@@ -30,6 +30,7 @@ from .utils import (
     build_env,
     clamp_text,
     ensure_dir,
+    get_main_file_names,
     is_within_workspace,
     normalized_program_and_args,
     open_dir_candidates,
@@ -221,5 +222,6 @@ __all__ = [
     "__version__",
     # Config helpers
     "save_engine_ui",
+    "get_main_file_names",
     "__version__",
 ]

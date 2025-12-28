@@ -52,6 +52,8 @@ PyCompiler ARK++ provides a modular, extensible platform for Python compilation 
 
 ## 🚀 Quick Start
 
+### Installation
+
 ```bash
 git clone https://github.com/raidos23/PyCompiler-ARK-Professional.git
 cd PyCompiler-ARK-Professional
@@ -62,6 +64,9 @@ source .venv/bin/activate  # Linux/macOS
 
 pip install -r requirements.txt -c constraints.txt
 
+# Install Click for enhanced CLI (optional but recommended)
+pip install click
+
 # Install development tools (optional)
 pip install -e ".[dev]"
 
@@ -71,12 +76,42 @@ pre-commit install
 
 ### Basic Usage
 
+#### GUI Application
+
 ```bash
-# Run the GUI application
+# Run the main GUI application
 python main.py
 
-# Or use the command-line interface
-python -m pycompiler_ark --help
+# Or via pycompiler_ark.py
+python pycompiler_ark.py
+```
+
+#### Command-Line Interface
+
+```bash
+# Show help
+python pycompiler_ark.py --help
+
+# Show version
+python pycompiler_ark.py --version
+
+# Launch main application
+python pycompiler_ark.py main
+
+# Launch BCASL standalone (plugin manager)
+python pycompiler_ark.py bcasl
+python pycompiler_ark.py bcasl /path/to/workspace
+```
+
+#### BCASL Standalone Module
+
+```bash
+# Launch BCASL directly
+python -m bcasl.only_mod
+
+# Launch with workspace
+python -m bcasl.only_mod /path/to/workspace
+python -m bcasl.only_mod .
 ```
 
 ### Development Setup
@@ -117,12 +152,19 @@ See [SUPPORTED_MATRIX.md](SUPPORTED_MATRIX.md) for detailed compatibility inform
 ## 📚 Documentation
 
 ### User Guides
-- [About SDKs](docs/about_sdks.md) - Overview of available SDKs
+- [About SDKs](docs/About_Sdks.md) - Overview of available SDKs
 - [Create a Building Engine](docs/how_to_create_an_engine.md) - Engine development guide
 - [Create a BC Plugin](docs/how_to_create_a_BC_plugin.md) - Pre-compile plugin guide
+- [BCASL Configuration](docs/BCASL_Configuration.md) - BCASL plugin system configuration
+
+### BCASL Standalone Module
+- [BCASL Standalone README](bcasl/only_mod/README.md) - Complete BCASL standalone documentation
+- [BCASL CLI Guide](bcasl/only_mod/CLI_GUIDE.md) - Command-line interface usage
+
 
 ### Developer Documentation
 - [Contributing](CONTRIBUTING.md) - How to contribute to the project
+- [ARK Configuration](docs/ARK_Configuration.md) - Main application configuration
 
 ### Operations
 - [Support Matrix](SUPPORTED_MATRIX.md) - Platform and version support
