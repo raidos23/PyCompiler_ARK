@@ -25,6 +25,14 @@ import subprocess
 import sys
 from pathlib import Path
 
+# Import build utilities
+try:
+    from build_utils import DependencyAnalyzer, check_dependencies
+except ImportError:
+    print("⚠️  build_utils.py not found. Creating minimal configuration...")
+    DependencyAnalyzer = None
+    check_dependencies = None
+
 PROJECT_NAME = "PyCompiler ARK"
 FORMAL_NAME = "PyCompiler-ARK"
 APP_NAME = "pycompiler_ark"
@@ -79,9 +87,14 @@ sources = [
     "main.py",
     "Core",
     "engine_sdk",
-    "ENGINES",
     "bcasl",
     "Plugins_SDK",
+    "themes",
+    "languages",
+    "logo",
+    "ui",
+    "Plugins",
+    "ENGINES",
 ]
 requires = [
     "PySide6>=6.8.0",

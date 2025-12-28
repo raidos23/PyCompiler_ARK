@@ -16,7 +16,7 @@
 
 """
 PyCompiler ARK++ — Pynsist Build Script
-Automated build configuration for creating Windows installers with pynsist.
+Automated build configuration for creating Windows standalone installers with pynsist.
 Note: pynsist is Windows-only and creates installers that include Python itself.
 """
 
@@ -25,6 +25,14 @@ import platform
 import subprocess
 import sys
 from pathlib import Path
+
+# Import build utilities
+try:
+    from build_utils import DependencyAnalyzer, check_dependencies
+except ImportError:
+    print("⚠️  build_utils.py not found. Creating minimal configuration...")
+    DependencyAnalyzer = None
+    check_dependencies = None
 
 # Project configuration
 PROJECT_NAME = "PyCompiler ARK++"
@@ -66,13 +74,14 @@ BUILD_CONFIG = {
         "pycompiler_ark.py",
         "Core",
         "engine_sdk",
-        "ENGINES",
         "bcasl",
         "Plugins_SDK",
         "themes",
         "languages",
         "logo",
         "ui",
+        "Plugins",
+        "ENGINES",
     ],
     
     # Exclude patterns (pynsist will skip these)

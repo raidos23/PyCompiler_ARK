@@ -25,6 +25,14 @@ import subprocess
 import sys
 from pathlib import Path
 
+# Import build utilities
+try:
+    from build_utils import DependencyAnalyzer, check_dependencies
+except ImportError:
+    print("⚠️  build_utils.py not found. Creating minimal configuration...")
+    DependencyAnalyzer = None
+    check_dependencies = None
+
 # Project configuration
 PROJECT_NAME = "PyCompiler-ARK"
 MAIN_SCRIPT = "pycompiler_ark.py"
@@ -72,15 +80,30 @@ BUILD_CONFIG = {
         "languages=languages",
         "logo=logo",
         "ui=ui",
+        "Plugins=Plugins",
+        "ENGINES=ENGINES",
     ],
     
     # Include packages (ensure all modules are bundled)
+    # Note: Plugins and ENGINES are excluded as they are loaded dynamically
     "include_package": [
         "Core",
         "engine_sdk",
-        "ENGINES",
         "bcasl",
         "Plugins_SDK",
+    ],
+    
+    # Exclude directories (Plugins and ENGINES are loaded dynamically at runtime)
+    "exclude_dirs": [
+        "Plugins",
+        "ENGINES",
+        "__pycache__",
+        ".git",
+        ".venv",
+        "build",
+        "dist",
+        "Tests",
+        "tests",
     ],
     
     # Include modules explicitly

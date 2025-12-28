@@ -16,7 +16,7 @@
 
 """
 PyCompiler ARK++ — cx_Freeze Build Script
-Automated build configuration for creating executables with cx_Freeze.
+Automated build configuration for creating standalone executables with cx_Freeze.
 """
 
 import os
@@ -24,6 +24,14 @@ import platform
 import subprocess
 import sys
 from pathlib import Path
+
+# Import build utilities
+try:
+    from build_utils import DependencyAnalyzer, check_dependencies
+except ImportError:
+    print("⚠️  build_utils.py not found. Creating minimal configuration...")
+    DependencyAnalyzer = None
+    check_dependencies = None
 
 # Project configuration
 PROJECT_NAME = "PyCompiler-ARK"
@@ -42,6 +50,8 @@ BUILD_CONFIG = {
         ("languages", "languages"),
         ("logo", "logo"),
         ("ui", "ui"),
+        ("Plugins", "Plugins"),
+        ("ENGINES", "ENGINES"),
     ],
     
     # Packages to include
