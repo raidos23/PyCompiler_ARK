@@ -86,7 +86,7 @@ class Cleaner(BcPluginBase):
             # Obtenir le chemin du workspace depuis bcasl.yml
             workspace_path = ctx.get_workspace_root()
             workspace_name = ctx.get_workspace_name()
-            
+
             log.log_info(f"Cleaning workspace: {workspace_name} ({workspace_path})")
 
             # Créer le dialog de progression
