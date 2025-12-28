@@ -1,0 +1,67 @@
+# PyCompiler ARK++ - Nuitka Build Configuration
+# This file contains the Nuitka build options for the project
+# Usage: python -m nuitka @nuitka_config.txt pycompiler_ark.py
+
+# Main compilation mode
+--standalone
+--onefile
+--follow-imports
+
+# Enable PySide6 plugin
+--enable-plugin=pyside6
+
+# Output configuration
+--output-dir=build/nuitka
+--output-filename=PyCompiler-ARK
+
+# Performance optimization
+--show-progress
+--show-memory
+--lto=yes
+--jobs=4
+
+# Include all project packages
+--include-package=Core
+--include-package=engine_sdk
+--include-package=ENGINES
+--include-package=bcasl
+--include-package=Plugins_SDK
+
+# Include required modules explicitly
+--include-module=PySide6.QtCore
+--include-module=PySide6.QtGui
+--include-module=PySide6.QtWidgets
+--include-module=PySide6.QtUiTools
+--include-module=psutil
+--include-module=yaml
+--include-module=PIL
+--include-module=jsonschema
+
+# Include data directories
+--include-data-dir=themes=themes
+--include-data-dir=languages=languages
+--include-data-dir=logo=logo
+--include-data-dir=ui=ui
+
+# Windows-specific options (uncomment on Windows)
+# --windows-disable-console
+# --windows-icon-from-ico=logo/logo.png
+# --windows-company-name=PyCompiler
+# --windows-product-name=PyCompiler ARK++
+# --windows-product-version=1.0.0
+# --windows-file-description=Python Compilation Toolkit
+
+# Linux-specific options (uncomment on Linux)
+# --linux-icon=logo/logo.png
+
+# macOS-specific options (uncomment on macOS)
+# --macos-app-name=PyCompiler ARK++
+# --macos-app-icon=logo/logo.png
+
+# Build optimization
+--remove-output
+--assume-yes-for-downloads
+
+# Debugging (uncomment for debugging builds)
+# --debug
+# --debugger
