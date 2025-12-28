@@ -326,6 +326,90 @@ def on_pre_compile(self, ctx: PreCompileContext) -> None:
 
 ## 6) Testing and debugging
 
+### Rapid Testing with BCASL Standalone Module
+
+The **BCASL Standalone Module** (`bcasl.only_mod`) is specifically designed for rapid plugin testing on a workspace without launching the full PyCompiler ARK++ application.
+
+#### Quick Start
+
+```bash
+# Launch BCASL standalone with your workspace
+python -m pycompiler_ark bcasl /path/to/workspace
+
+# Or use the module directly
+python -m bcasl.only_mod /path/to/workspace
+
+# Auto-discover workspace
+python -m pycompiler_ark bcasl --discover
+
+# Use most recent workspace
+python -m pycompiler_ark bcasl --recent
+```
+
+#### BCASL Standalone Features
+
+- **Lightweight GUI**: Minimal interface focused on plugin management
+- **Theme Support**: 4 built-in themes (light, dark, blue, green)
+- **Real-time Logging**: See plugin execution logs instantly
+- **Plugin Configuration**: Enable/disable and reorder plugins
+- **Async Execution**: Run plugins in background or synchronously
+- **Workspace Management**: Browse and select workspaces easily
+
+#### Typical Testing Workflow
+
+1. **Create your plugin** in `Plugins/my.plugin.id/__init__.py`
+
+2. **Launch BCASL standalone** with your test workspace:
+```bash
+python -m bcasl.only_mod ~/my-test-project
+```
+
+3. **Configure plugins** via the "⚙️ Configure Plugins" button:
+   - Enable only your plugin
+   - Disable other plugins to isolate testing
+   - Reorder if needed
+
+4. **Run BCASL** via the "▶️ Run BCASL" button
+
+5. **Check logs** in the execution log window for:
+   - Plugin loading status
+   - Execution messages
+   - Error details
+   - Performance metrics
+
+6. **Iterate** - Make changes and re-run without restarting
+
+#### Example Testing Session
+
+```bash
+# Terminal 1: Launch BCASL standalone
+$ python -m bcasl.only_mod ~/my-project
+
+# In BCASL GUI:
+# 1. Click "⚙️ Configure Plugins"
+# 2. Disable all plugins except "my.plugin.id"
+# 3. Click "▶️ Run BCASL"
+# 4. Check logs for execution results
+
+# Terminal 2: Edit your plugin
+$ vim Plugins/my.plugin.id/__init__.py
+
+# Back in BCASL GUI:
+# 1. Click "▶️ Run BCASL" again
+# 2. See updated results immediately
+```
+
+#### Advantages Over Full Application
+
+| Feature | BCASL Standalone | Full ARK++ |
+|---------|------------------|-----------|
+| Launch Time | ~2 seconds | ~5-10 seconds |
+| Memory Usage | ~150 MB | ~300+ MB |
+| Plugin Focus | Yes | No (mixed with compilation) |
+| Configuration UI | Dedicated | Integrated |
+| Logging | Clear and focused | Mixed with other logs |
+| Iteration Speed | Fast | Slower |
+
 ### Testing Checklist
 
 - [ ] Plugin loads without errors during discovery
@@ -336,6 +420,8 @@ def on_pre_compile(self, ctx: PreCompileContext) -> None:
 - [ ] Plugin logs informative messages
 - [ ] Plugin raises exceptions for critical failures
 - [ ] Plugin is idempotent (can run multiple times safely)
+- [ ] Plugin works in BCASL standalone module
+- [ ] Plugin works in full ARK++ application
 
 ### Debugging Tips
 
@@ -343,11 +429,12 @@ def on_pre_compile(self, ctx: PreCompileContext) -> None:
 ```bash
 # Set environment variable to see discovery logs
 export PYCOMPILER_VERBOSE=1
+python -m bcasl.only_mod /path/to/workspace
 ```
 
 2. **Test Plugin Isolation:**
-```python
-# Disable other plugins in bcasl.yml to test individually
+```yaml
+# In bcasl.yml - disable other plugins to test individually
 plugins:
   my.plugin.id:
     enabled: true
@@ -371,6 +458,18 @@ except Exception as e:
 # Check compatibility manually
 info = PLUGIN.get_full_compatibility_info()
 print(f"Plugin requirements: {info}")
+```
+
+5. **Use Different Themes:**
+```bash
+# Test plugin UI with different themes in BCASL standalone
+# Select theme from dropdown: light, dark, blue, green
+```
+
+6. **Monitor Performance:**
+```bash
+# BCASL standalone shows execution time for each plugin
+# Use this to identify performance bottlenecks
 ```
 
 ## 7) Developer checklist
