@@ -66,6 +66,106 @@ from bcasl.Loader import _load_workspace_config
 logger = logging.getLogger(__name__)
 
 
+class LanguageManager:
+    """Manages application languages loaded from JSON files."""
+    
+    def __init__(self):
+        self.languages = {}
+        self.current_language = "en"
+        self.strings = {}
+        self._load_languages()
+    
+    def _load_languages(self):
+        """Load languages from JSON files in languages directory."""
+        languages_dir = Path(__file__).parent / "languages"
+        
+        if not languages_dir.exists():
+            logger.warning(f"Languages directory not found: {languages_dir}")
+            self._load_default_language()
+            return
+        
+        try:
+            for lang_file in sorted(languages_dir.glob("*.json")):
+                try:
+                    with open(lang_file, 'r', encoding='utf-8') as f:
+                        lang_data = json.load(f)
+                        lang_code = lang_data.get('code', lang_file.stem)
+                        self.languages[lang_code] = {
+                            'name': lang_data.get('name', lang_code),
+                            'native_name': lang_data.get('native_name', lang_code),
+                            'strings': lang_data.get('strings', {})
+                        }
+                except Exception as e:
+                    logger.error(f"Failed to load language from {lang_file}: {e}")
+        except Exception as e:
+            logger.error(f"Error loading languages: {e}")
+            self._load_default_language()
+        
+        if self.languages:
+            self.current_language = list(self.languages.keys())[0]
+            self.strings = self.languages[self.current_language]['strings'].copy()
+        else:
+            self._load_default_language()
+    
+    def _load_default_language(self):
+        """Load default English language as fallback."""
+        self.languages = {
+            "en": {
+                "name": "English",
+                "native_name": "English",
+                "strings": {
+                    "app_title": "BCASL Standalone - Before Compilation Actions System Loader",
+                    "workspace_config": "Workspace Configuration",
+                    "workspace_label": "Workspace:",
+                    "no_workspace": "No workspace selected",
+                    "browse_button": "Browse...",
+                    "config_summary": "Configuration summary",
+                    "execution_log": "Execution Log:",
+                    "run_async": "Run asynchronously",
+                    "theme_label": "Theme:",
+                    "configure_plugins": "⚙️ Configure Plugins",
+                    "run_bcasl": "▶️ Run BCASL",
+                    "clear_log": "🗑️ Clear Log",
+                    "exit_button": "Exit",
+                    "ready": "Ready",
+                    "running": "Running BCASL...",
+                    "completed": "Completed",
+                    "failed": "Failed",
+                }
+            }
+        }
+        self.current_language = "en"
+        self.strings = self.languages["en"]["strings"].copy()
+    
+    def set_language(self, lang_code: str) -> bool:
+        """Set the current language."""
+        if lang_code not in self.languages:
+            return False
+        self.current_language = lang_code
+        self.strings = self.languages[lang_code]['strings'].copy()
+        return True
+    
+    def get_language_names(self) -> list:
+        """Get list of available language codes."""
+        return list(self.languages.keys())
+    
+    def get_language_display_names(self) -> list:
+        """Get list of available language display names."""
+        return [self.languages[code]['name'] for code in self.get_language_names()]
+    
+    def get(self, key: str, default: str = "") -> str:
+        """Get translated string."""
+        return self.strings.get(key, default)
+    
+    def format(self, key: str, **kwargs) -> str:
+        """Get translated string with formatting."""
+        template = self.strings.get(key, "")
+        try:
+            return template.format(**kwargs)
+        except KeyError:
+            return template
+
+
 class ThemeManager:
     """Manages application themes loaded from JSON files."""
     
@@ -305,8 +405,10 @@ class BcaslStandaloneApp(QMainWindow):
         self._config_cache = None
         self._last_config_load_time = 0
         
-        # Initialize theme manager
+        # Initialize language and theme managers
+        self.language_manager = LanguageManager()
         self.theme_manager = ThemeManager()
+        self._load_language_preference()
         self._load_theme_preference()
 
         self.setWindowTitle("BCASL Standalone - Before Compilation Actions System Loader")
@@ -365,6 +467,14 @@ class BcaslStandaloneApp(QMainWindow):
         self.chk_async.setToolTip("Execute BCASL in background thread for better responsiveness")
         options_layout.addWidget(self.chk_async)
         
+        # Language selector
+        lang_label = QLabel("Language:")
+        self.lang_combo = QComboBox()
+        self.lang_combo.addItems(list(self.language_manager.get_language_names()))
+        self.lang_combo.setCurrentText(self.language_manager.current_language)
+        self.lang_combo.currentTextChanged.connect(self._on_language_changed)
+        self.lang_combo.setMaximumWidth(100)
+        
         # Theme selector
         theme_label = QLabel("Theme:")
         self.theme_combo = QComboBox()
@@ -372,7 +482,10 @@ class BcaslStandaloneApp(QMainWindow):
         self.theme_combo.setCurrentText(self.theme_manager.current_theme)
         self.theme_combo.currentTextChanged.connect(self._on_theme_changed)
         self.theme_combo.setMaximumWidth(120)
+        
         options_layout.addStretch()
+        options_layout.addWidget(lang_label)
+        options_layout.addWidget(self.lang_combo)
         options_layout.addWidget(theme_label)
         options_layout.addWidget(self.theme_combo)
         layout.addLayout(options_layout)
@@ -409,6 +522,28 @@ class BcaslStandaloneApp(QMainWindow):
         if workspace_dir:
             self._load_config_info()
 
+    def _load_language_preference(self):
+        """Load language preference from config file."""
+        try:
+            config_file = Path.home() / ".bcasl_language"
+            if config_file.exists():
+                with open(config_file, 'r') as f:
+                    data = json.load(f)
+                    lang = data.get('language', 'en')
+                    if lang in self.language_manager.get_language_names():
+                        self.language_manager.set_language(lang)
+        except Exception:
+            pass
+
+    def _save_language_preference(self):
+        """Save language preference to config file."""
+        try:
+            config_file = Path.home() / ".bcasl_language"
+            with open(config_file, 'w') as f:
+                json.dump({'language': self.language_manager.current_language}, f)
+        except Exception:
+            pass
+
     def _load_theme_preference(self):
         """Load theme preference from config file."""
         try:
@@ -430,6 +565,13 @@ class BcaslStandaloneApp(QMainWindow):
                 json.dump({'theme': self.theme_manager.current_theme}, f)
         except Exception:
             pass
+
+    def _on_language_changed(self, lang_code: str):
+        """Handle language change."""
+        if self.language_manager.set_language(lang_code):
+            self._save_language_preference()
+            # Note: Full UI translation would require updating all text elements
+            # For now, language preference is saved for next session
 
     def _on_theme_changed(self, theme_name: str):
         """Handle theme change."""
