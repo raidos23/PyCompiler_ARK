@@ -19,11 +19,24 @@ BCASL Standalone Module (only_mod)
 Permet d'utiliser BCASL de manière indépendante sans lancer l'application complète.
 Réutilise les fonctions du package bcasl et fournit une interface GUI simple.
 
+Features:
+    - Standalone GUI application for BCASL management
+    - Plugin configuration and ordering
+    - Workspace selection and configuration
+    - Execution logging and reporting
+    - Asynchronous and synchronous execution modes
+
 Usage:
     python -m bcasl.only_mod [workspace_path]
+    
+    Or programmatically:
+    from bcasl.only_mod import BcaslStandaloneApp
+    app = BcaslStandaloneApp(workspace_dir="/path/to/workspace")
 """
 
 from __future__ import annotations
 
-__version__ = "1.0.0"
+from .app import BcaslStandaloneApp, main
+
+__version__ = "1.1.0"
 __all__ = ["BcaslStandaloneApp", "main"]
