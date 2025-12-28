@@ -67,10 +67,22 @@
       border: 1px solid var(--border); border-radius: 16px; padding: 18px;
       box-shadow: 0 12px 30px var(--shadow);
     }
+    .hero-card img { max-height: 400px; object-fit: contain; }
     .hero-kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 14px; }
     .kpi { background: #0e1520; border: 1px solid var(--border); border-radius: 12px; padding: 12px; text-align: center; }
     .kpi .num { font-size: 20px; font-weight: 800; color: var(--accent-2); }
     .kpi .label { color: var(--muted); font-size: 12px; }
+
+    /* Screenshot Section */
+    .screenshot-section { padding: 32px 0; }
+    .screenshot-container {
+      background: linear-gradient(180deg, #0f1621, #0c121a);
+      border: 1px solid var(--border); border-radius: 16px; padding: 20px;
+      box-shadow: 0 12px 30px var(--shadow);
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    .screenshot-container img { width: 100%; max-height: 500px; object-fit: contain; border-radius: 12px; border: 1px solid var(--border); }
 
     /* Features */
     .section { padding: 24px 0; }
@@ -130,10 +142,10 @@
     </section>
 
     <!-- Screenshot -->
-    <section class="section">
-      <h3>Aperçu de l'interface</h3>
-     <div class="hero-card">
-        <img src="images/Screenshot_2025-12-28_02_49_12.png" alt="Logo PyCompiler ARK" style="width:100%; border-radius:12px; border:1px solid var(--border);" />
+    <section class="screenshot-section">
+      <h3 style="text-align: center; margin-bottom: 24px;">Aperçu de l'interface</h3>
+      <div class="screenshot-container">
+        <img src="images/Screenshot_2025-12-28_02_49_12.png" alt="Aperçu de l'interface PyCompiler ARK" />
       </div>
     </section>
 
