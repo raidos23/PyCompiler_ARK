@@ -15,3 +15,5 @@
 !/images/
 !/images/**
 !WebPageLauncher.py
+!download_windows.html
+!download_linux.html

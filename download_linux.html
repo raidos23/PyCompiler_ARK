@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Téléchargements pour Linux - PyCompiler ARK</title>
+  <meta name="description" content="PyCompiler ARK - Téléchargements pour Linux" />
+  <link rel="icon" type="image/png" href="images/logo.png" />
+  <style>
+    :root {
+      --bg: #0b0f14;
+      --panel: #121821;
+      --text: #e6eef8;
+      --muted: #a9b2bf;
+      --accent: #1f9cf0;
+      --accent-2: #4bd1a0;
+      --border: #1b2430;
+      --shadow: rgba(0,0,0,.4);
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      color: var(--text);
+      background: radial-gradient(1200px 800px at 80% -10%, #122233 0%, rgba(18,34,51,0) 60%),
+                  radial-gradient(900px 700px at -10% 110%, #1a2b2a 0%, rgba(26,43,42,0) 55%),
+                  var(--bg);
+    }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .container { max-width: 1100px; margin: 0 auto; padding: 24px; }
+    header {
+      position: sticky; top: 0; z-index: 5;
+      background: linear-gradient(to bottom, rgba(11,15,20,.9), rgba(11,15,20,.6) 50%, rgba(11,15,20,0));
+      backdrop-filter: blur(6px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 16px; padding: 12px 0;
+    }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .brand img { width: 36px; height: 36px; border-radius: 8px; box-shadow: 0 4px 16px var(--shadow); }
+    .brand h1 { font-size: 18px; margin: 0; letter-spacing: .3px; }
+    .nav-actions { display: flex; gap: 10px; align-items: center; }
+    .btn {
+      padding: 10px 14px; border: 1px solid var(--border); border-radius: 10px;
+      background: linear-gradient(180deg, #17202b, #101620);
+      color: var(--text); cursor: pointer; font-weight: 600; letter-spacing: .2px;
+      box-shadow: 0 4px 16px var(--shadow);
+      transition: transform .12s ease, background .2s ease, border-color .2s ease;
+    }
+    .btn:hover { transform: translateY(-1px); border-color: #263347; }
+    .btn.primary { background: linear-gradient(180deg, #2095e7, #1679c2); border-color: #197ac7; }
+    .section { padding: 24px 0; }
+    .section h3 { margin: 0 0 12px; font-size: 22px; }
+    .muted { color: var(--muted); }
+    footer { margin-top: 32px; border-top: 1px solid var(--border); padding: 16px 0 40px; color: var(--muted); font-size: 14px; }
+    .release-list a {
+      display: block;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+    .release-list a:hover { border-color: #263347; }
+    .release-list h4 { margin: 0 0 8px; }
+    .release-list p { margin: 0; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container nav">
+      <div class="brand">
+        <img src="images/logo2.png" alt="PyCompiler ARK Logo" />
+        <h1>PyCompiler ARK</h1>
+      </div>
+      <div class="nav-actions">
+        <a class="btn" href="index.html">Accueil</a>
+        <a class="btn primary" href="https://github.com/raidos23/PyCompiler-ARK-Professional" target="_blank">GitHub</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="section" id="download">
+      <h3>Téléchargements pour Linux</h3>
+      <p class="muted">Voici la liste des versions disponibles pour Linux. Les données sont récupérées en temps réel depuis GitHub.</p>
+      <div class="release-list" id="release-list">
+        <p class="muted">Chargement des versions...</p>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="container">
+      © <span id="year"></span> PyCompiler ARK — Tous droits réservés
+    </div>
+  </footer>
+
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+
+    const REPO = 'raidos23/PyCompiler-ARK-Professional';
+    const API_URL = `https://api.github.com/repos/${REPO}/releases`;
+    const releaseList = document.getElementById('release-list');
+
+    async function fetchReleases() {
+      try {
+        const response = await fetch(API_URL);
+        if (!response.ok) {
+          throw new Error(`Erreur HTTP: ${response.status}`);
+        }
+        const releases = await response.json();
+
+        if (releases.length === 0) {
+          releaseList.innerHTML = '<p class="muted">Aucune release n\'a été publiée pour le moment.</p><a class="btn" style="margin-top: 12px; display: inline-block;" href="https://github.com/raidos23/PyCompiler-ARK-Professional/releases" target="_blank">Consulter les releases sur GitHub</a>';
+          return;
+        }
+
+        releaseList.innerHTML = ''; // Clear loading message
+
+        let foundReleases = false;
+        releases.forEach(release => {
+          const linuxAssets = release.assets.filter(asset => {
+            if (!asset || !asset.name) return false; // Robust check
+            const name = asset.name.toLowerCase();
+            return name.includes('linux') || name.endsWith('.deb') || name.endsWith('.rpm') || name.endsWith('.appimage') || (name.endsWith('.zip') && name.includes('linux'));
+          });
+
+          if (linuxAssets.length > 0) {
+            foundReleases = true;
+            linuxAssets.forEach(asset => {
+              const assetLink = document.createElement('a');
+              assetLink.href = asset.browser_download_url;
+              assetLink.target = '_blank';
+              assetLink.innerHTML = `
+                <h4>${release.name || release.tag_name}</h4>
+                <p class="muted">Fichier: ${asset.name} | Publié le ${new Date(release.published_at).toLocaleDateString()} | Taille: ${(asset.size / 1024 / 1024).toFixed(2)} MB</p>
+              `;
+              releaseList.appendChild(assetLink);
+            });
+          }
+        });
+
+        if (!foundReleases) {
+          releaseList.innerHTML = '<p class="muted">Aucune version compatible avec Linux n\'a été trouvée.</p><a class="btn" style="margin-top: 12px; display: inline-block;" href="https://github.com/raidos23/PyCompiler-ARK-Professional/releases" target="_blank">Consulter toutes les releases sur GitHub</a>';
+        }
+
+      } catch (error) {
+        console.error('Erreur lors de la récupération des releases:', error);
+        releaseList.innerHTML = '<p class="muted">Impossible de charger la liste des versions depuis GitHub.</p><a class="btn" style="margin-top: 12px; display: inline-block;" href="https://github.com/raidos23/PyCompiler-ARK-Professional/releases" target="_blank">Consulter les releases sur GitHub</a>';
+      }
+    }
+
+    fetchReleases();
+  </script>
+</body>
+</html>
