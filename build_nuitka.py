@@ -43,7 +43,7 @@ DIST_DIR = "dist"
 BUILD_CONFIG = {
     # Main compilation options
     "standalone": True,
-    "onefile": True,
+    "onefile": False,
     "follow_imports": True,
     
     # Qt/PySide6 configuration
@@ -80,18 +80,11 @@ BUILD_CONFIG = {
         "languages=languages",
         "logo=logo",
         "ui=ui",
-        "Plugins=Plugins",
-        "ENGINES=ENGINES",
     ],
     
     # Include packages (ensure all modules are bundled)
     # Note: Plugins and ENGINES are excluded as they are loaded dynamically
-    "include_package": [
-        "Core",
-        "engine_sdk",
-        "bcasl",
-        "Plugins_SDK",
-    ],
+
     
     # Exclude directories (Plugins and ENGINES are loaded dynamically at runtime)
     "exclude_dirs": [
