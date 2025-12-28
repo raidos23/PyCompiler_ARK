@@ -28,7 +28,7 @@ Features:
 
 Usage:
     python -m bcasl.only_mod [workspace_path]
-    
+
     Or programmatically:
     from bcasl.only_mod import BcaslStandaloneApp
     app = BcaslStandaloneApp(workspace_dir="/path/to/workspace")

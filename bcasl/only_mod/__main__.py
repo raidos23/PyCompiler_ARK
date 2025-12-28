@@ -18,14 +18,14 @@ BCASL Standalone Module Entry Point
 
 Allows running BCASL as a standalone application:
     python -m bcasl.only_mod [workspace_path]
-    
+
 Examples:
     # Launch with no workspace
     python -m bcasl.only_mod
-    
+
     # Launch with a specific workspace
     python -m bcasl.only_mod /path/to/workspace
-    
+
     # Launch from current directory
     python -m bcasl.only_mod .
 """

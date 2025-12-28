@@ -394,9 +394,9 @@ if QObject is not None and Signal is not None:  # pragma: no cover
                 }
                 report = manager.run_pre_compile(
                     PreCompileContext(
-                        self.workspace_root, 
+                        self.workspace_root,
                         config=self.cfg,
-                        workspace_metadata=workspace_meta
+                        workspace_metadata=workspace_meta,
                     )
                 )
                 self.finished.emit(report)
@@ -962,9 +962,7 @@ def run_pre_compile_async(self, on_done: Optional[callable] = None) -> None:
             }
             report = manager.run_pre_compile(
                 PreCompileContext(
-                    workspace_root, 
-                    config=cfg,
-                    workspace_metadata=workspace_meta
+                    workspace_root, config=cfg, workspace_metadata=workspace_meta
                 )
             )
         except Exception as _e:
@@ -1101,9 +1099,7 @@ def run_pre_compile(self) -> Optional[object]:
         }
         report = manager.run_pre_compile(
             PreCompileContext(
-                workspace_root, 
-                config=cfg,
-                workspace_metadata=workspace_meta
+                workspace_root, config=cfg, workspace_metadata=workspace_meta
             )
         )
         if hasattr(self, "log") and self.log is not None:
