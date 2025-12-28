@@ -134,6 +134,11 @@
       width: 100%;
       border-collapse: collapse;
       margin: 16px 0;
+      overflow-x: auto;
+    }
+    .content table-wrapper {
+      overflow-x: auto;
+      margin: 16px 0;
     }
     .content th, .content td {
       border: 1px solid var(--border);
@@ -143,6 +148,10 @@
     .content th {
       background: var(--code-bg);
       font-weight: 600;
+      color: var(--accent-2);
+    }
+    .content tr:hover {
+      background: rgba(31, 156, 240, 0.05);
     }
 
     /* Loading state */
@@ -216,6 +225,16 @@
         return `<pre><code>${code.trim()}</code></pre>`;
       });
 
+      // Tables - must be before paragraphs
+      html = html.replace(/\n\|(.+)\n\|[-:\s|]+\n((?:\|.+\n?)*)/g, (match, header, rows) => {
+        const headerCells = header.split('|').filter(c => c.trim()).map(c => `<th>${c.trim()}</th>`).join('');
+        const bodyRows = rows.split('\n').filter(r => r.trim()).map(row => {
+          const cells = row.split('|').filter(c => c.trim()).map(c => `<td>${c.trim()}</td>`).join('');
+          return `<tr>${cells}</tr>`;
+        }).join('');
+        return `<table><thead><tr>${headerCells}</tr></thead><tbody>${bodyRows}</tbody></table>`;
+      });
+
       // Headings
       html = html.replace(/^### (.*?)$/gm, '<h3>$1</h3>');
       html = html.replace(/^## (.*?)$/gm, '<h2>$1</h2>');
@@ -235,11 +254,18 @@
       // Links
       html = html.replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank">$1</a>');
 
-      // Lists
-      html = html.replace(/^\* (.*?)$/gm, '<li>$1</li>');
-      html = html.replace(/^- (.*?)$/gm, '<li>$1</li>');
+      // Lists - ordered
       html = html.replace(/^\d+\. (.*?)$/gm, '<li>$1</li>');
       html = html.replace(/(<li>.*<\/li>)/s, (match) => {
+        if (match.includes('<ol>') || match.includes('<ul>')) return match;
+        return '<ol>' + match + '</ol>';
+      });
+
+      // Lists - unordered
+      html = html.replace(/^[\*\-] (.*?)$/gm, '<li>$1</li>');
+      html = html.replace(/(<li>.*<\/li>)/s, (match) => {
+        if (match.includes('<ol>')) return match;
+        if (match.includes('<ul>')) return match;
         return '<ul>' + match + '</ul>';
       });
 
@@ -256,8 +282,12 @@
       html = html.replace(/(<\/h[1-6]>)<\/p>/g, '$1');
       html = html.replace(/<p>(<pre)/g, '$1');
       html = html.replace(/(<\/pre>)<\/p>/g, '$1');
+      html = html.replace(/<p>(<table)/g, '$1');
+      html = html.replace(/(<\/table>)<\/p>/g, '$1');
       html = html.replace(/<p>(<ul)/g, '$1');
       html = html.replace(/(<\/ul>)<\/p>/g, '$1');
+      html = html.replace(/<p>(<ol)/g, '$1');
+      html = html.replace(/(<\/ol>)<\/p>/g, '$1');
       html = html.replace(/<p>(<blockquote)/g, '$1');
       html = html.replace(/(<\/blockquote>)<\/p>/g, '$1');
 
