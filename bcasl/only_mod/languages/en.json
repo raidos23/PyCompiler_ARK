@@ -12,6 +12,7 @@
     "execution_log": "Execution Log:",
     "run_async": "Run asynchronously",
     "run_async_tooltip": "Execute BCASL in background thread for better responsiveness",
+    "language_label": "Language:",
     "theme_label": "Theme:",
     "configure_plugins": "⚙️ Configure Plugins",
     "configure_plugins_tooltip": "Open plugin configuration dialog",

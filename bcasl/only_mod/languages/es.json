@@ -12,6 +12,7 @@
     "execution_log": "Registro de Ejecución:",
     "run_async": "Ejecutar de forma asincrónica",
     "run_async_tooltip": "Ejecutar BCASL en un hilo de fondo para mejor capacidad de respuesta",
+    "language_label": "Idioma:",
     "theme_label": "Tema:",
     "configure_plugins": "⚙️ Configurar Complementos",
     "configure_plugins_tooltip": "Abrir el diálogo de configuración de complementos",

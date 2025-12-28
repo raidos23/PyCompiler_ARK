@@ -12,6 +12,7 @@
     "execution_log": "Journal d'Exécution:",
     "run_async": "Exécuter de manière asynchrone",
     "run_async_tooltip": "Exécuter BCASL dans un thread d'arrière-plan pour une meilleure réactivité",
+    "language_label": "Langue:",
     "theme_label": "Thème:",
     "configure_plugins": "⚙️ Configurer les Plugins",
     "configure_plugins_tooltip": "Ouvrir la boîte de dialogue de configuration des plugins",
