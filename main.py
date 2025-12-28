@@ -227,9 +227,9 @@ from Core import PyCompilerArkGui
 def main(argv: list[str]) -> int:
     try:
         app = QApplication(argv)
-        # Use logo/logo.png as application icon if available
+        # Use logo/logo2.png as application icon if available
         try:
-            _icon_path = os.path.join(ROOT_DIR, "logo", "logo.png")
+            _icon_path = os.path.join(ROOT_DIR, "logo", "logo2.png")
             if os.path.isfile(_icon_path):
                 app.setWindowIcon(QIcon(_icon_path))
         except Exception:
