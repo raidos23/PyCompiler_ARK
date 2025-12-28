@@ -374,9 +374,10 @@ class PreCompileContext:
         """Charge la configuration depuis bcasl.yml."""
         try:
             import yaml
+
             bcasl_file = self.project_root / "bcasl.yml"
             if bcasl_file.exists():
-                with open(bcasl_file, 'r', encoding='utf-8') as f:
+                with open(bcasl_file, "r", encoding="utf-8") as f:
                     return yaml.safe_load(f) or {}
         except Exception:
             pass
@@ -443,9 +444,11 @@ class PreCompileContext:
         """Vérifie si le workspace est valide (existe et est accessible, configuré dans bcasl.yml)."""
         try:
             bcasl_file = self.project_root / "bcasl.yml"
-            return (self.project_root.exists() and 
-                    self.project_root.is_dir() and 
-                    bcasl_file.exists())
+            return (
+                self.project_root.exists()
+                and self.project_root.is_dir()
+                and bcasl_file.exists()
+            )
         except Exception:
             return False
 
@@ -461,7 +464,7 @@ class PreCompileContext:
         root = self.project_root
         inc = tuple(include) if include else ("**/*",)
         exc = tuple(exclude) if exclude else tuple()
-        
+
         # Déterminer si le cache est activé
         try:
             opt = (
@@ -472,7 +475,7 @@ class PreCompileContext:
             enable_cache = bool(opt.get("iter_files_cache", True))
         except Exception:
             enable_cache = True
-        
+
         # Créer une clé de cache cohérente (patterns normalisés et triés)
         cache_key = None
         if enable_cache:
@@ -497,7 +500,7 @@ class PreCompileContext:
         # Collecter les fichiers avec déduplication (utiliser un set pour éviter les doublons)
         seen: set[Path] = set()
         collected: list[Path] = []
-        
+
         for pat in inc:
             try:
                 for path in root.glob(pat):
@@ -511,7 +514,7 @@ class PreCompileContext:
             except (OSError, ValueError):
                 # Ignorer les patterns invalides ou les erreurs d'accès
                 continue
-        
+
         # Mettre en cache le résultat si activé
         if enable_cache and cache_key is not None:
             try:
