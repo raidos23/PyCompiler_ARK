@@ -411,7 +411,7 @@ class BcaslStandaloneApp(QMainWindow):
         self._load_language_preference()
         self._load_theme_preference()
 
-        self.setWindowTitle("BCASL Standalone - Before Compilation Actions System Loader")
+        self.setWindowTitle(self.language_manager.get("app_title", "BCASL Standalone"))
         self.setGeometry(100, 100, 1100, 800)
         self.setMinimumSize(900, 650)
 
@@ -423,32 +423,32 @@ class BcaslStandaloneApp(QMainWindow):
         layout.setSpacing(10)
 
         # Workspace selection group
-        ws_group = QGroupBox("Workspace Configuration")
-        ws_layout = QHBoxLayout(ws_group)
-        ws_label = QLabel("Workspace:")
-        ws_label.setMinimumWidth(80)
-        self.ws_display = QLabel(workspace_dir or "No workspace selected")
-        self.ws_display.setToolTip("Currently selected workspace directory")
-        ws_btn = QPushButton("Browse...")
-        ws_btn.setMaximumWidth(100)
-        ws_btn.clicked.connect(self._select_workspace)
-        ws_layout.addWidget(ws_label)
+        self.ws_group = QGroupBox(self.language_manager.get("workspace_config", "Workspace Configuration"))
+        ws_layout = QHBoxLayout(self.ws_group)
+        self.ws_label = QLabel(self.language_manager.get("workspace_label", "Workspace:"))
+        self.ws_label.setMinimumWidth(80)
+        self.ws_display = QLabel(workspace_dir or self.language_manager.get("no_workspace", "No workspace selected"))
+        self.ws_display.setToolTip(self.language_manager.get("config_summary", "Currently selected workspace directory"))
+        self.ws_browse_btn = QPushButton(self.language_manager.get("browse_button", "Browse..."))
+        self.ws_browse_btn.setMaximumWidth(100)
+        self.ws_browse_btn.clicked.connect(self._select_workspace)
+        ws_layout.addWidget(self.ws_label)
         ws_layout.addWidget(self.ws_display)
         ws_layout.addStretch()
-        ws_layout.addWidget(ws_btn)
-        layout.addWidget(ws_group)
+        ws_layout.addWidget(self.ws_browse_btn)
+        layout.addWidget(self.ws_group)
 
         # Config info
-        self.config_info = QLabel("No configuration loaded")
-        self.config_info.setToolTip("Configuration summary: enabled plugins, file patterns, etc.")
+        self.config_info = QLabel(self.language_manager.get("no_config", "No configuration loaded"))
+        self.config_info.setToolTip(self.language_manager.get("config_summary", "Configuration summary: enabled plugins, file patterns, etc."))
         layout.addWidget(self.config_info)
 
         # Log output
-        log_label = QLabel("Execution Log:")
+        self.log_label = QLabel(self.language_manager.get("execution_log", "Execution Log:"))
         log_label_font = QFont()
         log_label_font.setBold(True)
-        log_label.setFont(log_label_font)
-        layout.addWidget(log_label)
+        self.log_label.setFont(log_label_font)
+        layout.addWidget(self.log_label)
         self.log = QTextEdit()
         self.log.setReadOnly(True)
         self.log.setMinimumHeight(280)
@@ -462,21 +462,34 @@ class BcaslStandaloneApp(QMainWindow):
 
         # Options and theme
         options_layout = QHBoxLayout()
-        self.chk_async = QCheckBox("Run asynchronously")
+        self.chk_async = QCheckBox(self.language_manager.get("run_async", "Run asynchronously"))
         self.chk_async.setChecked(True)
-        self.chk_async.setToolTip("Execute BCASL in background thread for better responsiveness")
+        self.chk_async.setToolTip(self.language_manager.get("run_async_tooltip", "Execute BCASL in background thread for better responsiveness"))
         options_layout.addWidget(self.chk_async)
         
         # Language selector
-        lang_label = QLabel("Language:")
+        self.lang_label = QLabel(self.language_manager.get("language_label", "Language:"))
         self.lang_combo = QComboBox()
-        self.lang_combo.addItems(list(self.language_manager.get_language_names()))
-        self.lang_combo.setCurrentText(self.language_manager.current_language)
-        self.lang_combo.currentTextChanged.connect(self._on_language_changed)
-        self.lang_combo.setMaximumWidth(100)
+        
+        # Store code -> display name mapping
+        self._lang_codes = self.language_manager.get_language_names()
+        self._lang_display_names = [
+            self.language_manager.languages[code]['native_name'] 
+            for code in self._lang_codes
+        ]
+        
+        # Add display names to combo
+        self.lang_combo.addItems(self._lang_display_names)
+        
+        # Set current language by display name
+        current_index = self._lang_codes.index(self.language_manager.current_language)
+        self.lang_combo.setCurrentIndex(current_index)
+        
+        self.lang_combo.currentIndexChanged.connect(self._on_language_changed)
+        self.lang_combo.setMaximumWidth(150)
         
         # Theme selector
-        theme_label = QLabel("Theme:")
+        self.theme_label = QLabel(self.language_manager.get("theme_label", "Theme:"))
         self.theme_combo = QComboBox()
         self.theme_combo.addItems(list(self.theme_manager.THEMES.keys()))
         self.theme_combo.setCurrentText(self.theme_manager.current_theme)
@@ -484,25 +497,25 @@ class BcaslStandaloneApp(QMainWindow):
         self.theme_combo.setMaximumWidth(120)
         
         options_layout.addStretch()
-        options_layout.addWidget(lang_label)
+        options_layout.addWidget(self.lang_label)
         options_layout.addWidget(self.lang_combo)
-        options_layout.addWidget(theme_label)
+        options_layout.addWidget(self.theme_label)
         options_layout.addWidget(self.theme_combo)
         layout.addLayout(options_layout)
 
         # Buttons
         btn_layout = QHBoxLayout()
-        self.btn_config = QPushButton("⚙️ Configure Plugins")
-        self.btn_config.setToolTip("Open plugin configuration dialog")
+        self.btn_config = QPushButton(self.language_manager.get("configure_plugins", "⚙️ Configure Plugins"))
+        self.btn_config.setToolTip(self.language_manager.get("configure_plugins_tooltip", "Open plugin configuration dialog"))
         self.btn_config.clicked.connect(self._open_config_dialog)
-        self.btn_run = QPushButton("▶️ Run BCASL")
-        self.btn_run.setToolTip("Execute BCASL pre-compilation actions")
+        self.btn_run = QPushButton(self.language_manager.get("run_bcasl", "▶️ Run BCASL"))
+        self.btn_run.setToolTip(self.language_manager.get("run_bcasl_tooltip", "Execute BCASL pre-compilation actions"))
         self.btn_run.clicked.connect(self._run_bcasl)
-        self.btn_clear = QPushButton("🗑️ Clear Log")
-        self.btn_clear.setToolTip("Clear the execution log")
+        self.btn_clear = QPushButton(self.language_manager.get("clear_log", "🗑️ Clear Log"))
+        self.btn_clear.setToolTip(self.language_manager.get("clear_log_tooltip", "Clear the execution log"))
         self.btn_clear.clicked.connect(self.log.clear)
-        self.btn_exit = QPushButton("Exit")
-        self.btn_exit.setToolTip("Close the application")
+        self.btn_exit = QPushButton(self.language_manager.get("exit_button", "Exit"))
+        self.btn_exit.setToolTip(self.language_manager.get("exit_tooltip", "Close the application"))
         self.btn_exit.clicked.connect(self.close)
 
         btn_layout.addWidget(self.btn_config)
@@ -513,7 +526,7 @@ class BcaslStandaloneApp(QMainWindow):
         layout.addLayout(btn_layout)
 
         # Status bar
-        self.statusBar().showMessage("Ready")
+        self.statusBar().showMessage(self.language_manager.get("ready", "Ready"))
 
         # Apply theme
         self._apply_theme()
@@ -566,12 +579,21 @@ class BcaslStandaloneApp(QMainWindow):
         except Exception:
             pass
 
-    def _on_language_changed(self, lang_code: str):
+    def _on_language_changed(self, index: int):
         """Handle language change."""
+        if index < 0 or index >= len(self._lang_codes):
+            return
+        
+        lang_code = self._lang_codes[index]
         if self.language_manager.set_language(lang_code):
             self._save_language_preference()
-            # Note: Full UI translation would require updating all text elements
-            # For now, language preference is saved for next session
+            self._update_ui_texts()
+            
+            # Update language combo display names after language change
+            self._lang_display_names = [
+                self.language_manager.languages[code]['native_name'] 
+                for code in self._lang_codes
+            ]
 
     def _on_theme_changed(self, theme_name: str):
         """Handle theme change."""
@@ -583,24 +605,59 @@ class BcaslStandaloneApp(QMainWindow):
         """Apply current theme to the application."""
         stylesheet = self.theme_manager.get_stylesheet()
         self.setStyleSheet(stylesheet)
+    
+    def _update_ui_texts(self):
+        """Update all UI text elements with current language."""
+        self.setWindowTitle(self.language_manager.get("app_title", "BCASL Standalone"))
+        self.ws_group.setTitle(self.language_manager.get("workspace_config", "Workspace Configuration"))
+        self.ws_label.setText(self.language_manager.get("workspace_label", "Workspace:"))
+        if not self.workspace_dir:
+            self.ws_display.setText(self.language_manager.get("no_workspace", "No workspace selected"))
+        self.ws_display.setToolTip(self.language_manager.get("config_summary", "Currently selected workspace directory"))
+        
+        if self.config_info.text() == "No configuration loaded" or self.config_info.text().startswith("Aucune configuration"):
+            self.config_info.setText(self.language_manager.get("no_config", "No configuration loaded"))
+        self.config_info.setToolTip(self.language_manager.get("config_summary", "Configuration summary: enabled plugins, file patterns, etc."))
+        
+        self.log_label.setText(self.language_manager.get("execution_log", "Execution Log:"))
+        self.chk_async.setText(self.language_manager.get("run_async", "Run asynchronously"))
+        self.chk_async.setToolTip(self.language_manager.get("run_async_tooltip", "Execute BCASL in background thread for better responsiveness"))
+        
+        self.ws_browse_btn.setText(self.language_manager.get("browse_button", "Browse..."))
+        self.lang_label.setText(self.language_manager.get("language_label", "Language:"))
+        self.theme_label.setText(self.language_manager.get("theme_label", "Theme:"))
+        
+        self.btn_config.setText(self.language_manager.get("configure_plugins", "⚙️ Configure Plugins"))
+        self.btn_config.setToolTip(self.language_manager.get("configure_plugins_tooltip", "Open plugin configuration dialog"))
+        self.btn_run.setText(self.language_manager.get("run_bcasl", "▶️ Run BCASL"))
+        self.btn_run.setToolTip(self.language_manager.get("run_bcasl_tooltip", "Execute BCASL pre-compilation actions"))
+        self.btn_clear.setText(self.language_manager.get("clear_log", "🗑️ Clear Log"))
+        self.btn_clear.setToolTip(self.language_manager.get("clear_log_tooltip", "Clear the execution log"))
+        self.btn_exit.setText(self.language_manager.get("exit_button", "Exit"))
+        self.btn_exit.setToolTip(self.language_manager.get("exit_tooltip", "Close the application"))
+        
+        # Update status bar if showing "Ready"
+        status_text = self.statusBar().currentMessage()
+        if status_text in ["Ready", "Prêt"]:
+            self.statusBar().showMessage(self.language_manager.get("ready", "Ready"))
 
     def _select_workspace(self):
         """Select workspace directory."""
         folder = QFileDialog.getExistingDirectory(
             self,
-            "Select Workspace Directory",
+            self.language_manager.get("select_workspace", "Select Workspace Directory"),
             self.workspace_dir or os.path.expanduser("~"),
         )
         if folder:
             self.workspace_dir = folder
             self.ws_display.setText(folder)
             self._load_config_info()
-            self.log.append(f"✅ Workspace selected: {folder}\n")
+            self.log.append(self.language_manager.format("workspace_selected", path=folder) + "\n")
 
     def _load_config_info(self):
         """Load and display configuration info."""
         if not self.workspace_dir:
-            self.config_info.setText("No workspace selected")
+            self.config_info.setText(self.language_manager.get("no_workspace", "No workspace selected"))
             return
 
         try:
@@ -617,36 +674,40 @@ class BcaslStandaloneApp(QMainWindow):
             exclude_patterns = cfg.get("exclude_patterns", [])
 
             info = (
-                f"Plugins: {enabled_count}/{total_count} enabled | "
-                f"File patterns: {len(file_patterns)} | "
-                f"Exclude patterns: {len(exclude_patterns)}"
+                f"{self.language_manager.format('plugins_enabled', enabled=enabled_count, total=total_count)} | "
+                f"{self.language_manager.format('file_patterns', count=len(file_patterns))} | "
+                f"{self.language_manager.format('exclude_patterns', count=len(exclude_patterns))}"
             )
             self.config_info.setText(info)
         except Exception as e:
-            self.config_info.setText(f"Error loading config: {e}")
+            self.config_info.setText(self.language_manager.format("error_loading_config", error=str(e)))
 
     def _open_config_dialog(self):
         """Open plugin configuration dialog."""
         if not self.workspace_dir:
             QMessageBox.warning(
                 self,
-                "Warning",
-                "Please select a workspace first.",
+                self.language_manager.get("warning", "Warning"),
+                self.language_manager.get("select_workspace_first", "Please select a workspace first."),
             )
             return
         try:
             open_bc_loader_dialog(self)
             self._load_config_info()
         except Exception as e:
-            QMessageBox.critical(self, "Error", f"Failed to open config dialog: {e}")
+            QMessageBox.critical(
+                self, 
+                self.language_manager.get("error", "Error"), 
+                self.language_manager.format("config_dialog_error", error=str(e))
+            )
 
     def _run_bcasl(self):
         """Run BCASL."""
         if not self.workspace_dir:
             QMessageBox.warning(
                 self,
-                "Warning",
-                "Please select a workspace first.",
+                self.language_manager.get("warning", "Warning"),
+                self.language_manager.get("select_workspace_first", "Please select a workspace first."),
             )
             return
 
@@ -654,7 +715,7 @@ class BcaslStandaloneApp(QMainWindow):
             QMessageBox.information(
                 self,
                 "Information",
-                "BCASL is already running. Please wait for it to complete.",
+                self.language_manager.get("bcasl_running", "BCASL is already running. Please wait for it to complete."),
             )
             return
 
@@ -663,9 +724,9 @@ class BcaslStandaloneApp(QMainWindow):
         self.btn_config.setEnabled(False)
         self.progress.setVisible(True)
         self.progress.setMaximum(0)  # Indeterminate progress
-        self.statusBar().showMessage("Running BCASL...")
+        self.statusBar().showMessage(self.language_manager.get("running", "Running BCASL..."))
         self.log.append("\n" + "=" * 60)
-        self.log.append("Starting BCASL execution...")
+        self.log.append(self.language_manager.get("starting_execution", "Starting BCASL execution..."))
         self.log.append("=" * 60 + "\n")
 
         def on_done(report):
@@ -676,25 +737,29 @@ class BcaslStandaloneApp(QMainWindow):
             self.progress.setVisible(False)
 
             if report is None:
-                self.log.append("\n❌ BCASL execution failed or was cancelled.\n")
-                self.statusBar().showMessage("Failed")
+                self.log.append("\n" + self.language_manager.get("execution_failed", "❌ BCASL execution failed or was cancelled.") + "\n")
+                self.statusBar().showMessage(self.language_manager.get("failed", "Failed"))
             else:
                 try:
                     self.log.append("\n" + "=" * 60)
-                    self.log.append("BCASL Execution Report:")
+                    self.log.append(self.language_manager.get("execution_report", "BCASL Execution Report:"))
                     self.log.append("=" * 60 + "\n")
                     for item in report:
-                        status = "✅ OK" if item.success else f"❌ FAIL: {item.error}"
+                        if item.success:
+                            status = self.language_manager.get("plugin_ok", "✅ OK")
+                        else:
+                            status = self.language_manager.format("plugin_fail", error=item.error)
                         self.log.append(
                             f"  {item.plugin_id}: {status} ({item.duration_ms:.1f}ms)\n"
                         )
                     self.log.append("\n" + report.summary() + "\n")
                     self.statusBar().showMessage(
-                        "Completed" if report.ok else "Completed with errors"
+                        self.language_manager.get("completed", "Completed") if report.ok 
+                        else self.language_manager.get("completed_errors", "Completed with errors")
                     )
                 except Exception as e:
-                    self.log.append(f"\n⚠️ Error displaying report: {e}\n")
-                    self.statusBar().showMessage("Completed")
+                    self.log.append("\n" + self.language_manager.format("error_displaying_report", error=str(e)) + "\n")
+                    self.statusBar().showMessage(self.language_manager.get("completed", "Completed"))
 
         try:
             if self.chk_async.isChecked():
@@ -703,12 +768,12 @@ class BcaslStandaloneApp(QMainWindow):
                 report = run_pre_compile(self)
                 on_done(report)
         except Exception as e:
-            self.log.append(f"\n❌ Error: {e}\n")
+            self.log.append("\n" + self.language_manager.format("error_running_bcasl", error=str(e)) + "\n")
             self._is_running = False
             self.btn_run.setEnabled(True)
             self.btn_config.setEnabled(True)
             self.progress.setVisible(False)
-            self.statusBar().showMessage("Error")
+            self.statusBar().showMessage(self.language_manager.get("error", "Error"))
 
     def closeEvent(self, event):
         """Handle window close."""
