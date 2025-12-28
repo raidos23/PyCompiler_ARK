@@ -726,3 +726,38 @@ def pip_install(
             pass
         code, _out, _err = run_process(gui, prog, args, timeout_ms=timeout_ms)
     return int(code)
+
+
+# -----------------------------------------------
+# ARK Configuration helpers
+# -----------------------------------------------
+
+
+def get_main_file_names(gui: Any) -> list[str]:
+    """Get main_file_names from the ARK configuration.
+    
+    Attempts to load the ARK config from the workspace and extract the main_file_names list.
+    Falls back to the default ["main.py", "app.py"] if the config cannot be loaded.
+    
+    Args:
+        gui: The GUI object (MainWindow) with workspace_dir attribute
+        
+    Returns:
+        List of main file names (e.g., ["main.py", "app.py"])
+    """
+    try:
+        from Core.ark_config_loader import load_ark_config
+        
+        ws = getattr(gui, "workspace_dir", None)
+        if not ws:
+            return ["main.py", "app.py"]
+        
+        ark_config = load_ark_config(ws)
+        main_names = ark_config.get("main_file_names", ["main.py", "app.py"])
+        
+        if isinstance(main_names, list):
+            return [str(n) for n in main_names if n]
+        
+        return ["main.py", "app.py"]
+    except Exception:
+        return ["main.py", "app.py"]
