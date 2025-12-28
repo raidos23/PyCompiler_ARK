@@ -8,20 +8,13 @@
   <link rel="icon" type="image/png" href="images/logo.png" />
   <style>
     :root {
-      --bg: #0b0f14;
-      --panel: #121821;
-      --text: #e6eef8;
-      --muted: #a9b2bf;
-      --accent: #1f9cf0;
-      --accent-2: #4bd1a0;
-      --border: #1b2430;
-      --shadow: rgba(0,0,0,.4);
+      --bg: #0b0f14; --panel: #121821; --text: #e6eef8; --muted: #a9b2bf;
+      --accent: #1f9cf0; --accent-2: #4bd1a0; --border: #1b2430; --shadow: rgba(0,0,0,.4);
     }
     * { box-sizing: border-box; }
     html, body { height: 100%; }
     body {
-      margin: 0;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Arial, "Apple Color Emoji", "Segoe UI Emoji";
       color: var(--text);
       background: radial-gradient(1200px 800px at 80% -10%, #122233 0%, rgba(18,34,51,0) 60%),
                   radial-gradient(900px 700px at -10% 110%, #1a2b2a 0%, rgba(26,43,42,0) 55%),
@@ -33,22 +26,17 @@
     header {
       position: sticky; top: 0; z-index: 5;
       background: linear-gradient(to bottom, rgba(11,15,20,.9), rgba(11,15,20,.6) 50%, rgba(11,15,20,0));
-      backdrop-filter: blur(6px);
-      border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(6px); border-bottom: 1px solid var(--border);
     }
-    .nav {
-      display: flex; align-items: center; justify-content: space-between;
-      gap: 16px; padding: 12px 0;
-    }
+    .nav { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 0; }
     .brand { display: flex; align-items: center; gap: 12px; }
     .brand img { width: 36px; height: 36px; border-radius: 8px; box-shadow: 0 4px 16px var(--shadow); }
     .brand h1 { font-size: 18px; margin: 0; letter-spacing: .3px; }
     .nav-actions { display: flex; gap: 10px; align-items: center; }
     .btn {
       padding: 10px 14px; border: 1px solid var(--border); border-radius: 10px;
-      background: linear-gradient(180deg, #17202b, #101620);
-      color: var(--text); cursor: pointer; font-weight: 600; letter-spacing: .2px;
-      box-shadow: 0 4px 16px var(--shadow);
+      background: linear-gradient(180deg, #17202b, #101620); color: var(--text); cursor: pointer;
+      font-weight: 600; letter-spacing: .2px; box-shadow: 0 4px 16px var(--shadow);
       transition: transform .12s ease, background .2s ease, border-color .2s ease;
     }
     .btn:hover { transform: translateY(-1px); border-color: #263347; }
@@ -57,17 +45,16 @@
     .section h3 { margin: 0 0 12px; font-size: 22px; }
     .muted { color: var(--muted); }
     footer { margin-top: 32px; border-top: 1px solid var(--border); padding: 16px 0 40px; color: var(--muted); font-size: 14px; }
-    .release-list a {
-      display: block;
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 16px;
-      margin-bottom: 12px;
-    }
+    .release-list a { display: block; background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 12px; }
     .release-list a:hover { border-color: #263347; }
     .release-list h4 { margin: 0 0 8px; }
     .release-list p { margin: 0; }
+    .controls { display: flex; gap: 12px; margin-bottom: 20px; background: var(--panel); padding: 12px; border-radius: 12px; border: 1px solid var(--border); }
+    .controls input, .controls select { 
+      width: 100%; background: #0b0f14; color: var(--text); border: 1px solid var(--border); 
+      padding: 10px; border-radius: 8px; font-size: 14px; 
+    }
+    .status { font-size: 12px; color: var(--muted); margin-top: 16px; }
   </style>
 </head>
 <body>
@@ -87,9 +74,27 @@
   <main class="container">
     <section class="section" id="download">
       <h3>Téléchargements pour Windows</h3>
-      <p class="muted">Voici la liste des versions disponibles pour Windows. Les données sont récupérées en temps réel depuis GitHub.</p>
+      <p class="muted">Voici la liste des versions disponibles pour Windows. La liste se met à jour automatiquement.</p>
+      
+      <div class="controls">
+        <input type="search" id="search-input" placeholder="Rechercher par nom, tag, ou fichier..." />
+        <select id="sort-select">
+          <option value="date-desc">Trier par : Plus récent</option>
+          <option value="date-asc">Trier par : Plus ancien</option>
+        </select>
+      </div>
+
       <div class="release-list" id="release-list">
         <p class="muted">Chargement des versions...</p>
+      </div>
+      <div id="status-info" class="status"></div>
+    </section>
+
+    <!-- Global Release History -->
+    <section class="section" id="global-releases">
+      <h3>Historique de toutes les versions</h3>
+      <div class="release-list" id="global-release-list">
+        <!-- Le contenu sera généré par le script -->
       </div>
     </section>
   </main>
@@ -105,57 +110,125 @@
 
     const REPO = 'raidos23/PyCompiler-ARK-Professional';
     const API_URL = `https://api.github.com/repos/${REPO}/releases`;
+    const POLLING_INTERVAL = 300000; // 5 minutes
+
     const releaseList = document.getElementById('release-list');
+    const globalReleaseList = document.getElementById('global-release-list');
+    const searchInput = document.getElementById('search-input');
+    const sortSelect = document.getElementById('sort-select');
+    const statusInfo = document.getElementById('status-info');
 
-    async function fetchReleases() {
-      try {
-        const response = await fetch(API_URL);
-        if (!response.ok) {
-          throw new Error(`Erreur HTTP: ${response.status}`);
-        }
-        const releases = await response.json();
+    let allReleases = [];
 
-        if (releases.length === 0) {
-          releaseList.innerHTML = '<p class="muted">Aucune release n\'a été publiée pour le moment.</p><a class="btn" style="margin-top: 12px; display: inline-block;" href="https://github.com/raidos23/PyCompiler-ARK-Professional/releases" target="_blank">Consulter les releases sur GitHub</a>';
-          return;
-        }
+    // --- Fonctions de rendu ---
 
-        releaseList.innerHTML = ''; // Clear loading message
+    function renderOsSpecificReleases(releases) {
+      releaseList.innerHTML = '';
+      let foundReleases = false;
 
-        let foundReleases = false;
-        releases.forEach(release => {
-          const windowsAssets = release.assets.filter(asset => {
-            if (!asset || !asset.name) return false; // Robust check
-            const name = asset.name.toLowerCase();
-            return name.endsWith('.exe') || name.endsWith('.msi') || name.endsWith('.rar') || (name.endsWith('.zip') && name.includes('win'));
-          });
-
-          if (windowsAssets.length > 0) {
-            foundReleases = true;
-            windowsAssets.forEach(asset => {
-              const assetLink = document.createElement('a');
-              assetLink.href = asset.browser_download_url;
-              assetLink.target = '_blank';
-              assetLink.innerHTML = `
-                <h4>${release.name || release.tag_name}</h4>
-                <p class="muted">Fichier: ${asset.name} | Publié le ${new Date(release.published_at).toLocaleDateString()} | Taille: ${(asset.size / 1024 / 1024).toFixed(2)} MB</p>
-              `;
-              releaseList.appendChild(assetLink);
-            });
-          }
+      releases.forEach(release => {
+        const windowsAssets = release.assets.filter(asset => {
+          if (!asset || !asset.name) return false;
+          const name = asset.name.toLowerCase();
+          return name.endsWith('.exe') || name.endsWith('.msi') || name.endsWith('.rar') || (name.endsWith('.zip') && name.includes('win'));
         });
 
-        if (!foundReleases) {
-          releaseList.innerHTML = '<p class="muted">Aucune version compatible avec Windows n\'a été trouvée.</p><a class="btn" style="margin-top: 12px; display: inline-block;" href="https://github.com/raidos23/PyCompiler-ARK-Professional/releases" target="_blank">Consulter toutes les releases sur GitHub</a>';
+        if (windowsAssets.length > 0) {
+          foundReleases = true;
+          windowsAssets.forEach(asset => {
+            const assetLink = document.createElement('a');
+            assetLink.href = asset.browser_download_url;
+            assetLink.target = '_blank';
+            assetLink.innerHTML = `
+              <h4>${release.name || release.tag_name}</h4>
+              <p class="muted">Fichier: ${asset.name} | Publié le ${new Date(release.published_at).toLocaleDateString()} | Taille: ${(asset.size / 1024 / 1024).toFixed(2)} MB</p>
+            `;
+            releaseList.appendChild(assetLink);
+          });
+        }
+      });
+
+      if (!foundReleases) {
+        releaseList.innerHTML = '<p class="muted">Aucune version compatible avec Windows ne correspond à votre recherche.</p>';
+      }
+    }
+
+    function renderGlobalReleases(releases) {
+        globalReleaseList.innerHTML = '';
+        if (releases.length === 0) return;
+
+        const sortedReleases = [...releases].sort((a, b) => new Date(b.published_at) - new Date(a.published_at));
+
+        sortedReleases.forEach(release => {
+            const releaseLink = document.createElement('a');
+            releaseLink.href = release.html_url;
+            releaseLink.target = '_blank';
+            releaseLink.innerHTML = `
+              <h4>${release.name || release.tag_name}</h4>
+              <p class="muted">Publié le ${new Date(release.published_at).toLocaleDateString()}</p>
+            `;
+            globalReleaseList.appendChild(releaseLink);
+        });
+    }
+
+    function updateDisplay() {
+      let releasesToDisplay = [...allReleases];
+      const searchTerm = searchInput.value.toLowerCase();
+      const sortOrder = sortSelect.value;
+
+      if (searchTerm) {
+        releasesToDisplay = releasesToDisplay.filter(release => {
+          const name = (release.name || '').toLowerCase();
+          const tag = (release.tag_name || '').toLowerCase();
+          const assets = release.assets.map(a => a.name.toLowerCase()).join(' ');
+          return name.includes(searchTerm) || tag.includes(searchTerm) || assets.includes(searchTerm);
+        });
+      }
+
+      releasesToDisplay.sort((a, b) => {
+        const dateA = new Date(a.published_at);
+        const dateB = new Date(b.published_at);
+        return sortOrder === 'date-asc' ? dateA - dateB : dateB - dateA;
+      });
+
+      renderOsSpecificReleases(releasesToDisplay);
+    }
+
+    // --- Récupération des données ---
+
+    async function fetchReleases() {
+      statusInfo.textContent = `Mise à jour...`;
+      try {
+        const response = await fetch(API_URL);
+        if (!response.ok) throw new Error(`Erreur HTTP: ${response.status}`);
+        
+        const releases = await response.json();
+        allReleases = releases;
+        updateDisplay();
+        renderGlobalReleases(allReleases);
+
+        statusInfo.textContent = `Dernière mise à jour : ${new Date().toLocaleTimeString()}`;
+
+        if (releases.length === 0) {
+            releaseList.innerHTML = '<p class="muted">Aucune release n\'a été publiée pour le moment.</p><a class="btn" style="margin-top: 12px; display: inline-block;" href="https://github.com/raidos23/PyCompiler-ARK-Professional/releases" target="_blank">Consulter les releases sur GitHub</a>';
+            globalReleaseList.innerHTML = '';
         }
 
       } catch (error) {
         console.error('Erreur lors de la récupération des releases:', error);
         releaseList.innerHTML = '<p class="muted">Impossible de charger la liste des versions depuis GitHub.</p><a class="btn" style="margin-top: 12px; display: inline-block;" href="https://github.com/raidos23/PyCompiler-ARK-Professional/releases" target="_blank">Consulter les releases sur GitHub</a>';
+        globalReleaseList.innerHTML = '';
+        statusInfo.textContent = `Erreur de mise à jour.`;
       }
     }
 
+    // --- Initialisation ---
+    searchInput.addEventListener('input', updateDisplay);
+    sortSelect.addEventListener('change', updateDisplay);
+
     fetchReleases();
+    setInterval(fetchReleases, POLLING_INTERVAL);
+
   </script>
 </body>
 </html>
