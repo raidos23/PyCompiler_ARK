@@ -17,3 +17,11 @@
 !WebPageLauncher.py
 !download_windows.html
 !download_linux.html
+
+# Documentation pages
+!docs-guide.html
+!docs-sdks.html
+!docs-config.html
+!docs-engine.html
+!docs-bc-plugin.html
+!docs-bcasl.html
