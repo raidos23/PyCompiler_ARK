@@ -127,7 +127,7 @@
           const windowsAssets = release.assets.filter(asset => {
             if (!asset || !asset.name) return false; // Robust check
             const name = asset.name.toLowerCase();
-            return name.includes('win') || name.endsWith('.exe') || name.endsWith('.msi') || (name.endsWith('.zip') && name.includes('windows'));
+            return name.endsWith('.exe') || name.endsWith('.msi') || name.endsWith('.rar') || (name.endsWith('.zip') && name.includes('win'));
           });
 
           if (windowsAssets.length > 0) {
