@@ -217,7 +217,7 @@
     function markdownToHtml(markdown) {
       let html = markdown;
 
-      // Escape HTML
+      // Escape HTML but preserve emojis
       html = html.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
       // Code blocks (before inline code)
@@ -235,12 +235,14 @@
         return `<table><thead><tr>${headerCells}</tr></thead><tbody>${bodyRows}</tbody></table>`;
       });
 
-      // Headings
+      // Headings (h5, h4, h3, h2, h1 in order)
+      html = html.replace(/^##### (.*?)$/gm, '<h5>$1</h5>');
+      html = html.replace(/^#### (.*?)$/gm, '<h4>$1</h4>');
       html = html.replace(/^### (.*?)$/gm, '<h3>$1</h3>');
       html = html.replace(/^## (.*?)$/gm, '<h2>$1</h2>');
       html = html.replace(/^# (.*?)$/gm, '<h1>$1</h1>');
 
-      // Bold
+      // Bold (must be before italic)
       html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
       html = html.replace(/__(.+?)__/g, '<strong>$1</strong>');
 
@@ -253,6 +255,9 @@
 
       // Links
       html = html.replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank">$1</a>');
+
+      // Horizontal rules
+      html = html.replace(/^---+$/gm, '<hr>');
 
       // Lists - ordered
       html = html.replace(/^\d+\. (.*?)$/gm, '<li>$1</li>');
@@ -290,18 +295,23 @@
       html = html.replace(/(<\/ol>)<\/p>/g, '$1');
       html = html.replace(/<p>(<blockquote)/g, '$1');
       html = html.replace(/(<\/blockquote>)<\/p>/g, '$1');
+      html = html.replace(/<p>(<hr)/g, '$1');
+      html = html.replace(/(<\/hr>)<\/p>/g, '$1');
 
       return html;
     }
 
     // Load markdown from GitHub
-    async function loadDocumentation(docFile) {
-      const url = `https://raw.githubusercontent.com/raidos23/PyCompiler-ARK-Professional/main/docs/${docFile}`;
+    async function loadDocumentation(docFile, isRoot = false) {
+      const baseUrl = isRoot 
+        ? 'https://raw.githubusercontent.com/raidos23/PyCompiler-ARK-Professional/main'
+        : 'https://raw.githubusercontent.com/raidos23/PyCompiler-ARK-Professional/main/docs';
+      const url = `${baseUrl}/${docFile}`;
       const contentDiv = $('#content');
 
       try {
         const response = await fetch(url);
-        if (!response.ok) throw new Error('Fichier non trouvé');
+        if (!response.ok) throw new Error(`Fichier non trouvé (${response.status})`);
         
         const markdown = await response.text();
         const html = markdownToHtml(markdown);
@@ -314,16 +324,16 @@
     // Determine which doc to load based on current page
     const page = window.location.pathname.split('/').pop();
     const docMap = {
-      'docs-guide.html': 'README.md',
-      'docs-sdks.html': 'About_Sdks.md',
-      'docs-config.html': 'ARK_Configuration.md',
-      'docs-engine.html': 'how_to_create_an_engine.md',
-      'docs-bc-plugin.html': 'how_to_create_a_BC_plugin.md',
-      'docs-bcasl.html': 'BCASL_Configuration.md'
+      'docs-guide.html': { file: 'README.md', isRoot: true },
+      'docs-sdks.html': { file: 'About_Sdks.md', isRoot: false },
+      'docs-config.html': { file: 'ARK_Configuration.md', isRoot: false },
+      'docs-engine.html': { file: 'how_to_create_an_engine.md', isRoot: false },
+      'docs-bc-plugin.html': { file: 'how_to_create_a_BC_plugin.md', isRoot: false },
+      'docs-bcasl.html': { file: 'BCASL_Configuration.md', isRoot: false }
     };
 
-    const docFile = docMap[page] || 'README.md';
-    loadDocumentation(docFile);
+    const docConfig = docMap[page] || { file: 'README.md', isRoot: true };
+    loadDocumentation(docConfig.file, docConfig.isRoot);
   </script>
 </body>
 </html>
