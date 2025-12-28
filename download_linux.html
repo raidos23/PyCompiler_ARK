@@ -127,7 +127,7 @@
           const linuxAssets = release.assets.filter(asset => {
             if (!asset || !asset.name) return false; // Robust check
             const name = asset.name.toLowerCase();
-            return name.includes('linux') || name.endsWith('.deb') || name.endsWith('.rpm') || name.endsWith('.appimage') || (name.endsWith('.zip') && name.includes('linux'));
+            return name.endsWith('.tar.gz') || name.endsWith('.deb') || name.endsWith('.rpm') || name.endsWith('.appimage') || (name.endsWith('.zip') && name.includes('linux'));
           });
 
           if (linuxAssets.length > 0) {
