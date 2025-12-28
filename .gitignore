@@ -29,7 +29,9 @@ share/python-wheels/
 .installed.cfg
 *.egg
 MANIFEST
-
+clean_venv_duplicates.py
+force_clean_venv_files.py
+sys
 # PyInstaller
 #  Usually these files are written by a python script from a template
 #  before PyInstaller builds the exe, so as to inject date/other infos into it.
