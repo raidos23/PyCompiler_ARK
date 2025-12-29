@@ -8,12 +8,10 @@
 - [Lifecycle](#4-full-engine-shape-and-lifecycle-hooks)
 - [Venv/Tools](#5-engine-owned-venvtool-management-async-non-blocking)
 - [Environment/Process](#6-environment-and-process-execution)
-- [ARK Config](#7-ark-configuration-integration)
-- [i18n](#8-internationalization-i18n)
-- [UI State](#9-ui-state-persistence)
-- [Checklist](#10-developer-checklist-and-anti-patterns)
-- [Registry](#11-registry-and-discovery-details)
-- [Troubleshooting](#12-troubleshooting-decision-tree)
+- [i18n](#7-internationalization-i18n)
+- [Checklist](#8-developer-checklist-and-anti-patterns)
+- [Registry](#9-registry-and-discovery-details)
+- [Troubleshooting](#10-troubleshooting-decision-tree)
 
 This guide explains how to implement a pluggable compilation engine for PyCompiler ARK++ using the Engine SDK.
 
@@ -467,57 +465,7 @@ class MyEngine(CompilerEngine):
 
 ---
 
-## 9) UI State Persistence
-
-Engines can persist their UI state automatically through the ARK configuration system:
-
-```python
-from Core.engines_loader.registry import save_engine_ui
-
-class MyEngine(CompilerEngine):
-    def create_tab(self, gui):
-        w = QWidget()
-        lay = QVBoxLayout(w)
-        
-        # Set objectName on widgets you want to persist
-        cb = QCheckBox("Onefile")
-        cb.setObjectName("onefile_checkbox")
-        cb.setChecked(True)
-        
-        # Connect signal to save state
-        cb.stateChanged.connect(lambda: self._save_ui_state(gui))
-        lay.addWidget(cb)
-        
-        return w, "MyEngine"
-    
-    def _save_ui_state(self, gui):
-        """Persist UI state to ARK_Main_Config.yml"""
-        try:
-            # Build state dictionary: {widgetName: {property: value}}
-            state = {
-                "onefile_checkbox": {"checked": self._onefile},
-            }
-            save_engine_ui(gui, self.id, state)
-        except Exception:
-            pass
-```
-
-**Supported Properties:**
-- `checked`: For checkboxes (bool)
-- `text`: For text inputs (str)
-- `enabled`: For enabling/disabling widgets (bool)
-- `visible`: For showing/hiding widgets (bool)
-- `currentIndex`: For combo boxes (int)
-
-**Key Points:**
-- State is saved per workspace in `ARK_Main_Config.yml`
-- State is automatically restored when `bind_tabs()` is called
-- Always use `objectName` for widgets you want to persist
-- The registry handles loading state before your tab is shown
-
----
-
-## 10) Developer checklist and anti‑patterns
+## 9) Developer checklist and anti‑patterns
 
 Checklist
 - [ ] Package under `ENGINES/<engine_id>/` with `__init__.py`
