@@ -2,18 +2,15 @@
 
 ## Overview
 
-The ARK configuration system provides centralized configuration management for PyCompiler ARK++ through YAML configuration files. This system controls compilation behavior, engine options, file patterns, dependencies, and plugin settings.
+The ARK configuration system provides centralized configuration management for PyCompiler ARK++ through YAML configuration files. This system controls compilation behavior, file patterns, dependencies, and plugin settings.
 
 ## Quick Navigation
 - [Configuration File](#configuration-file)
 - [File Patterns](#file-patterns)
 - [Compilation Behavior](#compilation-behavior)
-- [Engine Options](#engine-options)
-- [Output Configuration](#output-configuration)
 - [Dependencies](#dependencies-configuration)
 - [Environment Manager](#environment-manager-configuration)
 - [Plugins](#plugins-configuration)
-- [Engine UI State](#engine-ui-state-persistence)
 - [API Reference](#api-reference)
 
 ---
@@ -162,116 +159,6 @@ auto_detect_entry_points: true
 
 ---
 
-## Engine Options
-
-### PyInstaller Configuration
-
-```yaml
-pyinstaller:
-  onefile: true
-  windowed: false
-  noconfirm: true
-  clean: false
-  noupx: false
-  icon: null
-  debug: false
-  additional_options: []
-```
-
-#### PyInstaller Options
-
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `onefile` | boolean | `true` | Create a single executable file |
-| `windowed` | boolean | `false` | Windowed mode (no console) |
-| `noconfirm` | boolean | `true` | Replace output directory without confirmation |
-| `clean` | boolean | `false` | Clean PyInstaller cache before building |
-| `noupx` | boolean | `false` | Do not use UPX compression |
-| `icon` | string/null | `null` | Path to icon file (.ico on Windows, .icns on macOS) |
-| `debug` | boolean | `false` | Generate debug information |
-| `additional_options` | array | `[]` | Additional PyInstaller command-line options |
-
-#### Example
-
-```yaml
-pyinstaller:
-  onefile: true
-  windowed: true
-  icon: "assets/logo.ico"
-  additional_options:
-    - "--hidden-import=pkg_resources"
-    - "--collect-all=cryptography"
-    - "--exclude-module=tkinter"
-```
-
-### Nuitka Configuration
-
-```yaml
-nuitka:
-  onefile: true
-  standalone: true
-  disable_console: false
-  show_progress: true
-  output_dir: null
-  icon: null
-  additional_options: []
-```
-
-#### Nuitka Options
-
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `onefile` | boolean | `true` | Create a single executable file |
-| `standalone` | boolean | `true` | Standalone mode (include all dependencies) |
-| `disable_console` | boolean | `false` | Disable console window (Windows) |
-| `show_progress` | boolean | `true` | Show compilation progress |
-| `output_dir` | string/null | `null` | Custom output directory |
-| `icon` | string/null | `null` | Path to icon file |
-| `additional_options` | array | `[]` | Additional Nuitka command-line options |
-
-#### Example
-
-```yaml
-nuitka:
-  onefile: true
-  standalone: true
-  show_progress: true
-  icon: "assets/logo.png"
-  additional_options:
-    - "--follow-imports"
-    - "--enable-plugin=numpy"
-    - "--windows-disable-console"
-```
-
----
-
-## Output Configuration
-
-```yaml
-output:
-  directory: "dist"
-  clean_before_build: false
-```
-
-### Options
-
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `directory` | string | `"dist"` | Output directory name (relative to workspace) |
-| `clean_before_build` | boolean | `false` | Clean output directory before building |
-
-### Example
-
-```yaml
-output:
-  directory: "build/releases"
-  clean_before_build: true
-```
-
-**Note:** The output directory is created relative to the workspace root.
-
----
-
 ## Dependencies Configuration
 
 ```yaml
@@ -413,51 +300,6 @@ See [BCASL Configuration Guide](./BCASL_Configuration.md) for more details.
 
 ---
 
-## Engine UI State Persistence
-
-Engine UI state is automatically persisted in the configuration file to remember user preferences across sessions.
-
-```yaml
-engines:
-  pyinstaller:
-    ui:
-      widgets:
-        onefile_checkbox:
-          checked: true
-        windowed_checkbox:
-          checked: false
-        icon_input:
-          text: "assets/logo.ico"
-  nuitka:
-    ui:
-      widgets:
-        onefile_checkbox:
-          checked: true
-        standalone_checkbox:
-          checked: true
-```
-
-### Supported Widget Properties
-
-| Property | Type | Description |
-|----------|------|-------------|
-| `checked` | boolean | Checkbox state |
-| `text` | string | Text input value |
-| `enabled` | boolean | Widget enabled state |
-| `visible` | boolean | Widget visibility |
-| `currentIndex` | integer | Combo box selected index |
-
-### How It Works
-
-1. **Automatic Persistence:** Widget states are saved automatically when changed
-2. **Per-Workspace:** Each workspace maintains its own UI state
-3. **Per-Engine:** Each engine has separate UI state
-4. **Automatic Restoration:** UI state is restored when opening a workspace
-
-**Note:** This section is managed automatically by the application. Manual editing is not recommended.
-
----
-
 ## API Reference
 
 ### Loading Configuration
@@ -469,9 +311,8 @@ from Core.ark_config_loader import load_ark_config
 config = load_ark_config("/path/to/workspace")
 
 # Access specific sections
-pyinstaller_opts = config["pyinstaller"]
-output_opts = config["output"]
 exclusion_patterns = config["exclusion_patterns"]
+dependencies = config["dependencies"]
 ```
 
 ### Getting Specific Options
@@ -479,7 +320,6 @@ exclusion_patterns = config["exclusion_patterns"]
 ```python
 from Core.ark_config_loader import (
     get_compiler_options,
-    get_output_options,
     get_dependency_options,
     get_environment_manager_options,
 )
@@ -487,9 +327,6 @@ from Core.ark_config_loader import (
 # Get compiler-specific options
 pyinstaller_opts = get_compiler_options(config, "pyinstaller")
 nuitka_opts = get_compiler_options(config, "nuitka")
-
-# Get output options
-output_opts = get_output_options(config)
 
 # Get dependency options
 dep_opts = get_dependency_options(config)
@@ -520,23 +357,6 @@ from Core.ark_config_loader import create_default_ark_config
 success = create_default_ark_config("/path/to/workspace")
 ```
 
-### Engine UI State Management
-
-```python
-from Core.ark_config_loader import load_engine_ui_state, save_engine_ui_state
-
-# Load saved UI state for an engine
-ui_state = load_engine_ui_state("/path/to/workspace", "pyinstaller")
-# Returns: {"widget_name": {"checked": true, "text": "value"}}
-
-# Save UI state for an engine
-updates = {
-    "onefile_checkbox": {"checked": True},
-    "icon_input": {"text": "assets/logo.ico"}
-}
-success = save_engine_ui_state("/path/to/workspace", "pyinstaller", updates)
-```
-
 ---
 
 ## Complete Configuration Example
@@ -544,7 +364,7 @@ success = save_engine_ui_state("/path/to/workspace", "pyinstaller", updates)
 ```yaml
 # ═══════════════════════════════════════════════════════════════
 # ARK Main Configuration File
-# ═══════════════════════════════════════════════════════════════
+# ══════════════════════════════════��════════════════════════════
 
 # FILE PATTERNS
 exclusion_patterns:
@@ -577,36 +397,6 @@ main_file_names:
   - "run.py"
 auto_detect_entry_points: true
 
-# PYINSTALLER OPTIONS
-pyinstaller:
-  onefile: true
-  windowed: false
-  noconfirm: true
-  clean: false
-  noupx: false
-  icon: "assets/logo.ico"
-  debug: false
-  additional_options:
-    - "--hidden-import=pkg_resources"
-    - "--collect-all=cryptography"
-
-# NUITKA OPTIONS
-nuitka:
-  onefile: true
-  standalone: true
-  disable_console: false
-  show_progress: true
-  output_dir: "dist/nuitka"
-  icon: "assets/logo.png"
-  additional_options:
-    - "--follow-imports"
-    - "--enable-plugin=numpy"
-
-# OUTPUT CONFIGURATION
-output:
-  directory: "dist"
-  clean_before_build: false
-
 # DEPENDENCIES
 dependencies:
   requirements_files:
@@ -630,15 +420,6 @@ environment_manager:
 plugins:
   bcasl_enabled: true
   plugin_timeout: 30.0
-
-# ENGINES (UI state persistence - managed automatically)
-engines:
-  pyinstaller:
-    ui:
-      widgets: {}
-  nuitka:
-    ui:
-      widgets: {}
 ```
 
 ---
@@ -657,19 +438,15 @@ When a configuration file exists, it is **merged** with default values:
 
 **User Configuration:**
 ```yaml
-pyinstaller:
-  onefile: false
-  icon: "custom.ico"
+dependencies:
+  auto_generate_from_imports: false
 ```
 
 **Resulting Configuration:**
 ```yaml
-pyinstaller:
-  onefile: false          # User value
-  windowed: false         # Default value
-  noconfirm: true         # Default value
-  icon: "custom.ico"      # User value
-  # ... other defaults
+dependencies:
+  auto_generate_from_imports: false  # User value
+  requirements_files: [...]          # Default value
 ```
 
 ---
@@ -719,17 +496,6 @@ pyinstaller:
 3. Ensure patterns are case-sensitive
 4. Check `should_exclude_file()` function behavior
 5. Review pattern order (exclusions are checked before inclusions)
-
-### Engine Options Not Applied
-
-**Symptoms:** Engine uses different options than configured
-
-**Solutions:**
-1. Verify engine name matches exactly (`pyinstaller`, `nuitka`)
-2. Check option names are spelled correctly
-3. Ensure values are correct type (boolean, string, array)
-4. Review engine-specific documentation for supported options
-5. Check if engine overrides configuration with command-line arguments
 
 ---
 

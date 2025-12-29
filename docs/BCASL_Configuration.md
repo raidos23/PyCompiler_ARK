@@ -8,7 +8,6 @@ BCASL (Before-Compilation Actions System Loader) is fully integrated with the AR
 
 The activation/deactivation of BCASL (and all BC plugins) is managed through the global `ARK_Main_Config.yml` file, while BCASL-specific settings are configured in a dedicated **YML file only** (YAML format).
 
-**Note:** This configuration does **not** apply to compilation engines (PyInstaller, Nuitka, etc.). Engine configuration is managed separately in `ARK_Main_Config.yml`. See [ARK Configuration Guide](./ARK_Configuration.md) for engine configuration.
 
 ## Configuration Files
 
