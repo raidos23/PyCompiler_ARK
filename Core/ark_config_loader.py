@@ -54,32 +54,6 @@ DEFAULT_CONFIG = {
     "compile_only_main": False,
     "main_file_names": ["main.py", "app.py"],
     "auto_detect_entry_points": True,
-    # PyInstaller options
-    "pyinstaller": {
-        "onefile": True,
-        "windowed": False,
-        "noconfirm": True,
-        "clean": False,
-        "noupx": False,
-        "icon": None,
-        "debug": False,
-        "additional_options": [],
-    },
-    # Nuitka options
-    "nuitka": {
-        "onefile": True,
-        "standalone": True,
-        "disable_console": False,
-        "show_progress": True,
-        "output_dir": None,
-        "icon": None,
-        "additional_options": [],
-    },
-    # Output configuration
-    "output": {
-        "directory": "dist",
-        "clean_before_build": False,
-    },
     # Dependencies
     "dependencies": {
         "requirements_files": [
@@ -107,11 +81,6 @@ DEFAULT_CONFIG = {
     "plugins": {
         "bcasl_enabled": True,
         "plugin_timeout": 0.0,
-    },
-    # Engines UI state (persisted widget states per engine)
-    "engines": {
-        "pyinstaller": {"ui": {"widgets": {}}},
-        "nuitka": {"ui": {"widgets": {}}},
     },
 }
 
@@ -321,27 +290,6 @@ main_file_names:
   - "app.py"
 auto_detect_entry_points: true
 
-# PYINSTALLER OPTIONS
-pyinstaller:
-  onefile: true
-  windowed: false
-  noconfirm: true
-  clean: false
-  noupx: false
-  icon: null
-  debug: false
-  additional_options: []
-
-# NUITKA OPTIONS
-nuitka:
-  onefile: true
-  standalone: true
-  disable_console: false
-  show_progress: true
-  output_dir: null
-  icon: null
-  additional_options: []
-
 # OUTPUT CONFIGURATION
 output:
   directory: "dist"
@@ -362,15 +310,6 @@ environment_manager:
     - "pip"
   auto_detect: true
   fallback_to_pip: true
-
-# ENGINES (UI state persistence)
-engines:
-  pyinstaller:
-    ui:
-      widgets: {}
-  nuitka:
-    ui:
-      widgets: {}
 """
 
         with open(config_file, "w", encoding="utf-8") as f:
@@ -383,142 +322,3 @@ engines:
         return False
 
 
-# --- Simple Engine UI state helpers (for non-dev friendly persistence) ---
-
-
-def _read_yaml(path: Path) -> dict:
-    try:
-        if path.exists():
-            with open(path, "r", encoding="utf-8") as f:
-                data = yaml.safe_load(f) or {}
-                return data if isinstance(data, dict) else {}
-    except Exception:
-        pass
-    return {}
-
-
-def _write_yaml_atomic(path: Path, data: dict) -> bool:
-    try:
-        path.parent.mkdir(parents=True, exist_ok=True)
-        tmp = path.with_suffix(path.suffix + ".tmp")
-        with open(tmp, "w", encoding="utf-8") as f:
-            yaml.safe_dump(data, f, allow_unicode=True, sort_keys=False)
-        os.replace(tmp, path)
-        return True
-    except Exception:
-        return False
-
-
-essential_props = ("checked", "text", "enabled", "visible", "currentIndex")
-
-
-def load_engine_ui_state(workspace_dir: str, engine_id: str) -> dict:
-    """Load saved UI state for an engine from ARK_Main_Config.yml (YAML ONLY).
-    Cherche les fichiers dans cet ordre:
-    1. ARK_Main_Config.yaml
-    2. ARK_Main_Config.yml
-    3. .ARK_Main_Config.yaml
-    4. .ARK_Main_Config.yml
-
-    Returns a mapping {widgetName: {prop: value}} or {}.
-    """
-    try:
-        if not workspace_dir:
-            return {}
-
-        workspace_path = Path(workspace_dir)
-
-        # Chercher les fichiers YAML dans l'ordre de priorité
-        config_candidates = [
-            workspace_path / "ARK_Main_Config.yaml",
-            workspace_path / "ARK_Main_Config.yml",
-            workspace_path / ".ARK_Main_Config.yaml",
-            workspace_path / ".ARK_Main_Config.yml",
-        ]
-
-        cfg = {}
-        for candidate in config_candidates:
-            if candidate.exists() and candidate.is_file():
-                cfg = _read_yaml(candidate)
-                break
-
-        engines = cfg.get("engines", {}) if isinstance(cfg, dict) else {}
-        e = engines.get(str(engine_id), {}) if isinstance(engines, dict) else {}
-        ui = e.get("ui", {}) if isinstance(e, dict) else {}
-        widgets = ui.get("widgets", {}) if isinstance(ui, dict) else {}
-        return widgets if isinstance(widgets, dict) else {}
-    except Exception:
-        return {}
-
-
-def save_engine_ui_state(workspace_dir: str, engine_id: str, updates: dict) -> bool:
-    """Save UI state for an engine into ARK_Main_Config.yml (YAML ONLY).
-    Cherche les fichiers existants dans cet ordre:
-    1. ARK_Main_Config.yaml
-    2. ARK_Main_Config.yml
-    3. .ARK_Main_Config.yaml
-    4. .ARK_Main_Config.yml
-
-    Si aucun fichier n'existe, crée ARK_Main_Config.yml par défaut.
-
-    - workspace_dir: project workspace path
-    - engine_id: id string (e.g. 'pyinstaller')
-    - updates: {widgetName: {prop: value}}
-    Returns True on success, False otherwise.
-    """
-    if not workspace_dir:
-        return False
-    try:
-        workspace_path = Path(workspace_dir)
-
-        # Chercher les fichiers YAML existants dans l'ordre de priorité
-        config_candidates = [
-            workspace_path / "ARK_Main_Config.yaml",
-            workspace_path / "ARK_Main_Config.yml",
-            workspace_path / ".ARK_Main_Config.yaml",
-            workspace_path / ".ARK_Main_Config.yml",
-        ]
-
-        cfg_path = None
-        for candidate in config_candidates:
-            if candidate.exists() and candidate.is_file():
-                cfg_path = candidate
-                break
-
-        # Si aucun fichier n'existe, utiliser ARK_Main_Config.yml par défaut
-        if cfg_path is None:
-            cfg_path = workspace_path / "ARK_Main_Config.yml"
-
-        cfg = _read_yaml(cfg_path)
-        if not isinstance(cfg, dict):
-            cfg = {}
-        engines = cfg.get("engines")
-        if not isinstance(engines, dict):
-            engines = {}
-            cfg["engines"] = engines
-        e = engines.get(str(engine_id))
-        if not isinstance(e, dict):
-            e = {}
-            engines[str(engine_id)] = e
-        ui = e.get("ui")
-        if not isinstance(ui, dict):
-            ui = {}
-            e["ui"] = ui
-        widgets = ui.get("widgets")
-        if not isinstance(widgets, dict):
-            widgets = {}
-            ui["widgets"] = widgets
-        # Merge per widget
-        for wname, props in (updates or {}).items():
-            if not isinstance(wname, str) or not isinstance(props, dict):
-                continue
-            cur = widgets.get(wname)
-            if not isinstance(cur, dict):
-                cur = {}
-                widgets[wname] = cur
-            for k, v in props.items():
-                if k in essential_props:
-                    cur[k] = v
-        return _write_yaml_atomic(cfg_path, cfg)
-    except Exception:
-        return False

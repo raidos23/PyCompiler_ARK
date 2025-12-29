@@ -56,16 +56,6 @@ except Exception:  # pragma: no cover
     host_resolve_executable_path = None  # type: ignore
 
 
-# Simple wrapper to persist engine UI state via host registry
-def save_engine_ui(gui, engine_id: str, updates: dict) -> bool:
-    try:
-        if registry is None:
-            return False
-        return registry.save_engine_ui(gui, engine_id, updates)  # type: ignore[attr-defined]
-    except Exception:
-        return False
-
-
 # Re-export system dependency helpers
 # Re-export i18n helpers
 from .i18n import (
@@ -146,9 +136,6 @@ def get_capabilities() -> dict:
         "exec_resolution": {
             "host_resolve_executable_path": bool(host_resolve_executable_path),
         },
-        "config": {
-            "save_engine_ui": True,
-        },
     }
     return caps
 
@@ -221,7 +208,5 @@ __all__ = [
     "check_engine_compatibility",
     "__version__",
     # Config helpers
-    "save_engine_ui",
     "get_main_file_names",
-    "__version__",
 ]

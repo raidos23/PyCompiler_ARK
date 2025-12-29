@@ -213,27 +213,9 @@ See [BCASL Configuration Guide](./BCASL_Configuration.md) for BC plugin configur
 
 ### Engine Configuration
 
-Engines are configured in `ARK_Main_Config.yml`:
+Engines manage their own configuration through their UI tabs. Each engine provides its own options interface without relying on centralized configuration.
 
-```yaml
-pyinstaller:
-  onefile: true
-  windowed: false
-  additional_options: []
-
-nuitka:
-  onefile: true
-  standalone: true
-  additional_options: []
-
-# Engine UI state (auto-managed)
-engines:
-  pyinstaller:
-    ui:
-      widgets: {}
-```
-
-See [ARK Configuration Guide](./ARK_Configuration.md) for details.
+See [ARK Configuration Guide](./ARK_Configuration.md) for global configuration details.
 
 ---
 
