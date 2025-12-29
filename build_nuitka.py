@@ -42,8 +42,8 @@ DIST_DIR = "dist"
 # Build configuration
 BUILD_CONFIG = {
     # Main compilation options
-    "standalone": True,
-    "onefile": False,
+    "standalone": False,
+    "onefile": True,
     "follow_imports": True,
     
     # Qt/PySide6 configuration
