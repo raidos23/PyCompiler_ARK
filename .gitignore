@@ -209,7 +209,7 @@ security-*.json
 
 # Exclude tests folder
 tests/
-
+ideas/
 #PREFERENCE
 .pref
 .pycompiler/
