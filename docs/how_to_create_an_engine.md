@@ -248,7 +248,7 @@ class CompilerEngine:
 The engine loader includes a robust version compatibility validation system:
 
 ```python
-from Core.engines_loader.validator import (
+from engines_loader.validator import (
     check_engine_compatibility,
     validate_engines_compatibility,
 )
@@ -495,7 +495,7 @@ Anti‑patterns
 The engine loader provides several utilities through the registry:
 
 ```python
-from Core.engines_loader import registry
+from engines_loader import registry
 
 # Check if an engine is registered
 engine_cls = registry.get_engine("my_engine")

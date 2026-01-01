@@ -1578,7 +1578,7 @@ class PyCompilerArkGui(QWidget):
                         pass
                 # Registry-based propagation to engine instances
                 try:
-                    import Core.engines_loader as engines_loader
+                    import engines_loader as engines_loader
 
                     engines_loader.registry.apply_translations(self, tr)
                 except Exception:

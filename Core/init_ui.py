@@ -361,7 +361,7 @@ def init_ui(self):
     self.tab_nuitka = self.ui.findChild(QWidget, "tab_nuitka")
     # Lier dynamiquement les onglets des moteurs plug-and-play
     try:
-        import Core.engines_loader as engines_loader
+        import engines_loader as engines_loader
 
         engines_loader.registry.bind_tabs(self)
     except Exception:
@@ -588,7 +588,7 @@ def init_ui(self):
 
     def update_compiler_options_enabled():
         try:
-            import Core.engines_loader as engines_loader
+            import engines_loader as engines_loader
 
             idx = self.compiler_tabs.currentIndex()
             engine_id = engines_loader.registry.get_engine_for_tab(idx) or (
@@ -898,7 +898,7 @@ def show_language_dialog(self):
                 pass
             # Propagate translations to all engines so their UI matches the app language immediately
             try:
-                import Core.engines_loader as engines_loader
+                import engines_loader as engines_loader
 
                 engines_loader.registry.apply_translations(self, tr)
             except Exception:
