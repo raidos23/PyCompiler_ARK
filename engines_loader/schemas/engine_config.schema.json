@@ -1,0 +1,110 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://pycompiler.example.com/schemas/engine_config.schema.json",
+  "title": "PyCompiler Engine Configuration Schema",
+  "description": "Schema for engine-specific configuration stored in .pycompiler/engines/",
+  "type": "object",
+  "additionalProperties": true,
+  "definitions": {
+    "EngineConfigBase": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique engine identifier",
+          "minLength": 1
+        },
+        "name": {
+          "type": "string",
+          "description": "Human-readable engine name"
+        },
+        "version": {
+          "type": "string",
+          "description": "Engine configuration version"
+        },
+        "enabled": {
+          "type": "boolean",
+          "description": "Whether this engine is enabled",
+          "default": true
+        },
+        "metadata": {
+          "type": "object",
+          "description": "Engine-specific metadata",
+          "additionalProperties": true
+        },
+        "options": {
+          "type": "object",
+          "description": "Engine-specific compilation options",
+          "additionalProperties": true
+        },
+        "environment": {
+          "type": "object",
+          "description": "Environment variables to inject",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "timeout_seconds": {
+          "type": ["integer", "null"],
+          "description": "Process timeout in seconds (null = use global default)",
+          "minimum": 1
+        },
+        "output_dir": {
+          "type": "string",
+          "description": "Output directory for compiled artifacts"
+        },
+        "open_output_on_success": {
+          "type": "boolean",
+          "description": "Open output directory after successful build",
+          "default": false
+        }
+      }
+    },
+    "ExternalEngineConfig": {
+      "allOf": [
+        { "$ref": "#/definitions/EngineConfigBase" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "id": true,
+            "name": true,
+            "version": true,
+            "enabled": true,
+            "metadata": true,
+            "options": true,
+            "environment": true,
+            "timeout_seconds": true,
+            "output_dir": true,
+            "open_output_on_success": true,
+            "program": {
+              "type": "string",
+              "description": "Executable path (absolute or relative to manifest dir)"
+            },
+            "default_args": {
+              "type": "array",
+              "description": "Default arguments to pass to the executable",
+              "items": { "type": "string" }
+            },
+            "arg_style": {
+              "type": "string",
+              "enum": ["config_file", "json_arg"],
+              "description": "How to pass configuration to the executable",
+              "default": "config_file"
+            },
+            "config_key": {
+              "type": "string",
+              "description": "Argument key for passing config (e.g., --config, -c)",
+              "default": "--config"
+            },
+            "output_dir_field": {
+              "type": ["string", "null"],
+              "description": "Config key indicating output directory if different"
+            }
+          }
+        }
+      ]
+    }
+  }
+}
