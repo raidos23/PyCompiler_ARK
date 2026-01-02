@@ -243,7 +243,30 @@ def suggest_missing_dependencies(self):
         for f in files
         if not os.path.commonpath([os.path.abspath(f), venv_dir]) == venv_dir
         and not any(
-            part.startswith(".") or part == "__pycache__" for part in f.split(os.sep)
+            part.startswith(".")
+            or part
+            == (
+                "**/__pycache__/**",
+                "**/*.pyc",
+                "**/*.pyo",
+                "**/*.pyd",
+                ".git/**",
+                ".svn/**",
+                ".hg/**",
+                "venv/**",
+                ".venv/**",
+                "env/**",
+                ".env/**",
+                "node_modules/**",
+                "build/**",
+                "dist/**",
+                "*.egg-info/**",
+                ".pytest_cache/**",
+                ".mypy_cache/**",
+                ".tox/**",
+                "site-packages/**",
+            )
+            for part in f.split(os.sep)
         )
     ]
 
