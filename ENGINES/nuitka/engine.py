@@ -379,7 +379,131 @@ class NuitkaEngine(CompilerEngine):
         return True
 
     def build_command(self, gui, file: str) -> list[str]:
-        return gui.build_nuitka_command(file)
+        import sys
+        cmd = [sys.executable, "-m", "nuitka"]
+        
+        # Options checkboxes
+        try:
+            if hasattr(self, "_nuitka_onefile") and self._nuitka_onefile.isChecked():
+                cmd.append("--onefile")
+        except Exception:
+            pass
+        
+        try:
+            if hasattr(self, "_nuitka_standalone") and self._nuitka_standalone.isChecked():
+                cmd.append("--standalone")
+        except Exception:
+            pass
+        
+        try:
+            if (
+                hasattr(self, "_nuitka_disable_console")
+                and self._nuitka_disable_console.isChecked()
+                and platform.system() == "Windows"
+            ):
+                cmd.append("--windows-disable-console")
+        except Exception:
+            pass
+        
+        try:
+            if hasattr(self, "_nuitka_show_progress") and self._nuitka_show_progress.isChecked():
+                cmd.append("--show-progress")
+        except Exception:
+            pass
+        
+        # Auto-detect Qt plugins (PySide6 or PyQt6, but not both)
+        plugins = []
+        found_pyside6 = False
+        found_pyqt6 = False
+        
+        try:
+            with open(file, encoding="utf-8") as f:
+                content = f.read()
+                if "import PySide6" in content or "from PySide6" in content:
+                    found_pyside6 = True
+                if "import PyQt6" in content or "from PyQt6" in content:
+                    found_pyqt6 = True
+        except Exception:
+            pass
+        
+        # Never enable both Qt plugins at the same time
+        if found_pyside6:
+            if "pyqt6" in plugins:
+                plugins.remove("pyqt6")
+            if "pyside6" not in plugins:
+                plugins.append("pyside6")
+        elif found_pyqt6:
+            if "pyside6" in plugins:
+                plugins.remove("pyside6")
+            if "pyqt6" not in plugins:
+                plugins.append("pyqt6")
+        
+        # If both are in the list, keep only one (priority to pyside6)
+        if "pyside6" in plugins and "pyqt6" in plugins:
+            plugins.remove("pyqt6")
+        
+        for plugin in plugins:
+            cmd.append(f"--plugin-enable={plugin}")
+        
+        # Auto-detection of plugins/hooks
+        try:
+            from engine_sdk.auto_build_command import compute_auto_for_engine
+            auto_args = compute_auto_for_engine(gui, "nuitka") or []
+            for arg in auto_args:
+                if arg not in cmd:
+                    cmd.append(arg)
+        except Exception as e:
+            try:
+                gui.log.append(gui.tr(
+                    f"⚠️ Auto-détection Nuitka: {e}",
+                    f"⚠️ Nuitka auto-detection: {e}"
+                ))
+            except Exception:
+                pass
+        
+        # Icon (Windows only)
+        try:
+            if platform.system() == "Windows":
+                icon_path = None
+                if hasattr(self, "_nuitka_icon_path") and self._nuitka_icon_path:
+                    icon_path = self._nuitka_icon_path
+                elif hasattr(self, "_icon_path") and self._icon_path:
+                    icon_path = self._icon_path
+                
+                if icon_path:
+                    cmd.append(f"--windows-icon-from-ico={icon_path}")
+        except Exception:
+            pass
+        
+        # Output directory
+        try:
+            if hasattr(self, "_nuitka_output_dir") and self._nuitka_output_dir:
+                output_dir = self._nuitka_output_dir.text().strip()
+                if output_dir:
+                    cmd.append(f"--output-dir={output_dir}")
+        except Exception:
+            pass
+        
+        # Data files
+        try:
+            if hasattr(self, "_nuitka_data_files"):
+                for src, dest in self._nuitka_data_files:
+                    cmd.append(f"--include-data-files={src}={dest}")
+        except Exception:
+            pass
+        
+        # Data directories
+        try:
+            if hasattr(self, "_nuitka_data_dirs"):
+                for src, dest in self._nuitka_data_dirs:
+                    cmd.append(f"--include-data-dir={src}={dest}")
+        except Exception:
+            pass
+        
+        # Script file
+        cmd.append(file)
+        
+        return cmd
 
     def program_and_args(self, gui, file: str) -> Optional[tuple[str, list[str]]]:
         # Nuitka s'exécute avec python -m nuitka dans le venv; resolve via VenvManager

@@ -255,8 +255,111 @@ class PyInstallerEngine(CompilerEngine):
             return True
 
     def build_command(self, gui, file: str) -> list[str]:
-        # Reuse existing logic from gui (compiler.py build_pyinstaller_command)
-        return gui.build_pyinstaller_command(file)
+        import sys
+        
+        cmd = [sys.executable, "-m", "pyinstaller"]
+        
+        # Options checkboxes
+        try:
+            if hasattr(self, "_opt_onefile") and self._opt_onefile.isChecked():
+                cmd.append("--onefile")
+        except Exception:
+            pass
+        
+        try:
+            if hasattr(self, "_opt_windowed") and self._opt_windowed.isChecked():
+                cmd.append("--windowed")
+        except Exception:
+            pass
+        
+        try:
+            if hasattr(self, "_opt_noconfirm") and self._opt_noconfirm.isChecked():
+                cmd.append("--noconfirm")
+        except Exception:
+            pass
+        
+        try:
+            if hasattr(self, "_opt_clean") and self._opt_clean.isChecked():
+                cmd.append("--clean")
+        except Exception:
+            pass
+        
+        try:
+            if hasattr(self, "_opt_noupx") and self._opt_noupx.isChecked():
+                cmd.append("--noupx")
+        except Exception:
+            pass
+        
+        try:
+            if hasattr(self, "_opt_debug") and self._opt_debug.isChecked():
+                cmd.append("--debug")
+        except Exception:
+            pass
+        
+        # Icon
+        try:
+            if hasattr(self, "_icon_path") and self._icon_path:
+                cmd.append(f"--icon={self._icon_path}")
+        except Exception:
+            pass
+        
+        # Data files
+        try:
+            if hasattr(self, "_pyinstaller_data"):
+                for src, dest in self._pyinstaller_data:
+                    cmd.append(f"--add-data={src}:{dest}")
+        except Exception:
+            pass
+        
+        # Auto-detection of plugins/hooks
+        try:
+            from engine_sdk.auto_build_command import compute_auto_for_engine
+            auto_args = compute_auto_for_engine(gui, "pyinstaller") or []
+            if auto_args:
+                cmd.extend(auto_args)
+        except Exception as e:
+            try:
+                gui.log.append(gui.tr(
+                    f"⚠️ Auto-détection PyInstaller: {e}",
+                    f"⚠️ PyInstaller auto-detection: {e}"
+                ))
+            except Exception:
+                pass
+        
+        # Output name
+        try:
+            custom_name = ""
+            if hasattr(self, "_output_name_input") and self._output_name_input:
+                custom_name = self._output_name_input.text().strip()
+            
+            if custom_name:
+                output_name = (
+                    custom_name + ".exe" if platform.system() == "Windows" else custom_name
+                )
+            else:
+                base_name = os.path.splitext(os.path.basename(file))[0]
+                output_name = (
+                    base_name + ".exe" if platform.system() == "Windows" else base_name
+                )
+            cmd.extend(["--name", output_name])
+        except Exception:
+            pass
+        
+        # Output directory
+        try:
+            output_dir = ""
+            if hasattr(self, "_output_dir_input") and self._output_dir_input:
+                output_dir = self._output_dir_input.text().strip()
+            
+            if output_dir:
+                cmd.extend(["--distpath", output_dir])
+        except Exception:
+            pass
+        
+        # Script file
+        cmd.append(file)
+        
+        return cmd
 
     def program_and_args(self, gui, file: str) -> Optional[tuple[str, list[str]]]:
         cmd = self.build_command(gui, file)
