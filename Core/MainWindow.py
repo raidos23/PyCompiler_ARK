@@ -1043,7 +1043,6 @@ class PyCompilerArkGui(QWidget):
         except Exception:
             pass
 
-    from .Compiler import build_nuitka_command, build_pyinstaller_command
 
     def select_nuitka_icon(self):
         import platform

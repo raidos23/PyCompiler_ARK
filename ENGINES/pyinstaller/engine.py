@@ -195,60 +195,55 @@ class PyInstallerEngine(CompilerEngine):
             # Utiliser VenvManager s'il est là, sinon fallback pip
             vm = getattr(gui, "venv_manager", None)
             if vm:
-                # Fast non-blocking heuristic; if present, proceed
+                # Check if already installed
                 if vm.is_tool_installed(vroot, "pyinstaller"):
-                    return True
-                # Async confirm, then install if missing
-                try:
-                    gui.log.append(
-                        gui.tr(
-                            "🔎 Vérification de PyInstaller dans le venv (asynchrone)…",
-                            "🔎 Verifying PyInstaller in venv (async)…",
-                        )
-                    )
-                except Exception:
-                    pass
-
-                def _on_check(ok: bool):
-                    try:
-                        if ok:
-                            try:
-                                gui.log.append(
-                                    gui.tr(
-                                        "✅ PyInstaller déjà installé",
-                                        "✅ PyInstaller already installed",
-                                    )
-                                )
-                            except Exception:
-                                pass
-                        else:
-                            try:
-                                gui.log.append(
-                                    gui.tr(
-                                        "📦 Installation de PyInstaller dans le venv (asynchrone)…",
-                                        "📦 Installing PyInstaller in venv (async)…",
-                                    )
-                                )
-                            except Exception:
-                                pass
-                            vm.ensure_tools_installed(vroot, ["pyinstaller"])
-                    except Exception:
-                        pass
-
-                try:
-                    vm.is_tool_installed_async(vroot, "pyinstaller", _on_check)
-                except Exception:
                     try:
                         gui.log.append(
                             gui.tr(
-                                "📦 Installation de PyInstaller dans le venv (asynchrone)…",
-                                "📦 Installing PyInstaller in venv (async)…",
+                                "✅ PyInstaller déjà installé",
+                                "✅ PyInstaller already installed",
                             )
                         )
                     except Exception:
                         pass
-                    vm.ensure_tools_installed(vroot, ["pyinstaller"])
-                return False
+                    return True
+                
+                # Install synchronously (blocking) to ensure it's ready before build
+                try:
+                    gui.log.append(
+                        gui.tr(
+                            "📦 Installation de PyInstaller dans le venv…",
+                            "📦 Installing PyInstaller in venv…",
+                        )
+                    )
+                except Exception:
+                    pass
+                
+                vm.ensure_tools_installed(vroot, ["pyinstaller"])
+                
+                # Verify installation
+                if vm.is_tool_installed(vroot, "pyinstaller"):
+                    try:
+                        gui.log.append(
+                            gui.tr(
+                                "✅ PyInstaller installé avec succès",
+                                "✅ PyInstaller installed successfully",
+                            )
+                        )
+                    except Exception:
+                        pass
+                    return True
+                else:
+                    try:
+                        gui.log.append(
+                            gui.tr(
+                                "❌ Échec de l'installation de PyInstaller",
+                                "❌ Failed to install PyInstaller",
+                            )
+                        )
+                    except Exception:
+                        pass
+                    return False
             else:
                 return self._ensure_tool_with_pip(gui, vroot, "pyinstaller")
         except Exception:
@@ -363,7 +358,7 @@ class PyInstallerEngine(CompilerEngine):
 
     def program_and_args(self, gui, file: str) -> Optional[tuple[str, list[str]]]:
         cmd = self.build_command(gui, file)
-        # Resolve pyinstaller binary from venv via VenvManager
+        # Resolve python from venv via VenvManager
         try:
             vm = getattr(gui, "venv_manager", None)
             vroot = vm.resolve_project_venv() if vm else None
@@ -379,21 +374,21 @@ class PyInstallerEngine(CompilerEngine):
             vbin = os.path.join(
                 vroot, "Scripts" if platform.system() == "Windows" else "bin"
             )
-            pyinstaller_path = os.path.join(
+            python_path = os.path.join(
                 vbin,
-                "pyinstaller" if platform.system() != "Windows" else "pyinstaller.exe",
+                "python.exe" if platform.system() == "Windows" else "python",
             )
-            if not os.path.isfile(pyinstaller_path):
+            if not os.path.isfile(python_path):
                 gui.log.append(
                     gui.tr(
-                        "❌ pyinstaller non trouvé dans le venv : ",
-                        "❌ pyinstaller not found in venv: ",
+                        "❌ python non trouvé dans le venv : ",
+                        "❌ python not found in venv: ",
                     )
-                    + str(pyinstaller_path)
+                    + str(python_path)
                 )
                 gui.show_error_dialog(os.path.basename(file))
                 return None
-            return pyinstaller_path, cmd[1:]
+            return python_path, cmd[1:]
         except Exception:
             return None
 
