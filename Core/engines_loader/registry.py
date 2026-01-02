@@ -128,7 +128,7 @@ def apply_translations(gui, tr: dict) -> None:
         for eid, inst in list(_INSTANCES.items()):
             try:
                 fn = getattr(inst, "apply_i18n", None)
-                if callable(fn):
+                if callable(fn) and isinstance(tr, dict):
                     fn(gui, tr)
             except Exception:
                 continue
