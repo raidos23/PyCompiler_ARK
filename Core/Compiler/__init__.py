@@ -44,8 +44,6 @@ __all__ = [
     "try_install_missing_modules",
     "try_start_processes",
     "show_error_dialog",
-    "build_nuitka_command",
-    "build_pyinstaller_command",
     "clamp_text",
     "start_compilation_process",
     "cancel_all_compilations",
