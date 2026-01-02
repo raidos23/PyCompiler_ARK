@@ -969,65 +969,11 @@ class CxFreezeEngine(CompilerEngine):
     def apply_i18n(self, gui, tr: dict[str, str]) -> None:
         """Apply engine-local i18n from ENGINES/cx_freeze/languages/*.json independent of app languages."""
         try:
-            # Resolve language code preference
-            code = None
-            try:
-                if isinstance(tr, dict):
-                    meta = tr.get("_meta", {})
-                    code = meta.get("code") if isinstance(meta, dict) else None
-            except Exception:
-                code = None
-            if not code:
-                try:
-                    # Try GUI preferences
-                    pref = getattr(
-                        gui, "language_pref", getattr(gui, "language", "System")
-                    )
-                    if isinstance(pref, str) and pref != "System":
-                        code = pref
-                except Exception:
-                    pass
-            # Fallback
-            if not code:
-                code = "en"
-            # Normalize codes and build robust fallback candidates
-            raw = str(code)
-            low = raw.lower().replace("_", "-")
-            aliases = {
-                "en-us": "en",
-                "en_gb": "en",
-                "en-uk": "en",
-                "fr-fr": "fr",
-                "fr_ca": "fr",
-                "fr-ca": "fr",
-                "pt-br": "pt-BR",
-                "pt_br": "pt-BR",
-                "zh": "zh-CN",
-                "zh_cn": "zh-CN",
-                "zh-cn": "zh-CN",
-            }
-            mapped = aliases.get(low, raw)
-            # Candidate order: mapped -> base (before '-') -> exact lower -> exact raw -> 'en'
-            candidates = []
-            if mapped not in candidates:
-                candidates.append(mapped)
-            base = None
-            try:
-                if "-" in mapped:
-                    base = mapped.split("-", 1)[0]
-                elif "_" in mapped:
-                    base = mapped.split("_", 1)[0]
-            except Exception:
-                base = None
-            if base and base not in candidates:
-                candidates.append(base)
-            if low not in candidates:
-                candidates.append(low)
-            if raw not in candidates:
-                candidates.append(raw)
-            if "en" not in candidates:
-                candidates.append("en")
-            # Load engine-local JSON using the first existing candidate
+            from Core.engines_loader.registry import resolve_language_code
+            
+            code = resolve_language_code(gui, tr)
+            
+            # Load engine-local JSON using the resolved code
             import importlib.resources as ilr
             import json as _json
 
@@ -1047,6 +993,18 @@ class CxFreezeEngine(CompilerEngine):
                 except Exception:
                     pass
                 return False
+
+            # Build candidates from resolved code
+            candidates = [code]
+            try:
+                if "-" in code:
+                    base = code.split("-", 1)[0]
+                    if base not in candidates:
+                        candidates.append(base)
+            except Exception:
+                pass
+            if "en" not in candidates:
+                candidates.append("en")
 
             for cand in candidates:
                 if _load_lang(cand):
