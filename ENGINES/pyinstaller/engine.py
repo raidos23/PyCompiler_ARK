@@ -16,6 +16,15 @@ class PyInstallerEngine(CompilerEngine):
     required_core_version: str = "1.0.0"
     required_sdk_version: str = "1.0.0"
 
+    def _dedupe_args(self, seq: list[str]) -> list[str]:
+        seen = set()
+        out: list[str] = []
+        for x in seq:
+            if x not in seen:
+                out.append(x)
+                seen.add(x)
+        return out
+
     def preflight(self, gui, file: str) -> bool:
         try:
             import shutil
@@ -104,7 +113,19 @@ class PyInstallerEngine(CompilerEngine):
 
         # Fichier cible
         cmd.append(file)
-        return cmd
+
+        # Auto-plugins mapping for PyInstaller
+        try:
+            from engine_sdk import auto_build_command as _ap  # type: ignore
+
+            auto_args = _ap.compute_auto_for_engine(gui, "pyinstaller") or []
+        except Exception:
+            auto_args = []
+        try:
+            cmd = self._dedupe_args(cmd)
+        except Exception:
+            pass
+        return cmd + auto_args
 
     def program_and_args(self, gui, file: str) -> Optional[tuple[str, list[str]]]:
         # Utilise le python du venv résolu par le VenvManager si disponible
