@@ -50,12 +50,12 @@ We are committed to providing a welcoming and inspiring community for all. We pl
 1. Fork the repository on GitHub
 2. Clone your fork locally:
    ```bash
-   git clone https://github.com/YOUR_USERNAME/PyCompiler-ARK-Professional.git
-   cd PyCompiler-ARK-Professional
+   git clone https://github.com/YOUR_USERNAME/PyCompiler_ARK.git
+   cd PyCompiler_ARK
    ```
 3. Add the upstream repository:
    ```bash
-   git remote add upstream https://github.com/raidos23/PyCompiler-ARK-Professional.git
+   git remote add upstream https://github.com/raidos23/PyCompiler_ARK.git
    ```
 
 ## Development Setup

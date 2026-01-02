@@ -55,8 +55,8 @@ PyCompiler ARK++ provides a modular, extensible platform for Python compilation 
 ### Installation
 
 ```bash
-git clone https://github.com/raidos23/PyCompiler-ARK-Professional.git
-cd PyCompiler-ARK-Professional
+git clone https://github.com/raidos23/PyCompiler_ARK.git
+cd PyCompiler_ARK
 python -m venv .venv
 source .venv/bin/activate  # Linux/macOS
 # or
