@@ -194,7 +194,7 @@ tmp/
 *.pem
 certificates/
 secrets/
-
+.blackbox/
 # SBOM and security reports
 sbom.json
 sbom.xml
