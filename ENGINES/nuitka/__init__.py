@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: Apache-2.0
+﻿# SPDX-License-Identifier: Apache-2.0
 # Copyright 2026 Ague Samuel Amen
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,8 +27,9 @@ import platform
 import sys
 from typing import Optional
 
-from Core.engines_loader.base import CompilerEngine
-from Core.engines_loader.registry import register
+from engine_sdk.base import CompilerEngine
+from engine_sdk import register
+
 
 
 @register
