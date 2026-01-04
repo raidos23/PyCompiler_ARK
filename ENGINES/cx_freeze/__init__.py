@@ -93,38 +93,6 @@ class CXFreezeEngine(CompilerEngine):
             # Start with python -m cx_Freeze
             cmd = [python_path, "-m", "cx_Freeze"]
             
-            # Get options from GUI - use existing UI widgets from .ui file
-            # Onefile vs Onedir (CX_Freeze uses --onefile)
-            onefile = getattr(gui, "opt_onefile", None)
-            if onefile and onefile.isChecked():
-                cmd.append("--onefile")
-            else:
-                # CX_Freeze defaults to onedir (build-exe directory)
-                cmd.append("--build-exe")
-            
-            # Windowed (no console) - CX_Freeze uses --console or implies GUI
-            windowed = getattr(gui, "opt_windowed", None)
-            if windowed and windowed.isChecked():
-                # CX_Freeze uses --gui-name for windowed apps
-                cmd.append("--gui-name=pythonw")
-            
-            # Clean build
-            clean = getattr(gui, "opt_clean", None)
-            if clean and clean.isChecked():
-                cmd.append("--clean")
-            
-            # Output directory - CX_Freeze uses --build-dir
-            output_dir = getattr(gui, "output_dir_input", None)
-            if output_dir and output_dir.text().strip():
-                cmd.extend(["--build-dir", output_dir.text().strip()])
-            
-            # Name - CX_Freeze uses --name
-            name_input = getattr(gui, "output_name_input", None)
-            if name_input and name_input.text().strip():
-                cmd.extend(["--name", name_input.text().strip()])
-            
-            # Add the target file
-            cmd.append(file)
             
             return cmd
             
