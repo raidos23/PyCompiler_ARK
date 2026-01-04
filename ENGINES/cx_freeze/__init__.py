@@ -144,11 +144,7 @@ class CXFreezeEngine(CompilerEngine):
             pass
 
     def create_tab(self, gui):
-        """
-        Return None to use existing UI widgets from the .ui file.
-        The CX_Freeze tab is already defined in the UI with opt_onefile, 
-        opt_windowed, opt_clean, output_dir_input, etc.
-        """
+        """ it is the ui tab for cxfreeze engine """
         return None
 
     def get_log_prefix(self, file_basename: str) -> str:
