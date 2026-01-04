@@ -27,11 +27,11 @@ import platform
 import sys
 from typing import Optional
 
-from Core.engines_loader.base import CompilerEngine
-from Core.engines_loader.registry import register
+from engine_sdk.base import CompilerEngine
+from engine_sdk import registry
 
 
-@register
+@registry.register
 class CXFreezeEngine(CompilerEngine):
     """
     CX_Freeze compilation engine.
