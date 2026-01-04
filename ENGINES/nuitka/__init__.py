@@ -27,8 +27,9 @@ import platform
 import sys
 from typing import Optional
 
-from Core.engines_loader.base import CompilerEngine
-from Core.engines_loader.registry import register
+from engine_sdk.base import CompilerEngine
+from engine_sdk import register
+
 
 
 @register

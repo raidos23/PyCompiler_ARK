@@ -28,10 +28,11 @@ import sys
 from typing import Optional
 
 from engine_sdk.base import CompilerEngine
-from engine_sdk import registry
+from engine_sdk import register
 
 
-@registry.register
+
+@register
 class CXFreezeEngine(CompilerEngine):
     """
     CX_Freeze compilation engine.
