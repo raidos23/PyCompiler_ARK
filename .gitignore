@@ -41,6 +41,7 @@ sys
 # Installer logs
 pip-log.txt
 pip-delete-this-directory.txt
+.blackbox/
 .blackboxrules
 # Unit test / coverage reports
 htmlcov/

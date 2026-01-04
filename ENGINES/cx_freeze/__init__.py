@@ -14,11 +14,10 @@
 # limitations under the License.
 
 """
-PyInstaller Engine for PyCompiler_ARK.
+CX_Freeze Engine for PyCompiler_ARK.
 
-This engine handles compilation of Python scripts using PyInstaller,
-supporting onefile and directory (onedir) modes, windowed applications,
-and various customization options.
+This engine handles compilation of Python scripts using CX_Freeze,
+supporting onefile mode, windowed applications, and various customization options.
 """
 
 from __future__ import annotations
@@ -32,10 +31,11 @@ from engine_sdk.base import CompilerEngine
 from engine_sdk import register
 
 
+
 @register
-class PyInstallerEngine(CompilerEngine):
+class CXFreezeEngine(CompilerEngine):
     """
-    PyInstaller compilation engine.
+    CX_Freeze compilation engine.
     
     Features:
     - Onefile and onedir modes
@@ -43,22 +43,20 @@ class PyInstallerEngine(CompilerEngine):
     - Custom output directory
     - Automatic venv detection and use
     - Icon specification
-    - Version file support
-    - Clean build option
     """
 
-    id: str = "pyinstaller"
-    name: str = "PyInstaller"
+    id: str = "cx_freeze"
+    name: str = "CX_Freeze"
     version: str = "1.0.0"
     required_core_version: str = "1.0.0"
     required_sdk_version: str = "1.0.0"
 
     @property
     def required_tools(self) -> list[str]:
-        return ["pyinstaller"]
+        return ["cx_freeze"]
 
     def preflight(self, gui, file: str) -> bool:
-        """Check if PyInstaller is available in the venv."""
+        """Check if CX_Freeze is available in the venv."""
         try:
             venv_manager = getattr(gui, "venv_manager", None)
             if not venv_manager:
@@ -68,9 +66,9 @@ class PyInstallerEngine(CompilerEngine):
             if not venv_path:
                 return True  # Let build_command fail instead
             
-            if not venv_manager.has_tool_binary(venv_path, "pyinstaller"):
-                # Try to install pyinstaller
-                venv_manager.ensure_tools_installed(venv_path, ["pyinstaller"])
+            if not venv_manager.has_tool_binary(venv_path, "cx_freeze"):
+                # Try to install cx_freeze
+                venv_manager.ensure_tools_installed(venv_path, ["cx_freeze"])
                 return False  # Will be retried after installation
             
             return True
@@ -78,7 +76,7 @@ class PyInstallerEngine(CompilerEngine):
             return True  # Let build_command handle errors
 
     def build_command(self, gui, file: str) -> list[str]:
-        """Build the PyInstaller command line."""
+        """Build the CX_Freeze command line."""
         try:
             venv_manager = getattr(gui, "venv_manager", None)
             
@@ -92,62 +90,16 @@ class PyInstallerEngine(CompilerEngine):
             else:
                 python_path = sys.executable
             
-            # Start with python -m PyInstaller
-            cmd = [python_path, "-m", "PyInstaller"]
+            # Start with python -m cx_Freeze
+            cmd = [python_path, "-m", "cx_Freeze"]
             
-            # Get options from GUI - use existing UI widgets from .ui file
-            # Onefile vs Onedir
-            onefile = getattr(gui, "opt_onefile", None)
-            if onefile and onefile.isChecked():
-                cmd.append("--onefile")
-            else:
-                cmd.append("--onedir")
-            
-            # Windowed (no console) - only on Windows/macOS
-            windowed = getattr(gui, "opt_windowed", None)
-            if windowed and windowed.isChecked():
-                if platform.system() == "Windows":
-                    cmd.append("--windowed")
-                elif platform.system() == "Darwin":
-                    cmd.append("--windowed")
-            
-            # Clean build
-            clean = getattr(gui, "opt_clean", None)  # UI uses opt_clean, not opt_clean_build
-            if clean and clean.isChecked():
-                cmd.append("--clean")
-            
-            # No UPX
-            noupx = getattr(gui, "opt_noupx", None)
-            if noupx and noupx.isChecked():
-                cmd.append("--noupx")
-            
-            # Output directory - use output_dir_input from UI
-            output_dir = getattr(gui, "output_dir_input", None)
-            if output_dir and output_dir.text().strip():
-                cmd.extend(["--distpath", output_dir.text().strip()])
-            
-            # Icon
-            if platform.system() == "Windows":
-                # Try btn_select_icon callback for icon path
-                btn_icon = getattr(gui, "btn_select_icon", None)
-                if btn_icon and hasattr(self, "_selected_icon"):
-                    cmd.extend(["--icon", self._selected_icon])
-            
-            # Name
-            # Check if there's a name input in the UI
-            name_input = getattr(gui, "output_name_input", None)
-            if name_input and name_input.text().strip():
-                cmd.extend(["--name", name_input.text().strip()])
-            
-            # Add the target file
-            cmd.append(file)
             
             return cmd
             
         except Exception as e:
             try:
                 if hasattr(gui, "log"):
-                    gui.log.append(f"❌ Erreur construction commande PyInstaller: {e}\n")
+                    gui.log.append(f"❌ Erreur construction commande CX_Freeze: {e}\n")
             except Exception:
                 pass
             return []
@@ -185,7 +137,7 @@ class PyInstallerEngine(CompilerEngine):
             if output_dir and output_dir.text().strip():
                 try:
                     if hasattr(gui, "log"):
-                        gui.log.append(f"📁 Sortie générée dans: {output_dir.text().strip()}\n")
+                        gui.log.append(f"📁 Compilation CX_Freeze terminée. Sortie dans: {output_dir.text().strip()}\n")
                 except Exception:
                     pass
         except Exception:
@@ -194,13 +146,13 @@ class PyInstallerEngine(CompilerEngine):
     def create_tab(self, gui):
         """
         Return None to use existing UI widgets from the .ui file.
-        The PyInstaller tab is already defined in the UI with opt_onefile, 
+        The CX_Freeze tab is already defined in the UI with opt_onefile, 
         opt_windowed, opt_clean, output_dir_input, etc.
         """
         return None
 
     def get_log_prefix(self, file_basename: str) -> str:
-        return f"PyInstaller ({self.version})"
+        return f"CX_Freeze ({self.version})"
 
     def should_compile_file(self, gui, file: str, selected_files: list[str], python_files: list[str]) -> bool:
         """Determine if a file should be included in the compilation queue."""
