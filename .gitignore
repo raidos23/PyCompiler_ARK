@@ -4,6 +4,8 @@ __pycache__/
 *$py.class
 experimental_file/
 *.bak
+bcasl.yml
+ARK_Main_Config.yml
 # C extensions
 *.so
 *.swp
