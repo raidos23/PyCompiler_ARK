@@ -14,7 +14,7 @@
   "suggest_deps": "🔎 依存関係を解析",
   "help": "❓ ヘルプ",
   "help_title": "ヘルプ",
-  "help_text": "<b>PyCompiler ARK++ — クイックヘルプ</b><br><ul><li>1) ワークスペースを選択し、.py ファイルを追加します。</li><li>2) <b>API Loader</b> (BCASL) を介してプリコンパイルプラグインを設定します。</li><li>3) <b>PyInstaller</b>、<b>Nuitka</b>、または <b>CX_Freeze</b> タブでオプションを調整します。</li><li>4) <b>ビルド</b> をクリックし、ログに従います。</li></ul><b>注記</b><br><ul><li>ビルドが開始されると、すべてのアクションコントロール (API Loader を含む) が完了またはキャンセルされるまで無効になります。</li><li>プリコンパイル (BCASL) はコンパイル前に完了します。</li><li><i>venv</i> は自動的に作成される可能性があります; requirements.txt が存在する場合にインストールされます; 必要に応じてツールが venv にインストールされます。</li><li>API によって開始されたワークスペースの変更は自動的に適用されます; 実行中のビルドは切り替え前にキャンセルされます。</li></ul><b>ライセンス</b>: Apache-2.0 — <a href='https://www.apache.org/licenses/LICENSE-2.0'>apache.org/licenses/LICENSE-2.0</a><br><b>著者</b>: Ague Samuel Amen<br>© 2026 Ague Samuel Amen",
+  "help_text": "<b>PyCompiler ARK++ — クイックヘルプ</b><br><ul><li>1) ワークスペースを選択し、.py ファイルを追加します。</li><li>2) <b>Bc Plugins Loader</b> (BCASL) を介してプリコンパイルプラグインを設定します。</li><li>3) <b>PyInstaller</b>、<b>Nuitka</b>、または <b>CX_Freeze</b> タブでオプションを調整します。</li><li>4) <b>ビルド</b> をクリックし、ログに従います。</li></ul><b>注記</b><br><ul><li>ビルドが開始されると、すべてのアクションコントロール (Bc Plugins Loader を含む) が完了またはキャンセルされるまで無効になります。</li><li>プリコンパイル (BCASL) はコンパイル前に完了します。</li><li><i>venv</i> は自動的に作成される可能性があります; requirements.txt が存在する場合にインストールされます; 必要に応じてツールが venv にインストールされます。</li><li>API によって開始されたワークスペースの変更は自動的に適用されます; 実行中のビルドは切り替え前にキャンセルされます。</li></ul><b>ライセンス</b>: Apache-2.0 — <a href='https://www.apache.org/licenses/LICENSE-2.0'>apache.org/licenses/LICENSE-2.0</a><br><b>著者</b>: Ague Samuel Amen<br>© 2026 Ague Samuel Amen",
   "show_stats": "📊 統計",
   "select_lang": "言語を選択",
   "venv_button": "venv フォルダーを手動で選択",

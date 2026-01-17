@@ -1283,7 +1283,7 @@ class PyCompilerArkGui(QWidget):
                 self.btn_suggest_deps.setEnabled(enabled)
         except Exception:
             pass
-        # API Loader button (BCASL)
+        # Bc Plugins Loader button (BCASL)
         try:
             if hasattr(self, "btn_bc_loader") and self.btn_bc_loader:
                 self.btn_bc_loader.setEnabled(enabled)
