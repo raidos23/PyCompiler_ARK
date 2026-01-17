@@ -28,6 +28,7 @@ __all__ = [
     "PluginMeta",
     "PreCompileContext",
     "ExecutionReport",
+    "bc_register",
 ]
 
 # Configuration logger par défaut (faible verbosité pour embarqué)
@@ -580,5 +581,241 @@ class _PluginRecord:
 
 
 def register_plugin(cls: Any) -> Any:
+    """Marque une classe comme plugin BCASL (legacy).
+
+    Args:
+        cls: Classe à marquer
+
+    Returns:
+        La classe inchangée, avec l'attribut __bcasl_plugin__ = True
+    """
     setattr(cls, "__bcasl_plugin__", True)
     return cls
+
+
+def bc_register(
+    cls: Optional[type] = None,
+    *,
+    manager: Any = None,
+    auto_instantiate: bool = True,
+    priority: Optional[int] = None,
+) -> Any:
+    """Décorateur pour enregistrer un plugin BCASL.
+
+    Peut être utilisé de plusieurs façons:
+
+    1. En tant que décorateur simple (le plugin sera automatiquement instancié
+       et enregistré lorsque le module est importé par BCASL):
+
+       @bc_register
+       class MyPlugin(BcPluginBase):
+           meta = PluginMeta(
+               id="my_plugin",
+               name="My Plugin",
+               version="1.0.0",
+           )
+
+           def on_pre_compile(self, ctx: PreCompileContext) -> None:
+               ...
+
+    2. Avec un manager explicite (pour enregistrement immédiat):
+
+       @bc_register(manager=my_manager)
+       class MyPlugin(BcPluginBase):
+           meta = PluginMeta(
+               id="my_plugin",
+               name="My Plugin",
+               version="1.0.0",
+           )
+           ...
+
+    3. Avec des options de configuration:
+
+       @bc_register(priority=10)
+       class MyPlugin(BcPluginBase):
+           meta = PluginMeta(
+               id="my_plugin",
+               name="My Plugin",
+               version="1.0.0",
+           )
+           ...
+
+    Args:
+        cls: Classe de plugin (rempli automatiquement par Python lors de l'utilisation
+             du décorateur sans parenthèses).
+        manager: Instance optionnelle de BCASL pour enregistrement immédiat.
+        auto_instantiate: Si True (défaut), le plugin est instancié automatiquement.
+        priority: Priorité optionnelle du plugin (écrase celle définie dans le meta).
+
+    Returns:
+        La classe de plugin (avec instance créée si auto_instantiate=True)
+
+    Raises:
+        TypeError: Si la classe décorée n'hérite pas de BcPluginBase
+        ValueError: Si le plugin n'a pas de métadonnées valides
+
+    Example:
+        # Utilisation simple
+        from bcasl import BcPluginBase, PluginMeta, bc_register
+        from bcasl.Base import PreCompileContext
+
+        @bc_register
+        class MyLinter(BcPluginBase):
+            meta = PluginMeta(
+                id="my_linter",
+                name="My Linter",
+                version="1.0.0",
+                tags=["lint"],
+            )
+
+            def on_pre_compile(self, ctx: PreCompileContext) -> None:
+                # Votre logique de linting ici
+                pass
+
+        # Utilisation avec options
+        @bc_register(priority=5)
+        class EarlyPlugin(BcPluginBase):
+            meta = PluginMeta(
+                id="early_plugin",
+                name="Early Plugin",
+                version="1.0.0",
+                tags=["prepare"],
+            )
+
+            def on_pre_compile(self, ctx: PreCompileContext) -> None:
+                pass
+    """
+    def decorator_inner(cls_to_decorate: type) -> Any:
+        # Vérifier que c'est bien une classe
+        if not isinstance(cls_to_decorate, type):
+            raise TypeError(
+                f"bc_register doit être appliqué à une classe, pas à {type(cls_to_decorate)}"
+            )
+
+        # Vérifier l'héritage BcPluginBase (support des deux versions)
+        is_valid = False
+        try:
+            # Vérifier BcPluginBase de bcasl
+            if issubclass(cls_to_decorate, BcPluginBase):
+                is_valid = True
+        except TypeError:
+            pass
+
+        # Vérifier si le module Plugins_SDK est disponible
+        try:
+            from Plugins_SDK.BcPluginContext import BcPluginBase as BcPluginBaseSDK
+            if issubclass(cls_to_decorate, BcPluginBaseSDK):
+                is_valid = True
+        except (ImportError, TypeError):
+            pass
+
+        if not is_valid:
+            raise TypeError(
+                f"La classe décorée avec @bc_register doit hériter de BcPluginBase. "
+                f"Classe reçue: {cls_to_decorate.__name__}"
+            )
+
+        # Marquer la classe comme plugin BCASL
+        setattr(cls_to_decorate, "__bcasl_plugin__", True)
+
+        # Récupérer les métadonnées depuis l'attribut de classe
+        meta = getattr(cls_to_decorate, "meta", None)
+        if meta is None:
+            # Essayer d'instancier pour récupérer le meta depuis l'instance
+            # (utile pour les plugins old-style qui passent META à super().__init__)
+            try:
+                if cls_to_decorate.__init__ is not BcPluginBase.__init__:
+                    # Custom __init__ - try to instantiate
+                    temp_instance = cls_to_decorate()
+                    if hasattr(temp_instance, 'meta'):
+                        meta = temp_instance.meta
+            except Exception:
+                pass
+        
+        if meta is None:
+            raise ValueError(
+                f"La classe plugin '{cls_to_decorate.__name__}' doit avoir un attribut 'meta' "
+                f"contenant un PluginMeta valide."
+            )
+
+        # Valider les métadonnées
+        if not hasattr(meta, "id") or not meta.id:
+            raise ValueError(
+                f"Le PluginMeta du plugin '{cls_to_decorate.__name__}' doit avoir un 'id' défini."
+            )
+
+        # Fonction helper pour instancier le plugin
+        def _create_plugin_instance() -> "BcPluginBase":
+            """Crée une instance du plugin en gérant différents styles d'initialisation."""
+            # Stratégie 1: Si la classe a son propre __init__ (comme les plugins existants),
+            # essayer d'instancier directement
+            init_method = getattr(cls_to_decorate, "__init__", None)
+            # Obtenir le __init__ original de BcPluginBase
+            base_init = getattr(BcPluginBase, "__init__", None)
+            
+            # Si la classe n'a pas redéfini __init__ ou si son __init__ est le même que BcPluginBase
+            if init_method is base_init or cls_to_decorate.__init__ is BcPluginBase.__init__:
+                # Pas de __init__ personnalisé, utiliser meta de l'attribut de classe
+                cls_meta = getattr(cls_to_decorate, "meta", None)
+                if cls_meta is not None:
+                    return cls_to_decorate(meta=cls_meta)
+                # fallback: passer meta directement
+                return cls_to_decorate(meta)
+            else:
+                # __init__ personnalisé (probablement comme Cleaner), instancier directement
+                try:
+                    return cls_to_decorate()
+                except TypeError:
+                    # Si ça échoue, essayer avec meta
+                    cls_meta = getattr(cls_to_decorate, "meta", None)
+                    if cls_meta is not None:
+                        return cls_to_decorate(meta=cls_meta)
+                    return cls_to_decorate(meta)
+
+        # Créer l'instance si demandé
+        plugin_instance = None
+        if auto_instantiate:
+            try:
+                plugin_instance = _create_plugin_instance()
+                setattr(cls_to_decorate, "_bcasl_instance_", plugin_instance)
+            except Exception as e:
+                raise ValueError(
+                    f"Impossible d'instancier le plugin '{cls_to_decorate.__name__}': {e}"
+                ) from e
+
+        # Si un manager est fourni, enregistrer immédiatement
+        if manager is not None:
+            if plugin_instance is None:
+                try:
+                    plugin_instance = _create_plugin_instance()
+                except Exception as e:
+                    raise ValueError(
+                        f"Impossible d'instancier le plugin '{cls_to_decorate.__name__}': {e}"
+                    ) from e
+
+            # Appliquer la priorité personnalisée si fournie
+            if priority is not None and plugin_instance is not None:
+                plugin_instance.priority = priority
+
+            # Ajouter au manager
+            try:
+                manager.add_plugin(plugin_instance)
+                _logger.debug("Plugin '%s' enregistré avec @bc_register", meta.id)
+            except Exception as e:
+                raise RuntimeError(
+                    f"Échec de l'enregistrement du plugin '{meta.id}': {e}"
+                ) from e
+
+        return cls_to_decorate
+
+    # Gestion des deux syntaxes du décorateur:
+    # - @bc_register sans parenthèses: cls est la classe, manager/priority sont None
+    # - @bc_register() ou @bc_register(manager=x): cls est None, retourne decorator_inner
+    
+    if cls is not None and isinstance(cls, type):
+        # @bc_register sans parenthèses - cls est la classe à décorée
+        return decorator_inner(cls)
+    
+    # @bc_register() ou @bc_register(manager=x, priority=x) - retourner le décorateur
+    # Les paramètres manager et priority ont été capturés dans la closure
+    return decorator_inner

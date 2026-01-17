@@ -142,17 +142,51 @@ class BCASL:
 
                 # Recherche et appel de la fonction d'enregistrement si présente
                 reg = getattr(module, BCASL_PLUGIN_REGISTER_FUNC, None)
-                if not callable(reg):
-                    _logger.debug(
-                        "Package %s: aucune fonction %s, ignoré",
-                        pkg_dir.name,
-                        BCASL_PLUGIN_REGISTER_FUNC,
-                    )
-                    continue
-                # Appeler l'enregistrement
-                before_ids = set(self._registry.keys())
-                reg(self)  # le package appelle self.add_plugin(...)
-                new_ids = [k for k in self._registry.keys() if k not in before_ids]
+                is_decorator_plugin = False
+                new_ids: list[str] = []
+
+                if callable(reg):
+                    # Ancien style: fonction bcasl_register(manager)
+                    before_ids = set(self._registry.keys())
+                    reg(self)  # le package appelle self.add_plugin(...)
+                    new_ids = [k for k in self._registry.keys() if k not in before_ids]
+                else:
+                    # Nouveau style: chercher les classes marquées avec @bc_register
+                    # Ces classes ont l'attribut __bcasl_plugin__ = True
+                    # et peuvent avoir _bcasl_instance_ pour l'instance
+                    for attr_name in dir(module):
+                        try:
+                            attr = getattr(module, attr_name, None)
+                            if attr is None:
+                                continue
+                            # Vérifier si c'est une classe marquée comme plugin
+                            if not getattr(attr, "__bcasl_plugin__", False):
+                                continue
+                            if not isinstance(attr, type):
+                                continue
+                            # C'est une classe de plugin décorée avec @bc_register
+                            plugin_instance = getattr(
+                                attr, "_bcasl_instance_", None
+                            )
+                            if plugin_instance is None:
+                                try:
+                                    plugin_instance = attr()
+                                except Exception as e:
+                                    _logger.warning(
+                                        "Impossible d'instancier le plugin %s: %s",
+                                        attr_name,
+                                        e,
+                                    )
+                                    continue
+                            # Enregistrer le plugin
+                            pid = plugin_instance.meta.id
+                            if pid not in self._registry:
+                                self.add_plugin(plugin_instance)
+                                new_ids.append(pid)
+                                is_decorator_plugin = True
+                        except Exception:
+                            continue
+
                 for pid in new_ids:
                     rec = self._registry.get(pid)
                     if rec is not None:
@@ -161,12 +195,19 @@ class BCASL:
                 # Validation de signature supprimée (simplification)
                 added = len(new_ids)
                 if added <= 0:
-                    _logger.warning(
-                        "Aucun plugin enregistré par package %s", pkg_dir.name
-                    )
+                    if not is_decorator_plugin:
+                        _logger.debug(
+                            "Package %s: aucun plugin trouvé (ni %s, ni décorateur @bc_register), ignoré",
+                            pkg_dir.name,
+                            BCASL_PLUGIN_REGISTER_FUNC,
+                        )
+                    else:
+                        _logger.warning(
+                            "Aucun plugin enregistré par package %s", pkg_dir.name
+                        )
                 else:
                     count += added
-                    _logger.info("Plugin chargé depuis package %s", pkg_dir.name)
+                    _logger.info("Plugin(s) chargé(s) depuis package %s", pkg_dir.name)
             except Exception as exc:  # isolation
                 msg = f"échec chargement: {exc}"
                 errors.append((pkg_dir.name, msg))
