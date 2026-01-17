@@ -32,12 +32,13 @@ class TestPreferencesModule:
     def test_import_preferences(self):
         """Test that preferences module can be imported"""
         from Core import preferences
+
         assert preferences is not None
 
     def test_default_preferences_structure(self):
         """Test that default preferences have correct structure"""
         from Core.preferences import DEFAULT_PREFERENCES
-        
+
         assert isinstance(DEFAULT_PREFERENCES, dict)
         # Check for expected keys
         assert "language" in DEFAULT_PREFERENCES
@@ -47,14 +48,14 @@ class TestPreferencesModule:
     def test_default_language_is_system(self):
         """Test that default language is System"""
         from Core.preferences import DEFAULT_PREFERENCES
-        
+
         assert DEFAULT_PREFERENCES["language"] == "System"
         assert DEFAULT_PREFERENCES["language_pref"] == "System"
 
     def test_default_theme_is_system(self):
         """Test that default theme is System"""
         from Core.preferences import DEFAULT_PREFERENCES
-        
+
         assert DEFAULT_PREFERENCES["theme"] == "System"
 
 
@@ -64,14 +65,14 @@ class TestLoadPreferences:
     def test_load_preferences_returns_dict(self):
         """Test that load_preferences returns a dictionary"""
         from Core.preferences import load_preferences
-        
+
         prefs = load_preferences()
         assert isinstance(prefs, dict)
 
     def test_load_preferences_contains_expected_keys(self):
         """Test that loaded preferences contain expected keys"""
         from Core.preferences import load_preferences
-        
+
         prefs = load_preferences()
         expected_keys = ["language", "theme", "language_pref", "window_geometry"]
         for key in expected_keys:
@@ -80,7 +81,7 @@ class TestLoadPreferences:
     def test_load_preferences_handles_missing_file(self):
         """Test that load_preferences handles missing file gracefully"""
         from Core.preferences import load_preferences
-        
+
         # Should not raise an exception
         prefs = load_preferences()
         assert isinstance(prefs, dict)
@@ -88,7 +89,7 @@ class TestLoadPreferences:
     def test_load_preferences_with_corrupted_file(self):
         """Test that load_preferences handles corrupted file gracefully"""
         from Core.preferences import load_preferences
-        
+
         # Should not raise an exception even with corrupted data
         prefs = load_preferences()
         assert isinstance(prefs, dict)
@@ -100,13 +101,13 @@ class TestSavePreferences:
     def test_save_preferences_creates_file(self):
         """Test that save_preferences creates a preferences file"""
         from Core.preferences import save_preferences
-        
+
         # Create a mock GUI object
         mock_gui = MagicMock()
         mock_gui.language = "en"
         mock_gui.theme = "dark"
         mock_gui.language_pref = "en"
-        
+
         # save_preferences should not raise an exception
         try:
             save_preferences(mock_gui)
@@ -115,25 +116,29 @@ class TestSavePreferences:
 
     def test_save_preferences_with_custom_path(self):
         """Test saving preferences to custom path"""
-        from Core.preferences import save_preferences, load_preferences, DEFAULT_PREFERENCES
-        
+        from Core.preferences import (
+            save_preferences,
+            load_preferences,
+            DEFAULT_PREFERENCES,
+        )
+
         with tempfile.TemporaryDirectory() as tmpdir:
             custom_path = os.path.join(tmpdir, "custom_prefs.json")
-            
+
             mock_gui = MagicMock()
             mock_gui.language = "fr"
             mock_gui.theme = "light"
             mock_gui.language_pref = "fr"
-            
+
             # Mock the get_settings_path to return our custom path
-            with patch('Core.preferences._get_settings_path', return_value=custom_path):
+            with patch("Core.preferences._get_settings_path", return_value=custom_path):
                 try:
                     save_preferences(mock_gui)
                     # Verify file was created
                     assert os.path.exists(custom_path)
-                    
+
                     # Verify content
-                    with open(custom_path, 'r') as f:
+                    with open(custom_path, "r") as f:
                         saved = json.load(f)
                     assert saved["language"] == "fr"
                 except Exception as e:
@@ -146,17 +151,17 @@ class TestUpdateUIState:
     def test_update_ui_state_function_exists(self):
         """Test that update_ui_state function exists"""
         from Core.preferences import update_ui_state
-        
+
         assert callable(update_ui_state)
 
     def test_update_ui_state_with_mock_gui(self):
         """Test update_ui_state with a mock GUI object"""
         from Core.preferences import update_ui_state
-        
+
         mock_gui = MagicMock()
         mock_gui.select_lang = None
         mock_gui.select_theme = None
-        
+
         # Should not raise an exception
         try:
             update_ui_state(mock_gui)
@@ -170,13 +175,13 @@ class TestPreferencesMigration:
     def test_preferences_have_version(self):
         """Test that preferences include version info"""
         from Core.preferences import DEFAULT_PREFERENCES
-        
+
         assert "version" in DEFAULT_PREFERENCES or "app_version" in DEFAULT_PREFERENCES
 
     def test_load_preferences_preserves_unknown_keys(self):
         """Test that load_preferences preserves unknown keys from file"""
         from Core.preferences import load_preferences, DEFAULT_PREFERENCES
-        
+
         # If there are any custom/unknown keys in the file, they should be preserved
         prefs = load_preferences()
         assert isinstance(prefs, dict)
@@ -188,7 +193,7 @@ class TestPreferencesEdgeCases:
     def test_load_preferences_with_empty_file(self):
         """Test handling of empty preferences file"""
         from Core.preferences import load_preferences
-        
+
         # Should return defaults when file is empty
         prefs = load_preferences()
         assert isinstance(prefs, dict)
@@ -197,7 +202,7 @@ class TestPreferencesEdgeCases:
     def test_load_preferences_with_null_values(self):
         """Test handling of null values in preferences"""
         from Core.preferences import load_preferences
-        
+
         # Should handle null values gracefully
         prefs = load_preferences()
         # Should have all expected keys
@@ -206,15 +211,28 @@ class TestPreferencesEdgeCases:
     def test_language_preference_values(self):
         """Test valid language preference values"""
         from Core.preferences import DEFAULT_PREFERENCES
-        
-        valid_languages = ["System", "en", "fr", "de", "es", "it", "ja", "ko", "pt-BR", "ru", "zh-CN", "af"]
+
+        valid_languages = [
+            "System",
+            "en",
+            "fr",
+            "de",
+            "es",
+            "it",
+            "ja",
+            "ko",
+            "pt-BR",
+            "ru",
+            "zh-CN",
+            "af",
+        ]
         # Default should be "System"
         assert DEFAULT_PREFERENCES["language"] in ["System"] + valid_languages
 
     def test_theme_preference_values(self):
         """Test valid theme preference values"""
         from Core.preferences import DEFAULT_PREFERENCES
-        
+
         # Default should be "System"
         assert DEFAULT_PREFERENCES["theme"] == "System"
 
@@ -228,7 +246,7 @@ class TestPreferencesQtIntegration:
             app = QApplication.instance()
             if app is None:
                 app = QApplication([])
-            
+
             settings = QSettings("PyCompiler", "ARK")
             assert settings is not None
         except Exception as e:
@@ -237,7 +255,6 @@ class TestPreferencesQtIntegration:
     def test_preferences_use_qsettings(self):
         """Test that preferences module uses QSettings"""
         from Core import preferences
-        
-        # Verify that QSettings is used in the module
-        assert hasattr(preferences, 'QSettings') or 'QSettings' in dir(preferences)
 
+        # Verify that QSettings is used in the module
+        assert hasattr(preferences, "QSettings") or "QSettings" in dir(preferences)

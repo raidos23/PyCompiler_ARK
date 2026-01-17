@@ -165,9 +165,7 @@ class BCASL:
                             if not isinstance(attr, type):
                                 continue
                             # C'est une classe de plugin décorée avec @bc_register
-                            plugin_instance = getattr(
-                                attr, "_bcasl_instance_", None
-                            )
+                            plugin_instance = getattr(attr, "_bcasl_instance_", None)
                             if plugin_instance is None:
                                 try:
                                     plugin_instance = attr()
@@ -189,9 +187,9 @@ class BCASL:
                                         DEFAULT_TAG_PRIORITY,
                                     )
 
-                                    tags = getattr(
-                                        plugin_instance.meta, "tags", ()
-                                    ) or ()
+                                    tags = (
+                                        getattr(plugin_instance.meta, "tags", ()) or ()
+                                    )
                                     if tags:
                                         scores = []
                                         for tag in tags:

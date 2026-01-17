@@ -34,12 +34,11 @@ from engine_sdk.base import CompilerEngine
 from engine_sdk import engine_register
 
 
-
 @engine_register
 class NuitkaEngine(CompilerEngine):
     """
     Nuitka compilation engine.
-    
+
     Features:
     - Standalone and onefile modes
     - Python include options
@@ -65,16 +64,16 @@ class NuitkaEngine(CompilerEngine):
             venv_manager = getattr(gui, "venv_manager", None)
             if not venv_manager:
                 return True  # Let build_command fail instead
-            
+
             venv_path = venv_manager.resolve_project_venv()
             if not venv_path:
                 return True  # Let build_command fail instead
-            
+
             if not venv_manager.has_tool_binary(venv_path, "nuitka"):
                 # Try to install nuitka
                 venv_manager.ensure_tools_installed(venv_path, ["nuitka"])
                 return False  # Will be retried after installation
-            
+
             return True
         except Exception:
             return True  # Let build_command handle errors
@@ -83,7 +82,7 @@ class NuitkaEngine(CompilerEngine):
         """Build the Nuitka command line."""
         try:
             venv_manager = getattr(gui, "venv_manager", None)
-            
+
             # Resolve venv python
             if venv_manager:
                 venv_path = venv_manager.resolve_project_venv()
@@ -93,41 +92,41 @@ class NuitkaEngine(CompilerEngine):
                     python_path = sys.executable
             else:
                 python_path = sys.executable
-            
+
             # Start with python -m nuitka
             cmd = [python_path, "-m", "nuitka"]
-            
+
             # Use dynamic widgets or fallback to UI widgets
             # Standalone mode
             standalone = self._get_opt("standalone")
             if standalone and standalone.isChecked():
                 cmd.append("--standalone")
-            
+
             # Onefile mode
             onefile = self._get_opt("onefile")
             if onefile and onefile.isChecked():
                 cmd.append("--onefile")
-            
+
             # Windowed (no console)
             disable_console = self._get_opt("disable_console")
             if disable_console and disable_console.isChecked():
                 cmd.append("--windows-disable-console")
-            
+
             # Show progress
             show_progress = self._get_opt("show_progress")
             if show_progress and show_progress.isChecked():
                 cmd.append("--show-progress")
-            
+
             # Output directory
             output_dir = self._get_input("output_dir")
             if output_dir and output_dir.text().strip():
                 cmd.extend(["--output-dir", output_dir.text().strip()])
-            
+
             # Add the target file
             cmd.append(file)
-            
+
             return cmd
-            
+
         except Exception as e:
             try:
                 if hasattr(gui, "log"):
@@ -147,16 +146,16 @@ class NuitkaEngine(CompilerEngine):
         """Return environment variables for the compilation process."""
         try:
             env = {}
-            
+
             # Set PYTHONIOENCODING for proper output handling
             env["PYTHONIOENCODING"] = "utf-8"
-            
+
             # Disable PYTHONUTF8 mode to avoid conflicts
             env["PYTHONUTF8"] = "0"
-            
+
             # Set LC_ALL for consistent output
             env["LC_ALL"] = "C"
-            
+
             return env if env else None
         except Exception:
             return None
@@ -169,7 +168,9 @@ class NuitkaEngine(CompilerEngine):
             if output_dir and output_dir.text().strip():
                 try:
                     if hasattr(gui, "log"):
-                        gui.log.append(f"📁 Compilation Nuitka terminée. Sortie dans: {output_dir.text().strip()}\n")
+                        gui.log.append(
+                            f"📁 Compilation Nuitka terminée. Sortie dans: {output_dir.text().strip()}\n"
+                        )
                 except Exception:
                     pass
         except Exception:
@@ -221,7 +222,9 @@ class NuitkaEngine(CompilerEngine):
             form_layout.addRow("Console:", self._nuitka_disable_console)
 
             # Show progress option
-            self._nuitka_show_progress = QCheckBox("Afficher la progression (--show-progress)")
+            self._nuitka_show_progress = QCheckBox(
+                "Afficher la progression (--show-progress)"
+            )
             self._nuitka_show_progress.setObjectName("nuitka_show_progress_dynamic")
             self._nuitka_show_progress.setChecked(True)
             form_layout.addRow("Progression:", self._nuitka_show_progress)
@@ -296,7 +299,9 @@ class NuitkaEngine(CompilerEngine):
     def get_log_prefix(self, file_basename: str) -> str:
         return f"Nuitka ({self.version})"
 
-    def should_compile_file(self, gui, file: str, selected_files: list[str], python_files: list[str]) -> bool:
+    def should_compile_file(
+        self, gui, file: str, selected_files: list[str], python_files: list[str]
+    ) -> bool:
         """Determine if a file should be included in the compilation queue."""
         # Skip non-Python files
         if not file.endswith(".py"):
@@ -307,26 +312,42 @@ class NuitkaEngine(CompilerEngine):
         """Apply internationalization translations to the engine UI."""
         try:
             from Core.engines_loader.registry import resolve_language_code
-            
+
             # Resolve language code
             code = resolve_language_code(gui, tr)
-            
+
             # Load engine-local translations
             lang_data = self._load_language_file(code)
-            
+
             # Apply translations to UI elements if they exist
             if hasattr(self, "_nuitka_onefile") and "onefile_checkbox" in lang_data:
                 self._nuitka_onefile.setText(lang_data["onefile_checkbox"])
-            if hasattr(self, "_nuitka_standalone") and "standalone_checkbox" in lang_data:
+            if (
+                hasattr(self, "_nuitka_standalone")
+                and "standalone_checkbox" in lang_data
+            ):
                 self._nuitka_standalone.setText(lang_data["standalone_checkbox"])
-            if hasattr(self, "_nuitka_disable_console") and "disable_console_checkbox" in lang_data:
-                self._nuitka_disable_console.setText(lang_data["disable_console_checkbox"])
-            if hasattr(self, "_nuitka_show_progress") and "show_progress_checkbox" in lang_data:
+            if (
+                hasattr(self, "_nuitka_disable_console")
+                and "disable_console_checkbox" in lang_data
+            ):
+                self._nuitka_disable_console.setText(
+                    lang_data["disable_console_checkbox"]
+                )
+            if (
+                hasattr(self, "_nuitka_show_progress")
+                and "show_progress_checkbox" in lang_data
+            ):
                 self._nuitka_show_progress.setText(lang_data["show_progress_checkbox"])
             if hasattr(self, "_nuitka_add_data") and "add_data_button" in lang_data:
                 self._nuitka_add_data.setText(lang_data["add_data_button"])
-            if hasattr(self, "_nuitka_output_dir") and "output_placeholder" in lang_data:
-                self._nuitka_output_dir.setPlaceholderText(lang_data["output_placeholder"])
+            if (
+                hasattr(self, "_nuitka_output_dir")
+                and "output_placeholder" in lang_data
+            ):
+                self._nuitka_output_dir.setPlaceholderText(
+                    lang_data["output_placeholder"]
+                )
             if hasattr(self, "_btn_nuitka_icon") and "icon_button" in lang_data:
                 self._btn_nuitka_icon.setText(lang_data["icon_button"])
         except Exception:
@@ -337,10 +358,10 @@ class NuitkaEngine(CompilerEngine):
         try:
             import importlib.resources as ilr
             import json
-            
+
             pkg = __package__
             lang_data = {}
-            
+
             # Try exact code first
             try:
                 with ilr.as_file(
@@ -352,7 +373,7 @@ class NuitkaEngine(CompilerEngine):
                         return lang_data
             except Exception:
                 pass
-            
+
             # Fallback to base language (e.g., "fr" from "fr-CA")
             if "-" in code:
                 base = code.split("-", 1)[0]
@@ -366,18 +387,16 @@ class NuitkaEngine(CompilerEngine):
                             return lang_data
                 except Exception:
                     pass
-            
+
             # Final fallback to English
             try:
-                with ilr.as_file(
-                    ilr.files(pkg).joinpath("languages", "en.json")
-                ) as p:
+                with ilr.as_file(ilr.files(pkg).joinpath("languages", "en.json")) as p:
                     if os.path.isfile(str(p)):
                         with open(str(p), encoding="utf-8") as f:
                             lang_data = json.load(f) or {}
             except Exception:
                 pass
-            
+
             return lang_data
         except Exception:
             return {}
@@ -412,10 +431,14 @@ class NuitkaEngine(CompilerEngine):
                 if ok and dest:
                     self._data_files.append((file_path, dest))
                     if hasattr(self._gui, "log"):
-                        self._gui.log.append(f"Fichier ajouté à Nuitka : {file_path} => {dest}")
+                        self._gui.log.append(
+                            f"Fichier ajouté à Nuitka : {file_path} => {dest}"
+                        )
         elif choix == "Dossier":
             dir_path = QFileDialog.getExistingDirectory(
-                self._gui, "Sélectionner un dossier à inclure avec Nuitka", QDir.homePath()
+                self._gui,
+                "Sélectionner un dossier à inclure avec Nuitka",
+                QDir.homePath(),
             )
             if dir_path:
                 dest, ok = QInputDialog.getText(
@@ -427,5 +450,6 @@ class NuitkaEngine(CompilerEngine):
                 if ok and dest:
                     self._data_dirs.append((dir_path, dest))
                     if hasattr(self._gui, "log"):
-                        self._gui.log.append(f"Dossier ajouté à Nuitka : {dir_path} => {dest}")
-
+                        self._gui.log.append(
+                            f"Dossier ajouté à Nuitka : {dir_path} => {dest}"
+                        )

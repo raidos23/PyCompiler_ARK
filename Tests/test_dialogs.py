@@ -27,6 +27,7 @@ class TestDialogsModule:
     def test_import_dialogs(self):
         """Test that dialogs module can be imported"""
         from Core import dialogs
+
         assert dialogs is not None
 
 
@@ -36,12 +37,13 @@ class TestProgressDialog:
     def test_progress_dialog_import(self):
         """Test that ProgressDialog can be imported"""
         from Core.dialogs import ProgressDialog
+
         assert ProgressDialog is not None
 
     def test_progress_dialog_instantiation(self):
         """Test creating a ProgressDialog instance"""
         from Core.dialogs import ProgressDialog
-        
+
         try:
             # Create a mock parent
             mock_parent = MagicMock()
@@ -53,19 +55,19 @@ class TestProgressDialog:
     def test_progress_dialog_has_required_methods(self):
         """Test that ProgressDialog has required methods"""
         from Core.dialogs import ProgressDialog
-        
+
         try:
             mock_parent = MagicMock()
             dialog = ProgressDialog("Test", mock_parent)
-            
+
             required_methods = [
-                'set_message',
-                'set_progress',
-                'close',
-                'show',
-                'exec',
+                "set_message",
+                "set_progress",
+                "close",
+                "show",
+                "exec",
             ]
-            
+
             for method in required_methods:
                 assert hasattr(dialog, method), f"Missing method: {method}"
         except Exception as e:
@@ -78,12 +80,13 @@ class TestCompilationProcessDialog:
     def test_compilation_dialog_import(self):
         """Test that CompilationProcessDialog can be imported"""
         from Core.dialogs import CompilationProcessDialog
+
         assert CompilationProcessDialog is not None
 
     def test_compilation_dialog_instantiation(self):
         """Test creating a CompilationProcessDialog instance"""
         from Core.dialogs import CompilationProcessDialog
-        
+
         try:
             mock_parent = MagicMock()
             dialog = CompilationProcessDialog("Compilation", mock_parent)
@@ -94,19 +97,19 @@ class TestCompilationProcessDialog:
     def test_compilation_dialog_has_required_methods(self):
         """Test that CompilationProcessDialog has required methods"""
         from Core.dialogs import CompilationProcessDialog
-        
+
         try:
             mock_parent = MagicMock()
             dialog = CompilationProcessDialog("Compilation", mock_parent)
-            
+
             required_methods = [
-                'set_status',
-                'set_progress',
-                'close',
-                'show',
-                'exec',
+                "set_status",
+                "set_progress",
+                "close",
+                "show",
+                "exec",
             ]
-            
+
             for method in required_methods:
                 assert hasattr(dialog, method), f"Missing method: {method}"
         except Exception as e:
@@ -119,19 +122,21 @@ class TestConnectToApp:
     def test_connect_to_app_import(self):
         """Test that connect_to_app can be imported"""
         from Core.dialogs import connect_to_app
+
         assert connect_to_app is not None
 
     def test_connect_to_app_function_exists(self):
         """Test that connect_to_app is a function"""
         from Core.dialogs import connect_to_app
+
         assert callable(connect_to_app)
 
     def test_connect_to_app_with_mock_gui(self):
         """Test connecting dialogs to application"""
         from Core.dialogs import connect_to_app
-        
+
         mock_gui = MagicMock()
-        
+
         # Should not raise exception
         try:
             connect_to_app(mock_gui)
@@ -146,31 +151,37 @@ class TestDialogFunctions:
     def test_show_message_dialog_exists(self):
         """Test that show_message_dialog function exists"""
         from Core.dialogs import show_message_dialog
+
         assert callable(show_message_dialog)
 
     def test_show_error_dialog_exists(self):
         """Test that show_error_dialog function exists"""
         from Core.dialogs import show_error_dialog
+
         assert callable(show_error_dialog)
 
     def test_show_question_dialog_exists(self):
         """Test that show_question_dialog function exists"""
         from Core.dialogs import show_question_dialog
+
         assert callable(show_question_dialog)
 
     def test_show_input_dialog_exists(self):
         """Test that show_input_dialog function exists"""
         from Core.dialogs import show_input_dialog
+
         assert callable(show_input_dialog)
 
     def test_show_file_dialog_exists(self):
         """Test that show_file_dialog function exists"""
         from Core.dialogs import show_file_dialog
+
         assert callable(show_file_dialog)
 
     def test_show_directory_dialog_exists(self):
         """Test that show_directory_dialog function exists"""
         from Core.dialogs import show_directory_dialog
+
         assert callable(show_directory_dialog)
 
 
@@ -180,11 +191,11 @@ class TestDialogAppearance:
     def test_progress_dialog_default_state(self):
         """Test ProgressDialog default state"""
         from Core.dialogs import ProgressDialog
-        
+
         try:
             mock_parent = MagicMock()
             dialog = ProgressDialog("Test", mock_parent)
-            
+
             # Default message should be set
             assert dialog is not None
         except Exception as e:
@@ -193,13 +204,12 @@ class TestDialogAppearance:
     def test_compilation_dialog_has_cancel_button(self):
         """Test that CompilationProcessDialog has cancel button"""
         from Core.dialogs import CompilationProcessDialog
-        
+
         try:
             mock_parent = MagicMock()
             dialog = CompilationProcessDialog("Compilation", mock_parent)
-            
+
             # Should have cancel button
-            assert hasattr(dialog, 'btn_cancel') or hasattr(dialog, 'cancel_btn')
+            assert hasattr(dialog, "btn_cancel") or hasattr(dialog, "cancel_btn")
         except Exception as e:
             pytest.skip(f"QApplication not available: {e}")
-

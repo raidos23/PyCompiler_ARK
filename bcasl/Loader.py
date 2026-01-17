@@ -721,7 +721,9 @@ def open_bc_loader_dialog(self) -> None:  # UI minimale
                     | Qt.ItemIsDragEnabled
                 )
             if Qt is not None:
-                item.setCheckState(Qt.CheckState.Checked if enabled else Qt.CheckState.Unchecked)
+                item.setCheckState(
+                    Qt.CheckState.Checked if enabled else Qt.CheckState.Unchecked
+                )
             lst.addItem(item)
         layout.addWidget(lst)
 
@@ -775,7 +777,11 @@ def open_bc_loader_dialog(self) -> None:  # UI minimale
             for i in range(lst.count()):
                 it = lst.item(i)
                 pid = it.data(0x0100) or it.text()
-                en = it.checkState() == Qt.CheckState.Checked if Qt is not None else False
+                en = (
+                    it.checkState() == Qt.CheckState.Checked
+                    if Qt is not None
+                    else False
+                )
                 new_plugins[str(pid)] = {"enabled": bool(en), "priority": i}
                 order_ids.append(str(pid))
             cfg_out: dict[str, Any] = dict(cfg) if isinstance(cfg, dict) else {}

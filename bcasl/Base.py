@@ -685,6 +685,7 @@ def bc_register(
             def on_pre_compile(self, ctx: PreCompileContext) -> None:
                 pass
     """
+
     def decorator_inner(cls_to_decorate: type) -> Any:
         # Vérifier que c'est bien une classe
         if not isinstance(cls_to_decorate, type):
@@ -704,6 +705,7 @@ def bc_register(
         # Vérifier si le module Plugins_SDK est disponible
         try:
             from Plugins_SDK.BcPluginContext import BcPluginBase as BcPluginBaseSDK
+
             if issubclass(cls_to_decorate, BcPluginBaseSDK):
                 is_valid = True
         except (ImportError, TypeError):
@@ -727,11 +729,11 @@ def bc_register(
                 if cls_to_decorate.__init__ is not BcPluginBase.__init__:
                     # Custom __init__ - try to instantiate
                     temp_instance = cls_to_decorate()
-                    if hasattr(temp_instance, 'meta'):
+                    if hasattr(temp_instance, "meta"):
                         meta = temp_instance.meta
             except Exception:
                 pass
-        
+
         if meta is None:
             raise ValueError(
                 f"La classe plugin '{cls_to_decorate.__name__}' doit avoir un attribut 'meta' "
@@ -752,9 +754,12 @@ def bc_register(
             init_method = getattr(cls_to_decorate, "__init__", None)
             # Obtenir le __init__ original de BcPluginBase
             base_init = getattr(BcPluginBase, "__init__", None)
-            
+
             # Si la classe n'a pas redéfini __init__ ou si son __init__ est le même que BcPluginBase
-            if init_method is base_init or cls_to_decorate.__init__ is BcPluginBase.__init__:
+            if (
+                init_method is base_init
+                or cls_to_decorate.__init__ is BcPluginBase.__init__
+            ):
                 # Pas de __init__ personnalisé, utiliser meta de l'attribut de classe
                 cls_meta = getattr(cls_to_decorate, "meta", None)
                 if cls_meta is not None:
@@ -796,6 +801,7 @@ def bc_register(
             # Appliquer la priorité basée sur les tags si pas explicitement définie
             if priority is None and plugin_instance is not None:
                 from .tagging import TAG_PRIORITY_MAP, DEFAULT_TAG_PRIORITY
+
                 tags = getattr(plugin_instance.meta, "tags", ()) or ()
                 if tags:
                     # Trouver le score minimum parmi les tags
@@ -817,7 +823,11 @@ def bc_register(
             # Ajouter au manager
             try:
                 manager.add_plugin(plugin_instance)
-                _logger.debug("Plugin '%s' enregistré avec @bc_register (priority=%d)", meta.id, plugin_instance.priority)
+                _logger.debug(
+                    "Plugin '%s' enregistré avec @bc_register (priority=%d)",
+                    meta.id,
+                    plugin_instance.priority,
+                )
             except Exception as e:
                 raise RuntimeError(
                     f"Échec de l'enregistrement du plugin '{meta.id}': {e}"
@@ -828,11 +838,11 @@ def bc_register(
     # Gestion des deux syntaxes du décorateur:
     # - @bc_register sans parenthèses: cls est la classe, manager/priority sont None
     # - @bc_register() ou @bc_register(manager=x): cls est None, retourne decorator_inner
-    
+
     if cls is not None and isinstance(cls, type):
         # @bc_register sans parenthèses - cls est la classe à décorée
         return decorator_inner(cls)
-    
+
     # @bc_register() ou @bc_register(manager=x, priority=x) - retourner le décorateur
     # Les paramètres manager et priority ont été capturés dans la closure
     return decorator_inner
