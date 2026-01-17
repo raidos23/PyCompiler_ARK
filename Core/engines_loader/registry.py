@@ -15,6 +15,7 @@
 
 from __future__ import annotations
 
+import os
 from typing import Optional, Any
 
 from .base import CompilerEngine
@@ -304,6 +305,62 @@ def get_engine_for_tab(index: int) -> Optional[str]:
     except Exception:
         pass
     return None
+
+
+def load_engine_language_file(engine_package: str, code: str) -> dict:
+    """Load language file for an engine from its package's languages folder.
+
+    Args:
+        engine_package: The engine's package name (e.g., 'ENGINES.nuitka')
+        code: Language code (e.g., 'fr', 'en')
+
+    Returns:
+        Dict containing the language data, or empty dict if not found
+    """
+    try:
+        import importlib.resources as ilr
+        import json
+
+        lang_data = {}
+
+        # Try exact code first
+        try:
+            with ilr.as_file(
+                ilr.files(engine_package).joinpath("languages", f"{code}.json")
+            ) as p:
+                if os.path.isfile(str(p)):
+                    with open(str(p), encoding="utf-8") as f:
+                        lang_data = json.load(f) or {}
+                    return lang_data
+        except Exception:
+            pass
+
+        # Fallback to base language (e.g., "fr" from "fr-CA")
+        if "-" in code:
+            base = code.split("-", 1)[0]
+            try:
+                with ilr.as_file(
+                    ilr.files(engine_package).joinpath("languages", f"{base}.json")
+                ) as p:
+                    if os.path.isfile(str(p)):
+                        with open(str(p), encoding="utf-8") as f:
+                            lang_data = json.load(f) or {}
+                        return lang_data
+            except Exception:
+                pass
+
+        # Final fallback to English
+        try:
+            with ilr.as_file(ilr.files(engine_package).joinpath("languages", "en.json")) as p:
+                if os.path.isfile(str(p)):
+                    with open(str(p), encoding="utf-8") as f:
+                        lang_data = json.load(f) or {}
+        except Exception:
+            pass
+
+        return lang_data
+    except Exception:
+        return {}
 
 
 def create(eid: str) -> CompilerEngine:
