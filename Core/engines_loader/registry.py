@@ -44,22 +44,22 @@ _LANG_ALIASES: dict[str, str] = {
 
 def normalize_language_code(code: Optional[str]) -> str:
     """Normalize language code with fallback chain.
-    
+
     Returns normalized code or 'en' as ultimate fallback.
     """
     if not code:
         return "en"
-    
+
     try:
         raw = str(code)
         low = raw.lower().replace("_", "-")
         mapped = _LANG_ALIASES.get(low, raw)
-        
+
         # Candidate order: mapped -> base (before '-') -> exact lower -> exact raw -> 'en'
         candidates = []
         if mapped not in candidates:
             candidates.append(mapped)
-        
+
         base = None
         try:
             if "-" in mapped:
@@ -68,7 +68,7 @@ def normalize_language_code(code: Optional[str]) -> str:
                 base = mapped.split("_", 1)[0]
         except Exception:
             base = None
-        
+
         if base and base not in candidates:
             candidates.append(base)
         if low not in candidates:
@@ -77,7 +77,7 @@ def normalize_language_code(code: Optional[str]) -> str:
             candidates.append(raw)
         if "en" not in candidates:
             candidates.append("en")
-        
+
         return candidates[0] if candidates else "en"
     except Exception:
         return "en"
@@ -85,18 +85,18 @@ def normalize_language_code(code: Optional[str]) -> str:
 
 def resolve_language_code(gui, tr: Optional[dict]) -> str:
     """Resolve language code from translations metadata or GUI preferences.
-    
+
     Returns normalized language code.
     """
     code = None
-    
+
     try:
         if isinstance(tr, dict):
             meta = tr.get("_meta", {})
             code = meta.get("code") if isinstance(meta, dict) else None
     except Exception:
         code = None
-    
+
     if not code:
         try:
             pref = getattr(gui, "language_pref", getattr(gui, "language", "System"))
@@ -104,7 +104,7 @@ def resolve_language_code(gui, tr: Optional[dict]) -> str:
                 code = pref
         except Exception:
             pass
-    
+
     return normalize_language_code(code)
 
 

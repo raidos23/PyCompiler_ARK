@@ -39,7 +39,7 @@ from engine_sdk import engine_register
 class PyInstallerEngine(CompilerEngine):
     """
     PyInstaller compilation engine.
-    
+
     Features:
     - Onefile and onedir modes
     - Windowed/console mode selection
@@ -66,16 +66,16 @@ class PyInstallerEngine(CompilerEngine):
             venv_manager = getattr(gui, "venv_manager", None)
             if not venv_manager:
                 return True  # Let build_command fail instead
-            
+
             venv_path = venv_manager.resolve_project_venv()
             if not venv_path:
                 return True  # Let build_command fail instead
-            
+
             if not venv_manager.has_tool_binary(venv_path, "pyinstaller"):
                 # Try to install pyinstaller
                 venv_manager.ensure_tools_installed(venv_path, ["pyinstaller"])
                 return False  # Will be retried after installation
-            
+
             return True
         except Exception:
             return True  # Let build_command handle errors
@@ -84,7 +84,7 @@ class PyInstallerEngine(CompilerEngine):
         """Build the PyInstaller command line."""
         try:
             venv_manager = getattr(gui, "venv_manager", None)
-            
+
             # Resolve venv python
             if venv_manager:
                 venv_path = venv_manager.resolve_project_venv()
@@ -94,10 +94,10 @@ class PyInstallerEngine(CompilerEngine):
                     python_path = sys.executable
             else:
                 python_path = sys.executable
-            
+
             # Start with python -m PyInstaller
             cmd = [python_path, "-m", "PyInstaller"]
-            
+
             # Get options from GUI - use dynamic widgets or fallback to UI widgets
             # Onefile vs Onedir
             onefile = self._get_opt("onefile")
@@ -105,7 +105,7 @@ class PyInstallerEngine(CompilerEngine):
                 cmd.append("--onefile")
             else:
                 cmd.append("--onedir")
-            
+
             # Windowed (no console) - only on Windows/macOS
             windowed = self._get_opt("windowed")
             if windowed and windowed.isChecked():
@@ -113,43 +113,45 @@ class PyInstallerEngine(CompilerEngine):
                     cmd.append("--windowed")
                 elif platform.system() == "Darwin":
                     cmd.append("--windowed")
-            
+
             # Clean build
             clean = self._get_opt("clean")
             if clean and clean.isChecked():
                 cmd.append("--clean")
-            
+
             # No UPX
             noupx = self._get_opt("noupx")
             if noupx and noupx.isChecked():
                 cmd.append("--noupx")
-            
+
             # Output directory
             output_dir = self._get_input("output_dir_input")
             if output_dir and output_dir.text().strip():
                 cmd.extend(["--distpath", output_dir.text().strip()])
-            
+
             # Icon
             if platform.system() == "Windows":
                 # Try btn_select_icon callback for icon path
                 btn_icon = self._get_btn("select_icon")
                 if btn_icon and hasattr(self, "_selected_icon"):
                     cmd.extend(["--icon", self._selected_icon])
-            
+
             # Name
             name_input = self._get_input("output_name_input")
             if name_input and name_input.text().strip():
                 cmd.extend(["--name", name_input.text().strip()])
-            
+
             # Add the target file
             cmd.append(file)
-            
+
             return cmd
-            
+
         except Exception as e:
             try:
                 if hasattr(gui, "log"):
-                    gui.log.append(f"❌ Erreur construction commande PyInstaller: {e}\n")
+                    gui.log.append(
+                        f"❌ Erreur construction commande PyInstaller: {e}\n"
+                    )
             except Exception:
                 pass
             return []
@@ -165,16 +167,16 @@ class PyInstallerEngine(CompilerEngine):
         """Return environment variables for the compilation process."""
         try:
             env = {}
-            
+
             # Set PYTHONIOENCODING for proper output handling
             env["PYTHONIOENCODING"] = "utf-8"
-            
+
             # Disable PYTHONUTF8 mode to avoid conflicts
             env["PYTHONUTF8"] = "0"
-            
+
             # Set LC_ALL for consistent output
             env["LC_ALL"] = "C"
-            
+
             return env if env else None
         except Exception:
             return None
@@ -187,7 +189,9 @@ class PyInstallerEngine(CompilerEngine):
             if output_dir and output_dir.text().strip():
                 try:
                     if hasattr(gui, "log"):
-                        gui.log.append(f"📁 Sortie générée dans: {output_dir.text().strip()}\n")
+                        gui.log.append(
+                            f"📁 Sortie générée dans: {output_dir.text().strip()}\n"
+                        )
                 except Exception:
                     pass
         except Exception:
@@ -321,7 +325,9 @@ class PyInstallerEngine(CompilerEngine):
     def get_log_prefix(self, file_basename: str) -> str:
         return f"PyInstaller ({self.version})"
 
-    def should_compile_file(self, gui, file: str, selected_files: list[str], python_files: list[str]) -> bool:
+    def should_compile_file(
+        self, gui, file: str, selected_files: list[str], python_files: list[str]
+    ) -> bool:
         """Determine if a file should be included in the compilation queue."""
         # Skip non-Python files
         if not file.endswith(".py"):
@@ -332,13 +338,13 @@ class PyInstallerEngine(CompilerEngine):
         """Apply internationalization translations to the engine UI."""
         try:
             from Core.engines_loader.registry import resolve_language_code
-            
+
             # Resolve language code
             code = resolve_language_code(gui, tr)
-            
+
             # Load engine-local translations
             lang_data = self._load_language_file(code)
-            
+
             # Apply translations to UI elements if they exist
             if hasattr(self, "_opt_onefile") and "onefile_checkbox" in lang_data:
                 self._opt_onefile.setText(lang_data["onefile_checkbox"])
@@ -356,10 +362,15 @@ class PyInstallerEngine(CompilerEngine):
                 self._btn_select_icon.setText(lang_data["icon_button"])
             if hasattr(self, "_opt_debug") and "debug_checkbox" in lang_data:
                 self._opt_debug.setText(lang_data["debug_checkbox"])
-            if hasattr(self, "_pyinstaller_add_data") and "add_data_button" in lang_data:
+            if (
+                hasattr(self, "_pyinstaller_add_data")
+                and "add_data_button" in lang_data
+            ):
                 self._pyinstaller_add_data.setText(lang_data["add_data_button"])
             if hasattr(self, "_output_dir_input") and "output_placeholder" in lang_data:
-                self._output_dir_input.setPlaceholderText(lang_data["output_placeholder"])
+                self._output_dir_input.setPlaceholderText(
+                    lang_data["output_placeholder"]
+                )
         except Exception:
             pass
 
@@ -368,10 +379,10 @@ class PyInstallerEngine(CompilerEngine):
         try:
             import importlib.resources as ilr
             import json
-            
+
             pkg = __package__
             lang_data = {}
-            
+
             # Try exact code first
             try:
                 with ilr.as_file(
@@ -383,7 +394,7 @@ class PyInstallerEngine(CompilerEngine):
                         return lang_data
             except Exception:
                 pass
-            
+
             # Fallback to base language (e.g., "fr" from "fr-CA")
             if "-" in code:
                 base = code.split("-", 1)[0]
@@ -397,18 +408,16 @@ class PyInstallerEngine(CompilerEngine):
                             return lang_data
                 except Exception:
                     pass
-            
+
             # Final fallback to English
             try:
-                with ilr.as_file(
-                    ilr.files(pkg).joinpath("languages", "en.json")
-                ) as p:
+                with ilr.as_file(ilr.files(pkg).joinpath("languages", "en.json")) as p:
                     if os.path.isfile(str(p)):
                         with open(str(p), encoding="utf-8") as f:
                             lang_data = json.load(f) or {}
             except Exception:
                 pass
-            
+
             return lang_data
         except Exception:
             return {}
@@ -446,7 +455,9 @@ class PyInstallerEngine(CompilerEngine):
                         )
         elif choix == "Dossier":
             dir_path = QFileDialog.getExistingDirectory(
-                self._gui, "Sélectionner un dossier à inclure avec PyInstaller", QDir.homePath()
+                self._gui,
+                "Sélectionner un dossier à inclure avec PyInstaller",
+                QDir.homePath(),
             )
             if dir_path:
                 dest, ok = QInputDialog.getText(
@@ -461,4 +472,3 @@ class PyInstallerEngine(CompilerEngine):
                         self._gui.log.append(
                             f"Dossier ajouté à PyInstaller : {dir_path} => {dest}"
                         )
-

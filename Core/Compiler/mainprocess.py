@@ -904,8 +904,3 @@ def cancel_all_compilations(self):
         self.log.append(
             "⛔ Toutes les compilations ont été annulées et tous les processus enfants tués.\n"
         )
-
-
-
-
-

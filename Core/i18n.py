@@ -23,8 +23,9 @@ from typing import Any
 
 # Built-in fallback for English if language files are missing
 FALLBACK_EN: dict[str, Any] = {
+    "name": "English",
+    "code": "en",
     "_meta": {"code": "en", "name": "English"},
-    # Sidebar & main buttons
     "select_folder": "📁 Workspace",
     "select_files": "📋 Files",
     "build_all": "🚀 Build",
@@ -33,43 +34,39 @@ FALLBACK_EN: dict[str, Any] = {
     "cancel_all": "⛔ Cancel",
     "suggest_deps": "🔎 Analyze dependencies",
     "help": "❓ Help",
+    "help_title": "Help",
+    "help_text": "<b>PyCompiler ARK++ — Quick Help</b><br><ul><li>1) Select the Workspace and add your .py files.</li><li>2) Configure pre‑compile plugins via <b>API Loader</b> (BCASL).</li><li>3) Configure options in the <b>PyInstaller</b>, <b>Nuitka</b> or <b>CX_Freeze</b> tab.</li><li>4) Click <b>Build</b> and follow the logs.</li></ul><b>Notes</b><br><ul><li>When a build starts, all action controls are disabled (including API Loader) until it finishes or is canceled.</li><li>Pre‑compilation (BCASL) completes before compilation.</li><li>A <i>venv</i> can be created automatically; requirements.txt is installed if present; tools are installed into the venv as needed.</li><li>API‑initiated workspace changes are auto‑applied; running builds are canceled before switching.</li></ul><b>License</b>: Apache-2.0 — <a href='https://www.apache.org/licenses/LICENSE-2.0'>apache.org/licenses/LICENSE-2.0</a><br><b>Author</b>: Ague Samuel Amen<br>© 2026 Ague Samuel Amen",
     "show_stats": "📊 Statistics",
     "select_lang": "Choose language",
-    "select_theme": "Choose theme",
-    "choose_theme_button": "Choose theme",
-    "choose_theme_system_button": "Choose theme (System)",
-    # Workspace
     "venv_button": "Choose venv folder manually",
     "label_workspace_section": "1. Select workspace folder",
     "venv_label": "venv selected: None",
     "label_folder": "No folder selected",
-    # Files
     "label_files_section": "2. Files to build",
     "btn_remove_file": "🗑️ Remove selected file",
-    # Logs
     "label_logs_section": "Build logs",
-    # PyInstaller tab
-    "tab_pyinstaller": "PyInstaller",
-    "opt_onefile": "Onefile",
-    "opt_windowed": "Windowed",
-    "opt_noconfirm": "Noconfirm",
-    "opt_clean": "Clean",
-    "opt_noupx": "No UPX",
-    "opt_main_only": "Build only main.py or app.py",
-    "btn_select_icon": "🎨 Choose icon (.ico)",
-    "opt_debug": "Debug mode (--debug)",
-    "opt_auto_install": "Auto-install missing modules",
-    "opt_silent_errors": "Do not show error box (silent mode)",
-    # Nuitka tab
-    "tab_nuitka": "Nuitka",
-    "nuitka_onefile": "Onefile (--onefile)",
-    "nuitka_standalone": "Standalone (--standalone)",
-    "nuitka_disable_console": "Disable Windows console (--windows-disable-console)",
-    "nuitka_show_progress": "Show progress (--show-progress)",
-    # "nuitka_plugins": removed (auto-managed)
-    "nuitka_output_dir": "Output folder (--output-dir)",
-    "btn_nuitka_icon": "🎨 Choose Nuitka icon (.ico)",
+    "choose_language_title": "Choose language",
+    "choose_language_label": "Language:",
+    "choose_language_system": "System",
+    "choose_language_system_button": "Choose language (System)",
+    "choose_language_button": "Choose language",
+    "select_theme": "Choose theme",
+    "choose_theme_button": "Choose theme",
+    "choose_theme_system_button": "Choose theme (System)",
+    "tt_select_folder": "Select the workspace directory containing your Python files.",
+    "tt_select_files": "Add Python files manually to the build list.",
+    "tt_build_all": "Start building all selected files.",
+    "tt_export_config": "Export the current configuration to a JSON file.",
+    "tt_import_config": "Import a configuration from a JSON file.",
+    "tt_cancel_all": "Cancel all ongoing builds.",
+    "tt_remove_file": "Remove the selected file(s) from the list.",
+    "tt_help": "Open help and information about the software.",
+    "tt_bc_loader": "Configure API (BCASL) plugins to run before compilation.",
+    "tt_venv_button": "Manually select a venv directory to use for compilation.",
+    "tt_suggest_deps": "Analyze the project for missing Python dependencies.",
+    "tt_show_stats": "Show build statistics (time, number of files, memory).",
 }
+
 
 # Cache global pour les traductions chargées (évite les rechargements)
 _TRANSLATION_CACHE: dict[str, dict[str, Any]] = {}

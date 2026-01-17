@@ -75,7 +75,9 @@ class CompilerEngine:
         """
         return None
 
-    def should_compile_file(self, gui, file: str, selected_files: list[str], python_files: list[str]) -> bool:
+    def should_compile_file(
+        self, gui, file: str, selected_files: list[str], python_files: list[str]
+    ) -> bool:
         """
         Determine if a file should be included in the compilation queue.
         Called by the compiler to filter files based on engine-specific criteria.
