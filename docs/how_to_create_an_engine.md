@@ -77,9 +77,9 @@ class MyEngine(CompilerEngine):
         pass
 
 
-# Register the engine
-from Core.engines_loader.registry import register
-register(MyEngine)
+# Register the engine using the new engine_register function
+from engine_sdk import engine_register
+engine_register(MyEngine)
 ```
 
 Create `ENGINES/my_engine/mapping.json`:
@@ -152,8 +152,11 @@ class MyEngine(CompilerEngine):
 
 ```python
 # At module level, after class definition
-register(MyEngine)
+from engine_sdk import engine_register
+engine_register(MyEngine)
 ```
+
+**Note:** The old `register` function is still available as an alias for backward compatibility, but `engine_register` is the recommended new name.
 
 ### 2.4) Create mapping.json
 
@@ -177,22 +180,24 @@ register(MyEngine)
 
 ### 3.1) Registry API
 
-The `Core.engines_loader.registry` module provides the registration system:
+The `engine_sdk` module provides the registration system via `engine_register`:
 
 ```python
-from Core.engines_loader.registry import (
-    register,           # Register an engine class
-    get_engine,         # Get engine class by ID
-    available_engines,  # List all registered engine IDs
-    create,             # Create an engine instance
+from engine_sdk import (
+    engine_register,    # Register an engine class (new name)
+    register,           # Register an engine class (alias for backward compatibility)
+    CompilerEngine,
 )
 
-# Register your engine
-register(MyEngine)
+# Register your engine (using new name)
+engine_register(MyEngine)
 
 # Later, retrieve it
+from Core.engines_loader.registry import get_engine, available_engines, create
+
 engine_cls = get_engine("my_engine")
 engine_instance = create("my_engine")
+available = available_engines()
 ```
 
 ### 3.2) Registration rules
