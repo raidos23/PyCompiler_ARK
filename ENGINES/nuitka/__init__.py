@@ -55,28 +55,26 @@ class NuitkaEngine(CompilerEngine):
     required_sdk_version: str = "1.0.0"
 
     @property
-    def required_tools(self) -> list[str]:
-        return ["nuitka"]
+    def required_tools(self) -> dict[str, list[str]]:
+        """Return required tools for Nuitka compilation."""
+        system_tools = []
+        if platform.system() == "Linux":
+            # patchelf is needed for Linux binary manipulation
+            # gcc is needed for compilation
+            system_tools = ["patchelf", "gcc"]
+        elif platform.system() == "Windows":
+            # On Windows, Visual Studio Build Tools or similar might be needed
+            # but we'll keep it minimal for now
+            system_tools = []
+
+        return {
+            'python': ['nuitka'],
+            'system': system_tools
+        }
 
     def preflight(self, gui, file: str) -> bool:
-        """Check if Nuitka is available in the venv."""
-        try:
-            venv_manager = getattr(gui, "venv_manager", None)
-            if not venv_manager:
-                return True  # Let build_command fail instead
-
-            venv_path = venv_manager.resolve_project_venv()
-            if not venv_path:
-                return True  # Let build_command fail instead
-
-            if not venv_manager.has_tool_binary(venv_path, "nuitka"):
-                # Try to install nuitka
-                venv_manager.ensure_tools_installed(venv_path, ["nuitka"])
-                return False  # Will be retried after installation
-
-            return True
-        except Exception:
-            return True  # Let build_command handle errors
+        """Preflight check - dependencies are handled automatically by required_tools."""
+        return True
 
     def build_command(self, gui, file: str) -> list[str]:
         """Build the Nuitka command line."""

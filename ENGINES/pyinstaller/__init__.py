@@ -57,28 +57,16 @@ class PyInstallerEngine(CompilerEngine):
     required_sdk_version: str = "1.0.0"
 
     @property
-    def required_tools(self) -> list[str]:
-        return ["pyinstaller"]
+    def required_tools(self) -> dict[str, list[str]]:
+        """Return required tools for PyInstaller compilation."""
+        return {
+            'python': ['pyinstaller'],
+            'system': []
+        }
 
     def preflight(self, gui, file: str) -> bool:
-        """Check if PyInstaller is available in the venv."""
-        try:
-            venv_manager = getattr(gui, "venv_manager", None)
-            if not venv_manager:
-                return True  # Let build_command fail instead
-
-            venv_path = venv_manager.resolve_project_venv()
-            if not venv_path:
-                return True  # Let build_command fail instead
-
-            if not venv_manager.has_tool_binary(venv_path, "pyinstaller"):
-                # Try to install pyinstaller
-                venv_manager.ensure_tools_installed(venv_path, ["pyinstaller"])
-                return False  # Will be retried after installation
-
-            return True
-        except Exception:
-            return True  # Let build_command handle errors
+        """Preflight check - dependencies are handled automatically by required_tools."""
+        return True
 
     def build_command(self, gui, file: str) -> list[str]:
         """Build the PyInstaller command line."""

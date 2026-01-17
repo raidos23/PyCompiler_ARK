@@ -51,28 +51,16 @@ class CXFreezeEngine(CompilerEngine):
     required_sdk_version: str = "1.0.0"
 
     @property
-    def required_tools(self) -> list[str]:
-        return ["cx_freeze"]
+    def required_tools(self) -> dict[str, list[str]]:
+        """Return required tools for CX_Freeze compilation."""
+        return {
+            'python': ['cx_freeze'],
+            'system': []
+        }
 
     def preflight(self, gui, file: str) -> bool:
-        """Check if CX_Freeze is available in the venv."""
-        try:
-            venv_manager = getattr(gui, "venv_manager", None)
-            if not venv_manager:
-                return True  # Let build_command fail instead
-
-            venv_path = venv_manager.resolve_project_venv()
-            if not venv_path:
-                return True  # Let build_command fail instead
-
-            if not venv_manager.has_tool_binary(venv_path, "cx_freeze"):
-                # Try to install cx_freeze
-                venv_manager.ensure_tools_installed(venv_path, ["cx_freeze"])
-                return False  # Will be retried after installation
-
-            return True
-        except Exception:
-            return True  # Let build_command handle errors
+        """Preflight check - dependencies are handled automatically by required_tools."""
+        return True
 
     def build_command(self, gui, file: str) -> list[str]:
         """Build the CX_Freeze command line."""
