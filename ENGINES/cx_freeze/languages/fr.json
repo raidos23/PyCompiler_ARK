@@ -1,0 +1,14 @@
+{
+  "_meta": {
+    "code": "fr",
+    "name": "Français"
+  },
+  "tab_label": "CX_Freeze",
+  "mode_label": "Mode :",
+  "onefile_checkbox": "Onefile",
+  "console_label": "Console :",
+  "windowed_checkbox": "Windowed",
+  "icon_button": "🎨 Choisir une icône (.ico)",
+  "output_placeholder": "Dossier de sortie"
+}
+

@@ -1,0 +1,19 @@
+{
+  "_meta": {
+    "code": "fr",
+    "name": "Français"
+  },
+  "tab_label": "Nuitka",
+  "mode_label": "Mode :",
+  "onefile_checkbox": "Onefile (--onefile)",
+  "type_label": "Type :",
+  "standalone_checkbox": "Standalone (--standalone)",
+  "console_label": "Console :",
+  "disable_console_checkbox": "Désactiver la console Windows (--windows-disable-console)",
+  "progress_label": "Progression :",
+  "show_progress_checkbox": "Afficher la progression (--show-progress)",
+  "add_data_button": "add_data",
+  "output_placeholder": "Dossier de sortie (--output-dir)",
+  "icon_button": "🎨 Choisir une icône (.ico) Nuitka"
+}
+
