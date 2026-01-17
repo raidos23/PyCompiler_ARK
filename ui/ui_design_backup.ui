@@ -103,7 +103,7 @@
        <item>
         <widget class="QPushButton" name="btn_bc_loader">
          <property name="text">
-          <string>🔌 BCASL API Loader</string>
+          <string>🔌 BCASL Bc Plugins Loader</string>
          </property>
         </widget>
        </item>

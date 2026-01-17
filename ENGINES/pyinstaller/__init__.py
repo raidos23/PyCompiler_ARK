@@ -410,3 +410,22 @@ class PyInstallerEngine(CompilerEngine):
                         self._gui.log.append(
                             f"Dossier ajouté à PyInstaller : {dir_path} => {dest}"
                         )
+
+    def select_icon(self) -> None:
+        """Select an icon file for the executable."""
+        try:
+            from PySide6.QtWidgets import QFileDialog
+
+            file_path, _ = QFileDialog.getOpenFileName(
+                self._gui,
+                "Sélectionner une icône",
+                "",
+                "Fichiers icône (*.ico);;Tous les fichiers (*)"
+            )
+            if file_path:
+                self._selected_icon = file_path
+                if hasattr(self._gui, "log"):
+                    self._gui.log.append(f"Icône sélectionnée pour PyInstaller : {file_path}")
+        except Exception as e:
+            if hasattr(self._gui, "log"):
+                self._gui.log.append(f"❌ Erreur lors de la sélection de l'icône : {e}")

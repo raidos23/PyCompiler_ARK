@@ -285,3 +285,22 @@ class CXFreezeEngine(CompilerEngine):
                 self._cx_output_dir.setPlaceholderText(lang_data["output_placeholder"])
         except Exception:
             pass
+        
+    def select_icon(self) -> None:
+        """Select an icon file for the executable."""
+        try:
+            from PySide6.QtWidgets import QFileDialog
+
+            file_path, _ = QFileDialog.getOpenFileName(
+                self._gui,
+                "Sélectionner une icône",
+                "",
+                "Fichiers icône (*.ico);;Tous les fichiers (*)"
+            )
+            if file_path:
+                self._selected_icon = file_path
+                if hasattr(self._gui, "log"):
+                    self._gui.log.append(f"Icône sélectionnée pour Cx_Freeze : {file_path}")
+        except Exception as e:
+            if hasattr(self._gui, "log"):
+                self._gui.log.append(f"❌ Erreur lors de la sélection de l'icône : {e}")

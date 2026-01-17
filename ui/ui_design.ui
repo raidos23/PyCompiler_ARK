@@ -175,7 +175,7 @@
              <string>🧩 Bc Plugins Loader</string>
             </property>
             <property name="toolTip">
-             <string>Charger BCASL Loader</string>
+             <string>Charger Bc Plugins Loader</string>
             </property>
            </widget>
           </item>
