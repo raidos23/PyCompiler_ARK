@@ -793,6 +793,23 @@ def bc_register(
                         f"Impossible d'instancier le plugin '{cls_to_decorate.__name__}': {e}"
                     ) from e
 
+            # Appliquer la priorité basée sur les tags si pas explicitement définie
+            if priority is None and plugin_instance is not None:
+                from .tagging import TAG_PRIORITY_MAP, DEFAULT_TAG_PRIORITY
+                tags = getattr(plugin_instance.meta, "tags", ()) or ()
+                if tags:
+                    # Trouver le score minimum parmi les tags
+                    scores = []
+                    for tag in tags:
+                        tag_str = str(tag).strip().lower()
+                        if tag_str:
+                            score = TAG_PRIORITY_MAP.get(tag_str, DEFAULT_TAG_PRIORITY)
+                            scores.append(score)
+                    if scores:
+                        tag_priority = min(scores)
+                        if tag_priority != DEFAULT_TAG_PRIORITY:
+                            plugin_instance.priority = tag_priority
+
             # Appliquer la priorité personnalisée si fournie
             if priority is not None and plugin_instance is not None:
                 plugin_instance.priority = priority
@@ -800,7 +817,7 @@ def bc_register(
             # Ajouter au manager
             try:
                 manager.add_plugin(plugin_instance)
-                _logger.debug("Plugin '%s' enregistré avec @bc_register", meta.id)
+                _logger.debug("Plugin '%s' enregistré avec @bc_register (priority=%d)", meta.id, plugin_instance.priority)
             except Exception as e:
                 raise RuntimeError(
                     f"Échec de l'enregistrement du plugin '{meta.id}': {e}"
