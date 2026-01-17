@@ -13,6 +13,8 @@
   "cancel_all": "⛔ Kanselleer",
   "suggest_deps": "🔎 Ontleed afhanklikhede",
   "help": "❓ Hulp",
+  "help_title": "Hulp",
+  "help_text": "<b>PyCompiler ARK++ — Vinnige Hulp</b><br><ul><li>1) Kies die Werkruimte en voeg jou .py lêers by.</li><li>2) Stel voor-kompileer plugins op via <b>API Loader</b> (BCASL).</li><li>3) Stel opsies in die <b>PyInstaller</b>, <b>Nuitka</b> of <b>CX_Freeze</b> tab.</li><li>4) Klik <b>Bou</b> en volg die logs.</li></ul><b>Nota</b><br><ul><li>Wanneer 'n bou begin, word alle aksie kontroles gedeaktiveer (insluitend API Loader) totdat dit klaar is of gekanselleer word.</li><li>Voor-kompilasie (BCASL) voltooi voor kompilasie.</li><li>'n <i>venv</i> kan outomaties geskep word; requirements.txt word geïnstalleer indien teenwoordig; gereedskap word in die venv geïnstalleer soos nodig.</li><li>API-geïnisieerde werkruimte veranderinge word outomaties toegepas; lopende boue word gekanselleer voor omskakeling.</li></ul><b>Lisensie</b>: Apache-2.0 — <a href='https://www.apache.org/licenses/LICENSE-2.0'>apache.org/licenses/LICENSE-2.0</a><br><b>Outeur</b>: Ague Samuel Amen<br>© 2026 Ague Samuel Amen",
   "show_stats": "📊 Statistiek",
   "select_lang": "Kies taal",
   "venv_button": "Kies venv-lêergids handmatig",

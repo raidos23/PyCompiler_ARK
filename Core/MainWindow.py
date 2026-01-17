@@ -1091,48 +1091,19 @@ class PyCompilerArkGui(QWidget):
 
     def show_help_dialog(self):
         # Minimal help dialog with current license information
-        if getattr(self, "current_language", "Français") == "English":
-            help_text = (
-                "<b>PyCompiler ARK++ — Quick Help</b><br>"
-                "<ul>"
-                "<li>1) Select the Workspace and add your .py files.</li>"
-                "<li>2) Configure pre‑compile plugins via <b>API Loader</b> (BCASL).</li>"
-                "<li>3) Configure options in the <b>PyInstaller</b>, <b>Nuitka</b> or <b>CX_Freeze</b> tab.</li>"
-                "<li>4) Click <b>Build</b> and follow the logs.</li>"
-                "</ul>"
-                "<b>Notes</b><br>"
-                "<ul>"
-                "<li>When a build starts, all action controls are disabled (including API Loader) until it finishes or is canceled.</li>"
-                "<li>Pre‑compilation (BCASL) completes before compilation.</li>"
-                "<li>A <i>venv</i> can be created automatically; requirements.txt is installed if present; tools are installed into the venv as needed.</li>"
-                "<li>API‑initiated workspace changes are auto‑applied; running builds are canceled before switching.</li>"
-                "</ul>"
-                "<b>License</b>: Apache-2.0 — <a href='https://www.apache.org/licenses/LICENSE-2.0'>apache.org/licenses/LICENSE-2.0</a>"
-                "<br><b>Author</b>: Ague Samuel Amen"
-                "<br>© 2026 Ague Samuel Amen"
-            )
-        else:
-            help_text = (
-                "<b>PyCompiler ARK++ — Aide rapide</b><br>"
-                "<ul>"
-                "<li>1) Sélectionnez le Workspace et ajoutez vos fichiers .py.</li>"
-                "<li>2) Configurez les plugins de pré‑compilation via <b>API Loader</b> (BCASL).</li>"
-                "<li>3) Réglez les options dans l’onglet <b>PyInstaller</b> ou <b>Nuitka</b>.</li>"
-                "<li>4) Cliquez sur <b>Build</b> et suivez les logs.</li>"
-                "</ul>"
-                "<b>Notes</b><br>"
-                "<ul>"
-                "<li>Au démarrage d’un build, tous les contrôles d’action sont désactivés (y compris API Loader) jusqu’à la fin ou l’annulation.</li>"
-                "<li>La pré‑compilation (BCASL) se termine avant la compilation.</li>"
-                "<li>Un <i>venv</i> peut être créé automatiquement ; requirements.txt est installé s’il est présent ; les outils sont installés dans le venv si nécessaire.</li>"
-                "<li>Les demandes de changement de workspace via l’API sont appliquées automatiquement ; les builds en cours sont annulés avant le changement.</li>"
-                "</ul>"
-                "<b>Licence</b> : Apache-2.0 — <a href='https://www.apache.org/licenses/LICENSE-2.0'>apache.org/licenses/LICENSE-2.0</a>"
-                "<br><b>Auteur</b> : Ague Samuel Amen"
-                "<br>© 2026 Ague Samuel Amen"
-            )
+        try:
+            tr = getattr(self, "_tr", None)
+            if tr and isinstance(tr, dict):
+                help_title = tr.get("help_title", "Help")
+                help_text = tr.get("help_text", "")
+            else:
+                help_title = "Help"
+                help_text = ""
+        except Exception:
+            help_title = "Help"
+            help_text = ""
         dlg = QMessageBox(self)
-        dlg.setWindowTitle(self.tr("Aide", "Help"))
+        dlg.setWindowTitle(help_title)
         dlg.setTextFormat(Qt.TextFormat.RichText)
         dlg.setText(help_text)
         dlg.setIcon(QMessageBox.Icon.Information)

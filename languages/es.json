@@ -13,6 +13,8 @@
   "cancel_all": "⛔ Cancelar",
   "suggest_deps": "🔎 Analizar dependencias",
   "help": "❓ Ayuda",
+  "help_title": "Ayuda",
+  "help_text": "<b>PyCompiler ARK++ — Ayuda rápida</b><br><ul><li>1) Seleccione el Espacio de trabajo y añada sus archivos .py.</li><li>2) Configure los plugins de pre-compilación a través de <b>API Loader</b> (BCASL).</li><li>3) Ajuste las opciones en la pestaña <b>PyInstaller</b>, <b>Nuitka</b> o <b>CX_Freeze</b>.</li><li>4) Haga clic en <b>Compilar</b> y siga los logs.</li></ul><b>Notas</b><br><ul><li>Al iniciar una compilación, todos los controles de acción se desactivan (incluyendo API Loader) hasta que termine o se cancele.</li><li>La pre-compilación (BCASL) se completa antes de la compilación.</li><li>Un <i>venv</i> puede crearse automáticamente; requirements.txt se instala si está presente; las herramientas se instalan en el venv según sea necesario.</li><li>Los cambios de espacio de trabajo iniciados por API se aplican automáticamente; las compilaciones en curso se cancelan antes del cambio.</li></ul><b>Licencia</b>: Apache-2.0 — <a href='https://www.apache.org/licenses/LICENSE-2.0'>apache.org/licenses/LICENSE-2.0</a><br><b>Autor</b>: Ague Samuel Amen<br>© 2026 Ague Samuel Amen",
   "show_stats": "📊 Estadísticas",
   "select_lang": "Elegir idioma",
   "venv_button": "Elegir carpeta venv manualmente",
