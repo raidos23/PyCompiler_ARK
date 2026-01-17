@@ -1317,8 +1317,8 @@ class PyCompilerArkGui(QWidget):
             pass
         # API Loader button (BCASL)
         try:
-            if hasattr(self, "btn_api_loader") and self.btn_api_loader:
-                self.btn_api_loader.setEnabled(enabled)
+            if hasattr(self, "btn_bc_loader") and self.btn_bc_loader:
+                self.btn_bc_loader.setEnabled(enabled)
         except Exception:
             pass
         # Désactiver aussi options de langue/thème et stats (sensibles en cours de build)
@@ -1347,7 +1347,7 @@ class PyCompilerArkGui(QWidget):
                 getattr(self, "btn_remove_file", None),
                 getattr(self, "btn_export_config", None),
                 getattr(self, "btn_import_config", None),
-                getattr(self, "btn_api_loader", None),
+                getattr(self, "btn_bc_loader", None),
                 getattr(self, "btn_suggest_deps", None),
                 getattr(self, "select_lang", None),
                 getattr(self, "select_theme", None),
