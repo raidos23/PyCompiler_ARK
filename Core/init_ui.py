@@ -255,7 +255,7 @@ def init_ui(self):
     self.btn_cancel_all = self.ui.findChild(QPushButton, "btn_cancel_all")
     self.btn_help = self.ui.findChild(QPushButton, "btn_help")
     self.btn_suggest_deps = self.ui.findChild(QPushButton, "btn_suggest_deps")
-    self.btn_api_loader = self.ui.findChild(QPushButton, "btn_api_loader")
+    self.btn_bc_loader = self.ui.findChild(QPushButton, "btn_bc_loader")
     self.btn_acasl_loader = self.ui.findChild(QPushButton, "btn_acasl_loader")
     if self.btn_acasl_loader:
         try:
@@ -333,7 +333,7 @@ def init_ui(self):
 
     from bcasl import open_bc_loader_dialog
 
-    self.btn_api_loader.clicked.connect(lambda: open_bc_loader_dialog(self))
+    self.btn_bc_loader.clicked.connect(lambda: open_bc_loader_dialog(self))
     # ACASL removed: do not import or connect ACASL loader
 
     if self.btn_help:
@@ -855,9 +855,9 @@ def _apply_translations(self, tr: dict[str, object]) -> None:
                 )
             if getattr(self, "btn_help", None):
                 self.btn_help.setToolTip(_tt("tt_help", self.btn_help.toolTip()))
-            if getattr(self, "btn_api_loader", None):
-                self.btn_api_loader.setToolTip(
-                    _tt("tt_api_loader", self.btn_api_loader.toolTip())
+            if getattr(self, "btn_bc_loader", None):
+                self.btn_bc_loader.setToolTip(
+                    _tt("tt_bc_loader", self.btn_bc_loader.toolTip())
                 )
             # ACASL removed: no tooltip
             if getattr(self, "venv_button", None):
