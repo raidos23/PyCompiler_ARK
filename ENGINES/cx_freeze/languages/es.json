@@ -1,0 +1,13 @@
+{
+  "_meta": {
+    "code": "es",
+    "name": "Español"
+  },
+  "tab_label": "CX_Freeze",
+  "mode_label": "Modo:",
+  "onefile_checkbox": "Onefile",
+  "console_label": "Consola:",
+  "windowed_checkbox": "Windowed",
+  "icon_button": "🎨 Elegir icono (.ico)",
+  "output_placeholder": "Directorio de salida"
+}
