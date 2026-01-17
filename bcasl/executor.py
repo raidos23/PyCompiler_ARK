@@ -181,6 +181,30 @@ class BCASL:
                             # Enregistrer le plugin
                             pid = plugin_instance.meta.id
                             if pid not in self._registry:
+                                # Appliquer la priorité basée sur les tags si pas déjà définie
+                                # et si la priorité par défaut (100) est utilisée
+                                if plugin_instance.priority == 100:
+                                    from .tagging import (
+                                        TAG_PRIORITY_MAP,
+                                        DEFAULT_TAG_PRIORITY,
+                                    )
+
+                                    tags = getattr(
+                                        plugin_instance.meta, "tags", ()
+                                    ) or ()
+                                    if tags:
+                                        scores = []
+                                        for tag in tags:
+                                            tag_str = str(tag).strip().lower()
+                                            if tag_str:
+                                                score = TAG_PRIORITY_MAP.get(
+                                                    tag_str, DEFAULT_TAG_PRIORITY
+                                                )
+                                                scores.append(score)
+                                        if scores:
+                                            tag_priority = min(scores)
+                                            if tag_priority != DEFAULT_TAG_PRIORITY:
+                                                plugin_instance.priority = tag_priority
                                 self.add_plugin(plugin_instance)
                                 new_ids.append(pid)
                                 is_decorator_plugin = True
