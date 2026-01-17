@@ -141,6 +141,13 @@ class CompilerEngine:
                 gui.log.append(f"⚠️ Error ensuring tools installed: {e}")
             return False
 
+    def apply_i18n(self, gui, tr: dict) -> None:
+        """
+        Apply internationalization translations to the engine UI.
+        Default implementation does nothing - engines should override this.
+        """
+        pass
+
     def get_log_prefix(self, file_basename: str) -> str:
         """
         Return a log prefix string for the engine's compilation messages.

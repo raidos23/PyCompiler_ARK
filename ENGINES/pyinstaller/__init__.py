@@ -325,13 +325,13 @@ class PyInstallerEngine(CompilerEngine):
     def apply_i18n(self, gui, tr: dict) -> None:
         """Apply internationalization translations to the engine UI."""
         try:
-            from Core.engines_loader.registry import resolve_language_code
+            from Core.engines_loader.registry import resolve_language_code, load_engine_language_file
 
             # Resolve language code
             code = resolve_language_code(gui, tr)
 
             # Load engine-local translations
-            lang_data = self._load_language_file(code)
+            lang_data = load_engine_language_file(__package__, code)
 
             # Apply translations to UI elements if they exist
             if hasattr(self, "_opt_onefile") and "onefile_checkbox" in lang_data:
@@ -361,54 +361,6 @@ class PyInstallerEngine(CompilerEngine):
                 )
         except Exception:
             pass
-
-    def _load_language_file(self, code: str) -> dict:
-        """Load language file for the given code."""
-        try:
-            import importlib.resources as ilr
-            import json
-
-            pkg = __package__
-            lang_data = {}
-
-            # Try exact code first
-            try:
-                with ilr.as_file(
-                    ilr.files(pkg).joinpath("languages", f"{code}.json")
-                ) as p:
-                    if os.path.isfile(str(p)):
-                        with open(str(p), encoding="utf-8") as f:
-                            lang_data = json.load(f) or {}
-                        return lang_data
-            except Exception:
-                pass
-
-            # Fallback to base language (e.g., "fr" from "fr-CA")
-            if "-" in code:
-                base = code.split("-", 1)[0]
-                try:
-                    with ilr.as_file(
-                        ilr.files(pkg).joinpath("languages", f"{base}.json")
-                    ) as p:
-                        if os.path.isfile(str(p)):
-                            with open(str(p), encoding="utf-8") as f:
-                                lang_data = json.load(f) or {}
-                            return lang_data
-                except Exception:
-                    pass
-
-            # Final fallback to English
-            try:
-                with ilr.as_file(ilr.files(pkg).joinpath("languages", "en.json")) as p:
-                    if os.path.isfile(str(p)):
-                        with open(str(p), encoding="utf-8") as f:
-                            lang_data = json.load(f) or {}
-            except Exception:
-                pass
-
-            return lang_data
-        except Exception:
-            return {}
 
     def add_data(self) -> None:
         """Add data files or directories to be included with PyInstaller."""
