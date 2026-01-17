@@ -1090,14 +1090,14 @@ class PyCompilerArkGui(QWidget):
         self.update_command_preview()
 
     def show_help_dialog(self):
-        # Minimal, aligned with v3.2.0 behavior (classic engines only)
+        # Minimal help dialog with current license information
         if getattr(self, "current_language", "Français") == "English":
             help_text = (
                 "<b>PyCompiler ARK++ — Quick Help</b><br>"
                 "<ul>"
                 "<li>1) Select the Workspace and add your .py files.</li>"
                 "<li>2) Configure pre‑compile plugins via <b>API Loader</b> (BCASL).</li>"
-                "<li>3) Configure options in the <b>PyInstaller</b> or <b>Nuitka</b> tab.</li>"
+                "<li>3) Configure options in the <b>PyInstaller</b>, <b>Nuitka</b> or <b>CX_Freeze</b> tab.</li>"
                 "<li>4) Click <b>Build</b> and follow the logs.</li>"
                 "</ul>"
                 "<b>Notes</b><br>"
@@ -1107,10 +1107,9 @@ class PyCompilerArkGui(QWidget):
                 "<li>A <i>venv</i> can be created automatically; requirements.txt is installed if present; tools are installed into the venv as needed.</li>"
                 "<li>API‑initiated workspace changes are auto‑applied; running builds are canceled before switching.</li>"
                 "</ul>"
-                "<b>License</b>: GPL‑3.0 — <a href='https://www.gnu.org/licenses/gpl-3.0.html'>gnu.org/licenses/gpl-3.0.html</a>"
-                "<br><b>Author</b>: Samuel Amen Ague"
-                "<br>© 2025 Samuel Amen Ague"
-                "<br>©PyCompiler_Pro++(ARK++)"
+                "<b>License</b>: Apache-2.0 — <a href='https://www.apache.org/licenses/LICENSE-2.0'>apache.org/licenses/LICENSE-2.0</a>"
+                "<br><b>Author</b>: Ague Samuel Amen"
+                "<br>© 2026 Ague Samuel Amen"
             )
         else:
             help_text = (
@@ -1128,10 +1127,9 @@ class PyCompilerArkGui(QWidget):
                 "<li>Un <i>venv</i> peut être créé automatiquement ; requirements.txt est installé s’il est présent ; les outils sont installés dans le venv si nécessaire.</li>"
                 "<li>Les demandes de changement de workspace via l’API sont appliquées automatiquement ; les builds en cours sont annulés avant le changement.</li>"
                 "</ul>"
-                "<b>Licence</b> : GPL‑3.0 — <a href='https://www.gnu.org/licenses/gpl-3.0.html'>gnu.org/licenses/gpl-3.0.html</a>"
-                "<br><b>Auteur</b> : Samuel Amen Ague"
-                "<br>© 2025 Samuel Amen Ague"
-                "<br>©PyCompiler_Pro++(ARK++)"
+                "<b>Licence</b> : Apache-2.0 — <a href='https://www.apache.org/licenses/LICENSE-2.0'>apache.org/licenses/LICENSE-2.0</a>"
+                "<br><b>Auteur</b> : Ague Samuel Amen"
+                "<br>© 2026 Ague Samuel Amen"
             )
         dlg = QMessageBox(self)
         dlg.setWindowTitle(self.tr("Aide", "Help"))
