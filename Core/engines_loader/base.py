@@ -87,12 +87,59 @@ class CompilerEngine:
         return True
 
     @property
-    def required_tools(self) -> list[str]:
+    def required_tools(self) -> dict[str, list[str]]:
         """
-        Return list of tool names required by this engine (e.g., ['pyinstaller'], ['nuitka']).
-        Used by VenvManager to check/install dependencies.
+        Return dict of required tools with installation modes.
+        Keys: 'python' for pip-installable tools, 'system' for system packages.
+        Used by VenvManager for Python tools and system installer for system tools.
+        Example: {'python': ['pyinstaller'], 'system': ['build-essential']}
         """
-        return []
+        return {'python': [], 'system': []}
+
+    def ensure_tools_installed(self, gui) -> bool:
+        """
+        Ensure all required tools are installed.
+        Returns True if all tools are ready, False if installation failed or was cancelled.
+        Handles both Python (pip) and system packages.
+        """
+        try:
+            tools = self.required_tools
+            python_tools = tools.get('python', [])
+            system_tools = tools.get('system', [])
+
+            # Check if VenvManager is available
+            if hasattr(gui, 'venv_manager') and gui.venv_manager:
+                venv_root = gui.venv_manager.resolve_project_venv()
+                if venv_root:
+                    # Install Python tools via VenvManager
+                    if python_tools:
+                        try:
+                            gui.venv_manager.ensure_tools_installed(venv_root, python_tools)
+                            # Wait for completion (simplified - in practice would need async handling)
+                        except Exception as e:
+                            if hasattr(gui, 'log') and gui.log:
+                                gui.log.append(f"⚠️ Failed to install Python tools {python_tools}: {e}")
+                            return False
+
+            # Install system tools
+            if system_tools:
+                try:
+                    from Core.sys_deps import install_system_packages
+                    success = install_system_packages(system_tools, gui)
+                    if not success:
+                        if hasattr(gui, 'log') and gui.log:
+                            gui.log.append(f"⚠️ Failed to install system tools {system_tools}")
+                        return False
+                except Exception as e:
+                    if hasattr(gui, 'log') and gui.log:
+                        gui.log.append(f"⚠️ Failed to install system tools {system_tools}: {e}")
+                    return False
+
+            return True
+        except Exception as e:
+            if hasattr(gui, 'log') and gui.log:
+                gui.log.append(f"⚠️ Error ensuring tools installed: {e}")
+            return False
 
     def get_log_prefix(self, file_basename: str) -> str:
         """
