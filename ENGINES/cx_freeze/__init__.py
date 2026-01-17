@@ -80,6 +80,26 @@ class CXFreezeEngine(CompilerEngine):
             # Start with python -m cx_Freeze
             cmd = [python_path, "-m", "cx_Freeze"]
 
+            # Add options from UI
+            # Onefile mode
+            onefile = self._get_opt("onefile")
+            if onefile and onefile.isChecked():
+                cmd.append("--onefile")
+
+            # Windowed mode
+            windowed = self._get_opt("windowed")
+            if windowed and windowed.isChecked():
+                cmd.append("--no-console")
+
+            # Output directory
+            output_dir = self._get_input("output_dir")
+            if output_dir and output_dir.text().strip():
+                cmd.extend(["--build-exe", output_dir.text().strip()])
+
+            # Icon
+            if hasattr(self, "_selected_icon") and self._selected_icon:
+                cmd.extend(["--icon", self._selected_icon])
+
             return cmd
 
         except Exception as e:
@@ -175,6 +195,7 @@ class CXFreezeEngine(CompilerEngine):
             icon_layout = QHBoxLayout()
             self._cx_btn_select_icon = QPushButton("🎨 Choisir une icône (.ico)")
             self._cx_btn_select_icon.setObjectName("cx_btn_select_icon_dynamic")
+            self._cx_btn_select_icon.clicked.connect(self.select_icon)
             icon_layout.addWidget(self._cx_btn_select_icon)
             icon_layout.addStretch()
             layout.addLayout(icon_layout)
