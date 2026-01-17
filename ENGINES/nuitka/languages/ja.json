@@ -1,0 +1,18 @@
+{
+  "_meta": {
+    "code": "ja",
+    "name": "日本語"
+  },
+  "tab_label": "Nuitka",
+  "mode_label": "モード:",
+  "onefile_checkbox": "Onefile (--onefile)",
+  "type_label": "タイプ:",
+  "standalone_checkbox": "Standalone (--standalone)",
+  "console_label": "コンソール:",
+  "disable_console_checkbox": "Windowsコンソールを無効化 (--windows-disable-console)",
+  "progress_label": "進捗:",
+  "show_progress_checkbox": "進捗を表示 (--show-progress)",
+  "add_data_button": "add_data",
+  "output_placeholder": "出力ディレクトリ (--output-dir)",
+  "icon_button": "🎨 アイコンを選択 (.ico) Nuitka"
+}

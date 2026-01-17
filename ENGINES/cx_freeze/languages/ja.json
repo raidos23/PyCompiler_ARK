@@ -1,0 +1,13 @@
+{
+  "_meta": {
+    "code": "ja",
+    "name": "日本語"
+  },
+  "tab_label": "CX_Freeze",
+  "mode_label": "モード:",
+  "onefile_checkbox": "Onefile",
+  "console_label": "コンソール:",
+  "windowed_checkbox": "Windowed",
+  "icon_button": "🎨 アイコンを選択 (.ico)",
+  "output_placeholder": "出力ディレクトリ"
+}

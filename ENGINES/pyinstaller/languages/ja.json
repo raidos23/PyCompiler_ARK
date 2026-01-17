@@ -1,0 +1,24 @@
+{
+  "_meta": {
+    "code": "ja",
+    "name": "日本語"
+  },
+  "tab_label": "PyInstaller",
+  "mode_label": "モード:",
+  "onefile_checkbox": "Onefile",
+  "console_label": "コンソール:",
+  "windowed_checkbox": "Windowed",
+  "confirmation_label": "確認:",
+  "noconfirm_checkbox": "Noconfirm",
+  "cleanup_label": "クリーンアップ:",
+  "clean_checkbox": "Clean",
+  "compression_label": "圧縮:",
+  "noupx_checkbox": "No UPX",
+  "files_label": "ファイル:",
+  "main_only_checkbox": "main.pyまたはapp.pyのみをコンパイル",
+  "icon_button": "🎨 アイコンを選択 (.ico)",
+  "debug_checkbox": "デバッグモード (--debug)",
+  "add_data_button": "add_data",
+  "output_placeholder": "出力ディレクトリ (--distpath)。空の場合は ./dist"
+}
+
