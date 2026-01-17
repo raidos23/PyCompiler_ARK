@@ -17,6 +17,8 @@ import os
 from pathlib import Path
 import shutil
 from typing import Optional
+
+from bcasl import bc_register
 from Plugins_SDK.BcPluginContext import BcPluginBase, PluginMeta, PreCompileContext
 from Plugins_SDK.GeneralContext import Dialog
 
@@ -27,7 +29,8 @@ from Plugins_SDK.GeneralContext import Dialog
 log = Dialog()
 dialog = Dialog()
 
-META = PluginMeta(
+# Plugin metadata
+PLUGIN_META = PluginMeta(
     id="cleaner",
     name="Cleaner",
     version="1.0.0",
@@ -41,9 +44,8 @@ META = PluginMeta(
     required_general_context_version="1.0.0",
 )
 
-# Plugin no longer uses i18n; static messages are used directly.
 
-
+@bc_register
 class Cleaner(BcPluginBase):
     """Plugin de nettoyage du workspace avant compilation.
 
@@ -51,8 +53,10 @@ class Cleaner(BcPluginBase):
     et éviter les problèmes de cache lors de la compilation.
     """
 
+    meta = PLUGIN_META
+
     def __init__(self):
-        super().__init__(META)
+        super().__init__(meta=PLUGIN_META)
         self.cleaned_files = 0
         self.cleaned_dirs = 0
 
@@ -154,12 +158,3 @@ class Cleaner(BcPluginBase):
 
         except Exception as e:
             log.log_warn(f"Error during cleaning: {e}")
-
-
-# Auto-register plugin in BCASL
-PLUGIN = Cleaner()
-
-
-def bcasl_register(manager):
-    """Register the Cleaner plugin with the BCASL manager."""
-    manager.add_plugin(PLUGIN)
