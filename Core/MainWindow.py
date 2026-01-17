@@ -1267,27 +1267,8 @@ class PyCompilerArkGui(QWidget):
 
     def update_command_preview(self):
         # Aperçu de commande désactivé: widget label_cmd retiré
-        # Résumé des options - only check static widgets if they exist
-        summary = []
-        if hasattr(self, "opt_onefile") and self.opt_onefile is not None and self.opt_onefile.isChecked():
-            summary.append("Onefile")
-        if hasattr(self, "opt_windowed") and self.opt_windowed is not None and self.opt_windowed.isChecked():
-            summary.append("Windowed")
-        if hasattr(self, "opt_noconfirm") and self.opt_noconfirm is not None and self.opt_noconfirm.isChecked():
-            summary.append("Noconfirm")
-        if hasattr(self, "opt_clean") and self.opt_clean is not None and self.opt_clean.isChecked():
-            summary.append("Clean")
-        if hasattr(self, "opt_noupx") and self.opt_noupx is not None and self.opt_noupx.isChecked():
-            summary.append("NoUPX")
-        if hasattr(self, "opt_debug") and self.opt_debug is not None and self.opt_debug.isChecked():
-            summary.append("Debug")
-        if hasattr(self, "opt_auto_install") and self.opt_auto_install is not None and self.opt_auto_install.isChecked():
-            summary.append("Auto-install modules")
-        if hasattr(self, "icon_path") and self.icon_path:
-            summary.append("Icone")
-        if hasattr(self, "output_dir_input") and self.output_dir_input is not None and self.output_dir_input.text().strip():
-            summary.append(f"Sortie: {self.output_dir_input.text().strip()}")
-        # Widget options_summary supprimé; plus de mise à jour de résumé visuel
+        # Cette méthode est maintenant vide car les options sont gérées dynamiquement par les moteurs
+        pass
 
     from .Compiler import (
         cancel_all_compilations,
@@ -1315,7 +1296,6 @@ class PyCompilerArkGui(QWidget):
             pass
         self.btn_cancel_all.setEnabled(not enabled)
         self.btn_select_folder.setEnabled(enabled)
-        self.btn_select_icon.setEnabled(enabled)
         self.btn_select_files.setEnabled(enabled)
         self.btn_remove_file.setEnabled(enabled)
         # Check if buttons exist before calling setEnabled
@@ -1358,36 +1338,21 @@ class PyCompilerArkGui(QWidget):
         except Exception:
             pass
         self.venv_button.setEnabled(enabled)
-        # Enable/disable static output_dir_input if it exists
-        if hasattr(self, "output_dir_input") and self.output_dir_input is not None:
-            self.output_dir_input.setEnabled(enabled)
-        # Désactive toutes les cases à cocher d'options (only if they exist)
-        checkbox_list = []
-        for name in ["opt_onefile", "opt_windowed", "opt_noconfirm", "opt_clean", 
-                     "opt_noupx", "opt_main_only", "opt_debug", "opt_auto_install", 
-                     "opt_silent_errors"]:
-            if hasattr(self, name) and getattr(self, name) is not None:
-                checkbox_list.append(getattr(self, name))
-        for checkbox in checkbox_list:
-            checkbox.setEnabled(enabled)
         # Rafraîchir visuellement l'état grisé de tous les contrôles sensibles
         try:
             grey_targets = [
                 getattr(self, "btn_build_all", None),
                 getattr(self, "btn_select_folder", None),
-                getattr(self, "btn_select_icon", None),
                 getattr(self, "btn_select_files", None),
                 getattr(self, "btn_remove_file", None),
                 getattr(self, "btn_export_config", None),
                 getattr(self, "btn_import_config", None),
                 getattr(self, "btn_api_loader", None),
-                None,
                 getattr(self, "btn_suggest_deps", None),
                 getattr(self, "select_lang", None),
                 getattr(self, "select_theme", None),
                 getattr(self, "btn_show_stats", None),
                 getattr(self, "venv_button", None),
-                getattr(self, "output_dir_input", None),
             ]
             for w in grey_targets:
                 try:
@@ -1407,7 +1372,6 @@ class PyCompilerArkGui(QWidget):
                     pass
         except Exception:
             pass
-        # self.custom_args supprimé (widget supprimé)
 
     from .preferences import load_preferences, save_preferences, update_ui_state
 
@@ -1511,45 +1475,7 @@ class PyCompilerArkGui(QWidget):
         # Logs
         _set("label_logs_section", "label_logs_section")
 
-        # Tabs - only try if compiler_tabs exists and has tabs
-        try:
-            if hasattr(self, "compiler_tabs") and self.compiler_tabs:
-                tab_count = self.compiler_tabs.count()
-                if tab_count > 0:
-                    val0 = tr.get("tab_pyinstaller")
-                    if val0:
-                        self.compiler_tabs.setTabText(0, val0)
-                if tab_count > 1:
-                    val1 = tr.get("tab_nuitka")
-                    if val1:
-                        self.compiler_tabs.setTabText(1, val1)
-        except Exception:
-            pass
-
-        # PyInstaller options
-        _set("opt_onefile", "opt_onefile")
-        _set("opt_windowed", "opt_windowed")
-        _set("opt_noconfirm", "opt_noconfirm")
-        _set("opt_clean", "opt_clean")
-        _set("opt_noupx", "opt_noupx")
-        _set("opt_main_only", "opt_main_only")
-        _set("btn_select_icon", "btn_select_icon")
-        _set("opt_debug", "opt_debug")
-        _set("opt_auto_install", "opt_auto_install")
-        _set("opt_silent_errors", "opt_silent_errors")
-
-        # Nuitka options
-        _set("nuitka_onefile", "nuitka_onefile")
-        _set("nuitka_standalone", "nuitka_standalone")
-        _set("nuitka_disable_console", "nuitka_disable_console")
-        _set("nuitka_show_progress", "nuitka_show_progress")
-        try:
-            placeholder = tr.get("nuitka_output_dir")
-            if placeholder and getattr(self, "nuitka_output_dir", None):
-                self.nuitka_output_dir.setPlaceholderText(placeholder)
-        except Exception:
-            pass
-        _set("btn_nuitka_icon", "btn_nuitka_icon")
+        # Note: Tabs are now dynamically created by engines, no static translation needed
 
     def apply_language(self, lang_display: str):
         # Launch non-blocking translation loading and apply when ready
