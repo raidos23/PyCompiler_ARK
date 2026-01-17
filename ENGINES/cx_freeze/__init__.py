@@ -144,8 +144,105 @@ class CXFreezeEngine(CompilerEngine):
             pass
 
     def create_tab(self, gui):
-        """ it is the ui tab for cxfreeze engine """
-        return None
+        """
+        Create the CX_Freeze tab widget with all options.
+        Returns (widget, label) tuple or None if tab creation fails.
+        """
+        try:
+            from PySide6.QtWidgets import (
+                QCheckBox,
+                QFormLayout,
+                QHBoxLayout,
+                QLineEdit,
+                QPushButton,
+                QVBoxLayout,
+                QWidget,
+            )
+
+            # Create the tab widget
+            tab = QWidget()
+            tab.setObjectName("tab_cx_freeze_dynamic")
+
+            # Create main layout
+            layout = QVBoxLayout(tab)
+            layout.setSpacing(10)
+
+            # Create form layout for options
+            form_layout = QFormLayout()
+            form_layout.setSpacing(8)
+
+            # Onefile option
+            self._cx_onefile = QCheckBox("Onefile")
+            self._cx_onefile.setObjectName("cx_onefile_dynamic")
+            form_layout.addRow("Mode:", self._cx_onefile)
+
+            # Windowed option
+            self._cx_windowed = QCheckBox("Windowed")
+            self._cx_windowed.setObjectName("cx_windowed_dynamic")
+            form_layout.addRow("Console:", self._cx_windowed)
+
+            layout.addLayout(form_layout)
+
+            # Icon button
+            icon_layout = QHBoxLayout()
+            self._cx_btn_select_icon = QPushButton("🎨 Choisir une icône (.ico)")
+            self._cx_btn_select_icon.setObjectName("cx_btn_select_icon_dynamic")
+            icon_layout.addWidget(self._cx_btn_select_icon)
+            icon_layout.addStretch()
+            layout.addLayout(icon_layout)
+
+            # Output directory
+            output_layout = QHBoxLayout()
+            self._cx_output_dir = QLineEdit()
+            self._cx_output_dir.setObjectName("cx_output_dir_dynamic")
+            self._cx_output_dir.setPlaceholderText(
+                "Dossier de sortie"
+            )
+            output_layout.addWidget(self._cx_output_dir)
+            layout.addLayout(output_layout)
+
+            layout.addStretch()
+
+            # Store references in the engine instance for build_command access
+            self._gui = gui
+
+            return tab, "CX_Freeze"
+
+        except Exception as e:
+            try:
+                if hasattr(gui, "log"):
+                    gui.log.append(f"❌ Erreur création onglet CX_Freeze: {e}\n")
+            except Exception:
+                pass
+            return None
+
+    def _get_opt(self, name: str):
+        """Get option widget from engine instance or GUI."""
+        # Try engine instance first (dynamic tabs)
+        if hasattr(self, f"_cx_{name}"):
+            return getattr(self, f"_cx_{name}")
+        if hasattr(self, f"_opt_{name}"):
+            return getattr(self, f"_opt_{name}")
+        # Fallback to GUI widget (static UI)
+        return getattr(self._gui, name, None) if hasattr(self, "_gui") else None
+
+    def _get_btn(self, name: str):
+        """Get button widget from engine instance or GUI."""
+        if hasattr(self, f"_cx_btn_{name}"):
+            return getattr(self, f"_cx_btn_{name}")
+        if hasattr(self, f"_btn_{name}"):
+            return getattr(self, f"_btn_{name}")
+        return getattr(self._gui, name, None) if hasattr(self, "_gui") else None
+
+    def _get_input(self, name: str):
+        """Get input widget from engine instance or GUI."""
+        # Try engine instance first (dynamic tabs)
+        if hasattr(self, f"_cx_{name}"):
+            return getattr(self, f"_cx_{name}")
+        if hasattr(self, f"_{name}"):
+            return getattr(self, f"_{name}")
+        # Fallback to GUI widget (static UI)
+        return getattr(self._gui, name, None) if hasattr(self, "_gui") else None
 
     def get_log_prefix(self, file_basename: str) -> str:
         return f"CX_Freeze ({self.version})"
