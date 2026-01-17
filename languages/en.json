@@ -1,5 +1,10 @@
 {
-  "_meta": {"code": "en", "name": "English"},
+  "name": "English",
+  "code": "en",
+  "_meta": {
+    "code": "en",
+    "name": "English"
+  },
   "select_folder": "📁 Workspace",
   "select_files": "📋 Files",
   "build_all": "🚀 Build",
@@ -10,19 +15,22 @@
   "help": "❓ Help",
   "show_stats": "📊 Statistics",
   "select_lang": "Choose language",
-  "select_theme": "Choose theme",
-  "choose_theme_button": "Choose theme",
-  "choose_theme_system_button": "Choose theme (System)",
-
   "venv_button": "Choose venv folder manually",
   "label_workspace_section": "1. Select workspace folder",
   "venv_label": "venv selected: None",
   "label_folder": "No folder selected",
-
   "label_files_section": "2. Files to build",
   "btn_remove_file": "🗑️ Remove selected file",
-
   "label_logs_section": "Build logs",
+
+  "choose_language_title": "Choose language",
+  "choose_language_label": "Language:",
+  "choose_language_system": "System",
+  "choose_language_system_button": "Choose language (System)",
+  "choose_language_button": "Choose language",
+  "select_theme": "Choose theme",
+  "choose_theme_button": "Choose theme",
+  "choose_theme_system_button": "Choose theme (System)",
 
   "tt_select_folder": "Select the workspace directory containing your Python files.",
   "tt_select_files": "Add Python files manually to the build list.",
@@ -31,11 +39,10 @@
   "tt_import_config": "Import a configuration from a JSON file.",
   "tt_cancel_all": "Cancel all ongoing builds.",
   "tt_remove_file": "Remove the selected file(s) from the list.",
-  "tt_select_icon": "Choose an .ico file for the generated executable (Windows only).",
   "tt_help": "Open help and information about the software.",
   "tt_bc_loader": "Configure API (BCASL) plugins to run before compilation.",
   "tt_venv_button": "Manually select a venv directory to use for compilation.",
   "tt_suggest_deps": "Analyze the project for missing Python dependencies.",
-  "tt_show_stats": "Show build statistics (time, number of files, memory).",
-  "tt_output_dir": "Output directory for generated executables (PyInstaller --distpath). Leave empty to use 'dist'."
+  "tt_show_stats": "Show build statistics (time, number of files, memory)."
 }
+
