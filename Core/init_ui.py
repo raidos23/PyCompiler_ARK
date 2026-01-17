@@ -265,8 +265,6 @@ def init_ui(self):
             pass
     # Static button widgets are no longer used - buttons are now in dynamic tabs
     self.btn_select_icon = None
-    # Find select_theme widget if it exists in the UI
-    self.select_theme = self.ui.findChild(QPushButton, "select_theme")
     # Static checkbox widgets are no longer used - options are now in dynamic tabs
     self.opt_onefile = None
     self.opt_windowed = None
@@ -360,6 +358,14 @@ def init_ui(self):
         self.select_lang.setToolTip("Choisir la langue de l'interface utilisateur.")
         try:
             self.select_lang.clicked.connect(lambda: show_language_dialog(self))
+        except Exception:
+            pass
+
+    # Find select_theme widget if it exists in the UI and connect it
+    self.select_theme = self.ui.findChild(QPushButton, "select_theme")
+    if getattr(self, "select_theme", None):
+        try:
+            self.select_theme.clicked.connect(lambda: show_theme_dialog(self))
         except Exception:
             pass
 
