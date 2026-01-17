@@ -21,6 +21,7 @@ from PySide6.QtCore import QFile, Qt
 from PySide6.QtUiTools import QUiLoader
 from PySide6.QtWidgets import (
     QLabel,
+    QLineEdit,
     QListWidget,
     QProgressBar,
     QPushButton,
@@ -264,6 +265,8 @@ def init_ui(self):
             pass
     # Static button widgets are no longer used - buttons are now in dynamic tabs
     self.btn_select_icon = None
+    # Find select_theme widget if it exists in the UI
+    self.select_theme = self.ui.findChild(QPushButton, "select_theme")
     # Static checkbox widgets are no longer used - options are now in dynamic tabs
     self.opt_onefile = None
     self.opt_windowed = None
@@ -340,6 +343,8 @@ def init_ui(self):
 
     if self.btn_help:
         self.btn_help.clicked.connect(self.show_help_dialog)
+    # Find btn_show_stats widget if it exists in the UI
+    self.btn_show_stats = self.ui.findChild(QPushButton, "btn_show_stats")
     if self.btn_show_stats:
         self.btn_show_stats.setToolTip(
             "Afficher les statistiques de compilation (temps, nombre de fichiers, mémoire)"
@@ -348,6 +353,8 @@ def init_ui(self):
     # Static checkbox widgets are None - options are now in dynamic tabs
     # No signal connections needed for static widgets
     # self.custom_args supprimé (widget inutilisé)
+    # Find select_lang widget if it exists in the UI
+    self.select_lang = self.ui.findChild(QPushButton, "select_lang")
     if self.select_lang:
         self.select_lang.setToolTip("Choisir la langue de l'interface utilisateur.")
         try:
