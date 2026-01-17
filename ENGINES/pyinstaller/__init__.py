@@ -118,11 +118,8 @@ class PyInstallerEngine(CompilerEngine):
                 cmd.extend(["--distpath", output_dir.text().strip()])
 
             # Icon
-            if platform.system() == "Windows":
-                # Try btn_select_icon callback for icon path
-                btn_icon = self._get_btn("select_icon")
-                if btn_icon and hasattr(self, "_selected_icon"):
-                    cmd.extend(["--icon", self._selected_icon])
+            if hasattr(self, "_selected_icon") and self._selected_icon:
+                cmd.extend(["--icon", self._selected_icon])
 
             # Name
             name_input = self._get_input("output_name_input")
@@ -250,6 +247,7 @@ class PyInstallerEngine(CompilerEngine):
             icon_layout = QHBoxLayout()
             self._btn_select_icon = QPushButton("🎨 Choisir une icône (.ico)")
             self._btn_select_icon.setObjectName("btn_select_icon_dynamic")
+            self._btn_select_icon.clicked.connect(self.select_icon)
             icon_layout.addWidget(self._btn_select_icon)
             icon_layout.addStretch()
             layout.addLayout(icon_layout)

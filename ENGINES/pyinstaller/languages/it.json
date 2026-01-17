@@ -1,0 +1,18 @@
+{
+  "_meta": {
+    "code": "it",
+    "name": "Italiano"
+  },
+  "tab_label": "PyInstaller",
+  "mode_label": "Modalità:",
+  "onefile_checkbox": "File singolo",
+  "windowed_checkbox": "Finestra",
+  "noconfirm_checkbox": "Nessuna conferma",
+  "clean_checkbox": "Pulizia",
+  "noupx_checkbox": "Senza UPX",
+  "main_only_checkbox": "Compila solo main.py o app.py",
+  "debug_checkbox": "Modalità debug (--debug)",
+  "add_data_button": "add_data",
+  "output_placeholder": "Cartella di output (--distpath). Lascia vuoto per ./dist",
+  "icon_button": "🎨 Scegli icona (.ico)"
+}
