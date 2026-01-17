@@ -1511,14 +1511,18 @@ class PyCompilerArkGui(QWidget):
         # Logs
         _set("label_logs_section", "label_logs_section")
 
-        # Tabs
+        # Tabs - only try if compiler_tabs exists and has tabs
         try:
-            val0 = tr.get("tab_pyinstaller")
-            if val0:
-                self.compiler_tabs.setTabText(0, val0)
-            val1 = tr.get("tab_nuitka")
-            if val1:
-                self.compiler_tabs.setTabText(1, val1)
+            if hasattr(self, "compiler_tabs") and self.compiler_tabs:
+                tab_count = self.compiler_tabs.count()
+                if tab_count > 0:
+                    val0 = tr.get("tab_pyinstaller")
+                    if val0:
+                        self.compiler_tabs.setTabText(0, val0)
+                if tab_count > 1:
+                    val1 = tr.get("tab_nuitka")
+                    if val1:
+                        self.compiler_tabs.setTabText(1, val1)
         except Exception:
             pass
 
