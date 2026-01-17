@@ -304,8 +304,6 @@ def init_ui(self):
     self.nuitka_show_progress = None
     self.nuitka_plugins = None  # Champ supprimé de l'UI; plugins gérés automatiquement
     self.nuitka_output_dir = None
-    self.nuitka_add_data = None
-    self.nuitka_data_files = []  # Liste des tuples (source, dest)
     self.btn_nuitka_icon = None
     # Static checkbox widgets are None - options are now in dynamic tabs
     # Tooltips are handled by the engines themselves
@@ -316,8 +314,6 @@ def init_ui(self):
     self.progress = self.ui.findChild(QProgressBar, "progress")
     self.log = self.ui.findChild(QTextEdit, "log")
     # PyInstaller widgets (no longer static - now created dynamically by PyInstaller engine)
-    self.pyinstaller_add_data = None
-    self.pyinstaller_data = []  # Liste des tuples (source, dest)
     self.output_dir_input = None
     self.btn_browse_output_dir = None
     self.btn_export_config = self.ui.findChild(QPushButton, "btn_export_config")
@@ -440,111 +436,6 @@ def init_ui(self):
             pass
     except Exception:
         pass
-
-
-def add_pyinstaller_data(self):
-    import os
-
-    from PySide6.QtCore import QDir
-    from PySide6.QtWidgets import QFileDialog, QInputDialog
-
-    choix, ok = QInputDialog.getItem(
-        self,
-        "Type d'inclusion",
-        "Inclure un fichier ou un dossier ?",
-        ["Fichier", "Dossier"],
-        0,
-        False,
-    )
-    if not ok:
-        return
-    if choix == "Fichier":
-        file_path, _ = QFileDialog.getOpenFileName(
-            self, "Sélectionner un fichier à inclure avec PyInstaller"
-        )
-        if file_path:
-            dest, ok = QInputDialog.getText(
-                self,
-                "Chemin de destination",
-                "Chemin de destination dans l'exécutable :",
-                text=os.path.basename(file_path),
-            )
-            if ok and dest:
-                self.pyinstaller_data.append((file_path, dest))
-                if hasattr(self, "log"):
-                    self.log.append(
-                        f"Fichier ajouté à PyInstaller : {file_path} => {dest}"
-                    )
-    elif choix == "Dossier":
-        dir_path = QFileDialog.getExistingDirectory(
-            self, "Sélectionner un dossier à inclure avec PyInstaller", QDir.homePath()
-        )
-        if dir_path:
-            dest, ok = QInputDialog.getText(
-                self,
-                "Chemin de destination",
-                "Chemin de destination dans l'exécutable :",
-                text=os.path.basename(dir_path),
-            )
-            if ok and dest:
-                self.pyinstaller_data.append((dir_path, dest))
-                if hasattr(self, "log"):
-                    self.log.append(
-                        f"Dossier ajouté à PyInstaller : {dir_path} => {dest}"
-                    )
-
-
-def add_nuitka_data_file(self):
-    import os
-
-    from PySide6.QtCore import QDir
-    from PySide6.QtWidgets import QFileDialog, QInputDialog
-
-    # Demander à l'utilisateur s'il veut ajouter un fichier ou un dossier
-    choix, ok = QInputDialog.getItem(
-        self,
-        "Type d'inclusion",
-        "Inclure un fichier ou un dossier ?",
-        ["Fichier", "Dossier"],
-        0,
-        False,
-    )
-    if not ok:
-        return
-    if not hasattr(self, "nuitka_data_files"):
-        self.nuitka_data_files = []
-    if not hasattr(self, "nuitka_data_dirs"):
-        self.nuitka_data_dirs = []
-    if choix == "Fichier":
-        file_path, _ = QFileDialog.getOpenFileName(
-            self, "Sélectionner un fichier à inclure avec Nuitka"
-        )
-        if file_path:
-            dest, ok = QInputDialog.getText(
-                self,
-                "Chemin de destination",
-                "Chemin de destination dans l'exécutable :",
-                text=os.path.basename(file_path),
-            )
-            if ok and dest:
-                self.nuitka_data_files.append((file_path, dest))
-                if hasattr(self, "log"):
-                    self.log.append(f"Fichier ajouté à Nuitka : {file_path} => {dest}")
-    elif choix == "Dossier":
-        dir_path = QFileDialog.getExistingDirectory(
-            self, "Sélectionner un dossier à inclure avec Nuitka", QDir.homePath()
-        )
-        if dir_path:
-            dest, ok = QInputDialog.getText(
-                self,
-                "Chemin de destination",
-                "Chemin de destination dans l'exécutable :",
-                text=os.path.basename(dir_path),
-            )
-            if ok and dest:
-                self.nuitka_data_dirs.append((dir_path, dest))
-                if hasattr(self, "log"):
-                    self.log.append(f"Dossier ajouté à Nuitka : {dir_path} => {dest}")
 
 
 def show_language_dialog(self):
