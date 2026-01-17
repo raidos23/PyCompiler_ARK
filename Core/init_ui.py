@@ -291,13 +291,14 @@ def init_ui(self):
     # Static tabs no longer exist - they're created dynamically by engines
     self.tab_pyinstaller = None
     self.tab_nuitka = None
-    # Lier dynamiquement les onglets des moteurs plug-and-play
-    try:
-        import Core.engines_loader as engines_loader
+    # Lier dynamiquement les onglets des moteurs plug-and-play (only if compiler_tabs exists)
+    if self.compiler_tabs:
+        try:
+            import Core.engines_loader as engines_loader
 
-        engines_loader.registry.bind_tabs(self)
-    except Exception:
-        pass
+            engines_loader.registry.bind_tabs(self)
+        except Exception:
+            pass
     # Widgets Nuitka (no longer static - now created dynamically by Nuitka engine)
     self.nuitka_onefile = None
     self.nuitka_standalone = None
@@ -345,7 +346,7 @@ def init_ui(self):
         self.btn_help.clicked.connect(self.show_help_dialog)
     # Find btn_show_stats widget if it exists in the UI
     self.btn_show_stats = self.ui.findChild(QPushButton, "btn_show_stats")
-    if self.btn_show_stats:
+    if getattr(self, "btn_show_stats", None):
         self.btn_show_stats.setToolTip(
             "Afficher les statistiques de compilation (temps, nombre de fichiers, mémoire)"
         )
@@ -355,7 +356,7 @@ def init_ui(self):
     # self.custom_args supprimé (widget inutilisé)
     # Find select_lang widget if it exists in the UI
     self.select_lang = self.ui.findChild(QPushButton, "select_lang")
-    if self.select_lang:
+    if getattr(self, "select_lang", None):
         self.select_lang.setToolTip("Choisir la langue de l'interface utilisateur.")
         try:
             self.select_lang.clicked.connect(lambda: show_language_dialog(self))
@@ -366,6 +367,8 @@ def init_ui(self):
     import platform
 
     def update_compiler_options_enabled():
+        if not self.compiler_tabs:
+            return
         try:
             import Core.engines_loader as engines_loader
 
@@ -407,7 +410,8 @@ def init_ui(self):
             pass
 
     self.compiler_tabs.currentChanged.connect(update_compiler_options_enabled)
-    update_compiler_options_enabled()
+    if self.compiler_tabs:
+        update_compiler_options_enabled()
 
     # Message d'aide contextuel à la première utilisation
     if not self.workspace_dir:
