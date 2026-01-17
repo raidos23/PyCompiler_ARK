@@ -94,29 +94,29 @@ class NuitkaEngine(CompilerEngine):
             # Start with python -m nuitka
             cmd = [python_path, "-m", "nuitka"]
             
-            # Use existing UI widgets from .ui file
+            # Use dynamic widgets or fallback to UI widgets
             # Standalone mode
-            standalone = getattr(gui, "nuitka_standalone", None)
+            standalone = self._get_opt("standalone")
             if standalone and standalone.isChecked():
                 cmd.append("--standalone")
             
             # Onefile mode
-            onefile = getattr(gui, "nuitka_onefile", None)
+            onefile = self._get_opt("onefile")
             if onefile and onefile.isChecked():
                 cmd.append("--onefile")
             
             # Windowed (no console)
-            disable_console = getattr(gui, "nuitka_disable_console", None)
+            disable_console = self._get_opt("disable_console")
             if disable_console and disable_console.isChecked():
                 cmd.append("--windows-disable-console")
             
             # Show progress
-            show_progress = getattr(gui, "nuitka_show_progress", None)
+            show_progress = self._get_opt("show_progress")
             if show_progress and show_progress.isChecked():
                 cmd.append("--show-progress")
             
             # Output directory
-            output_dir = getattr(gui, "nuitka_output_dir", None)
+            output_dir = self._get_input("output_dir")
             if output_dir and output_dir.text().strip():
                 cmd.extend(["--output-dir", output_dir.text().strip()])
             
@@ -162,7 +162,7 @@ class NuitkaEngine(CompilerEngine):
         """Handle successful compilation."""
         try:
             # Log success message with output location
-            output_dir = getattr(gui, "nuitka_output_dir", None)
+            output_dir = self._get_input("output_dir")
             if output_dir and output_dir.text().strip():
                 try:
                     if hasattr(gui, "log"):
@@ -174,12 +174,120 @@ class NuitkaEngine(CompilerEngine):
 
     def create_tab(self, gui):
         """
-        Return None to use existing UI widgets from the .ui file.
-        The Nuitka tab is already defined in the UI with nuitka_onefile,
-        nuitka_standalone, nuitka_disable_console, nuitka_show_progress,
-        nuitka_output_dir, etc.
+        Create the Nuitka tab widget with all options.
+        Returns (widget, label) tuple or None if tab creation fails.
         """
-        return None
+        try:
+            from PySide6.QtWidgets import (
+                QCheckBox,
+                QFormLayout,
+                QHBoxLayout,
+                QLineEdit,
+                QPushButton,
+                QVBoxLayout,
+                QWidget,
+            )
+
+            # Create the tab widget
+            tab = QWidget()
+            tab.setObjectName("tab_nuitka_dynamic")
+
+            # Create main layout
+            layout = QVBoxLayout(tab)
+            layout.setSpacing(10)
+
+            # Create form layout for options
+            form_layout = QFormLayout()
+            form_layout.setSpacing(8)
+
+            # Onefile option
+            self._nuitka_onefile = QCheckBox("Onefile (--onefile)")
+            self._nuitka_onefile.setObjectName("nuitka_onefile_dynamic")
+            form_layout.addRow("Mode:", self._nuitka_onefile)
+
+            # Standalone option
+            self._nuitka_standalone = QCheckBox("Standalone (--standalone)")
+            self._nuitka_standalone.setObjectName("nuitka_standalone_dynamic")
+            form_layout.addRow("Type:", self._nuitka_standalone)
+
+            # Disable console option
+            self._nuitka_disable_console = QCheckBox(
+                "Désactiver la console Windows (--windows-disable-console)"
+            )
+            self._nuitka_disable_console.setObjectName("nuitka_disable_console_dynamic")
+            form_layout.addRow("Console:", self._nuitka_disable_console)
+
+            # Show progress option
+            self._nuitka_show_progress = QCheckBox("Afficher la progression (--show-progress)")
+            self._nuitka_show_progress.setObjectName("nuitka_show_progress_dynamic")
+            self._nuitka_show_progress.setChecked(True)
+            form_layout.addRow("Progression:", self._nuitka_show_progress)
+
+            layout.addLayout(form_layout)
+
+            # Add data button
+            self._nuitka_add_data = QPushButton("add_data")
+            self._nuitka_add_data.setObjectName("nuitka_add_data_dynamic")
+            layout.addWidget(self._nuitka_add_data)
+
+            # Output directory
+            output_layout = QHBoxLayout()
+            self._nuitka_output_dir = QLineEdit()
+            self._nuitka_output_dir.setObjectName("nuitka_output_dir_dynamic")
+            self._nuitka_output_dir.setPlaceholderText(
+                "Dossier de sortie (--output-dir)"
+            )
+            output_layout.addWidget(self._nuitka_output_dir)
+            layout.addLayout(output_layout)
+
+            # Icon button
+            icon_layout = QHBoxLayout()
+            self._btn_nuitka_icon = QPushButton("🎨 Choisir une icône (.ico) Nuitka")
+            self._btn_nuitka_icon.setObjectName("btn_nuitka_icon_dynamic")
+            icon_layout.addWidget(self._btn_nuitka_icon)
+            icon_layout.addStretch()
+            layout.addLayout(icon_layout)
+
+            layout.addStretch()
+
+            # Store references in the engine instance for build_command access
+            self._gui = gui
+
+            return tab, "Nuitka"
+
+        except Exception as e:
+            try:
+                if hasattr(gui, "log"):
+                    gui.log.append(f"❌ Erreur création onglet Nuitka: {e}\n")
+            except Exception:
+                pass
+            return None
+
+    def _get_opt(self, name: str):
+        """Get option widget from engine instance or GUI."""
+        # Try engine instance first (dynamic tabs)
+        if hasattr(self, f"_nuitka_{name}"):
+            return getattr(self, f"_nuitka_{name}")
+        if hasattr(self, f"_opt_{name}"):
+            return getattr(self, f"_opt_{name}")
+        # Fallback to GUI widget (static UI)
+        return getattr(self._gui, name, None) if hasattr(self, "_gui") else None
+
+    def _get_btn(self, name: str):
+        """Get button widget from engine instance or GUI."""
+        if hasattr(self, f"_btn_{name}"):
+            return getattr(self, f"_btn_{name}")
+        return getattr(self._gui, name, None) if hasattr(self, "_gui") else None
+
+    def _get_input(self, name: str):
+        """Get input widget from engine instance or GUI."""
+        # Try engine instance first (dynamic tabs)
+        if hasattr(self, f"_nuitka_{name}"):
+            return getattr(self, f"_nuitka_{name}")
+        if hasattr(self, f"_{name}"):
+            return getattr(self, f"_{name}")
+        # Fallback to GUI widget (static UI)
+        return getattr(self._gui, name, None) if hasattr(self, "_gui") else None
 
     def get_log_prefix(self, file_basename: str) -> str:
         return f"Nuitka ({self.version})"

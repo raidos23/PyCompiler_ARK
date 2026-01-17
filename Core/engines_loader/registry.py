@@ -165,11 +165,25 @@ def available_engines() -> list[str]:
 def bind_tabs(gui) -> None:
     """Create tabs for all registered engines that expose create_tab and store indexes.
     Robust to individual engine failures and avoids raising to the UI layer.
+    Also handles hiding the Hello tab when engines are available.
     """
     try:
         tabs = getattr(gui, "compiler_tabs", None)
         if not tabs:
             return
+
+        # Get the Hello tab if it exists
+        hello_tab = getattr(gui, "tab_hello", None)
+        hello_tab_index = -1
+        if hello_tab is not None:
+            try:
+                hello_tab_index = tabs.indexOf(hello_tab)
+            except Exception:
+                hello_tab_index = -1
+
+        # Track if any engine created a tab
+        any_engine_tab_created = False
+
         for eid in list(_ORDER):
             try:
                 engine = create(eid)
@@ -181,6 +195,7 @@ def bind_tabs(gui) -> None:
                 pair = res(gui)
                 if not pair:
                     continue
+                any_engine_tab_created = True
                 widget, label = pair
                 try:
                     existing = tabs.indexOf(widget)
@@ -202,8 +217,34 @@ def bind_tabs(gui) -> None:
             except Exception:
                 # keep UI responsive even if a plugin tab fails
                 continue
+
+        # Hide the Hello tab if any engine has created a tab
+        if any_engine_tab_created and hello_tab_index >= 0:
+            try:
+                tabs.tabBar().hideTab(hello_tab_index)
+            except Exception:
+                pass
     except Exception:
         # Swallow to avoid breaking app init
+        pass
+
+
+def show_hello_tab(gui) -> None:
+    """Show the Hello tab when no engines are available."""
+    try:
+        tabs = getattr(gui, "compiler_tabs", None)
+        if not tabs:
+            return
+        hello_tab = getattr(gui, "tab_hello", None)
+        if hello_tab is not None:
+            try:
+                idx = tabs.indexOf(hello_tab)
+                if idx >= 0:
+                    tabs.tabBar().showTab(idx)
+                    tabs.setCurrentIndex(idx)
+            except Exception:
+                pass
+    except Exception:
         pass
 
 

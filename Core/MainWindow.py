@@ -1267,25 +1267,25 @@ class PyCompilerArkGui(QWidget):
 
     def update_command_preview(self):
         # Aperçu de commande désactivé: widget label_cmd retiré
-        # Résumé des options
+        # Résumé des options - only check static widgets if they exist
         summary = []
-        if self.opt_onefile.isChecked():
+        if hasattr(self, "opt_onefile") and self.opt_onefile is not None and self.opt_onefile.isChecked():
             summary.append("Onefile")
-        if self.opt_windowed.isChecked():
+        if hasattr(self, "opt_windowed") and self.opt_windowed is not None and self.opt_windowed.isChecked():
             summary.append("Windowed")
-        if self.opt_noconfirm.isChecked():
+        if hasattr(self, "opt_noconfirm") and self.opt_noconfirm is not None and self.opt_noconfirm.isChecked():
             summary.append("Noconfirm")
-        if self.opt_clean.isChecked():
+        if hasattr(self, "opt_clean") and self.opt_clean is not None and self.opt_clean.isChecked():
             summary.append("Clean")
-        if self.opt_noupx.isChecked():
+        if hasattr(self, "opt_noupx") and self.opt_noupx is not None and self.opt_noupx.isChecked():
             summary.append("NoUPX")
-        if self.opt_debug.isChecked():
+        if hasattr(self, "opt_debug") and self.opt_debug is not None and self.opt_debug.isChecked():
             summary.append("Debug")
-        if self.opt_auto_install.isChecked():
+        if hasattr(self, "opt_auto_install") and self.opt_auto_install is not None and self.opt_auto_install.isChecked():
             summary.append("Auto-install modules")
-        if self.icon_path:
+        if hasattr(self, "icon_path") and self.icon_path:
             summary.append("Icone")
-        if self.output_dir_input.text().strip():
+        if hasattr(self, "output_dir_input") and self.output_dir_input is not None and self.output_dir_input.text().strip():
             summary.append(f"Sortie: {self.output_dir_input.text().strip()}")
         # Widget options_summary supprimé; plus de mise à jour de résumé visuel
 
@@ -1358,19 +1358,17 @@ class PyCompilerArkGui(QWidget):
         except Exception:
             pass
         self.venv_button.setEnabled(enabled)
-        self.output_dir_input.setEnabled(enabled)
-        # Désactive toutes les cases à cocher d'options
-        for checkbox in [
-            self.opt_onefile,
-            self.opt_windowed,
-            self.opt_noconfirm,
-            self.opt_clean,
-            self.opt_noupx,
-            self.opt_main_only,
-            self.opt_debug,
-            self.opt_auto_install,
-            self.opt_silent_errors,
-        ]:
+        # Enable/disable static output_dir_input if it exists
+        if hasattr(self, "output_dir_input") and self.output_dir_input is not None:
+            self.output_dir_input.setEnabled(enabled)
+        # Désactive toutes les cases à cocher d'options (only if they exist)
+        checkbox_list = []
+        for name in ["opt_onefile", "opt_windowed", "opt_noconfirm", "opt_clean", 
+                     "opt_noupx", "opt_main_only", "opt_debug", "opt_auto_install", 
+                     "opt_silent_errors"]:
+            if hasattr(self, name) and getattr(self, name) is not None:
+                checkbox_list.append(getattr(self, name))
+        for checkbox in checkbox_list:
             checkbox.setEnabled(enabled)
         # Rafraîchir visuellement l'état grisé de tous les contrôles sensibles
         try:

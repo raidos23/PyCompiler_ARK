@@ -95,16 +95,16 @@ class PyInstallerEngine(CompilerEngine):
             # Start with python -m PyInstaller
             cmd = [python_path, "-m", "PyInstaller"]
             
-            # Get options from GUI - use existing UI widgets from .ui file
+            # Get options from GUI - use dynamic widgets or fallback to UI widgets
             # Onefile vs Onedir
-            onefile = getattr(gui, "opt_onefile", None)
+            onefile = self._get_opt("onefile")
             if onefile and onefile.isChecked():
                 cmd.append("--onefile")
             else:
                 cmd.append("--onedir")
             
             # Windowed (no console) - only on Windows/macOS
-            windowed = getattr(gui, "opt_windowed", None)
+            windowed = self._get_opt("windowed")
             if windowed and windowed.isChecked():
                 if platform.system() == "Windows":
                     cmd.append("--windowed")
@@ -112,30 +112,29 @@ class PyInstallerEngine(CompilerEngine):
                     cmd.append("--windowed")
             
             # Clean build
-            clean = getattr(gui, "opt_clean", None)  # UI uses opt_clean, not opt_clean_build
+            clean = self._get_opt("clean")
             if clean and clean.isChecked():
                 cmd.append("--clean")
             
             # No UPX
-            noupx = getattr(gui, "opt_noupx", None)
+            noupx = self._get_opt("noupx")
             if noupx and noupx.isChecked():
                 cmd.append("--noupx")
             
-            # Output directory - use output_dir_input from UI
-            output_dir = getattr(gui, "output_dir_input", None)
+            # Output directory
+            output_dir = self._get_input("output_dir_input")
             if output_dir and output_dir.text().strip():
                 cmd.extend(["--distpath", output_dir.text().strip()])
             
             # Icon
             if platform.system() == "Windows":
                 # Try btn_select_icon callback for icon path
-                btn_icon = getattr(gui, "btn_select_icon", None)
+                btn_icon = self._get_btn("select_icon")
                 if btn_icon and hasattr(self, "_selected_icon"):
                     cmd.extend(["--icon", self._selected_icon])
             
             # Name
-            # Check if there's a name input in the UI
-            name_input = getattr(gui, "output_name_input", None)
+            name_input = self._get_input("output_name_input")
             if name_input and name_input.text().strip():
                 cmd.extend(["--name", name_input.text().strip()])
             
@@ -181,7 +180,7 @@ class PyInstallerEngine(CompilerEngine):
         """Handle successful compilation."""
         try:
             # Log success message with output location
-            output_dir = getattr(gui, "output_dir_input", None)
+            output_dir = self._get_input("output_dir_input")
             if output_dir and output_dir.text().strip():
                 try:
                     if hasattr(gui, "log"):
@@ -193,11 +192,127 @@ class PyInstallerEngine(CompilerEngine):
 
     def create_tab(self, gui):
         """
-        Return None to use existing UI widgets from the .ui file.
-        The PyInstaller tab is already defined in the UI with opt_onefile, 
-        opt_windowed, opt_clean, output_dir_input, etc.
+        Create the PyInstaller tab widget with all options.
+        Returns (widget, label) tuple or None if tab creation fails.
         """
-        return None
+        try:
+            from PySide6.QtWidgets import (
+                QCheckBox,
+                QFormLayout,
+                QHBoxLayout,
+                QLineEdit,
+                QPushButton,
+                QVBoxLayout,
+                QWidget,
+            )
+            from PySide6.QtCore import Qt
+
+            # Create the tab widget
+            tab = QWidget()
+            tab.setObjectName("tab_pyinstaller_dynamic")
+
+            # Create main layout
+            layout = QVBoxLayout(tab)
+            layout.setSpacing(10)
+
+            # Create form layout for options
+            form_layout = QFormLayout()
+            form_layout.setSpacing(8)
+
+            # Onefile option
+            self._opt_onefile = QCheckBox("Onefile")
+            self._opt_onefile.setObjectName("opt_onefile_dynamic")
+            form_layout.addRow("Mode:", self._opt_onefile)
+
+            # Windowed option
+            self._opt_windowed = QCheckBox("Windowed")
+            self._opt_windowed.setObjectName("opt_windowed_dynamic")
+            form_layout.addRow("Console:", self._opt_windowed)
+
+            # Noconfirm option
+            self._opt_noconfirm = QCheckBox("Noconfirm")
+            self._opt_noconfirm.setObjectName("opt_noconfirm_dynamic")
+            form_layout.addRow("Confirmation:", self._opt_noconfirm)
+
+            # Clean option
+            self._opt_clean = QCheckBox("Clean")
+            self._opt_clean.setObjectName("opt_clean_dynamic")
+            form_layout.addRow("Nettoyage:", self._opt_clean)
+
+            # No UPX option
+            self._opt_noupx = QCheckBox("No UPX")
+            self._opt_noupx.setObjectName("opt_noupx_dynamic")
+            form_layout.addRow("Compression:", self._opt_noupx)
+
+            # Main only option
+            self._opt_main_only = QCheckBox("Compiler uniquement main.py ou app.py")
+            self._opt_main_only.setObjectName("opt_main_only_dynamic")
+            form_layout.addRow("Fichiers:", self._opt_main_only)
+
+            layout.addLayout(form_layout)
+
+            # Icon button
+            icon_layout = QHBoxLayout()
+            self._btn_select_icon = QPushButton("🎨 Choisir une icône (.ico)")
+            self._btn_select_icon.setObjectName("btn_select_icon_dynamic")
+            icon_layout.addWidget(self._btn_select_icon)
+            icon_layout.addStretch()
+            layout.addLayout(icon_layout)
+
+            # Debug option
+            self._opt_debug = QCheckBox("Mode debug (--debug)")
+            self._opt_debug.setObjectName("opt_debug_dynamic")
+            layout.addWidget(self._opt_debug)
+
+            # Add data button
+            self._pyinstaller_add_data = QPushButton("add_data")
+            self._pyinstaller_add_data.setObjectName("pyinstaller_add_data_dynamic")
+            layout.addWidget(self._pyinstaller_add_data)
+
+            # Output directory
+            output_layout = QHBoxLayout()
+            self._output_dir_input = QLineEdit()
+            self._output_dir_input.setObjectName("output_dir_input_dynamic")
+            self._output_dir_input.setPlaceholderText(
+                "Dossier de sortie (--distpath). Laisser vide pour ./dist"
+            )
+            output_layout.addWidget(self._output_dir_input)
+            layout.addLayout(output_layout)
+
+            layout.addStretch()
+
+            # Store references in the engine instance for build_command access
+            self._gui = gui
+
+            return tab, "PyInstaller"
+
+        except Exception as e:
+            try:
+                if hasattr(gui, "log"):
+                    gui.log.append(f"❌ Erreur création onglet PyInstaller: {e}\n")
+            except Exception:
+                pass
+            return None
+
+    def _get_opt(self, name: str):
+        """Get option widget from engine instance or GUI."""
+        # Try engine instance first (dynamic tabs)
+        if hasattr(self, f"_opt_{name}"):
+            return getattr(self, f"_opt_{name}")
+        # Fallback to GUI widget (static UI)
+        return getattr(self._gui, name, None) if hasattr(self, "_gui") else None
+
+    def _get_btn(self, name: str):
+        """Get button widget from engine instance or GUI."""
+        if hasattr(self, f"_btn_{name}"):
+            return getattr(self, f"_btn_{name}")
+        return getattr(self._gui, name, None) if hasattr(self, "_gui") else None
+
+    def _get_input(self, name: str):
+        """Get input widget from engine instance or GUI."""
+        if hasattr(self, f"_{name}"):
+            return getattr(self, f"_{name}")
+        return getattr(self._gui, name, None) if hasattr(self, "_gui") else None
 
     def get_log_prefix(self, file_basename: str) -> str:
         return f"PyInstaller ({self.version})"
