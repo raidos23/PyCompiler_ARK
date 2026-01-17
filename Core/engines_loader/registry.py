@@ -121,7 +121,7 @@ def unregister(eid: str) -> None:
         pass
 
 
-def register(engine_cls: type[CompilerEngine]):
+def engine_register(engine_cls: type[CompilerEngine]):
     """Register an engine class. Enforces a non-empty unique id.
 
     If the same id is registered again with the same class object, this is a no-op.
@@ -142,6 +142,10 @@ def register(engine_cls: type[CompilerEngine]):
     except Exception:
         # Fail closed: do not crash the app
         return engine_cls
+
+
+# Alias for backward compatibility
+register = engine_register
 
 
 def get_engine(eid: str) -> Optional[type[CompilerEngine]]:
