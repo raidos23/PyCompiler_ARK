@@ -38,7 +38,6 @@
   "tt_import_config": "Importer une configuration depuis un fichier JSON.",
   "tt_cancel_all": "Annuler toutes les compilations en cours.",
   "tt_remove_file": "Supprimer le(s) fichier(s) sélectionné(s) de la liste.",
-  "tt_select_icon": "Choisir un fichier .ico pour l’exécutable généré (Windows uniquement).",
   "tt_help": "Ouvrir l’aide et les informations sur le logiciel.",
   "tt_bc_loader": "Configurer les plugins API (BCASL) à exécuter avant la compilation.",
   "tt_venv_button": "Sélectionner manuellement un dossier venv à utiliser pour la compilation.",
