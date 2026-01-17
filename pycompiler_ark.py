@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 # SPDX-License-Identifier: Apache-2.0
 # Copyright 2026 Ague Samuel Amen
 #
@@ -32,6 +32,7 @@ Usage:
     python -m pycompiler_ark bcasl              # Launch BCASL standalone
     python -m pycompiler_ark bcasl /path/to/ws  # Launch BCASL with workspace
     python -m pycompiler_ark --completion bash  # Generate bash completion
+    python -m pycompiler_ark unload             # Unload all engines
 """
 
 import multiprocessing
@@ -50,6 +51,7 @@ except ImportError:
 
 from main import main
 from Core import __version__ as APP_VERSION
+from Core.engines_loader import unload_all
 
 # Configure logging
 logging.basicConfig(
@@ -330,8 +332,14 @@ if click:
         type=click.Choice(["bash", "zsh", "fish"]),
         help="Generate shell completion",
     )
+    @click.option(
+        "--unload",
+        "unload_engines_flag",
+        is_flag=True,
+        help="Unload all registered engines before launching the application",
+    )
     @click.pass_context
-    def cli(ctx, version, help_all, info, completion):
+    def cli(ctx, version, help_all, info, completion, unload_engines_flag):
         """PyCompiler ARK++ — Cross-platform Python compiler with BCASL integration.
 
         Launch the main application by default, or use subcommands for specific modes.
@@ -355,6 +363,17 @@ if click:
             click.echo(f"# {completion.upper()} completion for PyCompiler ARK++")
             click.echo("# Add this to your shell configuration file")
             ctx.exit(0)
+
+        if unload_engines_flag:
+            result = unload_all()
+            if result["status"] == "success":
+                click.echo(f"✅ {result['message']}")
+                if result["unloaded"]:
+                    click.echo("  Unloaded engines:")
+                    for eid in result["unloaded"]:
+                        click.echo(f"    • {eid}")
+            else:
+                click.echo(f"❌ Error: {result['message']}", err=True)
 
         if help_all:
             click.echo(ctx.get_help())
@@ -457,6 +476,20 @@ if click:
         else:
             click.echo("No workspaces discovered")
 
+    @cli.command(context_settings=dict(help_option_names=["-h", "--help"]), name="unload")
+    def unload_engines_cmd():
+        """Unload all registered engines."""
+        result = unload_all()
+        if result["status"] == "success":
+            click.echo(f"✅ {result['message']}")
+            if result["unloaded"]:
+                click.echo("  Unloaded engines:")
+                for eid in result["unloaded"]:
+                    click.echo(f"    • {eid}")
+        else:
+            click.echo(f"❌ Error: {result['message']}", err=True)
+        sys.exit(0 if result["status"] == "success" else 1)
+
 
 if __name__ == "__main__":
     if click:
@@ -484,6 +517,17 @@ if __name__ == "__main__":
                 print_system_info()
                 print_workspace_info()
                 sys.exit(0)
+            elif sys.argv[1] == "--unload":
+                from Core.engines_loader import unload_all
+                result = unload_all()
+                if result["status"] == "success":
+                    print(f"✅ {result['message']}")
+                    if result["unloaded"]:
+                        print("  Unloaded engines:")
+                        for eid in result["unloaded"]:
+                            print(f"    • {eid}")
+                else:
+                    print(f"❌ Error: {result['message']}")
             elif sys.argv[1] == "bcasl":
                 workspace_dir = sys.argv[2] if len(sys.argv) > 2 else None
                 sys.exit(launch_bcasl_standalone(workspace_dir))
@@ -496,6 +540,18 @@ if __name__ == "__main__":
                 else:
                     print("No workspaces discovered")
                 sys.exit(0)
+            elif sys.argv[1] == "unload":
+                from Core.engines_loader import unload_all
+                result = unload_all()
+                if result["status"] == "success":
+                    print(f"✅ {result['message']}")
+                    if result["unloaded"]:
+                        print("  Unloaded engines:")
+                        for eid in result["unloaded"]:
+                            print(f"    • {eid}")
+                else:
+                    print(f"❌ Error: {result['message']}")
+                sys.exit(0 if result["status"] == "success" else 1)
             else:
                 print(f"Unknown command: {sys.argv[1]}")
                 print(__doc__)

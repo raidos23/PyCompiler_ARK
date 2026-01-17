@@ -121,6 +121,40 @@ def unregister(eid: str) -> None:
         pass
 
 
+def unload_all() -> dict[str, Any]:
+    """Unload all registered engines and clean up all registry data.
+
+    Returns:
+        dict with status and list of unloaded engine IDs
+    """
+    unloaded = []
+    try:
+        # Collect all engine IDs before clearing
+        unloaded = list(_ORDER)
+        unloaded.extend(k for k in _REGISTRY.keys() if k not in unloaded)
+
+        # Clear all registry data
+        _REGISTRY.clear()
+        _ORDER.clear()
+        _TAB_INDEX.clear()
+
+        # Clear instances
+        _INSTANCES.clear()
+
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": str(e),
+            "unloaded": unloaded
+        }
+
+    return {
+        "status": "success",
+        "message": f"Unloaded {len(unloaded)} engine(s)",
+        "unloaded": unloaded
+    }
+
+
 def engine_register(engine_cls: type[CompilerEngine]):
     """Register an engine class. Enforces a non-empty unique id.
 
