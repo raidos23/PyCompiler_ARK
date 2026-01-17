@@ -90,7 +90,7 @@ def _continue_compile_all(self):
     # L'option UI a priorité sur la config ARK
     compile_only_main = (
         self.opt_main_only.isChecked()
-        if hasattr(self, "opt_main_only")
+        if hasattr(self, "opt_main_only") and self.opt_main_only is not None
         else compile_only_main_ark
     )
 
@@ -132,46 +132,88 @@ def _continue_compile_all(self):
 
     # Vérifier s'il y a des fichiers à compiler
     if not files_ok:
-        self.log.append(
-            f"❌ Aucun fichier exécutable à compiler.\n"
-            f"   Raisons possibles :\n"
-            f"   • Aucun fichier Python sélectionné ou dans le workspace\n"
-            f"   • Les fichiers n'ont pas de point d'entrée (if __name__ == '__main__')\n"
-            f"   • Les fichiers sont dans site-packages ou correspondent à des patterns d'exclusion\n"
-            f"   • Les fichiers n'existent pas ou ne sont pas accessibles\n"
-        )
-        self.set_controls_enabled(True)
-        if hasattr(self, "compiler_tabs") and self.compiler_tabs:
-            self.compiler_tabs.setEnabled(True)
+        try:
+            self.log.append(
+                f"❌ Aucun fichier exécutable à compiler.\n"
+                f"   Raisons possibles :\n"
+                f"   • Aucun fichier Python sélectionné ou dans le workspace\n"
+                f"   • Les fichiers n'ont pas de point d'entrée (if __name__ == '__main__')\n"
+                f"   • Les fichiers sont dans site-packages ou correspondent à des patterns d'exclusion\n"
+                f"   • Les fichiers n'existent pas ou ne sont pas accessibles\n"
+            )
+        except Exception:
+            pass
+        try:
+            self.set_controls_enabled(True)
+        except Exception:
+            pass
+        try:
+            if hasattr(self, "compiler_tabs") and self.compiler_tabs:
+                self.compiler_tabs.setEnabled(True)
+        except Exception:
+            pass
         return
 
-    self.current_compiling.clear()
-    self.processes.clear()
-    self.progress.setRange(0, 0)  # Mode indéterminé pendant toute la compilation
+    try:
+        self.current_compiling.clear()
+    except Exception:
+        pass
+    try:
+        self.processes.clear()
+    except Exception:
+        pass
+    try:
+        self.progress.setRange(0, 0)  # Mode indéterminé pendant toute la compilation
+    except Exception:
+        pass
 
     # Afficher les informations de configuration ARK
     if ark_config:
-        self.log.append("📋 Configuration ARK chargée depuis ARK_Main_Config.yml\n")
+        try:
+            self.log.append("📋 Configuration ARK chargée depuis ARK_Main_Config.yml\n")
+        except Exception:
+            pass
         # Afficher les paramètres de compilation utilisés
-        self.log.append(
-            f"   • Patterns d'inclusion : {', '.join(inclusion_patterns)}\n"
-        )
-        self.log.append(
-            f"   • Patterns d'exclusion : {len(exclusion_patterns)} pattern(s)\n"
-        )
-        self.log.append(
-            f"   • Détection point d'entrée : {'Activée' if auto_detect_entry_points else 'Désactivée'}\n"
-        )
-        self.log.append(
-            f"   • Compiler uniquement main : {'Oui' if compile_only_main else 'Non'}\n"
-        )
+        try:
+            self.log.append(
+                f"   • Patterns d'inclusion : {', '.join(inclusion_patterns)}\n"
+            )
+        except Exception:
+            pass
+        try:
+            self.log.append(
+                f"   • Patterns d'exclusion : {len(exclusion_patterns)} pattern(s)\n"
+            )
+        except Exception:
+            pass
+        try:
+            self.log.append(
+                f"   • Détection point d'entrée : {'Activée' if auto_detect_entry_points else 'Désactivée'}\n"
+            )
+        except Exception:
+            pass
+        try:
+            self.log.append(
+                f"   • Compiler uniquement main : {'Oui' if compile_only_main else 'Non'}\n"
+            )
+        except Exception:
+            pass
 
-    self.log.append(
-        f"🔨 Compilation parallèle démarrée ({len(files_ok)} fichier(s))...\n"
-    )
+    try:
+        self.log.append(
+            f"🔨 Compilation parallèle démarrée ({len(files_ok)} fichier(s))...\n"
+        )
+    except Exception:
+        pass
 
-    self.set_controls_enabled(False)
-    self.try_start_processes()
+    try:
+        self.set_controls_enabled(False)
+    except Exception:
+        pass
+    try:
+        self.try_start_processes()
+    except Exception:
+        pass
 
 
 def compile_all(self):
@@ -179,16 +221,22 @@ def compile_all(self):
 
     # Garde-fous avant toute opération
     if self.processes:
-        QMessageBox.warning(
-            self,
-            self.tr("Attention", "Warning"),
-            self.tr(
-                "Des compilations sont déjà en cours.", "Builds are already running."
-            ),
-        )
+        try:
+            QMessageBox.warning(
+                self,
+                self.tr("Attention", "Warning"),
+                self.tr(
+                    "Des compilations sont déjà en cours.", "Builds are already running."
+                ),
+            )
+        except Exception:
+            pass
         return
     if not self.workspace_dir or (not self.python_files and not self.selected_files):
-        self.log.append("❌ Aucun fichier à compiler.\n")
+        try:
+            self.log.append("❌ Aucun fichier à compiler.\n")
+        except Exception:
+            pass
         return
 
     # Réinitialise les statistiques de compilation pour ce run
@@ -235,7 +283,26 @@ def compile_all(self):
                         self.log.append("⏭️ Démarrage compilation après BCASL.\n")
                     except Exception:
                         pass
-                    _continue_compile_all(self)
+                    try:
+                        _continue_compile_all(self)
+                    except Exception as _e:
+                        try:
+                            import traceback as _tb
+                            self.log.append(
+                                f"⚠️ Exception dans _continue_compile_all: {_e}\n{_tb.format_exc()}\n"
+                            )
+                        except Exception:
+                            pass
+                        # Réactiver l'UI en cas d'erreur
+                        try:
+                            self.set_controls_enabled(True)
+                        except Exception:
+                            pass
+                        try:
+                            if hasattr(self, "compiler_tabs") and self.compiler_tabs:
+                                self.compiler_tabs.setEnabled(True)
+                        except Exception:
+                            pass
             except Exception as _e:
                 try:
                     import traceback as _tb
@@ -243,6 +310,16 @@ def compile_all(self):
                     self.log.append(
                         f"⚠️ Exception _after_bcasl: {_e}\n{_tb.format_exc()}\n"
                     )
+                except Exception:
+                    pass
+                # Réactiver l'UI en cas d'erreur
+                try:
+                    self.set_controls_enabled(True)
+                except Exception:
+                    pass
+                try:
+                    if hasattr(self, "compiler_tabs") and self.compiler_tabs:
+                        self.compiler_tabs.setEnabled(True)
                 except Exception:
                     pass
 
