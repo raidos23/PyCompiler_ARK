@@ -108,6 +108,9 @@ def start_compilation_process(self, file):
     except Exception as e:
         self.log.append(f"❌ Impossible d'instancier le moteur '{engine_id}': {e}")
         return
+    # Ensure required tools are installed
+    if not engine.ensure_tools_installed(self):
+        return
     # Preflight checks
     if not engine.preflight(self, file):
         return
