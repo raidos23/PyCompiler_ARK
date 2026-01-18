@@ -15,6 +15,7 @@
 
 from PySide6.QtWidgets import QMessageBox
 import os
+import traceback
 from Core.ark_config_loader import (
     load_ark_config,
     should_exclude_file,
@@ -22,6 +23,70 @@ from Core.ark_config_loader import (
     get_output_options,
     get_dependency_options,
 )
+
+
+def _kill_all_processes(self) -> None:
+    """Tue tous les processus de compilation en cours et réinitialise l'état.
+
+    Cette fonction doit être appelée en cas d'erreur pour nettoyer proprement
+    tous les processus lancés et réinitialiser l'interface utilisateur.
+    """
+    try:
+        # Arrêter tous les processus en cours
+        if hasattr(self, 'processes') and self.processes:
+            for pid, proc in list(self.processes.items()):
+                try:
+                    if proc is not None and proc.state() == proc.Running:
+                        proc.terminate()
+                        proc.waitForFinished(2000)  # Attendre max 2s
+                        if proc.state() == proc.Running:
+                            proc.kill()
+                            proc.waitForFinished(1000)
+                except Exception:
+                    pass
+            # Vider le dictionnaire des processus
+            self.processes.clear()
+    except Exception:
+        pass
+
+    try:
+        # Vider la file d'attente
+        if hasattr(self, 'queue'):
+            self.queue.clear()
+    except Exception:
+        pass
+
+    try:
+        # Réinitialiser les compteurs
+        if hasattr(self, 'current_compiling'):
+            self.current_compiling.clear()
+    except Exception:
+        pass
+
+    # Réactiver les contrôles UI
+    try:
+        self.set_controls_enabled(True)
+    except Exception:
+        pass
+
+    try:
+        if hasattr(self, "compiler_tabs") and self.compiler_tabs:
+            self.compiler_tabs.setEnabled(True)
+    except Exception:
+        pass
+
+    try:
+        if hasattr(self, 'progress'):
+            self.progress.setRange(0, 1)
+            self.progress.setValue(0)
+    except Exception:
+        pass
+
+    try:
+        if hasattr(self, '_compile_continued'):
+            self._compile_continued = False
+    except Exception:
+        pass
 
 
 # Nouvelle version de try_start_processes pour gérer les fichiers ignorés dynamiquement
@@ -277,6 +342,19 @@ def compile_all(self):
                         tmr2.stop()
                 except Exception:
                     pass
+
+                # Vérifier si BCASL a eu des erreurs
+                if _report is not None and not _report.ok:
+                    error_items = [item for item in _report.items if not item.success]
+                    error_msg = ", ".join([f"{item.plugin_id}: {item.error}" for item in error_items])
+                    try:
+                        self.log.append(f"❌ Erreur BCASL: {error_msg}\n")
+                    except Exception:
+                        pass
+                    # Nettoyer tout et réactiver l'UI
+                    _kill_all_processes(self)
+                    return
+
                 if not getattr(self, "_compile_continued", False):
                     self._compile_continued = True
                     try:
@@ -287,41 +365,22 @@ def compile_all(self):
                         _continue_compile_all(self)
                     except Exception as _e:
                         try:
-                            import traceback as _tb
                             self.log.append(
-                                f"⚠️ Exception dans _continue_compile_all: {_e}\n{_tb.format_exc()}\n"
+                                f"❌ Erreur fatale dans _continue_compile_all: {_e}\n{traceback.format_exc()}\n"
                             )
                         except Exception:
                             pass
-                        # Réactiver l'UI en cas d'erreur
-                        try:
-                            self.set_controls_enabled(True)
-                        except Exception:
-                            pass
-                        try:
-                            if hasattr(self, "compiler_tabs") and self.compiler_tabs:
-                                self.compiler_tabs.setEnabled(True)
-                        except Exception:
-                            pass
+                        # En cas d'erreur: tout tuer et réinitialiser
+                        _kill_all_processes(self)
             except Exception as _e:
                 try:
-                    import traceback as _tb
-
                     self.log.append(
-                        f"⚠️ Exception _after_bcasl: {_e}\n{_tb.format_exc()}\n"
+                        f"❌ Erreur critique dans _after_bcasl: {_e}\n{traceback.format_exc()}\n"
                     )
                 except Exception:
                     pass
-                # Réactiver l'UI en cas d'erreur
-                try:
-                    self.set_controls_enabled(True)
-                except Exception:
-                    pass
-                try:
-                    if hasattr(self, "compiler_tabs") and self.compiler_tabs:
-                        self.compiler_tabs.setEnabled(True)
-                except Exception:
-                    pass
+                # En cas d'erreur: tout tuer et réinitialiser
+                _kill_all_processes(self)
 
         _run_bcasl_async(self, _after_bcasl)
         return  # différer la suite dans le callback pour ne pas bloquer
