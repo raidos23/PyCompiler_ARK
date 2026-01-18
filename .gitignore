@@ -9,7 +9,7 @@ ARK_Main_Config.yml
 # C extensions
 *.so
 *.swp
-.swp
+cloc
 # Distribution / packaging
 .Python
 build/
