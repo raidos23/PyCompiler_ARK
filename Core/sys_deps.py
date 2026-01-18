@@ -934,3 +934,46 @@ def check_system_packages(packages: list[str]) -> bool:
         return True
     except Exception:
         return False
+
+
+def install_system_packages(packages: list[str], gui=None) -> bool:
+    """
+    Install system packages using the appropriate package manager.
+    Returns True if successful, False otherwise.
+    """
+    try:
+        manager = SysDependencyManager(gui)
+        system = platform.system().lower()
+
+        if system == "linux":
+            # For Linux, use the install_packages_linux method
+            process = manager.install_packages_linux(packages)
+            if process:
+                # Wait for completion (simplified - in practice should be async)
+                process.waitForFinished(300000)  # 5 minutes timeout
+                return process.exitCode() == 0
+        elif system == "windows":
+            # For Windows, convert package names to winget format
+            # This is a simplified mapping - in practice would need proper mapping
+            winget_packages = []
+            for pkg in packages:
+                # Basic mapping - would need expansion for real use
+                if pkg == "build-essential":
+                    winget_packages.append({"id": "Microsoft.VisualStudio.2022.BuildTools"})
+                elif pkg == "python3-dev":
+                    winget_packages.append({"id": "Python.Python.3"})
+                else:
+                    # Generic fallback
+                    winget_packages.append({"id": pkg})
+
+            process = manager.install_packages_windows(winget_packages)
+            if process:
+                process.waitForFinished(300000)  # 5 minutes timeout
+                return process.exitCode() == 0
+        else:
+            # Unsupported platform
+            return False
+
+        return False
+    except Exception:
+        return False
