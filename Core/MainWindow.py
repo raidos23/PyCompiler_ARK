@@ -591,305 +591,45 @@ class PyCompilerArkGui(QWidget):
             return False
 
     def _check_next_venv_pkg(self):
-        if self._venv_check_index >= len(self._venv_check_pkgs):
-            self.venv_check_progress.set_message("Vérification terminée.")
-            self.venv_check_progress.set_progress(2, 2)
-            self.venv_check_progress.close()
-            # Installer les dépendances du projet si un requirements.txt est présent
-            if self.workspace_dir:
-                self.install_requirements_if_needed(self.workspace_dir)
-            return
-        pkg = self._venv_check_pkgs[self._venv_check_index]
-        process = QProcess(self)
-        self._venv_check_process = process
-        process.setProgram(self._venv_check_pip_exe)
-        process.setArguments(["show", pkg])
-        process.setWorkingDirectory(self._venv_check_path)
-        process.finished.connect(
-            lambda code, status: self._on_venv_pkg_checked(process, code, status, pkg)
-        )
-        process.start()
+        # Delegated to venv_manager - these methods are now handled by VenvManager
+        pass
 
     def _on_venv_pkg_checked(self, process, code, status, pkg):
-        if code == 0:
-            self.log_i18n(
-                f"✅ {pkg} déjà installé dans le venv.",
-                f"✅ {pkg} already installed in venv.",
-            )
-            self._venv_check_index += 1
-            self.venv_check_progress.set_message(
-                f"Vérification de {self._venv_check_pkgs[self._venv_check_index] if self._venv_check_index < len(self._venv_check_pkgs) else ''}..."
-            )
-            self.venv_check_progress.set_progress(self._venv_check_index, 2)
-            self._check_next_venv_pkg()
-        else:
-            self.log_i18n(
-                f"📦 Installation automatique de {pkg} dans le venv...",
-                f"📦 Automatic installation of {pkg} in venv...",
-            )
-            self.venv_check_progress.set_message(f"Installation de {pkg}...")
-            self.venv_check_progress.progress.setRange(0, 0)
-            process2 = QProcess(self)
-            self._venv_check_install_process = process2
-            process2.setProgram(self._venv_check_pip_exe)
-            process2.setArguments(["install", pkg])
-            process2.setWorkingDirectory(self._venv_check_path)
-            process2.readyReadStandardOutput.connect(
-                lambda: self._on_venv_check_output(process2)
-            )
-            process2.readyReadStandardError.connect(
-                lambda: self._on_venv_check_output(process2, error=True)
-            )
-            process2.finished.connect(
-                lambda code2, status2: self._on_venv_pkg_installed(
-                    process2, code2, status2, pkg
-                )
-            )
-            process2.start()
+        # Delegated to venv_manager
+        pass
 
     def _on_venv_check_output(self, process, error=False):
-        if getattr(self, "_closing", False):
-            return
-        data = (
-            process.readAllStandardError().data().decode()
-            if error
-            else process.readAllStandardOutput().data().decode()
-        )
-        if hasattr(self, "venv_check_progress") and self.venv_check_progress:
-            lines = data.strip().splitlines()
-            if lines:
-                self.venv_check_progress.set_message(lines[-1])
-        self._safe_log(data)
+        # Delegated to venv_manager
+        pass
 
     def _on_venv_pkg_installed(self, process, code, status, pkg):
-        if getattr(self, "_closing", False):
-            return
-        if code == 0:
-            self._safe_log(f"✅ {pkg} installé dans le venv.")
-        else:
-            self._safe_log(f"❌ Erreur installation {pkg} (code {code})")
-        self._venv_check_index += 1
-        self.venv_check_progress.progress.setRange(0, 2)
-        self.venv_check_progress.set_progress(self._venv_check_index, 2)
-        self._check_next_venv_pkg()
+        # Delegated to venv_manager
+        pass
 
     def select_venv_manually(self):
         self.venv_manager.select_venv_manually()
 
     def create_venv_if_needed(self, path):
-        # Support both '.venv' and 'venv'
-        existing = None
-        for name in (".venv", "venv"):
-            cand = os.path.join(path, name)
-            if os.path.exists(cand):
-                existing = cand
-                break
-        venv_path = existing or os.path.join(path, "venv")
-        if not existing:
-            self._safe_log("🔧 Aucun venv trouvé, création automatique...")
-            try:
-                # Recherche d'un python embarqué à côté de l'exécutable
-                python_candidate = None
-                exe_dir = os.path.dirname(sys.executable)
-                # Windows: python.exe, Linux/Mac: python3 ou python
-                candidates = [
-                    os.path.join(exe_dir, "python.exe"),
-                    os.path.join(exe_dir, "python3"),
-                    os.path.join(exe_dir, "python"),
-                    os.path.join(exe_dir, "python_embedded", "python.exe"),
-                    os.path.join(exe_dir, "python_embedded", "python3"),
-                    os.path.join(exe_dir, "python_embedded", "python"),
-                ]
-                # Recherche également les interpréteurs système disponibles dans le PATH
-                path_candidates = []
-                try:
-                    if platform.system() == "Windows":
-                        w = shutil.which("py")
-                        if w:
-                            path_candidates.append(w)
-                    for name in ("python3", "python"):
-                        w = shutil.which(name)
-                        if w:
-                            path_candidates.append(w)
-                except Exception:
-                    pass
-                for c in path_candidates:
-                    if c not in candidates:
-                        candidates.append(c)
-                for c in candidates:
-                    if os.path.isfile(c):
-                        python_candidate = c
-                        break
-                if not python_candidate:
-                    python_candidate = sys.executable
-                # Journalisation du type d'interpréteur détecté
-                base = os.path.basename(python_candidate).lower()
-                if (
-                    python_candidate.startswith(exe_dir)
-                    or "python_embedded" in python_candidate
-                ):
-                    self.log_i18n(
-                        f"➡️ Utilisation de l'interpréteur Python embarqué : {python_candidate}",
-                        f"➡️ Using embedded Python interpreter: {python_candidate}",
-                    )
-                elif base in ("py", "py.exe") or shutil.which(base):
-                    self.log_i18n(
-                        f"➡️ Utilisation de l'interpréteur système : {python_candidate}",
-                        f"➡️ Using system interpreter: {python_candidate}",
-                    )
-                else:
-                    self.log_i18n(
-                        f"➡️ Utilisation de sys.executable : {python_candidate}",
-                        f"➡️ Using sys.executable: {python_candidate}",
-                    )
-                self.venv_progress_dialog = ProgressDialog(
-                    "Création de l'environnement virtuel", self
-                )
-                self.venv_progress_dialog.set_message("Création du venv...")
-                process = QProcess(self)
-                self._venv_create_process = process
-                process.setProgram(python_candidate)
-                args = ["-m", "venv", venv_path]
-                # Si l'on utilise le launcher Windows 'py', forcer Python 3 avec -3
-                if base in ("py", "py.exe"):
-                    args = ["-3"] + args
-                process.setArguments(args)
-                process.setWorkingDirectory(path)
-                process.readyReadStandardOutput.connect(
-                    lambda: self._on_venv_output(process)
-                )
-                process.readyReadStandardError.connect(
-                    lambda: self._on_venv_output(process, error=True)
-                )
-                process.finished.connect(
-                    lambda code, status: self._on_venv_created(
-                        process, code, status, venv_path
-                    )
-                )
-                self._venv_progress_lines = 0
-                self.venv_progress_dialog.show()
-                process.start()
-            except Exception as e:
-                self._safe_log(f"❌ Échec de création du venv : {e}")
+        self.venv_manager.create_venv_if_needed(path)
 
     def _on_venv_output(self, process, error=False):
-        if getattr(self, "_closing", False):
-            return
-        data = (
-            process.readAllStandardError().data().decode()
-            if error
-            else process.readAllStandardOutput().data().decode()
-        )
-        if hasattr(self, "venv_progress_dialog") and self.venv_progress_dialog:
-            lines = data.strip().splitlines()
-            if lines:
-                self.venv_progress_dialog.set_message(lines[-1])
-            self._venv_progress_lines += len(lines)
-            self.venv_progress_dialog.set_progress(self._venv_progress_lines, 0)
-        self._safe_log(data)
+        # Delegated to venv_manager
+        pass
 
     def _on_venv_created(self, process, code, status, venv_path):
-        if getattr(self, "_closing", False):
-            return
-        if code == 0:
-            self._safe_log("✅ Environnement virtuel créé avec succès.")
-            if hasattr(self, "venv_progress_dialog") and self.venv_progress_dialog:
-                self.venv_progress_dialog.set_message("Environnement prêt.")
-                self.venv_progress_dialog.set_progress(1, 1)
-                self.venv_progress_dialog.close()
-            # Installer les dépendances du projet à partir de requirements.txt si présent
-            self.install_requirements_if_needed(os.path.dirname(venv_path))
-        else:
-            self._safe_log(f"❌ Échec de création du venv (code {code})")
-            if hasattr(self, "venv_progress_dialog") and self.venv_progress_dialog:
-                self.venv_progress_dialog.set_message(
-                    "Erreur lors de la création du venv."
-                )
-                self.venv_progress_dialog.close()
-        QApplication.processEvents()
+        # Delegated to venv_manager
+        pass
 
     def install_requirements_if_needed(self, path):
-        req_path = os.path.join(path, "requirements.txt")
-        if os.path.exists(req_path):
-            self._safe_log(
-                "📦 Installation des dépendances à partir de requirements.txt..."
-            )
-            # Resolve pip inside '.venv' or 'venv'
-            venv_root = None
-            for name in (".venv", "venv"):
-                cand = os.path.join(path, name)
-                if os.path.isdir(cand):
-                    venv_root = cand
-                    break
-            if not venv_root:
-                self._safe_log("⚠️ Aucun venv détecté pour installer requirements.txt.")
-                return
-            pip_exe = os.path.join(
-                venv_root, "Scripts" if platform.system() == "Windows" else "bin", "pip"
-            )
-            try:
-                self.progress_dialog = ProgressDialog(
-                    "Installation des dépendances", self
-                )
-                self.progress_dialog.set_message(
-                    "Démarrage de l'installation des dépendances..."
-                )
-                process = QProcess(self)
-                self._req_install_process = process
-                process.setProgram(pip_exe)
-                process.setArguments(["install", "-r", req_path])
-                process.setWorkingDirectory(path)
-                process.readyReadStandardOutput.connect(
-                    lambda: self._on_pip_output(process)
-                )
-                process.readyReadStandardError.connect(
-                    lambda: self._on_pip_output(process, error=True)
-                )
-                process.finished.connect(
-                    lambda code, status: self._on_pip_finished(process, code, status)
-                )
-                self._pip_progress_lines = 0
-                self.progress_dialog.show()
-                process.start()
-                # NE PAS bloquer ici, la fermeture se fait dans _on_pip_finished
-            except Exception as e:
-                self.log_i18n(
-                    f"❌ Échec installation requirements.txt : {e}",
-                    f"❌ Failed to install requirements.txt: {e}",
-                )
+        self.venv_manager.install_requirements_if_needed(path)
 
     def _on_pip_output(self, process, error=False):
-        if getattr(self, "_closing", False):
-            return
-        data = (
-            process.readAllStandardError().data().decode()
-            if error
-            else process.readAllStandardOutput().data().decode()
-        )
-        if hasattr(self, "progress_dialog") and self.progress_dialog:
-            # Affiche la dernière ligne reçue
-            lines = data.strip().splitlines()
-            if lines:
-                self.progress_dialog.set_message(lines[-1])
-            self._pip_progress_lines += len(lines)
-            # Simule une progression (pip ne donne pas de %)
-            self.progress_dialog.set_progress(self._pip_progress_lines, 0)
-        self._safe_log(data)
+        # Delegated to venv_manager
+        pass
 
     def _on_pip_finished(self, process, code, status):
-        if getattr(self, "_closing", False):
-            return
-        if code == 0:
-            self._safe_log("✅ requirements.txt installé.")
-            if hasattr(self, "progress_dialog") and self.progress_dialog:
-                self.progress_dialog.set_message("Installation terminée.")
-        else:
-            self._safe_log(f"❌ Échec installation requirements.txt (code {code})")
-            if hasattr(self, "progress_dialog") and self.progress_dialog:
-                self.progress_dialog.set_message("Erreur lors de l'installation.")
-        if hasattr(self, "progress_dialog") and self.progress_dialog:
-            self.progress_dialog.close()
-        QApplication.processEvents()
+        # Delegated to venv_manager
+        pass
 
     def select_files_manually(self):
         if not self.workspace_dir:
