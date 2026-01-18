@@ -98,44 +98,47 @@ class CompilerEngine:
 
     def ensure_tools_installed(self, gui) -> bool:
         """
-        Check if all required tools are installed.
-        Returns True if all tools are available, False if any tool is missing.
-        This is a synchronous check - actual installation should be handled asynchronously by the UI.
+        Check if all required tools are installed, and install missing ones.
+        Returns True if all tools are available or installation started, False if system tool installation failed.
         """
         try:
             tools = self.required_tools
             python_tools = tools.get('python', [])
             system_tools = tools.get('system', [])
 
-            # Check if VenvManager is available
+            # Check Python tools
             if hasattr(gui, 'venv_manager') and gui.venv_manager:
                 venv_path = gui.venv_manager.resolve_project_venv()
-                if venv_path:
-                    # Check Python tools in venv
-                    if python_tools:
-                        for tool in python_tools:
-                            if not gui.venv_manager.is_tool_installed(venv_path, tool):
-                                if hasattr(gui, 'log') and gui.log:
-                                    gui.log.append(f"⚠️ Python tool '{tool}' not found in venv")
-                                return False
+                if venv_path and python_tools:
+                    missing_python = []
+                    for tool in python_tools:
+                        if not gui.venv_manager.is_tool_installed(venv_path, tool):
+                            missing_python.append(tool)
+                    if missing_python:
+                        if hasattr(gui, 'log') and gui.log:
+                            gui.log.append(f"📦 Installation des outils Python manquants: {missing_python}")
+                        gui.venv_manager.ensure_tools_installed(venv_path, missing_python)
 
-            # Check system tools
+            # Check and install system tools
             if system_tools:
                 try:
-                    from Core.sys_deps import check_system_packages
+                    from Core.sys_deps import check_system_packages, install_system_packages
                     if not check_system_packages(system_tools):
                         if hasattr(gui, 'log') and gui.log:
-                            gui.log.append(f"⚠️ System tools {system_tools} not available")
-                        return False
+                            gui.log.append(f"📦 Installation des outils système manquants: {system_tools}")
+                        if not install_system_packages(system_tools, gui):
+                            if hasattr(gui, 'log') and gui.log:
+                                gui.log.append(f"❌ Échec installation outils système: {system_tools}")
+                            return False
                 except Exception as e:
                     if hasattr(gui, 'log') and gui.log:
-                        gui.log.append(f"⚠️ Error checking system tools {system_tools}: {e}")
+                        gui.log.append(f"⚠️ Error checking/installing system tools {system_tools}: {e}")
                     return False
 
             return True
         except Exception as e:
             if hasattr(gui, 'log') and gui.log:
-                gui.log.append(f"⚠️ Error checking tools: {e}")
+                gui.log.append(f"⚠️ Error in ensure_tools_installed: {e}")
             return False
 
     def apply_i18n(self, gui, tr: dict) -> None:
