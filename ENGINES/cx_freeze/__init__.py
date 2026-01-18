@@ -100,6 +100,9 @@ class CXFreezeEngine(CompilerEngine):
             if hasattr(self, "_selected_icon") and self._selected_icon:
                 cmd.extend(["--icon", self._selected_icon])
 
+            # Add the target file
+            cmd.append(file)
+
             return cmd
 
         except Exception as e:
