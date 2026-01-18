@@ -1,13 +1,13 @@
-
+#!/usr/bin/env pwsh
 # PyCompiler ARK++ — High-grade launcher (Windows PowerShell)
-#All rights reserved.
+# All rights reserved.
 
 [CmdletBinding(PositionalBinding=$false)]
 Param(
   [switch]$Recreate,
   [switch]$SkipInstall,
   [switch]$NoUpgrade,
-  [string]$VenvDir = 'venv',
+  [string]$VenvDir = '.venv',
   [string]$Requirements = 'requirements.txt',
   [string]$Python,
   [string]$MinPy = '3.10',
@@ -30,10 +30,11 @@ function Write-Warn($msg){ if ($NoColor) { Write-Host "[!] $msg" } else { Write-
 function Write-Err($msg){ if ($NoColor) { Write-Host "[x] $msg" } else { Write-Host "❌ $msg" -ForegroundColor Red } }
 
 # Always run from the script directory
-Set-Location -Path $PSScriptRoot
+$scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+Set-Location -Path $scriptDir
 
 # Load .env if present
-$EnvFile = Join-Path $PSScriptRoot '.env'
+$EnvFile = Join-Path $scriptDir '.env'
 if (Test-Path -Path $EnvFile) {
   Get-Content $EnvFile | ForEach-Object {
     if ($_ -match '^\s*#') { return }
@@ -45,6 +46,15 @@ if (Test-Path -Path $EnvFile) {
     }
   }
 }
+
+# Platform-specific settings
+$IsWindows = $PSVersionTable.PSVersion.Major -ge 6 -or $IsWindows
+if ($IsWindows) {
+  $env:QT_WAYLAND_DISABLE_FRACTIONAL_SCALE = 1
+}
+$env:PYTHONUTF8 = 1
+$env:PYTHONIOENCODING = 'utf-8'
+$env:PYCOMPILER_NONINTERACTIVE = 0
 
 # Optional logging to file
 $__TranscriptStarted = $false
@@ -158,3 +168,4 @@ if ($LASTEXITCODE -ne 0) {
   Stop-TranscriptSafe; exit $LASTEXITCODE
 }
 Stop-TranscriptSafe
+

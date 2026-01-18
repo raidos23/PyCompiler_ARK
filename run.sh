@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # PyCompiler ARK++ — High-grade launcher (Unix)
-#All rights reserved.
+# All rights reserved.
 
 set -Eeuo pipefail
 
@@ -47,7 +47,7 @@ trap cleanup EXIT
 trap errtrap ERR
 
 # --- Defaults & CLI --------------------------------------------------------
-VENV_DIR=${VENV_DIR:-venv}
+VENV_DIR=${VENV_DIR:-.venv}
 VENV_DIR_CLI_SPECIFIED=0
 REQ_FILE=${REQ_FILE:-requirements.txt}
 PY_CMD_OVERRIDE=""
@@ -226,3 +226,4 @@ PY
 )
 section "Lancement de main.py (version ${APP_VERSION})"
 exec "$VENV_PY" main.py "${APP_ARGS[@]}"
+

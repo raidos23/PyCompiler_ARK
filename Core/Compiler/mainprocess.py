@@ -725,12 +725,28 @@ def try_install_missing_modules(self, process):
     if not hasattr(self, "_install_report"):
         self._install_report = []
     if missing_modules:
-        pip_exe = os.path.join(
-            self.workspace_dir,
-            "venv",
-            "Scripts" if platform.system() == "Windows" else "bin",
-            "pip",
-        )
+        # Use venv_manager to get the correct pip path
+        venv_manager = getattr(self, "venv_manager", None)
+        if venv_manager:
+            venv_path = venv_manager.resolve_project_venv()
+            if venv_path:
+                pip_exe = venv_manager.pip_path(venv_path)
+            else:
+                # Fallback to hardcoded path
+                pip_exe = os.path.join(
+                    self.workspace_dir,
+                    "venv",
+                    "Scripts" if platform.system() == "Windows" else "bin",
+                    "pip",
+                )
+        else:
+            # Fallback to hardcoded path
+            pip_exe = os.path.join(
+                self.workspace_dir,
+                "venv",
+                "Scripts" if platform.system() == "Windows" else "bin",
+                "pip",
+            )
         all_installed = True
         new_modules = [
             m for m in missing_modules if m not in self._already_tried_modules
