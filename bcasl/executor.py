@@ -883,7 +883,7 @@ def _plugin_worker(
         module = _ilu.module_from_spec(spec)
         _sys.modules[spec.name] = module
         spec.loader.exec_module(module)  # type: ignore[attr-defined]
-        # Récupérer PLUGIN ou fallback via bcasl_register
+        # Récupérer PLUGIN ou fallback via bcasl_register ou décorateur @bc_register
         plg = getattr(module, "PLUGIN", None)
         if plg is None or getattr(getattr(plg, "meta", None), "id", None) != plugin_id:
             try:
@@ -899,10 +899,35 @@ def _plugin_worker(
                     module.bcasl_register(mgr)
                 rec = getattr(mgr, "_registry", {}).get(plugin_id)
                 if rec is None:
+                    # Nouveau style: chercher les classes marquées avec @bc_register
+                    # Ces classes ont l'attribut __bcasl_plugin__ = True
+                    # et peuvent avoir _bcasl_instance_ pour l'instance
+                    for attr_name in dir(module):
+                        try:
+                            attr = getattr(module, attr_name, None)
+                            if attr is None:
+                                continue
+                            if not isinstance(attr, type):
+                                continue
+                            if not getattr(attr, "__bcasl_plugin__", False):
+                                continue
+                            plugin_instance = getattr(attr, "_bcasl_instance_", None)
+                            if plugin_instance is None:
+                                try:
+                                    plugin_instance = attr()
+                                except Exception:
+                                    continue
+                            if getattr(plugin_instance.meta, "id", None) == plugin_id:
+                                plg = plugin_instance
+                                break
+                        except Exception:
+                            continue
+                else:
+                    plg = rec.plugin
+                if plg is None:
                     raise RuntimeError(
                         f"Plugin '{plugin_id}' introuvable dans le module"
                     )
-                plg = rec.plugin
             except Exception as ex:
                 raise RuntimeError(f"Impossible d'instancier le plugin: {ex}")
         # Exécution
