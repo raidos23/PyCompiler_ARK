@@ -920,6 +920,23 @@ class SysDependencyManager:
             return None
 
 
+def check_system_packages(packages: list[str]) -> bool:
+    """
+    Check if system packages/tools are installed.
+    Returns True if all packages/tools are available, False otherwise.
+    Uses shutil.which() to check for command availability.
+    """
+    try:
+        if not packages:
+            return True
+        for pkg in packages:
+            if pkg and not shutil.which(pkg):
+                return False
+        return True
+    except Exception:
+        return False
+
+
 def install_system_packages(packages: list[str], gui) -> bool:
     """
     Install system packages using the appropriate package manager.
