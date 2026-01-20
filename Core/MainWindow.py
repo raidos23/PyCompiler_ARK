@@ -22,9 +22,11 @@ import sys
 import threading
 from typing import Optional
 
-from PySide6.QtCore import QObject, QProcess, Qt, QTimer, Signal
+from PySide6.QtCore import QProcess, Qt
 from PySide6.QtGui import QDropEvent, QPixmap
 from PySide6.QtWidgets import QApplication, QFileDialog, QMessageBox, QWidget
+
+from .utils import _UiInvoker, _run_coro_async
 from .dialogs import ProgressDialog, CompilationProcessDialog
 from .Venv_Manager import VenvManager
 
@@ -54,53 +56,6 @@ def get_selected_workspace() -> Optional[str]:
     except Exception:
         pass
     return None
-
-
-class _UiInvoker(QObject):
-    _sig = Signal(object)
-
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self._sig.connect(self._exec, Qt.QueuedConnection)
-
-    def post(self, fn):
-        try:
-            self._sig.emit(fn)
-        except Exception:
-            pass
-
-    def _exec(self, fn):
-        try:
-            fn()
-        except Exception:
-            pass
-
-
-def _run_coro_async(coro, on_result, ui_owner=None):
-    invoker = None
-    try:
-        if ui_owner is not None and isinstance(ui_owner, QObject):
-            invoker = getattr(ui_owner, "_ui_invoker", None)
-            if invoker is None:
-                invoker = _UiInvoker(ui_owner)
-                setattr(ui_owner, "_ui_invoker", invoker)
-    except Exception:
-        invoker = None
-
-    def _runner():
-        try:
-            res = asyncio.run(coro)
-        except Exception as e:
-            res = e
-        try:
-            if invoker is not None:
-                invoker.post(lambda: on_result(res))
-            else:
-                QTimer.singleShot(0, lambda: on_result(res))
-        except Exception:
-            pass
-
-    threading.Thread(target=_runner, daemon=True).start()
 
 
 # Synchronous request from background threads to change workspace via GUI thread
@@ -591,305 +546,45 @@ class PyCompilerArkGui(QWidget):
             return False
 
     def _check_next_venv_pkg(self):
-        if self._venv_check_index >= len(self._venv_check_pkgs):
-            self.venv_check_progress.set_message("Vérification terminée.")
-            self.venv_check_progress.set_progress(2, 2)
-            self.venv_check_progress.close()
-            # Installer les dépendances du projet si un requirements.txt est présent
-            if self.workspace_dir:
-                self.install_requirements_if_needed(self.workspace_dir)
-            return
-        pkg = self._venv_check_pkgs[self._venv_check_index]
-        process = QProcess(self)
-        self._venv_check_process = process
-        process.setProgram(self._venv_check_pip_exe)
-        process.setArguments(["show", pkg])
-        process.setWorkingDirectory(self._venv_check_path)
-        process.finished.connect(
-            lambda code, status: self._on_venv_pkg_checked(process, code, status, pkg)
-        )
-        process.start()
+        # Delegated to venv_manager - these methods are now handled by VenvManager
+        pass
 
     def _on_venv_pkg_checked(self, process, code, status, pkg):
-        if code == 0:
-            self.log_i18n(
-                f"✅ {pkg} déjà installé dans le venv.",
-                f"✅ {pkg} already installed in venv.",
-            )
-            self._venv_check_index += 1
-            self.venv_check_progress.set_message(
-                f"Vérification de {self._venv_check_pkgs[self._venv_check_index] if self._venv_check_index < len(self._venv_check_pkgs) else ''}..."
-            )
-            self.venv_check_progress.set_progress(self._venv_check_index, 2)
-            self._check_next_venv_pkg()
-        else:
-            self.log_i18n(
-                f"📦 Installation automatique de {pkg} dans le venv...",
-                f"📦 Automatic installation of {pkg} in venv...",
-            )
-            self.venv_check_progress.set_message(f"Installation de {pkg}...")
-            self.venv_check_progress.progress.setRange(0, 0)
-            process2 = QProcess(self)
-            self._venv_check_install_process = process2
-            process2.setProgram(self._venv_check_pip_exe)
-            process2.setArguments(["install", pkg])
-            process2.setWorkingDirectory(self._venv_check_path)
-            process2.readyReadStandardOutput.connect(
-                lambda: self._on_venv_check_output(process2)
-            )
-            process2.readyReadStandardError.connect(
-                lambda: self._on_venv_check_output(process2, error=True)
-            )
-            process2.finished.connect(
-                lambda code2, status2: self._on_venv_pkg_installed(
-                    process2, code2, status2, pkg
-                )
-            )
-            process2.start()
+        # Delegated to venv_manager
+        pass
 
     def _on_venv_check_output(self, process, error=False):
-        if getattr(self, "_closing", False):
-            return
-        data = (
-            process.readAllStandardError().data().decode()
-            if error
-            else process.readAllStandardOutput().data().decode()
-        )
-        if hasattr(self, "venv_check_progress") and self.venv_check_progress:
-            lines = data.strip().splitlines()
-            if lines:
-                self.venv_check_progress.set_message(lines[-1])
-        self._safe_log(data)
+        # Delegated to venv_manager
+        pass
 
     def _on_venv_pkg_installed(self, process, code, status, pkg):
-        if getattr(self, "_closing", False):
-            return
-        if code == 0:
-            self._safe_log(f"✅ {pkg} installé dans le venv.")
-        else:
-            self._safe_log(f"❌ Erreur installation {pkg} (code {code})")
-        self._venv_check_index += 1
-        self.venv_check_progress.progress.setRange(0, 2)
-        self.venv_check_progress.set_progress(self._venv_check_index, 2)
-        self._check_next_venv_pkg()
+        # Delegated to venv_manager
+        pass
 
     def select_venv_manually(self):
         self.venv_manager.select_venv_manually()
 
     def create_venv_if_needed(self, path):
-        # Support both '.venv' and 'venv'
-        existing = None
-        for name in (".venv", "venv"):
-            cand = os.path.join(path, name)
-            if os.path.exists(cand):
-                existing = cand
-                break
-        venv_path = existing or os.path.join(path, "venv")
-        if not existing:
-            self._safe_log("🔧 Aucun venv trouvé, création automatique...")
-            try:
-                # Recherche d'un python embarqué à côté de l'exécutable
-                python_candidate = None
-                exe_dir = os.path.dirname(sys.executable)
-                # Windows: python.exe, Linux/Mac: python3 ou python
-                candidates = [
-                    os.path.join(exe_dir, "python.exe"),
-                    os.path.join(exe_dir, "python3"),
-                    os.path.join(exe_dir, "python"),
-                    os.path.join(exe_dir, "python_embedded", "python.exe"),
-                    os.path.join(exe_dir, "python_embedded", "python3"),
-                    os.path.join(exe_dir, "python_embedded", "python"),
-                ]
-                # Recherche également les interpréteurs système disponibles dans le PATH
-                path_candidates = []
-                try:
-                    if platform.system() == "Windows":
-                        w = shutil.which("py")
-                        if w:
-                            path_candidates.append(w)
-                    for name in ("python3", "python"):
-                        w = shutil.which(name)
-                        if w:
-                            path_candidates.append(w)
-                except Exception:
-                    pass
-                for c in path_candidates:
-                    if c not in candidates:
-                        candidates.append(c)
-                for c in candidates:
-                    if os.path.isfile(c):
-                        python_candidate = c
-                        break
-                if not python_candidate:
-                    python_candidate = sys.executable
-                # Journalisation du type d'interpréteur détecté
-                base = os.path.basename(python_candidate).lower()
-                if (
-                    python_candidate.startswith(exe_dir)
-                    or "python_embedded" in python_candidate
-                ):
-                    self.log_i18n(
-                        f"➡️ Utilisation de l'interpréteur Python embarqué : {python_candidate}",
-                        f"➡️ Using embedded Python interpreter: {python_candidate}",
-                    )
-                elif base in ("py", "py.exe") or shutil.which(base):
-                    self.log_i18n(
-                        f"➡️ Utilisation de l'interpréteur système : {python_candidate}",
-                        f"➡️ Using system interpreter: {python_candidate}",
-                    )
-                else:
-                    self.log_i18n(
-                        f"➡️ Utilisation de sys.executable : {python_candidate}",
-                        f"➡️ Using sys.executable: {python_candidate}",
-                    )
-                self.venv_progress_dialog = ProgressDialog(
-                    "Création de l'environnement virtuel", self
-                )
-                self.venv_progress_dialog.set_message("Création du venv...")
-                process = QProcess(self)
-                self._venv_create_process = process
-                process.setProgram(python_candidate)
-                args = ["-m", "venv", venv_path]
-                # Si l'on utilise le launcher Windows 'py', forcer Python 3 avec -3
-                if base in ("py", "py.exe"):
-                    args = ["-3"] + args
-                process.setArguments(args)
-                process.setWorkingDirectory(path)
-                process.readyReadStandardOutput.connect(
-                    lambda: self._on_venv_output(process)
-                )
-                process.readyReadStandardError.connect(
-                    lambda: self._on_venv_output(process, error=True)
-                )
-                process.finished.connect(
-                    lambda code, status: self._on_venv_created(
-                        process, code, status, venv_path
-                    )
-                )
-                self._venv_progress_lines = 0
-                self.venv_progress_dialog.show()
-                process.start()
-            except Exception as e:
-                self._safe_log(f"❌ Échec de création du venv : {e}")
+        self.venv_manager.create_venv_if_needed(path)
 
     def _on_venv_output(self, process, error=False):
-        if getattr(self, "_closing", False):
-            return
-        data = (
-            process.readAllStandardError().data().decode()
-            if error
-            else process.readAllStandardOutput().data().decode()
-        )
-        if hasattr(self, "venv_progress_dialog") and self.venv_progress_dialog:
-            lines = data.strip().splitlines()
-            if lines:
-                self.venv_progress_dialog.set_message(lines[-1])
-            self._venv_progress_lines += len(lines)
-            self.venv_progress_dialog.set_progress(self._venv_progress_lines, 0)
-        self._safe_log(data)
+        # Delegated to venv_manager
+        pass
 
     def _on_venv_created(self, process, code, status, venv_path):
-        if getattr(self, "_closing", False):
-            return
-        if code == 0:
-            self._safe_log("✅ Environnement virtuel créé avec succès.")
-            if hasattr(self, "venv_progress_dialog") and self.venv_progress_dialog:
-                self.venv_progress_dialog.set_message("Environnement prêt.")
-                self.venv_progress_dialog.set_progress(1, 1)
-                self.venv_progress_dialog.close()
-            # Installer les dépendances du projet à partir de requirements.txt si présent
-            self.install_requirements_if_needed(os.path.dirname(venv_path))
-        else:
-            self._safe_log(f"❌ Échec de création du venv (code {code})")
-            if hasattr(self, "venv_progress_dialog") and self.venv_progress_dialog:
-                self.venv_progress_dialog.set_message(
-                    "Erreur lors de la création du venv."
-                )
-                self.venv_progress_dialog.close()
-        QApplication.processEvents()
+        # Delegated to venv_manager
+        pass
 
     def install_requirements_if_needed(self, path):
-        req_path = os.path.join(path, "requirements.txt")
-        if os.path.exists(req_path):
-            self._safe_log(
-                "📦 Installation des dépendances à partir de requirements.txt..."
-            )
-            # Resolve pip inside '.venv' or 'venv'
-            venv_root = None
-            for name in (".venv", "venv"):
-                cand = os.path.join(path, name)
-                if os.path.isdir(cand):
-                    venv_root = cand
-                    break
-            if not venv_root:
-                self._safe_log("⚠️ Aucun venv détecté pour installer requirements.txt.")
-                return
-            pip_exe = os.path.join(
-                venv_root, "Scripts" if platform.system() == "Windows" else "bin", "pip"
-            )
-            try:
-                self.progress_dialog = ProgressDialog(
-                    "Installation des dépendances", self
-                )
-                self.progress_dialog.set_message(
-                    "Démarrage de l'installation des dépendances..."
-                )
-                process = QProcess(self)
-                self._req_install_process = process
-                process.setProgram(pip_exe)
-                process.setArguments(["install", "-r", req_path])
-                process.setWorkingDirectory(path)
-                process.readyReadStandardOutput.connect(
-                    lambda: self._on_pip_output(process)
-                )
-                process.readyReadStandardError.connect(
-                    lambda: self._on_pip_output(process, error=True)
-                )
-                process.finished.connect(
-                    lambda code, status: self._on_pip_finished(process, code, status)
-                )
-                self._pip_progress_lines = 0
-                self.progress_dialog.show()
-                process.start()
-                # NE PAS bloquer ici, la fermeture se fait dans _on_pip_finished
-            except Exception as e:
-                self.log_i18n(
-                    f"❌ Échec installation requirements.txt : {e}",
-                    f"❌ Failed to install requirements.txt: {e}",
-                )
+        self.venv_manager.install_requirements_if_needed(path)
 
     def _on_pip_output(self, process, error=False):
-        if getattr(self, "_closing", False):
-            return
-        data = (
-            process.readAllStandardError().data().decode()
-            if error
-            else process.readAllStandardOutput().data().decode()
-        )
-        if hasattr(self, "progress_dialog") and self.progress_dialog:
-            # Affiche la dernière ligne reçue
-            lines = data.strip().splitlines()
-            if lines:
-                self.progress_dialog.set_message(lines[-1])
-            self._pip_progress_lines += len(lines)
-            # Simule une progression (pip ne donne pas de %)
-            self.progress_dialog.set_progress(self._pip_progress_lines, 0)
-        self._safe_log(data)
+        # Delegated to venv_manager
+        pass
 
     def _on_pip_finished(self, process, code, status):
-        if getattr(self, "_closing", False):
-            return
-        if code == 0:
-            self._safe_log("✅ requirements.txt installé.")
-            if hasattr(self, "progress_dialog") and self.progress_dialog:
-                self.progress_dialog.set_message("Installation terminée.")
-        else:
-            self._safe_log(f"❌ Échec installation requirements.txt (code {code})")
-            if hasattr(self, "progress_dialog") and self.progress_dialog:
-                self.progress_dialog.set_message("Erreur lors de l'installation.")
-        if hasattr(self, "progress_dialog") and self.progress_dialog:
-            self.progress_dialog.close()
-        QApplication.processEvents()
+        # Delegated to venv_manager
+        pass
 
     def select_files_manually(self):
         if not self.workspace_dir:
@@ -1043,7 +738,6 @@ class PyCompilerArkGui(QWidget):
         except Exception:
             pass
 
-
     def select_nuitka_icon(self):
         import platform
 
@@ -1090,51 +784,20 @@ class PyCompilerArkGui(QWidget):
         self.update_command_preview()
 
     def show_help_dialog(self):
-        # Minimal, aligned with v3.2.0 behavior (classic engines only)
-        if getattr(self, "current_language", "Français") == "English":
-            help_text = (
-                "<b>PyCompiler ARK++ — Quick Help</b><br>"
-                "<ul>"
-                "<li>1) Select the Workspace and add your .py files.</li>"
-                "<li>2) Configure pre‑compile plugins via <b>API Loader</b> (BCASL).</li>"
-                "<li>3) Configure options in the <b>PyInstaller</b> or <b>Nuitka</b> tab.</li>"
-                "<li>4) Click <b>Build</b> and follow the logs.</li>"
-                "</ul>"
-                "<b>Notes</b><br>"
-                "<ul>"
-                "<li>When a build starts, all action controls are disabled (including API Loader) until it finishes or is canceled.</li>"
-                "<li>Pre‑compilation (BCASL) completes before compilation.</li>"
-                "<li>A <i>venv</i> can be created automatically; requirements.txt is installed if present; tools are installed into the venv as needed.</li>"
-                "<li>API‑initiated workspace changes are auto‑applied; running builds are canceled before switching.</li>"
-                "</ul>"
-                "<b>License</b>: GPL‑3.0 — <a href='https://www.gnu.org/licenses/gpl-3.0.html'>gnu.org/licenses/gpl-3.0.html</a>"
-                "<br><b>Author</b>: Samuel Amen Ague"
-                "<br>© 2025 Samuel Amen Ague"
-                "<br>©PyCompiler_Pro++(ARK++)"
-            )
-        else:
-            help_text = (
-                "<b>PyCompiler ARK++ — Aide rapide</b><br>"
-                "<ul>"
-                "<li>1) Sélectionnez le Workspace et ajoutez vos fichiers .py.</li>"
-                "<li>2) Configurez les plugins de pré‑compilation via <b>API Loader</b> (BCASL).</li>"
-                "<li>3) Réglez les options dans l’onglet <b>PyInstaller</b> ou <b>Nuitka</b>.</li>"
-                "<li>4) Cliquez sur <b>Build</b> et suivez les logs.</li>"
-                "</ul>"
-                "<b>Notes</b><br>"
-                "<ul>"
-                "<li>Au démarrage d’un build, tous les contrôles d’action sont désactivés (y compris API Loader) jusqu’à la fin ou l’annulation.</li>"
-                "<li>La pré‑compilation (BCASL) se termine avant la compilation.</li>"
-                "<li>Un <i>venv</i> peut être créé automatiquement ; requirements.txt est installé s’il est présent ; les outils sont installés dans le venv si nécessaire.</li>"
-                "<li>Les demandes de changement de workspace via l’API sont appliquées automatiquement ; les builds en cours sont annulés avant le changement.</li>"
-                "</ul>"
-                "<b>Licence</b> : GPL‑3.0 — <a href='https://www.gnu.org/licenses/gpl-3.0.html'>gnu.org/licenses/gpl-3.0.html</a>"
-                "<br><b>Auteur</b> : Samuel Amen Ague"
-                "<br>© 2025 Samuel Amen Ague"
-                "<br>©PyCompiler_Pro++(ARK++)"
-            )
+        # Minimal help dialog with current license information
+        try:
+            tr = getattr(self, "_tr", None)
+            if tr and isinstance(tr, dict):
+                help_title = tr.get("help_title", "Help")
+                help_text = tr.get("help_text", "")
+            else:
+                help_title = "Help"
+                help_text = ""
+        except Exception:
+            help_title = "Help"
+            help_text = ""
         dlg = QMessageBox(self)
-        dlg.setWindowTitle(self.tr("Aide", "Help"))
+        dlg.setWindowTitle(help_title)
         dlg.setTextFormat(Qt.TextFormat.RichText)
         dlg.setText(help_text)
         dlg.setIcon(QMessageBox.Icon.Information)
@@ -1267,27 +930,8 @@ class PyCompilerArkGui(QWidget):
 
     def update_command_preview(self):
         # Aperçu de commande désactivé: widget label_cmd retiré
-        # Résumé des options
-        summary = []
-        if self.opt_onefile.isChecked():
-            summary.append("Onefile")
-        if self.opt_windowed.isChecked():
-            summary.append("Windowed")
-        if self.opt_noconfirm.isChecked():
-            summary.append("Noconfirm")
-        if self.opt_clean.isChecked():
-            summary.append("Clean")
-        if self.opt_noupx.isChecked():
-            summary.append("NoUPX")
-        if self.opt_debug.isChecked():
-            summary.append("Debug")
-        if self.opt_auto_install.isChecked():
-            summary.append("Auto-install modules")
-        if self.icon_path:
-            summary.append("Icone")
-        if self.output_dir_input.text().strip():
-            summary.append(f"Sortie: {self.output_dir_input.text().strip()}")
-        # Widget options_summary supprimé; plus de mise à jour de résumé visuel
+        # Cette méthode est maintenant vide car les options sont gérées dynamiquement par les moteurs
+        pass
 
     from .Compiler import (
         cancel_all_compilations,
@@ -1315,7 +959,6 @@ class PyCompilerArkGui(QWidget):
             pass
         self.btn_cancel_all.setEnabled(not enabled)
         self.btn_select_folder.setEnabled(enabled)
-        self.btn_select_icon.setEnabled(enabled)
         self.btn_select_files.setEnabled(enabled)
         self.btn_remove_file.setEnabled(enabled)
         # Check if buttons exist before calling setEnabled
@@ -1335,10 +978,10 @@ class PyCompilerArkGui(QWidget):
                 self.btn_suggest_deps.setEnabled(enabled)
         except Exception:
             pass
-        # API Loader button (BCASL)
+        # Bc Plugins Loader button (BCASL)
         try:
-            if hasattr(self, "btn_api_loader") and self.btn_api_loader:
-                self.btn_api_loader.setEnabled(enabled)
+            if hasattr(self, "btn_bc_loader") and self.btn_bc_loader:
+                self.btn_bc_loader.setEnabled(enabled)
         except Exception:
             pass
         # Désactiver aussi options de langue/thème et stats (sensibles en cours de build)
@@ -1358,38 +1001,21 @@ class PyCompilerArkGui(QWidget):
         except Exception:
             pass
         self.venv_button.setEnabled(enabled)
-        self.output_dir_input.setEnabled(enabled)
-        # Désactive toutes les cases à cocher d'options
-        for checkbox in [
-            self.opt_onefile,
-            self.opt_windowed,
-            self.opt_noconfirm,
-            self.opt_clean,
-            self.opt_noupx,
-            self.opt_main_only,
-            self.opt_debug,
-            self.opt_auto_install,
-            self.opt_silent_errors,
-        ]:
-            checkbox.setEnabled(enabled)
         # Rafraîchir visuellement l'état grisé de tous les contrôles sensibles
         try:
             grey_targets = [
                 getattr(self, "btn_build_all", None),
                 getattr(self, "btn_select_folder", None),
-                getattr(self, "btn_select_icon", None),
                 getattr(self, "btn_select_files", None),
                 getattr(self, "btn_remove_file", None),
                 getattr(self, "btn_export_config", None),
                 getattr(self, "btn_import_config", None),
-                getattr(self, "btn_api_loader", None),
-                None,
+                getattr(self, "btn_bc_loader", None),
                 getattr(self, "btn_suggest_deps", None),
                 getattr(self, "select_lang", None),
                 getattr(self, "select_theme", None),
                 getattr(self, "btn_show_stats", None),
                 getattr(self, "venv_button", None),
-                getattr(self, "output_dir_input", None),
             ]
             for w in grey_targets:
                 try:
@@ -1409,7 +1035,6 @@ class PyCompilerArkGui(QWidget):
                     pass
         except Exception:
             pass
-        # self.custom_args supprimé (widget supprimé)
 
     from .preferences import load_preferences, save_preferences, update_ui_state
 
@@ -1447,7 +1072,7 @@ class PyCompilerArkGui(QWidget):
     # Internationalization using JSON language files
     current_language = "English"
 
-    def _apply_translations(self, tr: dict):
+    def _apply_main_app_translations(self, tr: dict):
         # Utilitaires internes pour éviter les valeurs codées en dur
         def _set(attr: str, key: str, method: str = "setText"):
             try:
@@ -1513,41 +1138,7 @@ class PyCompilerArkGui(QWidget):
         # Logs
         _set("label_logs_section", "label_logs_section")
 
-        # Tabs
-        try:
-            val0 = tr.get("tab_pyinstaller")
-            if val0:
-                self.compiler_tabs.setTabText(0, val0)
-            val1 = tr.get("tab_nuitka")
-            if val1:
-                self.compiler_tabs.setTabText(1, val1)
-        except Exception:
-            pass
-
-        # PyInstaller options
-        _set("opt_onefile", "opt_onefile")
-        _set("opt_windowed", "opt_windowed")
-        _set("opt_noconfirm", "opt_noconfirm")
-        _set("opt_clean", "opt_clean")
-        _set("opt_noupx", "opt_noupx")
-        _set("opt_main_only", "opt_main_only")
-        _set("btn_select_icon", "btn_select_icon")
-        _set("opt_debug", "opt_debug")
-        _set("opt_auto_install", "opt_auto_install")
-        _set("opt_silent_errors", "opt_silent_errors")
-
-        # Nuitka options
-        _set("nuitka_onefile", "nuitka_onefile")
-        _set("nuitka_standalone", "nuitka_standalone")
-        _set("nuitka_disable_console", "nuitka_disable_console")
-        _set("nuitka_show_progress", "nuitka_show_progress")
-        try:
-            placeholder = tr.get("nuitka_output_dir")
-            if placeholder and getattr(self, "nuitka_output_dir", None):
-                self.nuitka_output_dir.setPlaceholderText(placeholder)
-        except Exception:
-            pass
-        _set("btn_nuitka_icon", "btn_nuitka_icon")
+        # Note: Tabs are now dynamically created by engines, no static translation needed
 
     def apply_language(self, lang_display: str):
         # Launch non-blocking translation loading and apply when ready
@@ -1566,7 +1157,7 @@ class PyCompilerArkGui(QWidget):
             if isinstance(res, Exception):
                 return
             code, tr = res
-            self._apply_translations(tr)
+            self._apply_main_app_translations(tr)
             # Notifier les moteurs pour rafraîchir leurs libellés (i18n)
             try:
                 # Callback-based refresh (legacy)

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>PyInstallerGUI</class>
- <widget class="QWidget" name="PyInstallerGUI">
+ <class>PyCompilerARKGui</class>
+ <widget class="QWidget" name="PyCompilerARKGui">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -143,7 +143,7 @@
          </layout>
         </widget>
        </item>
-              <item>
+       <item>
         <widget class="QFrame" name="frame_tools">
          <property name="frameShape">
           <enum>QFrame::Shape::StyledPanel</enum>
@@ -170,17 +170,28 @@
            </widget>
           </item>
           <item>
-           <widget class="QPushButton" name="btn_api_loader">
+           <widget class="QPushButton" name="btn_bc_loader">
             <property name="text">
-             <string>🧩 Bc Plugins Loader </string>
+             <string>🧩 Bc Plugins Loader</string>
             </property>
             <property name="toolTip">
-             <string>Charger BCASL Loader</string>
+             <string>Charger Bc Plugins Loader</string>
             </property>
            </widget>
           </item>
           <item>
-           </item>
+           <spacer name="toolsSpacer">
+            <property name="orientation">
+             <enum>Qt::Orientation::Vertical</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>20</width>
+              <height>10</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
           <item>
            <widget class="QPushButton" name="btn_show_stats">
             <property name="text">
@@ -384,149 +395,6 @@
             <property name="currentIndex">
              <number>0</number>
             </property>
-            <widget class="QWidget" name="tab_pyinstaller">
-             <attribute name="title">
-              <string>PyInstaller</string>
-             </attribute>
-             <layout class="QVBoxLayout" name="pyinstaller_options_layout">
-              <property name="spacing">
-               <number>10</number>
-              </property>
-              <item>
-               <widget class="QCheckBox" name="opt_onefile">
-                <property name="text">
-                 <string>Onefile</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QCheckBox" name="opt_windowed">
-                <property name="text">
-                 <string>Windowed</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QCheckBox" name="opt_noconfirm">
-                <property name="text">
-                 <string>Noconfirm</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QCheckBox" name="opt_clean">
-                <property name="text">
-                 <string>Clean</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QCheckBox" name="opt_noupx">
-                <property name="text">
-                 <string>No UPX</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QCheckBox" name="opt_main_only">
-                <property name="text">
-                 <string>Compiler uniquement main.py ou app.py</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QPushButton" name="btn_select_icon">
-                <property name="text">
-                 <string>🎨 Choisir une icône (.ico)</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QCheckBox" name="opt_debug">
-                <property name="text">
-                 <string>Mode debug (--debug)</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QPushButton" name="pyinstaller_add_data">
-                <property name="text">
-                 <string>add_data</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <layout class="QHBoxLayout" name="outputDirLayout">
-                <item>
-                 <widget class="QLineEdit" name="output_dir_input">
-                  <property name="placeholderText">
-                   <string>Dossier de sortie (--distpath). Laisser vide pour ./dist</string>
-                  </property>
-                 </widget>
-                </item>
-               </layout>
-              </item>
-             </layout>
-            </widget>
-            <widget class="QWidget" name="tab_nuitka">
-             <attribute name="title">
-              <string>Nuitka</string>
-             </attribute>
-             <layout class="QVBoxLayout" name="nuitka_options_layout">
-              <property name="spacing">
-               <number>10</number>
-              </property>
-              <item>
-               <widget class="QCheckBox" name="nuitka_onefile">
-                <property name="text">
-                 <string>Onefile (--onefile)</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QCheckBox" name="nuitka_standalone">
-                <property name="text">
-                 <string>Standalone (--standalone)</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QCheckBox" name="nuitka_disable_console">
-                <property name="text">
-                 <string>Désactiver la console Windows (--windows-disable-console)</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QCheckBox" name="nuitka_show_progress">
-                <property name="text">
-                 <string>Afficher la progression (--show-progress)</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QPushButton" name="nuitka_add_data">
-                <property name="text">
-                 <string>add_data</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QLineEdit" name="nuitka_output_dir">
-                <property name="placeholderText">
-                 <string>Dossier de sortie (--output-dir)</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QPushButton" name="btn_nuitka_icon">
-                <property name="text">
-                 <string>🎨 Choisir une icône (.ico) Nuitka</string>
-                </property>
-               </widget>
-              </item>
-             </layout>
-            </widget>
            </widget>
           </item>
          </layout>
@@ -599,3 +467,4 @@
  <resources/>
  <connections/>
 </ui>
+

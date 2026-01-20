@@ -1,0 +1,18 @@
+{
+  "_meta": {
+    "code": "ru",
+    "name": "Русский"
+  },
+  "tab_label": "PyInstaller",
+  "mode_label": "Режим:",
+  "onefile_checkbox": "Один файл",
+  "windowed_checkbox": "Оконный",
+  "noconfirm_checkbox": "Без подтверждения",
+  "clean_checkbox": "Очистка",
+  "noupx_checkbox": "Без UPX",
+  "main_only_checkbox": "Компилировать только main.py или app.py",
+  "debug_checkbox": "Режим отладки (--debug)",
+  "add_data_button": "add_data",
+  "output_placeholder": "Выходная папка (--distpath). Оставьте пустым для ./dist",
+  "icon_button": "🎨 Выбрать иконку (.ico)"
+}

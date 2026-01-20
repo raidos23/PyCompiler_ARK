@@ -20,7 +20,6 @@ import sys
 from PySide6.QtCore import QFile, Qt
 from PySide6.QtUiTools import QUiLoader
 from PySide6.QtWidgets import (
-    QCheckBox,
     QLabel,
     QLineEdit,
     QListWidget,
@@ -31,6 +30,7 @@ from PySide6.QtWidgets import (
 )
 
 from Core import i18n as _i18n
+from .i18n import _apply_main_app_translations, show_language_dialog
 
 
 def _detect_system_color_scheme() -> str:
@@ -256,7 +256,7 @@ def init_ui(self):
     self.btn_cancel_all = self.ui.findChild(QPushButton, "btn_cancel_all")
     self.btn_help = self.ui.findChild(QPushButton, "btn_help")
     self.btn_suggest_deps = self.ui.findChild(QPushButton, "btn_suggest_deps")
-    self.btn_api_loader = self.ui.findChild(QPushButton, "btn_api_loader")
+    self.btn_bc_loader = self.ui.findChild(QPushButton, "btn_bc_loader")
     self.btn_acasl_loader = self.ui.findChild(QPushButton, "btn_acasl_loader")
     if self.btn_acasl_loader:
         try:
@@ -264,90 +264,18 @@ def init_ui(self):
             self.btn_acasl_loader.setEnabled(False)
         except Exception:
             pass
-    self.btn_select_icon = self.ui.findChild(QPushButton, "btn_select_icon")
-    self.btn_show_stats = self.ui.findChild(QPushButton, "btn_show_stats")
-    self.select_lang = self.ui.findChild(QPushButton, "select_lang")
-    self.select_theme = self.ui.findChild(QPushButton, "select_theme")
-    if self.select_theme:
-        try:
-            self.select_theme.clicked.connect(lambda: show_theme_dialog(self))
-        except Exception:
-            pass
-    # Tooltips pour les boutons principaux (après initialisation)
-    if self.btn_select_folder:
-        self.btn_select_folder.setToolTip(
-            "Sélectionner le dossier de travail (workspace) contenant vos scripts Python."
-        )
-    if self.btn_select_files:
-        self.btn_select_files.setToolTip(
-            "Ajouter manuellement des fichiers Python à compiler dans le workspace."
-        )
-    if self.btn_build_all:
-        self.btn_build_all.setToolTip(
-            "Lancer la compilation de tous les fichiers sélectionnés."
-        )
-    if self.btn_cancel_all:
-        self.btn_cancel_all.setToolTip("Annuler toutes les compilations en cours.")
-    if self.btn_remove_file:
-        self.btn_remove_file.setToolTip(
-            "Supprimer le ou les fichiers sélectionnés de la liste."
-        )
-        self.btn_remove_file.clicked.connect(self.remove_selected_file)
-    if self.btn_select_icon:
-        self.btn_select_icon.setToolTip(
-            "Choisir une icône (.ico) pour l'exécutable généré (Windows uniquement)."
-        )
-        import platform
-
-        self.btn_select_icon.setEnabled(platform.system() == "Windows")
-    if self.btn_help:
-        self.btn_help.setToolTip("Afficher l'aide et les informations sur le logiciel.")
-    if self.btn_api_loader:
-        self.btn_api_loader.setToolTip(
-            "Configurer les plugins API (BCASL) à exécuter avant la compilation."
-        )
-    # ACASL removed: hide or disable ACASL loader button if present
-    if self.btn_acasl_loader:
-        try:
-            self.btn_acasl_loader.setToolTip("")
-            self.btn_acasl_loader.hide()
-            self.btn_acasl_loader.setEnabled(False)
-        except Exception:
-            pass
-    if self.venv_button:
-        self.venv_button.setToolTip(
-            "Sélectionner manuellement un dossier venv à utiliser pour la compilation."
-        )
-    if self.btn_suggest_deps:
-        self.btn_suggest_deps.setToolTip(
-            "Analyser les dépendances Python manquantes dans le projet."
-        )
-    self.opt_onefile = self.ui.findChild(QCheckBox, "opt_onefile")
-    self.opt_windowed = self.ui.findChild(QCheckBox, "opt_windowed")
-    self.opt_noconfirm = self.ui.findChild(QCheckBox, "opt_noconfirm")
-    self.opt_clean = self.ui.findChild(QCheckBox, "opt_clean")
-    self.opt_noupx = self.ui.findChild(QCheckBox, "opt_noupx")
-    self.opt_main_only = self.ui.findChild(QCheckBox, "opt_main_only")
-    self.btn_select_icon = self.ui.findChild(QPushButton, "btn_select_icon")
-    self.opt_debug = self.ui.findChild(QCheckBox, "opt_debug")
-    self.opt_auto_install = self.ui.findChild(QCheckBox, "opt_auto_install")
-    if self.opt_auto_install is None:
-        try:
-            from PySide6.QtWidgets import QCheckBox as _QCB
-
-            self.opt_auto_install = _QCB()
-            self.opt_auto_install.setObjectName("opt_auto_install")
-        except Exception:
-            self.opt_auto_install = None
-    self.opt_silent_errors = self.ui.findChild(QCheckBox, "opt_silent_errors")
-    if self.opt_silent_errors is None:
-        try:
-            from PySide6.QtWidgets import QCheckBox as _QCB
-
-            self.opt_silent_errors = _QCB()
-            self.opt_silent_errors.setObjectName("opt_silent_errors")
-        except Exception:
-            self.opt_silent_errors = None
+    # Static button widgets are no longer used - buttons are now in dynamic tabs
+    self.btn_select_icon = None
+    # Static checkbox widgets are no longer used - options are now in dynamic tabs
+    self.opt_onefile = None
+    self.opt_windowed = None
+    self.opt_noconfirm = None
+    self.opt_clean = None
+    self.opt_noupx = None
+    self.opt_main_only = None
+    self.opt_debug = None
+    self.opt_auto_install = None
+    self.opt_silent_errors = None
     # Onglets compilateur (correction robuste)
     from PySide6.QtWidgets import QTabWidget, QWidget
 
@@ -357,177 +285,38 @@ def init_ui(self):
     except Exception:
         pass
     self.compiler_tabs = self.ui.findChild(QTabWidget, "compiler_tabs")
-    self.tab_pyinstaller = self.ui.findChild(QWidget, "tab_pyinstaller")
-    self.tab_nuitka = self.ui.findChild(QWidget, "tab_nuitka")
-    # Lier dynamiquement les onglets des moteurs plug-and-play
-    try:
-        import Core.engines_loader as engines_loader
+    # Hello tab is now the default tab - it's defined in the UI
+    self.tab_hello = self.ui.findChild(QWidget, "tab_hello")
+    # Static tabs no longer exist - they're created dynamically by engines
+    self.tab_pyinstaller = None
+    self.tab_nuitka = None
+    # Lier dynamiquement les onglets des moteurs plug-and-play (only if compiler_tabs exists)
+    if self.compiler_tabs:
+        try:
+            import Core.engines_loader as engines_loader
 
-        engines_loader.registry.bind_tabs(self)
-    except Exception:
-        pass
-    # Widgets Nuitka (doit être AVANT update_compiler_options_enabled)
-    self.nuitka_onefile = (
-        self.tab_nuitka.findChild(QCheckBox, "nuitka_onefile")
-        if self.tab_nuitka
-        else None
-    )
-    self.nuitka_standalone = (
-        self.tab_nuitka.findChild(QCheckBox, "nuitka_standalone")
-        if self.tab_nuitka
-        else None
-    )
-    self.nuitka_disable_console = (
-        self.tab_nuitka.findChild(QCheckBox, "nuitka_disable_console")
-        if self.tab_nuitka
-        else None
-    )
-    if self.nuitka_disable_console:
-        self.nuitka_disable_console.setToolTip(
-            "Désactiver la console Windows (--windows-disable-console). Option Windows uniquement."
-        )
-        import platform
-
-        _is_win = platform.system() == "Windows"
-        self.nuitka_disable_console.setEnabled(_is_win)
-        if not _is_win:
-            self.nuitka_disable_console.setChecked(False)
-    self.nuitka_show_progress = (
-        self.tab_nuitka.findChild(QCheckBox, "nuitka_show_progress")
-        if self.tab_nuitka
-        else None
-    )
-    if self.nuitka_show_progress:
-        self.nuitka_show_progress.setChecked(True)
+            engines_loader.registry.bind_tabs(self)
+        except Exception:
+            pass
+    # Widgets Nuitka (no longer static - now created dynamically by Nuitka engine)
+    self.nuitka_onefile = None
+    self.nuitka_standalone = None
+    self.nuitka_disable_console = None
+    self.nuitka_show_progress = None
     self.nuitka_plugins = None  # Champ supprimé de l'UI; plugins gérés automatiquement
-    self.nuitka_output_dir = (
-        self.tab_nuitka.findChild(QLineEdit, "nuitka_output_dir")
-        if self.tab_nuitka
-        else None
-    )
-    self.nuitka_add_data = (
-        self.tab_nuitka.findChild(QPushButton, "nuitka_add_data")
-        if self.tab_nuitka
-        else None
-    )
-    self.nuitka_data_files = []  # Liste des tuples (source, dest)
-    if self.nuitka_add_data:
-        self.nuitka_add_data.clicked.connect(self.add_nuitka_data_file)
-    self.btn_nuitka_icon = (
-        self.tab_nuitka.findChild(QPushButton, "btn_nuitka_icon")
-        if self.tab_nuitka
-        else None
-    )
-    import platform
-
-    if self.btn_nuitka_icon:
-        self.btn_nuitka_icon.setToolTip(
-            "Choisir une icône (.ico) pour l'exécutable Nuitka (Windows uniquement)."
-        )
-        self.btn_nuitka_icon.setEnabled(platform.system() == "Windows")
-        self.btn_nuitka_icon.clicked.connect(self.select_nuitka_icon)
-    # Tooltips pour les cases à cocher principales
-    if self.opt_onefile:
-        self.opt_onefile.setToolTip("Générer un exécutable unique (mode onefile).")
-    if self.opt_windowed:
-        self.opt_windowed.setToolTip(
-            "Ne pas ouvrir de console lors de l'exécution (mode fenêtré, --windowed)."
-        )
-        import platform
-
-        is_win = platform.system() == "Windows"
-        self.opt_windowed.setEnabled(is_win)
-        if not is_win:
-            self.opt_windowed.setChecked(False)
-    if self.opt_noconfirm:
-        self.opt_noconfirm.setToolTip(
-            "Ne pas demander de confirmation pour écraser les fichiers existants (--noconfirm)."
-        )
-    if self.opt_clean:
-        self.opt_clean.setToolTip(
-            "Nettoyer les fichiers temporaires avant compilation (--clean)."
-        )
-    if self.opt_noupx:
-        self.opt_noupx.setToolTip(
-            "Ne pas utiliser UPX pour compresser l'exécutable (--noupx)."
-        )
-    if self.opt_main_only:
-        self.opt_main_only.setToolTip(
-            "Compiler uniquement les fichiers main.py ou app.py du projet."
-        )
-    if self.opt_debug:
-        self.opt_debug.setToolTip(
-            "Activer le mode debug (--debug) pour obtenir plus de logs."
-        )
-    if self.opt_auto_install:
-        self.opt_auto_install.setToolTip(
-            "Installer automatiquement les modules Python manquants détectés."
-        )
-    if self.opt_silent_errors:
-        self.opt_silent_errors.setToolTip(
-            "Ne pas afficher de boîte d'erreur graphique (mode silencieux)."
-        )
+    self.nuitka_output_dir = None
+    self.btn_nuitka_icon = None
+    # Static checkbox widgets are None - options are now in dynamic tabs
+    # Tooltips are handled by the engines themselves
     # self.custom_args supprimé (widget inutilisé)
     # self.custom_args supprimé (widget inutilisé)
     self.btn_build_all = self.ui.findChild(QPushButton, "btn_build_all")
     self.btn_cancel_all = self.ui.findChild(QPushButton, "btn_cancel_all")
     self.progress = self.ui.findChild(QProgressBar, "progress")
     self.log = self.ui.findChild(QTextEdit, "log")
-    self.pyinstaller_add_data = (
-        self.tab_pyinstaller.findChild(QPushButton, "pyinstaller_add_data")
-        if self.tab_pyinstaller
-        else None
-    )
-    self.pyinstaller_data = []  # Liste des tuples (source, dest)
-    if self.pyinstaller_add_data:
-        self.pyinstaller_add_data.clicked.connect(self.add_pyinstaller_data)
-    self.output_dir_input = (
-        self.tab_pyinstaller.findChild(QLineEdit, "output_dir_input")
-        if self.tab_pyinstaller
-        else None
-    )
-
-    def find_widget_recursive(parent, widget_type, name):
-        for child in parent.findChildren(widget_type):
-            if child.objectName() == name:
-                return child
-        for child in parent.children():
-            if hasattr(child, "findChildren"):
-                result = find_widget_recursive(child, widget_type, name)
-                if result:
-                    return result
-        return None
-
-    self.btn_browse_output_dir = (
-        find_widget_recursive(
-            self.tab_pyinstaller, QPushButton, "btn_browse_output_dir"
-        )
-        if self.tab_pyinstaller
-        else None
-    )
-    if self.output_dir_input:
-        self.output_dir_input.setToolTip(
-            "Dossier de sortie pour les exécutables générés (option --distpath de PyInstaller). Laisser vide pour utiliser le dossier par défaut 'dist'."
-        )
-    if self.btn_browse_output_dir and self.output_dir_input:
-
-        def browse_output_dir():
-            from PySide6.QtWidgets import QFileDialog
-
-            # Utilise self comme parent pour garantir l'affichage du dialog
-            dir_path = QFileDialog.getExistingDirectory(
-                self, "Choisir le dossier de sortie", ""
-            )
-            if dir_path:
-                self.output_dir_input.setText(dir_path)
-
-        self.btn_browse_output_dir.clicked.connect(browse_output_dir)
-    if self.output_dir_input:
-        try:
-            self.output_dir_input.textChanged.connect(self.update_command_preview)
-            self.output_dir_input.textChanged.connect(self.save_preferences)
-        except Exception:
-            pass
+    # PyInstaller widgets (no longer static - now created dynamically by PyInstaller engine)
+    self.output_dir_input = None
+    self.btn_browse_output_dir = None
     self.btn_export_config = self.ui.findChild(QPushButton, "btn_export_config")
     self.btn_import_config = self.ui.findChild(QPushButton, "btn_import_config")
     self.btn_help = self.ui.findChild(QPushButton, "btn_help")
@@ -535,51 +324,45 @@ def init_ui(self):
         QLineEdit()
     )  # Si non présent dans le .ui, à ajouter dans le .ui pour conformité
 
-    # Connecter les signaux
+    # Connecter les signaux (only for widgets that exist in the UI)
     self.btn_select_folder.clicked.connect(self.select_workspace)
     self.venv_button.clicked.connect(self.select_venv_manually)
     self.btn_select_files.clicked.connect(self.select_files_manually)
     self.btn_remove_file.clicked.connect(self.remove_selected_file)
-    self.opt_main_only.stateChanged.connect(self.on_main_only_changed)
-    self.btn_select_icon.clicked.connect(self.select_icon)
     self.btn_build_all.clicked.connect(self.compile_all)
     self.btn_cancel_all.clicked.connect(self.cancel_all_compilations)
 
     from bcasl import open_bc_loader_dialog
 
-    self.btn_api_loader.clicked.connect(lambda: open_bc_loader_dialog(self))
+    self.btn_bc_loader.clicked.connect(lambda: open_bc_loader_dialog(self))
     # ACASL removed: do not import or connect ACASL loader
 
     if self.btn_help:
         self.btn_help.clicked.connect(self.show_help_dialog)
-    if self.btn_show_stats:
+    # Find btn_show_stats widget if it exists in the UI
+    self.btn_show_stats = self.ui.findChild(QPushButton, "btn_show_stats")
+    if getattr(self, "btn_show_stats", None):
         self.btn_show_stats.setToolTip(
             "Afficher les statistiques de compilation (temps, nombre de fichiers, mémoire)"
         )
         self.btn_show_stats.clicked.connect(self.show_statistics)
-    for checkbox in [
-        self.opt_onefile,
-        self.opt_windowed,
-        self.opt_noconfirm,
-        self.opt_clean,
-        self.opt_noupx,
-        self.opt_main_only,
-        self.opt_debug,
-        self.opt_auto_install,
-        self.opt_silent_errors,
-    ]:
-        if not checkbox:
-            continue
-        checkbox.stateChanged.connect(self.update_command_preview)
-        try:
-            checkbox.stateChanged.connect(self.save_preferences)
-        except Exception:
-            pass
+    # Static checkbox widgets are None - options are now in dynamic tabs
+    # No signal connections needed for static widgets
     # self.custom_args supprimé (widget inutilisé)
-    if self.select_lang:
+    # Find select_lang widget if it exists in the UI
+    self.select_lang = self.ui.findChild(QPushButton, "select_lang")
+    if getattr(self, "select_lang", None):
         self.select_lang.setToolTip("Choisir la langue de l'interface utilisateur.")
         try:
             self.select_lang.clicked.connect(lambda: show_language_dialog(self))
+        except Exception:
+            pass
+
+    # Find select_theme widget if it exists in the UI and connect it
+    self.select_theme = self.ui.findChild(QPushButton, "select_theme")
+    if getattr(self, "select_theme", None):
+        try:
+            self.select_theme.clicked.connect(lambda: show_theme_dialog(self))
         except Exception:
             pass
 
@@ -587,128 +370,51 @@ def init_ui(self):
     import platform
 
     def update_compiler_options_enabled():
+        if not self.compiler_tabs:
+            return
         try:
             import Core.engines_loader as engines_loader
 
             idx = self.compiler_tabs.currentIndex()
-            engine_id = engines_loader.registry.get_engine_for_tab(idx) or (
-                "pyinstaller" if idx == 0 else "nuitka"
-            )
+            engine_id = engines_loader.registry.get_engine_for_tab(idx)
         except Exception:
-            engine_id = (
-                "pyinstaller" if self.compiler_tabs.currentIndex() == 0 else "nuitka"
-            )
+            engine_id = None
+
+        # Helper to enable/disable widgets safely
+        def set_enabled_safe(widget, enabled):
+            if widget is None:
+                return
+            try:
+                if enabled:
+                    widget.setEnabled(True)
+                else:
+                    widget.setEnabled(False)
+            except Exception:
+                pass
+
+        # Helper to set checkbox checked state safely
+        def set_checked_safe(widget, checked):
+            if widget is None:
+                return
+            try:
+                widget.setChecked(checked)
+            except Exception:
+                pass
+
         if engine_id == "pyinstaller":
-            for w in [
-                self.opt_onefile,
-                self.opt_windowed,
-                self.opt_noconfirm,
-                self.opt_clean,
-                self.opt_noupx,
-                self.opt_main_only,
-                self.opt_debug,
-                self.opt_auto_install,
-                self.opt_silent_errors,
-            ]:
-                if not w:
-                    continue
-                if w is self.opt_windowed:
-                    is_win = platform.system() == "Windows"
-                    w.setEnabled(is_win)
-                    if not is_win:
-                        w.setChecked(False)
-                else:
-                    w.setEnabled(True)
-            if self.btn_select_icon:
-                self.btn_select_icon.setEnabled(platform.system() == "Windows")
-            for w in [
-                self.nuitka_onefile,
-                self.nuitka_standalone,
-                self.nuitka_disable_console,
-                self.nuitka_show_progress,
-                self.nuitka_output_dir,
-            ]:
-                if w:
-                    w.setEnabled(False)
+            # Enable PyInstaller options (widgets are created dynamically)
+            # These are accessed through the engine instance
+            pass
         elif engine_id == "nuitka":
-            for w in [
-                self.opt_onefile,
-                self.opt_windowed,
-                self.opt_noconfirm,
-                self.opt_clean,
-                self.opt_noupx,
-                self.opt_main_only,
-                self.opt_debug,
-                self.opt_auto_install,
-                self.opt_silent_errors,
-                self.btn_select_icon,
-            ]:
-                if w:
-                    w.setEnabled(False)
-            for w in [
-                self.nuitka_onefile,
-                self.nuitka_standalone,
-                self.nuitka_disable_console,
-                self.nuitka_show_progress,
-                self.nuitka_output_dir,
-            ]:
-                if not w:
-                    continue
-                if w is self.nuitka_disable_console:
-                    is_win = platform.system() == "Windows"
-                    w.setEnabled(is_win)
-                    if not is_win:
-                        w.setChecked(False)
-                else:
-                    w.setEnabled(True)
+            # Enable Nuitka options (widgets are created dynamically)
+            pass
         else:
-            # Tout autre moteur (ex: binaire externe): désactiver options spécifiques et laisser la compilation gérée par le moteur
-            for w in [
-                self.opt_onefile,
-                self.opt_windowed,
-                self.opt_noconfirm,
-                self.opt_clean,
-                self.opt_noupx,
-                self.opt_main_only,
-                self.opt_debug,
-                self.opt_auto_install,
-                self.opt_silent_errors,
-                self.btn_select_icon,
-            ]:
-                if w:
-                    w.setEnabled(False)
-            for w in [
-                self.nuitka_onefile,
-                self.nuitka_standalone,
-                self.nuitka_disable_console,
-                self.nuitka_show_progress,
-                self.nuitka_output_dir,
-            ]:
-                if w:
-                    w.setEnabled(False)
+            # Hello tab or unknown engine - no options to enable
+            pass
 
     self.compiler_tabs.currentChanged.connect(update_compiler_options_enabled)
-    update_compiler_options_enabled()
-
-    # Exclusivité onefile/standalone pour Nuitka
-    if self.nuitka_onefile and self.nuitka_standalone:
-
-        def nuitka_onefile_changed(state):
-            if state:
-                self.nuitka_standalone.setChecked(False)
-                self.nuitka_standalone.setEnabled(False)
-            else:
-                self.nuitka_standalone.setEnabled(True)
-
-        def nuitka_standalone_changed(state):
-            if state:
-                self.nuitka_onefile.setChecked(False)
-                self.nuitka_onefile.setEnabled(False)
-            else:
-                self.nuitka_onefile.setEnabled(True)
-
-        self.nuitka_onefile.stateChanged.connect(nuitka_onefile_changed)
-        self.nuitka_standalone.stateChanged.connect(nuitka_standalone_changed)
+    if self.compiler_tabs:
+        update_compiler_options_enabled()
 
     # Message d'aide contextuel à la première utilisation
     if not self.workspace_dir:
@@ -720,218 +426,7 @@ def init_ui(self):
     if self.btn_suggest_deps:
         self.btn_suggest_deps.clicked.connect(self.suggest_missing_dependencies)
 
-    # Mode silencieux actif par défaut (forcer activé même si le widget n'existe pas)
-    try:
-        if self.opt_silent_errors:
-            self.opt_silent_errors.setChecked(True)
-    except Exception:
-        pass
-    # Auto-install actif par défaut (forcer activé même si le widget n'existe pas)
-    try:
-        if self.opt_auto_install:
-            self.opt_auto_install.setChecked(True)
-    except Exception:
-        pass
-    # Apply initial language from preference using async i18n
-    try:
-        lang_pref = getattr(self, "language", "System")
-        tr = asyncio.run(_i18n.get_translations(lang_pref))
-        _apply_translations(self, tr)
-        try:
-            setattr(self, "_tr", tr)
-        except Exception:
-            pass
-    except Exception:
-        pass
 
-
-def add_pyinstaller_data(self):
-    import os
-
-    from PySide6.QtCore import QDir
-    from PySide6.QtWidgets import QFileDialog, QInputDialog
-
-    choix, ok = QInputDialog.getItem(
-        self,
-        "Type d'inclusion",
-        "Inclure un fichier ou un dossier ?",
-        ["Fichier", "Dossier"],
-        0,
-        False,
-    )
-    if not ok:
-        return
-    if choix == "Fichier":
-        file_path, _ = QFileDialog.getOpenFileName(
-            self, "Sélectionner un fichier à inclure avec PyInstaller"
-        )
-        if file_path:
-            dest, ok = QInputDialog.getText(
-                self,
-                "Chemin de destination",
-                "Chemin de destination dans l'exécutable :",
-                text=os.path.basename(file_path),
-            )
-            if ok and dest:
-                self.pyinstaller_data.append((file_path, dest))
-                if hasattr(self, "log"):
-                    self.log.append(
-                        f"Fichier ajouté à PyInstaller : {file_path} => {dest}"
-                    )
-    elif choix == "Dossier":
-        dir_path = QFileDialog.getExistingDirectory(
-            self, "Sélectionner un dossier à inclure avec PyInstaller", QDir.homePath()
-        )
-        if dir_path:
-            dest, ok = QInputDialog.getText(
-                self,
-                "Chemin de destination",
-                "Chemin de destination dans l'exécutable :",
-                text=os.path.basename(dir_path),
-            )
-            if ok and dest:
-                self.pyinstaller_data.append((dir_path, dest))
-                if hasattr(self, "log"):
-                    self.log.append(
-                        f"Dossier ajouté à PyInstaller : {dir_path} => {dest}"
-                    )
-
-
-def add_nuitka_data_file(self):
-    import os
-
-    from PySide6.QtCore import QDir
-    from PySide6.QtWidgets import QFileDialog, QInputDialog
-
-    # Demander à l'utilisateur s'il veut ajouter un fichier ou un dossier
-    choix, ok = QInputDialog.getItem(
-        self,
-        "Type d'inclusion",
-        "Inclure un fichier ou un dossier ?",
-        ["Fichier", "Dossier"],
-        0,
-        False,
-    )
-    if not ok:
-        return
-    if not hasattr(self, "nuitka_data_files"):
-        self.nuitka_data_files = []
-    if not hasattr(self, "nuitka_data_dirs"):
-        self.nuitka_data_dirs = []
-    if choix == "Fichier":
-        file_path, _ = QFileDialog.getOpenFileName(
-            self, "Sélectionner un fichier à inclure avec Nuitka"
-        )
-        if file_path:
-            dest, ok = QInputDialog.getText(
-                self,
-                "Chemin de destination",
-                "Chemin de destination dans l'exécutable :",
-                text=os.path.basename(file_path),
-            )
-            if ok and dest:
-                self.nuitka_data_files.append((file_path, dest))
-                if hasattr(self, "log"):
-                    self.log.append(f"Fichier ajouté à Nuitka : {file_path} => {dest}")
-    elif choix == "Dossier":
-        dir_path = QFileDialog.getExistingDirectory(
-            self, "Sélectionner un dossier à inclure avec Nuitka", QDir.homePath()
-        )
-        if dir_path:
-            dest, ok = QInputDialog.getText(
-                self,
-                "Chemin de destination",
-                "Chemin de destination dans l'exécutable :",
-                text=os.path.basename(dir_path),
-            )
-            if ok and dest:
-                self.nuitka_data_dirs.append((dir_path, dest))
-                if hasattr(self, "log"):
-                    self.log.append(f"Dossier ajouté à Nuitka : {dir_path} => {dest}")
-
-
-def show_language_dialog(self):
-    from PySide6.QtWidgets import QInputDialog
-
-    try:
-        langs = asyncio.run(_i18n.available_languages())
-    except Exception:
-        langs = [{"code": "en", "name": "English"}, {"code": "fr", "name": "Français"}]
-    # Build options list with 'System' at top
-    options = ["System"] + [str(x.get("name", x.get("code", ""))) for x in langs]
-    # Determine current index
-    current_pref = getattr(self, "language", "System")
-    try:
-        if current_pref == "System":
-            start_index = 0
-        else:
-            # map code->index
-            codes = [str(x.get("code", "")) for x in langs]
-            try:
-                start_index = 1 + codes.index(current_pref)
-            except Exception:
-                start_index = 0
-    except Exception:
-        start_index = 0
-    title = "Choisir la langue"
-    label = "Langue :"
-    choice, ok = QInputDialog.getItem(self, title, label, options, start_index, False)
-    if ok and choice:
-        lang_pref = (
-            "System"
-            if choice == "System"
-            else next(
-                (
-                    str(x.get("code", "en"))
-                    for x in langs
-                    if str(x.get("name", "")) == choice
-                ),
-                "en",
-            )
-        )
-        try:
-            tr = asyncio.run(_i18n.get_translations(lang_pref))
-            _apply_translations(self, tr)
-            try:
-                setattr(self, "_tr", tr)
-            except Exception:
-                pass
-            # Propagate translations to all engines so their UI matches the app language immediately
-            try:
-                import Core.engines_loader as engines_loader
-
-                engines_loader.registry.apply_translations(self, tr)
-            except Exception:
-                pass
-            # Propagate translations to all BCASL plugins
-            try:
-                import bcasl.Loader as bcasl_loader
-
-                bcasl_loader.apply_translations(self, tr)
-            except Exception:
-                pass
-            # Update language preference markers
-            try:
-                self.language_pref = lang_pref
-            except Exception:
-                pass
-            self.language = lang_pref
-            try:
-                if hasattr(self, "save_preferences"):
-                    self.save_preferences()
-            except Exception:
-                pass
-            if hasattr(self, "log") and self.log:
-                meta = tr.get("_meta", {}) if isinstance(tr, dict) else {}
-                self.log.append(
-                    f"Langue appliquée: {getattr(meta, 'get', lambda k, d=None: d)('name', lang_pref) if isinstance(meta, dict) else lang_pref}"
-                )
-        except Exception as e:
-            if hasattr(self, "log") and self.log:
-                self.log.append(f"⚠️ Échec application de la langue: {e}")
-    else:
-        if hasattr(self, "log") and self.log:
-            self.log.append("Sélection de la langue annulée.")
 
 
 def _themes_dir() -> str:
@@ -1036,305 +531,6 @@ def _is_qss_dark(css: str) -> bool:
         return avg < 128.0
     except Exception:
         return False
-
-
-def _apply_translations(self, tr: dict[str, object]) -> None:
-    try:
-        # Buttons
-        if getattr(self, "btn_select_folder", None):
-            self.btn_select_folder.setText(
-                str(tr.get("select_folder", self.btn_select_folder.text()))
-            )
-        if getattr(self, "btn_select_files", None):
-            self.btn_select_files.setText(
-                str(tr.get("select_files", self.btn_select_files.text()))
-            )
-        if getattr(self, "btn_build_all", None):
-            self.btn_build_all.setText(
-                str(tr.get("build_all", self.btn_build_all.text()))
-            )
-        if getattr(self, "btn_export_config", None):
-            self.btn_export_config.setText(
-                str(tr.get("export_config", self.btn_export_config.text()))
-            )
-        if getattr(self, "btn_import_config", None):
-            self.btn_import_config.setText(
-                str(tr.get("import_config", self.btn_import_config.text()))
-            )
-        if getattr(self, "btn_cancel_all", None):
-            self.btn_cancel_all.setText(
-                str(tr.get("cancel_all", self.btn_cancel_all.text()))
-            )
-        if getattr(self, "btn_suggest_deps", None):
-            self.btn_suggest_deps.setText(
-                str(tr.get("suggest_deps", self.btn_suggest_deps.text()))
-            )
-
-        if getattr(self, "btn_remove_file", None):
-            self.btn_remove_file.setText(
-                str(tr.get("btn_remove_file", self.btn_remove_file.text()))
-            )
-
-        if getattr(self, "btn_help", None):
-            self.btn_help.setText(str(tr.get("help", self.btn_help.text())))
-        if getattr(self, "btn_show_stats", None):
-            self.btn_show_stats.setText(
-                str(tr.get("show_stats", self.btn_show_stats.text()))
-            )
-        if getattr(self, "select_lang", None):
-            self.select_lang.setText(
-                str(tr.get("select_lang", self.select_lang.text()))
-            )
-        if getattr(self, "select_theme", None):
-            try:
-                # Prefer dynamic label keys; fallback to generic key
-                if getattr(self, "theme", "System") == "System":
-                    val = (
-                        tr.get("choose_theme_system_button")
-                        or tr.get("choose_theme_button")
-                        or tr.get("select_theme")
-                    )
-                else:
-                    val = tr.get("choose_theme_button") or tr.get("select_theme")
-                self.select_theme.setText(str(val or self.select_theme.text()))
-            except Exception:
-                self.select_theme.setText(
-                    str(tr.get("select_theme", self.select_theme.text()))
-                )
-        if getattr(self, "venv_button", None):
-            self.venv_button.setText(
-                str(tr.get("venv_button", self.venv_button.text()))
-            )
-        if getattr(self, "btn_select_icon", None):
-            self.btn_select_icon.setText(
-                str(tr.get("btn_select_icon", self.btn_select_icon.text()))
-            )
-        if getattr(self, "btn_nuitka_icon", None):
-            self.btn_nuitka_icon.setText(
-                str(tr.get("btn_nuitka_icon", self.btn_nuitka_icon.text()))
-            )
-        # Labels
-        if getattr(self, "label_workspace_section", None):
-            self.label_workspace_section.setText(
-                str(
-                    tr.get(
-                        "label_workspace_section", self.label_workspace_section.text()
-                    )
-                )
-            )
-        if getattr(self, "venv_label", None):
-            self.venv_label.setText(str(tr.get("venv_label", self.venv_label.text())))
-        if getattr(self, "label_folder", None):
-            self.label_folder.setText(
-                str(tr.get("label_folder", self.label_folder.text()))
-            )
-        if getattr(self, "label_files_section", None):
-            self.label_files_section.setText(
-                str(tr.get("label_files_section", self.label_files_section.text()))
-            )
-        if getattr(self, "label_logs_section", None):
-            self.label_logs_section.setText(
-                str(tr.get("label_logs_section", self.label_logs_section.text()))
-            )
-        # Tabs
-        if getattr(self, "compiler_tabs", None):
-            try:
-                if getattr(self, "tab_pyinstaller", None):
-                    idx = self.compiler_tabs.indexOf(self.tab_pyinstaller)
-                    if idx >= 0:
-                        self.compiler_tabs.setTabText(
-                            idx,
-                            str(
-                                tr.get(
-                                    "tab_pyinstaller", self.compiler_tabs.tabText(idx)
-                                )
-                            ),
-                        )
-                if getattr(self, "tab_nuitka", None):
-                    idx2 = self.compiler_tabs.indexOf(self.tab_nuitka)
-                    if idx2 >= 0:
-                        self.compiler_tabs.setTabText(
-                            idx2,
-                            str(tr.get("tab_nuitka", self.compiler_tabs.tabText(idx2))),
-                        )
-            except Exception:
-                pass
-        # Checkboxes/options
-        if getattr(self, "opt_onefile", None):
-            self.opt_onefile.setText(
-                str(tr.get("opt_onefile", self.opt_onefile.text()))
-            )
-        if getattr(self, "opt_windowed", None):
-            self.opt_windowed.setText(
-                str(tr.get("opt_windowed", self.opt_windowed.text()))
-            )
-        if getattr(self, "opt_noconfirm", None):
-            self.opt_noconfirm.setText(
-                str(tr.get("opt_noconfirm", self.opt_noconfirm.text()))
-            )
-        if getattr(self, "opt_clean", None):
-            self.opt_clean.setText(str(tr.get("opt_clean", self.opt_clean.text())))
-        if getattr(self, "opt_noupx", None):
-            self.opt_noupx.setText(str(tr.get("opt_noupx", self.opt_noupx.text())))
-        if getattr(self, "opt_main_only", None):
-            self.opt_main_only.setText(
-                str(tr.get("opt_main_only", self.opt_main_only.text()))
-            )
-        if getattr(self, "opt_debug", None):
-            self.opt_debug.setText(str(tr.get("opt_debug", self.opt_debug.text())))
-        if getattr(self, "opt_auto_install", None):
-            self.opt_auto_install.setText(
-                str(tr.get("opt_auto_install", self.opt_auto_install.text()))
-            )
-        if getattr(self, "opt_silent_errors", None):
-            self.opt_silent_errors.setText(
-                str(tr.get("opt_silent_errors", self.opt_silent_errors.text()))
-            )
-        # Nuitka checkboxes
-        if getattr(self, "nuitka_onefile", None):
-            self.nuitka_onefile.setText(
-                str(tr.get("nuitka_onefile", self.nuitka_onefile.text()))
-            )
-        if getattr(self, "nuitka_standalone", None):
-            self.nuitka_standalone.setText(
-                str(tr.get("nuitka_standalone", self.nuitka_standalone.text()))
-            )
-        if getattr(self, "nuitka_disable_console", None):
-            self.nuitka_disable_console.setText(
-                str(
-                    tr.get("nuitka_disable_console", self.nuitka_disable_console.text())
-                )
-            )
-        if getattr(self, "nuitka_show_progress", None):
-            self.nuitka_show_progress.setText(
-                str(tr.get("nuitka_show_progress", self.nuitka_show_progress.text()))
-            )
-        if getattr(self, "nuitka_output_dir", None):
-            try:
-                self.nuitka_output_dir.setPlaceholderText(
-                    str(
-                        tr.get(
-                            "nuitka_output_dir",
-                            self.nuitka_output_dir.placeholderText(),
-                        )
-                    )
-                )
-            except Exception:
-                pass
-        # Tooltips (apply i18n when keys are present; fallback to current tooltip text)
-        try:
-
-            def _tt(key: str, current: str) -> str:
-                try:
-                    val = tr.get(key)
-                    if isinstance(val, str) and val.strip():
-                        return val
-                except Exception:
-                    pass
-                return current
-
-            if getattr(self, "btn_select_folder", None):
-                self.btn_select_folder.setToolTip(
-                    _tt("tt_select_folder", self.btn_select_folder.toolTip())
-                )
-            if getattr(self, "btn_select_files", None):
-                self.btn_select_files.setToolTip(
-                    _tt("tt_select_files", self.btn_select_files.toolTip())
-                )
-            if getattr(self, "btn_build_all", None):
-                self.btn_build_all.setToolTip(
-                    _tt("tt_build_all", self.btn_build_all.toolTip())
-                )
-            if getattr(self, "btn_export_config", None):
-                self.btn_export_config.setToolTip(
-                    _tt("tt_export_config", self.btn_export_config.toolTip())
-                )
-            if getattr(self, "btn_import_config", None):
-                self.btn_import_config.setToolTip(
-                    _tt("tt_import_config", self.btn_import_config.toolTip())
-                )
-            if getattr(self, "btn_cancel_all", None):
-                self.btn_cancel_all.setToolTip(
-                    _tt("tt_cancel_all", self.btn_cancel_all.toolTip())
-                )
-            if getattr(self, "btn_remove_file", None):
-                self.btn_remove_file.setToolTip(
-                    _tt("tt_remove_file", self.btn_remove_file.toolTip())
-                )
-            if getattr(self, "btn_select_icon", None):
-                self.btn_select_icon.setToolTip(
-                    _tt("tt_select_icon", self.btn_select_icon.toolTip())
-                )
-            if getattr(self, "btn_help", None):
-                self.btn_help.setToolTip(_tt("tt_help", self.btn_help.toolTip()))
-            if getattr(self, "btn_api_loader", None):
-                self.btn_api_loader.setToolTip(
-                    _tt("tt_api_loader", self.btn_api_loader.toolTip())
-                )
-            # ACASL removed: no tooltip
-            if getattr(self, "venv_button", None):
-                self.venv_button.setToolTip(
-                    _tt("tt_venv_button", self.venv_button.toolTip())
-                )
-            if getattr(self, "btn_suggest_deps", None):
-                self.btn_suggest_deps.setToolTip(
-                    _tt("tt_suggest_deps", self.btn_suggest_deps.toolTip())
-                )
-            if getattr(self, "btn_show_stats", None):
-                self.btn_show_stats.setToolTip(
-                    _tt("tt_show_stats", self.btn_show_stats.toolTip())
-                )
-            if getattr(self, "output_dir_input", None):
-                self.output_dir_input.setToolTip(
-                    _tt("tt_output_dir", self.output_dir_input.toolTip())
-                )
-            # PyInstaller/Nuitka specific tooltips
-            if getattr(self, "nuitka_disable_console", None):
-                self.nuitka_disable_console.setToolTip(
-                    _tt(
-                        "tt_nuitka_disable_console",
-                        self.nuitka_disable_console.toolTip(),
-                    )
-                )
-            if getattr(self, "btn_nuitka_icon", None):
-                self.btn_nuitka_icon.setToolTip(
-                    _tt("tt_nuitka_icon", self.btn_nuitka_icon.toolTip())
-                )
-            # Options checkboxes
-            if getattr(self, "opt_onefile", None):
-                self.opt_onefile.setToolTip(
-                    _tt("tt_opt_onefile", self.opt_onefile.toolTip())
-                )
-            if getattr(self, "opt_windowed", None):
-                self.opt_windowed.setToolTip(
-                    _tt("tt_opt_windowed", self.opt_windowed.toolTip())
-                )
-            if getattr(self, "opt_noconfirm", None):
-                self.opt_noconfirm.setToolTip(
-                    _tt("tt_opt_noconfirm", self.opt_noconfirm.toolTip())
-                )
-            if getattr(self, "opt_clean", None):
-                self.opt_clean.setToolTip(_tt("tt_opt_clean", self.opt_clean.toolTip()))
-            if getattr(self, "opt_noupx", None):
-                self.opt_noupx.setToolTip(_tt("tt_opt_noupx", self.opt_noupx.toolTip()))
-            if getattr(self, "opt_main_only", None):
-                self.opt_main_only.setToolTip(
-                    _tt("tt_opt_main_only", self.opt_main_only.toolTip())
-                )
-            if getattr(self, "opt_debug", None):
-                self.opt_debug.setToolTip(_tt("tt_opt_debug", self.opt_debug.toolTip()))
-            if getattr(self, "opt_auto_install", None):
-                self.opt_auto_install.setToolTip(
-                    _tt("tt_opt_auto_install", self.opt_auto_install.toolTip())
-                )
-            if getattr(self, "opt_silent_errors", None):
-                self.opt_silent_errors.setToolTip(
-                    _tt("tt_opt_silent_errors", self.opt_silent_errors.toolTip())
-                )
-        except Exception:
-            pass
-    except Exception:
-        pass
 
 
 def apply_theme(self, pref: str):

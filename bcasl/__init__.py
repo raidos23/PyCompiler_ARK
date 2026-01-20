@@ -36,6 +36,7 @@ from .Base import (
     BcPluginBase,
     PluginMeta,
     PreCompileContext,
+    bc_register,
     register_plugin,
     BCASL_PLUGIN_REGISTER_FUNC,
 )
@@ -103,6 +104,7 @@ __all__ = [
     "PluginMeta",
     "PreCompileContext",
     "ExecutionReport",
+    "bc_register",
     "register_plugin",
     "BCASL_PLUGIN_REGISTER_FUNC",
     # Loader

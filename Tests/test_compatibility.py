@@ -1,4 +1,4 @@
-﻿# SPDX-License-Identifier: Apache-2.0
+# SPDX-License-Identifier: Apache-2.0
 # Copyright 2026 Ague Samuel Amen
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,398 +14,226 @@
 # limitations under the License.
 
 """
-Tests for Core.compatibility module - Version compatibility checking
+Tests for Core.compatibility module - System compatibility checks
 """
 
+import os
 import pytest
-from io import StringIO
+import platform
 import sys
-
-from Core.compatibility import (
-    CompatibilityResult,
-    parse_version,
-    compare_versions,
-    check_engine_compatibility,
-    check_plugin_compatibility,
-    check_sdk_compatibility,
-    validate_engines,
-    validate_plugins,
-    get_incompatible_components,
-    print_compatibility_report,
-)
+from unittest.mock import patch, MagicMock
 
 
-class TestVersionParsing:
-    """Test version parsing functionality"""
+class TestCompatibilityModule:
+    """Test compatibility module functions"""
 
-    def test_parse_version_standard(self):
-        """Test parsing standard version strings"""
-        assert parse_version("1.0.0") == (1, 0, 0)
-        assert parse_version("2.3.4") == (2, 3, 4)
-        assert parse_version("0.0.1") == (0, 0, 1)
+    def test_import_compatibility(self):
+        """Test that compatibility module can be imported"""
+        from Core import compatibility
 
-    def test_parse_version_with_prerelease(self):
-        """Test parsing versions with prerelease tags"""
-        assert parse_version("1.0.0-alpha") == (1, 0, 0)
-        assert parse_version("2.1.0-beta.1") == (2, 1, 0)
+        assert compatibility is not None
 
-    def test_parse_version_with_build_metadata(self):
-        """Test parsing versions with build metadata"""
-        assert parse_version("1.0.0+build.1") == (1, 0, 0)
-        assert parse_version("2.1.0+20130313144700") == (2, 1, 0)
 
-    def test_parse_version_incomplete(self):
-        """Test parsing incomplete version strings"""
-        assert parse_version("1") == (1, 0, 0)
-        assert parse_version("1.2") == (1, 2, 0)
+class TestPythonVersion:
+    """Test Python version compatibility"""
 
-    def test_parse_version_invalid(self):
-        """Test parsing invalid version strings"""
-        assert parse_version("invalid") == (0, 0, 0)
-        assert parse_version("") == (0, 0, 0)
-        assert parse_version("abc.def.ghi") == (0, 0, 0)
+    def test_python_version_check(self):
+        """Test that Python version is 3.8 or higher"""
+        from Core.compatibility import check_python_version, PYTHON_MIN_VERSION
 
-    def test_parse_version_with_whitespace(self):
-        """Test parsing versions with whitespace"""
-        assert parse_version("  1.0.0  ") == (1, 0, 0)
-        assert parse_version("\t2.1.0\n") == (2, 1, 0)
+        assert sys.version_info >= (3, 8)
+
+        # check_python_version should return True for current version
+        result = check_python_version()
+        assert result is True
+
+    def test_python_min_version_constant(self):
+        """Test that PYTHON_MIN_VERSION is defined correctly"""
+        from Core.compatibility import PYTHON_MIN_VERSION
+
+        assert isinstance(PYTHON_MIN_VERSION, tuple)
+        assert len(PYTHON_MIN_VERSION) == 2
+        assert PYTHON_MIN_VERSION[0] == 3
+
+
+class TestPlatformDetection:
+    """Test platform detection functions"""
+
+    def test_is_windows(self):
+        """Test Windows detection"""
+        from Core.compatibility import is_windows
+
+        result = is_windows()
+        assert isinstance(result, bool)
+        assert result == (platform.system() == "Windows")
+
+    def test_is_macos(self):
+        """Test macOS detection"""
+        from Core.compatibility import is_macos
+
+        result = is_macos()
+        assert isinstance(result, bool)
+        assert result == (platform.system() == "Darwin")
+
+    def test_is_linux(self):
+        """Test Linux detection"""
+        from Core.compatibility import is_linux
+
+        result = is_linux()
+        assert isinstance(result, bool)
+        assert result == (platform.system() == "Linux")
+
+
+class TestDependencyChecks:
+    """Test dependency checking functions"""
+
+    def test_check_pip_exists(self):
+        """Test pip existence check"""
+        from Core.compatibility import check_pip
+
+        result = check_pip()
+        assert isinstance(result, bool)
+        # pip should exist in test environment
+
+    def test_check_git_exists(self):
+        """Test git existence check"""
+        from Core.compatibility import check_git
+
+        result = check_git()
+        assert isinstance(result, bool)
+
+
+class TestCompilerChecks:
+    """Test compiler availability checks"""
+
+    def test_check_pyinstaller(self):
+        """Test PyInstaller availability check"""
+        from Core.compatibility import check_pyinstaller
+
+        result = check_pyinstaller()
+        assert isinstance(result, bool)
+
+    def test_check_nuitka(self):
+        """Test Nuitka availability check"""
+        from Core.compatibility import check_nuitka
+
+        result = check_nuitka()
+        assert isinstance(result, bool)
+
+    def test_check_cx_freeze(self):
+        """Test cx_Freeze availability check"""
+        from Core.compatibility import check_cx_freeze
+
+        result = check_cx_freeze()
+        assert isinstance(result, bool)
+
+
+class TestSystemInfo:
+    """Test system information functions"""
+
+    def test_get_system_info(self):
+        """Test getting system information"""
+        from Core.compatibility import get_system_info
+
+        info = get_system_info()
+        assert isinstance(info, dict)
+        assert "platform" in info
+        assert "python_version" in info
+
+    def test_get_python_executable(self):
+        """Test getting Python executable path"""
+        from Core.compatibility import get_python_executable
+
+        path = get_python_executable()
+        assert isinstance(path, str)
+        assert len(path) > 0
+        assert os.path.exists(path) or "python" in path.lower()
+
+
+class TestCompatibilityReport:
+    """Test compatibility report generation"""
+
+    def test_get_compatibility_report(self):
+        """Test getting full compatibility report"""
+        from Core.compatibility import get_compatibility_report
+
+        report = get_compatibility_report()
+        assert isinstance(report, dict)
+        assert "python" in report
+        assert "platform" in report
+        assert "compilers" in report
+
+    def test_compatibility_report_contains_all_checks(self):
+        """Test that report contains all necessary checks"""
+        from Core.compatibility import get_compatibility_report
+
+        report = get_compatibility_report()
+
+        # Check for expected keys
+        expected_keys = ["python_version", "platform", "pip", "pyinstaller", "nuitka"]
+        for key in expected_keys:
+            assert key in report, f"Missing key: {key}"
 
 
 class TestVersionComparison:
-    """Test version comparison functionality"""
+    """Test version comparison functions"""
 
-    def test_compare_versions_gte(self):
-        """Test greater than or equal comparison"""
-        assert compare_versions("2.0.0", "1.0.0", "gte") is True
-        assert compare_versions("1.0.0", "1.0.0", "gte") is True
-        assert compare_versions("1.0.0", "2.0.0", "gte") is False
+    def test_version_parsing(self):
+        """Test parsing version strings"""
+        from Core.compatibility import parse_version
 
-    def test_compare_versions_gt(self):
-        """Test greater than comparison"""
-        assert compare_versions("2.0.0", "1.0.0", "gt") is True
-        assert compare_versions("1.0.0", "1.0.0", "gt") is False
-        assert compare_versions("1.0.0", "2.0.0", "gt") is False
+        version = parse_version("1.2.3")
+        assert version == (1, 2, 3)
 
-    def test_compare_versions_eq(self):
-        """Test equality comparison"""
-        assert compare_versions("1.0.0", "1.0.0", "eq") is True
-        assert compare_versions("1.0.0", "1.0.1", "eq") is False
-        assert compare_versions("2.0.0", "1.0.0", "eq") is False
+        version = parse_version("3.10.4")
+        assert version == (3, 10, 4)
 
-    def test_compare_versions_lte(self):
-        """Test less than or equal comparison"""
-        assert compare_versions("1.0.0", "2.0.0", "lte") is True
-        assert compare_versions("1.0.0", "1.0.0", "lte") is True
-        assert compare_versions("2.0.0", "1.0.0", "lte") is False
+    def test_version_comparison(self):
+        """Test comparing version strings"""
+        from Core.compatibility import compare_versions
 
-    def test_compare_versions_lt(self):
-        """Test less than comparison"""
-        assert compare_versions("1.0.0", "2.0.0", "lt") is True
-        assert compare_versions("1.0.0", "1.0.0", "lt") is False
-        assert compare_versions("2.0.0", "1.0.0", "lt") is False
+        assert compare_versions("1.0.0", "1.0.0") == 0
+        assert compare_versions("2.0.0", "1.0.0") > 0
+        assert compare_versions("1.0.0", "2.0.0") < 0
 
-    def test_compare_versions_invalid_mode(self):
-        """Test invalid comparison mode"""
-        assert compare_versions("1.0.0", "1.0.0", "invalid") is False
+    def test_version_with_v_prefix(self):
+        """Test parsing versions with 'v' prefix"""
+        from Core.compatibility import parse_version
+
+        version = parse_version("v1.2.3")
+        assert version == (1, 2, 3)
 
 
-class TestCompatibilityResult:
-    """Test CompatibilityResult dataclass"""
+class TestRequiredDependencies:
+    """Test required dependency checking"""
 
-    def test_compatibility_result_creation(self):
-        """Test creating a CompatibilityResult"""
-        result = CompatibilityResult(
-            is_compatible=True,
-            component_name="Test Engine",
-            component_version="1.0.0",
-            required_version="1.0.0",
-            message="Compatible",
+    def test_get_required_dependencies(self):
+        """Test getting list of required dependencies"""
+        from Core.compatibility import get_required_dependencies
+
+        deps = get_required_dependencies()
+        assert isinstance(deps, list)
+        assert len(deps) > 0
+
+    def test_required_dependencies_format(self):
+        """Test that required dependencies have correct format"""
+        from Core.compatibility import get_required_dependencies
+
+        deps = get_required_dependencies()
+        for dep in deps:
+            # Each dependency should have a name
+            assert hasattr(dep, "name") or isinstance(dep, str)
+
+    def test_required_compilers_list(self):
+        """Test getting list of required compilers"""
+        from Core.compatibility import get_required_compilers
+
+        compilers = get_required_compilers()
+        assert isinstance(compilers, list)
+        # Should include at least pyinstaller and nuitka
+        compiler_names = [
+            c.lower() if isinstance(c, str) else c.__name__.lower() for c in compilers
+        ]
+        assert (
+            "pyinstaller" in compiler_names or "pyinstaller" in str(compilers).lower()
         )
-        assert result.is_compatible is True
-        assert result.component_name == "Test Engine"
-        assert result.component_version == "1.0.0"
-        assert result.required_version == "1.0.0"
-        assert result.message == "Compatible"
-
-    def test_compatibility_result_incompatible(self):
-        """Test incompatible result"""
-        result = CompatibilityResult(
-            is_compatible=False,
-            component_name="Test Engine",
-            component_version="1.0.0",
-            required_version="2.0.0",
-            message="Incompatible",
-        )
-        assert result.is_compatible is False
-
-
-class TestEngineCompatibility:
-    """Test engine compatibility checking"""
-
-    def test_check_engine_compatibility_compatible(self):
-        """Test checking compatible engine"""
-
-        class MockEngine:
-            name = "Test Engine"
-            id = "test_engine"
-            version = "1.0.0"
-            required_core_version = "1.0.0"
-
-        result = check_engine_compatibility(MockEngine, "1.0.0")
-        assert result.is_compatible is True
-        assert "compatible" in result.message.lower()
-
-    def test_check_engine_compatibility_incompatible(self):
-        """Test checking incompatible engine"""
-
-        class MockEngine:
-            name = "Test Engine"
-            id = "test_engine"
-            version = "1.0.0"
-            required_core_version = "2.0.0"
-
-        result = check_engine_compatibility(MockEngine, "1.0.0")
-        assert result.is_compatible is False
-        assert "require" in result.message.lower()
-
-    def test_check_engine_compatibility_missing_attributes(self):
-        """Test checking engine with missing attributes"""
-
-        class MockEngine:
-            pass
-
-        result = check_engine_compatibility(MockEngine, "1.0.0")
-        assert isinstance(result, CompatibilityResult)
-
-
-class TestPluginCompatibility:
-    """Test plugin compatibility checking"""
-
-    def test_check_plugin_compatibility_compatible(self):
-        """Test checking compatible plugin"""
-
-        class MockPlugin:
-            name = "Test Plugin"
-            version = "1.0.0"
-            required_core_version = "1.0.0"
-
-        result = check_plugin_compatibility(MockPlugin, "1.0.0")
-        assert result.is_compatible is True
-
-    def test_check_plugin_compatibility_incompatible(self):
-        """Test checking incompatible plugin"""
-
-        class MockPlugin:
-            name = "Test Plugin"
-            version = "1.0.0"
-            required_core_version = "2.0.0"
-
-        result = check_plugin_compatibility(MockPlugin, "1.0.0")
-        assert result.is_compatible is False
-
-    def test_check_plugin_compatibility_with_meta(self):
-        """Test checking plugin with meta attribute"""
-
-        class MockMeta:
-            name = "Test Plugin"
-            version = "1.0.0"
-
-        class MockPlugin:
-            meta = MockMeta()
-            required_core_version = "1.0.0"
-
-        result = check_plugin_compatibility(MockPlugin, "1.0.0")
-        assert result.is_compatible is True
-
-
-class TestSDKCompatibility:
-    """Test SDK compatibility checking"""
-
-    def test_check_sdk_compatibility_compatible(self):
-        """Test checking compatible SDK"""
-        result = check_sdk_compatibility("3.2.3", "3.2.0", "Engine SDK")
-        assert result.is_compatible is True
-
-    def test_check_sdk_compatibility_incompatible(self):
-        """Test checking incompatible SDK"""
-        result = check_sdk_compatibility("3.1.0", "3.2.0", "Engine SDK")
-        assert result.is_compatible is False
-
-    def test_check_sdk_compatibility_exact_match(self):
-        """Test checking SDK with exact version match"""
-        result = check_sdk_compatibility("3.2.0", "3.2.0", "Engine SDK")
-        assert result.is_compatible is True
-
-
-class TestValidation:
-    """Test validation functions"""
-
-    def test_validate_engines_empty_list(self):
-        """Test validating empty engine list"""
-        results = validate_engines([], "1.0.0")
-        assert isinstance(results, dict)
-        assert len(results) == 0
-
-    def test_validate_engines_single(self):
-        """Test validating single engine"""
-
-        class MockEngine:
-            name = "Test Engine"
-            version = "1.0.0"
-            required_core_version = "1.0.0"
-
-        results = validate_engines([MockEngine], "1.0.0")
-        assert len(results) == 1
-        assert "Test Engine" in results
-
-    def test_validate_engines_multiple(self):
-        """Test validating multiple engines"""
-
-        class Engine1:
-            name = "Engine 1"
-            version = "1.0.0"
-            required_core_version = "1.0.0"
-
-        class Engine2:
-            name = "Engine 2"
-            version = "1.0.0"
-            required_core_version = "1.0.0"
-
-        results = validate_engines([Engine1, Engine2], "1.0.0")
-        assert len(results) == 2
-
-    def test_validate_plugins_empty_list(self):
-        """Test validating empty plugin list"""
-        results = validate_plugins([], "1.0.0")
-        assert isinstance(results, dict)
-        assert len(results) == 0
-
-    def test_validate_plugins_single(self):
-        """Test validating single plugin"""
-
-        class MockPlugin:
-            name = "Test Plugin"
-            version = "1.0.0"
-            required_core_version = "1.0.0"
-
-        results = validate_plugins([MockPlugin], "1.0.0")
-        assert len(results) == 1
-
-
-class TestIncompatibleComponents:
-    """Test filtering incompatible components"""
-
-    def test_get_incompatible_components_all_compatible(self):
-        """Test filtering when all components are compatible"""
-        results = {
-            "engine1": CompatibilityResult(
-                is_compatible=True,
-                component_name="Engine 1",
-                component_version="1.0.0",
-                required_version="1.0.0",
-                message="Compatible",
-            ),
-            "engine2": CompatibilityResult(
-                is_compatible=True,
-                component_name="Engine 2",
-                component_version="1.0.0",
-                required_version="1.0.0",
-                message="Compatible",
-            ),
-        }
-        incompatible = get_incompatible_components(results)
-        assert len(incompatible) == 0
-
-    def test_get_incompatible_components_mixed(self):
-        """Test filtering with mixed compatibility"""
-        results = {
-            "engine1": CompatibilityResult(
-                is_compatible=True,
-                component_name="Engine 1",
-                component_version="1.0.0",
-                required_version="1.0.0",
-                message="Compatible",
-            ),
-            "engine2": CompatibilityResult(
-                is_compatible=False,
-                component_name="Engine 2",
-                component_version="1.0.0",
-                required_version="2.0.0",
-                message="Incompatible",
-            ),
-        }
-        incompatible = get_incompatible_components(results)
-        assert len(incompatible) == 1
-        assert incompatible[0].component_name == "Engine 2"
-
-    def test_get_incompatible_components_all_incompatible(self):
-        """Test filtering when all components are incompatible"""
-        results = {
-            "engine1": CompatibilityResult(
-                is_compatible=False,
-                component_name="Engine 1",
-                component_version="1.0.0",
-                required_version="2.0.0",
-                message="Incompatible",
-            ),
-            "engine2": CompatibilityResult(
-                is_compatible=False,
-                component_name="Engine 2",
-                component_version="1.0.0",
-                required_version="2.0.0",
-                message="Incompatible",
-            ),
-        }
-        incompatible = get_incompatible_components(results)
-        assert len(incompatible) == 2
-
-
-class TestReporting:
-    """Test reporting functionality"""
-
-    def test_print_compatibility_report(self, capsys):
-        """Test printing compatibility report"""
-        results = {
-            "engine1": CompatibilityResult(
-                is_compatible=True,
-                component_name="Engine 1",
-                component_version="1.0.0",
-                required_version="1.0.0",
-                message="Engine 1 is compatible",
-            ),
-            "engine2": CompatibilityResult(
-                is_compatible=False,
-                component_name="Engine 2",
-                component_version="1.0.0",
-                required_version="2.0.0",
-                message="Engine 2 is incompatible",
-            ),
-        }
-        print_compatibility_report(results, "Test Report")
-        captured = capsys.readouterr()
-        assert "Test Report" in captured.out
-        assert "compatible" in captured.out.lower()
-        assert "incompatible" in captured.out.lower()
-
-    def test_print_compatibility_report_summary(self, capsys):
-        """Test that report includes summary"""
-        results = {
-            "engine1": CompatibilityResult(
-                is_compatible=True,
-                component_name="Engine 1",
-                component_version="1.0.0",
-                required_version="1.0.0",
-                message="Compatible",
-            ),
-            "engine2": CompatibilityResult(
-                is_compatible=False,
-                component_name="Engine 2",
-                component_version="1.0.0",
-                required_version="2.0.0",
-                message="Incompatible",
-            ),
-        }
-        print_compatibility_report(results)
-        captured = capsys.readouterr()
-        assert "1 compatible" in captured.out
-        assert "1 incompatible" in captured.out

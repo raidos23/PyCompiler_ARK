@@ -1,17 +1,13 @@
 {
-  "_meta": {"code": "ja", "name": "日本語"},
-  "cx_freeze_title": "cx_Freeze オプション",
-  "cx_output_dir_ph": "出力ディレクトリ (--target-dir)",
-  "browse": "参照…",
-  "gui_windows": "GUI アプリ (コンソールなし) [Windows]",
-  "include_encodings": "エンコーディングを含める",
-  "icon": "アイコン",
-  "packages_title": "含めるパッケージ",
-  "add": "追加",
-  "remove": "削除",
-  "modules_title": "含めるモジュール",
-  "data_title": "含めるデータ (ファイル/ディレクトリ)",
-  "choose_data_file": "データファイルを選択",
-  "choose_data_dir": "データディレクトリを選択",
-  "optimize": "最適化"
+  "_meta": {
+    "code": "ja",
+    "name": "日本語"
+  },
+  "tab_label": "CX_Freeze",
+  "mode_label": "モード:",
+  "onefile_checkbox": "Onefile",
+  "console_label": "コンソール:",
+  "windowed_checkbox": "Windowed",
+  "icon_button": "🎨 アイコンを選択 (.ico)",
+  "output_placeholder": "出力ディレクトリ"
 }

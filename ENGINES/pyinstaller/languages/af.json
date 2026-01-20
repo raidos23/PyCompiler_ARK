@@ -1,0 +1,18 @@
+{
+  "_meta": {
+    "code": "af",
+    "name": "Afrikaans"
+  },
+  "tab_label": "PyInstaller",
+  "mode_label": "Modus:",
+  "onefile_checkbox": "Een lêer",
+  "windowed_checkbox": "Venster",
+  "noconfirm_checkbox": "Geen bevestiging",
+  "clean_checkbox": "Skoon",
+  "noupx_checkbox": "Geen UPX",
+  "main_only_checkbox": "Kompileer slegs main.py of app.py",
+  "debug_checkbox": "Ontfoutmodus (--debug)",
+  "add_data_button": "add_data",
+  "output_placeholder": "Uitset gids (--distpath). Laat leeg vir ./dist",
+  "icon_button": "🎨 Kies ikoon (.ico)"
+}

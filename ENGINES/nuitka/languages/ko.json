@@ -1,0 +1,18 @@
+{
+  "_meta": {
+    "code": "ko",
+    "name": "한국어"
+  },
+  "tab_label": "Nuitka",
+  "mode_label": "모드:",
+  "onefile_checkbox": "단일 파일 (--onefile)",
+  "type_label": "유형:",
+  "standalone_checkbox": "독립 실행형 (--standalone)",
+  "console_label": "콘솔:",
+  "disable_console_checkbox": "Windows 콘솔 비활성화 (--windows-disable-console)",
+  "progress_label": "진행률:",
+  "show_progress_checkbox": "진행률 표시 (--show-progress)",
+  "add_data_button": "add_data",
+  "output_placeholder": "출력 디렉터리 (--output-dir)",
+  "icon_button": "🎨 아이콘 선택 (.ico) Nuitka"
+}

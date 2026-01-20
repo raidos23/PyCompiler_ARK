@@ -1,17 +1,13 @@
 {
-  "_meta": {"code": "zh-CN", "name": "简体中文"},
-  "cx_freeze_title": "cx_Freeze 选项",
-  "cx_output_dir_ph": "输出目录 (--target-dir)",
-  "browse": "浏览…",
-  "gui_windows": "GUI 应用（无控制台）[Windows]",
-  "include_encodings": "包含编码",
-  "icon": "图标",
-  "packages_title": "要包含的包",
-  "add": "添加",
-  "remove": "删除",
-  "modules_title": "要包含的模块",
-  "data_title": "要包含的数据（文件/目录）",
-  "choose_data_file": "选择数据文件",
-  "choose_data_dir": "选择数据目录",
-  "optimize": "优化"
+  "_meta": {
+    "code": "zh-CN",
+    "name": "中文 (简体)"
+  },
+  "tab_label": "CX_Freeze",
+  "mode_label": "模式:",
+  "onefile_checkbox": "Onefile",
+  "console_label": "控制台:",
+  "windowed_checkbox": "Windowed",
+  "icon_button": "🎨 选择图标 (.ico)",
+  "output_placeholder": "输出目录"
 }

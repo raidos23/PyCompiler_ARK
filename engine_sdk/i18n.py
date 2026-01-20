@@ -16,16 +16,10 @@
 from __future__ import annotations
 
 # Stable i18n facade for engines
-from Core.i18n import (
-    available_languages,
-    get_translations,
-    normalize_lang_pref,
-    resolve_system_language,
-)
+from Core.engines_loader.registry import (resolve_language_code, load_engine_language_file)
+
 
 __all__ = [
-    "normalize_lang_pref",
-    "available_languages",
-    "resolve_system_language",
-    "get_translations",
+    "resolve_language_code",
+    "load_engine_language_file",
 ]

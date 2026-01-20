@@ -104,7 +104,6 @@ _EXPORTS: dict[str, tuple[str, str]] = {
     "try_install_missing_modules": (".compiler", "try_install_missing_modules"),
     "show_error_dialog": (".compiler", "show_error_dialog"),
     "cancel_all_compilations": (".compiler", "cancel_all_compilations"),
-    
     # Dependency analysis (some internal helpers intentionally exported)
     "suggest_missing_dependencies": (
         ".dependency_analysis",
@@ -268,7 +267,6 @@ def __getattr__(name: str) -> Any:
                 ),
                 "show_error_dialog": _load_export("show_error_dialog"),
                 "cancel_all_compilations": _load_export("cancel_all_compilations"),
-                
             },
             "dependency_analysis": {
                 "suggest_missing_dependencies": _load_export(

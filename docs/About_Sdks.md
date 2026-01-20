@@ -23,7 +23,7 @@ BC plugins are pre-compilation plugins that validate, prepare, and optimize the 
 - Clean workspace before compilation
 
 **Key Characteristics:**
-- **Registration:** Uses `bcasl_register(manager)` function to register with BCASL
+- **Registration:** Uses `@bc_register` decorator or `bcasl_register(manager)` function
 - **Version Compatibility:** Plugins declare required versions for BCASL, Core, and SDK components
 - **User Interaction:** Uses `Dialog` API from `Plugins_SDK.GeneralContext` for logging and user prompts
 - **Context Access:** Receives `PreCompileContext` with workspace info and file iteration utilities
@@ -48,7 +48,7 @@ Engines are compilation tools that transform Python code into executables. They 
 - Engine-specific configuration management
 
 **Key Characteristics:**
-- **Registration:** Self-register via `registry.register(MyEngine)` on import
+- **Registration:** Self-register via `engine_register(MyEngine)` or `registry.register(MyEngine)` (alias)
 - **Version Compatibility:** Engines declare `required_core_version` and `required_sdk_version`
 - **Discovery:** Auto-discovered from `ENGINES/` directory (packages only)
 - **UI Integration:** Optional tab creation via `create_tab(gui)` method
@@ -164,13 +164,19 @@ def bcasl_register(manager):
 ### Engine Registration
 
 ```python
-# Self-register at module level
+# Self-register at module level (new method)
+from engine_sdk import engine_register
+
 class MyEngine(CompilerEngine):
     id = "my_engine"
     name = "My Engine"
     # ...
 
-registry.register(MyEngine)
+engine_register(MyEngine)
+
+# Or using the legacy alias (still supported)
+from engine_sdk import register
+register(MyEngine)
 ```
 
 **Discovery:**
@@ -300,7 +306,7 @@ See [ARK Configuration Guide](./ARK_Configuration.md) for global configuration d
 |--------|---------------------|---------|
 | **Purpose** | Pre-compilation validation/preparation (BC phase) | Compilation execution |
 | **When** | Before build starts | During build |
-| **Registration** | `bcasl_register(manager)` | `registry.register(MyEngine)` |
+| **Registration** | `@bc_register` or `bcasl_register(manager)` | `engine_register(MyEngine)` or `register(MyEngine)` |
 | **Discovery** | `Plugins/` directory | `ENGINES/` directory |
 | **UI** | None (uses Dialog API) | Optional tab via `create_tab()` |
 | **i18n** | No (static messages) | Yes (via `apply_i18n()`) |

@@ -1,0 +1,24 @@
+{
+  "_meta": {
+    "code": "en",
+    "name": "English"
+  },
+  "tab_label": "PyInstaller",
+  "mode_label": "Mode:",
+  "onefile_checkbox": "Onefile",
+  "console_label": "Console:",
+  "windowed_checkbox": "Windowed",
+  "confirmation_label": "Confirmation:",
+  "noconfirm_checkbox": "Noconfirm",
+  "cleanup_label": "Cleanup:",
+  "clean_checkbox": "Clean",
+  "compression_label": "Compression:",
+  "noupx_checkbox": "No UPX",
+  "files_label": "Files:",
+  "main_only_checkbox": "Compile only main.py or app.py",
+  "icon_button": "🎨 Choose icon (.ico)",
+  "debug_checkbox": "Debug mode (--debug)",
+  "add_data_button": "add_data",
+  "output_placeholder": "Output directory (--distpath). Leave empty for ./dist"
+}
+

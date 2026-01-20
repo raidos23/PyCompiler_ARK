@@ -1,0 +1,5 @@
+- [ ] Move check_system_packages inside SysDependencyManager class as @staticmethod
+- [ ] Remove the standalone check_system_packages function
+- [ ] Update import in Core/engines_loader/base.py to import SysDependencyManager
+- [ ] Change the call in base.py to use SysDependencyManager.check_system_packages
+- [ ] Test the changes

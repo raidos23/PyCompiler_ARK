@@ -25,6 +25,7 @@ Create `Plugins/my.plugin.id/__init__.py`:
 from __future__ import annotations
 
 from pathlib import Path
+from bcasl import bc_register
 from Plugins_SDK.BcPluginContext import BcPluginBase, PluginMeta, PreCompileContext
 from Plugins_SDK.GeneralContext import Dialog
 
@@ -32,7 +33,7 @@ from Plugins_SDK.GeneralContext import Dialog
 log = Dialog()
 dialog = Dialog()
 
-META = PluginMeta(
+PLUGIN_META = PluginMeta(
     id="my.plugin.id",
     name="My BC Plugin",
     version="1.0.0",
@@ -47,9 +48,14 @@ META = PluginMeta(
 )
 
 
+@bc_register
 class MyPlugin(BcPluginBase):
+    '''My BC Plugin description.'''
+    
+    meta = PLUGIN_META
+
     def __init__(self) -> None:
-        super().__init__(META)
+        super().__init__(meta=PLUGIN_META)
 
     def on_pre_compile(self, ctx: PreCompileContext) -> None:
         """Execute pre-compilation actions.
@@ -81,11 +87,15 @@ class MyPlugin(BcPluginBase):
         except Exception as e:
             log.log_error(f"Plugin error: {e}")
             raise
+```
 
+**Alternative: Using old-style registration**
 
-# Create plugin instance
+If you prefer the old-style registration, you can still use it:
+
+```python
+# Old-style registration (still supported)
 PLUGIN = MyPlugin()
-
 
 def bcasl_register(manager):
     """Register the plugin with the BCASL manager."""

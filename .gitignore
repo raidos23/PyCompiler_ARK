@@ -4,10 +4,12 @@ __pycache__/
 *$py.class
 experimental_file/
 *.bak
+bcasl.yml
+ARK_Main_Config.yml
 # C extensions
 *.so
 *.swp
-.swp
+cloc
 # Distribution / packaging
 .Python
 build/
@@ -41,7 +43,8 @@ sys
 # Installer logs
 pip-log.txt
 pip-delete-this-directory.txt
-
+.blackbox/
+.blackboxrules
 # Unit test / coverage reports
 htmlcov/
 .tox/
@@ -194,7 +197,7 @@ tmp/
 *.pem
 certificates/
 secrets/
-
+.blackbox/
 # SBOM and security reports
 sbom.json
 sbom.xml

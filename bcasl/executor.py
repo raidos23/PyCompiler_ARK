@@ -142,17 +142,73 @@ class BCASL:
 
                 # Recherche et appel de la fonction d'enregistrement si présente
                 reg = getattr(module, BCASL_PLUGIN_REGISTER_FUNC, None)
-                if not callable(reg):
-                    _logger.debug(
-                        "Package %s: aucune fonction %s, ignoré",
-                        pkg_dir.name,
-                        BCASL_PLUGIN_REGISTER_FUNC,
-                    )
-                    continue
-                # Appeler l'enregistrement
-                before_ids = set(self._registry.keys())
-                reg(self)  # le package appelle self.add_plugin(...)
-                new_ids = [k for k in self._registry.keys() if k not in before_ids]
+                is_decorator_plugin = False
+                new_ids: list[str] = []
+
+                if callable(reg):
+                    # Ancien style: fonction bcasl_register(manager)
+                    before_ids = set(self._registry.keys())
+                    reg(self)  # le package appelle self.add_plugin(...)
+                    new_ids = [k for k in self._registry.keys() if k not in before_ids]
+                else:
+                    # Nouveau style: chercher les classes marquées avec @bc_register
+                    # Ces classes ont l'attribut __bcasl_plugin__ = True
+                    # et peuvent avoir _bcasl_instance_ pour l'instance
+                    for attr_name in dir(module):
+                        try:
+                            attr = getattr(module, attr_name, None)
+                            if attr is None:
+                                continue
+                            # Vérifier si c'est une classe marquée comme plugin
+                            if not getattr(attr, "__bcasl_plugin__", False):
+                                continue
+                            if not isinstance(attr, type):
+                                continue
+                            # C'est une classe de plugin décorée avec @bc_register
+                            plugin_instance = getattr(attr, "_bcasl_instance_", None)
+                            if plugin_instance is None:
+                                try:
+                                    plugin_instance = attr()
+                                except Exception as e:
+                                    _logger.warning(
+                                        "Impossible d'instancier le plugin %s: %s",
+                                        attr_name,
+                                        e,
+                                    )
+                                    continue
+                            # Enregistrer le plugin
+                            pid = plugin_instance.meta.id
+                            if pid not in self._registry:
+                                # Appliquer la priorité basée sur les tags si pas déjà définie
+                                # et si la priorité par défaut (100) est utilisée
+                                if plugin_instance.priority == 100:
+                                    from .tagging import (
+                                        TAG_PRIORITY_MAP,
+                                        DEFAULT_TAG_PRIORITY,
+                                    )
+
+                                    tags = (
+                                        getattr(plugin_instance.meta, "tags", ()) or ()
+                                    )
+                                    if tags:
+                                        scores = []
+                                        for tag in tags:
+                                            tag_str = str(tag).strip().lower()
+                                            if tag_str:
+                                                score = TAG_PRIORITY_MAP.get(
+                                                    tag_str, DEFAULT_TAG_PRIORITY
+                                                )
+                                                scores.append(score)
+                                        if scores:
+                                            tag_priority = min(scores)
+                                            if tag_priority != DEFAULT_TAG_PRIORITY:
+                                                plugin_instance.priority = tag_priority
+                                self.add_plugin(plugin_instance)
+                                new_ids.append(pid)
+                                is_decorator_plugin = True
+                        except Exception:
+                            continue
+
                 for pid in new_ids:
                     rec = self._registry.get(pid)
                     if rec is not None:
@@ -161,12 +217,19 @@ class BCASL:
                 # Validation de signature supprimée (simplification)
                 added = len(new_ids)
                 if added <= 0:
-                    _logger.warning(
-                        "Aucun plugin enregistré par package %s", pkg_dir.name
-                    )
+                    if not is_decorator_plugin:
+                        _logger.debug(
+                            "Package %s: aucun plugin trouvé (ni %s, ni décorateur @bc_register), ignoré",
+                            pkg_dir.name,
+                            BCASL_PLUGIN_REGISTER_FUNC,
+                        )
+                    else:
+                        _logger.warning(
+                            "Aucun plugin enregistré par package %s", pkg_dir.name
+                        )
                 else:
                     count += added
-                    _logger.info("Plugin chargé depuis package %s", pkg_dir.name)
+                    _logger.info("Plugin(s) chargé(s) depuis package %s", pkg_dir.name)
             except Exception as exc:  # isolation
                 msg = f"échec chargement: {exc}"
                 errors.append((pkg_dir.name, msg))
@@ -820,7 +883,7 @@ def _plugin_worker(
         module = _ilu.module_from_spec(spec)
         _sys.modules[spec.name] = module
         spec.loader.exec_module(module)  # type: ignore[attr-defined]
-        # Récupérer PLUGIN ou fallback via bcasl_register
+        # Récupérer PLUGIN ou fallback via bcasl_register ou décorateur @bc_register
         plg = getattr(module, "PLUGIN", None)
         if plg is None or getattr(getattr(plg, "meta", None), "id", None) != plugin_id:
             try:
@@ -836,10 +899,35 @@ def _plugin_worker(
                     module.bcasl_register(mgr)
                 rec = getattr(mgr, "_registry", {}).get(plugin_id)
                 if rec is None:
+                    # Nouveau style: chercher les classes marquées avec @bc_register
+                    # Ces classes ont l'attribut __bcasl_plugin__ = True
+                    # et peuvent avoir _bcasl_instance_ pour l'instance
+                    for attr_name in dir(module):
+                        try:
+                            attr = getattr(module, attr_name, None)
+                            if attr is None:
+                                continue
+                            if not isinstance(attr, type):
+                                continue
+                            if not getattr(attr, "__bcasl_plugin__", False):
+                                continue
+                            plugin_instance = getattr(attr, "_bcasl_instance_", None)
+                            if plugin_instance is None:
+                                try:
+                                    plugin_instance = attr()
+                                except Exception:
+                                    continue
+                            if getattr(plugin_instance.meta, "id", None) == plugin_id:
+                                plg = plugin_instance
+                                break
+                        except Exception:
+                            continue
+                else:
+                    plg = rec.plugin
+                if plg is None:
                     raise RuntimeError(
                         f"Plugin '{plugin_id}' introuvable dans le module"
                     )
-                plg = rec.plugin
             except Exception as ex:
                 raise RuntimeError(f"Impossible d'instancier le plugin: {ex}")
         # Exécution
