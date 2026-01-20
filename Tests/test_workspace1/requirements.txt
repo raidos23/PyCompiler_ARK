@@ -1,2 +1,0 @@
-# Minimal requirements for test workspace
-# Intentionally light to avoid network installs during tests.

@@ -1,17 +1,13 @@
 {
-  "_meta": {"code": "de", "name": "Deutsch"},
-  "cx_freeze_title": "cx_Freeze Optionen",
-  "cx_output_dir_ph": "Ausgabeverzeichnis (--target-dir)",
-  "browse": "Durchsuchen…",
-  "gui_windows": "GUI‑Anwendung (keine Konsole) [Windows]",
-  "include_encodings": "Encodings einschließen",
-  "icon": "Icon",
-  "packages_title": "Einzuschließende Pakete",
-  "add": "Hinzufügen",
-  "remove": "Entfernen",
-  "modules_title": "Einzuschließende Module",
-  "data_title": "Einzuschließende Daten (Dateien/Verzeichnisse)",
-  "choose_data_file": "Datendatei auswählen",
-  "choose_data_dir": "Datenverzeichnis auswählen",
-  "optimize": "Optimieren"
+  "_meta": {
+    "code": "de",
+    "name": "Deutsch"
+  },
+  "tab_label": "CX_Freeze",
+  "mode_label": "Modus:",
+  "onefile_checkbox": "Onefile",
+  "console_label": "Konsole:",
+  "windowed_checkbox": "Windowed",
+  "icon_button": "🎨 Icon auswählen (.ico)",
+  "output_placeholder": "Ausgabeverzeichnis"
 }

@@ -15,6 +15,7 @@
 
 from __future__ import annotations
 
+import os
 from typing import Optional, Any
 
 from .base import CompilerEngine
@@ -44,22 +45,22 @@ _LANG_ALIASES: dict[str, str] = {
 
 def normalize_language_code(code: Optional[str]) -> str:
     """Normalize language code with fallback chain.
-    
+
     Returns normalized code or 'en' as ultimate fallback.
     """
     if not code:
         return "en"
-    
+
     try:
         raw = str(code)
         low = raw.lower().replace("_", "-")
         mapped = _LANG_ALIASES.get(low, raw)
-        
+
         # Candidate order: mapped -> base (before '-') -> exact lower -> exact raw -> 'en'
         candidates = []
         if mapped not in candidates:
             candidates.append(mapped)
-        
+
         base = None
         try:
             if "-" in mapped:
@@ -68,7 +69,7 @@ def normalize_language_code(code: Optional[str]) -> str:
                 base = mapped.split("_", 1)[0]
         except Exception:
             base = None
-        
+
         if base and base not in candidates:
             candidates.append(base)
         if low not in candidates:
@@ -77,7 +78,7 @@ def normalize_language_code(code: Optional[str]) -> str:
             candidates.append(raw)
         if "en" not in candidates:
             candidates.append("en")
-        
+
         return candidates[0] if candidates else "en"
     except Exception:
         return "en"
@@ -85,18 +86,18 @@ def normalize_language_code(code: Optional[str]) -> str:
 
 def resolve_language_code(gui, tr: Optional[dict]) -> str:
     """Resolve language code from translations metadata or GUI preferences.
-    
+
     Returns normalized language code.
     """
     code = None
-    
+
     try:
         if isinstance(tr, dict):
             meta = tr.get("_meta", {})
             code = meta.get("code") if isinstance(meta, dict) else None
     except Exception:
         code = None
-    
+
     if not code:
         try:
             pref = getattr(gui, "language_pref", getattr(gui, "language", "System"))
@@ -104,7 +105,7 @@ def resolve_language_code(gui, tr: Optional[dict]) -> str:
                 code = pref
         except Exception:
             pass
-    
+
     return normalize_language_code(code)
 
 
@@ -121,7 +122,41 @@ def unregister(eid: str) -> None:
         pass
 
 
-def register(engine_cls: type[CompilerEngine]):
+def unload_all() -> dict[str, Any]:
+    """Unload all registered engines and clean up all registry data.
+
+    Returns:
+        dict with status and list of unloaded engine IDs
+    """
+    unloaded = []
+    try:
+        # Collect all engine IDs before clearing
+        unloaded = list(_ORDER)
+        unloaded.extend(k for k in _REGISTRY.keys() if k not in unloaded)
+
+        # Clear all registry data
+        _REGISTRY.clear()
+        _ORDER.clear()
+        _TAB_INDEX.clear()
+
+        # Clear instances
+        _INSTANCES.clear()
+
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": str(e),
+            "unloaded": unloaded
+        }
+
+    return {
+        "status": "success",
+        "message": f"Unloaded {len(unloaded)} engine(s)",
+        "unloaded": unloaded
+    }
+
+
+def engine_register(engine_cls: type[CompilerEngine]):
     """Register an engine class. Enforces a non-empty unique id.
 
     If the same id is registered again with the same class object, this is a no-op.
@@ -144,6 +179,10 @@ def register(engine_cls: type[CompilerEngine]):
         return engine_cls
 
 
+# Alias for backward compatibility
+register = engine_register
+
+
 def get_engine(eid: str) -> Optional[type[CompilerEngine]]:
     try:
         return _REGISTRY.get(eid)
@@ -161,11 +200,25 @@ def available_engines() -> list[str]:
 def bind_tabs(gui) -> None:
     """Create tabs for all registered engines that expose create_tab and store indexes.
     Robust to individual engine failures and avoids raising to the UI layer.
+    Also handles hiding the Hello tab when engines are available.
     """
     try:
         tabs = getattr(gui, "compiler_tabs", None)
         if not tabs:
             return
+
+        # Get the Hello tab if it exists
+        hello_tab = getattr(gui, "tab_hello", None)
+        hello_tab_index = -1
+        if hello_tab is not None:
+            try:
+                hello_tab_index = tabs.indexOf(hello_tab)
+            except Exception:
+                hello_tab_index = -1
+
+        # Track if any engine created a tab
+        any_engine_tab_created = False
+
         for eid in list(_ORDER):
             try:
                 engine = create(eid)
@@ -177,6 +230,7 @@ def bind_tabs(gui) -> None:
                 pair = res(gui)
                 if not pair:
                     continue
+                any_engine_tab_created = True
                 widget, label = pair
                 try:
                     existing = tabs.indexOf(widget)
@@ -198,8 +252,34 @@ def bind_tabs(gui) -> None:
             except Exception:
                 # keep UI responsive even if a plugin tab fails
                 continue
+
+        # Hide the Hello tab if any engine has created a tab
+        if any_engine_tab_created and hello_tab_index >= 0:
+            try:
+                tabs.tabBar().hideTab(hello_tab_index)
+            except Exception:
+                pass
     except Exception:
         # Swallow to avoid breaking app init
+        pass
+
+
+def show_hello_tab(gui) -> None:
+    """Show the Hello tab when no engines are available."""
+    try:
+        tabs = getattr(gui, "compiler_tabs", None)
+        if not tabs:
+            return
+        hello_tab = getattr(gui, "tab_hello", None)
+        if hello_tab is not None:
+            try:
+                idx = tabs.indexOf(hello_tab)
+                if idx >= 0:
+                    tabs.tabBar().showTab(idx)
+                    tabs.setCurrentIndex(idx)
+            except Exception:
+                pass
+    except Exception:
         pass
 
 
@@ -225,6 +305,62 @@ def get_engine_for_tab(index: int) -> Optional[str]:
     except Exception:
         pass
     return None
+
+
+def load_engine_language_file(engine_package: str, code: str) -> dict:
+    """Load language file for an engine from its package's languages folder.
+
+    Args:
+        engine_package: The engine's package name (e.g., 'ENGINES.nuitka')
+        code: Language code (e.g., 'fr', 'en')
+
+    Returns:
+        Dict containing the language data, or empty dict if not found
+    """
+    try:
+        import importlib.resources as ilr
+        import json
+
+        lang_data = {}
+
+        # Try exact code first
+        try:
+            with ilr.as_file(
+                ilr.files(engine_package).joinpath("languages", f"{code}.json")
+            ) as p:
+                if os.path.isfile(str(p)):
+                    with open(str(p), encoding="utf-8") as f:
+                        lang_data = json.load(f) or {}
+                    return lang_data
+        except Exception:
+            pass
+
+        # Fallback to base language (e.g., "fr" from "fr-CA")
+        if "-" in code:
+            base = code.split("-", 1)[0]
+            try:
+                with ilr.as_file(
+                    ilr.files(engine_package).joinpath("languages", f"{base}.json")
+                ) as p:
+                    if os.path.isfile(str(p)):
+                        with open(str(p), encoding="utf-8") as f:
+                            lang_data = json.load(f) or {}
+                        return lang_data
+            except Exception:
+                pass
+
+        # Final fallback to English
+        try:
+            with ilr.as_file(ilr.files(engine_package).joinpath("languages", "en.json")) as p:
+                if os.path.isfile(str(p)):
+                    with open(str(p), encoding="utf-8") as f:
+                        lang_data = json.load(f) or {}
+        except Exception:
+            pass
+
+        return lang_data
+    except Exception:
+        return {}
 
 
 def create(eid: str) -> CompilerEngine:

@@ -59,6 +59,7 @@ def _has_bcasl_marker(pkg_dir: Path) -> bool:
 
 def _discover_bcasl_meta(api_dir: Path) -> dict[str, dict[str, Any]]:
     """Découvre les plugins en important chaque package et en appelant bcasl_register(manager).
+    Supporte également les plugins enregistrés avec le décorateur @bc_register.
     Retourne un mapping plugin_id -> meta dict {id, name, version, description, author, requirements}
     """
     meta: dict[str, dict[str, Any]] = {}
@@ -82,12 +83,39 @@ def _discover_bcasl_meta(api_dir: Path) -> dict[str, dict[str, Any]]:
                 module = _ilu.module_from_spec(spec)
                 _sys.modules[mod_name] = module
                 spec.loader.exec_module(module)  # type: ignore[attr-defined]
-                reg = getattr(module, "bcasl_register", None)
-                if not callable(reg):
-                    continue
+
                 # Utilise un gestionnaire temporaire pour enregistrer et lire les métadonnées
                 mgr = BCASL(api_dir, config={}, sandbox=False, plugin_timeout_s=0.0)  # type: ignore[call-arg]
-                reg(mgr)
+
+                # Méthode 1: chercher fonction bcasl_register
+                reg = getattr(module, "bcasl_register", None)
+                if callable(reg):
+                    reg(mgr)
+                else:
+                    # Méthode 2: chercher classes marquées avec @bc_register
+                    for attr_name in dir(module):
+                        try:
+                            attr = getattr(module, attr_name, None)
+                            if attr is None:
+                                continue
+                            if not getattr(attr, "__bcasl_plugin__", False):
+                                continue
+                            if not isinstance(attr, type):
+                                continue
+                            # C'est une classe de plugin décorée avec @bc_register
+                            plugin_instance = getattr(attr, "_bcasl_instance_", None)
+                            if plugin_instance is None:
+                                try:
+                                    plugin_instance = attr()
+                                except Exception:
+                                    continue
+                            # Enregistrer temporairement pour récupérer les métadonnées
+                            pid = plugin_instance.meta.id
+                            if pid not in mgr._registry:
+                                mgr.add_plugin(plugin_instance)
+                        except Exception:
+                            continue
+
                 # Récupère les plugins enregistrés
                 for pid, rec in getattr(mgr, "_registry", {}).items():
                     try:
@@ -692,9 +720,10 @@ def open_bc_loader_dialog(self) -> None:  # UI minimale
                     | Qt.ItemIsSelectable
                     | Qt.ItemIsDragEnabled
                 )
-            item.setCheckState(
-                Qt.Checked if (Qt is not None and enabled) else 2 if enabled else 0
-            )
+            if Qt is not None:
+                item.setCheckState(
+                    Qt.CheckState.Checked if enabled else Qt.CheckState.Unchecked
+                )
             lst.addItem(item)
         layout.addWidget(lst)
 
@@ -748,7 +777,11 @@ def open_bc_loader_dialog(self) -> None:  # UI minimale
             for i in range(lst.count()):
                 it = lst.item(i)
                 pid = it.data(0x0100) or it.text()
-                en = it.checkState() == (Qt.Checked if Qt is not None else 2)
+                en = (
+                    it.checkState() == Qt.CheckState.Checked
+                    if Qt is not None
+                    else False
+                )
                 new_plugins[str(pid)] = {"enabled": bool(en), "priority": i}
                 order_ids.append(str(pid))
             cfg_out: dict[str, Any] = dict(cfg) if isinstance(cfg, dict) else {}

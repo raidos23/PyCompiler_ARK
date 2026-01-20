@@ -168,6 +168,8 @@ class VenvManager:
                 names = ["pyinstaller", "pyinstaller.exe", "pyinstaller-script.py"]
             elif t == "nuitka":
                 names = ["nuitka", "nuitka3", "nuitka.exe", "nuitka-script.py"]
+            elif t == "cx_freeze":
+                names = ["cxfreeze", "cxfreeze.exe", "cxfreeze-script.py"]
             else:
                 # generic: try tool, tool.exe, and tool-script.py
                 names = [t, f"{t}.exe", f"{t}-script.py"]
@@ -512,7 +514,7 @@ class VenvManager:
                     "Scripts" if platform.system() == "Windows" else "bin",
                     "pip",
                 )
-                self._venv_check_pkgs = ["pyinstaller", "nuitka"]
+                self._venv_check_pkgs = ["pyinstaller", "nuitka", "cx_freeze"]
                 self._venv_check_index = 0
                 self._venv_check_pip_exe = pip_exe
                 self._venv_check_path = venv_path
@@ -848,6 +850,7 @@ class VenvManager:
             tools_to_check = [
                 ("pyinstaller", 50),
                 ("nuitka", 50),
+                ("cx_freeze", 50),
             ]
             for tool, tool_score in tools_to_check:
                 if self.has_tool_binary(venv_path, tool):

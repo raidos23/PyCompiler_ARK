@@ -59,10 +59,8 @@ except Exception:  # pragma: no cover
 # Re-export system dependency helpers
 # Re-export i18n helpers
 from .i18n import (
-    available_languages,
-    get_translations,
-    normalize_lang_pref,
-    resolve_system_language,
+    resolve_language_code,
+    load_engine_language_file,
 )
 from .Sys_Deps import SysDependencyManager  # type: ignore
 
@@ -169,8 +167,12 @@ def check_engine_compatibility(engine_class, required_sdk_version: str = None) -
         return False
 
 
+from Core.engines_loader.registry import engine_register
+
 __all__ = [
     "CompilerEngine",
+    "engine_register",
+    "register",
     "compute_auto_for_engine",
     "compute_for_all",
     "register_auto_builder",
@@ -198,10 +200,8 @@ __all__ = [
     "resolve_executable_path",
     "host_resolve_executable_path",
     "SysDependencyManager",
-    "normalize_lang_pref",
-    "available_languages",
-    "resolve_system_language",
-    "get_translations",
+    "resolve_language_code",
+    "load_engine_language_file",
     "ensure_min_sdk",
     "get_capabilities",
     "sdk_info",

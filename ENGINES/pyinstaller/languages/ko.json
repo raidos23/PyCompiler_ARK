@@ -1,0 +1,18 @@
+{
+  "_meta": {
+    "code": "ko",
+    "name": "한국어"
+  },
+  "tab_label": "PyInstaller",
+  "mode_label": "모드:",
+  "onefile_checkbox": "단일 파일",
+  "windowed_checkbox": "창 모드",
+  "noconfirm_checkbox": "확인 없음",
+  "clean_checkbox": "청소",
+  "noupx_checkbox": "UPX 없음",
+  "main_only_checkbox": "main.py 또는 app.py만 컴파일",
+  "debug_checkbox": "디버그 모드 (--debug)",
+  "add_data_button": "add_data",
+  "output_placeholder": "출력 디렉터리 (--distpath). ./dist로 두려면 비워두세요",
+  "icon_button": "🎨 아이콘 선택 (.ico)"
+}

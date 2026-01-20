@@ -74,3 +74,83 @@ class CompilerEngine:
         Values here will override the current process environment. Return None for no changes.
         """
         return None
+
+    def should_compile_file(
+        self, gui, file: str, selected_files: list[str], python_files: list[str]
+    ) -> bool:
+        """
+        Determine if a file should be included in the compilation queue.
+        Called by the compiler to filter files based on engine-specific criteria.
+        Default implementation returns True for all files.
+        Override to implement custom filtering logic.
+        """
+        return True
+
+    @property
+    def required_tools(self) -> dict[str, list[str]]:
+        """
+        Return dict of required tools with installation modes.
+        Keys: 'python' for pip-installable tools, 'system' for system packages.
+        Used by VenvManager for Python tools and system installer for system tools.
+        Example: {'python': ['pyinstaller'], 'system': ['build-essential']}
+        """
+        return {'python': [], 'system': []}
+
+    def ensure_tools_installed(self, gui) -> bool:
+        """
+        Check if all required tools are installed, and install missing ones.
+        Returns True if all tools are available or installation started, False if system tool installation failed.
+        """
+        try:
+            tools = self.required_tools
+            python_tools = tools.get('python', [])
+            system_tools = tools.get('system', [])
+
+            # Check Python tools
+            if hasattr(gui, 'venv_manager') and gui.venv_manager:
+                venv_path = gui.venv_manager.resolve_project_venv()
+                if venv_path and python_tools:
+                    missing_python = []
+                    for tool in python_tools:
+                        if not gui.venv_manager.is_tool_installed(venv_path, tool):
+                            missing_python.append(tool)
+                    if missing_python:
+                        if hasattr(gui, 'log') and gui.log:
+                            gui.log.append(f"📦 Installation des outils Python manquants: {missing_python}")
+                        gui.venv_manager.ensure_tools_installed(venv_path, missing_python)
+
+            # Check and install system tools
+            if system_tools:
+                try:
+                    from Core.sys_deps import check_system_packages, install_system_packages
+                    if not check_system_packages(system_tools):
+                        if hasattr(gui, 'log') and gui.log:
+                            gui.log.append(f"📦 Installation des outils système manquants: {system_tools}")
+                        if not install_system_packages(system_tools, gui):
+                            if hasattr(gui, 'log') and gui.log:
+                                gui.log.append(f"❌ Échec installation outils système: {system_tools}")
+                            return False
+                except Exception as e:
+                    if hasattr(gui, 'log') and gui.log:
+                        gui.log.append(f"⚠️ Error checking/installing system tools {system_tools}: {e}")
+                    return False
+
+            return True
+        except Exception as e:
+            if hasattr(gui, 'log') and gui.log:
+                gui.log.append(f"⚠️ Error in ensure_tools_installed: {e}")
+            return False
+
+    def apply_i18n(self, gui, tr: dict) -> None:
+        """
+        Apply internationalization translations to the engine UI.
+        Default implementation does nothing - engines should override this.
+        """
+        pass
+
+    def get_log_prefix(self, file_basename: str) -> str:
+        """
+        Return a log prefix string for the engine's compilation messages.
+        Default includes engine name and version.
+        """
+        return f"{self.name} ({self.version})"

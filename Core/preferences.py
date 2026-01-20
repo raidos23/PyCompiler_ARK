@@ -152,20 +152,31 @@ def save_preferences(self):
 
 
 def update_ui_state(self):
-    self.opt_onefile.setChecked(self.opt_onefile_state)
-    self.opt_windowed.setChecked(self.opt_windowed_state)
-    self.opt_noconfirm.setChecked(self.opt_noconfirm_state)
-    self.opt_clean.setChecked(self.opt_clean_state)
-    self.opt_noupx.setChecked(self.opt_noupx_state)
-    self.opt_main_only.setChecked(self.opt_main_only_state)
-    self.opt_debug.setChecked(self.opt_debug_state)
-    self.opt_auto_install.setChecked(self.opt_auto_install_state)
+    # Update static UI widgets if they exist (they may be None if using dynamic tabs)
+    if hasattr(self, "opt_onefile") and self.opt_onefile is not None:
+        self.opt_onefile.setChecked(self.opt_onefile_state)
+    if hasattr(self, "opt_windowed") and self.opt_windowed is not None:
+        self.opt_windowed.setChecked(self.opt_windowed_state)
+    if hasattr(self, "opt_noconfirm") and self.opt_noconfirm is not None:
+        self.opt_noconfirm.setChecked(self.opt_noconfirm_state)
+    if hasattr(self, "opt_clean") and self.opt_clean is not None:
+        self.opt_clean.setChecked(self.opt_clean_state)
+    if hasattr(self, "opt_noupx") and self.opt_noupx is not None:
+        self.opt_noupx.setChecked(self.opt_noupx_state)
+    if hasattr(self, "opt_main_only") and self.opt_main_only is not None:
+        self.opt_main_only.setChecked(self.opt_main_only_state)
+    if hasattr(self, "opt_debug") and self.opt_debug is not None:
+        self.opt_debug.setChecked(self.opt_debug_state)
+    if hasattr(self, "opt_auto_install") and self.opt_auto_install is not None:
+        self.opt_auto_install.setChecked(self.opt_auto_install_state)
     # self.custom_args supprimé (widget supprimé)
-    if self.output_dir_input:
+    if hasattr(self, "output_dir_input") and self.output_dir_input is not None:
         self.output_dir_input.setText(self.output_dir)
     if self.icon_path:
         self.log.append(f"🎨 Icône chargée depuis préférences : {self.icon_path}")
-    self.update_command_preview()
+    # Update command preview if method exists
+    if hasattr(self, "update_command_preview"):
+        self.update_command_preview()
 
 
 # --- System preference detection helpers ---

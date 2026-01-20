@@ -22,6 +22,7 @@ import sys
 
 from . import registry as registry  # re-export registry module
 from .base import CompilerEngine  # re-export base type
+from .registry import unload_all  # re-export unload_all function
 from .validator import (
     EngineCompatibilityCheckResult,
     check_engine_compatibility,
@@ -89,4 +90,4 @@ try:
 except Exception:
     pass
 
-__all__ = ["CompilerEngine", "registry"]
+__all__ = ["CompilerEngine", "registry", "unload_all"]
