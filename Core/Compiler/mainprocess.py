@@ -213,11 +213,9 @@ def start_compilation_process(self, file):
             if hasattr(self, "compiler_tabs") and self.compiler_tabs
             else 0
         )
-        engine_id = engines_loader.registry.get_engine_for_tab(idx) or (
-            "pyinstaller" if idx == 0 else "nuitka"
-        )
+        engine_id = engines_loader.registry.get_engine_for_tab(idx)
     except Exception:
-        engine_id = "pyinstaller"
+        print("No engine detected")
 
     # ========================================================================
     # Étape 2: Instanciation du moteur de compilation
