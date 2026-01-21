@@ -35,19 +35,33 @@ from .utils import (
     normalized_program_and_args,
     open_dir_candidates,
     open_path,
-    pip_executable,
-    pip_install,
-    pip_show,
     redact_secrets,
     resolve_executable,  # executable resolution helper (SDK)
     resolve_executable_path,
-    resolve_project_venv,
     run_process,
     safe_join,
     safe_log,
     tr,
     validate_args,
 )
+
+# Re-export venv/pip helpers from mainprocess.py (moved from utils.py)
+# These are maintained here for backward compatibility
+try:
+    from Core.Compiler.mainprocess import (
+        pip_executable,
+        pip_install,
+        pip_show,
+        resolve_project_venv,
+    )
+except ImportError:
+    # Fallback: keep original imports if mainprocess.py is not available
+    from .utils import (
+        pip_executable,
+        pip_install,
+        pip_show,
+        resolve_project_venv,
+    )
 
 try:
     # Optional alias to host-level executable resolver for advanced cases

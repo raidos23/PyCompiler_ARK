@@ -37,6 +37,8 @@ import os            # Opérations sur le système de fichiers (chemins, créati
 import platform      # Détection du système d'exploitation (Windows/Linux)
 import re            # Expressions régulières (détection de modules manquants)
 import subprocess    # Exécution de processus externes (pip install)
+import time          # Minuteries et délais (pour pip install retry)
+from typing import Any, Optional  # Type hints pour les fonctions
 
 # --- Imports du framework PySide6 (Qt pour Python) ---
 # QProcess : Gestion des processus externes avec signaux/slots Qt
@@ -67,11 +69,105 @@ from PySide6.QtWidgets import (
 # MAX_PARALLEL : Constante définissant le nombre max de compilations parallèles
 from .process_killer import _kill_process_tree, _kill_all_descendants
 from .. import engines_loader as engines_loader
-from engine_sdk.utils import clamp_text, redact_secrets
+from engine_sdk.utils import clamp_text, redact_secrets, run_process
 from ..Auto_Command_Builder import compute_for_all
 from ..preferences import MAX_PARALLEL
 
 # Note : Support ACASL supprimé (obsolète)
+
+# ============================================================================
+# SECTION 0 : VENV/PIP HELPERS (MOVED FROM engine_sdk/utils.py)
+# ============================================================================
+# These functions were moved from engine_sdk/utils.py to centralize
+# venv and pip management logic in mainprocess.py
+# ============================================================================
+
+
+def resolve_project_venv(gui: Any) -> Optional[str]:
+    """Resolve the project venv path using VenvManager when available, else workspace/venv."""
+    try:
+        vm = getattr(gui, "venv_manager", None)
+        if vm:
+            vroot = vm.resolve_project_venv()
+            if vroot and os.path.isdir(vroot):
+                return vroot
+    except Exception:
+        pass
+    try:
+        ws = getattr(gui, "workspace_dir", None)
+        if ws:
+            v = os.path.join(ws, "venv")
+            return v if os.path.isdir(v) else None
+    except Exception:
+        pass
+    return None
+
+
+def pip_executable(vroot: str) -> str:
+    """Return pip executable path under a venv root (cross-platform)."""
+    name = "pip.exe" if platform.system() == "Windows" else "pip"
+    return os.path.join(
+        vroot, "Scripts" if platform.system() == "Windows" else "bin", name
+    )
+
+
+def pip_show(gui: Any, pip_exe: str, package: str, *, timeout_ms: int = 180000) -> int:
+    """Run 'pip show <package>' and return exit code (0 if installed).
+    Falls back to 'python -m pip' if the venv pip executable is missing.
+    """
+    prog = pip_exe
+    args = ["show", package]
+    try:
+        if not os.path.isfile(pip_exe):
+            import sys as _sys
+
+            prog = _sys.executable
+            args = ["-m", "pip", "show", package]
+    except Exception:
+        try:
+            import sys as _sys
+
+            prog = _sys.executable
+            args = ["-m", "pip", "show", package]
+        except Exception:
+            prog = pip_exe
+            args = ["show", package]
+    code, _out, _err = run_process(gui, prog, args, timeout_ms=timeout_ms)
+    return int(code)
+
+
+def pip_install(
+    gui: Any, pip_exe: str, package: str, *, timeout_ms: int = 600000
+) -> int:
+    """Run 'pip install <package>' and return exit code (0 if success).
+    - Uses the venv pip when available, else falls back to 'python -m pip'
+    - Retries once on failure after a short delay to improve robustness.
+    """
+    prog = pip_exe
+    args = ["install", package]
+    try:
+        if not os.path.isfile(pip_exe):
+            import sys as _sys
+
+            prog = _sys.executable
+            args = ["-m", "pip", "install", package]
+    except Exception:
+        try:
+            import sys as _sys
+
+            prog = _sys.executable
+            args = ["-m", "pip", "install", package]
+        except Exception:
+            prog = pip_exe
+            args = ["install", package]
+    code, _out, _err = run_process(gui, prog, args, timeout_ms=timeout_ms)
+    if code != 0:
+        try:
+            time.sleep(1.0)
+        except Exception:
+            pass
+        code, _out, _err = run_process(gui, prog, args, timeout_ms=timeout_ms)
+    return int(code)
 
 # ============================================================================
 # SECTION 2 : GESTION DES PROCESSUS DE COMPILATION
