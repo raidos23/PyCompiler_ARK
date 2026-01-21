@@ -264,18 +264,6 @@ def init_ui(self):
             self.btn_acasl_loader.setEnabled(False)
         except Exception:
             pass
-    # Static button widgets are no longer used - buttons are now in dynamic tabs
-    self.btn_select_icon = None
-    # Static checkbox widgets are no longer used - options are now in dynamic tabs
-    self.opt_onefile = None
-    self.opt_windowed = None
-    self.opt_noconfirm = None
-    self.opt_clean = None
-    self.opt_noupx = None
-    self.opt_main_only = None
-    self.opt_debug = None
-    self.opt_auto_install = None
-    self.opt_silent_errors = None
     # Onglets compilateur (correction robuste)
     from PySide6.QtWidgets import QTabWidget, QWidget
 
@@ -287,9 +275,6 @@ def init_ui(self):
     self.compiler_tabs = self.ui.findChild(QTabWidget, "compiler_tabs")
     # Hello tab is now the default tab - it's defined in the UI
     self.tab_hello = self.ui.findChild(QWidget, "tab_hello")
-    # Static tabs no longer exist - they're created dynamically by engines
-    self.tab_pyinstaller = None
-    self.tab_nuitka = None
     # Lier dynamiquement les onglets des moteurs plug-and-play (only if compiler_tabs exists)
     if self.compiler_tabs:
         try:
@@ -298,25 +283,11 @@ def init_ui(self):
             engines_loader.registry.bind_tabs(self)
         except Exception:
             pass
-    # Widgets Nuitka (no longer static - now created dynamically by Nuitka engine)
-    self.nuitka_onefile = None
-    self.nuitka_standalone = None
-    self.nuitka_disable_console = None
-    self.nuitka_show_progress = None
-    self.nuitka_plugins = None  # Champ supprimé de l'UI; plugins gérés automatiquement
-    self.nuitka_output_dir = None
-    self.btn_nuitka_icon = None
-    # Static checkbox widgets are None - options are now in dynamic tabs
-    # Tooltips are handled by the engines themselves
-    # self.custom_args supprimé (widget inutilisé)
-    # self.custom_args supprimé (widget inutilisé)
+    
     self.btn_build_all = self.ui.findChild(QPushButton, "btn_build_all")
     self.btn_cancel_all = self.ui.findChild(QPushButton, "btn_cancel_all")
     self.progress = self.ui.findChild(QProgressBar, "progress")
     self.log = self.ui.findChild(QTextEdit, "log")
-    # PyInstaller widgets (no longer static - now created dynamically by PyInstaller engine)
-    self.output_dir_input = None
-    self.btn_browse_output_dir = None
     self.btn_export_config = self.ui.findChild(QPushButton, "btn_export_config")
     self.btn_import_config = self.ui.findChild(QPushButton, "btn_import_config")
     self.btn_help = self.ui.findChild(QPushButton, "btn_help")
@@ -400,17 +371,6 @@ def init_ui(self):
                 widget.setChecked(checked)
             except Exception:
                 pass
-
-        if engine_id == "pyinstaller":
-            # Enable PyInstaller options (widgets are created dynamically)
-            # These are accessed through the engine instance
-            pass
-        elif engine_id == "nuitka":
-            # Enable Nuitka options (widgets are created dynamically)
-            pass
-        else:
-            # Hello tab or unknown engine - no options to enable
-            pass
 
     self.compiler_tabs.currentChanged.connect(update_compiler_options_enabled)
     if self.compiler_tabs:
