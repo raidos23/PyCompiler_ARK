@@ -220,6 +220,7 @@ def tr(gui: Any, fr: str, en: str) -> str:
     return fr
 
 
+
 essential_log_max_len = 10000
 
 
@@ -636,95 +637,15 @@ def run_process(
 
 
 # -------------------------------
-# venv/pip helpers
+# venv/pip helpers - MOVED TO Core/Compiler/mainprocess.py
 # -------------------------------
-
-
-def resolve_project_venv(gui: Any) -> Optional[str]:
-    """Resolve the project venv path using VenvManager when available, else workspace/venv."""
-    try:
-        vm = getattr(gui, "venv_manager", None)
-        if vm:
-            vroot = vm.resolve_project_venv()
-            if vroot and os.path.isdir(vroot):
-                return vroot
-    except Exception:
-        pass
-    try:
-        ws = getattr(gui, "workspace_dir", None)
-        if ws:
-            v = os.path.join(ws, "venv")
-            return v if os.path.isdir(v) else None
-    except Exception:
-        pass
-    return None
-
-
-def pip_executable(vroot: str) -> str:
-    """Return pip executable path under a venv root (cross-platform)."""
-    name = "pip.exe" if platform.system() == "Windows" else "pip"
-    return os.path.join(
-        vroot, "Scripts" if platform.system() == "Windows" else "bin", name
-    )
-
-
-def pip_show(gui: Any, pip_exe: str, package: str, *, timeout_ms: int = 180000) -> int:
-    """Run 'pip show <package>' and return exit code (0 if installed).
-    Falls back to 'python -m pip' if the venv pip executable is missing.
-    """
-    prog = pip_exe
-    args = ["show", package]
-    try:
-        if not os.path.isfile(pip_exe):
-            import sys as _sys
-
-            prog = _sys.executable
-            args = ["-m", "pip", "show", package]
-    except Exception:
-        try:
-            import sys as _sys
-
-            prog = _sys.executable
-            args = ["-m", "pip", "show", package]
-        except Exception:
-            prog = pip_exe
-            args = ["show", package]
-    code, _out, _err = run_process(gui, prog, args, timeout_ms=timeout_ms)
-    return int(code)
-
-
-def pip_install(
-    gui: Any, pip_exe: str, package: str, *, timeout_ms: int = 600000
-) -> int:
-    """Run 'pip install <package>' and return exit code (0 if success).
-    - Uses the venv pip when available, else falls back to 'python -m pip'
-    - Retries once on failure after a short delay to improve robustness.
-    """
-    prog = pip_exe
-    args = ["install", package]
-    try:
-        if not os.path.isfile(pip_exe):
-            import sys as _sys
-
-            prog = _sys.executable
-            args = ["-m", "pip", "install", package]
-    except Exception:
-        try:
-            import sys as _sys
-
-            prog = _sys.executable
-            args = ["-m", "pip", "install", package]
-        except Exception:
-            prog = pip_exe
-            args = ["install", package]
-    code, _out, _err = run_process(gui, prog, args, timeout_ms=timeout_ms)
-    if code != 0:
-        try:
-            time.sleep(1.0)
-        except Exception:
-            pass
-        code, _out, _err = run_process(gui, prog, args, timeout_ms=timeout_ms)
-    return int(code)
+# The following functions have been moved to Core/Compiler/mainprocess.py:
+# - resolve_project_venv
+# - pip_executable
+# - pip_show
+# - pip_install
+# These are now available via engine_sdk.utils for backward compatibility
+# when imported directly, but are primarily used within mainprocess.py
 
 
 # -----------------------------------------------
