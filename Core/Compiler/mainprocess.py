@@ -180,26 +180,7 @@ def start_compilation_process(self, file):
     process._cancel_file = cancel_file
     process.readyReadStandardOutput.connect(lambda p=process: self.handle_stdout(p))
     process.readyReadStandardError.connect(lambda p=process: self.handle_stderr(p))
-
-    # Capture stderr data before process deletion to avoid accessing deleted C++ object
-    def _on_finished(ec, es, p=process):
-        try:
-            # Save stderr data before process is deleted
-            p._final_stderr = p.readAllStandardError().data().decode()
-        except Exception:
-            p._final_stderr = ""
-        try:
-            self.handle_finished(p, ec, es)
-        except Exception:
-            pass
-        finally:
-            # Schedule deletion after handle_finished completes
-            try:
-                p.deleteLater()
-            except Exception:
-                pass
-
-    process.finished.connect(_on_finished)
+    process.finished.connect(lambda ec, es, p=process: self.handle_finished(p, ec, es))
     self.processes.append(process)
     self.current_compiling.add(file)
     # Optional: update dependent UI states
@@ -694,12 +675,15 @@ def handle_finished(self, process, exit_code, exit_status):
             self.log.append(
                 f"<span style='color:red;'>Détails de l'erreur :<br><pre>{error_details}</pre></span>"
             )
-        self.show_error_dialog(file_basename, file, exit_code, error_details)
-
+        try :
+            self.show_error_dialog(file_basename, file, exit_code, error_details)
+        
         # Auto-install modules manquants si activé
-        if self.opt_auto_install.isChecked():
-            self.try_install_missing_modules(process)
+            if self.opt_auto_install.isChecked():
+                self.try_install_missing_modules(process)
 
+        except :
+            pass
     if process in self.processes:
         self.processes.remove(process)
     if file in self.current_compiling:

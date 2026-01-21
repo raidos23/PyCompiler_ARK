@@ -1,5 +1,6 @@
-- [ ] Move check_system_packages inside SysDependencyManager class as @staticmethod
-- [ ] Remove the standalone check_system_packages function
-- [ ] Update import in Core/engines_loader/base.py to import SysDependencyManager
-- [ ] Change the call in base.py to use SysDependencyManager.check_system_packages
-- [ ] Test the changes
+- [X] Move check_system_packages inside SysDependencyManager class as @staticmethod
+- [X] Remove the standalone check_system_packages function
+- [X] Update import in Core/engines_loader/base.py to import SysDependencyManager
+- [X] Change the call in base.py to use SysDependencyManager.check_system_packages
+- [X] Test the changes
+- [] Corriger les engines pour que les connection de buttons soit faie directement    aulieu d'utiliser des abstractions via des fonctions.

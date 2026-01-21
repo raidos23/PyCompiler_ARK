@@ -23,49 +23,56 @@ from typing import Any
 
 # Built-in fallback for English if language files are missing
 FALLBACK_EN: dict[str, Any] = {
-    "name": "English",
+  "name": "English",
+  "code": "en",
+  "_meta": {
     "code": "en",
-    "_meta": {"code": "en", "name": "English"},
-    "select_folder": "📁 Workspace",
-    "select_files": "📋 Files",
-    "build_all": "🚀 Build",
-    "export_config": "💾 Export config",
-    "import_config": "📥 Import config",
-    "cancel_all": "⛔ Cancel",
-    "suggest_deps": "🔎 Analyze dependencies",
-    "help": "❓ Help",
-    "help_title": "Help",
-    "help_text": "<b>PyCompiler ARK++ — Quick Help</b><br><ul><li>1) Select the Workspace and add your .py files.</li><li>2) Configure pre‑compile plugins via <b>Bc Plugins Loader</b> (BCASL).</li><li>3) Configure options in the <b>PyInstaller</b>, <b>Nuitka</b> or <b>CX_Freeze</b> tab.</li><li>4) Click <b>Build</b> and follow the logs.</li></ul><b>Notes</b><br><ul><li>When a build starts, all action controls are disabled (including Bc Plugins Loader) until it finishes or is canceled.</li><li>Pre‑compilation (BCASL) completes before compilation.</li><li>A <i>venv</i> can be created automatically; requirements.txt is installed if present; tools are installed into the venv as needed.</li><li>API‑initiated workspace changes are auto‑applied; running builds are canceled before switching.</li></ul><b>License</b>: Apache-2.0 — <a href='https://www.apache.org/licenses/LICENSE-2.0'>apache.org/licenses/LICENSE-2.0</a><br><b>Author</b>: Ague Samuel Amen<br>© 2026 Ague Samuel Amen",
-    "show_stats": "📊 Statistics",
-    "select_lang": "Choose language",
-    "venv_button": "Choose venv folder manually",
-    "label_workspace_section": "1. Select workspace folder",
-    "venv_label": "venv selected: None",
-    "label_folder": "No folder selected",
-    "label_files_section": "2. Files to build",
-    "btn_remove_file": "🗑️ Remove selected file",
-    "label_logs_section": "Build logs",
-    "choose_language_title": "Choose language",
-    "choose_language_label": "Language:",
-    "choose_language_system": "System",
-    "choose_language_system_button": "Choose language (System)",
-    "choose_language_button": "Choose language",
-    "select_theme": "Choose theme",
-    "choose_theme_button": "Choose theme",
-    "choose_theme_system_button": "Choose theme (System)",
-    "tt_select_folder": "Select the workspace directory containing your Python files.",
-    "tt_select_files": "Add Python files manually to the build list.",
-    "tt_build_all": "Start building all selected files.",
-    "tt_export_config": "Export the current configuration to a JSON file.",
-    "tt_import_config": "Import a configuration from a JSON file.",
-    "tt_cancel_all": "Cancel all ongoing builds.",
-    "tt_remove_file": "Remove the selected file(s) from the list.",
-    "tt_help": "Open help and information about the software.",
-    "tt_bc_loader": "Configure API (BCASL) plugins to run before compilation.",
-    "tt_venv_button": "Manually select a venv directory to use for compilation.",
-    "tt_suggest_deps": "Analyze the project for missing Python dependencies.",
-    "tt_show_stats": "Show build statistics (time, number of files, memory).",
+    "name": "English"
+  },
+  "select_folder": "📁 Workspace",
+  "select_files": "📋 Files",
+  "build_all": "🚀 Build",
+  "export_config": "💾 Export config",
+  "import_config": "📥 Import config",
+  "cancel_all": "⛔ Cancel",
+  "suggest_deps": "🔎 Analyze dependencies",
+  "help": "❓ Help",
+  "help_title": "Help",
+  "help_text": "<b>PyCompiler ARK++ — Quick Help</b><br><ul><li>1) Select the Workspace and add your .py files.</li><li>2) Configure pre‑compile plugins via <b>Bc Plugins Loader</b> (BCASL).</li><li>3) Configure options in the <b>PyInstaller</b>, <b>Nuitka</b> or <b>CX_Freeze</b> tab.</li><li>4) Click <b>Build</b> and follow the logs.</li></ul><b>Notes</b><br><ul><li>When a build starts, all action controls are disabled (including Bc Plugins Loader) until it finishes or is canceled.</li><li>Pre‑compilation (BCASL) completes before compilation.</li><li>A <i>venv</i> can be created automatically; requirements.txt is installed if present; tools are installed into the venv as needed.</li><li>API‑initiated workspace changes are auto‑applied; running builds are canceled before switching.</li></ul><b>License</b>: Apache-2.0 — <a href='https://www.apache.org/licenses/LICENSE-2.0'>apache.org/licenses/LICENSE-2.0</a><br><b>Author</b>: Ague Samuel Amen<br>© 2026 Ague Samuel Amen",
+  "show_stats": "📊 Statistics",
+  "select_lang": "Choose language",
+  "venv_button": "Choose venv folder manually",
+  "label_workspace_section": "1. Select workspace folder",
+  "venv_label": "venv selected: None",
+  "label_folder": "No folder selected",
+  "label_files_section": "2. Files to build",
+  "btn_remove_file": "🗑️ Remove selected file",
+  "label_logs_section": "Build logs",
+
+  "choose_language_title": "Choose language",
+  "choose_language_label": "Language:",
+  "choose_language_system": "System",
+  "choose_language_system_button": "Choose language (System)",
+  "choose_language_button": "Choose language",
+  "select_theme": "Choose theme",
+  "choose_theme_button": "Choose theme",
+  "choose_theme_system_button": "Choose theme (System)",
+
+  "tt_select_folder": "Select the workspace directory containing your Python files.",
+  "tt_select_files": "Add Python files manually to the build list.",
+  "tt_build_all": "Start building all selected files.",
+  "tt_export_config": "Export the current configuration to a JSON file.",
+  "tt_import_config": "Import a configuration from a JSON file.",
+  "tt_cancel_all": "Cancel all ongoing builds.",
+  "tt_remove_file": "Remove the selected file(s) from the list.",
+  "tt_help": "Open help and information about the software.",
+  "tt_bc_loader": "Configure API (BCASL) plugins to run before compilation.",
+  "tt_venv_button": "Manually select a venv directory to use for compilation.",
+  "tt_suggest_deps": "Analyze the project for missing Python dependencies.",
+  "tt_show_stats": "Show build statistics (time, number of files, memory)."
 }
+
+
 
 
 # Cache global pour les traductions chargées (évite les rechargements)
@@ -330,3 +337,392 @@ def get_current_language_sync() -> str:
             return _resolve_system_language_sync()
     except Exception:
         return "en"
+
+# PyCompiler ARK main GUI translation
+def _apply_main_app_translations(self, tr: dict[str, object]) -> None:
+    try:
+        # Buttons
+        if getattr(self, "btn_select_folder", None):
+            self.btn_select_folder.setText(
+                str(tr.get("select_folder", self.btn_select_folder.text()))
+            )
+        if getattr(self, "btn_select_files", None):
+            self.btn_select_files.setText(
+                str(tr.get("select_files", self.btn_select_files.text()))
+            )
+        if getattr(self, "btn_build_all", None):
+            self.btn_build_all.setText(
+                str(tr.get("build_all", self.btn_build_all.text()))
+            )
+        if getattr(self, "btn_export_config", None):
+            self.btn_export_config.setText(
+                str(tr.get("export_config", self.btn_export_config.text()))
+            )
+        if getattr(self, "btn_import_config", None):
+            self.btn_import_config.setText(
+                str(tr.get("import_config", self.btn_import_config.text()))
+            )
+        if getattr(self, "btn_cancel_all", None):
+            self.btn_cancel_all.setText(
+                str(tr.get("cancel_all", self.btn_cancel_all.text()))
+            )
+        if getattr(self, "btn_suggest_deps", None):
+            self.btn_suggest_deps.setText(
+                str(tr.get("suggest_deps", self.btn_suggest_deps.text()))
+            )
+
+        if getattr(self, "btn_remove_file", None):
+            self.btn_remove_file.setText(
+                str(tr.get("btn_remove_file", self.btn_remove_file.text()))
+            )
+
+        if getattr(self, "btn_help", None):
+            self.btn_help.setText(str(tr.get("help", self.btn_help.text())))
+        if getattr(self, "btn_show_stats", None):
+            self.btn_show_stats.setText(
+                str(tr.get("show_stats", self.btn_show_stats.text()))
+            )
+        if getattr(self, "select_lang", None):
+            self.select_lang.setText(
+                str(tr.get("select_lang", self.select_lang.text()))
+            )
+        if getattr(self, "select_theme", None):
+            try:
+                # Prefer dynamic label keys; fallback to generic key
+                if getattr(self, "theme", "System") == "System":
+                    val = (
+                        tr.get("choose_theme_system_button")
+                        or tr.get("choose_theme_button")
+                        or tr.get("select_theme")
+                    )
+                else:
+                    val = tr.get("choose_theme_button") or tr.get("select_theme")
+                self.select_theme.setText(str(val or self.select_theme.text()))
+            except Exception:
+                self.select_theme.setText(
+                    str(tr.get("select_theme", self.select_theme.text()))
+                )
+        if getattr(self, "venv_button", None):
+            self.venv_button.setText(
+                str(tr.get("venv_button", self.venv_button.text()))
+            )
+        if getattr(self, "btn_select_icon", None):
+            self.btn_select_icon.setText(
+                str(tr.get("btn_select_icon", self.btn_select_icon.text()))
+            )
+        if getattr(self, "btn_nuitka_icon", None):
+            self.btn_nuitka_icon.setText(
+                str(tr.get("btn_nuitka_icon", self.btn_nuitka_icon.text()))
+            )
+        # Labels
+        if getattr(self, "label_workspace_section", None):
+            self.label_workspace_section.setText(
+                str(
+                    tr.get(
+                        "label_workspace_section", self.label_workspace_section.text()
+                    )
+                )
+            )
+        if getattr(self, "venv_label", None):
+            self.venv_label.setText(str(tr.get("venv_label", self.venv_label.text())))
+        if getattr(self, "label_folder", None):
+            self.label_folder.setText(
+                str(tr.get("label_folder", self.label_folder.text()))
+            )
+        if getattr(self, "label_files_section", None):
+            self.label_files_section.setText(
+                str(tr.get("label_files_section", self.label_files_section.text()))
+            )
+        if getattr(self, "label_logs_section", None):
+            self.label_logs_section.setText(
+                str(tr.get("label_logs_section", self.label_logs_section.text()))
+            )
+        # Tabs
+        if getattr(self, "compiler_tabs", None):
+            try:
+                if getattr(self, "tab_pyinstaller", None):
+                    idx = self.compiler_tabs.indexOf(self.tab_pyinstaller)
+                    if idx >= 0:
+                        self.compiler_tabs.setTabText(
+                            idx,
+                            str(
+                                tr.get(
+                                    "tab_pyinstaller", self.compiler_tabs.tabText(idx)
+                                )
+                            ),
+                        )
+                if getattr(self, "tab_nuitka", None):
+                    idx2 = self.compiler_tabs.indexOf(self.tab_nuitka)
+                    if idx2 >= 0:
+                        self.compiler_tabs.setTabText(
+                            idx2,
+                            str(tr.get("tab_nuitka", self.compiler_tabs.tabText(idx2))),
+                        )
+            except Exception:
+                pass
+        # Checkboxes/options
+        if getattr(self, "opt_onefile", None):
+            self.opt_onefile.setText(
+                str(tr.get("opt_onefile", self.opt_onefile.text()))
+            )
+        if getattr(self, "opt_windowed", None):
+            self.opt_windowed.setText(
+                str(tr.get("opt_windowed", self.opt_windowed.text()))
+            )
+        if getattr(self, "opt_noconfirm", None):
+            self.opt_noconfirm.setText(
+                str(tr.get("opt_noconfirm", self.opt_noconfirm.text()))
+            )
+        if getattr(self, "opt_clean", None):
+            self.opt_clean.setText(str(tr.get("opt_clean", self.opt_clean.text())))
+        if getattr(self, "opt_noupx", None):
+            self.opt_noupx.setText(str(tr.get("opt_noupx", self.opt_noupx.text())))
+        if getattr(self, "opt_main_only", None):
+            self.opt_main_only.setText(
+                str(tr.get("opt_main_only", self.opt_main_only.text()))
+            )
+        if getattr(self, "opt_debug", None):
+            self.opt_debug.setText(str(tr.get("opt_debug", self.opt_debug.text())))
+        if getattr(self, "opt_auto_install", None):
+            self.opt_auto_install.setText(
+                str(tr.get("opt_auto_install", self.opt_auto_install.text()))
+            )
+        if getattr(self, "opt_silent_errors", None):
+            self.opt_silent_errors.setText(
+                str(tr.get("opt_silent_errors", self.opt_silent_errors.text()))
+            )
+        # Nuitka checkboxes
+        if getattr(self, "nuitka_onefile", None):
+            self.nuitka_onefile.setText(
+                str(tr.get("nuitka_onefile", self.nuitka_onefile.text()))
+            )
+        if getattr(self, "nuitka_standalone", None):
+            self.nuitka_standalone.setText(
+                str(tr.get("nuitka_standalone", self.nuitka_standalone.text()))
+            )
+        if getattr(self, "nuitka_disable_console", None):
+            self.nuitka_disable_console.setText(
+                str(
+                    tr.get("nuitka_disable_console", self.nuitka_disable_console.text())
+                )
+            )
+        if getattr(self, "nuitka_show_progress", None):
+            self.nuitka_show_progress.setText(
+                str(tr.get("nuitka_show_progress", self.nuitka_show_progress.text()))
+            )
+        if getattr(self, "nuitka_output_dir", None):
+            try:
+                self.nuitka_output_dir.setPlaceholderText(
+                    str(
+                        tr.get(
+                            "nuitka_output_dir",
+                            self.nuitka_output_dir.placeholderText(),
+                        )
+                    )
+                )
+            except Exception:
+                pass
+        # Tooltips (apply i18n when keys are present; fallback to current tooltip text)
+        try:
+
+            def _tt(key: str, current: str) -> str:
+                try:
+                    val = tr.get(key)
+                    if isinstance(val, str) and val.strip():
+                        return val
+                except Exception:
+                    pass
+                return current
+
+            if getattr(self, "btn_select_folder", None):
+                self.btn_select_folder.setToolTip(
+                    _tt("tt_select_folder", self.btn_select_folder.toolTip())
+                )
+            if getattr(self, "btn_select_files", None):
+                self.btn_select_files.setToolTip(
+                    _tt("tt_select_files", self.btn_select_files.toolTip())
+                )
+            if getattr(self, "btn_build_all", None):
+                self.btn_build_all.setToolTip(
+                    _tt("tt_build_all", self.btn_build_all.toolTip())
+                )
+            if getattr(self, "btn_export_config", None):
+                self.btn_export_config.setToolTip(
+                    _tt("tt_export_config", self.btn_export_config.toolTip())
+                )
+            if getattr(self, "btn_import_config", None):
+                self.btn_import_config.setToolTip(
+                    _tt("tt_import_config", self.btn_import_config.toolTip())
+                )
+            if getattr(self, "btn_cancel_all", None):
+                self.btn_cancel_all.setToolTip(
+                    _tt("tt_cancel_all", self.btn_cancel_all.toolTip())
+                )
+            if getattr(self, "btn_remove_file", None):
+                self.btn_remove_file.setToolTip(
+                    _tt("tt_remove_file", self.btn_remove_file.toolTip())
+                )
+            if getattr(self, "btn_select_icon", None):
+                self.btn_select_icon.setToolTip(
+                    _tt("tt_select_icon", self.btn_select_icon.toolTip())
+                )
+            if getattr(self, "btn_help", None):
+                self.btn_help.setToolTip(_tt("tt_help", self.btn_help.toolTip()))
+            if getattr(self, "btn_bc_loader", None):
+                self.btn_bc_loader.setToolTip(
+                    _tt("tt_bc_loader", self.btn_bc_loader.toolTip())
+                )
+            # ACASL removed: no tooltip
+            if getattr(self, "venv_button", None):
+                self.venv_button.setToolTip(
+                    _tt("tt_venv_button", self.venv_button.toolTip())
+                )
+            if getattr(self, "btn_suggest_deps", None):
+                self.btn_suggest_deps.setToolTip(
+                    _tt("tt_suggest_deps", self.btn_suggest_deps.toolTip())
+                )
+            if getattr(self, "btn_show_stats", None):
+                self.btn_show_stats.setToolTip(
+                    _tt("tt_show_stats", self.btn_show_stats.toolTip())
+                )
+            if getattr(self, "output_dir_input", None):
+                self.output_dir_input.setToolTip(
+                    _tt("tt_output_dir", self.output_dir_input.toolTip())
+                )
+            # PyInstaller/Nuitka specific tooltips
+            if getattr(self, "nuitka_disable_console", None):
+                self.nuitka_disable_console.setToolTip(
+                    _tt(
+                        "tt_nuitka_disable_console",
+                        self.nuitka_disable_console.toolTip(),
+                    )
+                )
+            if getattr(self, "btn_nuitka_icon", None):
+                self.btn_nuitka_icon.setToolTip(
+                    _tt("tt_nuitka_icon", self.btn_nuitka_icon.toolTip())
+                )
+            # Options checkboxes
+            if getattr(self, "opt_onefile", None):
+                self.opt_onefile.setToolTip(
+                    _tt("tt_opt_onefile", self.opt_onefile.toolTip())
+                )
+            if getattr(self, "opt_windowed", None):
+                self.opt_windowed.setToolTip(
+                    _tt("tt_opt_windowed", self.opt_windowed.toolTip())
+                )
+            if getattr(self, "opt_noconfirm", None):
+                self.opt_noconfirm.setToolTip(
+                    _tt("tt_opt_noconfirm", self.opt_noconfirm.toolTip())
+                )
+            if getattr(self, "opt_clean", None):
+                self.opt_clean.setToolTip(_tt("tt_opt_clean", self.opt_clean.toolTip()))
+            if getattr(self, "opt_noupx", None):
+                self.opt_noupx.setToolTip(_tt("tt_opt_noupx", self.opt_noupx.toolTip()))
+            if getattr(self, "opt_main_only", None):
+                self.opt_main_only.setToolTip(
+                    _tt("tt_opt_main_only", self.opt_main_only.toolTip())
+                )
+            if getattr(self, "opt_debug", None):
+                self.opt_debug.setToolTip(_tt("tt_opt_debug", self.opt_debug.toolTip()))
+            if getattr(self, "opt_auto_install", None):
+                self.opt_auto_install.setToolTip(
+                    _tt("tt_opt_auto_install", self.opt_auto_install.toolTip())
+                )
+            if getattr(self, "opt_silent_errors", None):
+                self.opt_silent_errors.setToolTip(
+                    _tt("tt_opt_silent_errors", self.opt_silent_errors.toolTip())
+                )
+        except Exception:
+            pass
+    except Exception:
+        pass
+
+
+# LANGUAGE DIALOG and all ARK language's system translations propagation 
+def show_language_dialog(self):
+    from PySide6.QtWidgets import QInputDialog
+
+    try:
+        langs = asyncio.run(available_languages())
+    except Exception:
+        langs = [{"code": "en", "name": "English"}, {"code": "fr", "name": "Français"}]
+    # Build options list with 'System' at top
+    options = ["System"] + [str(x.get("name", x.get("code", ""))) for x in langs]
+    # Determine current index
+    current_pref = getattr(self, "language", "System")
+    try:
+        if current_pref == "System":
+            start_index = 0
+        else:
+            # map code->index
+            codes = [str(x.get("code", "")) for x in langs]
+            try:
+                start_index = 1 + codes.index(current_pref)
+            except Exception:
+                start_index = 0
+    except Exception:
+        start_index = 0
+    title = "Choisir la langue"
+    label = "Langue :"
+    choice, ok = QInputDialog.getItem(self, title, label, options, start_index, False)
+    if ok and choice:
+        lang_pref = (
+            "System"
+            if choice == "System"
+            else next(
+                (
+                    str(x.get("code", "en"))
+                    for x in langs
+                    if str(x.get("name", "")) == choice
+                ),
+                "en",
+            )
+        )
+        try:
+            # Apply initial language from preference using async i18n
+            tr = asyncio.run(get_translations(lang_pref))
+            _apply_main_app_translations(self, tr)
+            try:
+                setattr(self, "_tr", tr)
+            except Exception:
+                pass
+            # Propagate translations to all engines so their UI matches the app language immediately
+            try:
+                import Core.engines_loader as engines_loader
+
+                engines_loader.registry.apply_translations(self, tr)
+            except Exception:
+                pass
+            # Propagate translations to all BCASL plugins
+            try:
+                import bcasl.Loader as bcasl_loader
+
+                bcasl_loader.apply_translations(self, tr)
+            except Exception:
+                pass
+            # Update language preference markers
+            try:
+                self.language_pref = lang_pref
+            except Exception:
+                pass
+            self.language = lang_pref
+            try:
+                if hasattr(self, "save_preferences"):
+                    self.save_preferences()
+            except Exception:
+                pass
+            if hasattr(self, "log") and self.log:
+                meta = tr.get("_meta", {}) if isinstance(tr, dict) else {}
+                self.log.append(
+                    f"Langue appliquée: {getattr(meta, 'get', lambda k, d=None: d)('name', lang_pref) if isinstance(meta, dict) else lang_pref}"
+                )
+        except Exception as e:
+            if hasattr(self, "log") and self.log:
+                self.log.append(f"⚠️ Échec application de la langue: {e}")
+    else:
+        if hasattr(self, "log") and self.log:
+            self.log.append("Sélection de la langue annulée.")
+
+
+
+

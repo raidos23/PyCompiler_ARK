@@ -22,9 +22,11 @@ import sys
 import threading
 from typing import Optional
 
-from PySide6.QtCore import QObject, QProcess, Qt, QTimer, Signal
+from PySide6.QtCore import QProcess, Qt
 from PySide6.QtGui import QDropEvent, QPixmap
 from PySide6.QtWidgets import QApplication, QFileDialog, QMessageBox, QWidget
+
+from .utils import _UiInvoker, _run_coro_async
 from .dialogs import ProgressDialog, CompilationProcessDialog
 from .Venv_Manager import VenvManager
 
@@ -54,53 +56,6 @@ def get_selected_workspace() -> Optional[str]:
     except Exception:
         pass
     return None
-
-
-class _UiInvoker(QObject):
-    _sig = Signal(object)
-
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self._sig.connect(self._exec, Qt.QueuedConnection)
-
-    def post(self, fn):
-        try:
-            self._sig.emit(fn)
-        except Exception:
-            pass
-
-    def _exec(self, fn):
-        try:
-            fn()
-        except Exception:
-            pass
-
-
-def _run_coro_async(coro, on_result, ui_owner=None):
-    invoker = None
-    try:
-        if ui_owner is not None and isinstance(ui_owner, QObject):
-            invoker = getattr(ui_owner, "_ui_invoker", None)
-            if invoker is None:
-                invoker = _UiInvoker(ui_owner)
-                setattr(ui_owner, "_ui_invoker", invoker)
-    except Exception:
-        invoker = None
-
-    def _runner():
-        try:
-            res = asyncio.run(coro)
-        except Exception as e:
-            res = e
-        try:
-            if invoker is not None:
-                invoker.post(lambda: on_result(res))
-            else:
-                QTimer.singleShot(0, lambda: on_result(res))
-        except Exception:
-            pass
-
-    threading.Thread(target=_runner, daemon=True).start()
 
 
 # Synchronous request from background threads to change workspace via GUI thread
@@ -1117,7 +1072,7 @@ class PyCompilerArkGui(QWidget):
     # Internationalization using JSON language files
     current_language = "English"
 
-    def _apply_translations(self, tr: dict):
+    def _apply_main_app_translations(self, tr: dict):
         # Utilitaires internes pour éviter les valeurs codées en dur
         def _set(attr: str, key: str, method: str = "setText"):
             try:
@@ -1202,7 +1157,7 @@ class PyCompilerArkGui(QWidget):
             if isinstance(res, Exception):
                 return
             code, tr = res
-            self._apply_translations(tr)
+            self._apply_main_app_translations(tr)
             # Notifier les moteurs pour rafraîchir leurs libellés (i18n)
             try:
                 # Callback-based refresh (legacy)
