@@ -1,4 +1,4 @@
-﻿# SPDX-License-Identifier: Apache-2.0
+﻿﻿# SPDX-License-Identifier: Apache-2.0
 # Copyright 2026 Ague Samuel Amen
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,12 +13,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""
+Module mainprocess.py - Gestion des processus de compilation PyCompiler ARK++
+
+Ce module contient toutes les fonctions de gestion des processus de compilation,
+y compris le démarrage, la surveillance, la gestion des erreurs et l'annulation
+des compilations. Il gère également l'interface utilisateur dynamique pour les
+moteurs externes et l'installation automatique des modules manquants.
+"""
+
+# ============================================================================
+# IMPORTATIONS
+# ============================================================================
+
 import json
 import os
 import platform
 import re
 import subprocess
 
+# Imports PySide6 pour l'interface graphique et les processus
 from PySide6.QtCore import QProcess, QTimer
 from PySide6.QtWidgets import (
     QCheckBox,
@@ -29,19 +43,33 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-
+# Imports locaux pour la gestion des processus et moteurs
 from .process_killer import _kill_process_tree, _kill_all_descendants
-
 from .. import engines_loader as engines_loader
 from engine_sdk.utils import clamp_text, redact_secrets
-
 from ..Auto_Command_Builder import compute_for_all
 from ..preferences import MAX_PARALLEL
 
 # ACASL support removed (obsolete)
 
+# ============================================================================
+# GESTION DES PROCESSUS DE COMPILATION
+# ============================================================================
 
 def try_start_processes(self):
+    """
+    Fonction principale de gestion de la file d'attente des compilations.
+
+    Cette fonction tente de démarrer de nouveaux processus de compilation
+    tant que le nombre maximum de processus parallèles n'est pas atteint
+    et qu'il y a des fichiers dans la file d'attente.
+
+    Args:
+        self: Instance de la classe principale (GUI)
+
+    Returns:
+        None
+    """
     from PySide6.QtWidgets import QApplication
 
     while len(self.processes) < MAX_PARALLEL and self.queue:
@@ -58,6 +86,7 @@ def try_start_processes(self):
 
         QApplication.processEvents()
         self.log.append("✔️ Toutes les compilations sont terminées.\n")
+
         # Exécuter immédiatement les hooks de succès des moteurs et restaurer l'UI
         try:
             hooks = getattr(self, "_pending_engine_success_hooks", [])
@@ -79,6 +108,8 @@ def try_start_processes(self):
                     self._pending_engine_success_hooks.clear()
             except Exception:
                 pass
+
+        # Restaurer l'interface utilisateur
         if hasattr(self, "compiler_tabs") and self.compiler_tabs:
             self.compiler_tabs.setEnabled(True)
         self.set_controls_enabled(True)
@@ -90,7 +121,8 @@ def start_compilation_process(self, file):
     import time
 
     file_basename = os.path.basename(file)
-    # Determine active engine from UI tab (via registry mapping)
+
+    # Déterminer le moteur actif depuis l'onglet UI (via mapping registry)
     try:
         idx = (
             self.compiler_tabs.currentIndex()
@@ -102,16 +134,19 @@ def start_compilation_process(self, file):
         )
     except Exception:
         engine_id = "pyinstaller"
-    # Instantiate engine
+
+    # Instancier le moteur de compilation
     try:
         engine = engines_loader.registry.create(engine_id)
     except Exception as e:
         self.log.append(f"❌ Impossible d'instancier le moteur '{engine_id}': {e}")
         return
-    # Ensure required tools are installed
+
+    # S'assurer que les outils requis sont installés
     if not engine.ensure_tools_installed(self):
         return
-    # Preflight checks
+
+    # Vérifications préliminaires avant compilation
     if not engine.preflight(self, file):
         return
     prog_args = engine.program_and_args(self, file)
@@ -152,8 +187,8 @@ def start_compilation_process(self, file):
         self.log.append(
             f"▶️ Lancement compilation : {file_basename}\nCommande : {cmd_preview_log}\n"
         )
-    # Start QProcess
-    # Cooperative cancellation sentinel path
+    # Démarrage du processus QProcess
+    # Chemin du fichier sentinelle pour annulation coopérative
     try:
         cancel_dir = os.path.join(
             self.workspace_dir or os.getcwd(), ".pycompiler", "cancel"
@@ -164,6 +199,8 @@ def start_compilation_process(self, file):
             os.remove(cancel_file)
     except Exception:
         cancel_file = None
+
+    # Création et configuration du processus
     process = QProcess(self)
     if penv is not None:
         try:
@@ -178,12 +215,17 @@ def start_compilation_process(self, file):
     process._start_time = time.time()
     process._engine_id = engine_id
     process._cancel_file = cancel_file
+
+    # Connexion des signaux du processus
     process.readyReadStandardOutput.connect(lambda p=process: self.handle_stdout(p))
     process.readyReadStandardError.connect(lambda p=process: self.handle_stderr(p))
     process.finished.connect(lambda ec, es, p=process: self.handle_finished(p, ec, es))
+
+    # Ajout à la liste des processus actifs
     self.processes.append(process)
     self.current_compiling.add(file)
-    # Optional: update dependent UI states
+
+    # Mise à jour optionnelle des états UI dépendants
     if hasattr(self, "update_compiler_options_enabled"):
         try:
             self.update_compiler_options_enabled()
@@ -268,7 +310,22 @@ def start_compilation_process(self, file):
 
 
 def handle_stdout(self, process):
+    """
+    Gestionnaire pour la sortie standard du processus de compilation.
+
+    Cette fonction traite les données de sortie standard, interprète les
+    événements JSON Lines pour la progression déterministe, gère le pont
+    UI pour les moteurs externes, et détecte la fin de compilation Nuitka.
+
+    Args:
+        self: Instance de la classe principale (GUI)
+        process: Objet QProcess du processus en cours
+
+    Returns:
+        None
+    """
     data = process.readAllStandardOutput().data().decode()
+
     # Tentative d'interprétation d'événements JSON Lines pour progression déterministe
     try:
         for line in data.splitlines():
@@ -563,6 +620,19 @@ def handle_stdout(self, process):
 
 
 def handle_stderr(self, process):
+    """
+    Gestionnaire pour la sortie d'erreur du processus de compilation.
+
+    Cette fonction traite les données d'erreur standard et les affiche
+    en rouge dans le journal de log.
+
+    Args:
+        self: Instance de la classe principale (GUI)
+        process: Objet QProcess du processus en cours
+
+    Returns:
+        None
+    """
     data = process.readAllStandardError().data().decode()
     self.log.append(f"<span style='color:red;'>{data}</span>")
 
