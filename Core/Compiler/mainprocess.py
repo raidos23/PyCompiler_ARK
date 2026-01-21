@@ -67,11 +67,12 @@ from PySide6.QtWidgets import (
 # clamp_text, redact_secrets : Utilitaires pour le logging sécurisé
 # compute_for_all : Constructeur automatique de commandes
 # MAX_PARALLEL : Constante définissant le nombre max de compilations parallèles
-from .process_killer import _kill_process_tree, _kill_all_descendants
-from .. import engines_loader as engines_loader
-from engine_sdk.utils import clamp_text, redact_secrets, run_process
-from ..Auto_Command_Builder import compute_for_all
-from ..preferences import MAX_PARALLEL
+from Core.Compiler.process_killer import _kill_process_tree, _kill_all_descendants
+from Core import engines_loader as engines_loader
+from engine_sdk.utils import clamp_text, redact_secrets
+from Core.Compiler.command_helpers import run_process
+from Core.Auto_Command_Builder import compute_for_all
+from Core.preferences import MAX_PARALLEL
 
 # Note : Support ACASL supprimé (obsolète)
 
