@@ -29,6 +29,10 @@ from PySide6.QtWidgets import QApplication, QFileDialog, QMessageBox, QWidget
 from .utils import _UiInvoker, _run_coro_async
 from .dialogs import ProgressDialog, CompilationProcessDialog
 from .Venv_Manager import VenvManager
+from .i18n import (
+    _apply_main_app_translations as _i18n_apply_translations,
+    show_language_dialog as _i18n_show_dialog,
+)
 
 # Référence globale vers l'instance GUI pour récupération du workspace par l'API_SDK
 _latest_gui_instance = None
@@ -1073,72 +1077,8 @@ class PyCompilerArkGui(QWidget):
     current_language = "English"
 
     def _apply_main_app_translations(self, tr: dict):
-        # Utilitaires internes pour éviter les valeurs codées en dur
-        def _set(attr: str, key: str, method: str = "setText"):
-            try:
-                widget = getattr(self, attr, None)
-                value = tr.get(key)
-                if widget is not None and value:
-                    getattr(widget, method)(value)
-            except Exception:
-                pass
-
-        # Sidebar & main buttons
-        _set("btn_select_folder", "select_folder")
-        _set("btn_select_files", "select_files")
-        _set("btn_build_all", "build_all")
-        _set("btn_export_config", "export_config")
-        _set("btn_import_config", "import_config")
-        _set("btn_cancel_all", "cancel_all")
-        _set("btn_suggest_deps", "suggest_deps")
-        _set("btn_help", "help")
-        _set("btn_show_stats", "show_stats")
-
-        # Bouton de langue (variante System vs simple), sans valeur de secours
-        try:
-            if getattr(self, "select_lang", None):
-                if (
-                    getattr(self, "language_pref", getattr(self, "language", "System"))
-                    == "System"
-                ):
-                    val = tr.get("choose_language_system_button") or tr.get(
-                        "choose_language_button"
-                    )
-                else:
-                    val = tr.get("choose_language_button")
-                if val:
-                    self.select_lang.setText(val)
-        except Exception:
-            pass
-
-        # Bouton de thème (variante System vs simple), sans valeur de secours
-        try:
-            if getattr(self, "select_theme", None):
-                if getattr(self, "theme", "System") == "System":
-                    val = tr.get("choose_theme_system_button") or tr.get(
-                        "choose_theme_button"
-                    )
-                else:
-                    val = tr.get("choose_theme_button")
-                if val:
-                    self.select_theme.setText(val)
-        except Exception:
-            pass
-
-        # Workspace
-        _set("venv_button", "venv_button")
-        _set("label_workspace_section", "label_workspace_section")
-        _set("venv_label", "venv_label")
-        _set("label_folder", "label_folder")
-
-        # Files
-        _set("label_files_section", "label_files_section")
-        _set("btn_remove_file", "btn_remove_file")
-
-        # Logs
-        _set("label_logs_section", "label_logs_section")
-
-        # Note: Tabs are now dynamically created by engines, no static translation needed
+        """Apply translations to UI elements - uses centralized i18n module version."""
+        _i18n_apply_translations(self, tr)
 
     def apply_language(self, lang_display: str):
         # Launch non-blocking translation loading and apply when ready
@@ -1235,83 +1175,8 @@ class PyCompilerArkGui(QWidget):
         self.set_controls_enabled(enabled)
 
     def show_language_dialog(self):
-        from PySide6.QtWidgets import QInputDialog
-
-        from .i18n import available_languages, get_translations, resolve_system_language
-
-        async def _prepare():
-            langs = await available_languages()
-            name_to_code = {l.get("name", l.get("code")): l.get("code") for l in langs}
-            display = ["System"] + list(name_to_code.keys())
-            current = getattr(
-                self, "language_pref", getattr(self, "language", "System")
-            )
-            try:
-                start_index = display.index(current if current in display else "System")
-            except Exception:
-                start_index = 0
-            return name_to_code, display, start_index
-
-        def _after_prepared(res):
-            if isinstance(res, Exception):
-                try:
-                    self.log_i18n(
-                        "❌ Échec de chargement des langues disponibles.",
-                        "❌ Failed to load available languages.",
-                    )
-                except Exception:
-                    pass
-                return
-            name_to_code, display, start_index = res
-            title = self.tr("Choisir la langue", "Choose language")
-            label = self.tr("Langue :", "Language:")
-            choice, ok = QInputDialog.getItem(
-                self, title, label, display, start_index, False
-            )
-            if ok and choice:
-                if choice == "System":
-                    self.language_pref = "System"
-                    # Apply resolved system language for UI strings, but keep pref as System
-                    self.apply_language("System")
-                    if self.select_lang:
-
-                        async def _fetch_sys():
-                            code = await resolve_system_language()
-                            return await get_translations(code)
-
-                        _run_coro_async(
-                            _fetch_sys(),
-                            lambda tr: self.select_lang.setText(
-                                tr.get("choose_language_system_button")
-                                or tr.get("select_lang")
-                                or ""
-                            ),
-                            ui_owner=self,
-                        )
-                else:
-                    code = name_to_code.get(choice) or choice
-                    self.language_pref = code
-                    self.apply_language(code)
-                    if self.select_lang:
-                        _run_coro_async(
-                            get_translations(code),
-                            lambda tr2: self.select_lang.setText(
-                                tr2.get("choose_language_button")
-                                or tr2.get("select_lang")
-                                or ""
-                            ),
-                            ui_owner=self,
-                        )
-            else:
-                try:
-                    self.log_i18n(
-                        "Sélection de la langue annulée.",
-                        "Language selection canceled.",
-                    )
-                except Exception:
-                    pass
-
-        _run_coro_async(_prepare(), _after_prepared, ui_owner=self)
+        """Show language selection dialog - uses centralized i18n module version."""
+        _i18n_show_dialog(self)
 
     from .deps_analyser import (
         _install_next_dependency,
