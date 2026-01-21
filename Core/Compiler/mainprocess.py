@@ -1,4 +1,4 @@
-﻿﻿# SPDX-License-Identifier: Apache-2.0
+# SPDX-License-Identifier: Apache-2.0
 # Copyright 2026 Ague Samuel Amen
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,17 +23,33 @@ moteurs externes et l'installation automatique des modules manquants.
 """
 
 # ============================================================================
-# IMPORTATIONS
+# SECTION 1 : IMPORTATIONS
+# ============================================================================
+# Ce fichier utilise plusieurs catégories d'importations organisées par fonctionnalité.
+# 1. Bibliothèques standard Python (utilitaires système, gestion de fichiers, regex)
+# 2. Framework PySide6 pour l'interface graphique et les processus Qt
+# 3. Modules locaux du projet (gestion des moteurs, utilitaires, préférences)
 # ============================================================================
 
-import json
-import os
-import platform
-import re
-import subprocess
+# --- Imports des bibliothèques standard Python ---
+import json          # Manipulation de données JSON (parsing, sérialisation)
+import os            # Opérations sur le système de fichiers (chemins, création de répertoires)
+import platform      # Détection du système d'exploitation (Windows/Linux)
+import re            # Expressions régulières (détection de modules manquants)
+import subprocess    # Exécution de processus externes (pip install)
 
-# Imports PySide6 pour l'interface graphique et les processus
+# --- Imports du framework PySide6 (Qt pour Python) ---
+# QProcess : Gestion des processus externes avec signaux/slots Qt
+# QTimer : Minuteries pour les timeouts et délais de grâce
 from PySide6.QtCore import QProcess, QTimer
+
+# --- Imports des widgets Qt utilisés pour l'interface dynamique ---
+# QCheckBox : Cases à cocher pour les options dynamiques
+# QLabel : Étiquettes pour afficher du texte
+# QMessageBox : Boîtes de dialogue pour les messages utilisateur
+# QPlainTextEdit : Zones de texte multiligne
+# QPushButton : Boutons cliquables
+# QWidget : Classe de base pour tous les widgets
 from PySide6.QtWidgets import (
     QCheckBox,
     QLabel,
@@ -43,17 +59,29 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-# Imports locaux pour la gestion des processus et moteurs
+# --- Imports des modules locaux du projet PyCompiler ARK ---
+# process_killer : Fonctions pour tuer les arbres de processus
+# engines_loader : Gestionnaire de moteurs de compilation
+# clamp_text, redact_secrets : Utilitaires pour le logging sécurisé
+# compute_for_all : Constructeur automatique de commandes
+# MAX_PARALLEL : Constante définissant le nombre max de compilations parallèles
 from .process_killer import _kill_process_tree, _kill_all_descendants
 from .. import engines_loader as engines_loader
 from engine_sdk.utils import clamp_text, redact_secrets
 from ..Auto_Command_Builder import compute_for_all
 from ..preferences import MAX_PARALLEL
 
-# ACASL support removed (obsolete)
+# Note : Support ACASL supprimé (obsolète)
 
 # ============================================================================
-# GESTION DES PROCESSUS DE COMPILATION
+# SECTION 2 : GESTION DES PROCESSUS DE COMPILATION
+# ============================================================================
+# Cette section contient toutes les fonctions liées au cycle de vie des processus
+# de compilation :
+# - Démarrage des processus (try_start_processes, start_compilation_process)
+# - Traitement des sorties (handle_stdout, handle_stderr)
+# - Finalisation et nettoyage (handle_finished)
+# - Gestion des erreurs et annulation (cancel_all_compilations, try_install_missing_modules)
 # ============================================================================
 
 def try_start_processes(self):
@@ -70,30 +98,54 @@ def try_start_processes(self):
     Returns:
         None
     """
+    # Import nécessaire pour forcer le rafraîchissement de l'interface Qt
     from PySide6.QtWidgets import QApplication
 
+    # ========================================================================
+    # Boucle principale de traitement de la file d'attente
+    # ========================================================================
+    # Tant que le nombre de processus actifs est inférieur au maximum autorisé
+    # ET qu'il reste des fichiers dans la file d'attente, on lance les compilations
     while len(self.processes) < MAX_PARALLEL and self.queue:
+        # Extraction du premier fichier de la file d'attente
         file, to_compile = self.queue.pop(0)
+
+        # Lancement de la compilation seulement si le fichier n'est pas ignoré
         if to_compile:
             self.start_compilation_process(file)
-        # Si le fichier est ignoré (to_compile == False), on ne touche pas à la barre de progression
-        # et on passe simplement au suivant
+        # Note : Si to_compile == False (fichier ignoré), on ne modifie pas la
+        # barre de progression et on passe directement au suivant dans la file
+
+    # ========================================================================
+    # Vérification de fin de toutes les compilations
+    # ========================================================================
+    # Si aucun processus n'est actif ET la file d'attente est vide,
+    # alors toutes les compilations sont terminées
     if not self.processes and not self.queue:
-        # Toutes les compilations sont terminées : mettre la barre à 100%
+        # Affichage de la barre de progression à 100%
         self.progress.setRange(0, 1)
         self.progress.setValue(1)
-        from PySide6.QtWidgets import QApplication
 
+        # Forcer Qt à rafraîchir l'interface pour afficher les changements
+        from PySide6.QtWidgets import QApplication
         QApplication.processEvents()
+
+        # Message de confirmation dans le journal
         self.log.append("✔️ Toutes les compilations sont terminées.\n")
 
-        # Exécuter immédiatement les hooks de succès des moteurs et restaurer l'UI
+        # ========================================================================
+        # Exécution des hooks de succès des moteurs de compilation
+        # ========================================================================
+        # Chaque moteur peut avoir une fonction on_success() appelée après
+        # la compilation réussie pour effectuer des actions supplémentaires
         try:
             hooks = getattr(self, "_pending_engine_success_hooks", [])
             for eng, fpath in hooks:
                 try:
+                    # Appel du hook de succès du moteur
                     eng.on_success(self, fpath)
                 except Exception:
+                    # En cas d'erreur dans le hook, on log un avertissement
                     try:
                         self.log.append(
                             f"⚠️ on_success du moteur '{getattr(eng, 'id', '?')}' a échoué."
@@ -103,26 +155,300 @@ def try_start_processes(self):
         except Exception:
             pass
         finally:
+            # Nettoyage de la liste des hooks en attente
             try:
                 if hasattr(self, "_pending_engine_success_hooks"):
                     self._pending_engine_success_hooks.clear()
             except Exception:
                 pass
 
-        # Restaurer l'interface utilisateur
+        # ========================================================================
+        # Restauration de l'interface utilisateur
+        # ========================================================================
+        # Réactivation des onglets du compilateur s'ils existent
         if hasattr(self, "compiler_tabs") and self.compiler_tabs:
             self.compiler_tabs.setEnabled(True)
+
+        # Réactivation des contrôles de l'interface
         self.set_controls_enabled(True)
+
+        # Sauvegarde des préférences utilisateur
         self.save_preferences()
+
+        # Fin de la fonction
         return
 
 
 def start_compilation_process(self, file):
+    """
+    Démarre un processus de compilation pour un fichier donné.
+
+    Cette fonction:
+    1. Détermine le moteur de compilation actif (PyInstaller, Nuitka, etc.)
+    2. Instancie le moteur et vérifie les outils requis
+    3. Configure l'environnement du processus
+    4. Crée et configure le processus QProcess
+    5. Met en place les minuteries de timeout
+    6. Lance le processus de compilation
+
+    Args:
+        self: Instance de la classe principale (GUI)
+        file: Chemin absolu du fichier Python à compiler
+
+    Returns:
+        None
+    """
     import time
 
     file_basename = os.path.basename(file)
 
-    # Déterminer le moteur actif depuis l'onglet UI (via mapping registry)
+    # ========================================================================
+    # Étape 1: Détermination du moteur de compilation actif
+    # ========================================================================
+    # On récupère l'index de l'onglet UI actif et on le mappe vers un moteur
+    # Via le registre des moteurs (engines_loader.registry)
+    try:
+        idx = (
+            self.compiler_tabs.currentIndex()
+            if hasattr(self, "compiler_tabs") and self.compiler_tabs
+            else 0
+        )
+        engine_id = engines_loader.registry.get_engine_for_tab(idx) or (
+            "pyinstaller" if idx == 0 else "nuitka"
+        )
+    except Exception:
+        engine_id = "pyinstaller"
+
+    # ========================================================================
+    # Étape 2: Instanciation du moteur de compilation
+    # ========================================================================
+    # Création d'une instance du moteur via le registre
+    try:
+        engine = engines_loader.registry.create(engine_id)
+    except Exception as e:
+        self.log.append(f"❌ Impossible d'instancier le moteur '{engine_id}': {e}")
+        return
+
+    # ========================================================================
+    # Étape 3: Vérification des outils requis
+    # ========================================================================
+    # Le moteur peut installer automatiquement les outils manquants (pip, etc.)
+    if not engine.ensure_tools_installed(self):
+        return
+
+    # ========================================================================
+    # Étape 4: Vérifications préliminaires (preflight)
+    # ========================================================================
+    # Le moteur peut vérifier que le fichier est compilable
+    if not engine.preflight(self, file):
+        return
+
+    # ========================================================================
+    # Étape 5: Récupération des arguments de compilation
+    # ========================================================================
+    # Le moteur retourne la commande complète (programme + arguments)
+    prog_args = engine.program_and_args(self, file)
+    if not prog_args:
+        return
+    program, args = prog_args
+
+    # ========================================================================
+    # Étape 6: Configuration de la barre de progression
+    # ========================================================================
+    # Mode indéterminé (animation) pendant la compilation
+    from PySide6.QtWidgets import QApplication
+    self.progress.setRange(0, 0)
+    QApplication.processEvents()
+
+    # ========================================================================
+    # Étape 7: Configuration de l'environnement du processus
+    # ========================================================================
+    # Le moteur peut surcharger les variables d'environnement
+    try:
+        env = engine.environment(self, file)
+    except Exception:
+        env = None
+    if env:
+        try:
+            from PySide6.QtCore import QProcessEnvironment
+            penv = QProcessEnvironment()
+            for k, v in env.items():
+                penv.insert(str(k), str(v))
+        except Exception:
+            penv = None
+    else:
+        penv = None
+
+    # ========================================================================
+    # Étape 8: Logging de la commande de compilation
+    # ========================================================================
+    # Affichage de la commande dans le journal (avec secrets masqués)
+    cmd_preview = " ".join([program] + args)
+    try:
+        cmd_preview_log = clamp_text(redact_secrets(cmd_preview), max_len=1000)
+    except Exception:
+        cmd_preview_log = cmd_preview
+    if engine_id == "nuitka":
+        self.log.append(
+            f"▶️ Lancement compilation Nuitka : {file_basename}\nCommande : {cmd_preview_log}\n"
+        )
+    else:
+        self.log.append(
+            f"▶️ Lancement compilation : {file_basename}\nCommande : {cmd_preview_log}\n"
+        )
+
+    # ========================================================================
+    # Étape 9: Configuration du fichier sentinelle pour annulation
+    # ========================================================================
+    # Ce fichier permet une annulation coopérative du processus
+    try:
+        cancel_dir = os.path.join(
+            self.workspace_dir or os.getcwd(), ".pycompiler", "cancel"
+        )
+        os.makedirs(cancel_dir, exist_ok=True)
+        cancel_file = os.path.join(cancel_dir, f"{engine_id}_{file_basename}.cancel")
+        if os.path.isfile(cancel_file):
+            os.remove(cancel_file)
+    except Exception:
+        cancel_file = None
+
+    # ========================================================================
+    # Étape 10: Création et configuration du processus QProcess
+    # ========================================================================
+    process = QProcess(self)
+    if penv is not None:
+        try:
+            process.setProcessEnvironment(penv)
+        except Exception:
+            pass
+    process.setProgram(program)
+    process.setArguments(args)
+    process.setWorkingDirectory(self.workspace_dir)
+    process.file_path = file
+    process.file_basename = file_basename
+    process._start_time = time.time()
+    process._engine_id = engine_id
+    process._cancel_file = cancel_file
+
+    # ========================================================================
+    # Étape 11: Connexion des signaux du processus
+    # ========================================================================
+    # readyReadStandardOutput: données stdout reçues
+    # readyReadStandardError: données stderr reçues
+    # finished: processus terminé
+    process.readyReadStandardOutput.connect(lambda p=process: self.handle_stdout(p))
+    process.readyReadStandardError.connect(lambda p=process: self.handle_stderr(p))
+    process.finished.connect(lambda ec, es, p=process: self.handle_finished(p, ec, es))
+
+    # ========================================================================
+    # Étape 12: Ajout aux processus actifs
+    # ========================================================================
+    self.processes.append(process)
+    self.current_compiling.add(file)
+
+    # ========================================================================
+    # Étape 13: Mise à jour optionnelle de l'interface
+    # ========================================================================
+    if hasattr(self, "update_compiler_options_enabled"):
+        try:
+            self.update_compiler_options_enabled()
+        except Exception:
+            pass
+
+    # ========================================================================
+    # Étape 14: Configuration du timeout avec arrêt propre puis kill
+    # ========================================================================
+    try:
+        # Récupération du timeout depuis le moteur, l'environnement ou défaut
+        try:
+            timeout_sec = int(
+                getattr(
+                    engine,
+                    "get_timeout_seconds",
+                    lambda _gui: int(
+                        os.environ.get("PYCOMPILER_PROCESS_TIMEOUT", "1800")
+                    ),
+                )(self)
+            )
+        except Exception:
+            timeout_sec = int(os.environ.get("PYCOMPILER_PROCESS_TIMEOUT", "1800"))
+
+        if timeout_sec and timeout_sec > 0:
+            # Création de la minuterie de timeout
+            t = QTimer(self)
+            t.setSingleShot(True)
+
+            # Fonction appelée lors du timeout
+            def _on_timeout(proc=process, seconds=timeout_sec):
+                try:
+                    self.log.append(
+                        f"⏱️ Timeout ({seconds}s) pour {getattr(proc, 'file_basename', '?')}. Arrêt en cours…"
+                    )
+                except Exception:
+                    pass
+                # Tentative d'arrêt propre (SIGTERM)
+                try:
+                    if proc.state() != QProcess.NotRunning:
+                        proc.terminate()
+                except Exception:
+                    pass
+                # Si l'arrêt propre échoue, on force le kill
+                try:
+                    proc.kill()
+                except Exception:
+                    pass
+
+                # ========================================================================
+                # Délai de grâce avant kill forcé
+                # ========================================================================
+                # On attend 10 secondes pour que le processus se termine proprement
+                grace = QTimer(self)
+                grace.setSingleShot(True)
+
+                def _force_kill(p=proc):
+                    if p.state() != QProcess.NotRunning:
+                        try:
+                            self.log.append(
+                                f"🛑 Arrêt forcé du processus {getattr(p, 'file_basename', '?')} après délai de grâce."
+                            )
+                        except Exception:
+                            pass
+                        # Kill full process tree if possible
+                        try:
+                            pid2 = int(p.processId())
+                        except Exception:
+                            pid2 = None
+                        if pid2:
+                            _kill_process_tree(pid2, timeout=3.0, log=self.log.append)
+                        try:
+                            p.kill()
+                        except Exception:
+                            pass
+
+                grace.timeout.connect(_force_kill)
+                grace.start(10000)  # 10s grâce
+                proc._grace_kill_timer = grace
+
+            # Connexion de la minuterie et démarrage
+            t.timeout.connect(_on_timeout)
+            t.start(int(timeout_sec * 1000))
+            process._timeout_timer = t
+
+            # Fonction pour annuler la minuterie quand le processus finit normalement
+            def _cancel_timer(_ec, _es, timer=t):
+                try:
+                    timer.stop()
+                except Exception:
+                    pass
+
+            process.finished.connect(_cancel_timer)
+    except Exception:
+        pass
+
+    # ========================================================================
+    # Étape 15: Lancement du processus de compilation
+    # ========================================================================
+    process.start()
     try:
         idx = (
             self.compiler_tabs.currentIndex()
@@ -324,9 +650,340 @@ def handle_stdout(self, process):
     Returns:
         None
     """
+    # ========================================================================
+    # Lecture des données stdout du processus
+    # ========================================================================
     data = process.readAllStandardOutput().data().decode()
 
-    # Tentative d'interprétation d'événements JSON Lines pour progression déterministe
+    # ========================================================================
+    # Traitement des événements JSON Lines
+    # ========================================================================
+    # Les moteurs peuvent envoyer des événements structurés en JSON Lines
+    # pour indiquer la progression, afficher des messages, ou créer des widgets UI
+    try:
+        for line in data.splitlines():
+            lt = line.strip()
+            if lt.startswith("{") and lt.endswith("}"):
+                try:
+                    evt = json.loads(lt)
+                    if isinstance(evt, dict):
+                        # ========================================================================
+                        # Événements de progression
+                        # ========================================================================
+                        # Format: {"progress": {"current": 1, "total": 10}}
+                        prog = evt.get("progress")
+                        if isinstance(prog, dict):
+                            cur = prog.get("current")
+                            total = prog.get("total")
+                            if (
+                                isinstance(cur, int)
+                                and isinstance(total, int)
+                                and total > 0
+                            ):
+                                self.progress.setRange(0, total)
+                                self.progress.setValue(min(cur, total))
+
+                        # ========================================================================
+                        # Événements d'étape (stage)
+                        # ========================================================================
+                        # Format: {"stage": "Analyse des imports..."}
+                        stage = evt.get("stage")
+                        if isinstance(stage, str) and stage:
+                            self.log.append(f"⏩ {stage}")
+
+                        # ========================================================================
+                        # Pont UI pour les moteurs externes/binaires
+                        # ========================================================================
+                        # Les moteurs peuvent demander l'affichage de widgets via JSON
+                        ui_req = evt.get("ui")
+                        if isinstance(ui_req, dict):
+                            try:
+                                # ========================================================================
+                                # Fonction helper pour envoyer des événements au moteur
+                                # ========================================================================
+                                def _emit_event(
+                                    ev: str, wid: str, payload: dict | None = None
+                                ):
+                                    try:
+                                        resp = {
+                                            "ui": {
+                                                "type": "event",
+                                                "id": wid,
+                                                "event": ev,
+                                            }
+                                        }
+                                        if payload:
+                                            resp["ui"]["payload"] = payload
+                                        payload_bytes = (
+                                            json.dumps(resp, ensure_ascii=False) + "\n"
+                                        ).encode("utf-8")
+                                        process.write(payload_bytes)
+                                        process.flush()
+                                    except Exception:
+                                        pass
+
+                                # ========================================================================
+                                # 1) Boîtes de message (msg_box)
+                                # ========================================================================
+                                # Format: {"msg_box": {"type": "info|warn|error|question", "title": "...", "text": "...", "id": "..."}}
+                                msg = ui_req.get("msg_box")
+                                if isinstance(msg, dict):
+                                    from PySide6.QtWidgets import QMessageBox as _QMB
+
+                                    mtype = str(msg.get("type", "info")).lower()
+                                    title = str(msg.get("title", "Information"))
+                                    text = str(msg.get("text", ""))
+                                    default_yes = bool(msg.get("default_yes", True))
+                                    box = _QMB(self)
+                                    box.setText(text)
+                                    box.setWindowTitle(title)
+                                    if mtype in ("warn", "warning"):
+                                        box.setIcon(_QMB.Warning)
+                                    elif mtype in ("error", "critical"):
+                                        box.setIcon(_QMB.Critical)
+                                    elif mtype in ("question", "ask"):
+                                        box.setIcon(_QMB.Question)
+                                    else:
+                                        box.setIcon(_QMB.Information)
+                                    if mtype in ("question", "ask"):
+                                        btns = _QMB.Yes | _QMB.No
+                                        box.setStandardButtons(btns)
+                                        box.setDefaultButton(
+                                            _QMB.Yes if default_yes else _QMB.No
+                                        )
+                                    else:
+                                        box.setStandardButtons(_QMB.Ok)
+                                        box.setDefaultButton(_QMB.Ok)
+                                    res = box.exec()
+                                    result = (
+                                        "yes"
+                                        if (
+                                            mtype in ("question", "ask")
+                                            and res == _QMB.Yes
+                                        )
+                                        else (
+                                            "no"
+                                            if mtype in ("question", "ask")
+                                            else "ok"
+                                        )
+                                    )
+                                    resp = {
+                                        "ui": {
+                                            "type": "msg_box",
+                                            "id": msg.get("id"),
+                                            "result": result,
+                                        }
+                                    }
+                                    try:
+                                        payload = (
+                                            json.dumps(resp, ensure_ascii=False) + "\n"
+                                        ).encode("utf-8")
+                                        process.write(payload)
+                                        process.flush()
+                                    except Exception:
+                                        pass
+
+                                # ========================================================================
+                                # 2) Widgets dynamiques (label, button, checkbox, text)
+                                # ========================================================================
+                                # Format: {"widget": {"op": "add|set|remove", "id": "...", "type": "...", "props": {...}}}
+                                widget = ui_req.get("widget")
+                                if isinstance(widget, dict):
+                                    try:
+                                        op = widget.get("op")
+                                        wid = str(widget.get("id", ""))
+                                        if not wid:
+                                            raise ValueError("missing widget id")
+                                        engine_id = getattr(process, "_engine_id", None)
+                                        if not engine_id:
+                                            raise RuntimeError(
+                                                "unknown engine id for process"
+                                            )
+                                        # Find dynamic area container
+                                        cont = None
+                                        try:
+                                            tabs = getattr(self, "compiler_tabs", None)
+                                            if tabs:
+                                                for i in range(tabs.count()):
+                                                    tw = tabs.widget(i)
+                                                    if not tw:
+                                                        continue
+                                                    c = tw.findChild(
+                                                        QWidget,
+                                                        f"engine_dynamic_area_{engine_id}",
+                                                    )
+                                                    if c:
+                                                        cont = c
+                                                        break
+                                        except Exception:
+                                            cont = None
+                                        if cont is None:
+                                            raise RuntimeError("dynamic area not found")
+                                        if not hasattr(self, "_external_ui_widgets"):
+                                            self._external_ui_widgets = {}
+                                        widgets = self._external_ui_widgets.setdefault(
+                                            engine_id, {}
+                                        )
+
+                                        # ========================================================================
+                                        # Fonction pour appliquer les propriétés au widget
+                                        # ========================================================================
+                                        def _apply_props(_w, props: dict):
+                                            try:
+                                                if "text" in props:
+                                                    if isinstance(
+                                                        _w, (QLabel, QPushButton)
+                                                    ):
+                                                        _w.setText(str(props["text"]))
+                                                    elif isinstance(_w, QPlainTextEdit):
+                                                        _w.setPlainText(
+                                                            str(props["text"])
+                                                        )
+                                                if "placeholder" in props and hasattr(
+                                                    _w, "setPlaceholderText"
+                                                ):
+                                                    _w.setPlaceholderText(
+                                                        str(props["placeholder"])
+                                                    )
+                                                if "checked" in props and isinstance(
+                                                    _w, QCheckBox
+                                                ):
+                                                    _w.setChecked(
+                                                        bool(props["checked"])
+                                                    )
+                                                if "enabled" in props:
+                                                    _w.setEnabled(
+                                                        bool(props["enabled"])
+                                                    )
+                                                if "visible" in props:
+                                                    _w.setVisible(
+                                                        bool(props["visible"])
+                                                    )
+                                                if "tooltip" in props:
+                                                    _w.setToolTip(str(props["tooltip"]))
+                                            except Exception:
+                                                pass
+
+                                        lay = cont.layout()
+                                        if op == "add":
+                                            wtype = widget.get("type")
+                                            props = widget.get("props") or {}
+                                            w = None
+                                            if wtype == "label":
+                                                w = QLabel()
+                                            elif wtype == "button":
+                                                w = QPushButton()
+                                            elif wtype == "checkbox":
+                                                w = QCheckBox()
+                                            elif wtype == "text":
+                                                w = QPlainTextEdit()
+                                            if w is not None:
+                                                w.setObjectName(wid)
+                                                _apply_props(w, props)
+                                                if lay is not None:
+                                                    lay.addWidget(w)
+                                                widgets[wid] = w
+                                                try:
+                                                    if isinstance(w, QPushButton):
+                                                        w.clicked.connect(
+                                                            lambda checked=False, wid=wid: _emit_event(
+                                                                "clicked", wid
+                                                            )
+                                                        )
+                                                    elif isinstance(w, QCheckBox):
+                                                        w.stateChanged.connect(
+                                                            lambda _s, wid=wid, w=w: _emit_event(
+                                                                "changed",
+                                                                wid,
+                                                                {
+                                                                    "checked": w.isChecked()
+                                                                },
+                                                            )
+                                                        )
+                                                    elif isinstance(w, QPlainTextEdit):
+                                                        w.textChanged.connect(
+                                                            lambda wid=wid, w=w: _emit_event(
+                                                                "changed",
+                                                                wid,
+                                                                {
+                                                                    "text": w.toPlainText()[
+                                                                        :5000
+                                                                    ]
+                                                                },
+                                                            )
+                                                        )
+                                                except Exception:
+                                                    pass
+                                        elif op == "set":
+                                            props = widget.get("props") or {}
+                                            w = widgets.get(wid) or cont.findChild(
+                                                QWidget, wid
+                                            )
+                                            if w is not None:
+                                                _apply_props(w, props)
+                                        elif op == "remove":
+                                            w = widgets.pop(wid, None)
+                                            if w is None:
+                                                w = cont.findChild(QWidget, wid)
+                                            if w is not None:
+                                                try:
+                                                    if lay is not None:
+                                                        lay.removeWidget(w)
+                                                except Exception:
+                                                    pass
+                                                w.deleteLater()
+                                    except Exception:
+                                        pass
+                            except Exception:
+                                pass
+                except Exception:
+                    pass
+    except Exception:
+        pass
+
+    # ========================================================================
+    # Affichage des données brutes dans le journal
+    # ========================================================================
+    self.log.append(data)
+
+    # ========================================================================
+    # Détection de la fin de compilation Nuitka
+    # ========================================================================
+    # Nuitka affiche "Successfully created" quand la compilation est terminée
+    if "Successfully created" in data or "Nuitka: Successfully created" in data:
+        # Forcer la barre à 100% et sortir du mode animation
+        self.progress.setRange(0, 1)
+        self.progress.setValue(1)
+
+        # S'assurer que le message est à la fin du log
+        lines = data.strip().splitlines()
+        for line in lines:
+            if "Nuitka: Successfully created" in line or "Successfully created" in line:
+                self.log.append(f"<b style='color:green'>{line}</b>")
+
+        # Forcer la terminaison du process si besoin
+        if process.state() != QProcess.NotRunning:
+            self.log.append(
+                "<span style='color:orange;'>ℹ️ Nuitka a signalé la fin de compilation dans le log, mais le process n'est pas terminé. Forçage du kill (arbre) et nettoyage UI...</span>"
+            )
+            try:
+                pidx = int(process.processId())
+            except Exception:
+                pidx = None
+            if pidx:
+                _kill_process_tree(pidx, timeout=3.0, log=self.log.append)
+            try:
+                process.kill()
+            except Exception:
+                pass
+            process.waitForFinished(2000)
+
+            # Nettoyage manuel si le signal finished ne se déclenche pas
+            if process in self.processes:
+                self.handle_finished(process, 0, QProcess.NormalExit)
+
+    # Note : La progression Nuitka (--show-progress) est désactivée
+    # La barre reste indéterminée pendant toute la compilation
     try:
         for line in data.splitlines():
             lt = line.strip()
@@ -633,6 +1290,10 @@ def handle_stderr(self, process):
     Returns:
         None
     """
+    # ========================================================================
+    # Lecture des données stderr du processus
+    # ========================================================================
+    # Les erreurs et warnings sont affichés en rouge dans le journal
     data = process.readAllStandardError().data().decode()
     self.log.append(f"<span style='color:red;'>{data}</span>")
 
