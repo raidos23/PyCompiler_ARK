@@ -338,106 +338,91 @@ def get_current_language_sync() -> str:
     except Exception:
         return "en"
 
-# PyCompiler ARK main GUI translation
+# PyCompiler ARK main GUI translation - FUSED VERSION
 def _apply_main_app_translations(self, tr: dict[str, object]) -> None:
+    """Apply translations to main app UI elements.
+    
+    This is a fused version combining the best features from both implementations.
+    Uses the _set helper pattern for cleaner code while maintaining comprehensive coverage.
+    """
+    # Internal helper for setting widget text with fallback
+    def _set(attr: str, key: str, method: str = "setText"):
+        try:
+            widget = getattr(self, attr, None)
+            value = tr.get(key)
+            if widget is not None and value:
+                getattr(widget, method)(value)
+        except Exception:
+            pass
+
+    # Internal helper for tooltips with fallback
+    def _tt(key: str, current: str) -> str:
+        try:
+            val = tr.get(key)
+            if isinstance(val, str) and val.strip():
+                return val
+        except Exception:
+            pass
+        return current
+
     try:
-        # Buttons
-        if getattr(self, "btn_select_folder", None):
-            self.btn_select_folder.setText(
-                str(tr.get("select_folder", self.btn_select_folder.text()))
-            )
-        if getattr(self, "btn_select_files", None):
-            self.btn_select_files.setText(
-                str(tr.get("select_files", self.btn_select_files.text()))
-            )
-        if getattr(self, "btn_build_all", None):
-            self.btn_build_all.setText(
-                str(tr.get("build_all", self.btn_build_all.text()))
-            )
-        if getattr(self, "btn_export_config", None):
-            self.btn_export_config.setText(
-                str(tr.get("export_config", self.btn_export_config.text()))
-            )
-        if getattr(self, "btn_import_config", None):
-            self.btn_import_config.setText(
-                str(tr.get("import_config", self.btn_import_config.text()))
-            )
-        if getattr(self, "btn_cancel_all", None):
-            self.btn_cancel_all.setText(
-                str(tr.get("cancel_all", self.btn_cancel_all.text()))
-            )
-        if getattr(self, "btn_suggest_deps", None):
-            self.btn_suggest_deps.setText(
-                str(tr.get("suggest_deps", self.btn_suggest_deps.text()))
-            )
+        # === BUTTONS ===
+        # Sidebar & main buttons
+        _set("btn_select_folder", "select_folder")
+        _set("btn_select_files", "select_files")
+        _set("btn_build_all", "build_all")
+        _set("btn_export_config", "export_config")
+        _set("btn_import_config", "import_config")
+        _set("btn_cancel_all", "cancel_all")
+        _set("btn_suggest_deps", "suggest_deps")
+        _set("btn_help", "help")
+        _set("btn_show_stats", "show_stats")
+        _set("btn_remove_file", "btn_remove_file")
 
-        if getattr(self, "btn_remove_file", None):
-            self.btn_remove_file.setText(
-                str(tr.get("btn_remove_file", self.btn_remove_file.text()))
-            )
-
-        if getattr(self, "btn_help", None):
-            self.btn_help.setText(str(tr.get("help", self.btn_help.text())))
-        if getattr(self, "btn_show_stats", None):
-            self.btn_show_stats.setText(
-                str(tr.get("show_stats", self.btn_show_stats.text()))
-            )
-        if getattr(self, "select_lang", None):
-            self.select_lang.setText(
-                str(tr.get("select_lang", self.select_lang.text()))
-            )
-        if getattr(self, "select_theme", None):
-            try:
-                # Prefer dynamic label keys; fallback to generic key
-                if getattr(self, "theme", "System") == "System":
-                    val = (
-                        tr.get("choose_theme_system_button")
-                        or tr.get("choose_theme_button")
-                        or tr.get("select_theme")
+        # Bouton de langue (variante System vs simple), sans valeur de secours
+        try:
+            if getattr(self, "select_lang", None):
+                if (
+                    getattr(self, "language_pref", getattr(self, "language", "System"))
+                    == "System"
+                ):
+                    val = tr.get("choose_language_system_button") or tr.get(
+                        "choose_language_button"
                     )
                 else:
-                    val = tr.get("choose_theme_button") or tr.get("select_theme")
-                self.select_theme.setText(str(val or self.select_theme.text()))
-            except Exception:
-                self.select_theme.setText(
-                    str(tr.get("select_theme", self.select_theme.text()))
-                )
-        if getattr(self, "venv_button", None):
-            self.venv_button.setText(
-                str(tr.get("venv_button", self.venv_button.text()))
-            )
-        if getattr(self, "btn_select_icon", None):
-            self.btn_select_icon.setText(
-                str(tr.get("btn_select_icon", self.btn_select_icon.text()))
-            )
-        if getattr(self, "btn_nuitka_icon", None):
-            self.btn_nuitka_icon.setText(
-                str(tr.get("btn_nuitka_icon", self.btn_nuitka_icon.text()))
-            )
-        # Labels
-        if getattr(self, "label_workspace_section", None):
-            self.label_workspace_section.setText(
-                str(
-                    tr.get(
-                        "label_workspace_section", self.label_workspace_section.text()
+                    val = tr.get("choose_language_button")
+                if val:
+                    self.select_lang.setText(val)
+        except Exception:
+            pass
+
+        # Bouton de thème (variante System vs simple), sans valeur de secours
+        try:
+            if getattr(self, "select_theme", None):
+                if getattr(self, "theme", "System") == "System":
+                    val = tr.get("choose_theme_system_button") or tr.get(
+                        "choose_theme_button"
                     )
-                )
-            )
-        if getattr(self, "venv_label", None):
-            self.venv_label.setText(str(tr.get("venv_label", self.venv_label.text())))
-        if getattr(self, "label_folder", None):
-            self.label_folder.setText(
-                str(tr.get("label_folder", self.label_folder.text()))
-            )
-        if getattr(self, "label_files_section", None):
-            self.label_files_section.setText(
-                str(tr.get("label_files_section", self.label_files_section.text()))
-            )
-        if getattr(self, "label_logs_section", None):
-            self.label_logs_section.setText(
-                str(tr.get("label_logs_section", self.label_logs_section.text()))
-            )
-        # Tabs
+                else:
+                    val = tr.get("choose_theme_button")
+                if val:
+                    self.select_theme.setText(val)
+        except Exception:
+            pass
+
+        # Venv button and icon buttons
+        _set("venv_button", "venv_button")
+        _set("btn_select_icon", "btn_select_icon")
+        _set("btn_nuitka_icon", "btn_nuitka_icon")
+
+        # === LABELS ===
+        _set("label_workspace_section", "label_workspace_section")
+        _set("venv_label", "venv_label")
+        _set("label_folder", "label_folder")
+        _set("label_files_section", "label_files_section")
+        _set("label_logs_section", "label_logs_section")
+
+        # === TABS ===
         if getattr(self, "compiler_tabs", None):
             try:
                 if getattr(self, "tab_pyinstaller", None):
@@ -458,182 +443,149 @@ def _apply_main_app_translations(self, tr: dict[str, object]) -> None:
                             idx2,
                             str(tr.get("tab_nuitka", self.compiler_tabs.tabText(idx2))),
                         )
+                # CX_Freeze tab if exists
+                if getattr(self, "tab_cx_freeze", None):
+                    idx3 = self.compiler_tabs.indexOf(self.tab_cx_freeze)
+                    if idx3 >= 0:
+                        self.compiler_tabs.setTabText(
+                            idx3,
+                            str(tr.get("tab_cx_freeze", self.compiler_tabs.tabText(idx3))),
+                        )
             except Exception:
                 pass
-        # Checkboxes/options
-        if getattr(self, "opt_onefile", None):
-            self.opt_onefile.setText(
-                str(tr.get("opt_onefile", self.opt_onefile.text()))
-            )
-        if getattr(self, "opt_windowed", None):
-            self.opt_windowed.setText(
-                str(tr.get("opt_windowed", self.opt_windowed.text()))
-            )
-        if getattr(self, "opt_noconfirm", None):
-            self.opt_noconfirm.setText(
-                str(tr.get("opt_noconfirm", self.opt_noconfirm.text()))
-            )
-        if getattr(self, "opt_clean", None):
-            self.opt_clean.setText(str(tr.get("opt_clean", self.opt_clean.text())))
-        if getattr(self, "opt_noupx", None):
-            self.opt_noupx.setText(str(tr.get("opt_noupx", self.opt_noupx.text())))
-        if getattr(self, "opt_main_only", None):
-            self.opt_main_only.setText(
-                str(tr.get("opt_main_only", self.opt_main_only.text()))
-            )
-        if getattr(self, "opt_debug", None):
-            self.opt_debug.setText(str(tr.get("opt_debug", self.opt_debug.text())))
-        if getattr(self, "opt_auto_install", None):
-            self.opt_auto_install.setText(
-                str(tr.get("opt_auto_install", self.opt_auto_install.text()))
-            )
-        if getattr(self, "opt_silent_errors", None):
-            self.opt_silent_errors.setText(
-                str(tr.get("opt_silent_errors", self.opt_silent_errors.text()))
-            )
-        # Nuitka checkboxes
-        if getattr(self, "nuitka_onefile", None):
-            self.nuitka_onefile.setText(
-                str(tr.get("nuitka_onefile", self.nuitka_onefile.text()))
-            )
-        if getattr(self, "nuitka_standalone", None):
-            self.nuitka_standalone.setText(
-                str(tr.get("nuitka_standalone", self.nuitka_standalone.text()))
-            )
-        if getattr(self, "nuitka_disable_console", None):
-            self.nuitka_disable_console.setText(
-                str(
-                    tr.get("nuitka_disable_console", self.nuitka_disable_console.text())
-                )
-            )
-        if getattr(self, "nuitka_show_progress", None):
-            self.nuitka_show_progress.setText(
-                str(tr.get("nuitka_show_progress", self.nuitka_show_progress.text()))
-            )
+
+        # === CHECKBOXES/OPTIONS ===
+        # PyInstaller options
+        _set("opt_onefile", "opt_onefile")
+        _set("opt_windowed", "opt_windowed")
+        _set("opt_noconfirm", "opt_noconfirm")
+        _set("opt_clean", "opt_clean")
+        _set("opt_noupx", "opt_noupx")
+        _set("opt_main_only", "opt_main_only")
+        _set("opt_debug", "opt_debug")
+        _set("opt_auto_install", "opt_auto_install")
+        _set("opt_silent_errors", "opt_silent_errors")
+
+        # Nuitka options
+        _set("nuitka_onefile", "nuitka_onefile")
+        _set("nuitka_standalone", "nuitka_standalone")
+        _set("nuitka_disable_console", "nuitka_disable_console")
+        _set("nuitka_show_progress", "nuitka_show_progress")
+
+        # CX_Freeze options (if exists)
+        _set("cx_onefile", "cx_onefile")
+        _set("cx_console", "cx_console")
+
+        # === PLACEHOLDERS ===
         if getattr(self, "nuitka_output_dir", None):
             try:
-                self.nuitka_output_dir.setPlaceholderText(
-                    str(
-                        tr.get(
-                            "nuitka_output_dir",
-                            self.nuitka_output_dir.placeholderText(),
-                        )
-                    )
-                )
+                ph = tr.get("nuitka_output_dir")
+                if isinstance(ph, str) and ph.strip():
+                    self.nuitka_output_dir.setPlaceholderText(ph)
             except Exception:
                 pass
-        # Tooltips (apply i18n when keys are present; fallback to current tooltip text)
-        try:
 
-            def _tt(key: str, current: str) -> str:
-                try:
-                    val = tr.get(key)
-                    if isinstance(val, str) and val.strip():
-                        return val
-                except Exception:
-                    pass
-                return current
+        # === TOOLTIPS ===
+        # Main buttons tooltips
+        if getattr(self, "btn_select_folder", None):
+            self.btn_select_folder.setToolTip(
+                _tt("tt_select_folder", self.btn_select_folder.toolTip())
+            )
+        if getattr(self, "btn_select_files", None):
+            self.btn_select_files.setToolTip(
+                _tt("tt_select_files", self.btn_select_files.toolTip())
+            )
+        if getattr(self, "btn_build_all", None):
+            self.btn_build_all.setToolTip(
+                _tt("tt_build_all", self.btn_build_all.toolTip())
+            )
+        if getattr(self, "btn_export_config", None):
+            self.btn_export_config.setToolTip(
+                _tt("tt_export_config", self.btn_export_config.toolTip())
+            )
+        if getattr(self, "btn_import_config", None):
+            self.btn_import_config.setToolTip(
+                _tt("tt_import_config", self.btn_import_config.toolTip())
+            )
+        if getattr(self, "btn_cancel_all", None):
+            self.btn_cancel_all.setToolTip(
+                _tt("tt_cancel_all", self.btn_cancel_all.toolTip())
+            )
+        if getattr(self, "btn_remove_file", None):
+            self.btn_remove_file.setToolTip(
+                _tt("tt_remove_file", self.btn_remove_file.toolTip())
+            )
+        if getattr(self, "btn_select_icon", None):
+            self.btn_select_icon.setToolTip(
+                _tt("tt_select_icon", self.btn_select_icon.toolTip())
+            )
+        if getattr(self, "btn_nuitka_icon", None):
+            self.btn_nuitka_icon.setToolTip(
+                _tt("tt_nuitka_icon", self.btn_nuitka_icon.toolTip())
+            )
+        if getattr(self, "btn_help", None):
+            self.btn_help.setToolTip(_tt("tt_help", self.btn_help.toolTip()))
+        if getattr(self, "btn_bc_loader", None):
+            self.btn_bc_loader.setToolTip(
+                _tt("tt_bc_loader", self.btn_bc_loader.toolTip())
+            )
+        if getattr(self, "venv_button", None):
+            self.venv_button.setToolTip(
+                _tt("tt_venv_button", self.venv_button.toolTip())
+            )
+        if getattr(self, "btn_suggest_deps", None):
+            self.btn_suggest_deps.setToolTip(
+                _tt("tt_suggest_deps", self.btn_suggest_deps.toolTip())
+            )
+        if getattr(self, "btn_show_stats", None):
+            self.btn_show_stats.setToolTip(
+                _tt("tt_show_stats", self.btn_show_stats.toolTip())
+            )
 
-            if getattr(self, "btn_select_folder", None):
-                self.btn_select_folder.setToolTip(
-                    _tt("tt_select_folder", self.btn_select_folder.toolTip())
-                )
-            if getattr(self, "btn_select_files", None):
-                self.btn_select_files.setToolTip(
-                    _tt("tt_select_files", self.btn_select_files.toolTip())
-                )
-            if getattr(self, "btn_build_all", None):
-                self.btn_build_all.setToolTip(
-                    _tt("tt_build_all", self.btn_build_all.toolTip())
-                )
-            if getattr(self, "btn_export_config", None):
-                self.btn_export_config.setToolTip(
-                    _tt("tt_export_config", self.btn_export_config.toolTip())
-                )
-            if getattr(self, "btn_import_config", None):
-                self.btn_import_config.setToolTip(
-                    _tt("tt_import_config", self.btn_import_config.toolTip())
-                )
-            if getattr(self, "btn_cancel_all", None):
-                self.btn_cancel_all.setToolTip(
-                    _tt("tt_cancel_all", self.btn_cancel_all.toolTip())
-                )
-            if getattr(self, "btn_remove_file", None):
-                self.btn_remove_file.setToolTip(
-                    _tt("tt_remove_file", self.btn_remove_file.toolTip())
-                )
-            if getattr(self, "btn_select_icon", None):
-                self.btn_select_icon.setToolTip(
-                    _tt("tt_select_icon", self.btn_select_icon.toolTip())
-                )
-            if getattr(self, "btn_help", None):
-                self.btn_help.setToolTip(_tt("tt_help", self.btn_help.toolTip()))
-            if getattr(self, "btn_bc_loader", None):
-                self.btn_bc_loader.setToolTip(
-                    _tt("tt_bc_loader", self.btn_bc_loader.toolTip())
-                )
-            # ACASL removed: no tooltip
-            if getattr(self, "venv_button", None):
-                self.venv_button.setToolTip(
-                    _tt("tt_venv_button", self.venv_button.toolTip())
-                )
-            if getattr(self, "btn_suggest_deps", None):
-                self.btn_suggest_deps.setToolTip(
-                    _tt("tt_suggest_deps", self.btn_suggest_deps.toolTip())
-                )
-            if getattr(self, "btn_show_stats", None):
-                self.btn_show_stats.setToolTip(
-                    _tt("tt_show_stats", self.btn_show_stats.toolTip())
-                )
-            if getattr(self, "output_dir_input", None):
-                self.output_dir_input.setToolTip(
-                    _tt("tt_output_dir", self.output_dir_input.toolTip())
-                )
-            # PyInstaller/Nuitka specific tooltips
-            if getattr(self, "nuitka_disable_console", None):
-                self.nuitka_disable_console.setToolTip(
-                    _tt(
-                        "tt_nuitka_disable_console",
-                        self.nuitka_disable_console.toolTip(),
-                    )
-                )
-            if getattr(self, "btn_nuitka_icon", None):
-                self.btn_nuitka_icon.setToolTip(
-                    _tt("tt_nuitka_icon", self.btn_nuitka_icon.toolTip())
-                )
-            # Options checkboxes
-            if getattr(self, "opt_onefile", None):
-                self.opt_onefile.setToolTip(
-                    _tt("tt_opt_onefile", self.opt_onefile.toolTip())
-                )
-            if getattr(self, "opt_windowed", None):
-                self.opt_windowed.setToolTip(
-                    _tt("tt_opt_windowed", self.opt_windowed.toolTip())
-                )
-            if getattr(self, "opt_noconfirm", None):
-                self.opt_noconfirm.setToolTip(
-                    _tt("tt_opt_noconfirm", self.opt_noconfirm.toolTip())
-                )
-            if getattr(self, "opt_clean", None):
-                self.opt_clean.setToolTip(_tt("tt_opt_clean", self.opt_clean.toolTip()))
-            if getattr(self, "opt_noupx", None):
-                self.opt_noupx.setToolTip(_tt("tt_opt_noupx", self.opt_noupx.toolTip()))
-            if getattr(self, "opt_main_only", None):
-                self.opt_main_only.setToolTip(
-                    _tt("tt_opt_main_only", self.opt_main_only.toolTip())
-                )
-            if getattr(self, "opt_debug", None):
-                self.opt_debug.setToolTip(_tt("tt_opt_debug", self.opt_debug.toolTip()))
-            if getattr(self, "opt_auto_install", None):
-                self.opt_auto_install.setToolTip(
-                    _tt("tt_opt_auto_install", self.opt_auto_install.toolTip())
-                )
-            if getattr(self, "opt_silent_errors", None):
-                self.opt_silent_errors.setToolTip(
-                    _tt("tt_opt_silent_errors", self.opt_silent_errors.toolTip())
-                )
-        except Exception:
-            pass
+        # Output directory tooltip
+        if getattr(self, "output_dir_input", None):
+            self.output_dir_input.setToolTip(
+                _tt("tt_output_dir", self.output_dir_input.toolTip())
+            )
+
+        # Options checkboxes tooltips
+        if getattr(self, "opt_onefile", None):
+            self.opt_onefile.setToolTip(
+                _tt("tt_opt_onefile", self.opt_onefile.toolTip())
+            )
+        if getattr(self, "opt_windowed", None):
+            self.opt_windowed.setToolTip(
+                _tt("tt_opt_windowed", self.opt_windowed.toolTip())
+            )
+        if getattr(self, "opt_noconfirm", None):
+            self.opt_noconfirm.setToolTip(
+                _tt("tt_opt_noconfirm", self.opt_noconfirm.toolTip())
+            )
+        if getattr(self, "opt_clean", None):
+            self.opt_clean.setToolTip(_tt("tt_opt_clean", self.opt_clean.toolTip()))
+        if getattr(self, "opt_noupx", None):
+            self.opt_noupx.setToolTip(_tt("tt_opt_noupx", self.opt_noupx.toolTip()))
+        if getattr(self, "opt_main_only", None):
+            self.opt_main_only.setToolTip(
+                _tt("tt_opt_main_only", self.opt_main_only.toolTip())
+            )
+        if getattr(self, "opt_debug", None):
+            self.opt_debug.setToolTip(_tt("tt_opt_debug", self.opt_debug.toolTip()))
+        if getattr(self, "opt_auto_install", None):
+            self.opt_auto_install.setToolTip(
+                _tt("tt_opt_auto_install", self.opt_auto_install.toolTip())
+            )
+        if getattr(self, "opt_silent_errors", None):
+            self.opt_silent_errors.setToolTip(
+                _tt("tt_opt_silent_errors", self.opt_silent_errors.toolTip())
+            )
+
+        # Nuitka specific tooltips
+        if getattr(self, "nuitka_disable_console", None):
+            self.nuitka_disable_console.setToolTip(
+                _tt("tt_nuitka_disable_console", self.nuitka_disable_console.toolTip())
+            )
+
     except Exception:
         pass
 
