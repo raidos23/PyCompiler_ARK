@@ -31,8 +31,7 @@ from PySide6.QtCore import QDir
 from PySide6.QtWidgets import QFileDialog, QInputDialog
 
 from engine_sdk.base import CompilerEngine
-from engine_sdk import engine_register
-
+from engine_sdk import engine_register, compute_for_all
 
 @engine_register
 class NuitkaEngine(CompilerEngine):
@@ -119,6 +118,19 @@ class NuitkaEngine(CompilerEngine):
             output_dir = self._get_input("output_dir")
             if output_dir and output_dir.text().strip():
                 cmd.extend(["--output-dir", output_dir.text().strip()])
+
+             # Auto ajout des plugins Nuitka via détection
+            try:
+                auto_map = compute_for_all(self) or {}
+                auto_nuitka_args = auto_map.get("nuitka", [])
+                for a in auto_nuitka_args:
+                    if a not in cmd:
+                        cmd.append(a)
+            except Exception as e:
+                try:
+                    self.log.append(f"⚠️ Auto-détection Nuitka: {e}")
+                except Exception:
+                    pass
 
             # Add the target file
             cmd.append(file)
@@ -310,7 +322,7 @@ class NuitkaEngine(CompilerEngine):
     def apply_i18n(self, gui, tr: dict) -> None:
         """Apply internationalization translations to the engine UI."""
         try:
-            from Core.engines_loader.registry import resolve_language_code, load_engine_language_file
+            from engine_sdk import resolve_language_code, load_engine_language_file
 
             # Resolve language code
             code = resolve_language_code(gui, tr)

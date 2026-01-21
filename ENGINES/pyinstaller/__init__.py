@@ -323,8 +323,7 @@ class PyInstallerEngine(CompilerEngine):
     def apply_i18n(self, gui, tr: dict) -> None:
         """Apply internationalization translations to the engine UI."""
         try:
-            from Core.engines_loader.registry import resolve_language_code, load_engine_language_file
-
+            from engine_sdk import resolve_language_code, load_engine_language_file
             # Resolve language code
             code = resolve_language_code(gui, tr)
 

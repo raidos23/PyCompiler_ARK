@@ -22,7 +22,7 @@ from typing import Optional
 
 # Optional access to registered engines for discovery
 try:
-    from Core.engines_loader import registry as engines_registry  # type: ignore
+    from ..engines_loader import registry as engines_registry  # type: ignore
 except Exception:  # pragma: no cover
     engines_registry = None  # type: ignore
 

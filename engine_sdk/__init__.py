@@ -17,9 +17,9 @@ from __future__ import annotations
 
 # Re-export auto_plugins helpers for convenience
 from .auto_build_command import (
-    compute_auto_for_engine,
+    
     compute_for_all,
-    register_auto_builder,
+    
 )
 
 __version__ = "1.0.0"
@@ -59,10 +59,8 @@ except Exception:  # pragma: no cover
 # Re-export system dependency helpers
 # Re-export i18n helpers
 from .i18n import (
-    available_languages,
-    get_translations,
-    normalize_lang_pref,
-    resolve_system_language,
+    resolve_language_code,
+    load_engine_language_file,
 )
 from .Sys_Deps import SysDependencyManager  # type: ignore
 
@@ -175,9 +173,9 @@ __all__ = [
     "CompilerEngine",
     "engine_register",
     "register",
-    "compute_auto_for_engine",
+    
     "compute_for_all",
-    "register_auto_builder",
+   
     "registry",
     # Utilities for engine authors
     "redact_secrets",
@@ -202,10 +200,8 @@ __all__ = [
     "resolve_executable_path",
     "host_resolve_executable_path",
     "SysDependencyManager",
-    "normalize_lang_pref",
-    "available_languages",
-    "resolve_system_language",
-    "get_translations",
+    "resolve_language_code",
+    "load_engine_language_file",
     "ensure_min_sdk",
     "get_capabilities",
     "sdk_info",
