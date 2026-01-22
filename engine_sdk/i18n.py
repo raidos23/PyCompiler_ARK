@@ -16,7 +16,10 @@
 from __future__ import annotations
 
 # Stable i18n facade for engines
-from Core.engines_loader.registry import (resolve_language_code, load_engine_language_file)
+from Core.engines_loader.registry import (
+    resolve_language_code,
+    load_engine_language_file,
+)
 
 
 __all__ = [

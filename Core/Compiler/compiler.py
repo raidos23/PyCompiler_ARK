@@ -33,7 +33,7 @@ def _kill_all_processes(self) -> None:
     """
     try:
         # Arrêter tous les processus en cours
-        if hasattr(self, 'processes') and self.processes:
+        if hasattr(self, "processes") and self.processes:
             for pid, proc in list(self.processes.items()):
                 try:
                     if proc is not None and proc.state() == proc.Running:
@@ -51,14 +51,14 @@ def _kill_all_processes(self) -> None:
 
     try:
         # Vider la file d'attente
-        if hasattr(self, 'queue'):
+        if hasattr(self, "queue"):
             self.queue.clear()
     except Exception:
         pass
 
     try:
         # Réinitialiser les compteurs
-        if hasattr(self, 'current_compiling'):
+        if hasattr(self, "current_compiling"):
             self.current_compiling.clear()
     except Exception:
         pass
@@ -76,14 +76,14 @@ def _kill_all_processes(self) -> None:
         pass
 
     try:
-        if hasattr(self, 'progress'):
+        if hasattr(self, "progress"):
             self.progress.setRange(0, 1)
             self.progress.setValue(0)
     except Exception:
         pass
 
     try:
-        if hasattr(self, '_compile_continued'):
+        if hasattr(self, "_compile_continued"):
             self._compile_continued = False
     except Exception:
         pass
@@ -291,7 +291,8 @@ def compile_all(self):
                 self,
                 self.tr("Attention", "Warning"),
                 self.tr(
-                    "Des compilations sont déjà en cours.", "Builds are already running."
+                    "Des compilations sont déjà en cours.",
+                    "Builds are already running.",
                 ),
             )
         except Exception:
@@ -346,7 +347,9 @@ def compile_all(self):
                 # Vérifier si BCASL a eu des erreurs
                 if _report is not None and not _report.ok:
                     error_items = [item for item in _report.items if not item.success]
-                    error_msg = ", ".join([f"{item.plugin_id}: {item.error}" for item in error_items])
+                    error_msg = ", ".join(
+                        [f"{item.plugin_id}: {item.error}" for item in error_items]
+                    )
                     try:
                         self.log.append(f"❌ Erreur BCASL: {error_msg}\n")
                     except Exception:

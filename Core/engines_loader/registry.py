@@ -143,16 +143,12 @@ def unload_all() -> dict[str, Any]:
         _INSTANCES.clear()
 
     except Exception as e:
-        return {
-            "status": "error",
-            "message": str(e),
-            "unloaded": unloaded
-        }
+        return {"status": "error", "message": str(e), "unloaded": unloaded}
 
     return {
         "status": "success",
         "message": f"Unloaded {len(unloaded)} engine(s)",
-        "unloaded": unloaded
+        "unloaded": unloaded,
     }
 
 
@@ -351,7 +347,9 @@ def load_engine_language_file(engine_package: str, code: str) -> dict:
 
         # Final fallback to English
         try:
-            with ilr.as_file(ilr.files(engine_package).joinpath("languages", "en.json")) as p:
+            with ilr.as_file(
+                ilr.files(engine_package).joinpath("languages", "en.json")
+            ) as p:
                 if os.path.isfile(str(p)):
                     with open(str(p), encoding="utf-8") as f:
                         lang_data = json.load(f) or {}

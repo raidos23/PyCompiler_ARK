@@ -94,7 +94,7 @@ class CompilerEngine:
         Used by VenvManager for Python tools and system installer for system tools.
         Example: {'python': ['pyinstaller'], 'system': ['build-essential']}
         """
-        return {'python': [], 'system': []}
+        return {"python": [], "system": []}
 
     def ensure_tools_installed(self, gui) -> bool:
         """
@@ -103,11 +103,11 @@ class CompilerEngine:
         """
         try:
             tools = self.required_tools
-            python_tools = tools.get('python', [])
-            system_tools = tools.get('system', [])
+            python_tools = tools.get("python", [])
+            system_tools = tools.get("system", [])
 
             # Check Python tools
-            if hasattr(gui, 'venv_manager') and gui.venv_manager:
+            if hasattr(gui, "venv_manager") and gui.venv_manager:
                 venv_path = gui.venv_manager.resolve_project_venv()
                 if venv_path and python_tools:
                     missing_python = []
@@ -115,29 +115,43 @@ class CompilerEngine:
                         if not gui.venv_manager.is_tool_installed(venv_path, tool):
                             missing_python.append(tool)
                     if missing_python:
-                        if hasattr(gui, 'log') and gui.log:
-                            gui.log.append(f"📦 Installation des outils Python manquants: {missing_python}")
-                        gui.venv_manager.ensure_tools_installed(venv_path, missing_python)
+                        if hasattr(gui, "log") and gui.log:
+                            gui.log.append(
+                                f"📦 Installation des outils Python manquants: {missing_python}"
+                            )
+                        gui.venv_manager.ensure_tools_installed(
+                            venv_path, missing_python
+                        )
 
             # Check and install system tools
             if system_tools:
                 try:
-                    from Core.sys_deps import check_system_packages, install_system_packages
+                    from Core.sys_deps import (
+                        check_system_packages,
+                        install_system_packages,
+                    )
+
                     if not check_system_packages(system_tools):
-                        if hasattr(gui, 'log') and gui.log:
-                            gui.log.append(f"📦 Installation des outils système manquants: {system_tools}")
+                        if hasattr(gui, "log") and gui.log:
+                            gui.log.append(
+                                f"📦 Installation des outils système manquants: {system_tools}"
+                            )
                         if not install_system_packages(system_tools, gui):
-                            if hasattr(gui, 'log') and gui.log:
-                                gui.log.append(f"❌ Échec installation outils système: {system_tools}")
+                            if hasattr(gui, "log") and gui.log:
+                                gui.log.append(
+                                    f"❌ Échec installation outils système: {system_tools}"
+                                )
                             return False
                 except Exception as e:
-                    if hasattr(gui, 'log') and gui.log:
-                        gui.log.append(f"⚠️ Error checking/installing system tools {system_tools}: {e}")
+                    if hasattr(gui, "log") and gui.log:
+                        gui.log.append(
+                            f"⚠️ Error checking/installing system tools {system_tools}: {e}"
+                        )
                     return False
 
             return True
         except Exception as e:
-            if hasattr(gui, 'log') and gui.log:
+            if hasattr(gui, "log") and gui.log:
                 gui.log.append(f"⚠️ Error in ensure_tools_installed: {e}")
             return False
 
