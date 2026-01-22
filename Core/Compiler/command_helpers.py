@@ -38,13 +38,13 @@ Usage typique (dans mainprocess.py):
     def compiler_function(self, gui, file):
         # Validation des arguments
         args = validate_args(["--input", file])
-        
+
         # Construction de l'environnement
         env = build_env(None, extra={"PYTHONPATH": "/custom/path"})
-        
+
         # Normalisation programme + arguments
         prog, args = normalized_program_and_args("python", args)
-        
+
         # Exécution du processus
         code, stdout, stderr = run_process(gui, prog, args, env=env)
 """
@@ -379,4 +379,3 @@ def run_process(
     except Exception as e:
         # En cas d'erreur, retourne un code d'erreur 1 avec le message
         return 1, "", str(e)
-

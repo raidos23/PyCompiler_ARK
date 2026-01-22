@@ -889,7 +889,9 @@ if click:
         else:
             click.echo("No workspaces discovered")
 
-    @cli.command(context_settings=dict(help_option_names=["-h", "--help"]), name="unload")
+    @cli.command(
+        context_settings=dict(help_option_names=["-h", "--help"]), name="unload"
+    )
     def unload_engines_cmd():
         """Unload all registered engines."""
         result = unload_all()
@@ -970,4 +972,3 @@ if __name__ == "__main__":
         else:
             # No arguments: launch main application
             sys.exit(launch_main_application())
-

@@ -33,6 +33,7 @@ from PySide6.QtWidgets import QFileDialog, QInputDialog
 from engine_sdk.base import CompilerEngine
 from engine_sdk import engine_register, compute_for_all
 
+
 @engine_register
 class NuitkaEngine(CompilerEngine):
     """
@@ -66,10 +67,7 @@ class NuitkaEngine(CompilerEngine):
             # but we'll keep it minimal for now
             system_tools = []
 
-        return {
-            'python': ['nuitka'],
-            'system': system_tools
-        }
+        return {"python": ["nuitka"], "system": system_tools}
 
     def preflight(self, gui, file: str) -> bool:
         """Preflight check - dependencies are handled automatically by required_tools."""
@@ -119,7 +117,7 @@ class NuitkaEngine(CompilerEngine):
             if output_dir and output_dir.text().strip():
                 cmd.extend(["--output-dir", output_dir.text().strip()])
 
-             # Auto ajout des plugins Nuitka via détection
+            # Auto ajout des plugins Nuitka via détection
             try:
                 auto_map = compute_for_all(self) or {}
                 auto_nuitka_args = auto_map.get("nuitka", [])
@@ -426,12 +424,14 @@ class NuitkaEngine(CompilerEngine):
                 self._gui,
                 "Sélectionner une icône",
                 "",
-                "Fichiers icône (*.ico);;Tous les fichiers (*)"
+                "Fichiers icône (*.ico);;Tous les fichiers (*)",
             )
             if file_path:
                 self._selected_icon = file_path
                 if hasattr(self._gui, "log"):
-                    self._gui.log.append(f"Icône sélectionnée pour Nuitka : {file_path}")
+                    self._gui.log.append(
+                        f"Icône sélectionnée pour Nuitka : {file_path}"
+                    )
         except Exception as e:
             if hasattr(self._gui, "log"):
                 self._gui.log.append(f"❌ Erreur lors de la sélection de l'icône : {e}")

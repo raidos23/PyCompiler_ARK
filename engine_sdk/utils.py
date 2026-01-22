@@ -113,8 +113,6 @@ def safe_join(workspace: Pathish, *parts: Pathish) -> Path:
     return rp
 
 
-
-
 # -------------------------------
 # Output/log safety
 # -------------------------------
@@ -126,7 +124,6 @@ def clamp_text(text: str, *, max_len: int = 10000) -> str:
         return ""
     s = str(text)
     return s if len(s) <= max_len else (s[: max_len - 1] + "…")
-
 
 
 # -------------------------------
@@ -150,7 +147,6 @@ def tr(gui: Any, fr: str, en: str) -> str:
     except Exception:
         pass
     return fr
-
 
 
 essential_log_max_len = 10000
@@ -448,5 +444,3 @@ def atomic_write_text(path: Pathish, text: str, *, encoding: str = "utf-8") -> b
                 pass
     except Exception:
         return False
-
-

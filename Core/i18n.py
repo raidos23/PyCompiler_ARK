@@ -23,56 +23,49 @@ from typing import Any
 
 # Built-in fallback for English if language files are missing
 FALLBACK_EN: dict[str, Any] = {
-  "name": "English",
-  "code": "en",
-  "_meta": {
+    "name": "English",
     "code": "en",
-    "name": "English"
-  },
-  "select_folder": "📁 Workspace",
-  "select_files": "📋 Files",
-  "build_all": "🚀 Build",
-  "export_config": "💾 Export config",
-  "import_config": "📥 Import config",
-  "cancel_all": "⛔ Cancel",
-  "suggest_deps": "🔎 Analyze dependencies",
-  "help": "❓ Help",
-  "help_title": "Help",
-  "help_text": "<b>PyCompiler ARK++ — Quick Help</b><br><ul><li>1) Select the Workspace and add your .py files.</li><li>2) Configure pre‑compile plugins via <b>Bc Plugins Loader</b> (BCASL).</li><li>3) Configure options in the <b>PyInstaller</b>, <b>Nuitka</b> or <b>CX_Freeze</b> tab.</li><li>4) Click <b>Build</b> and follow the logs.</li></ul><b>Notes</b><br><ul><li>When a build starts, all action controls are disabled (including Bc Plugins Loader) until it finishes or is canceled.</li><li>Pre‑compilation (BCASL) completes before compilation.</li><li>A <i>venv</i> can be created automatically; requirements.txt is installed if present; tools are installed into the venv as needed.</li><li>API‑initiated workspace changes are auto‑applied; running builds are canceled before switching.</li></ul><b>License</b>: Apache-2.0 — <a href='https://www.apache.org/licenses/LICENSE-2.0'>apache.org/licenses/LICENSE-2.0</a><br><b>Author</b>: Ague Samuel Amen<br>© 2026 Ague Samuel Amen",
-  "show_stats": "📊 Statistics",
-  "select_lang": "Choose language",
-  "venv_button": "Choose venv folder manually",
-  "label_workspace_section": "1. Select workspace folder",
-  "venv_label": "venv selected: None",
-  "label_folder": "No folder selected",
-  "label_files_section": "2. Files to build",
-  "btn_remove_file": "🗑️ Remove selected file",
-  "label_logs_section": "Build logs",
-
-  "choose_language_title": "Choose language",
-  "choose_language_label": "Language:",
-  "choose_language_system": "System",
-  "choose_language_system_button": "Choose language (System)",
-  "choose_language_button": "Choose language",
-  "select_theme": "Choose theme",
-  "choose_theme_button": "Choose theme",
-  "choose_theme_system_button": "Choose theme (System)",
-
-  "tt_select_folder": "Select the workspace directory containing your Python files.",
-  "tt_select_files": "Add Python files manually to the build list.",
-  "tt_build_all": "Start building all selected files.",
-  "tt_export_config": "Export the current configuration to a JSON file.",
-  "tt_import_config": "Import a configuration from a JSON file.",
-  "tt_cancel_all": "Cancel all ongoing builds.",
-  "tt_remove_file": "Remove the selected file(s) from the list.",
-  "tt_help": "Open help and information about the software.",
-  "tt_bc_loader": "Configure API (BCASL) plugins to run before compilation.",
-  "tt_venv_button": "Manually select a venv directory to use for compilation.",
-  "tt_suggest_deps": "Analyze the project for missing Python dependencies.",
-  "tt_show_stats": "Show build statistics (time, number of files, memory)."
+    "_meta": {"code": "en", "name": "English"},
+    "select_folder": "📁 Workspace",
+    "select_files": "📋 Files",
+    "build_all": "🚀 Build",
+    "export_config": "💾 Export config",
+    "import_config": "📥 Import config",
+    "cancel_all": "⛔ Cancel",
+    "suggest_deps": "🔎 Analyze dependencies",
+    "help": "❓ Help",
+    "help_title": "Help",
+    "help_text": "<b>PyCompiler ARK++ — Quick Help</b><br><ul><li>1) Select the Workspace and add your .py files.</li><li>2) Configure pre‑compile plugins via <b>Bc Plugins Loader</b> (BCASL).</li><li>3) Configure options in the <b>PyInstaller</b>, <b>Nuitka</b> or <b>CX_Freeze</b> tab.</li><li>4) Click <b>Build</b> and follow the logs.</li></ul><b>Notes</b><br><ul><li>When a build starts, all action controls are disabled (including Bc Plugins Loader) until it finishes or is canceled.</li><li>Pre‑compilation (BCASL) completes before compilation.</li><li>A <i>venv</i> can be created automatically; requirements.txt is installed if present; tools are installed into the venv as needed.</li><li>API‑initiated workspace changes are auto‑applied; running builds are canceled before switching.</li></ul><b>License</b>: Apache-2.0 — <a href='https://www.apache.org/licenses/LICENSE-2.0'>apache.org/licenses/LICENSE-2.0</a><br><b>Author</b>: Ague Samuel Amen<br>© 2026 Ague Samuel Amen",
+    "show_stats": "📊 Statistics",
+    "select_lang": "Choose language",
+    "venv_button": "Choose venv folder manually",
+    "label_workspace_section": "1. Select workspace folder",
+    "venv_label": "venv selected: None",
+    "label_folder": "No folder selected",
+    "label_files_section": "2. Files to build",
+    "btn_remove_file": "🗑️ Remove selected file",
+    "label_logs_section": "Build logs",
+    "choose_language_title": "Choose language",
+    "choose_language_label": "Language:",
+    "choose_language_system": "System",
+    "choose_language_system_button": "Choose language (System)",
+    "choose_language_button": "Choose language",
+    "select_theme": "Choose theme",
+    "choose_theme_button": "Choose theme",
+    "choose_theme_system_button": "Choose theme (System)",
+    "tt_select_folder": "Select the workspace directory containing your Python files.",
+    "tt_select_files": "Add Python files manually to the build list.",
+    "tt_build_all": "Start building all selected files.",
+    "tt_export_config": "Export the current configuration to a JSON file.",
+    "tt_import_config": "Import a configuration from a JSON file.",
+    "tt_cancel_all": "Cancel all ongoing builds.",
+    "tt_remove_file": "Remove the selected file(s) from the list.",
+    "tt_help": "Open help and information about the software.",
+    "tt_bc_loader": "Configure API (BCASL) plugins to run before compilation.",
+    "tt_venv_button": "Manually select a venv directory to use for compilation.",
+    "tt_suggest_deps": "Analyze the project for missing Python dependencies.",
+    "tt_show_stats": "Show build statistics (time, number of files, memory).",
 }
-
-
 
 
 # Cache global pour les traductions chargées (évite les rechargements)
@@ -338,13 +331,15 @@ def get_current_language_sync() -> str:
     except Exception:
         return "en"
 
+
 # PyCompiler ARK main GUI translation - FUSED VERSION
 def _apply_main_app_translations(self, tr: dict[str, object]) -> None:
     """Apply translations to main app UI elements.
-    
+
     This is a fused version combining the best features from both implementations.
     Uses the _set helper pattern for cleaner code while maintaining comprehensive coverage.
     """
+
     # Internal helper for setting widget text with fallback
     def _set(attr: str, key: str, method: str = "setText"):
         try:
@@ -449,7 +444,11 @@ def _apply_main_app_translations(self, tr: dict[str, object]) -> None:
                     if idx3 >= 0:
                         self.compiler_tabs.setTabText(
                             idx3,
-                            str(tr.get("tab_cx_freeze", self.compiler_tabs.tabText(idx3))),
+                            str(
+                                tr.get(
+                                    "tab_cx_freeze", self.compiler_tabs.tabText(idx3)
+                                )
+                            ),
                         )
             except Exception:
                 pass
@@ -590,7 +589,7 @@ def _apply_main_app_translations(self, tr: dict[str, object]) -> None:
         pass
 
 
-# LANGUAGE DIALOG and all ARK language's system translations propagation 
+# LANGUAGE DIALOG and all ARK language's system translations propagation
 def show_language_dialog(self):
     from PySide6.QtWidgets import QInputDialog
 
@@ -674,7 +673,3 @@ def show_language_dialog(self):
     else:
         if hasattr(self, "log") and self.log:
             self.log.append("Sélection de la langue annulée.")
-
-
-
-

@@ -283,7 +283,7 @@ def init_ui(self):
             engines_loader.registry.bind_tabs(self)
         except Exception:
             pass
-    
+
     self.btn_build_all = self.ui.findChild(QPushButton, "btn_build_all")
     self.btn_cancel_all = self.ui.findChild(QPushButton, "btn_cancel_all")
     self.progress = self.ui.findChild(QProgressBar, "progress")
@@ -291,9 +291,7 @@ def init_ui(self):
     self.btn_export_config = self.ui.findChild(QPushButton, "btn_export_config")
     self.btn_import_config = self.ui.findChild(QPushButton, "btn_import_config")
     self.btn_help = self.ui.findChild(QPushButton, "btn_help")
-    self.output_name_input = (
-        QLineEdit()
-    )  # Si non présent dans le .ui, à ajouter dans le .ui pour conformité
+    
 
     # Connecter les signaux (only for widgets that exist in the UI)
     self.btn_select_folder.clicked.connect(self.select_workspace)
@@ -385,8 +383,6 @@ def init_ui(self):
     self.btn_suggest_deps = self.ui.findChild(QPushButton, "btn_suggest_deps")
     if self.btn_suggest_deps:
         self.btn_suggest_deps.clicked.connect(self.suggest_missing_dependencies)
-
-
 
 
 def _themes_dir() -> str:

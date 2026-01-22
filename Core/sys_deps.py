@@ -919,6 +919,7 @@ class SysDependencyManager:
         except Exception:
             return None
 
+
 def check_system_packages(packages: list[str]) -> bool:
     """
     Check if system packages/tools are installed.
@@ -959,7 +960,9 @@ def install_system_packages(packages: list[str], gui=None) -> bool:
             for pkg in packages:
                 # Basic mapping - would need expansion for real use
                 if pkg == "build-essential":
-                    winget_packages.append({"id": "Microsoft.VisualStudio.2022.BuildTools"})
+                    winget_packages.append(
+                        {"id": "Microsoft.VisualStudio.2022.BuildTools"}
+                    )
                 elif pkg == "python3-dev":
                     winget_packages.append({"id": "Python.Python.3"})
                 else:

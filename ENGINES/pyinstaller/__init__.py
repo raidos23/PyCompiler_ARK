@@ -59,10 +59,7 @@ class PyInstallerEngine(CompilerEngine):
     @property
     def required_tools(self) -> dict[str, list[str]]:
         """Return required tools for PyInstaller compilation."""
-        return {
-            'python': ['pyinstaller'],
-            'system': []
-        }
+        return {"python": ["pyinstaller"], "system": []}
 
     def preflight(self, gui, file: str) -> bool:
         """Preflight check - dependencies are handled automatically by required_tools."""
@@ -324,6 +321,7 @@ class PyInstallerEngine(CompilerEngine):
         """Apply internationalization translations to the engine UI."""
         try:
             from engine_sdk import resolve_language_code, load_engine_language_file
+
             # Resolve language code
             code = resolve_language_code(gui, tr)
 
@@ -419,12 +417,14 @@ class PyInstallerEngine(CompilerEngine):
                 self._gui,
                 "Sélectionner une icône",
                 "",
-                "Fichiers icône (*.ico);;Tous les fichiers (*)"
+                "Fichiers icône (*.ico);;Tous les fichiers (*)",
             )
             if file_path:
                 self._selected_icon = file_path
                 if hasattr(self._gui, "log"):
-                    self._gui.log.append(f"Icône sélectionnée pour PyInstaller : {file_path}")
+                    self._gui.log.append(
+                        f"Icône sélectionnée pour PyInstaller : {file_path}"
+                    )
         except Exception as e:
             if hasattr(self._gui, "log"):
                 self._gui.log.append(f"❌ Erreur lors de la sélection de l'icône : {e}")

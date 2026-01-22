@@ -32,12 +32,12 @@ moteurs externes et l'installation automatique des modules manquants.
 # ============================================================================
 
 # --- Imports des bibliothèques standard Python ---
-import json          # Manipulation de données JSON (parsing, sérialisation)
-import os            # Opérations sur le système de fichiers (chemins, création de répertoires)
-import platform      # Détection du système d'exploitation (Windows/Linux)
-import re            # Expressions régulières (détection de modules manquants)
-import subprocess    # Exécution de processus externes (pip install)
-import time          # Minuteries et délais (pour pip install retry)
+import json  # Manipulation de données JSON (parsing, sérialisation)
+import os  # Opérations sur le système de fichiers (chemins, création de répertoires)
+import platform  # Détection du système d'exploitation (Windows/Linux)
+import re  # Expressions régulières (détection de modules manquants)
+import subprocess  # Exécution de processus externes (pip install)
+import time  # Minuteries et délais (pour pip install retry)
 from typing import Any, Optional  # Type hints pour les fonctions
 
 # --- Imports du framework PySide6 (Qt pour Python) ---
@@ -170,6 +170,7 @@ def pip_install(
         code, _out, _err = run_process(gui, prog, args, timeout_ms=timeout_ms)
     return int(code)
 
+
 # ============================================================================
 # SECTION 2 : GESTION DES PROCESSUS DE COMPILATION
 # ============================================================================
@@ -180,6 +181,7 @@ def pip_install(
 # - Finalisation et nettoyage (handle_finished)
 # - Gestion des erreurs et annulation (cancel_all_compilations, try_install_missing_modules)
 # ============================================================================
+
 
 def try_start_processes(self):
     """
@@ -225,6 +227,7 @@ def try_start_processes(self):
 
         # Forcer Qt à rafraîchir l'interface pour afficher les changements
         from PySide6.QtWidgets import QApplication
+
         QApplication.processEvents()
 
         # Message de confirmation dans le journal
@@ -352,6 +355,7 @@ def start_compilation_process(self, file):
     # ========================================================================
     # Mode indéterminé (animation) pendant la compilation
     from PySide6.QtWidgets import QApplication
+
     self.progress.setRange(0, 0)
     QApplication.processEvents()
 
@@ -366,6 +370,7 @@ def start_compilation_process(self, file):
     if env:
         try:
             from PySide6.QtCore import QProcessEnvironment
+
             penv = QProcessEnvironment()
             for k, v in env.items():
                 penv.insert(str(k), str(v))
@@ -1501,14 +1506,14 @@ def handle_finished(self, process, exit_code, exit_status):
             self.log.append(
                 f"<span style='color:red;'>Détails de l'erreur :<br><pre>{error_details}</pre></span>"
             )
-        try :
+        try:
             self.show_error_dialog(file_basename, file, exit_code, error_details)
-        
-        # Auto-install modules manquants si activé
+
+            # Auto-install modules manquants si activé
             if self.opt_auto_install.isChecked():
                 self.try_install_missing_modules(process)
 
-        except :
+        except:
             pass
     if process in self.processes:
         self.processes.remove(process)
