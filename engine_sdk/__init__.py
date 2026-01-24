@@ -18,6 +18,7 @@ from __future__ import annotations
 # Re-export auto_plugins helpers for convenience
 from .auto_build_command import (
     compute_for_all,
+register_auto_builder
 )
 
 __version__ = "1.0.0"
@@ -217,6 +218,7 @@ __all__ = [
     "engine_register",
     "register",
     "compute_for_all",
+    "register_auto_builder",
     "registry",
     # Utilities for engine authors
     "redact_secrets",
