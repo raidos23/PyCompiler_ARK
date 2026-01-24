@@ -113,7 +113,7 @@ try:
 except Exception:  # pragma: no cover
     registry = None  # type: ignore
 
-__version__ = "3.2.3"
+__version__ = "1.0.1"
 
 
 # Lazy attribute resolver to reduce import overhead in plugin environments
