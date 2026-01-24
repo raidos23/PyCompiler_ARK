@@ -101,6 +101,11 @@ python pycompiler_ark.py main
 # Launch BCASL standalone (plugin manager)
 python pycompiler_ark.py bcasl
 python pycompiler_ark.py bcasl /path/to/workspace
+
+# Launch Engines standalone (compilation engine manager)
+python pycompiler_ark.py engines
+python pycompiler_ark.py engines /path/to/workspace
+python pycompiler_ark.py engines --dry-run  # List available engines
 ```
 
 #### BCASL Standalone Module
@@ -160,6 +165,24 @@ See [SUPPORTED_MATRIX.md](SUPPORTED_MATRIX.md) for detailed compatibility inform
 ### BCASL Standalone Module
 - [BCASL Standalone README](bcasl/only_mod/README.md) - Complete BCASL standalone documentation
 - [BCASL CLI Guide](bcasl/only_mod/CLI_GUIDE.md) - Command-line interface usage
+
+### Engines Standalone Module
+- Launch standalone compilation engine manager with GUI or CLI
+- Manage PyInstaller, Nuitka, and cx_Freeze engines
+- Check engine compatibility and run compilations
+
+#### Engines Standalone Module
+
+```bash
+# Launch Engines GUI directly
+python -m Core.engines_loader.engines_only_mod
+
+# List available engines (CLI mode)
+python -m Core.engines_loader.engines_only_mod --list-engines
+
+# Check engine compatibility
+python -m Core.engines_loader.engines_only_mod --check-compat nuitka
+```
 
 
 ### Developer Documentation
