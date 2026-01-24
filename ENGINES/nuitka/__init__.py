@@ -93,24 +93,29 @@ class NuitkaEngine(CompilerEngine):
 
             # Use dynamic widgets or fallback to UI widgets
             # Standalone mode
-            if self._nuitka_standalone.isChecked():
+            standalone = getattr(self, "_nuitka_standalone", getattr(self._gui, "standalone", None)) if hasattr(self, "_gui") else getattr(self, "_nuitka_standalone", None)
+            if standalone and standalone.isChecked():
                 cmd.append("--standalone")
 
             # Onefile mode
-            if self._nuitka_onefile.isChecked():
+            onefile = getattr(self, "_nuitka_onefile", getattr(self._gui, "onefile", None)) if hasattr(self, "_gui") else getattr(self, "_nuitka_onefile", None)
+            if onefile and onefile.isChecked():
                 cmd.append("--onefile")
 
             # Windowed (no console)
-            if self._nuitka_disable_console.isChecked():
+            disable_console = getattr(self, "_nuitka_disable_console", getattr(self._gui, "disable_console", None)) if hasattr(self, "_gui") else getattr(self, "_nuitka_disable_console", None)
+            if disable_console and disable_console.isChecked():
                 cmd.append("--windows-disable-console")
 
             # Show progress
-            if self._nuitka_show_progress.isChecked():
+            show_progress = getattr(self, "_nuitka_show_progress", getattr(self._gui, "show_progress", None)) if hasattr(self, "_gui") else getattr(self, "_nuitka_show_progress", None)
+            if show_progress and show_progress.isChecked():
                 cmd.append("--show-progress")
 
             # Output directory
-            if self._nuitka_output_dir.text().strip():
-                cmd.extend(["--output-dir", self._nuitka_output_dir.text().strip()])
+            output_dir = getattr(self, "_nuitka_output_dir", getattr(self._gui, "output_dir", None)) if hasattr(self, "_gui") else getattr(self, "_nuitka_output_dir", None)
+            if output_dir and output_dir.text().strip():
+                cmd.extend(["--output-dir", output_dir.text().strip()])
 
             # Auto ajout des plugins Nuitka via détection
             try:

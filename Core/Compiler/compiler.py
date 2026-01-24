@@ -345,18 +345,32 @@ def compile_all(self):
                     pass
 
                 # Vérifier si BCASL a eu des erreurs
-                if _report is not None and not _report.ok:
-                    error_items = [item for item in _report.items if not item.success]
-                    error_msg = ", ".join(
-                        [f"{item.plugin_id}: {item.error}" for item in error_items]
-                    )
-                    try:
-                        self.log.append(f"❌ Erreur BCASL: {error_msg}\n")
-                    except Exception:
-                        pass
-                    # Nettoyer tout et réactiver l'UI
-                    _kill_all_processes(self)
-                    return
+                if _report is not None:
+                    if isinstance(_report, dict):
+                        # Cas spécial: BCASL désactivé
+                        if _report.get("status") == "disabled":
+                            # BCASL désactivé, continuer normalement
+                            pass
+                        else:
+                            # Autre dict inattendu, traiter comme erreur
+                            try:
+                                self.log.append(f"❌ Erreur BCASL: rapport inattendu {_report}\n")
+                            except Exception:
+                                pass
+                            _kill_all_processes(self)
+                            return
+                    elif hasattr(_report, 'ok') and not _report.ok:
+                        error_items = [item for item in _report.items if not item.success]
+                        error_msg = ", ".join(
+                            [f"{item.plugin_id}: {item.error}" for item in error_items]
+                        )
+                        try:
+                            self.log.append(f"❌ Erreur BCASL: {error_msg}\n")
+                        except Exception:
+                            pass
+                        # Nettoyer tout et réactiver l'UI
+                        _kill_all_processes(self)
+                        return
 
                 if not getattr(self, "_compile_continued", False):
                     self._compile_continued = True
