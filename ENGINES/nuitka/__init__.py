@@ -61,7 +61,7 @@ class NuitkaEngine(CompilerEngine):
         if platform.system() == "Linux":
             # patchelf is needed for Linux binary manipulation
             # gcc is needed for compilation
-            system_tools = ["patchelf", "gcc"]
+            system_tools = ["patchelf"]
         elif platform.system() == "Windows":
             # On Windows, Visual Studio Build Tools or similar might be needed
             # but we'll keep it minimal for now
@@ -110,7 +110,7 @@ class NuitkaEngine(CompilerEngine):
 
             # Output directory
             if hasattr(self, "_nuitka_output_dir") and self._nuitka_output_dir.text().strip():
-                cmd.extend(["--output-dir", self._nuitka_output_dir.text().strip()])
+                cmd.append(f"--output-dir={self._nuitka_output_dir.text().strip()}")
 
             # Data files
             data_files = getattr(self, "_nuitka_data_files", [])
