@@ -26,6 +26,7 @@ Features:
     - macOS PATH augmentation for GUI-launched app (Homebrew paths)
     - Main application (default)
     - BCASL standalone module with autocompletion
+    - Engines standalone module for compilation engine management
     - Help and version information
     - Workspace discovery and validation
     - Environment detection
@@ -37,6 +38,9 @@ Usage:
     python -m pycompiler_ark --version          # Show version
     python -m pycompiler_ark bcasl              # Launch BCASL standalone
     python -m pycompiler_ark bcasl /path/to/ws  # Launch BCASL with workspace
+    python -m pycompiler_ark engines            # Launch Engines standalone GUI
+    python -m pycompiler_ark engines /path/to/ws  # Launch Engines with workspace
+    python -m pycompiler_ark engines --dry-run  # List available engines
     python -m pycompiler_ark --completion bash  # Generate bash completion
     python -m pycompiler_ark unload             # Unload all engines
 """
@@ -454,7 +458,7 @@ def launch_bcasl_standalone(workspace_dir: Optional[str] = None) -> int:
 
 
 def launch_engines_only_standalone(workspace_dir: Optional[str] = None) -> int:
-    """Launch the Engines standalone module.
+    """Launch the Engines standalone GUI module.
 
     Args:
         workspace_dir: Optional path to workspace directory
@@ -463,7 +467,7 @@ def launch_engines_only_standalone(workspace_dir: Optional[str] = None) -> int:
         Exit code (0 for success, 1 for error)
     """
     try:
-        from Core.engines_loader.engines_only_mod import EnginesStandaloneApp
+        from Core.engines_loader.engines_only_mod.gui import EnginesStandaloneGui
         from PySide6.QtWidgets import QApplication
 
         # Validate and resolve workspace
@@ -479,7 +483,8 @@ def launch_engines_only_standalone(workspace_dir: Optional[str] = None) -> int:
             WorkspaceManager.save_workspace(workspace_dir)
 
         app = QApplication(sys.argv)
-        window = EnginesStandaloneApp(workspace_dir=workspace_dir)
+        app.setApplicationName("PyCompiler ARK++ Engines")
+        window = EnginesStandaloneGui(workspace_dir=workspace_dir)
         window.show()
         return app.exec()
     except ImportError as e:
@@ -1088,16 +1093,33 @@ if __name__ == "__main__":
                 workspace_dir = sys.argv[2] if len(sys.argv) > 2 else None
                 sys.exit(launch_bcasl_standalone(workspace_dir))
             elif sys.argv[1] == "engines":
-                workspace_dir = sys.argv[2] if len(sys.argv) > 2 else None
-                # Check for --dry-run flag
-                dry_run = "--dry-run" in sys.argv or "-d" in sys.argv
-                if dry_run:
+                # Extract arguments
+                args = sys.argv[2:] if len(sys.argv) > 2 else []
+                workspace_dir = None
+                
+                # Check for flags first
+                if "--list-engines" in args or "-l" in args:
                     from Core.engines_loader import available_engines
                     engines = available_engines()
                     print(f"Available engines ({len(engines)}):")
                     for eid in engines:
                         print(f"  - {eid}")
                     sys.exit(0)
+                
+                if "--dry-run" in args or "-d" in args:
+                    from Core.engines_loader import available_engines
+                    engines = available_engines()
+                    print(f"Available engines ({len(engines)}):")
+                    for eid in engines:
+                        print(f"  - {eid}")
+                    sys.exit(0)
+                
+                # Get workspace if provided and doesn't look like a flag
+                for arg in args:
+                    if not arg.startswith("-"):
+                        workspace_dir = arg
+                        break
+                
                 sys.exit(launch_engines_only_standalone(workspace_dir))
             elif sys.argv[1] == "discover":
                 discovered = WorkspaceManager.discover_workspaces()
