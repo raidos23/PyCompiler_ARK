@@ -93,29 +93,24 @@ class NuitkaEngine(CompilerEngine):
 
             # Use dynamic widgets or fallback to UI widgets
             # Standalone mode
-            standalone = self._get_opt("standalone")
-            if standalone and standalone.isChecked():
+            if self._nuitka_standalone.isChecked():
                 cmd.append("--standalone")
 
             # Onefile mode
-            onefile = self._get_opt("onefile")
-            if onefile and onefile.isChecked():
+            if self._nuitka_onefile.isChecked():
                 cmd.append("--onefile")
 
             # Windowed (no console)
-            disable_console = self._get_opt("disable_console")
-            if disable_console and disable_console.isChecked():
+            if self._nuitka_disable_console.isChecked():
                 cmd.append("--windows-disable-console")
 
             # Show progress
-            show_progress = self._get_opt("show_progress")
-            if show_progress and show_progress.isChecked():
+            if self._nuitka_show_progress.isChecked():
                 cmd.append("--show-progress")
 
             # Output directory
-            output_dir = self._get_input("output_dir")
-            if output_dir and output_dir.text().strip():
-                cmd.extend(["--output-dir", output_dir.text().strip()])
+            if self._nuitka_output_dir.text().strip():
+                cmd.extend(["--output-dir", self._nuitka_output_dir.text().strip()])
 
             # Auto ajout des plugins Nuitka via détection
             try:
@@ -172,12 +167,11 @@ class NuitkaEngine(CompilerEngine):
         """Handle successful compilation."""
         try:
             # Log success message with output location
-            output_dir = self._get_input("output_dir")
-            if output_dir and output_dir.text().strip():
+            if self._nuitka_output_dir.text().strip():
                 try:
                     if hasattr(gui, "log"):
                         gui.log.append(
-                            f"📁 Compilation Nuitka terminée. Sortie dans: {output_dir.text().strip()}\n"
+                            f"📁 Compilation Nuitka terminée. Sortie dans: {self._nuitka_output_dir.text().strip()}\n"
                         )
                 except Exception:
                     pass
@@ -279,15 +273,7 @@ class NuitkaEngine(CompilerEngine):
                 pass
             return None
 
-    def _get_opt(self, name: str):
-        """Get option widget from engine instance or GUI."""
-        # Try engine instance first (dynamic tabs)
-        if hasattr(self, f"_nuitka_{name}"):
-            return getattr(self, f"_nuitka_{name}")
-        if hasattr(self, f"_opt_{name}"):
-            return getattr(self, f"_opt_{name}")
-        # Fallback to GUI widget (static UI)
-        return getattr(self._gui, name, None) if hasattr(self, "_gui") else None
+
 
     def _get_btn(self, name: str):
         """Get button widget from engine instance or GUI."""
@@ -295,15 +281,7 @@ class NuitkaEngine(CompilerEngine):
             return getattr(self, f"_btn_{name}")
         return getattr(self._gui, name, None) if hasattr(self, "_gui") else None
 
-    def _get_input(self, name: str):
-        """Get input widget from engine instance or GUI."""
-        # Try engine instance first (dynamic tabs)
-        if hasattr(self, f"_nuitka_{name}"):
-            return getattr(self, f"_nuitka_{name}")
-        if hasattr(self, f"_{name}"):
-            return getattr(self, f"_{name}")
-        # Fallback to GUI widget (static UI)
-        return getattr(self._gui, name, None) if hasattr(self, "_gui") else None
+
 
     def get_log_prefix(self, file_basename: str) -> str:
         return f"Nuitka ({self.version})"
