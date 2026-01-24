@@ -167,7 +167,7 @@ class PyInstallerEngine(CompilerEngine):
         """Handle successful compilation."""
         try:
             # Log success message with output location
-            output_dir = self._get_input("output_dir_input")
+            output_dir = getattr(self, "_output_dir_input", getattr(gui, "output_dir_input", None)) if hasattr(self, "_gui") else getattr(self, "_output_dir_input", None)
             if output_dir and output_dir.text().strip():
                 try:
                     if hasattr(gui, "log"):
@@ -293,11 +293,7 @@ class PyInstallerEngine(CompilerEngine):
         # Fallback to GUI widget (static UI)
         return getattr(self._gui, name, None) if hasattr(self, "_gui") else None
 
-    def _get_btn(self, name: str):
-        """Get button widget from engine instance or GUI."""
-        if hasattr(self, f"_btn_{name}"):
-            return getattr(self, f"_btn_{name}")
-        return getattr(self._gui, name, None) if hasattr(self, "_gui") else None
+
 
     def _get_input(self, name: str):
         """Get input widget from engine instance or GUI."""
