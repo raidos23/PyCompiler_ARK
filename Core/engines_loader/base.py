@@ -99,6 +99,7 @@ class CompilerEngine:
     def ensure_tools_installed(self, gui) -> bool:
         """
         Check if all required tools are installed, and install missing ones.
+        Uses direct SysDependencyManager integration for system packages with full GUI support.
         Returns True if all tools are available or installation started, False if system tool installation failed.
         """
         try:
@@ -106,7 +107,7 @@ class CompilerEngine:
             python_tools = tools.get("python", [])
             system_tools = tools.get("system", [])
 
-            # Check Python tools
+            # Check Python tools using venv_manager
             if hasattr(gui, "venv_manager") and gui.venv_manager:
                 venv_path = gui.venv_manager.resolve_project_venv()
                 if venv_path and python_tools:
@@ -117,42 +118,195 @@ class CompilerEngine:
                     if missing_python:
                         if hasattr(gui, "log") and gui.log:
                             gui.log.append(
-                                f"📦 Installation des outils Python manquants: {missing_python}"
+                                gui.tr(
+                                    f"📦 Installation des outils Python manquants: {missing_python}",
+                                    f"📦 Installing missing Python tools: {missing_python}"
+                                )
                             )
                         gui.venv_manager.ensure_tools_installed(
                             venv_path, missing_python
                         )
 
-            # Check and install system tools
+            # Check and install system tools using direct SysDependencyManager
             if system_tools:
                 try:
-                    from Core.sys_deps import (
-                        check_system_packages,
-                        install_system_packages,
-                    )
+                    # Import and use SysDependencyManager directly for full GUI support
+                    from Core.sys_deps import SysDependencyManager, check_system_packages
 
-                    if not check_system_packages(system_tools):
+                    # Get or create the system dependency manager with GUI parent
+                    if hasattr(gui, "sys_deps_manager") and gui.sys_deps_manager:
+                        sys_manager = gui.sys_deps_manager
+                    else:
+                        sys_manager = SysDependencyManager(gui)
+
+                    # Check which system tools are missing
+                    missing_system = []
+                    for tool in system_tools:
+                        if not check_system_packages([tool]):
+                            missing_system.append(tool)
+
+                    if missing_system:
                         if hasattr(gui, "log") and gui.log:
                             gui.log.append(
-                                f"📦 Installation des outils système manquants: {system_tools}"
+                                gui.tr(
+                                    f"📦 Installation des outils système manquants: {missing_system}",
+                                    f"📦 Installing missing system tools: {missing_system}"
+                                )
                             )
-                        if not install_system_packages(system_tools, gui):
+
+                        # Detect platform and use appropriate installation method
+                        import platform
+                        system = platform.system().lower()
+
+                        if system == "linux":
+                            # Use Linux package installation with progress dialog
+                            process = sys_manager.install_packages_linux(missing_system)
+                            if process:
+                                # Wait for completion with timeout
+                                if process.waitForFinished(600000):  # 10 minutes
+                                    if process.exitCode() == 0:
+                                        if hasattr(gui, "log") and gui.log:
+                                            gui.log.append(
+                                                gui.tr(
+                                                    f"✅ Outils système installés avec succès: {missing_system}",
+                                                    f"✅ System tools installed successfully: {missing_system}"
+                                                )
+                                            )
+                                    else:
+                                        if hasattr(gui, "log") and gui.log:
+                                            gui.log.append(
+                                                gui.tr(
+                                                    f"❌ Échec installation outils système: {missing_system} (code: {process.exitCode()})",
+                                                    f"❌ System tools installation failed: {missing_system} (code: {process.exitCode()})"
+                                                )
+                                            )
+                                        return False
+                                else:
+                                    if hasattr(gui, "log") and gui.log:
+                                        gui.log.append(
+                                            gui.tr(
+                                                "⏱️ Timeout lors de l'installation des outils système",
+                                                "⏱️ Timeout during system tools installation"
+                                            )
+                                        )
+                                    return False
+                            else:
+                                if hasattr(gui, "log") and gui.log:
+                                    gui.log.append(
+                                        gui.tr(
+                                            "❌ Impossible de démarrer l'installation des outils système",
+                                            "❌ Unable to start system tools installation"
+                                        )
+                                    )
+                                return False
+
+                        elif system == "windows":
+                            # Convert package names to winget format for Windows
+                            winget_packages = []
+                            for tool in missing_system:
+                                # Map common Linux package names to Windows equivalents
+                                winget_map = {
+                                    "build-essential": [{"id": "Microsoft.VisualStudio.2022.BuildTools"}],
+                                    "gcc": [{"id": "Microsoft.VisualStudio.2022.BuildTools"}],
+                                    "g++": [{"id": "Microsoft.VisualStudio.2022.BuildTools"}],
+                                    "python3-dev": [{"id": "Python.Python.3"}],
+                                    "libpython3-dev": [{"id": "Python.Python.3"}],
+                                    "patchelf": [],  # Not available on Windows
+                                }
+                                if tool in winget_map:
+                                    winget_packages.extend(winget_map[tool])
+                                else:
+                                    # Try as generic package
+                                    winget_packages.append({"id": tool})
+
+                            if winget_packages:
+                                process = sys_manager.install_packages_windows(winget_packages)
+                                if process:
+                                    if process.waitForFinished(600000):  # 10 minutes
+                                        if process.exitCode() == 0:
+                                            if hasattr(gui, "log") and gui.log:
+                                                gui.log.append(
+                                                    gui.tr(
+                                                        f"✅ Outils Windows installés: {missing_system}",
+                                                        f"✅ Windows tools installed: {missing_system}"
+                                                    )
+                                                )
+                                        else:
+                                            if hasattr(gui, "log") and gui.log:
+                                                gui.log.append(
+                                                    gui.tr(
+                                                        f"❌ Échec installation Windows: {missing_system}",
+                                                        f"❌ Windows installation failed: {missing_system}"
+                                                    )
+                                                )
+                                            return False
+                                    else:
+                                        if hasattr(gui, "log") and gui.log:
+                                            gui.log.append(
+                                                gui.tr(
+                                                    "⏱️ Timeout lors de l'installation Windows",
+                                                    "⏱️ Timeout during Windows installation"
+                                                )
+                                            )
+                                        return False
+                                else:
+                                    if hasattr(gui, "log") and gui.log:
+                                        gui.log.append(
+                                            gui.tr(
+                                                "⚠️ winget non disponible, installation manuelle requise",
+                                                "⚠️ winget not available, manual installation required"
+                                            )
+                                        )
+                                    # Open documentation URL for manual installation
+                                    sys_manager.open_urls([
+                                        "https://learn.microsoft.com/en-us/windows/package-manager/winget/"
+                                    ])
+                                    return False
+                            else:
+                                if hasattr(gui, "log") and gui.log:
+                                    gui.log.append(
+                                        gui.tr(
+                                            f"⚠️ Aucun équivalent Windows pour: {missing_system}",
+                                            f"⚠️ No Windows equivalent for: {missing_system}"
+                                        )
+                                    )
+                        else:
                             if hasattr(gui, "log") and gui.log:
                                 gui.log.append(
-                                    f"❌ Échec installation outils système: {system_tools}"
+                                    gui.tr(
+                                        "⚠️ Plateforme non supportée pour l'installation automatique",
+                                        "⚠️ Platform not supported for automatic installation"
+                                    )
                                 )
-                            return False
+                                return False
+                    else:
+                        if hasattr(gui, "log") and gui.log:
+                            gui.log.append(
+                                gui.tr(
+                                    f"✅ Tous les outils système sont déjà installés: {system_tools}",
+                                    f"✅ All system tools are already installed: {system_tools}"
+                                )
+                            )
+
                 except Exception as e:
                     if hasattr(gui, "log") and gui.log:
                         gui.log.append(
-                            f"⚠️ Error checking/installing system tools {system_tools}: {e}"
+                            gui.tr(
+                                f"⚠️ Erreur lors de la vérification/installation des outils système: {e}",
+                                f"⚠️ Error checking/installing system tools: {e}"
+                            )
                         )
                     return False
 
             return True
         except Exception as e:
             if hasattr(gui, "log") and gui.log:
-                gui.log.append(f"⚠️ Error in ensure_tools_installed: {e}")
+                gui.log.append(
+                    gui.tr(
+                        f"⚠️ Erreur dans ensure_tools_installed: {e}",
+                        f"⚠️ Error in ensure_tools_installed: {e}"
+                    )
+                )
             return False
 
     def apply_i18n(self, gui, tr: dict) -> None:
