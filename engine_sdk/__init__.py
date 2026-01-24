@@ -25,41 +25,72 @@ __version__ = "1.0.0"
 from .base import CompilerEngine
 from .utils import (
     atomic_write_text,
-    build_env,
+   
     clamp_text,
     ensure_dir,
-    get_main_file_names,
     is_within_workspace,
-    normalized_program_and_args,
+   
     open_dir_candidates,
     open_path,
     redact_secrets,
     resolve_executable,  # executable resolution helper (SDK)
-    resolve_executable_path,
-    run_process,
+ 
     safe_join,
     safe_log,
     tr,
-    validate_args,
+
 )
 
 # Re-export venv/pip helpers from mainprocess.py (moved from utils.py)
 # These are maintained here for backward compatibility
-try:
-    from Core.Compiler.mainprocess import (
-        pip_executable,
-        pip_install,
-        pip_show,
-        resolve_project_venv,
-    )
-except ImportError:
-    # Fallback: keep original imports if mainprocess.py is not available
-    from .utils import (
-        pip_executable,
-        pip_install,
-        pip_show,
-        resolve_project_venv,
-    )
+# NOTE: Using lazy imports to avoid circular import issues during engine discovery
+_lazy_imports_done = False
+_lazy_mainprocess_imports = {}
+
+
+def _do_lazy_imports():
+    """Perform lazy imports from Core.Compiler.mainprocess to avoid circular imports."""
+    global _lazy_imports_done, _lazy_mainprocess_imports
+    if _lazy_imports_done:
+        return
+    try:
+        from Core.Compiler.mainprocess import (
+            pip_executable,
+            pip_install,
+            pip_show,
+            resolve_project_venv,
+        )
+        _lazy_mainprocess_imports = {
+            "pip_executable": pip_executable,
+            "pip_install": pip_install,
+            "pip_show": pip_show,
+            "resolve_project_venv": resolve_project_venv,
+        }
+        _lazy_imports_done = True
+    except ImportError:
+        # Fallback: keep original imports if mainprocess.py is not available
+        from .utils import (
+            pip_executable,
+            pip_install,
+            pip_show,
+            resolve_project_venv,
+        )
+        _lazy_mainprocess_imports = {
+            "pip_executable": pip_executable,
+            "pip_install": pip_install,
+            "pip_show": pip_show,
+            "resolve_project_venv": resolve_project_venv,
+        }
+        _lazy_imports_done = True
+
+
+# Provide access to these functions via __getattr__ for lazy loading
+def __getattr__(name: str):
+    if name in ("pip_executable", "pip_install", "pip_show", "resolve_project_venv"):
+        _do_lazy_imports()
+        if name in _lazy_mainprocess_imports:
+            return _lazy_mainprocess_imports[name]
+    raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
 
 try:
     # Optional alias to host-level executable resolver for advanced cases
