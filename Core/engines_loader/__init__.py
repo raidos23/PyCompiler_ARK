@@ -23,6 +23,9 @@ import sys
 from . import registry as registry  # re-export registry module
 from .base import CompilerEngine  # re-export base type
 from .registry import unload_all  # re-export unload_all function
+from .registry import get_engine  # re-export get_engine function
+from .registry import available_engines  # re-export available_engines function
+from .registry import create  # re-export create function
 from .validator import (
     EngineCompatibilityCheckResult,
     check_engine_compatibility,
@@ -90,4 +93,4 @@ try:
 except Exception:
     pass
 
-__all__ = ["CompilerEngine", "registry", "unload_all"]
+__all__ = ["CompilerEngine", "registry", "unload_all", "get_engine", "available_engines", "create"]

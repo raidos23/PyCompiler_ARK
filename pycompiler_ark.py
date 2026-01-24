@@ -453,6 +453,53 @@ def launch_bcasl_standalone(workspace_dir: Optional[str] = None) -> int:
         return 1
 
 
+def launch_engines_only_standalone(workspace_dir: Optional[str] = None) -> int:
+    """Launch the Engines standalone module.
+
+    Args:
+        workspace_dir: Optional path to workspace directory
+
+    Returns:
+        Exit code (0 for success, 1 for error)
+    """
+    try:
+        from Core.engines_loader.engines_only_mod import EnginesStandaloneApp
+        from PySide6.QtWidgets import QApplication
+
+        # Validate and resolve workspace
+        if workspace_dir:
+            is_valid, resolved_path = WorkspaceManager.validate_workspace(workspace_dir)
+            if not is_valid:
+                if click:
+                    click.echo(f"❌ {resolved_path}", err=True)
+                else:
+                    print(f"❌ {resolved_path}")
+                return 1
+            workspace_dir = resolved_path
+            WorkspaceManager.save_workspace(workspace_dir)
+
+        app = QApplication(sys.argv)
+        window = EnginesStandaloneApp(workspace_dir=workspace_dir)
+        window.show()
+        return app.exec()
+    except ImportError as e:
+        if click:
+            click.echo(
+                f"❌ Error: Failed to import Engines standalone module: {e}", err=True
+            )
+            click.echo("Make sure Core.engines_loader.engines_only_mod is properly installed.", err=True)
+        else:
+            print(f"❌ Error: Failed to import Engines standalone module: {e}")
+            print("Make sure Core.engines_loader.engines_only_mod is properly installed.")
+        return 1
+    except Exception as e:
+        if click:
+            click.echo(f"❌ Error: Failed to launch Engines standalone: {e}", err=True)
+        else:
+            print(f"❌ Error: Failed to launch Engines standalone: {e}")
+        return 1
+
+
 def launch_main_application() -> int:
     """Launch the main PyCompiler ARK++ application.
 
@@ -873,6 +920,101 @@ if click:
         sys.exit(launch_bcasl_standalone(workspace_dir))
 
     @cli.command(context_settings=dict(help_option_names=["-h", "--help"]))
+    @click.argument(
+        "workspace",
+        required=False,
+        type=click.Path(exists=False),
+        shell_complete=lambda ctx, args, incomplete: PathCompleter.complete_paths(
+            incomplete
+        ),
+    )
+    @click.option("--discover", is_flag=True, help="Discover workspaces automatically")
+    @click.option("--recent", is_flag=True, help="Use most recent workspace")
+    @click.option(
+        "--dry-run",
+        is_flag=True,
+        help="Show command without executing",
+    )
+    @click.option(
+        "-l",
+        "--language",
+        type=click.Choice(["en", "fr"]),
+        default="en",
+        help="Interface language",
+    )
+    @click.option(
+        "-t",
+        "--theme",
+        type=click.Choice(["light", "dark"]),
+        default="dark",
+        help="UI theme",
+    )
+    def engines(workspace, discover, recent, dry_run, language, theme):
+        """Launch Engines standalone module for compilation engine management.
+
+        WORKSPACE: Optional path to workspace directory
+
+        Examples:
+            python -m pycompiler_ark engines                  # No workspace
+            python -m pycompiler_ark engines /path/to/project # With path
+            python -m pycompiler_ark engines .                # Current directory
+            python -m pycompiler_ark engines --discover       # Auto-discover
+            python -m pycompiler_ark engines --dry-run        # Dry-run mode
+            python -m pycompiler_ark engines --language fr    # French interface
+        """
+        workspace_dir = None
+
+        # Handle auto-discovery
+        if discover:
+            discovered = WorkspaceManager.discover_workspaces()
+            if discovered:
+                workspace_dir = str(discovered[0])
+                click.echo(f"✅ Discovered workspace: {workspace_dir}")
+            else:
+                click.echo("❌ No workspaces discovered", err=True)
+                sys.exit(1)
+
+        # Handle recent workspace
+        elif recent:
+            recent_ws = WorkspaceManager.get_recent_workspaces()
+            if recent_ws:
+                workspace_dir = str(recent_ws[0])
+                click.echo(f"✅ Using recent workspace: {workspace_dir}")
+            else:
+                click.echo("❌ No recent workspaces found", err=True)
+                sys.exit(1)
+
+        # Use provided workspace
+        elif workspace:
+            workspace_dir = workspace
+
+        # Validate workspace if provided
+        if workspace_dir:
+            ws_path = Path(workspace_dir)
+            if not ws_path.exists():
+                click.echo(
+                    f"⚠️  Workspace directory does not exist: {workspace_dir}", err=True
+                )
+                click.echo("Creating directory...", err=True)
+                try:
+                    ws_path.mkdir(parents=True, exist_ok=True)
+                    click.echo(f"✅ Directory created: {workspace_dir}")
+                except Exception as e:
+                    click.echo(f"❌ Failed to create directory: {e}", err=True)
+                    sys.exit(1)
+
+        # For dry-run mode, just list engines
+        if dry_run:
+            from Core.engines_loader import available_engines
+            engines = available_engines()
+            click.echo(f"📦 Available engines ({len(engines)}):")
+            for eid in engines:
+                click.echo(f"  • {eid}")
+            sys.exit(0)
+
+        sys.exit(launch_engines_only_standalone(workspace_dir))
+
+    @cli.command(context_settings=dict(help_option_names=["-h", "--help"]))
     def main_app():
         """Launch the main PyCompiler ARK++ application."""
         sys.exit(launch_main_application())
@@ -945,6 +1087,18 @@ if __name__ == "__main__":
             elif sys.argv[1] == "bcasl":
                 workspace_dir = sys.argv[2] if len(sys.argv) > 2 else None
                 sys.exit(launch_bcasl_standalone(workspace_dir))
+            elif sys.argv[1] == "engines":
+                workspace_dir = sys.argv[2] if len(sys.argv) > 2 else None
+                # Check for --dry-run flag
+                dry_run = "--dry-run" in sys.argv or "-d" in sys.argv
+                if dry_run:
+                    from Core.engines_loader import available_engines
+                    engines = available_engines()
+                    print(f"Available engines ({len(engines)}):")
+                    for eid in engines:
+                        print(f"  - {eid}")
+                    sys.exit(0)
+                sys.exit(launch_engines_only_standalone(workspace_dir))
             elif sys.argv[1] == "discover":
                 discovered = WorkspaceManager.discover_workspaces()
                 if discovered:
