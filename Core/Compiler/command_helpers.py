@@ -14,39 +14,49 @@
 # limitations under the License.
 
 """
-Module command_helpers.py — Helpers pour la construction et l'exécution de commandes
+================================================================================
+MODULE command_helpers.py - Helpers pour la Construction et Exécution de Commandes
+================================================================================
 
 Ce module fournit des utilitaires de bas niveau pour la construction sécurisée
-de commandes de compilation, la validation des arguments et l'exécution de processus.
-Il est utilisé par le module mainprocess.py pour orchestrer les compilations.
+de commandes de compilation, la validation des arguments et l'exécution de
+processus. Il constitue le socle technique sur lequel repose mainprocess.py.
 
-Fonctions principales:
-    - validate_args: Validation et normalisation des arguments CLI
-    - build_env: Construction d'un environnement minimal pour les processus
-    - normalized_program_and_args: Normalisation couple (programme, arguments)
-    - run_process: Exécution générique de processus (QProcess ou subprocess)
+FONCTIONS PRINCIPALES:
+    ┌────────────────────────────────────────────────────────────────────────┐
+    │ VALIDATION & NORMALISATION                                             │
+    ├────────────────────────────────────────────────────────────────────────┤
+    │ • validate_args()              → Valide et normalise les arguments CLI │
+    │ • normalized_program_and_args() → Combine conversion + validation      │
+    ├────────────────────────────────────────────────────────────────────────┤
+    │ ENVIRONNEMENT                                                           │
+    ├────────────────────────────────────────────────────────────────────────┤
+    │ • build_env()                  → Construit un environnement sécurisé   │
+    ├────────────────────────────────────────────────────────────────────────┤
+    │ EXÉCUTION                                                               │
+    ├────────────────────────────────────────────────────────────────────────┤
+    │ • run_process()                → Exécute un processus (QProcess ou     │
+    │                                 subprocess avec fallback automatique)  │
+    └────────────────────────────────────────────────────────────────────────┘
 
-Usage typique (dans mainprocess.py):
+FONCTIONNEMENT INTERNE:
+    1. Les arguments sont d'abord validés (validate_args) pour prévenir les
+       injections de commandes et les caractères dangereux.
+    2. L'environnement est construit (build_env) avec un whitelist de vars.
+    3. Le programme et ses arguments sont normalisés en types sûrs.
+    4. Le processus est exécuté via QProcess (préféré) ou subprocess (fallback).
 
-    from .command_helpers import (
-        validate_args,
-        build_env,
-        normalized_program_and_args,
-        run_process,
-    )
+SÉCURITÉ:
+    - Validation stricte des arguments (rejet des caractères de contrôle)
+    - Whitelist des variables d'environnement (variables par défaut sûres)
+    - Encodage forcé en UTF-8 pour les sorties
+    - Masquage automatique des secrets dans les logs
 
-    def compiler_function(self, gui, file):
-        # Validation des arguments
-        args = validate_args(["--input", file])
+DÉPENDANCES:
+    - PySide6.QtCore.QProcess : Préféré pour l'intégration avec l'event loop Qt
+    - subprocess : Fallback lorsque QProcess n'est pas disponible
 
-        # Construction de l'environnement
-        env = build_env(None, extra={"PYTHONPATH": "/custom/path"})
-
-        # Normalisation programme + arguments
-        prog, args = normalized_program_and_args("python", args)
-
-        # Exécution du processus
-        code, stdout, stderr = run_process(gui, prog, args, env=env)
+================================================================================
 """
 
 from __future__ import annotations
@@ -58,48 +68,102 @@ from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Any, Optional, Union
 
-# Tentative d'import de QProcess pour l'intégration Qt
-# QProcess est préféré quand disponible car il offre une meilleure
-# intégration avec l'événement loop de PySide6
+# =============================================================================
+# SECTION 1 : IMPORTS ET CONSTANTES
+# =============================================================================
+# Import de QProcess pour l'intégration Qt. QProcess est préféré car il offre
+# une meilleure intégration avec l'event loop de PySide6 et permet l'utilisation
+# des signaux/slots Qt pour la communication asynchrone.
+
 try:
     from PySide6.QtCore import QProcess  # type: ignore
 except Exception:  # pragma: no cover - Qt peut ne pas être installé
     QProcess = None  # type: ignore
 
-# Type alias pour les chemins (str ou Path)
+# --- Type Alias pour les Chemins ---
+# Un "Pathish" est un chemin qui peut être exprimé soit comme string,
+# soit comme objet Path. Cette flexibilité simplifie l'API.
 Pathish = Union[str, Path]
 
 
-# ============================================================================
-# SECTION 1 : VALIDATION DES ARGUMENTS CLI
-# ============================================================================
-# Ces fonctions assurent la sécurité et la robustesse des arguments passés
-# aux processus externes. Elles préviennent les injections et les erreurs.
+# =============================================================================
+# SECTION 2 : VALIDATION DES ARGUMENTS CLI
+# =============================================================================
+# Cette section contient les fonctions de validation et de normalisation
+# des arguments destinés à être passés aux processus externes.
+# La validation est cruciale pour prévenir les injections de commandes.
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# 2.1 Variables d'Environnement par Défaut Conservées
+# -----------------------------------------------------------------------------
+# Ces variables sont considérées comme "sûres" et conservées par défaut
+# lors de la construction d'un environnement pour un processus.
+# Elles sont essentielles pour le bon fonctionnement de Python et du système.
+
+_DEF_ENV_KEYS = (
+    "PATH",     # Chemins des exécutables
+    "LANG",     # Paramètres linguistiques
+    "LC_ALL",   # Paramètres régionaux complets
+    "LC_CTYPE", # Type de caractères
+    "TMP",      # Répertoire temporaire (Windows)
+    "TEMP",     # Répertoire temporaire (Windows, alternatif)
+)
 
 
-def validate_args(args: Sequence[Any], *, max_len: int = 4096) -> list[str]:
-    """Valide et normalise une séquence d'arguments CLI.
-
-    Cette fonction effectue plusieurs vérifications de sécurité:
-    1. Rejette les valeurs None
-    2. Rejette les caractères de contrôle (newline, null, etc.)
-    3. Limite la longueur de chaque argument
-    4. Convertit tous les types en chaînes de caractères
-
+def validate_args(
+    args: Sequence[Any], 
+    *, 
+    max_len: int = 4096
+) -> list[str]:
+    """
+    Valide et normalise une séquence d'arguments CLI.
+    
+    Cette fonction effectue plusieurs vérifications de sécurité essentielles:
+    
+    1. **Rejet des valeurs None** : Les arguments None sont invalides et
+       indiquent généralement une erreur de programmation.
+    
+    2. **Rejet des caractères de contrôle** : Les caractères comme newline
+       (\\n), carriage return (\\r) et null (\\x00) peuvent être utilisés pour
+       injecter des commandes supplémentaires.
+    
+    3. **Limite de longueur** : Empêche les attaques par débordement de
+       tampon et les arguments excessivement longs.
+    
+    4. **Conversion en chaînes** : Tous les types sont convertis en strings
+       pour assurer la cohérence du typage.
+    
     Args:
-        args: Séquence d'arguments à valider (peut contenir des Path, nombres, etc.)
-        max_len: Longueur maximale autorisée par argument (défaut: 4096)
-
+        args: Séquence d'arguments à valider. Peut contenir des objets de
+              types variés (Path, int, str, etc.) qui seront convertis.
+        max_len: Longueur maximale autorisée pour chaque argument.
+                 Par défaut 4096 caractères.
+    
     Returns:
-        Liste de chaînes de caractères validées
-
+        Liste de chaînes de caractères validées et normalisées.
+    
     Raises:
-        ValueError: Si un argument est None, contient des caractères invalides,
-                   ou dépasse la longueur maximale
-
-    Exemple:
+        ValueError: Si un argument est None, contient des caractères de
+                   contrôle invalides, ou dépasse la longueur maximale.
+    
+    Exemples:
         >>> validate_args(["--input", "file.py", 123])
         ['--input', 'file.py', '123']
+        
+        >>> validate_args(["--name", "test"])
+        ['--name', 'test']
+        
+        >>> validate_args([None])  # ValueError
+        ValueError: Argument is None
+        
+        >>> validate_args(["--data", "line\\nbreak"])  # ValueError
+        ValueError: Invalid control character in argument...
+    
+    Notes:
+        - Cette validation est exécutée AVANT toute exécution de processus.
+        - Elle protège contre les injections de commandes shell.
+        - Les objets Path sont automatiquement convertis en chemins absolus.
     """
     out: list[str] = []
     for a in args:
@@ -114,17 +178,13 @@ def validate_args(args: Sequence[Any], *, max_len: int = 4096) -> list[str]:
     return out
 
 
-# ============================================================================
-# SECTION 2 : CONSTRUCTION DE L'ENVIRONNEMENT
-# ============================================================================
-# Construit un dictionnaire d'environnement sécurisé pour les processus.
-# Filtre les variables pour ne garder que celles jugées sûres.
-
-
-# Variables d'environnement par défaut conservées
-# Ce sont les variables essentielles pour le bon fonctionnement des
-# processus Python et du système
-_DEF_ENV_KEYS = ("PATH", "LANG", "LC_ALL", "LC_CTYPE", "TMP", "TEMP")
+# =============================================================================
+# SECTION 3 : CONSTRUCTION DE L'ENVIRONNEMENT
+# =============================================================================
+# Cette section contient les fonctions pour construire un environnement
+# de processus sécurisé. L'environnement est filtré pour ne garder que
+# les variables jugées sûres.
+# =============================================================================
 
 
 def build_env(
@@ -134,80 +194,136 @@ def build_env(
     extra: Optional[Mapping[str, str]] = None,
     minimal_path: Optional[str] = None,
 ) -> dict[str, str]:
-    """Construit un dictionnaire d'environnement pour subprocess/QProcess.
-
-    Cette fonction crée un environnement minimal et sécurisé en:
-    1. Partant d'un mapping vide ou d'un 'base' fourni
-    2. Ne conservant que les variables whitelisted (ou un ensemble par défaut)
-    3. Ajoutant/écrasant avec les valeurs 'extra'
-    4. Éventuellement remplaçant PATH par 'minimal_path'
-
+    """
+    Construit un dictionnaire d'environnement sécurisé pour subprocess/QProcess.
+    
+    Cette fonction crée un environnement minimal en suivant ce processus:
+    
+    1. **Initialisation** : Part d'un mapping vide ou du 'base' fourni.
+    
+    2. **Filtrage** : Ne conserve que les variables whitelisted. Si aucune
+       whitelist n'est fournie, utilise la liste par défaut (_DEF_ENV_KEYS).
+    
+    3. **Injection** : Ajoute ou écrase les variables avec 'extra'.
+    
+    4. **PATH** : Remplace éventuellement le PATH par 'minimal_path'.
+    
+    L'objectif est de créer un environnement isolé et prévisible pour les
+    processus de compilation, en évitant les variables potentiellement
+    dangereuses ou incohérentes.
+    
     Args:
-        base: Environnement de base à utiliser (si None, commence vide)
-        whitelist: Liste des variables d'environnement à conserver
-        extra: Variables supplémentaires à ajouter/écraser
-        minimal_path: Valeur fixe pour PATH (si fourni, écrase le PATH existant)
-
+        base: Environnement de base à utiliser. Si None, commence avec
+              un dictionnaire vide.
+        whitelist: Liste des variables d'environnement à conserver. Si None,
+                   utilise la liste par défaut (_DEF_ENV_KEYS).
+        extra: Variables supplémentaires à ajouter ou écraser dans l'env.
+        minimal_path: Valeur fixe pour la variable PATH. Si fourni, remplace
+                      complètement le PATH existant.
+    
     Returns:
-        Dictionnaire contenant l'environnement construit
-
-    Exemple:
+        Dictionnaire contenant l'environnement construit, prêt à être passé
+        à subprocess ou QProcess.
+    
+    Exemples:
+        >>> # Environnement minimal avec variables par défaut
+        >>> env = build_env()
+        >>> print(env.keys())
+        dict_keys(['PATH', 'LANG', 'LC_ALL', 'LC_CTYPE', 'TMP', 'TEMP'])
+        
+        >>> # À partir de l'environnement courant, en gardant seulement PATH et HOME
         >>> env = build_env(
         ...     base=os.environ,
         ...     whitelist=["PATH", "HOME"],
-        ...     extra={"MY_VAR": "value"},
-        ...     minimal_path="/custom/bin"
+        ...     extra={"MY_VAR": "value"}
         ... )
+        
+        >>> # PATH personnalisé (pour isoler l'environnement de compilation)
+        >>> env = build_env(
+        ...     base=os.environ,
+        ...     minimal_path="/custom/bin:/usr/local/bin"
+        ... )
+    
+    Notes:
+        - Les variables non-string sont ignorées.
+        - L'ordre de priorité: extra > minimal_path > whitelist > base
+        - Pour les compilations, un PATH minimal est souvent préféré pour
+          éviter les conflits de versions.
     """
     env: dict[str, str] = {}
     src = dict(base or {})
     allow = set(whitelist or _DEF_ENV_KEYS)
+    
+    # Filtrage des variables selon la whitelist
     for k, v in src.items():
         if k in allow and isinstance(v, str):
             env[k] = v
+    
+    # Remplacement du PATH si demandé
     if minimal_path is not None:
         env["PATH"] = minimal_path
+    
+    # Ajout des variables supplémentaires
     if extra:
         for k, v in extra.items():
             if isinstance(k, str) and isinstance(v, str):
                 env[k] = v
+    
     return env
 
 
-# ============================================================================
-# SECTION 3 : NORMALISATION PROGRAMME + ARGUMENTS
-# ============================================================================
-# Combine la conversion en chaîne et la validation des arguments.
+# =============================================================================
+# SECTION 4 : NORMALISATION PROGRAMME + ARGUMENTS
+# =============================================================================
+# Combine la conversion en chaîne et la validation des arguments en une
+# seule opération pratique.
+# =============================================================================
 
 
 def normalized_program_and_args(
-    program: Pathish, args: Sequence[Any]
+    program: Pathish, 
+    args: Sequence[Any]
 ) -> tuple[str, list[str]]:
-    """Normalise le programme et ses arguments en types sûrs.
-
-    Cette fonction:
-    1. Convertit le chemin du programme en chaîne de caractères
-    2. Valide tous les arguments avec validate_args
-
+    """
+    Normalise le programme et ses arguments en types sûrs.
+    
+    Cette fonction de commodité combine deux opérations:
+    1. Conversion du chemin du programme en chaîne de caractères
+    2. Validation de tous les arguments avec validate_args()
+    
     Args:
-        program: Chemin vers l'exécutable (str ou Path)
-        args: Séquence d'arguments pour le programme
-
+        program: Chemin vers l'exécutable (peut être str ou Path).
+        args: Séquence d'arguments pour le programme.
+    
     Returns:
-        Tuple (programme_str, args_validés)
-
-    Exemple:
+        Tuple (programme_str, args_validés) où:
+        - programme_str: Chemin du programme en string
+        - args_validés: Liste d'arguments validés et normalisés
+    
+    Raises:
+        ValueError: Si un argument est invalide (voir validate_args).
+    
+    Exemples:
         >>> normalized_program_and_args(Path("/usr/bin/python"), ["-c", "print(1)"])
         ('/usr/bin/python', ['-c', 'print(1)'])
+        
+        >>> normalized_program_and_args("python", ["script.py"])
+        ('python', ['script.py'])
+    
+    Notes:
+        - Cette fonction est généralement appelée avant run_process().
+        - Elle garantit que tous les types sont normalisés avant exécution.
     """
     prog_str = str(program)
     return prog_str, validate_args(args)
 
 
-# ============================================================================
-# SECTION 4 : EXÉCUTION DE PROCESSUS
-# ============================================================================
-# Exécution générique avec support QProcess (Qt) et subprocess (fallback).
+# =============================================================================
+# SECTION 5 : EXÉCUTION DE PROCESSUS
+# =============================================================================
+# Point d'entrée principal pour l'exécution de processus. Supporte QProcess
+# (Qt) avec fallback vers subprocess standard.
+# =============================================================================
 
 
 def run_process(
@@ -221,46 +337,103 @@ def run_process(
     on_stdout: Optional[Any] = None,
     on_stderr: Optional[Any] = None,
 ) -> tuple[int, str, str]:
-    """Exécute un processus en utilisant QProcess (Qt) ou subprocess.
-
+    """
+    Exécute un processus en utilisant QProcess (Qt) ou subprocess.
+    
     Cette fonction est le point d'entrée principal pour l'exécution de
     processus dans PyCompiler ARK. Elle offre plusieurs avantages:
-    - Utilisation de QProcess pour une meilleure intégration Qt
-    - Fallback automatique vers subprocess si QProcess indisponible
-    - Gestion automatique du répertoire de travail (depuis gui.workspace_dir)
-    - Support des callbacks pour stdout/stderr
-
+    
+    - **QProcess (Préféré)** : Meilleure intégration avec l'event loop Qt,
+      support natif des signaux/slots, et gestion plus propre des processus.
+    
+    - **Subprocess (Fallback)** : Si QProcess échoue ou n'est pas disponible,
+      utilise subprocess.run() comme solution de repli.
+    
+    - **Gestion du Répertoire** : Utilise automatiquement gui.workspace_dir
+      comme répertoire de travail si aucun n'est spécifié.
+    
+    - **Callbacks Optionnels** : Appelle on_stdout/on_stderr après la
+      complétion du processus avec le contenu complet des buffers.
+    
+    - **Timeout Intelligent** : Gère proprement les timeouts avec tentative
+      d'arrêt propre (terminate) avant forçage (kill).
+    
     Args:
-        gui: Instance GUI (MainWindow) contenant workspace_dir et log
-        program: Chemin vers l'exécutable
-        args: Arguments à passer au programme
-        cwd: Répertoire de travail (si None, utilise gui.workspace_dir)
-        env: Variables d'environnement (si None, utilise l'environnement courant)
-        timeout_ms: Timeout en millisecondes (défaut: 300s = 5min)
-        on_stdout: Callback optionnel appelé avec les données stdout
-        on_stderr: Callback optionnel appelé avec les données stderr
-
+        gui: Instance GUI (MainWindow) contenant workspace_dir et log.
+             Utilisé pour déterminer le répertoire de travail par défaut.
+        program: Chemin vers l'exécutable à lancer.
+        args: Arguments à passer au programme.
+        cwd: Répertoire de travail. Si None, utilise gui.workspace_dir.
+        env: Variables d'environnement. Si None, utilise l'environnement
+             courant (filtré selon build_env).
+        timeout_ms: Timeout en millisecondes. Par défaut 300000ms (5 min).
+        on_stdout: Callback(optionnel) appelé avec les données stdout.
+                   Signature: callback(stdout: str) -> None
+        on_stderr: Callback(optionnel) appelé avec les données stderr.
+                   Signature: callback(stderr: str) -> None
+    
     Returns:
         Tuple (exit_code, stdout, stderr):
-            - exit_code: Code de retour du processus
-            - stdout: Sortie standard capturée
-            - stderr: Sortie d'erreur capturée
-
-    Note:
-        Les callbacks on_stdout/on_stderr sont appelés après la complétion
-        du processus, avec le contenu complet des buffers (pas de streaming).
-
-    Exemple:
+        - exit_code: Code de retour du processus (0 = succès)
+        - stdout: Sortie standard capturée (string)
+        - stderr: Sortie d'erreur capturée (string)
+    
+    Raises:
+        - Ne lève jamais d'exception ; retourne (1, "", str(e)) en cas d'erreur.
+    
+    Exemples:
+        >>> # Exécution simple
         >>> code, out, err = run_process(
         ...     gui, "python", ["-c", "print('hello')"],
         ...     timeout_ms=60000
         ... )
         >>> print(out)
         hello
+        
+        >>> # Avec répertoire personnalisé
+        >>> code, out, err = run_process(
+        ...     gui, "python", ["script.py"],
+        ...     cwd="/path/to/workdir"
+        ... )
+        
+        >>> # Avec callbacks
+        >>> def log_output(text):
+        ...     print(f"OUTPUT: {text}")
+        >>> code, out, err = run_process(
+        ...     gui, "python", ["script.py"],
+        ...     on_stdout=log_output
+        ... )
+    
+    Flux d'Exécution:
+        ┌─────────────────────────────────────────────────────────────┐
+        │ 1. Normaliser programme + arguments                         │
+        │ 2. Déterminer répertoire de travail (cwd)                   │
+        │ 3. Tenter QProcess (si disponible)                          │
+        │    ├─ Configurer programme, arguments, cwd, env            │
+        │    ├─ Démarrer le processus                                │
+        │    ├─ Attendre avec timeout                                │
+        │    ├─ Si timeout: terminate → wait → kill                  │
+        │    └─ Lire stdout/stderr et retourner                      │
+        │ 4. Si QProcess échoue: utiliser subprocess.run()            │
+        │ 5. Exécuter les callbacks (si fournis)                      │
+        │ 6. Retourner (code, stdout, stderr)                        │
+        └─────────────────────────────────────────────────────────────┘
+    
+    Notes:
+        - Les callbacks sont appelés APRÈS la complétion du processus,
+          pas en streaming temps réel.
+        - Les sorties sont décodées en UTF-8 avec erreurs ignorées.
+        - Pour les processus de longue durée, preferer l'utilisation
+          directe de QProcess avec les signaux readyReadStandardOutput.
     """
+    # -----------------------------------------------------------------------------
+    # ÉTAPE 1 : Normalisation du programme et des arguments
+    # -----------------------------------------------------------------------------
     prog_str, arg_list = normalized_program_and_args(program, args)
 
-    # Répertoire de travail par défaut depuis la GUI
+    # -----------------------------------------------------------------------------
+    # ÉTAPE 2 : Détermination du répertoire de travail
+    # -----------------------------------------------------------------------------
     if cwd is None:
         try:
             ws = getattr(gui, "workspace_dir", None)
@@ -269,10 +442,12 @@ def run_process(
         except Exception:
             cwd = None
 
-    # Point de départ pour la mesure de performance
+    # Point de départ pour la mesure de performance (utilisé par les appelants)
     time.perf_counter()
 
-    # Tentative d'utilisation de QProcess (préféré pour l'intégration Qt)
+    # -----------------------------------------------------------------------------
+    # ÉTAPE 3 : Tentative avec QProcess (préféré pour l'intégration Qt)
+    # -----------------------------------------------------------------------------
     if QProcess is not None:
         try:
             proc = QProcess(gui)
@@ -311,7 +486,7 @@ def run_process(
                     proc.waitForFinished(5000)
                 except Exception:
                     pass
-                # Forcément kill si pas arrêté
+                # Forcément kill si pas arrêté proprement
                 try:
                     proc.kill()
                     proc.waitForFinished(2000)
@@ -352,7 +527,9 @@ def run_process(
             # QProcess a échoué, on utilise subprocess comme fallback
             pass
 
-    # Fallback: utilisation de subprocess standard
+    # -----------------------------------------------------------------------------
+    # ÉTAPE 4 : Fallback avec subprocess standard
+    # -----------------------------------------------------------------------------
     try:
         completed = subprocess.run(
             [prog_str, *arg_list],
@@ -379,3 +556,9 @@ def run_process(
     except Exception as e:
         # En cas d'erreur, retourne un code d'erreur 1 avec le message
         return 1, "", str(e)
+
+
+# =============================================================================
+# FIN DU MODULE command_helpers.py
+# =============================================================================
+

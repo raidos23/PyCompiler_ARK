@@ -28,7 +28,7 @@ import sys
 from typing import Optional
 
 from PySide6.QtCore import QDir
-from PySide6.QtWidgets import QFileDialog, QInputDialog
+from PySide6.QtWidgets import QFileDialog, QInputDialog, QCheckBox, QLineEdit
 
 from engine_sdk.base import CompilerEngine
 from engine_sdk import engine_register, compute_for_all
@@ -76,6 +76,7 @@ class NuitkaEngine(CompilerEngine):
     def build_command(self, gui, file: str) -> list[str]:
         """Build the Nuitka command line."""
         try:
+
             venv_manager = getattr(gui, "venv_manager", None)
 
             # Resolve venv python
@@ -91,31 +92,40 @@ class NuitkaEngine(CompilerEngine):
             # Start with python -m nuitka
             cmd = [python_path, "-m", "nuitka"]
 
-            # Use dynamic widgets or fallback to UI widgets
             # Standalone mode
-            standalone = getattr(self, "_nuitka_standalone", getattr(self._gui, "standalone", None)) if hasattr(self, "_gui") else getattr(self, "_nuitka_standalone", None)
-            if standalone and standalone.isChecked():
+            if hasattr(self, "_nuitka_standalone") and self._nuitka_standalone.isChecked():
                 cmd.append("--standalone")
 
             # Onefile mode
-            onefile = getattr(self, "_nuitka_onefile", getattr(self._gui, "onefile", None)) if hasattr(self, "_gui") else getattr(self, "_nuitka_onefile", None)
-            if onefile and onefile.isChecked():
+            if hasattr(self, "_nuitka_onefile") and self._nuitka_onefile.isChecked():
                 cmd.append("--onefile")
 
             # Windowed (no console)
-            disable_console = getattr(self, "_nuitka_disable_console", getattr(self._gui, "disable_console", None)) if hasattr(self, "_gui") else getattr(self, "_nuitka_disable_console", None)
-            if disable_console and disable_console.isChecked():
+            if hasattr(self, "_nuitka_disable_console") and self._nuitka_disable_console.isChecked():
                 cmd.append("--windows-disable-console")
 
             # Show progress
-            show_progress = getattr(self, "_nuitka_show_progress", getattr(self._gui, "show_progress", None)) if hasattr(self, "_gui") else getattr(self, "_nuitka_show_progress", None)
-            if show_progress and show_progress.isChecked():
+            if hasattr(self, "_nuitka_show_progress") and self._nuitka_show_progress.isChecked():
                 cmd.append("--show-progress")
 
             # Output directory
-            output_dir = getattr(self, "_nuitka_output_dir", getattr(self._gui, "output_dir", None)) if hasattr(self, "_gui") else getattr(self, "_nuitka_output_dir", None)
-            if output_dir and output_dir.text().strip():
-                cmd.extend(["--output-dir", output_dir.text().strip()])
+            if hasattr(self, "_nuitka_output_dir") and self._nuitka_output_dir.text().strip():
+                cmd.extend(["--output-dir", self._nuitka_output_dir.text().strip()])
+
+            # Data files
+            data_files = getattr(self, "_nuitka_data_files", [])
+            for src, dst in data_files:
+                cmd.extend(["--include-data-file", f"{src}={dst}"])
+
+            # Data dirs
+            data_dirs = getattr(self, "_nuitka_data_dirs", [])
+            for src, dst in data_dirs:
+                cmd.extend(["--include-data-dir", f"{src}={dst}"])
+
+            # Icon
+            selected_icon = getattr(self, "_nuitka_selected_icon", None)
+            if selected_icon:
+                cmd.extend(["--windows-icon", selected_icon])
 
             # Auto ajout des plugins Nuitka via détection
             try:
@@ -126,7 +136,7 @@ class NuitkaEngine(CompilerEngine):
                         cmd.append(a)
             except Exception as e:
                 try:
-                    self.log.append(f"⚠️ Auto-détection Nuitka: {e}")
+                    gui.log.append(f"⚠️ Auto-détection Nuitka: {e}")
                 except Exception:
                     pass
 
@@ -172,7 +182,7 @@ class NuitkaEngine(CompilerEngine):
         """Handle successful compilation."""
         try:
             # Log success message with output location
-            if self._nuitka_output_dir.text().strip():
+            if hasattr(self, "_nuitka_output_dir") and self._nuitka_output_dir.text().strip():
                 try:
                     if hasattr(gui, "log"):
                         gui.log.append(
@@ -357,10 +367,10 @@ class NuitkaEngine(CompilerEngine):
         )
         if not ok:
             return
-        if not hasattr(self, "_data_files"):
-            self._data_files = []
-        if not hasattr(self, "_data_dirs"):
-            self._data_dirs = []
+        if not hasattr(self, "_nuitka_data_files"):
+            self._nuitka_data_files = []
+        if not hasattr(self, "_nuitka_data_dirs"):
+            self._nuitka_data_dirs = []
         if choix == "Fichier":
             file_path, _ = QFileDialog.getOpenFileName(
                 self._gui, "Sélectionner un fichier à inclure avec Nuitka"
@@ -373,7 +383,7 @@ class NuitkaEngine(CompilerEngine):
                     text=os.path.basename(file_path),
                 )
                 if ok and dest:
-                    self._data_files.append((file_path, dest))
+                    self._nuitka_data_files.append((file_path, dest))
                     if hasattr(self._gui, "log"):
                         self._gui.log.append(
                             f"Fichier ajouté à Nuitka : {file_path} => {dest}"
@@ -392,7 +402,7 @@ class NuitkaEngine(CompilerEngine):
                     text=os.path.basename(dir_path),
                 )
                 if ok and dest:
-                    self._data_dirs.append((dir_path, dest))
+                    self._nuitka_data_dirs.append((dir_path, dest))
                     if hasattr(self._gui, "log"):
                         self._gui.log.append(
                             f"Dossier ajouté à Nuitka : {dir_path} => {dest}"
