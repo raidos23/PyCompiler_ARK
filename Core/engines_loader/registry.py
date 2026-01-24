@@ -361,6 +361,13 @@ def load_engine_language_file(engine_package: str, code: str) -> dict:
         return {}
 
 
+def get_instance(eid: str) -> Optional[CompilerEngine]:
+    try:
+        return _INSTANCES.get(eid)
+    except Exception:
+        return None
+
+
 def create(eid: str) -> CompilerEngine:
     cls = get_engine(eid)
     if not cls:
