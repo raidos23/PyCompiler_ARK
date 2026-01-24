@@ -126,20 +126,7 @@ class NuitkaEngine(CompilerEngine):
             selected_icon = getattr(self, "_nuitka_selected_icon", None)
             if selected_icon:
                 cmd.extend(["--windows-icon", selected_icon])
-
-            # Auto ajout des plugins Nuitka via détection
-            try:
-                auto_map = compute_for_all(self) or {}
-                auto_nuitka_args = auto_map.get("nuitka", [])
-                for a in auto_nuitka_args:
-                    if a not in cmd:
-                        cmd.append(a)
-            except Exception as e:
-                try:
-                    gui.log.append(f"⚠️ Auto-détection Nuitka: {e}")
-                except Exception:
-                    pass
-
+                
             # Add the target file
             cmd.append(file)
 
