@@ -42,7 +42,7 @@ from PySide6.QtWidgets import (
     QFileDialog, QStatusBar, QMessageBox, QLineEdit, QGridLayout,
     QFrame, QSplitter
 )
-from PySide6.QtGui import QIcon, QAction, QFont
+from PySide6.QtGui import QIcon, QAction, QFont, QPixmap
 
 from Core.engines_loader import (
     available_engines,
