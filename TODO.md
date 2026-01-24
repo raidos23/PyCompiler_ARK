@@ -1,6 +1,5 @@
-- [X] Move check_system_packages inside SysDependencyManager class as @staticmethod
-- [X] Remove the standalone check_system_packages function
-- [X] Update import in Core/engines_loader/base.py to import SysDependencyManager
-- [X] Change the call in base.py to use SysDependencyManager.check_system_packages
-- [X] Test the changes
-- [] Corriger les engines pour que les connection de buttons soit faie directement    aulieu d'utiliser des abstractions via des fonctions.
+- [ ] Update build_command to use direct widget access instead of _get_opt and _get_input
+- [ ] Update on_success to use direct widget access instead of _get_input
+- [ ] Remove the _get_opt method
+- [ ] Remove the _get_btn method
+- [ ] Remove the _get_input method
