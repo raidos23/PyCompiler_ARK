@@ -156,6 +156,8 @@ cython_debug/
 # macOS
 .DS_Store
 
+#qtcreator
+.qtcreator/
 # Windows
 Thumbs.db
 ehthumbs.db
