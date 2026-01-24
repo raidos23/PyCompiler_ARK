@@ -167,23 +167,7 @@ See [SUPPORTED_MATRIX.md](SUPPORTED_MATRIX.md) for detailed compatibility inform
 - [BCASL CLI Guide](bcasl/only_mod/CLI_GUIDE.md) - Command-line interface usage
 
 ### Engines Standalone Module
-- Launch standalone compilation engine manager with GUI or CLI
-- Manage PyInstaller, Nuitka, and cx_Freeze engines
-- Check engine compatibility and run compilations
-
-#### Engines Standalone Module
-
-```bash
-# Launch Engines GUI directly
-python -m Core.engines_loader.engines_only_mod
-
-# List available engines (CLI mode)
-python -m Core.engines_loader.engines_only_mod --list-engines
-
-# Check engine compatibility
-python -m Core.engines_loader.engines_only_mod --check-compat nuitka
-```
-
+- [Engines Standalone README](Core/engines_loader/engines_only_mod/README.md) - Complete Engines standalone documentation
 
 ### Developer Documentation
 - [Contributing](CONTRIBUTING.md) - How to contribute to the project
