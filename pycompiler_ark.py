@@ -492,10 +492,15 @@ def launch_engines_only_standalone(workspace_dir: Optional[str] = None) -> int:
             click.echo(
                 f"❌ Error: Failed to import Engines standalone module: {e}", err=True
             )
-            click.echo("Make sure Core.engines_loader.engines_only_mod is properly installed.", err=True)
+            click.echo(
+                "Make sure Core.engines_loader.engines_only_mod is properly installed.",
+                err=True,
+            )
         else:
             print(f"❌ Error: Failed to import Engines standalone module: {e}")
-            print("Make sure Core.engines_loader.engines_only_mod is properly installed.")
+            print(
+                "Make sure Core.engines_loader.engines_only_mod is properly installed."
+            )
         return 1
     except Exception as e:
         if click:
@@ -1011,6 +1016,7 @@ if click:
         # For dry-run mode, just list engines
         if dry_run:
             from Core.engines_loader import available_engines
+
             engines = available_engines()
             click.echo(f"📦 Available engines ({len(engines)}):")
             for eid in engines:
@@ -1096,30 +1102,32 @@ if __name__ == "__main__":
                 # Extract arguments
                 args = sys.argv[2:] if len(sys.argv) > 2 else []
                 workspace_dir = None
-                
+
                 # Check for flags first
                 if "--list-engines" in args or "-l" in args:
                     from Core.engines_loader import available_engines
+
                     engines = available_engines()
                     print(f"Available engines ({len(engines)}):")
                     for eid in engines:
                         print(f"  - {eid}")
                     sys.exit(0)
-                
+
                 if "--dry-run" in args or "-d" in args:
                     from Core.engines_loader import available_engines
+
                     engines = available_engines()
                     print(f"Available engines ({len(engines)}):")
                     for eid in engines:
                         print(f"  - {eid}")
                     sys.exit(0)
-                
+
                 # Get workspace if provided and doesn't look like a flag
                 for arg in args:
                     if not arg.startswith("-"):
                         workspace_dir = arg
                         break
-                
+
                 sys.exit(launch_engines_only_standalone(workspace_dir))
             elif sys.argv[1] == "discover":
                 discovered = WorkspaceManager.discover_workspaces()

@@ -116,23 +116,23 @@ from Core.ark_config_loader import (
 def _kill_all_processes(self) -> None:
     """
     Tue tous les processus de compilation en cours et réinitialise l'état.
-    
+
     Cette fonction est le mécanisme de récupération d'urgence principal.
     Elle doit être appelée en cas d'erreur critique pour:
     1. Arrêter proprement tous les processus de compilation actifs
     2. Vider la file d'attente des compilations
     3. Réinitialiser les compteurs et drapeaux internes
     4. Réactiver les contrôles de l'interface utilisateur
-    
+
     L'ordre des opérations est important pour éviter les conditions de
     course et assurer un nettoyage complet et cohérent.
-    
+
     Args:
         self: Instance de la fenêtre principale (MainWindow)
-    
+
     Returns:
         None
-    
+
     Processus Nettoyés:
         1. Processus actifs (terminate → wait → kill si nécessaire)
         2. File d'attente (queue.clear())
@@ -141,7 +141,7 @@ def _kill_all_processes(self) -> None:
         5. Onglets du compilateur (setEnabled(True))
         6. Barre de progression (reset à 0/1)
         7. Drapeau de continuation (_compile_continued = False)
-    
+
     Notes:
         - Cette fonction est "best-effort" : elle ignore les erreurs
           individuelles pour garantir que le nettoyage global se fait.
@@ -228,44 +228,44 @@ def _kill_all_processes(self) -> None:
 def _continue_compile_all(self) -> None:
     """
     Suite de la compilation après exécution de BCASL.
-    
+
     Cette fonction est appelée uniquement après que BCASL a terminé
     avec succès. Elle est responsable de:
-    
+
     1. **Chargement de la configuration ARK** : Lit les paramètres de
        compilation depuis ARK_Main_Config.yml
-    
+
     2. **Filtrage des fichiers** : Applique les règles d'exclusion et
        de sélection pour déterminer quels fichiers compiler
-    
+
     3. **Construction de la file d'attente** : Crée la liste des fichiers
        à compiler avec leur statut (à compiler ou ignoré)
-    
+
     4. **Configuration de l'interface** : Met à jour la barre de progression,
        les logs et l'état des contrôles
-    
+
     5. **Lancement des compilations** : Appelle try_start_processes() pour
        démarrer les compilations parallèles
-    
+
     Args:
         self: Instance de la fenêtre principale (MainWindow)
-    
+
     Returns:
         None
-    
+
     Configuration ARK Utilisée:
         - exclusion_patterns : Patterns de fichiers à exclure
         - inclusion_patterns : Patterns de fichiers à inclure (défaut: **/*.py)
         - auto_detect_entry_points : Détection automatique de __main__
         - compile_only_main : Compiler uniquement main.py/app.py
         - main_file_names : Noms de fichiers principaux à chercher
-    
+
     Filtres Appliqués:
         1. Existence du fichier (must exist)
         2. Patterns d'exclusion ARK (site-packages, patterns personnalisés)
         3. Point d'entrée (__main__) si auto_detect_entry_points est activé
         4. Sélection UI (fichiers sélectionnés vs tous les fichiers)
-    
+
     Notes:
         - Cette fonction est 非bloquante : elle lance les compilations
           et retourne immédiatement.
@@ -298,16 +298,16 @@ def _continue_compile_all(self) -> None:
     def is_executable_script(path: str) -> bool:
         """
         Vérifie si un fichier Python est un script exécutable.
-        
+
         Un fichier est considéré comme exécutable s'il:
         1. Existe physiquement sur le disque
         2. N'est pas dans site-packages
         3. Ne correspond pas aux patterns d'exclusion ARK
         4. Contient un point d'entrée __main__ (si activé)
-        
+
         Args:
             path: Chemin absolu vers le fichier Python
-            
+
         Returns:
             True si le fichier doit être compilé, False sinon
         """
@@ -389,7 +389,7 @@ def _continue_compile_all(self) -> None:
             ]
             files_ok = [f for f in files if is_executable_script(f)]
             self.queue = [(f, True) for f in files_ok]
-            
+
             # Message d'erreur si aucun fichier principal trouvé
             if not files_ok:
                 main_names_str = ", ".join(main_file_names_ark)
@@ -515,28 +515,28 @@ def _continue_compile_all(self) -> None:
 def compile_all(self) -> None:
     """
     Point d'entrée principal pour démarrer la compilation.
-    
+
     Cette fonction orchestre l'ensemble du processus de compilation:
-    
+
     1. **Vérifications préliminaires** : S'assure que les conditions
        nécessaires sont réunies (pas de compilation en cours, fichiers
        disponibles)
-    
+
     2. **Désactivation de l'interface** : Bloque les contrôles utilisateur
        pour éviter les modifications pendant la compilation
-    
+
     3. **Exécution BCASL** : Lance les plugins de pré-compilation de manière
        asynchrone (sans bloquer l'UI)
-    
+
     4. **Callback de continuation** : Une fois BCASL terminé, appelle
        _continue_compile_all() pour lancer la compilation réelle
-    
+
     Args:
         self: Instance de la fenêtre principale (MainWindow)
-    
+
     Returns:
         None
-    
+
     Flux d'Exécution:
         ┌─────────────────────────────────────────────────────────────────┐
         │ VERIFICATIONS PRÉLIMINAIRES                                     │
@@ -570,12 +570,12 @@ def compile_all(self) -> None:
         └─────────────────────────────────────────────────────────────────┘
                                ↓
         [_continue_compile_all s'exécute et lance les compilations]
-    
+
     Gestion des Erreurs BCASL:
         - BCASL désactivé (status="disabled") : Continuer normalement
         - BCASL avec erreurs : Log des erreurs + nettoyage + réactivation UI
         - BCASL avec rapport inattendu : Traitement comme erreur
-    
+
     Notes:
         - Cette fonction est 非bloquante grâce à l'exécution asynchrone
           de BCASL via run_pre_compile_async()
@@ -588,7 +588,7 @@ def compile_all(self) -> None:
     # -----------------------------------------------------------------------------
     # ÉTAPE 1 : Vérifications préliminaires
     # -----------------------------------------------------------------------------
-    
+
     # Vérification : une compilation est-elle déjà en cours?
     if self.processes:
         try:
@@ -615,7 +615,7 @@ def compile_all(self) -> None:
     # -----------------------------------------------------------------------------
     # ÉTAPE 2 : Initialisation
     # -----------------------------------------------------------------------------
-    
+
     # Réinitialiser les statistiques de compilation
     try:
         self._compilation_times = {}
@@ -649,10 +649,10 @@ def compile_all(self) -> None:
         def _after_bcasl(_report) -> None:
             """
             Callback appelé après l'exécution de BCASL.
-            
+
             Gère les différents cas de retour de BCASL et lance
             la compilation si tout s'est bien passé.
-            
+
             Args:
                 _report: Rapport de BCASL (dict ou objet avec attributs)
             """
@@ -682,7 +682,7 @@ def compile_all(self) -> None:
                                 pass
                             _kill_all_processes(self)
                             return
-                    elif hasattr(_report, 'ok') and not _report.ok:
+                    elif hasattr(_report, "ok") and not _report.ok:
                         # BCASL a rencontré des erreurs
                         error_items = [
                             item for item in _report.items if not item.success
@@ -717,7 +717,7 @@ def compile_all(self) -> None:
                             pass
                         # En cas d'erreur: tout tuer et réinitialiser
                         _kill_all_processes(self)
-            
+
             except Exception as _e:
                 try:
                     self.log.append(
@@ -759,4 +759,3 @@ def compile_all(self) -> None:
 # =============================================================================
 # FIN DU MODULE compiler.py
 # =============================================================================
-

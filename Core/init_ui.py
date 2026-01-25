@@ -291,7 +291,6 @@ def init_ui(self):
     self.btn_export_config = self.ui.findChild(QPushButton, "btn_export_config")
     self.btn_import_config = self.ui.findChild(QPushButton, "btn_import_config")
     self.btn_help = self.ui.findChild(QPushButton, "btn_help")
-    
 
     # Connecter les signaux (only for widgets that exist in the UI)
     self.btn_select_folder.clicked.connect(self.select_workspace)

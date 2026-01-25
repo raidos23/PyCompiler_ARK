@@ -87,7 +87,7 @@ Note:
 
 from .compiler import (
     _continue_compile_all,  # Suite de la compilation après BCASL
-    compile_all,            # Point d'entrée principal de compilation
+    compile_all,  # Point d'entrée principal de compilation
 )
 
 # =============================================================================
@@ -98,26 +98,23 @@ from .compiler import (
 
 from .mainprocess import (
     # --- Gestion du Cycle de Vie des Processus ---
-    _kill_process_tree,           # Tue un processus et ses enfants (arbre)
-    _kill_all_descendants,        # Tue tous les descendants du processus GUI
-    try_start_processes,          # Démarre les compilations en file d'attente
-    start_compilation_process,    # Lance une compilation pour un fichier
-    cancel_all_compilations,      # Annule toutes les compilations en cours
-
+    _kill_process_tree,  # Tue un processus et ses enfants (arbre)
+    _kill_all_descendants,  # Tue tous les descendants du processus GUI
+    try_start_processes,  # Démarre les compilations en file d'attente
+    start_compilation_process,  # Lance une compilation pour un fichier
+    cancel_all_compilations,  # Annule toutes les compilations en cours
     # --- Traitement des Sorties de Processus ---
-    handle_finished,              # Gère la terminaison d'un processus
-    handle_stderr,                # Traite la sortie d'erreur (stderr)
-    handle_stdout,                # Traite la sortie standard (stdout)
-
+    handle_finished,  # Gère la terminaison d'un processus
+    handle_stderr,  # Traite la sortie d'erreur (stderr)
+    handle_stdout,  # Traite la sortie standard (stdout)
     # --- Installation et Gestion des Erreurs ---
     try_install_missing_modules,  # Installe les modules pip manquants
-    show_error_dialog,            # Affiche une boîte de dialogue d'erreur
-
+    show_error_dialog,  # Affiche une boîte de dialogue d'erreur
     # --- Utilitaires ---
-    clamp_text,                   # Tronque le texte pour l'affichage
-    redact_secrets,               # Masque les secrets dans les logs
-    compute_for_all,              # Construit les commandes de compilation
-    engines_loader,               # Gestionnaire de moteurs de compilation
+    clamp_text,  # Tronque le texte pour l'affichage
+    redact_secrets,  # Masque les secrets dans les logs
+    compute_for_all,  # Construit les commandes de compilation
+    engines_loader,  # Gestionnaire de moteurs de compilation
 )
 
 # =============================================================================
@@ -137,12 +134,10 @@ __all__ = [
     "clamp_text",
     "start_compilation_process",
     "cancel_all_compilations",
-    
     # --- Traitement des Sorties ---
     "handle_finished",
     "handle_stderr",
     "handle_stdout",
-    
     # --- Utilitaires et Chargement ---
     "redact_secrets",
     "compiler",

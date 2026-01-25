@@ -45,7 +45,7 @@ from .gui import launch_engines_gui
 def run_cli(args):
     """Exécute en mode CLI."""
     from .app import EnginesStandaloneApp
-    
+
     app = EnginesStandaloneApp(
         engine_id=args.engine,
         file_path=args.file,
@@ -55,7 +55,7 @@ def run_cli(args):
         dry_run=args.dry_run,
         headless=True,
     )
-    
+
     if args.list_engines:
         engines = app.load_engines()
         print(f"\nAvailable engines ({len(engines)}):\n")
@@ -68,7 +68,7 @@ def run_cli(args):
             print(f"       Required Core: {eng['required_core']}")
             print()
         return 0
-    
+
     if args.check_compat:
         result = app.check_engine_compatibility(args.check_compat)
         print(f"\nCompatibility check for: {args.check_compat}")
@@ -82,7 +82,7 @@ def run_cli(args):
             if result.get("message"):
                 print(f"     Message: {result['message']}")
         return 0
-    
+
     if args.dry_run:
         if args.engine and args.file:
             result = app.run_compilation(args.engine, args.file, dry_run=True)
@@ -91,7 +91,7 @@ def run_cli(args):
         else:
             print("Error: --dry-run requires --engine and --file")
             return 1
-    
+
     return 0
 
 
@@ -115,7 +115,7 @@ Exemples:
     python -m Core.engines_loader.engines_only_mod --engine nuitka -f script.py --dry-run
         """,
     )
-    
+
     # Options GUI
     parser.add_argument(
         "-w",
@@ -136,7 +136,7 @@ Exemples:
         default="dark",
         help="UI theme (default: dark)",
     )
-    
+
     # Options CLI
     parser.add_argument(
         "-e",
@@ -164,12 +164,18 @@ Exemples:
         metavar="ENGINE_ID",
         help="Check engine compatibility (CLI mode)",
     )
-    
+
     args = parser.parse_args()
-    
+
     # Déterminer le mode d'exécution
-    cli_mode = args.list_engines or args.check_compat or args.dry_run or args.engine or args.file
-    
+    cli_mode = (
+        args.list_engines
+        or args.check_compat
+        or args.dry_run
+        or args.engine
+        or args.file
+    )
+
     if cli_mode:
         # Mode CLI
         return run_cli(args)
@@ -184,4 +190,3 @@ Exemples:
 
 if __name__ == "__main__":
     sys.exit(main())
-

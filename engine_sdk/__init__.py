@@ -16,30 +16,23 @@
 from __future__ import annotations
 
 # Re-export auto_plugins helpers for convenience
-from .auto_build_command import (
-    compute_for_all,
-register_auto_builder
-)
+from .auto_build_command import compute_for_all, register_auto_builder
 
 __version__ = "1.0.0"
 # Re-export the base interface used by the host
 from .base import CompilerEngine
 from .utils import (
     atomic_write_text,
-   
     clamp_text,
     ensure_dir,
     is_within_workspace,
-   
     open_dir_candidates,
     open_path,
     redact_secrets,
     resolve_executable,  # executable resolution helper (SDK)
- 
     safe_join,
     safe_log,
     tr,
-
 )
 
 # Re-export venv/pip helpers from mainprocess.py (moved from utils.py)
@@ -61,6 +54,7 @@ def _do_lazy_imports():
             pip_show,
             resolve_project_venv,
         )
+
         _lazy_mainprocess_imports = {
             "pip_executable": pip_executable,
             "pip_install": pip_install,
@@ -76,6 +70,7 @@ def _do_lazy_imports():
             pip_show,
             resolve_project_venv,
         )
+
         _lazy_mainprocess_imports = {
             "pip_executable": pip_executable,
             "pip_install": pip_install,
@@ -92,6 +87,7 @@ def __getattr__(name: str):
         if name in _lazy_mainprocess_imports:
             return _lazy_mainprocess_imports[name]
     raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
+
 
 try:
     # Optional alias to host-level executable resolver for advanced cases

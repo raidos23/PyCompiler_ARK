@@ -27,8 +27,7 @@ import platform
 import sys
 from typing import Optional
 
-from engine_sdk.base import CompilerEngine
-from engine_sdk import engine_register
+from engine_sdk import CompilerEngine, engine_register
 
 
 @engine_register
@@ -139,7 +138,11 @@ class CXFreezeEngine(CompilerEngine):
         """Handle successful compilation."""
         try:
             # Log success message with output location
-            output_dir = getattr(self, "_cx_output_dir", getattr(gui, "output_dir_input", None)) if hasattr(self, "_gui") else getattr(self, "_cx_output_dir", None)
+            output_dir = (
+                getattr(self, "_cx_output_dir", getattr(gui, "output_dir_input", None))
+                if hasattr(self, "_gui")
+                else getattr(self, "_cx_output_dir", None)
+            )
             if output_dir and output_dir.text().strip():
                 try:
                     if hasattr(gui, "log"):
@@ -223,8 +226,6 @@ class CXFreezeEngine(CompilerEngine):
                 pass
             return None
 
-
-
     def _get_btn(self, name: str):
         """Get button widget from engine instance or GUI."""
         if hasattr(self, f"_cx_btn_{name}"):
@@ -232,8 +233,6 @@ class CXFreezeEngine(CompilerEngine):
         if hasattr(self, f"_btn_{name}"):
             return getattr(self, f"_btn_{name}")
         return getattr(self._gui, name, None) if hasattr(self, "_gui") else None
-
-
 
     def get_log_prefix(self, file_basename: str) -> str:
         return f"CX_Freeze ({self.version})"

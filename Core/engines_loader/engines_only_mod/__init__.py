@@ -28,10 +28,10 @@ Fonctionnalités:
 Utilisation:
     # Interface GUI
     python -m Core.engines_loader.engines_only_mod
-    
+
     # Mode CLI - lister les moteurs
     python -m Core.engines_loader.engines_only_mod --list-engines
-    
+
     # Mode CLI - vérifier compatibilité
     python -m Core.engines_loader.engines_only_mod --check-compat nuitka
 
@@ -44,24 +44,29 @@ from __future__ import annotations
 from .app import EnginesStandaloneApp  # Classe principale pour usage programmatique
 from .gui import EnginesStandaloneGui  # Interface graphique
 
-def launch_engines_gui(workspace_dir: str = None, language: str = "en", theme: str = "dark") -> int:
+
+def launch_engines_gui(
+    workspace_dir: str = None, language: str = "en", theme: str = "dark"
+) -> int:
     """Lance l'application Engines Standalone GUI.
-    
+
     Args:
         workspace_dir: Chemin du workspace (optionnel)
         language: Code de langue ('en' ou 'fr')
         theme: Nom du thème ('light' ou 'dark')
-        
+
     Returns:
         Code de retour de l'application
     """
     from .gui import launch_engines_gui as _launch
+
     return _launch(workspace_dir, language, theme)
 
 
 def main():
     """Point d'entrée principal du module."""
     from . import __main__ as _main_module
+
     return _main_module.main()
 
 
@@ -72,4 +77,3 @@ __all__ = [
     "launch_engines_gui",
     "main",
 ]
-
