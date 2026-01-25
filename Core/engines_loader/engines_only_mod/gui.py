@@ -106,8 +106,8 @@ class EnginesStandaloneGui(QMainWindow):
 
         # Configuration de la fenêtre
         self.setWindowTitle("Engines Standalone - PyCompiler ARK++")
-        self.resize(1600, 1000)
-        self.setMinimumSize(1200, 800)
+        self.resize(1400, 850)
+        self.setMinimumSize(1100, 700)
         self.showMaximized()
 
         # Chargement des icônes
@@ -150,8 +150,8 @@ class EnginesStandaloneGui(QMainWindow):
 
         # Layout principal avec marge réduite
         main_layout = QVBoxLayout(central_widget)
-        main_layout.setSpacing(8)
-        main_layout.setContentsMargins(10, 10, 10, 10)
+        main_layout.setSpacing(5)
+        main_layout.setContentsMargins(8, 8, 8, 8)
 
         # === En-tête ===
         header_layout = QHBoxLayout()
@@ -191,8 +191,8 @@ class EnginesStandaloneGui(QMainWindow):
         # === Section Configuration (gauche) ===
         config_container = QWidget()
         config_layout = QGridLayout(config_container)
-        config_layout.setSpacing(15)
-        config_layout.setContentsMargins(5, 5, 5, 5)
+        config_layout.setSpacing(10)
+        config_layout.setContentsMargins(3, 3, 3, 3)
         config_layout.setColumnStretch(0, 1)
         config_layout.setColumnStretch(1, 1)
         config_layout.setRowStretch(0, 1)
@@ -202,7 +202,7 @@ class EnginesStandaloneGui(QMainWindow):
         engine_group = QGroupBox("Engine Configuration")
         engine_group.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         engine_layout = QVBoxLayout()
-        engine_layout.setSpacing(5)
+        engine_layout.setSpacing(3)
 
         self.compiler_tabs = QTabWidget()
         self.compiler_tabs.setDocumentMode(False)
@@ -212,7 +212,7 @@ class EnginesStandaloneGui(QMainWindow):
         engine_layout.addWidget(self.compiler_tabs)
 
         compat_btn = QPushButton("Check Compatibility")
-        compat_btn.setMinimumHeight(32)
+        compat_btn.setMinimumHeight(28)
         compat_btn.clicked.connect(self._check_compatibility)
         engine_layout.addWidget(compat_btn)
 
@@ -227,7 +227,7 @@ class EnginesStandaloneGui(QMainWindow):
         file_group = QGroupBox("File / Project Configuration")
         file_group.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         file_layout = QVBoxLayout()
-        file_layout.setSpacing(10)
+        file_layout.setSpacing(5)
 
         file_label = QLabel("File to compile:")
         file_layout.addWidget(file_label)
@@ -236,12 +236,12 @@ class EnginesStandaloneGui(QMainWindow):
         self.file_path_edit = QLineEdit()
         self.file_path_edit.setPlaceholderText("Select a Python file to compile...")
         self.file_path_edit.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        self.file_path_edit.setMinimumHeight(35)
+        self.file_path_edit.setMinimumHeight(30)
         file_input_layout.addWidget(self.file_path_edit)
 
         browse_btn = QPushButton("Browse")
-        browse_btn.setMinimumHeight(35)
-        browse_btn.setMinimumWidth(90)
+        browse_btn.setMinimumHeight(30)
+        browse_btn.setMinimumWidth(80)
         browse_btn.clicked.connect(self._browse_file)
         file_input_layout.addWidget(browse_btn)
 
@@ -253,7 +253,7 @@ class EnginesStandaloneGui(QMainWindow):
         workspace_group = QGroupBox("Workspace")
         workspace_group.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
         workspace_layout = QGridLayout()
-        workspace_layout.setSpacing(8)
+        workspace_layout.setSpacing(5)
         workspace_layout.setColumnStretch(1, 1)
 
         workspace_label = QLabel("Workspace:")
@@ -263,12 +263,12 @@ class EnginesStandaloneGui(QMainWindow):
         if self.workspace_dir:
             self.workspace_edit.setText(self.workspace_dir)
         self.workspace_edit.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        self.workspace_edit.setMinimumHeight(32)
+        self.workspace_edit.setMinimumHeight(28)
         workspace_layout.addWidget(self.workspace_edit, 0, 1)
 
         workspace_browse_btn = QPushButton("Browse")
-        workspace_browse_btn.setMinimumHeight(32)
-        workspace_browse_btn.setMinimumWidth(80)
+        workspace_browse_btn.setMinimumHeight(28)
+        workspace_browse_btn.setMinimumWidth(70)
         workspace_browse_btn.clicked.connect(self._browse_workspace)
         workspace_layout.addWidget(workspace_browse_btn, 0, 2)
 
@@ -279,10 +279,10 @@ class EnginesStandaloneGui(QMainWindow):
         actions_group = QGroupBox("Actions")
         actions_group.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         actions_layout = QVBoxLayout()
-        actions_layout.setSpacing(12)
+        actions_layout.setSpacing(8)
 
         self.compile_btn = QPushButton("Compile")
-        self.compile_btn.setMinimumHeight(36)
+        self.compile_btn.setMinimumHeight(32)
         self.compile_btn.setStyleSheet(
             """
             QPushButton {
@@ -331,13 +331,13 @@ class EnginesStandaloneGui(QMainWindow):
         # === Section Log (droite avec plus d'espace) ===
         log_container = QWidget()
         log_layout = QVBoxLayout(log_container)
-        log_layout.setSpacing(8)
-        log_layout.setContentsMargins(5, 5, 5, 5)
+        log_layout.setSpacing(5)
+        log_layout.setContentsMargins(3, 3, 3, 3)
 
         log_group = QGroupBox("Compilation Log")
         log_group.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         log_layout_inner = QVBoxLayout()
-        log_layout_inner.setSpacing(5)
+        log_layout_inner.setSpacing(3)
 
         self.log_text = QTextEdit()
         self.log_text.setFont(QFont("Consolas", 10))
@@ -359,7 +359,7 @@ class EnginesStandaloneGui(QMainWindow):
         # Progress bar
         self.progress_bar = QProgressBar()
         self.progress_bar.setVisible(False)
-        self.progress_bar.setMinimumHeight(18)
+        self.progress_bar.setMinimumHeight(14)
         log_layout_inner.addWidget(self.progress_bar)
 
         log_group.setLayout(log_layout_inner)
@@ -375,12 +375,12 @@ class EnginesStandaloneGui(QMainWindow):
         # === Barre de statut ===
         self.statusBar = QStatusBar()
         self.statusBar.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        self.statusBar.setMinimumHeight(22)
+        self.statusBar.setMinimumHeight(20)
         self.setStatusBar(self.statusBar)
         self.statusBar.showMessage("Ready")
 
         # Définir les proportions du splitter vertical
-        main_splitter.setSizes([700, 120])
+        main_splitter.setSizes([750, 80])
 
     def _center_window(self):
         """Centre la fenêtre sur l'écran."""
