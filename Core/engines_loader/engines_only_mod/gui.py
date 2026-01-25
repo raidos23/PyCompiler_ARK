@@ -190,13 +190,17 @@ class EnginesStandaloneGui(QMainWindow):
 
         # === Section Configuration (gauche) ===
         config_container = QWidget()
-        config_layout = QVBoxLayout(config_container)
-        config_layout.setSpacing(10)
+        config_layout = QGridLayout(config_container)
+        config_layout.setSpacing(15)
         config_layout.setContentsMargins(5, 5, 5, 5)
+        config_layout.setColumnStretch(0, 1)
+        config_layout.setColumnStretch(1, 1)
+        config_layout.setRowStretch(0, 1)
+        config_layout.setRowStretch(1, 1)
 
-        # Moteur
+        # Moteur (top-left)
         engine_group = QGroupBox("Engine Configuration")
-        engine_group.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+        engine_group.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         engine_layout = QVBoxLayout()
         engine_layout.setSpacing(5)
 
@@ -208,7 +212,7 @@ class EnginesStandaloneGui(QMainWindow):
         engine_layout.addWidget(self.compiler_tabs)
 
         compat_btn = QPushButton("Check Compatibility")
-        compat_btn.setMinimumHeight(28)
+        compat_btn.setMinimumHeight(32)
         compat_btn.clicked.connect(self._check_compatibility)
         engine_layout.addWidget(compat_btn)
 
@@ -217,32 +221,33 @@ class EnginesStandaloneGui(QMainWindow):
         engine_layout.addWidget(self.compat_status_label)
 
         engine_group.setLayout(engine_layout)
-        config_layout.addWidget(engine_group)
+        config_layout.addWidget(engine_group, 0, 0)
 
-        # Fichier
+        # Fichier (top-right)
         file_group = QGroupBox("File / Project Configuration")
-        file_group.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
-        file_layout = QGridLayout()
-        file_layout.setSpacing(8)
-        file_layout.setColumnStretch(1, 1)
+        file_group.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        file_layout = QVBoxLayout()
+        file_layout.setSpacing(10)
 
         file_label = QLabel("File to compile:")
-        file_layout.addWidget(file_label, 0, 0)
+        file_layout.addWidget(file_label)
 
+        file_input_layout = QHBoxLayout()
         self.file_path_edit = QLineEdit()
         self.file_path_edit.setPlaceholderText("Select a Python file to compile...")
         self.file_path_edit.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        self.file_path_edit.setMinimumHeight(32)
-        file_layout.addWidget(self.file_path_edit, 0, 1)
+        self.file_path_edit.setMinimumHeight(35)
+        file_input_layout.addWidget(self.file_path_edit)
 
         browse_btn = QPushButton("Browse")
-        browse_btn.setMinimumHeight(32)
-        browse_btn.setMinimumWidth(80)
+        browse_btn.setMinimumHeight(35)
+        browse_btn.setMinimumWidth(90)
         browse_btn.clicked.connect(self._browse_file)
-        file_layout.addWidget(browse_btn, 0, 2)
+        file_input_layout.addWidget(browse_btn)
 
+        file_layout.addLayout(file_input_layout)
         file_group.setLayout(file_layout)
-        config_layout.addWidget(file_group)
+        config_layout.addWidget(file_group, 0, 1)
 
         # Workspace
         workspace_group = QGroupBox("Workspace")
@@ -270,23 +275,23 @@ class EnginesStandaloneGui(QMainWindow):
         workspace_group.setLayout(workspace_layout)
         config_layout.addWidget(workspace_group)
 
-        # Actions
+        # Actions (bottom-right)
         actions_group = QGroupBox("Actions")
-        actions_group.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
-        actions_layout = QHBoxLayout()
-        actions_layout.setSpacing(10)
+        actions_group.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        actions_layout = QVBoxLayout()
+        actions_layout.setSpacing(12)
 
         self.compile_btn = QPushButton("Compile")
-        self.compile_btn.setMinimumHeight(40)
+        self.compile_btn.setMinimumHeight(36)
         self.compile_btn.setStyleSheet(
             """
             QPushButton {
                 background-color: #4caf50;
                 color: white;
-                font-size: 14px;
+                font-size: 16px;
                 font-weight: bold;
-                border-radius: 5px;
-                padding: 8px 16px;
+                border-radius: 6px;
+                padding: 10px 20px;
             }
             QPushButton:hover {
                 background-color: #45a049;
@@ -299,25 +304,27 @@ class EnginesStandaloneGui(QMainWindow):
         self.compile_btn.clicked.connect(self._run_compilation)
         actions_layout.addWidget(self.compile_btn)
 
+        button_row = QHBoxLayout()
+        button_row.setSpacing(10)
+
         dry_run_btn = QPushButton("Dry Run")
-        dry_run_btn.setMinimumHeight(40)
+        dry_run_btn.setMinimumHeight(32)
         dry_run_btn.clicked.connect(self._dry_run)
-        actions_layout.addWidget(dry_run_btn)
+        button_row.addWidget(dry_run_btn)
 
         refresh_btn = QPushButton("Refresh Engines")
-        refresh_btn.setMinimumHeight(40)
+        refresh_btn.setMinimumHeight(32)
         refresh_btn.clicked.connect(self._refresh_engines)
-        actions_layout.addWidget(refresh_btn)
-
-        actions_layout.addStretch()
+        button_row.addWidget(refresh_btn)
 
         clear_log_btn = QPushButton("Clear Log")
-        clear_log_btn.setMinimumHeight(40)
+        clear_log_btn.setMinimumHeight(32)
         clear_log_btn.clicked.connect(self._clear_log)
-        actions_layout.addWidget(clear_log_btn)
+        button_row.addWidget(clear_log_btn)
 
+        actions_layout.addLayout(button_row)
         actions_group.setLayout(actions_layout)
-        config_layout.addWidget(actions_group)
+        config_layout.addWidget(actions_group, 1, 1)
 
         top_splitter.addWidget(config_container)
 
@@ -352,7 +359,7 @@ class EnginesStandaloneGui(QMainWindow):
         # Progress bar
         self.progress_bar = QProgressBar()
         self.progress_bar.setVisible(False)
-        self.progress_bar.setMinimumHeight(24)
+        self.progress_bar.setMinimumHeight(18)
         log_layout_inner.addWidget(self.progress_bar)
 
         log_group.setLayout(log_layout_inner)
@@ -368,12 +375,12 @@ class EnginesStandaloneGui(QMainWindow):
         # === Barre de statut ===
         self.statusBar = QStatusBar()
         self.statusBar.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        self.statusBar.setMinimumHeight(28)
+        self.statusBar.setMinimumHeight(22)
         self.setStatusBar(self.statusBar)
         self.statusBar.showMessage("Ready")
 
         # Définir les proportions du splitter vertical
-        main_splitter.setSizes([700, 200])
+        main_splitter.setSizes([700, 120])
 
     def _center_window(self):
         """Centre la fenêtre sur l'écran."""
