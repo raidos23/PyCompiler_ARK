@@ -55,6 +55,7 @@ from PySide6.QtWidgets import (
     QGridLayout,
     QFrame,
     QSplitter,
+    QTabWidget,
 )
 from PySide6.QtGui import QIcon, QAction, QFont, QPixmap
 
@@ -65,6 +66,7 @@ from Core.engines_loader import (
 )
 from Core.engines_loader.validator import check_engine_compatibility
 from Core.allversion import get_core_version, get_engine_sdk_version
+import Core.engines_loader as engines_loader
 
 
 class EnginesStandaloneGui(QMainWindow):
@@ -182,35 +184,25 @@ class EnginesStandaloneGui(QMainWindow):
         config_layout = QGridLayout(config_widget)
         config_layout.setSpacing(15)
 
-        # === Section Moteur ===
+        # === Section Moteur (Tabs) ===
         engine_group = QGroupBox("Engine Configuration")
-        engine_layout = QGridLayout()
+        engine_layout = QVBoxLayout()
 
-        engine_label = QLabel("Engine:")
-        engine_layout.addWidget(engine_label, 0, 0)
+        # Ajout du QTabWidget pour les moteurs (comme dans l'application principale)
+        self.compiler_tabs = QTabWidget()
+        self.compiler_tabs.setDocumentMode(False)
+        self.compiler_tabs.setTabsClosable(False)
+        self.compiler_tabs.setMovable(False)
+        engine_layout.addWidget(self.compiler_tabs)
 
-        self.engine_combo = QComboBox()
-        self.engine_combo.setMinimumWidth(200)
-        self.engine_combo.currentIndexChanged.connect(self._on_engine_changed)
-        engine_layout.addWidget(self.engine_combo, 0, 1)
-
-        self.engine_version_label = QLabel("Version: -")
-        self.engine_version_label.setStyleSheet("color: #888;")
-        engine_layout.addWidget(self.engine_version_label, 0, 2)
-
-        engine_layout.addWidget(QLabel("Required Core:"), 1, 0)
-        self.core_version_label = QLabel("-")
-        self.core_version_label.setStyleSheet("color: #888;")
-        engine_layout.addWidget(self.core_version_label, 1, 1, 1, 2)
-
-        # Bouton vérifier compatibilité
+        # Bouton vérifier compatibilité (sélectionne l'onglet courant)
         compat_btn = QPushButton("Check Compatibility")
         compat_btn.clicked.connect(self._check_compatibility)
-        engine_layout.addWidget(compat_btn, 2, 0)
+        engine_layout.addWidget(compat_btn)
 
         self.compat_status_label = QLabel("")
         self.compat_status_label.setStyleSheet("font-weight: bold;")
-        engine_layout.addWidget(self.compat_status_label, 2, 1, 1, 2)
+        engine_layout.addWidget(self.compat_status_label)
 
         engine_group.setLayout(engine_layout)
         config_layout.addWidget(engine_group, 0, 0)
@@ -337,13 +329,6 @@ class EnginesStandaloneGui(QMainWindow):
         self.statusBar = QStatusBar()
         self.setStatusBar(self.statusBar)
         self.statusBar.showMessage("Ready")
-
-        # Initialiser les dimensions des groupes
-        self._init_group_dimensions()
-
-    def _init_group_dimensions(self):
-        """Initialise les dimensions minimales des groupes."""
-        self.engine_combo.setMinimumContentsLength(15)
 
     def _center_window(self):
         """Centre la fenêtre sur l'écran."""
@@ -513,62 +498,145 @@ class EnginesStandaloneGui(QMainWindow):
                 child.setTitle(tr["log"])
 
     def _refresh_engines(self):
-        """Rafraîchit la liste des moteurs disponibles."""
-        self.engine_combo.clear()
+        """Rafraîchit la liste des moteurs disponibles et crée leurs onglets."""
+        # Nettoyer les onglets existants
+        self.compiler_tabs.clear()
         self.engines_info = {}
 
         engine_ids = available_engines()
 
-        for eid in engine_ids:
-            try:
-                engine_cls = get_engine(eid)
-                if engine_cls:
-                    name = getattr(engine_cls, "name", eid)
-                    version = getattr(engine_cls, "version", "1.0.0")
-                    required_core = getattr(
-                        engine_cls, "required_core_version", "1.0.0"
-                    )
-
-                    self.engine_combo.addItem(f"{name} ({eid})", eid)
-                    self.engines_info[eid] = {
-                        "name": name,
-                        "version": version,
-                        "required_core": required_core,
-                        "class": engine_cls,
-                    }
-            except Exception as e:
-                self._log(f"Error loading engine {eid}: {e}")
-
-        if engine_ids:
-            self._log(f"Loaded {len(engine_ids)} engine(s)")
-            self.statusBar.showMessage(f"Ready - {len(engine_ids)} engines loaded")
-        else:
+        if not engine_ids:
+            # Pas de moteurs : afficher un message
+            no_engine_widget = QWidget()
+            no_engine_layout = QVBoxLayout()
+            no_engine_label = QLabel("No engines available.\nPlease check ENGINES folder.")
+            no_engine_label.setStyleSheet("color: #888; font-size: 14px;")
+            no_engine_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            no_engine_layout.addWidget(no_engine_label)
+            no_engine_widget.setLayout(no_engine_layout)
+            self.compiler_tabs.addTab(no_engine_label, "No Engines")
             self._log("No engines available. Please check ENGINES folder.")
             self.statusBar.showMessage("No engines available")
+            return
+
+        # Utiliser le mécanisme standard de bind_tabs comme dans l'application principale
+        try:
+            engines_loader.registry.bind_tabs(self)
+            self._log(f"Loaded {len(engine_ids)} engine(s)")
+            self.statusBar.showMessage(f"Ready - {len(engine_ids)} engines loaded")
+        except Exception as e:
+            self._log(f"Error binding engine tabs: {e}")
+            # Fallback : créer les onglets manuellement
+            for eid in engine_ids:
+                try:
+                    engine_cls = get_engine(eid)
+                    if engine_cls:
+                        name = getattr(engine_cls, "name", eid)
+                        version = getattr(engine_cls, "version", "1.0.0")
+                        required_core = getattr(
+                            engine_cls, "required_core_version", "1.0.0"
+                        )
+
+                        self.engines_info[eid] = {
+                            "name": name,
+                            "version": version,
+                            "required_core": required_core,
+                            "class": engine_cls,
+                        }
+
+                        # Essayer de créer l'onglet via create_tab
+                        create_tab = getattr(engine_cls, "create_tab", None)
+                        if callable(create_tab):
+                            result = create_tab(self)
+                            if result:
+                                widget, label = result
+                                self.compiler_tabs.addTab(widget, label)
+                        else:
+                            # Pas de create_tab : créer un onglet par défaut
+                            default_widget = self._create_default_engine_widget(
+                                eid, name, version, required_core
+                            )
+                            self.compiler_tabs.addTab(default_widget, name)
+
+                except Exception as e:
+                    self._log(f"Error loading engine {eid}: {e}")
 
     def _on_engine_changed(self, index):
-        """Appelé lorsque l'utilisateur sélectionne un moteur."""
+        """Appelé lorsque l'utilisateur sélectionne un moteur via l'onglet."""
         if index < 0:
             return
 
-        engine_id = self.engine_combo.currentData()
-        self.selected_engine_id = engine_id
+        # Récupérer l'ID du moteur depuis le registry
+        try:
+            engine_id = engines_loader.registry.get_engine_for_tab(index)
+            self.selected_engine_id = engine_id
+            if engine_id and engine_id in self.engines_info:
+                info = self.engines_info[engine_id]
+                self._log(f"Selected engine: {info['name']} v{info['version']}")
+        except Exception as e:
+            self._log(f"Error getting engine for tab {index}: {e}")
 
-        if engine_id in self.engines_info:
-            info = self.engines_info[engine_id]
-            self.engine_version_label.setText(f"Version: {info['version']}")
-            self.core_version_label.setText(info["required_core"])
-            self._log(f"Selected engine: {info['name']} v{info['version']}")
+    def _create_default_engine_widget(
+        self, engine_id: str, name: str, version: str, required_core: str
+    ) -> QWidget:
+        """Crée un widget par défaut pour un moteur sans create_tab."""
+        widget = QWidget()
+        layout = QGridLayout()
+
+        layout.addWidget(QLabel(f"<b>Engine:</b> {name} ({engine_id})"), 0, 0, 1, 2)
+        layout.addWidget(QLabel(f"<b>Version:</b> {version}"), 1, 0)
+        layout.addWidget(QLabel(f"<b>Required Core:</b> {required_core}"), 1, 1)
+
+        # Info label
+        info_label = QLabel(
+            "This engine uses default configuration.\n"
+            "Configure options in the main application for full functionality."
+        )
+        info_label.setStyleSheet("color: #888; font-style: italic;")
+        info_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(info_label, 2, 0, 1, 2)
+
+        widget.setLayout(layout)
+        return widget
 
     def _check_compatibility(self):
-        """Vérifie la compatibilité du moteur sélectionné."""
-        engine_id = self.engine_combo.currentData()
-        if not engine_id:
-            QMessageBox.warning(self, "Warning", "Please select an engine first")
+        """Vérifie la compatibilité du moteur de l'onglet courant."""
+        # Récupérer l'ID du moteur depuis l'onglet courant
+        current_index = self.compiler_tabs.currentIndex()
+        if current_index < 0:
+            QMessageBox.warning(self, "Warning", "No engine tab selected")
             return
 
         try:
-            engine_cls = self.engines_info[engine_id]["class"]
+            engine_id = engines_loader.registry.get_engine_for_tab(current_index)
+            if not engine_id:
+                # Essayer le fallback avec engines_info
+                if self.engines_info:
+                    engine_id = list(self.engines_info.keys())[current_index]
+                else:
+                    QMessageBox.warning(self, "Warning", "No engine available")
+                    return
+        except Exception:
+            engine_id = None
+
+        if not engine_id:
+            QMessageBox.warning(self, "Warning", "No engine available")
+            return
+
+        try:
+            # Récupérer la classe du moteur
+            engine_cls = None
+            if engine_id in self.engines_info:
+                engine_cls = self.engines_info[engine_id].get("class")
+            if not engine_cls:
+                engine_cls = get_engine(engine_id)
+
+            if not engine_cls:
+                QMessageBox.warning(
+                    self, "Warning", f"Engine class not found: {engine_id}"
+                )
+                return
+
             result = check_engine_compatibility(
                 engine_cls,
                 get_core_version(),
@@ -619,16 +687,49 @@ class EnginesStandaloneGui(QMainWindow):
             self.workspace_dir = workspace_dir
 
     def _run_compilation(self):
-        """Exécute la compilation."""
-        engine_id = self.engine_combo.currentData()
+        """Exécute la compilation avec le moteur de l'onglet courant."""
+        # Récupérer l'ID du moteur depuis l'onglet courant
+        current_index = self.compiler_tabs.currentIndex()
+        if current_index < 0:
+            QMessageBox.warning(
+                self,
+                "Warning",
+                (
+                    "Please select an engine tab first"
+                    if self.language == "en"
+                    else "Veuillez sélectionner un onglet de moteur d'abord"
+                ),
+            )
+            return
+
+        try:
+            engine_id = engines_loader.registry.get_engine_for_tab(current_index)
+            if not engine_id:
+                # Fallback avec engines_info
+                if self.engines_info:
+                    engine_id = list(self.engines_info.keys())[current_index]
+                else:
+                    QMessageBox.warning(
+                        self,
+                        "Warning",
+                        (
+                            "No engine available"
+                            if self.language == "en"
+                            else "Aucun moteur disponible"
+                        ),
+                    )
+                    return
+        except Exception:
+            engine_id = None
+
         if not engine_id:
             QMessageBox.warning(
                 self,
                 "Warning",
                 (
-                    "Please select an engine first"
+                    "No engine available"
                     if self.language == "en"
-                    else "Veuillez sélectionner un moteur d'abord"
+                    else "Aucun moteur disponible"
                 ),
             )
             return
@@ -671,8 +772,8 @@ class EnginesStandaloneGui(QMainWindow):
             # Créer le moteur
             engine = create_engine(engine_id)
 
-            # Préparer les arguments
-            result = engine.program_and_args(None, file_path)
+            # Préparer les arguments avec le GUI pour accéder aux options
+            result = engine.program_and_args(self, file_path)
 
             if result:
                 program, args = result
@@ -760,10 +861,27 @@ class EnginesStandaloneGui(QMainWindow):
             self.compile_btn.setEnabled(True)
 
     def _dry_run(self):
-        """Affiche la commande sans l'exécuter."""
-        engine_id = self.engine_combo.currentData()
+        """Affiche la commande sans l'exécuter en utilisant l'onglet courant."""
+        # Récupérer l'ID du moteur depuis l'onglet courant
+        current_index = self.compiler_tabs.currentIndex()
+        if current_index < 0:
+            QMessageBox.warning(self, "Warning", "Please select an engine tab first")
+            return
+
+        try:
+            engine_id = engines_loader.registry.get_engine_for_tab(current_index)
+            if not engine_id:
+                # Fallback avec engines_info
+                if self.engines_info:
+                    engine_id = list(self.engines_info.keys())[current_index]
+                else:
+                    QMessageBox.warning(self, "Warning", "No engine available")
+                    return
+        except Exception:
+            engine_id = None
+
         if not engine_id:
-            QMessageBox.warning(self, "Warning", "Please select an engine first")
+            QMessageBox.warning(self, "Warning", "No engine available")
             return
 
         file_path = self.file_path_edit.text()
@@ -773,7 +891,7 @@ class EnginesStandaloneGui(QMainWindow):
 
         try:
             engine = create_engine(engine_id)
-            result = engine.program_and_args(None, file_path)
+            result = engine.program_and_args(self, file_path)
 
             if result:
                 program, args = result
@@ -828,3 +946,4 @@ def launch_engines_gui(
 
 if __name__ == "__main__":
     sys.exit(launch_engines_gui())
+
