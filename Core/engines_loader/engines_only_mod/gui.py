@@ -35,7 +35,7 @@ from pathlib import Path
 from typing import Optional, Dict, Any, List
 from datetime import datetime
 
-from PySide6.QtCore import Qt, QSize, QTimer, QProcess, QThread
+from PySide6.QtCore import Qt, QSize, QTimer, QProcess, QThread, Signal
 from PySide6.QtWidgets import (
     QApplication,
     QMainWindow,
@@ -74,9 +74,9 @@ import Core.engines_loader as engines_loader
 class CompilationThread(QThread):
     """Thread pour exécuter la compilation sans bloquer l'UI."""
 
-    output_ready = None  # Signal(str)
-    error_ready = None   # Signal(str)
-    finished = None      # Signal(int) - code de retour
+    output_ready = Signal(str)
+    error_ready = Signal(str)
+    finished = Signal(int)
 
     def __init__(self, program, args, env, working_dir=None):
         super().__init__()
