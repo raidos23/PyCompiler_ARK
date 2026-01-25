@@ -31,8 +31,7 @@ from typing import Optional
 from PySide6.QtCore import QDir
 from PySide6.QtWidgets import QFileDialog, QInputDialog
 
-from engine_sdk.base import CompilerEngine
-from engine_sdk import engine_register
+from engine_sdk import CompilerEngine, engine_register
 
 
 @engine_register
@@ -167,7 +166,13 @@ class PyInstallerEngine(CompilerEngine):
         """Handle successful compilation."""
         try:
             # Log success message with output location
-            output_dir = getattr(self, "_output_dir_input", getattr(gui, "output_dir_input", None)) if hasattr(self, "_gui") else getattr(self, "_output_dir_input", None)
+            output_dir = (
+                getattr(
+                    self, "_output_dir_input", getattr(gui, "output_dir_input", None)
+                )
+                if hasattr(self, "_gui")
+                else getattr(self, "_output_dir_input", None)
+            )
             if output_dir and output_dir.text().strip():
                 try:
                     if hasattr(gui, "log"):
@@ -292,8 +297,6 @@ class PyInstallerEngine(CompilerEngine):
             return getattr(self, f"_opt_{name}")
         # Fallback to GUI widget (static UI)
         return getattr(self._gui, name, None) if hasattr(self, "_gui") else None
-
-
 
     def _get_input(self, name: str):
         """Get input widget from engine instance or GUI."""

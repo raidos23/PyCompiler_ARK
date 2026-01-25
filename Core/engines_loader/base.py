@@ -120,7 +120,7 @@ class CompilerEngine:
                             gui.log.append(
                                 gui.tr(
                                     f"📦 Installation des outils Python manquants: {missing_python}",
-                                    f"📦 Installing missing Python tools: {missing_python}"
+                                    f"📦 Installing missing Python tools: {missing_python}",
                                 )
                             )
                         gui.venv_manager.ensure_tools_installed(
@@ -131,7 +131,10 @@ class CompilerEngine:
             if system_tools:
                 try:
                     # Import and use SysDependencyManager directly for full GUI support
-                    from Core.sys_deps import SysDependencyManager, check_system_packages
+                    from Core.sys_deps import (
+                        SysDependencyManager,
+                        check_system_packages,
+                    )
 
                     # Get or create the system dependency manager with GUI parent
                     if hasattr(gui, "sys_deps_manager") and gui.sys_deps_manager:
@@ -150,12 +153,13 @@ class CompilerEngine:
                             gui.log.append(
                                 gui.tr(
                                     f"📦 Installation des outils système manquants: {missing_system}",
-                                    f"📦 Installing missing system tools: {missing_system}"
+                                    f"📦 Installing missing system tools: {missing_system}",
                                 )
                             )
 
                         # Detect platform and use appropriate installation method
                         import platform
+
                         system = platform.system().lower()
 
                         if system == "linux":
@@ -169,7 +173,7 @@ class CompilerEngine:
                                             gui.log.append(
                                                 gui.tr(
                                                     f"✅ Outils système installés avec succès: {missing_system}",
-                                                    f"✅ System tools installed successfully: {missing_system}"
+                                                    f"✅ System tools installed successfully: {missing_system}",
                                                 )
                                             )
                                     else:
@@ -177,7 +181,7 @@ class CompilerEngine:
                                             gui.log.append(
                                                 gui.tr(
                                                     f"❌ Échec installation outils système: {missing_system} (code: {process.exitCode()})",
-                                                    f"❌ System tools installation failed: {missing_system} (code: {process.exitCode()})"
+                                                    f"❌ System tools installation failed: {missing_system} (code: {process.exitCode()})",
                                                 )
                                             )
                                         return False
@@ -186,7 +190,7 @@ class CompilerEngine:
                                         gui.log.append(
                                             gui.tr(
                                                 "⏱️ Timeout lors de l'installation des outils système",
-                                                "⏱️ Timeout during system tools installation"
+                                                "⏱️ Timeout during system tools installation",
                                             )
                                         )
                                     return False
@@ -195,7 +199,7 @@ class CompilerEngine:
                                     gui.log.append(
                                         gui.tr(
                                             "❌ Impossible de démarrer l'installation des outils système",
-                                            "❌ Unable to start system tools installation"
+                                            "❌ Unable to start system tools installation",
                                         )
                                     )
                                 return False
@@ -206,9 +210,15 @@ class CompilerEngine:
                             for tool in missing_system:
                                 # Map common Linux package names to Windows equivalents
                                 winget_map = {
-                                    "build-essential": [{"id": "Microsoft.VisualStudio.2022.BuildTools"}],
-                                    "gcc": [{"id": "Microsoft.VisualStudio.2022.BuildTools"}],
-                                    "g++": [{"id": "Microsoft.VisualStudio.2022.BuildTools"}],
+                                    "build-essential": [
+                                        {"id": "Microsoft.VisualStudio.2022.BuildTools"}
+                                    ],
+                                    "gcc": [
+                                        {"id": "Microsoft.VisualStudio.2022.BuildTools"}
+                                    ],
+                                    "g++": [
+                                        {"id": "Microsoft.VisualStudio.2022.BuildTools"}
+                                    ],
                                     "python3-dev": [{"id": "Python.Python.3"}],
                                     "libpython3-dev": [{"id": "Python.Python.3"}],
                                     "patchelf": [],  # Not available on Windows
@@ -220,7 +230,9 @@ class CompilerEngine:
                                     winget_packages.append({"id": tool})
 
                             if winget_packages:
-                                process = sys_manager.install_packages_windows(winget_packages)
+                                process = sys_manager.install_packages_windows(
+                                    winget_packages
+                                )
                                 if process:
                                     if process.waitForFinished(600000):  # 10 minutes
                                         if process.exitCode() == 0:
@@ -228,7 +240,7 @@ class CompilerEngine:
                                                 gui.log.append(
                                                     gui.tr(
                                                         f"✅ Outils Windows installés: {missing_system}",
-                                                        f"✅ Windows tools installed: {missing_system}"
+                                                        f"✅ Windows tools installed: {missing_system}",
                                                     )
                                                 )
                                         else:
@@ -236,7 +248,7 @@ class CompilerEngine:
                                                 gui.log.append(
                                                     gui.tr(
                                                         f"❌ Échec installation Windows: {missing_system}",
-                                                        f"❌ Windows installation failed: {missing_system}"
+                                                        f"❌ Windows installation failed: {missing_system}",
                                                     )
                                                 )
                                             return False
@@ -245,7 +257,7 @@ class CompilerEngine:
                                             gui.log.append(
                                                 gui.tr(
                                                     "⏱️ Timeout lors de l'installation Windows",
-                                                    "⏱️ Timeout during Windows installation"
+                                                    "⏱️ Timeout during Windows installation",
                                                 )
                                             )
                                         return False
@@ -254,20 +266,22 @@ class CompilerEngine:
                                         gui.log.append(
                                             gui.tr(
                                                 "⚠️ winget non disponible, installation manuelle requise",
-                                                "⚠️ winget not available, manual installation required"
+                                                "⚠️ winget not available, manual installation required",
                                             )
                                         )
                                     # Open documentation URL for manual installation
-                                    sys_manager.open_urls([
-                                        "https://learn.microsoft.com/en-us/windows/package-manager/winget/"
-                                    ])
+                                    sys_manager.open_urls(
+                                        [
+                                            "https://learn.microsoft.com/en-us/windows/package-manager/winget/"
+                                        ]
+                                    )
                                     return False
                             else:
                                 if hasattr(gui, "log") and gui.log:
                                     gui.log.append(
                                         gui.tr(
                                             f"⚠️ Aucun équivalent Windows pour: {missing_system}",
-                                            f"⚠️ No Windows equivalent for: {missing_system}"
+                                            f"⚠️ No Windows equivalent for: {missing_system}",
                                         )
                                     )
                         else:
@@ -275,7 +289,7 @@ class CompilerEngine:
                                 gui.log.append(
                                     gui.tr(
                                         "⚠️ Plateforme non supportée pour l'installation automatique",
-                                        "⚠️ Platform not supported for automatic installation"
+                                        "⚠️ Platform not supported for automatic installation",
                                     )
                                 )
                                 return False
@@ -284,7 +298,7 @@ class CompilerEngine:
                             gui.log.append(
                                 gui.tr(
                                     f"✅ Tous les outils système sont déjà installés: {system_tools}",
-                                    f"✅ All system tools are already installed: {system_tools}"
+                                    f"✅ All system tools are already installed: {system_tools}",
                                 )
                             )
 
@@ -293,7 +307,7 @@ class CompilerEngine:
                         gui.log.append(
                             gui.tr(
                                 f"⚠️ Erreur lors de la vérification/installation des outils système: {e}",
-                                f"⚠️ Error checking/installing system tools: {e}"
+                                f"⚠️ Error checking/installing system tools: {e}",
                             )
                         )
                     return False
@@ -304,7 +318,7 @@ class CompilerEngine:
                 gui.log.append(
                     gui.tr(
                         f"⚠️ Erreur dans ensure_tools_installed: {e}",
-                        f"⚠️ Error in ensure_tools_installed: {e}"
+                        f"⚠️ Error in ensure_tools_installed: {e}",
                     )
                 )
             return False

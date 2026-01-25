@@ -64,22 +64,22 @@ logger = logging.getLogger(__name__)
 class MockGUI:
     """
     Mock GUI object pour fournir une interface compatible avec les moteurs.
-    
+
     Cette classe simule les propriétés et méthodes du GUI principal
     nécessaires aux moteurs de compilation, permettant leur exécution
     en mode standalone sans l'application complète.
     """
-    
+
     def __init__(self, workspace_dir: Optional[str] = None):
         self.workspace_dir = workspace_dir
         self.log = MockLog()
         self._tr = {}
-        
+
     def tr(self, fr_text: str, en_text: str) -> str:
         """Traduit le texte selon la langue préférée (défaut: anglais)."""
         try:
-            lang = getattr(self, 'language_pref', 'en')
-            if lang and lang.lower().startswith('fr'):
+            lang = getattr(self, "language_pref", "en")
+            if lang and lang.lower().startswith("fr"):
                 return fr_text
             return en_text
         except Exception:
@@ -88,31 +88,31 @@ class MockGUI:
 
 class MockLog:
     """Mock log object qui collecte les messages pour affichage."""
-    
+
     def __init__(self):
         self.messages: List[str] = []
-    
+
     def append(self, message: str) -> None:
         """Ajoute un message au log."""
         self.messages.append(message)
         print(message)
-    
+
     def clear(self) -> None:
         """Efface le log."""
         self.messages.clear()
-    
+
     def get_value(self) -> str:
         """Retourne le contenu complet du log."""
-        return '\n'.join(self.messages)
+        return "\n".join(self.messages)
 
 
 class LanguageManager:
     """Gestionnaire de langues pour l'application."""
-    
+
     def __init__(self):
         self.strings = self._get_default_strings()
         self.current_language = "en"
-    
+
     def _get_default_strings(self) -> dict:
         """Retourne les chaînes par défaut en anglais et français."""
         return {
@@ -125,7 +125,6 @@ class LanguageManager:
             "file_config_fr": "Configuration Fichier",
             "execution_config": "Execution Options",
             "execution_config_fr": "Options d'Exécution",
-            
             # Labels
             "engine_label": "Engine:",
             "engine_label_fr": "Moteur :",
@@ -143,7 +142,6 @@ class LanguageManager:
             "workspace_label_fr": "Workspace :",
             "no_workspace": "No workspace selected",
             "no_workspace_fr": "Aucun workspace sélectionné",
-            
             # Boutons
             "run_compile": "Compile",
             "run_compile_fr": "Compiler",
@@ -155,7 +153,6 @@ class LanguageManager:
             "exit_button_fr": "Quitter",
             "refresh_engines": "Refresh Engines",
             "refresh_engines_fr": "Rafraîchir",
-            
             # Status
             "ready": "Ready",
             "ready_fr": "Prêt",
@@ -167,7 +164,6 @@ class LanguageManager:
             "failed_fr": "Échec de la compilation",
             "no_engine": "No engine selected",
             "no_engine_fr": "Aucun moteur sélectionné",
-            
             # Messages
             "select_engine": "Please select an engine first",
             "select_engine_fr": "Veuillez sélectionner un moteur d'abord",
@@ -190,18 +186,20 @@ class LanguageManager:
             "dry_run_label": "Dry run mode",
             "dry_run_label_fr": "Mode simulation",
         }
-    
+
     def set_language(self, lang_code: str) -> None:
         """Définit la langue actuelle."""
         self.current_language = lang_code
-    
+
     def get(self, key: str, default: str = "") -> str:
         """Récupère une chaîne traduite."""
-        lang_key = f"{key}_{self.current_language}" if self.current_language != 'en' else key
+        lang_key = (
+            f"{key}_{self.current_language}" if self.current_language != "en" else key
+        )
         if lang_key in self.strings:
             return self.strings[lang_key]
         return self.strings.get(key, default)
-    
+
     def format(self, key: str, **kwargs) -> str:
         """Récupère une chaîne formatée."""
         template = self.get(key, "")
@@ -213,11 +211,11 @@ class LanguageManager:
 
 class ThemeManager:
     """Gestionnaire de thèmes pour l'application."""
-    
+
     def __init__(self):
         self.current_theme = "dark"
         self.colors = self._get_default_colors()
-    
+
     def _get_default_colors(self) -> dict:
         """Retourne les couleurs par défaut pour le thème sombre."""
         return {
@@ -232,7 +230,7 @@ class ThemeManager:
             "border": "#404040",
             "group_bg": "#252525",
         }
-    
+
     def set_theme(self, theme_name: str) -> bool:
         """Définit le thème actuel."""
         if theme_name == "light":
@@ -255,7 +253,7 @@ class ThemeManager:
             self.colors = self._get_default_colors()
             return True
         return False
-    
+
     def get_stylesheet(self) -> str:
         """Génère la feuille de style pour le thème actuel."""
         c = self.colors
@@ -334,19 +332,19 @@ class ThemeManager:
 class EnginesStandaloneApp:
     """
     Application autonome pour gérer et exécuter les moteurs de compilation.
-    
+
     Cette classe fournit une interface CLI/TUI pour:
     - Lister les moteurs disponibles
     - Sélectionner et configurer un moteur
     - Compiler des fichiers avec le moteur choisi
     - Afficher les résultats et logs
-    
+
     Attributes:
         gui: MockGUI object pour compatibilité avec les moteurs
         language_manager: Gestionnaire de langues
         theme_manager: Gestionnaire de thèmes
     """
-    
+
     def __init__(
         self,
         engine_id: Optional[str] = None,
@@ -359,7 +357,7 @@ class EnginesStandaloneApp:
     ):
         """
         Initialise l'application standalone engines.
-        
+
         Args:
             engine_id: ID du moteur à utiliser (optionnel)
             file_path: Chemin du fichier à compiler (optionnel)
@@ -372,35 +370,35 @@ class EnginesStandaloneApp:
         self.gui = MockGUI(workspace_dir)
         self.language_manager = LanguageManager()
         self.theme_manager = ThemeManager()
-        
+
         # Paramètres d'exécution
         self.selected_engine_id = engine_id
         self.selected_file = file_path
         self.workspace_dir = workspace_dir
         self.dry_run = dry_run
         self.headless = headless
-        
+
         # État de l'application
         self._is_running = False
         self._engines_cache = None
-        
+
         # Configuration langue et thème
         self.language_manager.set_language(language)
         self.theme_manager.set_theme(theme)
-    
+
     def load_engines(self) -> List[Dict[str, Any]]:
         """
         Charge et retourne la liste des moteurs disponibles.
-        
+
         Returns:
             Liste de dictionnaires contenant les informations des moteurs
         """
         if self._engines_cache is not None:
             return self._engines_cache
-        
+
         engines = []
         engine_ids = available_engines()
-        
+
         for eid in engine_ids:
             try:
                 engine_cls = get_engine(eid)
@@ -420,17 +418,17 @@ class EnginesStandaloneApp:
                     engines.append(engine_info)
             except Exception as e:
                 logger.error(f"Error loading engine {eid}: {e}")
-        
+
         self._engines_cache = engines
         return engines
-    
+
     def get_engine_info(self, engine_id: str) -> Optional[Dict[str, Any]]:
         """
         Retourne les informations d'un moteur spécifique.
-        
+
         Args:
             engine_id: ID du moteur
-            
+
         Returns:
             Dictionnaire avec les informations du moteur ou None
         """
@@ -439,14 +437,14 @@ class EnginesStandaloneApp:
             if engine["id"] == engine_id:
                 return engine
         return None
-    
+
     def check_engine_compatibility(self, engine_id: str) -> Dict[str, Any]:
         """
         Vérifie la compatibilité d'un moteur avec le système.
-        
+
         Args:
             engine_id: ID du moteur à vérifier
-            
+
         Returns:
             Dictionnaire avec le résultat de la vérification
         """
@@ -458,14 +456,14 @@ class EnginesStandaloneApp:
                     engine=engine_id
                 ),
             }
-        
+
         try:
             result = check_engine_compatibility(
                 engine_info["class"],
                 get_core_version(),
                 get_engine_sdk_version(),
             )
-            
+
             return {
                 "compatible": result.is_compatible,
                 "message": result.error_message if not result.is_compatible else None,
@@ -477,28 +475,26 @@ class EnginesStandaloneApp:
                 "message": str(e),
                 "missing_requirements": [],
             }
-    
-    def build_command(
-        self, engine_id: str, file_path: str
-    ) -> Optional[List[str]]:
+
+    def build_command(self, engine_id: str, file_path: str) -> Optional[List[str]]:
         """
         Construit la commande de compilation pour un moteur et fichier donnés.
-        
+
         Args:
             engine_id: ID du moteur
             file_path: Chemin du fichier à compiler
-            
+
         Returns:
             Liste de chaînes de commande ou None si erreur
         """
         engine_info = self.get_engine_info(engine_id)
         if not engine_info:
             return None
-        
+
         try:
             engine = create_engine(engine_id)
             result = engine.program_and_args(self.gui, file_path)
-            
+
             if result:
                 program, args = result
                 return [program] + args
@@ -506,7 +502,7 @@ class EnginesStandaloneApp:
         except Exception as e:
             logger.error(f"Error building command: {e}")
             return None
-    
+
     def run_compilation(
         self,
         engine_id: str,
@@ -516,18 +512,18 @@ class EnginesStandaloneApp:
     ) -> Dict[str, Any]:
         """
         Exécute la compilation avec le moteur spécifié.
-        
+
         Args:
             engine_id: ID du moteur à utiliser
             file_path: Chemin du fichier à compiler
             dry_run: Si True, affiche seulement la commande
             env: Variables d'environnement additionnelles
-            
+
         Returns:
             Dictionnaire avec le résultat de la compilation
         """
         start_time = datetime.now()
-        
+
         # Vérifications préliminaires
         if not engine_id:
             return {
@@ -538,7 +534,7 @@ class EnginesStandaloneApp:
                 "stderr": "",
                 "duration_ms": 0,
             }
-        
+
         if not file_path:
             return {
                 "success": False,
@@ -548,7 +544,7 @@ class EnginesStandaloneApp:
                 "stderr": "",
                 "duration_ms": 0,
             }
-        
+
         # Vérifier compatibilité moteur
         compat = self.check_engine_compatibility(engine_id)
         if not compat["compatible"]:
@@ -560,7 +556,7 @@ class EnginesStandaloneApp:
                 "stderr": "",
                 "duration_ms": 0,
             }
-        
+
         # Construire la commande
         cmd = self.build_command(engine_id, file_path)
         if not cmd:
@@ -572,7 +568,7 @@ class EnginesStandaloneApp:
                 "stderr": "",
                 "duration_ms": 0,
             }
-        
+
         # Mode dry run
         if dry_run or self.dry_run:
             return {
@@ -586,12 +582,12 @@ class EnginesStandaloneApp:
                 "duration_ms": 0,
                 "message": self.language_manager.get("dry_run_label"),
             }
-        
+
         # Préparer l'environnement
         execution_env = os.environ.copy()
         if env:
             execution_env.update(env)
-        
+
         # Exécuter la commande
         try:
             proc = subprocess.Popen(
@@ -602,14 +598,14 @@ class EnginesStandaloneApp:
                 env=execution_env,
                 cwd=os.path.dirname(file_path) if file_path else None,
             )
-            
+
             stdout, stderr = proc.communicate()
-            
+
             end_time = datetime.now()
             duration_ms = (end_time - start_time).total_seconds() * 1000
-            
+
             success = proc.returncode == 0
-            
+
             return {
                 "success": success,
                 "return_code": proc.returncode,
@@ -619,11 +615,11 @@ class EnginesStandaloneApp:
                 "command": " ".join(cmd),
                 "cmd_list": cmd,
             }
-            
+
         except Exception as e:
             end_time = datetime.now()
             duration_ms = (end_time - start_time).total_seconds() * 1000
-            
+
             return {
                 "success": False,
                 "error": str(e),
@@ -632,11 +628,11 @@ class EnginesStandaloneApp:
                 "stderr": "",
                 "duration_ms": duration_ms,
             }
-    
+
     def execute(self) -> Dict[str, Any]:
         """
         Exécute l'application avec les paramètres configurés.
-        
+
         Returns:
             Dictionnaire avec le résultat de l'exécution
         """
@@ -646,7 +642,7 @@ class EnginesStandaloneApp:
             "selected_file": self.selected_file,
             "compilation": None,
         }
-        
+
         # Si un moteur et un fichier sont spécifiés, exécuter la compilation
         if self.selected_engine_id and self.selected_file:
             results["compilation"] = self.run_compilation(
@@ -654,31 +650,31 @@ class EnginesStandaloneApp:
                 self.selected_file,
                 dry_run=self.dry_run,
             )
-        
+
         return results
-    
+
     def print_summary(self) -> None:
         """Affiche un résumé de l'état de l'application."""
         print("\n" + "=" * 60)
         print("ENGINES STANDALONE - Application Summary")
         print("=" * 60)
-        
+
         engines = self.load_engines()
         print(f"\nAvailable engines ({len(engines)}):")
         for eng in engines:
             compat = self.check_engine_compatibility(eng["id"])
             status = "OK" if compat["compatible"] else "FAIL"
             print(f"  [{status}] {eng['name']} ({eng['id']}) v{eng['version']}")
-        
+
         if self.selected_engine_id:
             print(f"\nSelected engine: {self.selected_engine_id}")
-        
+
         if self.selected_file:
             print(f"File to compile: {self.selected_file}")
-        
+
         if self.dry_run:
             print("\nMode: Dry-run (simulation)")
-        
+
         print()
 
 
@@ -694,7 +690,7 @@ def run_cli(
 ) -> None:
     """
     Point d'entrée CLI pour l'application standalone engines.
-    
+
     Args:
         engine_id: Moteur à utiliser
         file_path: Fichier à compiler
@@ -714,7 +710,7 @@ def run_cli(
         dry_run=dry_run,
         headless=True,
     )
-    
+
     if list_engines:
         engines = app.load_engines()
         print(f"\nAvailable engines ({len(engines)}):\n")
@@ -727,7 +723,7 @@ def run_cli(
             print(f"       Required Core: {eng['required_core']}")
             print()
         return
-    
+
     if check_compat:
         result = app.check_engine_compatibility(check_compat)
         print(f"\nCompatibility check for: {check_compat}")
@@ -741,7 +737,7 @@ def run_cli(
             if result.get("message"):
                 print(f"     Message: {result['message']}")
         return
-    
+
     if engine_id and file_path:
         result = app.run_compilation(engine_id, file_path, dry_run=dry_run)
         print(f"\nCompilation result with {engine_id}:\n")
@@ -766,7 +762,7 @@ def run_cli(
 def main():
     """Point d'entrée principal pour l'application standalone."""
     import argparse
-    
+
     parser = argparse.ArgumentParser(
         description="Engines Standalone - Execute compilation engines independently",
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -785,7 +781,7 @@ Examples:
     python -m Core.engines_loader.engines_only_mod --engine pyinstaller --file script.py
         """,
     )
-    
+
     parser.add_argument(
         "-e",
         "--engine",
@@ -831,9 +827,9 @@ Examples:
         metavar="ENGINE_ID",
         help="Check engine compatibility",
     )
-    
+
     args = parser.parse_args()
-    
+
     run_cli(
         engine_id=args.engine,
         file_path=args.file,

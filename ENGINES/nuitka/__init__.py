@@ -30,8 +30,7 @@ from typing import Optional
 from PySide6.QtCore import QDir
 from PySide6.QtWidgets import QFileDialog, QInputDialog, QCheckBox, QLineEdit
 
-from engine_sdk.base import CompilerEngine
-from engine_sdk import engine_register, compute_for_all
+from engine_sdk import CompilerEngine, engine_register
 
 
 @engine_register
@@ -93,7 +92,10 @@ class NuitkaEngine(CompilerEngine):
             cmd = [python_path, "-m", "nuitka"]
 
             # Standalone mode
-            if hasattr(self, "_nuitka_standalone") and self._nuitka_standalone.isChecked():
+            if (
+                hasattr(self, "_nuitka_standalone")
+                and self._nuitka_standalone.isChecked()
+            ):
                 cmd.append("--standalone")
 
             # Onefile mode
@@ -101,15 +103,24 @@ class NuitkaEngine(CompilerEngine):
                 cmd.append("--onefile")
 
             # Windowed (no console)
-            if hasattr(self, "_nuitka_disable_console") and self._nuitka_disable_console.isChecked():
+            if (
+                hasattr(self, "_nuitka_disable_console")
+                and self._nuitka_disable_console.isChecked()
+            ):
                 cmd.append("--windows-disable-console")
 
             # Show progress
-            if hasattr(self, "_nuitka_show_progress") and self._nuitka_show_progress.isChecked():
+            if (
+                hasattr(self, "_nuitka_show_progress")
+                and self._nuitka_show_progress.isChecked()
+            ):
                 cmd.append("--show-progress")
 
             # Output directory
-            if hasattr(self, "_nuitka_output_dir") and self._nuitka_output_dir.text().strip():
+            if (
+                hasattr(self, "_nuitka_output_dir")
+                and self._nuitka_output_dir.text().strip()
+            ):
                 cmd.append(f"--output-dir={self._nuitka_output_dir.text().strip()}")
 
             # Data files
@@ -126,7 +137,7 @@ class NuitkaEngine(CompilerEngine):
             selected_icon = getattr(self, "_nuitka_selected_icon", None)
             if selected_icon:
                 cmd.extend(["--windows-icon", selected_icon])
-                
+
             # Add the target file
             cmd.append(file)
 
@@ -169,7 +180,10 @@ class NuitkaEngine(CompilerEngine):
         """Handle successful compilation."""
         try:
             # Log success message with output location
-            if hasattr(self, "_nuitka_output_dir") and self._nuitka_output_dir.text().strip():
+            if (
+                hasattr(self, "_nuitka_output_dir")
+                and self._nuitka_output_dir.text().strip()
+            ):
                 try:
                     if hasattr(gui, "log"):
                         gui.log.append(
@@ -275,15 +289,11 @@ class NuitkaEngine(CompilerEngine):
                 pass
             return None
 
-
-
     def _get_btn(self, name: str):
         """Get button widget from engine instance or GUI."""
         if hasattr(self, f"_btn_{name}"):
             return getattr(self, f"_btn_{name}")
         return getattr(self._gui, name, None) if hasattr(self, "_gui") else None
-
-
 
     def get_log_prefix(self, file_basename: str) -> str:
         return f"Nuitka ({self.version})"
