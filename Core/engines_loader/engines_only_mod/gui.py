@@ -56,6 +56,7 @@ from PySide6.QtWidgets import (
     QFrame,
     QSplitter,
     QTabWidget,
+    QSizePolicy,
 )
 from PySide6.QtGui import QIcon, QAction, QFont, QPixmap
 
@@ -104,7 +105,9 @@ class EnginesStandaloneGui(QMainWindow):
 
         # Configuration de la fenêtre
         self.setWindowTitle("Engines Standalone - PyCompiler ARK++")
-        self.resize(900, 700)
+        self.resize(1400, 1000)
+        self.setMinimumSize(1000, 700)
+        self.showMaximized()  # Start maximized for better usability
 
         # Chargement des icônes
         self._load_icons()
@@ -183,9 +186,11 @@ class EnginesStandaloneGui(QMainWindow):
         config_widget = QWidget()
         config_layout = QGridLayout(config_widget)
         config_layout.setSpacing(15)
+        config_layout.setColumnStretch(0, 1)
 
         # === Section Moteur (Tabs) ===
         engine_group = QGroupBox("Engine Configuration")
+        engine_group.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
         engine_layout = QVBoxLayout()
 
         # Ajout du QTabWidget pour les moteurs (comme dans l'application principale)
@@ -209,6 +214,7 @@ class EnginesStandaloneGui(QMainWindow):
 
         # === Section Fichier ===
         file_group = QGroupBox("File / Project Configuration")
+        file_group.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
         file_layout = QGridLayout()
 
         file_label = QLabel("File to compile:")
@@ -216,7 +222,9 @@ class EnginesStandaloneGui(QMainWindow):
 
         self.file_path_edit = QLineEdit()
         self.file_path_edit.setPlaceholderText("Select a Python file to compile...")
+        self.file_path_edit.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         file_layout.addWidget(self.file_path_edit, 0, 1)
+        file_layout.setColumnStretch(1, 1)
 
         browse_btn = QPushButton("Browse")
         browse_btn.clicked.connect(self._browse_file)
@@ -227,6 +235,7 @@ class EnginesStandaloneGui(QMainWindow):
 
         # === Section Workspace ===
         workspace_group = QGroupBox("Workspace")
+        workspace_group.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
         workspace_layout = QGridLayout()
 
         workspace_label = QLabel("Workspace:")
@@ -235,7 +244,9 @@ class EnginesStandaloneGui(QMainWindow):
         self.workspace_edit = QLineEdit()
         if self.workspace_dir:
             self.workspace_edit.setText(self.workspace_dir)
+        self.workspace_edit.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         workspace_layout.addWidget(self.workspace_edit, 0, 1)
+        workspace_layout.setColumnStretch(1, 1)
 
         workspace_browse_btn = QPushButton("Browse")
         workspace_browse_btn.clicked.connect(self._browse_workspace)
@@ -323,7 +334,7 @@ class EnginesStandaloneGui(QMainWindow):
         content_splitter.addWidget(log_group)
 
         # Définir les proportions du splitter
-        content_splitter.setSizes([300, 80, 300])
+        content_splitter.setSizes([700, 80, 400])
 
         # === Barre de statut ===
         self.statusBar = QStatusBar()
