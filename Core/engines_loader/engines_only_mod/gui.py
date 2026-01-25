@@ -56,6 +56,7 @@ from PySide6.QtWidgets import (
     QFrame,
     QSplitter,
     QTabWidget,
+    QScrollArea,
     QSizePolicy,
 )
 from PySide6.QtGui import QIcon, QAction, QFont, QPixmap
@@ -105,9 +106,9 @@ class EnginesStandaloneGui(QMainWindow):
 
         # Configuration de la fenêtre
         self.setWindowTitle("Engines Standalone - PyCompiler ARK++")
-        self.resize(1400, 1000)
-        self.setMinimumSize(1000, 700)
-        self.showMaximized()  # Start maximized for better usability
+        self.resize(1600, 1000)
+        self.setMinimumSize(1200, 800)
+        self.showMaximized()
 
         # Chargement des icônes
         self._load_icons()
@@ -147,16 +148,16 @@ class EnginesStandaloneGui(QMainWindow):
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
 
-        # Layout principal
+        # Layout principal avec marge réduite
         main_layout = QVBoxLayout(central_widget)
-        main_layout.setSpacing(10)
-        main_layout.setContentsMargins(15, 15, 15, 15)
+        main_layout.setSpacing(8)
+        main_layout.setContentsMargins(10, 10, 10, 10)
 
         # === En-tête ===
         header_layout = QHBoxLayout()
 
         title_label = QLabel("Engines Standalone")
-        title_label.setStyleSheet("font-size: 24px; font-weight: bold; color: #4da6ff;")
+        title_label.setStyleSheet("font-size: 22px; font-weight: bold; color: #4da6ff;")
         header_layout.addWidget(title_label)
 
         header_layout.addStretch()
@@ -165,78 +166,90 @@ class EnginesStandaloneGui(QMainWindow):
         version_label = QLabel(
             f"Core: {get_core_version()} | SDK: {get_engine_sdk_version()}"
         )
-        version_label.setStyleSheet("color: #888; font-size: 12px;")
+        version_label.setStyleSheet("color: #888; font-size: 11px;")
         header_layout.addWidget(version_label)
 
         main_layout.addLayout(header_layout)
 
-        # === Séparateur ===
+        # === Séparateur fin ===
         separator = QFrame()
         separator.setFrameShape(QFrame.HLine)
         separator.setFrameShadow(QFrame.Sunken)
-        separator.setStyleSheet("background-color: #404040;")
+        separator.setStyleSheet("background-color: #404040; max-height: 2px;")
         main_layout.addWidget(separator)
 
-        # === Layout principal avec splitters ===
-        content_splitter = QSplitter(Qt.Vertical)
-        content_splitter.setChildrenCollapsible(False)
-        main_layout.addWidget(content_splitter)
+        # === Splitter principal ===
+        main_splitter = QSplitter(Qt.Vertical)
+        main_splitter.setChildrenCollapsible(False)
+        main_layout.addWidget(main_splitter)
 
-        # Panneau de configuration (haut)
-        config_widget = QWidget()
-        config_layout = QGridLayout(config_widget)
-        config_layout.setSpacing(15)
-        config_layout.setColumnStretch(0, 1)
+        # === Panneau supérieur avec splitter horizontal ===
+        top_splitter = QSplitter(Qt.Horizontal)
+        top_splitter.setChildrenCollapsible(False)
+        top_splitter.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
-        # === Section Moteur (Tabs) ===
+        # === Section Configuration (gauche) ===
+        config_container = QWidget()
+        config_layout = QVBoxLayout(config_container)
+        config_layout.setSpacing(10)
+        config_layout.setContentsMargins(5, 5, 5, 5)
+
+        # Moteur
         engine_group = QGroupBox("Engine Configuration")
-        engine_group.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
+        engine_group.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
         engine_layout = QVBoxLayout()
+        engine_layout.setSpacing(5)
 
-        # Ajout du QTabWidget pour les moteurs (comme dans l'application principale)
         self.compiler_tabs = QTabWidget()
         self.compiler_tabs.setDocumentMode(False)
         self.compiler_tabs.setTabsClosable(False)
         self.compiler_tabs.setMovable(False)
+        self.compiler_tabs.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         engine_layout.addWidget(self.compiler_tabs)
 
-        # Bouton vérifier compatibilité (sélectionne l'onglet courant)
         compat_btn = QPushButton("Check Compatibility")
+        compat_btn.setMinimumHeight(28)
         compat_btn.clicked.connect(self._check_compatibility)
         engine_layout.addWidget(compat_btn)
 
         self.compat_status_label = QLabel("")
-        self.compat_status_label.setStyleSheet("font-weight: bold;")
+        self.compat_status_label.setStyleSheet("font-weight: bold; font-size: 11px;")
         engine_layout.addWidget(self.compat_status_label)
 
         engine_group.setLayout(engine_layout)
-        config_layout.addWidget(engine_group, 0, 0)
+        config_layout.addWidget(engine_group)
 
-        # === Section Fichier ===
+        # Fichier
         file_group = QGroupBox("File / Project Configuration")
-        file_group.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
+        file_group.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
         file_layout = QGridLayout()
+        file_layout.setSpacing(8)
+        file_layout.setColumnStretch(1, 1)
 
         file_label = QLabel("File to compile:")
         file_layout.addWidget(file_label, 0, 0)
 
         self.file_path_edit = QLineEdit()
         self.file_path_edit.setPlaceholderText("Select a Python file to compile...")
-        self.file_path_edit.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        self.file_path_edit.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        self.file_path_edit.setMinimumHeight(32)
         file_layout.addWidget(self.file_path_edit, 0, 1)
-        file_layout.setColumnStretch(1, 1)
 
         browse_btn = QPushButton("Browse")
+        browse_btn.setMinimumHeight(32)
+        browse_btn.setMinimumWidth(80)
         browse_btn.clicked.connect(self._browse_file)
         file_layout.addWidget(browse_btn, 0, 2)
 
         file_group.setLayout(file_layout)
-        config_layout.addWidget(file_group, 1, 0)
+        config_layout.addWidget(file_group)
 
-        # === Section Workspace ===
+        # Workspace
         workspace_group = QGroupBox("Workspace")
-        workspace_group.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
+        workspace_group.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
         workspace_layout = QGridLayout()
+        workspace_layout.setSpacing(8)
+        workspace_layout.setColumnStretch(1, 1)
 
         workspace_label = QLabel("Workspace:")
         workspace_layout.addWidget(workspace_label, 0, 0)
@@ -244,23 +257,24 @@ class EnginesStandaloneGui(QMainWindow):
         self.workspace_edit = QLineEdit()
         if self.workspace_dir:
             self.workspace_edit.setText(self.workspace_dir)
-        self.workspace_edit.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        self.workspace_edit.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        self.workspace_edit.setMinimumHeight(32)
         workspace_layout.addWidget(self.workspace_edit, 0, 1)
-        workspace_layout.setColumnStretch(1, 1)
 
         workspace_browse_btn = QPushButton("Browse")
+        workspace_browse_btn.setMinimumHeight(32)
+        workspace_browse_btn.setMinimumWidth(80)
         workspace_browse_btn.clicked.connect(self._browse_workspace)
         workspace_layout.addWidget(workspace_browse_btn, 0, 2)
 
         workspace_group.setLayout(workspace_layout)
-        config_layout.addWidget(workspace_group, 2, 0)
+        config_layout.addWidget(workspace_group)
 
-        content_splitter.addWidget(config_widget)
-
-        # === Section Actions ===
-        actions_widget = QWidget()
+        # Actions
+        actions_group = QGroupBox("Actions")
+        actions_group.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
         actions_layout = QHBoxLayout()
-        actions_layout.setContentsMargins(0, 10, 0, 10)
+        actions_layout.setSpacing(10)
 
         self.compile_btn = QPushButton("Compile")
         self.compile_btn.setMinimumHeight(40)
@@ -269,10 +283,10 @@ class EnginesStandaloneGui(QMainWindow):
             QPushButton {
                 background-color: #4caf50;
                 color: white;
-                font-size: 16px;
+                font-size: 14px;
                 font-weight: bold;
                 border-radius: 5px;
-                padding: 8px 20px;
+                padding: 8px 16px;
             }
             QPushButton:hover {
                 background-color: #45a049;
@@ -298,19 +312,30 @@ class EnginesStandaloneGui(QMainWindow):
         actions_layout.addStretch()
 
         clear_log_btn = QPushButton("Clear Log")
+        clear_log_btn.setMinimumHeight(40)
         clear_log_btn.clicked.connect(self._clear_log)
         actions_layout.addWidget(clear_log_btn)
 
-        actions_widget.setLayout(actions_layout)
-        content_splitter.addWidget(actions_widget)
+        actions_group.setLayout(actions_layout)
+        config_layout.addWidget(actions_group)
 
-        # === Section Logs (bas) ===
+        top_splitter.addWidget(config_container)
+
+        # === Section Log (droite avec plus d'espace) ===
+        log_container = QWidget()
+        log_layout = QVBoxLayout(log_container)
+        log_layout.setSpacing(8)
+        log_layout.setContentsMargins(5, 5, 5, 5)
+
         log_group = QGroupBox("Compilation Log")
-        log_layout = QVBoxLayout()
+        log_group.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        log_layout_inner = QVBoxLayout()
+        log_layout_inner.setSpacing(5)
 
         self.log_text = QTextEdit()
         self.log_text.setFont(QFont("Consolas", 10))
         self.log_text.setReadOnly(True)
+        self.log_text.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.log_text.setStyleSheet(
             """
             QTextEdit {
@@ -318,28 +343,37 @@ class EnginesStandaloneGui(QMainWindow):
                 color: #e0e0e0;
                 border: 1px solid #404040;
                 border-radius: 4px;
-                padding: 5px;
+                padding: 8px;
             }
         """
         )
-        log_layout.addWidget(self.log_text)
+        log_layout_inner.addWidget(self.log_text)
 
         # Progress bar
         self.progress_bar = QProgressBar()
         self.progress_bar.setVisible(False)
-        self.progress_bar.setMinimumHeight(20)
-        log_layout.addWidget(self.progress_bar)
+        self.progress_bar.setMinimumHeight(24)
+        log_layout_inner.addWidget(self.progress_bar)
 
-        log_group.setLayout(log_layout)
-        content_splitter.addWidget(log_group)
+        log_group.setLayout(log_layout_inner)
+        log_layout.addWidget(log_group)
 
-        # Définir les proportions du splitter
-        content_splitter.setSizes([700, 80, 400])
+        top_splitter.addWidget(log_container)
+
+        # Définir les proportions (30% config, 70% log)
+        top_splitter.setSizes([400, 800])
+
+        main_splitter.addWidget(top_splitter)
 
         # === Barre de statut ===
         self.statusBar = QStatusBar()
+        self.statusBar.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        self.statusBar.setMinimumHeight(28)
         self.setStatusBar(self.statusBar)
         self.statusBar.showMessage("Ready")
+
+        # Définir les proportions du splitter vertical
+        main_splitter.setSizes([700, 200])
 
     def _center_window(self):
         """Centre la fenêtre sur l'écran."""
@@ -359,25 +393,28 @@ class EnginesStandaloneGui(QMainWindow):
                 }
                 QGroupBox {
                     font-weight: bold;
+                    font-size: 12px;
                     border: 1px solid #404040;
                     border-radius: 5px;
-                    margin-top: 10px;
-                    padding-top: 10px;
+                    margin-top: 8px;
+                    padding-top: 8px;
                 }
                 QGroupBox::title {
                     subcontrol-origin: margin;
-                    left: 10px;
+                    left: 8px;
                     padding: 0 5px;
                 }
                 QLabel {
                     color: #ffffff;
+                    font-size: 12px;
                 }
                 QComboBox, QLineEdit {
                     background-color: #2d2d2d;
                     color: #ffffff;
                     border: 1px solid #404040;
                     border-radius: 4px;
-                    padding: 5px;
+                    padding: 6px;
+                    font-size: 12px;
                 }
                 QComboBox:focus, QLineEdit:focus {
                     border-color: #4da6ff;
@@ -388,9 +425,31 @@ class EnginesStandaloneGui(QMainWindow):
                     border: 1px solid #505050;
                     border-radius: 4px;
                     padding: 6px 12px;
+                    font-size: 12px;
                 }
                 QPushButton:hover {
                     background-color: #4d4d4d;
+                }
+                QTabWidget::pane {
+                    border: 1px solid #404040;
+                    background-color: #252525;
+                }
+                QTabBar::tab {
+                    background-color: #2d2d2d;
+                    color: #ffffff;
+                    padding: 8px 12px;
+                    border: 1px solid #404040;
+                    border-bottom: none;
+                    margin-right: 2px;
+                }
+                QTabBar::tab:selected {
+                    background-color: #3d3d3d;
+                    border-bottom: 2px solid #4da6ff;
+                }
+                QStatusBar {
+                    background-color: #252525;
+                    color: #aaaaaa;
+                    font-size: 11px;
                 }
             """
             )
@@ -403,25 +462,28 @@ class EnginesStandaloneGui(QMainWindow):
                 }
                 QGroupBox {
                     font-weight: bold;
+                    font-size: 12px;
                     border: 1px solid #cccccc;
                     border-radius: 5px;
-                    margin-top: 10px;
-                    padding-top: 10px;
+                    margin-top: 8px;
+                    padding-top: 8px;
                 }
                 QGroupBox::title {
                     subcontrol-origin: margin;
-                    left: 10px;
+                    left: 8px;
                     padding: 0 5px;
                 }
                 QLabel {
                     color: #000000;
+                    font-size: 12px;
                 }
                 QComboBox, QLineEdit {
                     background-color: #ffffff;
                     color: #000000;
                     border: 1px solid #cccccc;
                     border-radius: 4px;
-                    padding: 5px;
+                    padding: 6px;
+                    font-size: 12px;
                 }
                 QComboBox:focus, QLineEdit:focus {
                     border-color: #0066cc;
@@ -432,6 +494,7 @@ class EnginesStandaloneGui(QMainWindow):
                     border: 1px solid #bbbbbb;
                     border-radius: 4px;
                     padding: 6px 12px;
+                    font-size: 12px;
                 }
                 QPushButton:hover {
                     background-color: #d0d0d0;
@@ -457,6 +520,7 @@ class EnginesStandaloneGui(QMainWindow):
                 "dry_run": "Dry Run",
                 "refresh": "Refresh Engines",
                 "clear_log": "Clear Log",
+                "actions": "Actions",
                 "version": "Version:",
                 "required_core": "Required Core:",
                 "log": "Compilation Log",
@@ -481,6 +545,7 @@ class EnginesStandaloneGui(QMainWindow):
                 "dry_run": "Simulation",
                 "refresh": "Rafraîchir",
                 "clear_log": "Effacer Log",
+                "actions": "Actions",
                 "version": "Version :",
                 "required_core": "Core Requis :",
                 "log": "Log de Compilation",
@@ -499,13 +564,16 @@ class EnginesStandaloneGui(QMainWindow):
 
         # Mise à jour des labels
         for child in self.findChildren(QGroupBox):
-            if "engine" in child.title().lower() or "moteur" in child.title().lower():
+            title = child.title().lower()
+            if "engine" in title or "moteur" in title:
                 child.setTitle(tr["engine_config"])
-            elif "file" in child.title().lower() or "fichier" in child.title().lower():
+            elif "file" in title or "fichier" in title:
                 child.setTitle(tr["file_config"])
-            elif "workspace" in child.title().lower():
+            elif "workspace" in title:
                 child.setTitle(tr["workspace"])
-            elif "log" in child.title().lower():
+            elif "action" in title:
+                child.setTitle(tr["actions"])
+            elif "log" in title:
                 child.setTitle(tr["log"])
 
     def _refresh_engines(self):
@@ -525,7 +593,7 @@ class EnginesStandaloneGui(QMainWindow):
             no_engine_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
             no_engine_layout.addWidget(no_engine_label)
             no_engine_widget.setLayout(no_engine_layout)
-            self.compiler_tabs.addTab(no_engine_label, "No Engines")
+            self.compiler_tabs.addTab(no_engine_widget, "No Engines")
             self._log("No engines available. Please check ENGINES folder.")
             self.statusBar.showMessage("No engines available")
             return
@@ -593,6 +661,7 @@ class EnginesStandaloneGui(QMainWindow):
         """Crée un widget par défaut pour un moteur sans create_tab."""
         widget = QWidget()
         layout = QGridLayout()
+        layout.setSpacing(8)
 
         layout.addWidget(QLabel(f"<b>Engine:</b> {name} ({engine_id})"), 0, 0, 1, 2)
         layout.addWidget(QLabel(f"<b>Version:</b> {version}"), 1, 0)
@@ -603,7 +672,7 @@ class EnginesStandaloneGui(QMainWindow):
             "This engine uses default configuration.\n"
             "Configure options in the main application for full functionality."
         )
-        info_label.setStyleSheet("color: #888; font-style: italic;")
+        info_label.setStyleSheet("color: #888; font-style: italic; font-size: 11px;")
         info_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(info_label, 2, 0, 1, 2)
 
@@ -657,13 +726,13 @@ class EnginesStandaloneGui(QMainWindow):
             if result.is_compatible:
                 self.compat_status_label.setText("✓ Compatible")
                 self.compat_status_label.setStyleSheet(
-                    "color: #4caf50; font-weight: bold;"
+                    "color: #4caf50; font-weight: bold; font-size: 11px;"
                 )
                 self._log(f"Engine {engine_id} is compatible")
             else:
                 self.compat_status_label.setText("✗ Not compatible")
                 self.compat_status_label.setStyleSheet(
-                    "color: #f44336; font-weight: bold;"
+                    "color: #f44336; font-weight: bold; font-size: 11px;"
                 )
                 self._log(f"Engine {engine_id} compatibility issues:")
                 for req in result.missing_requirements:
