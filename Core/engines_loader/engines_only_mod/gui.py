@@ -35,7 +35,7 @@ from pathlib import Path
 from typing import Optional, Dict, Any, List
 from datetime import datetime
 
-from PySide6.QtCore import Qt, QSize, QTimer
+from PySide6.QtCore import Qt, QSize, QTimer, QProcess, QThread
 from PySide6.QtWidgets import (
     QApplication,
     QMainWindow,
@@ -69,6 +69,60 @@ from Core.engines_loader import (
 from Core.engines_loader.validator import check_engine_compatibility
 from Core.allversion import get_core_version, get_engine_sdk_version
 import Core.engines_loader as engines_loader
+
+
+class CompilationThread(QThread):
+    """Thread pour exécuter la compilation sans bloquer l'UI."""
+
+    output_ready = None  # Signal(str)
+    error_ready = None   # Signal(str)
+    finished = None      # Signal(int) - code de retour
+
+    def __init__(self, program, args, env, working_dir=None):
+        super().__init__()
+        self.program = program
+        self.args = args
+        self.env = env
+        self.working_dir = working_dir
+
+    def run(self):
+        """Exécute le processus de compilation."""
+        try:
+            proc = subprocess.Popen(
+                [self.program] + self.args,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                env=self.env,
+                cwd=self.working_dir,
+                bufsize=1,
+            )
+
+            # Lire la sortie en temps réel
+            while True:
+                line = proc.stdout.readline()
+                if not line and proc.poll() is not None:
+                    break
+                if line and self.output_ready:
+                    self.output_ready.emit(line.rstrip())
+
+            # Lire stderr à la fin
+            stderr = proc.stderr.read()
+            if stderr and self.error_ready:
+                for line in stderr.strip().split("\n"):
+                    if line:
+                        self.error_ready.emit(line.rstrip())
+
+            # Signaler la fin
+            return_code = proc.wait()
+            if self.finished:
+                self.finished.emit(return_code)
+
+        except Exception as e:
+            if self.error_ready:
+                self.error_ready.emit(f"Error: {str(e)}")
+            if self.finished:
+                self.finished.emit(1)
 
 
 class EnginesStandaloneGui(QMainWindow):
@@ -647,21 +701,6 @@ class EnginesStandaloneGui(QMainWindow):
                 except Exception as e:
                     self._log(f"Error loading engine {eid}: {e}")
 
-    def _on_engine_changed(self, index):
-        """Appelé lorsque l'utilisateur sélectionne un moteur via l'onglet."""
-        if index < 0:
-            return
-
-        # Récupérer l'ID du moteur depuis le registry
-        try:
-            engine_id = engines_loader.registry.get_engine_for_tab(index)
-            self.selected_engine_id = engine_id
-            if engine_id and engine_id in self.engines_info:
-                info = self.engines_info[engine_id]
-                self._log(f"Selected engine: {info['name']} v{info['version']}")
-        except Exception as e:
-            self._log(f"Error getting engine for tab {index}: {e}")
-
     def _create_default_engine_widget(
         self, engine_id: str, name: str, version: str, required_core: str
     ) -> QWidget:
@@ -856,8 +895,12 @@ class EnginesStandaloneGui(QMainWindow):
         self._log("=" * 50)
 
         try:
-            # Créer le moteur
-            engine = create_engine(engine_id)
+            # Get the engine instance from registry (has the tab configuration)
+            engine = engines_loader.registry.get_instance(engine_id)
+
+            # If no stored instance, create one (fallback)
+            if not engine:
+                engine = create_engine(engine_id)
 
             # Préparer les arguments avec le GUI pour accéder aux options
             result = engine.program_and_args(self, file_path)
@@ -874,65 +917,19 @@ class EnginesStandaloneGui(QMainWindow):
                 if self.workspace_dir:
                     env["ARK_WORKSPACE"] = self.workspace_dir
 
-                # Exécuter la commande
+                # Exécuter la commande dans un thread séparé
                 self._log("Executing...")
 
-                proc = subprocess.Popen(
-                    cmd,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                    text=True,
-                    env=env,
-                    cwd=os.path.dirname(file_path) if file_path else None,
-                    bufsize=1,
-                )
-
                 # Timer pour mettre à jour le statut
-                start_time = datetime.now()
+                self._start_time = datetime.now()
 
-                # Lire la sortie en temps réel
-                while True:
-                    line = proc.stdout.readline()
-                    if not line and proc.poll() is not None:
-                        break
-                    if line:
-                        self._log(line.rstrip())
-
-                # Lire stderr
-                stderr = proc.stderr.read()
-                if stderr:
-                    self._log(f"STDERR:\n{stderr}")
-
-                # Récupérer le code de retour
-                return_code = proc.wait()
-                end_time = datetime.now()
-                duration = (end_time - start_time).total_seconds()
-
-                self._log("=" * 50)
-                if return_code == 0:
-                    self._log(
-                        "Compilation successful!"
-                        if self.language == "en"
-                        else "Compilation réussie !"
-                    )
-                    self.statusBar.showMessage(
-                        "Compilation successful!"
-                        if self.language == "en"
-                        else "Compilation terminée !"
-                    )
-                else:
-                    self._log(
-                        f"Compilation failed with code {return_code}"
-                        if self.language == "en"
-                        else f"Échec de la compilation (code {return_code})"
-                    )
-                    self.statusBar.showMessage(
-                        "Compilation failed"
-                        if self.language == "en"
-                        else "Échec de la compilation"
-                    )
-                self._log(f"Duration: {duration:.2f}s")
-                self._log("=" * 50)
+                # Créer et configurer le thread
+                working_dir = os.path.dirname(file_path) if file_path else None
+                self.compilation_thread = CompilationThread(program, args, env, working_dir)
+                self.compilation_thread.output_ready.connect(self._log)
+                self.compilation_thread.error_ready.connect(self._on_compilation_error)
+                self.compilation_thread.finished.connect(self._on_compilation_finished)
+                self.compilation_thread.start()
 
             else:
                 self._log(
@@ -943,9 +940,46 @@ class EnginesStandaloneGui(QMainWindow):
 
         except Exception as e:
             self._log(f"Error: {str(e)}")
-        finally:
-            self.progress_bar.setVisible(False)
-            self.compile_btn.setEnabled(True)
+
+    def _on_compilation_error(self, message):
+        """Affiche les erreurs de compilation."""
+        self._log(f"STDERR: {message}")
+
+    def _on_compilation_finished(self, return_code):
+        """Appelé lorsque la compilation est terminée."""
+        self._log("=" * 50)
+
+        end_time = datetime.now()
+        duration = (end_time - self._start_time).total_seconds()
+
+        if return_code == 0:
+            self._log(
+                "Compilation successful!"
+                if self.language == "en"
+                else "Compilation réussie !"
+            )
+            self.statusBar.showMessage(
+                "Compilation successful!"
+                if self.language == "en"
+                else "Compilation terminée !"
+            )
+        else:
+            self._log(
+                f"Compilation failed with code {return_code}"
+                if self.language == "en"
+                else f"Échec de la compilation (code {return_code})"
+            )
+            self.statusBar.showMessage(
+                "Compilation failed"
+                if self.language == "en"
+                else "Échec de la compilation"
+            )
+
+        self._log(f"Duration: {duration:.2f}s")
+        self._log("=" * 50)
+
+        self.progress_bar.setVisible(False)
+        self.compile_btn.setEnabled(True)
 
     def _dry_run(self):
         """Affiche la commande sans l'exécuter en utilisant l'onglet courant."""
@@ -977,7 +1011,13 @@ class EnginesStandaloneGui(QMainWindow):
             return
 
         try:
-            engine = create_engine(engine_id)
+            # Get the engine instance from registry (has the tab configuration)
+            engine = engines_loader.registry.get_instance(engine_id)
+
+            # If no stored instance, create one (fallback)
+            if not engine:
+                engine = create_engine(engine_id)
+
             result = engine.program_and_args(self, file_path)
 
             if result:
