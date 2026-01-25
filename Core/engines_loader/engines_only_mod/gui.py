@@ -380,7 +380,7 @@ class EnginesStandaloneGui(QMainWindow):
         self.statusBar.showMessage("Ready")
 
         # Définir les proportions du splitter vertical
-        main_splitter.setSizes([750, 80])
+        main_splitter.setSizes([600, 200])
 
     def _center_window(self):
         """Centre la fenêtre sur l'écran."""
