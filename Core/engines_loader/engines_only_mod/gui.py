@@ -84,6 +84,8 @@ class CompilationThread(QThread):
         self.args = args
         self.env = env
         self.working_dir = working_dir
+        self.cancel_requested = False
+        self.process = None
 
     def run(self):
         """Exécute le processus de compilation."""
@@ -98,23 +100,56 @@ class CompilationThread(QThread):
                 bufsize=1,
             )
 
-            # Lire la sortie en temps réel
-            while True:
-                line = proc.stdout.readline()
-                if not line and proc.poll() is not None:
-                    break
-                if line and self.output_ready:
-                    self.output_ready.emit(line.rstrip())
+            import select
+            import time
 
-            # Lire stderr à la fin
-            stderr = proc.stderr.read()
-            if stderr and self.error_ready:
-                for line in stderr.strip().split("\n"):
+            # Utiliser select pour lire stdout et stderr en temps réel
+            while True:
+                # Vérifier si l'annulation a été demandée
+                if self.cancel_requested:
+                    proc.terminate()
+                    try:
+                        proc.wait(timeout=5)  # Attendre que le processus se termine
+                    except subprocess.TimeoutExpired:
+                        proc.kill()  # Forcer la terminaison si nécessaire
+                    if self.finished:
+                        self.finished.emit(-1)  # Code spécial pour annulation
+                    return
+
+                # Vérifier si le processus est terminé
+                if proc.poll() is not None:
+                    break
+
+                # Utiliser select pour attendre des données sur stdout ou stderr
+                ready, _, _ = select.select([proc.stdout, proc.stderr], [], [], 0.1)
+
+                for stream in ready:
+                    if stream == proc.stdout and self.output_ready:
+                        line = proc.stdout.readline()
+                        if line:
+                            self.output_ready.emit(line.rstrip())
+                    elif stream == proc.stderr and self.error_ready:
+                        line = proc.stderr.readline()
+                        if line:
+                            self.error_ready.emit(line.rstrip())
+
+                time.sleep(0.01)  # Petit délai pour éviter la surcharge CPU
+
+            # Lire tout ce qui reste dans les buffers après la fin du processus
+            remaining_stdout = proc.stdout.read()
+            if remaining_stdout and self.output_ready:
+                for line in remaining_stdout.strip().split("\n"):
+                    if line:
+                        self.output_ready.emit(line.rstrip())
+
+            remaining_stderr = proc.stderr.read()
+            if remaining_stderr and self.error_ready:
+                for line in remaining_stderr.strip().split("\n"):
                     if line:
                         self.error_ready.emit(line.rstrip())
 
             # Signaler la fin
-            return_code = proc.wait()
+            return_code = proc.returncode
             if self.finished:
                 self.finished.emit(return_code)
 
@@ -123,6 +158,10 @@ class CompilationThread(QThread):
                 self.error_ready.emit(f"Error: {str(e)}")
             if self.finished:
                 self.finished.emit(1)
+
+    def cancel(self):
+        """Demande l'annulation de la compilation."""
+        self.cancel_requested = True
 
 
 class EnginesStandaloneGui(QMainWindow):
@@ -357,6 +396,31 @@ class EnginesStandaloneGui(QMainWindow):
         )
         self.compile_btn.clicked.connect(self._run_compilation)
         actions_layout.addWidget(self.compile_btn)
+
+        # Cancel button
+        self.cancel_btn = QPushButton("Cancel")
+        self.cancel_btn.setMinimumHeight(32)
+        self.cancel_btn.setStyleSheet(
+            """
+            QPushButton {
+                background-color: #f44336;
+                color: white;
+                font-size: 16px;
+                font-weight: bold;
+                border-radius: 6px;
+                padding: 10px 20px;
+            }
+            QPushButton:hover {
+                background-color: #d32f2f;
+            }
+            QPushButton:disabled {
+                background-color: #666;
+            }
+        """
+        )
+        self.cancel_btn.clicked.connect(self._cancel_compilation)
+        self.cancel_btn.setEnabled(False)  # Disabled by default
+        actions_layout.addWidget(self.cancel_btn)
 
         button_row = QHBoxLayout()
         button_row.setSpacing(10)
@@ -885,6 +949,7 @@ class EnginesStandaloneGui(QMainWindow):
         self.progress_bar.setVisible(True)
         self.progress_bar.setRange(0, 0)  # Indeterminate
         self.compile_btn.setEnabled(False)
+        self.cancel_btn.setEnabled(True)
 
         # Logger le début
         self._log("=" * 50)
@@ -940,6 +1005,18 @@ class EnginesStandaloneGui(QMainWindow):
 
         except Exception as e:
             self._log(f"Error: {str(e)}")
+
+    def _cancel_compilation(self):
+        """Annule la compilation en cours."""
+        if hasattr(self, 'compilation_thread') and self.compilation_thread and self.compilation_thread.isRunning():
+            self._log("Cancelling compilation...")
+            self.statusBar.showMessage(
+                "Cancelling compilation..."
+                if self.language == "en"
+                else "Annulation de la compilation..."
+            )
+            self.compilation_thread.cancel()
+            self.cancel_btn.setEnabled(False)
 
     def _on_compilation_error(self, message):
         """Affiche les erreurs de compilation."""
