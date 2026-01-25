@@ -1,5 +1,14 @@
-- [ ] Update build_command to use direct widget access instead of _get_opt and _get_input
-- [ ] Update on_success to use direct widget access instead of _get_input
-- [ ] Remove the _get_opt method
-- [ ] Remove the _get_btn method
-- [ ] Remove the _get_input method
+# Integration of Robust Compilation Launching from "Only Mod" Engines
+
+## Tasks
+- [ ] Modify `start_compilation_process` in `Core/Compiler/mainprocess.py` to use subprocess.Popen instead of QProcess
+- [ ] Implement select-based real-time stdout/stderr reading
+- [ ] Update cancellation logic for better process termination
+- [ ] Ensure remaining output is read after process completion
+- [ ] Test compilation functionality
+- [ ] Verify real-time output display
+- [ ] Ensure cancellation works properly
+
+## Status
+- Plan approved by user
+- Implementation in progress
