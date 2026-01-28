@@ -35,7 +35,7 @@ Usage:
 
 from __future__ import annotations
 
-from .engines_only_mod.app import EnginesStandaloneApp, main, run_cli
+from .engines_only_mod.gui import launch_engines_gui,EnginesStandaloneGui
 
 __version__ = "1.0.0"
-__all__ = ["EnginesStandaloneApp", "main", "run_cli"]
+__all__ = ["EnginesStandaloneGui", "launch_engines_gui"]
