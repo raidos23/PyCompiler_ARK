@@ -71,7 +71,7 @@ python -m bcasl.only_mod .
 ### Programmatic Usage
 
 ```python
-from bcasl.only_mod import BcaslStandaloneApp
+from OnlyMod.BcaslOnlyMod import BcaslStandaloneApp
 from PySide6.QtWidgets import QApplication
 import sys
 

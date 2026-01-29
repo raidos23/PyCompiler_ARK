@@ -420,7 +420,7 @@ def launch_bcasl_standalone(workspace_dir: Optional[str] = None) -> int:
         Exit code (0 for success, 1 for error)
     """
     try:
-        from bcasl.only_mod import BcaslStandaloneApp
+        from OnlyMod.BcaslOnlyMod import BcaslStandaloneApp
         from PySide6.QtWidgets import QApplication
 
         # Validate and resolve workspace
