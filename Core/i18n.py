@@ -639,7 +639,7 @@ def show_language_dialog(self):
                 pass
             # Propagate translations to all engines so their UI matches the app language immediately
             try:
-                import Core.engines_loader as engines_loader
+                import EngineLoader as engines_loader
 
                 engines_loader.registry.apply_translations(self, tr)
             except Exception:

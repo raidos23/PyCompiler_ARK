@@ -12,36 +12,36 @@ Ce module permet d'exécuter les moteurs de compilation (PyInstaller, Nuitka, cx
 
 ```bash
 # Lancer l'interface GUI
-python -m Core.engines_loader.engines_only_mod
+python -m OnlyMod.EngineOnlyMod
 
 # Avec un workspace spécifique
-python -m Core.engines_loader.engines_only_mod /path/to/workspace
+python -m OnlyMod.EngineOnlyMod /path/to/workspace
 
 # Avec un thème spécifique
-python -m Core.engines_loader.engines_only_mod --theme light
-python -m Core.engines_loader.engines_only_mod --theme dark
+python -m OnlyMod.EngineOnlyMod --theme light
+python -m OnlyMod.EngineOnlyMod --theme dark
 
 # Avec une langue spécifique
-python -m Core.engines_loader.engines_only_mod --language fr
-python -m Core.engines_loader.engines_only_mod --language en
+python -m OnlyMod.EngineOnlyMod --language fr
+python -m OnlyMod.EngineOnlyMod --language en
 ```
 
 ### Mode CLI
 
 ```bash
 # Lister les moteurs disponibles
-python -m Core.engines_loader.engines_only_mod --list-engines
+python -m OnlyMod.EngineOnlyMod --list-engines
 
 # Vérifier la compatibilité d'un moteur
-python -m Core.engines_loader.engines_only_mod --check-compat nuitka
-python -m Core.engines_loader.engines_only_mod --check-compat pyinstaller
-python -m Core.engines_loader.engines_only_mod --check-compat cx_freeze
+python -m OnlyMod.EngineOnlyMod --check-compat nuitka
+python -m OnlyMod.EngineOnlyMod --check-compat pyinstaller
+python -m OnlyMod.EngineOnlyMod --check-compat cx_freeze
 
 # Mode dry-run (afficher la commande sans exécuter)
-python -m Core.engines_loader.engines_only_mod --engine nuitka -f script.py --dry-run
+python -m OnlyMod.EngineOnlyMod --engine nuitka -f script.py --dry-run
 
 # Compiler un fichier
-python -m Core.engines_loader.engines_only_mod --engine nuitka -f script.py
+python -m OnlyMod.EngineOnlyMod --engine nuitka -f script.py
 ```
 
 ### Via pycompiler_ark.py
@@ -99,7 +99,7 @@ engines_only_mod/
 
 ```python
 # Import du module
-from EngineLoader.engines_only_mod import EnginesStandaloneApp
+from OnlyMod.engines_only_mod import EnginesStandaloneApp
 
 # Création de l'application
 app = EnginesStandaloneApp(

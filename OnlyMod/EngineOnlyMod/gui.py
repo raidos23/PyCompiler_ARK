@@ -68,7 +68,7 @@ from EngineLoader import (
 )
 from EngineLoader.validator import check_engine_compatibility
 from Core.allversion import get_core_version, get_engine_sdk_version
-import Core.engines_loader as engines_loader
+import EngineLoader as engines_loader
 
 
 class CompilationThread(QThread):

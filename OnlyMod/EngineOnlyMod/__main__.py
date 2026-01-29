@@ -17,23 +17,23 @@
 Engines Standalone Module Entry Point
 
 Permet d'exécuter l'application moteurs de compilation de manière autonome:
-    python -m Core.engines_loader.engines_only_mod [options]
+    python -m OnlyMod.EngineOnlyMod [options]
 
 Sans arguments, lance l'interface GUI complète.
 Avec --list-engines ou --check-compat, lance en mode CLI.
 
 Exemples:
     # Lancer l'interface GUI
-    python -m Core.engines_loader.engines_only_mod
+    python -m OnlyMod.EngineOnlyMod
 
     # Lister les moteurs disponibles (CLI mode)
-    python -m Core.engines_loader.engines_only_mod --list-engines
+    python -m OnlyMod.EngineOnlyMod --list-engines
 
     # Vérifier la compatibilité d'un moteur
-    python -m Core.engines_loader.engines_only_mod --check-compat nuitka
+    python -m OnlyMod.EngineOnlyMod --check-compat nuitka
 
     # Compiler un fichier (mode dry-run)
-    python -m Core.engines_loader.engines_only_mod --engine nuitka -f script.py --dry-run
+    python -m OnlyMod.EngineOnlyMod --engine nuitka -f script.py --dry-run
 """
 
 import argparse
@@ -103,16 +103,16 @@ def main():
         epilog="""
 Exemples:
     # Lancer l'interface GUI
-    python -m Core.engines_loader.engines_only_mod
+    python -m OnlyMod.EngineOnlyMod
     
     # Lister les moteurs disponibles
-    python -m Core.engines_loader.engines_only_mod --list-engines
+    python -m OnlyMod.EngineOnlyMod --list-engines
     
     # Vérifier la compatibilité d'un moteur
-    python -m Core.engines_loader.engines_only_mod --check-compat nuitka
+    python -m OnlyMod.EngineOnlyMod --check-compat nuitka
     
     # Compiler un fichier (dry-run)
-    python -m Core.engines_loader.engines_only_mod --engine nuitka -f script.py --dry-run
+    python -m OnlyMod.EngineOnlyMod --engine nuitka -f script.py --dry-run
         """,
     )
 
