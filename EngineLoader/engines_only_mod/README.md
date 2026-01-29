@@ -99,7 +99,7 @@ engines_only_mod/
 
 ```python
 # Import du module
-from Core.engines_loader.engines_only_mod import EnginesStandaloneApp
+from EngineLoader.engines_only_mod import EnginesStandaloneApp
 
 # Création de l'application
 app = EnginesStandaloneApp(

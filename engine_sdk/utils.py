@@ -214,7 +214,7 @@ def resolve_executable(
 
 # Fallback: host-level resolver override if available; else use SDK's resolve_executable
 try:  # pragma: no cover
-    from Core.engines_loader.external import resolve_executable_path as resolve_executable_path  # type: ignore
+    from EngineLoader.external import resolve_executable_path as resolve_executable_path  # type: ignore
 except Exception:  # pragma: no cover
 
     def resolve_executable_path(

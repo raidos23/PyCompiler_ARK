@@ -129,7 +129,7 @@ import sys
 from typing import Optional
 
 from engine_sdk import CompilerEngine
-from Core.engines_loader.registry import register
+from EngineLoader.registry import register
 ```
 
 ### 2.2) Define the engine class
@@ -193,7 +193,7 @@ from engine_sdk import (
 engine_register(MyEngine)
 
 # Later, retrieve it
-from Core.engines_loader.registry import get_engine, available_engines, create
+from EngineLoader.registry import get_engine, available_engines, create
 
 engine_cls = get_engine("my_engine")
 engine_instance = create("my_engine")
@@ -551,7 +551,7 @@ def apply_i18n(self, gui, tr: dict[str, str]) -> None:
         tr: Translation dictionary (may be empty on first call)
     """
     try:
-        from Core.engines_loader.registry import resolve_language_code
+        from EngineLoader.registry import resolve_language_code
         
         # Resolve language code
         code = resolve_language_code(gui, tr)
@@ -680,7 +680,7 @@ python -m my_engine /path/to/script.py
 
 **Check engine registration:**
 ```python
-from Core.engines_loader.registry import available_engines, get_engine
+from EngineLoader.registry import available_engines, get_engine
 print(available_engines())  # Should include "my_engine"
 print(get_engine("my_engine"))  # Should return your engine class
 ```
