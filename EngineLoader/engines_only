@@ -28,7 +28,7 @@ Usage:
     python -m Core.engines_loader.engines_only_mod [options]
 
     Ou programmatiquement:
-    from Core.engines_loader.engines_only_mod import EnginesStandaloneApp
+    from EngineLoader.engines_only_mod import EnginesStandaloneApp
     app = EnginesStandaloneApp(engine_id="nuitka", file_path="/path/to/script.py")
     result = app.run_compilation("nuitka", "/path/to/script.py")
 """

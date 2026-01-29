@@ -69,7 +69,7 @@ except ImportError:
     click = None
 
 from Core import __version__ as APP_VERSION
-from Core.engines_loader import unload_all
+from EngineLoader import unload_all
 from Core import PyCompilerArkGui
 
 # Configure logging
@@ -467,7 +467,7 @@ def launch_engines_only_standalone(workspace_dir: Optional[str] = None) -> int:
         Exit code (0 for success, 1 for error)
     """
     try:
-        from Core.engines_loader.engines_only_mod.gui import EnginesStandaloneGui
+        from EngineLoader.engines_only_mod.gui import EnginesStandaloneGui
         from PySide6.QtWidgets import QApplication
 
         # Validate and resolve workspace
@@ -1015,7 +1015,7 @@ if click:
 
         # For dry-run mode, just list engines
         if dry_run:
-            from Core.engines_loader import available_engines
+            from EngineLoader import available_engines
 
             engines = available_engines()
             click.echo(f"📦 Available engines ({len(engines)}):")
@@ -1105,7 +1105,7 @@ if __name__ == "__main__":
 
                 # Check for flags first
                 if "--list-engines" in args or "-l" in args:
-                    from Core.engines_loader import available_engines
+                    from EngineLoader import available_engines
 
                     engines = available_engines()
                     print(f"Available engines ({len(engines)}):")
@@ -1114,7 +1114,7 @@ if __name__ == "__main__":
                     sys.exit(0)
 
                 if "--dry-run" in args or "-d" in args:
-                    from Core.engines_loader import available_engines
+                    from EngineLoader import available_engines
 
                     engines = available_engines()
                     print(f"Available engines ({len(engines)}):")
