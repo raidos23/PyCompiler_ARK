@@ -19,23 +19,23 @@ Engines Standalone Module
 Application autonome permettant d'exécuter les moteurs de compilation
 individuellement sans lancer l'application complète PyCompiler ARK.
 
-Ce module réutilise les fonctions de Core.engines_loader pour:
+Ce module réutilise les fonctions de EngineLoader pour:
 - Découverte et enregistrement des moteurs (registry)
 - Vérification de compatibilité (validator)
 - Compilation avec un moteur spécifique
 
 Usage:
-    python -m Core.engines_loader.engines_only_mod [options]
+    python -m OnlyMod.EngineOnlyMod [options]
 
     Ou programmatiquement:
-    from EngineLoader.engines_only_mod import EnginesStandaloneApp
+    from OnlyMod.engines_only_mod import EnginesStandaloneApp
     app = EnginesStandaloneApp(engine_id="nuitka", file_path="/path/to/script.py")
     result = app.run_compilation("nuitka", "/path/to/script.py")
 """
 
 from __future__ import annotations
 
-from .engines_only_mod.gui import launch_engines_gui,EnginesStandaloneGui
+from .gui import launch_engines_gui,EnginesStandaloneGui
 
 __version__ = "1.0.0"
 __all__ = ["EnginesStandaloneGui", "launch_engines_gui"]

@@ -278,7 +278,7 @@ def init_ui(self):
     # Lier dynamiquement les onglets des moteurs plug-and-play (only if compiler_tabs exists)
     if self.compiler_tabs:
         try:
-            import Core.engines_loader as engines_loader
+            import EngineLoader as engines_loader
 
             engines_loader.registry.bind_tabs(self)
         except Exception:
@@ -341,7 +341,7 @@ def init_ui(self):
         if not self.compiler_tabs:
             return
         try:
-            import Core.engines_loader as engines_loader
+            import EngineLoader as engines_loader
 
             idx = self.compiler_tabs.currentIndex()
             engine_id = engines_loader.registry.get_engine_for_tab(idx)

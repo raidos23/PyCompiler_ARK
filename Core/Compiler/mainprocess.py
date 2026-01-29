@@ -68,7 +68,7 @@ from PySide6.QtWidgets import (
 # compute_for_all : Constructeur automatique de commandes
 # MAX_PARALLEL : Constante définissant le nombre max de compilations parallèles
 from Core.Compiler.process_killer import _kill_process_tree, _kill_all_descendants
-from Core import engines_loader as engines_loader
+import EngineLoader as engines_loader
 from engine_sdk.utils import clamp_text, redact_secrets
 from Core.Compiler.command_helpers import run_process
 from Core.Auto_Command_Builder import compute_for_all

@@ -467,7 +467,7 @@ def launch_engines_only_standalone(workspace_dir: Optional[str] = None) -> int:
         Exit code (0 for success, 1 for error)
     """
     try:
-        from EngineLoader.engines_only_mod.gui import EnginesStandaloneGui
+        from OnlyMod.EngineOnlyMod.gui import EnginesStandaloneGui
         from PySide6.QtWidgets import QApplication
 
         # Validate and resolve workspace
@@ -493,13 +493,13 @@ def launch_engines_only_standalone(workspace_dir: Optional[str] = None) -> int:
                 f"❌ Error: Failed to import Engines standalone module: {e}", err=True
             )
             click.echo(
-                "Make sure Core.engines_loader.engines_only_mod is properly installed.",
+                "Make sure OnlyMod.EngineOnlyMod is properly installed.",
                 err=True,
             )
         else:
             print(f"❌ Error: Failed to import Engines standalone module: {e}")
             print(
-                "Make sure Core.engines_loader.engines_only_mod is properly installed."
+                "Make sure OnlyMod.EngineOnlyMod is properly installed."
             )
         return 1
     except Exception as e:

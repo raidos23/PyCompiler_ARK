@@ -27,13 +27,13 @@ Fonctionnalités:
 
 Utilisation:
     # Interface GUI
-    python -m Core.engines_loader.engines_only_mod
+    python -m OnlyMod.EngineOnlyMod
 
     # Mode CLI - lister les moteurs
-    python -m Core.engines_loader.engines_only_mod --list-engines
+    python -m OnlyMod.EngineOnlyMod --list-engines
 
     # Mode CLI - vérifier compatibilité
-    python -m Core.engines_loader.engines_only_mod --check-compat nuitka
+    python -m OnlyMod.EngineOnlyMod --check-compat nuitka
 
 Documentation complète : voir README.md
 """

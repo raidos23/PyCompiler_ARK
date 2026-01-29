@@ -37,7 +37,7 @@ Architecture du Package:
 Dépendances Principales:
     - PySide6 (Qt) : Interface graphique et gestion des processus QProcess
     - psutil : Énumération et termination des processus
-    - Core.engines_loader : Chargement dynamique des moteurs de compilation
+    - EngineLoader : Chargement dynamique des moteurs de compilation
     - Core.Auto_Command_Builder : Construction automatique des commandes
 
 Fonctions Publiques (Exportées):
