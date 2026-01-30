@@ -2047,7 +2047,7 @@ class VenvManager:
 
         QApplication.processEvents()
 
-    def setup_workspace(self, workspace_dir: str) -> bool:
+    def setup_workspace(self, workspace_dir: str, check_tools: bool = True) -> bool:
         """Setup a workspace with venv and dependencies.
 
         This centralizes the workspace setup logic that was previously
@@ -2055,6 +2055,8 @@ class VenvManager:
 
         Args:
             workspace_dir: Path to the workspace directory
+            check_tools: Whether to check and install tools (pyinstaller, nuitka, cx_freeze)
+                        after venv creation. Defaults to True.
 
         Returns:
             bool: True if setup successful, False otherwise
@@ -2062,8 +2064,37 @@ class VenvManager:
         try:
             workspace_dir = os.path.abspath(workspace_dir)
 
+            # Resolve venv path first to check if it exists
+            existing, default_path = self._detect_venv_in(workspace_dir)
+            venv_path = existing or default_path
+
             # Create venv if needed
             self.create_venv_if_needed(workspace_dir)
+
+            # Check and install tools if requested
+            if check_tools:
+                # Verify venv exists and is valid before checking tools
+                existing_check, _ = self._detect_venv_in(workspace_dir)
+                if existing_check:
+                    ok, reason = self.validate_venv_strict(existing_check)
+                    if ok:
+                        # Verify binding and then check tools
+                        def _after_binding(ok_bind: bool):
+                            if ok_bind:
+                                self._safe_log(
+                                    "🔍 Vérification des outils de compilation..."
+                                )
+                                self.check_tools_in_venv(existing_check)
+                            else:
+                                self._safe_log(
+                                    "⚠️ Liaison venv invalide, vérification des outils ignorée."
+                                )
+
+                        self._verify_venv_binding_async(existing_check, _after_binding)
+                    else:
+                        self._safe_log(
+                            f"⚠️ Venv invalide, vérification des outils ignorée: {reason}"
+                        )
 
             # Create ARK config if it doesn't exist
             try:
