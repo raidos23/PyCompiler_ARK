@@ -437,6 +437,12 @@ def launch_bcasl_standalone(workspace_dir: Optional[str] = None) -> int:
 
         app = QApplication(sys.argv)
         window = BcaslStandaloneApp(workspace_dir=workspace_dir)
+        try:
+            _icon_path = os.path.join(ROOT_DIR, "logo", "logo2.png")
+            if os.path.isfile(_icon_path):
+                app.setWindowIcon(QIcon(_icon_path))
+        except Exception:
+            pass
         window.show()
         return app.exec()
     except ImportError as e:
@@ -484,7 +490,14 @@ def launch_engines_only_standalone(workspace_dir: Optional[str] = None) -> int:
 
         app = QApplication(sys.argv)
         app.setApplicationName("PyCompiler ARK++ Engines")
+        try:
+            _icon_path = os.path.join(ROOT_DIR, "logo", "logo2.png")
+            if os.path.isfile(_icon_path):
+                app.setWindowIcon(QIcon(_icon_path))
+        except Exception:
+            pass
         window = EnginesStandaloneGui(workspace_dir=workspace_dir)
+        
         window.show()
         return app.exec()
     except ImportError as e:
