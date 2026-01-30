@@ -532,24 +532,10 @@ class PyCompilerArkGui(QWidget):
     def create_venv_if_needed(self, path):
         self.venv_manager.create_venv_if_needed(path)
 
-    def _on_venv_output(self, process, error=False):
-        # Delegated to venv_manager
-        pass
-
-    def _on_venv_created(self, process, code, status, venv_path):
-        # Delegated to venv_manager
-        pass
-
     def install_requirements_if_needed(self, path):
         self.venv_manager.install_requirements_if_needed(path)
 
-    def _on_pip_output(self, process, error=False):
-        # Delegated to venv_manager
-        pass
 
-    def _on_pip_finished(self, process, code, status):
-        # Delegated to venv_manager
-        pass
 
     def select_files_manually(self):
         if not self.workspace_dir:
