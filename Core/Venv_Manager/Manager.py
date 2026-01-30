@@ -2047,6 +2047,44 @@ class VenvManager:
 
         QApplication.processEvents()
 
+    def setup_workspace(self, workspace_dir: str) -> bool:
+        """Setup a workspace with venv and dependencies.
+
+        This centralizes the workspace setup logic that was previously
+        scattered in MainWindow.apply_workspace_selection().
+
+        Args:
+            workspace_dir: Path to the workspace directory
+
+        Returns:
+            bool: True if setup successful, False otherwise
+        """
+        try:
+            workspace_dir = os.path.abspath(workspace_dir)
+
+            # Create venv if needed
+            self.create_venv_if_needed(workspace_dir)
+
+            # Create ARK config if it doesn't exist
+            try:
+                from Core.ark_config_loader import create_default_ark_config
+
+                if create_default_ark_config(workspace_dir):
+                    self._safe_log(
+                        "📋 Fichier ARK_Main_Config.yml créé dans le workspace.",
+                        "📋 ARK_Main_Config.yml file created in workspace.",
+                    )
+            except Exception as e:
+                self._safe_log(
+                    f"⚠️ Impossible de créer ARK_Main_Config.yml: {e}",
+                    f"⚠️ Failed to create ARK_Main_Config.yml: {e}",
+                )
+
+            return True
+        except Exception as e:
+            self._safe_log(f"❌ Erreur lors de la configuration du workspace: {e}")
+            return False
+
     def get_manager_info(self, workspace_dir: str) -> dict:
         """Get detailed information about the detected environment manager."""
         try:

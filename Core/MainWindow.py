@@ -492,38 +492,13 @@ class PyCompilerArkGui(QWidget):
                 self.save_preferences()
             except Exception:
                 pass
-            # -- Ajout automatique --
+            # -- Configuration centralisée du workspace --
             try:
-                self.venv_manager.create_venv_if_needed(folder)
-                venv_path = None
-                for name in (".venv", "venv"):
-                    cand = os.path.join(folder, name)
-                    if os.path.isdir(cand):
-                        venv_path = cand
-                        break
-                if not venv_path:
-                    self.log_i18n(
-                        "Aucun dossier venv détecté dans ce workspace.",
-                        "No venv folder detected in this workspace.",
-                    )
-                else:
-                    self.log_i18n("Dossier venv détecté.", "Venv folder detected.")
-            except Exception:
-                pass
-
-            # Créer le fichier ARK_Main_Config.yml s'il n'existe pas
-            try:
-                from Core.ark_config_loader import create_default_ark_config
-
-                if create_default_ark_config(folder):
-                    self.log_i18n(
-                        "📋 Fichier ARK_Main_Config.yml créé dans le workspace.",
-                        "📋 ARK_Main_Config.yml file created in workspace.",
-                    )
+                self.venv_manager.setup_workspace(folder)
             except Exception as e:
                 self.log_i18n(
-                    f"⚠️ Impossible de créer ARK_Main_Config.yml: {e}",
-                    f"⚠️ Failed to create ARK_Main_Config.yml: {e}",
+                    f"⚠️ Erreur lors de la configuration du workspace: {e}",
+                    f"⚠️ Error during workspace setup: {e}",
                 )
 
             # Fermer le dialog de chargement
@@ -549,21 +524,7 @@ class PyCompilerArkGui(QWidget):
                 pass
             return False
 
-    def _check_next_venv_pkg(self):
-        # Delegated to venv_manager - these methods are now handled by VenvManager
-        pass
 
-    def _on_venv_pkg_checked(self, process, code, status, pkg):
-        # Delegated to venv_manager
-        pass
-
-    def _on_venv_check_output(self, process, error=False):
-        # Delegated to venv_manager
-        pass
-
-    def _on_venv_pkg_installed(self, process, code, status, pkg):
-        # Delegated to venv_manager
-        pass
 
     def select_venv_manually(self):
         self.venv_manager.select_venv_manually()
