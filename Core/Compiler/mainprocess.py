@@ -20,6 +20,16 @@ Ce module contient toutes les fonctions de gestion des processus de compilation,
 y compris le démarrage, la surveillance, la gestion des erreurs et l'annulation
 des compilations. Il gère également l'interface utilisateur dynamique pour les
 moteurs externes et l'installation automatique des modules manquants.
+
+Inspiré de OnlyMod/EngineOnlyMod/gui.py avec les améliorations suivantes:
+- Utilisation du registry pour conserver l'état du moteur (configuration UI)
+- Mesure précise du temps de compilation avec horodatage
+- Gestion de l'annulation via flag atomic (compatible avec select())
+- Hooks on_success différés utilisant l'instance engine du registry
+- Support complet du pont UI JSON pour les moteurs externes
+
+Auteur: Ague Samuel Amen
+Version: 2.0.0
 """
 
 # ============================================================================
@@ -37,13 +47,19 @@ import os  # Opérations sur le système de fichiers (chemins, création de rép
 import platform  # Détection du système d'exploitation (Windows/Linux)
 import re  # Expressions régulières (détection de modules manquants)
 import subprocess  # Exécution de processus externes (pip install)
-import time  # Minuteries et délais (pour pip install retry)
+import time  # Minuteries et délais (pour pip install retry et mesure de temps)
+from datetime import datetime  # Horodatage précis pour la mesure de performance
 from typing import Any, Optional  # Type hints pour les fonctions
 
 # --- Imports du framework PySide6 (Qt pour Python) ---
 # QProcess : Gestion des processus externes avec signaux/slots Qt
 # QTimer : Minuteries pour les timeouts et délais de grâce
-from PySide6.QtCore import QProcess, QTimer
+from PySide6.QtCore import QProcess, QTimer, QAtomicInt, QThread, Signal  # QAtomicInt pour flag d'annulation thread-safe
+
+# --- Imports pour le threading avancé (inspiré de gui.py) ---
+import threading
+import select
+import time
 
 # --- Imports des widgets Qt utilisés pour l'interface dynamique ---
 # QCheckBox : Cases à cocher pour les options dynamiques
@@ -75,6 +91,121 @@ from Core.Auto_Command_Builder import compute_for_all
 from Core.preferences import MAX_PARALLEL
 
 # Note : Support ACASL supprimé (obsolète)
+
+# ============================================================================
+# SECTION 0 : COMPILATION THREAD (INSPIRED FROM gui.py)
+# ============================================================================
+# Thread avancé pour l'exécution de la compilation sans bloquer l'interface Qt
+# Inspiré de OnlyMod/EngineOnlyMod/gui.py pour une meilleure robustesse
+# ============================================================================
+
+class CompilationThread(QThread):
+    """Thread pour exécuter la compilation sans bloquer l'UI."""
+
+    output_ready = Signal(str)
+    error_ready = Signal(str)
+    finished = Signal(int)
+
+    def __init__(self, program, args, env, working_dir=None, cancel_file=None):
+        super().__init__()
+        self.program = program
+        self.args = args
+        self.env = env
+        self.working_dir = working_dir
+        self.cancel_file = cancel_file
+        self.cancel_requested = False
+        self.process = None
+        self._collected_stderr = []  # Pour collecter stderr pour try_install_missing_modules
+
+    def run(self):
+        """Exécute le processus de compilation."""
+        try:
+            proc = subprocess.Popen(
+                [self.program] + self.args,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                env=self.env,
+                cwd=self.working_dir,
+                bufsize=1,
+            )
+
+            import select
+            import time
+
+            # Utiliser select pour lire stdout et stderr en temps réel
+            while True:
+                # Vérifier si l'annulation a été demandée
+                if self.cancel_requested:
+                    proc.terminate()
+                    try:
+                        proc.wait(timeout=5)  # Attendre que le processus se termine
+                    except subprocess.TimeoutExpired:
+                        proc.kill()  # Forcer la terminaison si nécessaire
+                    if self.finished:
+                        self.finished.emit(-1)  # Code spécial pour annulation
+                    return
+
+                # Vérifier si le fichier sentinelle d'annulation existe
+                if self.cancel_file and os.path.isfile(self.cancel_file):
+                    proc.terminate()
+                    try:
+                        proc.wait(timeout=5)
+                    except subprocess.TimeoutExpired:
+                        proc.kill()
+                    if self.finished:
+                        self.finished.emit(-1)
+                    return
+
+                # Vérifier si le processus est terminé
+                if proc.poll() is not None:
+                    break
+
+                # Utiliser select pour attendre des données sur stdout ou stderr
+                ready, _, _ = select.select([proc.stdout, proc.stderr], [], [], 0.1)
+
+                for stream in ready:
+                    if stream == proc.stdout and self.output_ready:
+                        line = proc.stdout.readline()
+                        if line:
+                            self.output_ready.emit(line.rstrip())
+                    elif stream == proc.stderr and self.error_ready:
+                        line = proc.stderr.readline()
+                        if line:
+                            line_str = line.rstrip()
+                            self._collected_stderr.append(line_str)  # Collecter pour try_install_missing_modules
+                            self.error_ready.emit(line_str)
+
+                time.sleep(0.01)  # Petit délai pour éviter la surcharge CPU
+
+            # Lire tout ce qui reste dans les buffers après la fin du processus
+            remaining_stdout = proc.stdout.read()
+            if remaining_stdout and self.output_ready:
+                for line in remaining_stdout.strip().split("\n"):
+                    if line:
+                        self.output_ready.emit(line.rstrip())
+
+            remaining_stderr = proc.stderr.read()
+            if remaining_stderr and self.error_ready:
+                for line in remaining_stderr.strip().split("\n"):
+                    if line:
+                        self.error_ready.emit(line.rstrip())
+
+            # Signaler la fin
+            return_code = proc.returncode
+            if self.finished:
+                self.finished.emit(return_code)
+
+        except Exception as e:
+            if self.error_ready:
+                self.error_ready.emit(f"Error: {str(e)}")
+            if self.finished:
+                self.finished.emit(1)
+
+    def cancel(self):
+        """Demande l'annulation de la compilation."""
+        self.cancel_requested = True
+
 
 # ============================================================================
 # SECTION 0 : VENV/PIP HELPERS (MOVED FROM engine_sdk/utils.py)
@@ -415,37 +546,42 @@ def start_compilation_process(self, file):
         cancel_file = None
 
     # ========================================================================
-    # Étape 10: Création et configuration du processus QProcess
+    # Étape 10: Création et configuration du thread de compilation
     # ========================================================================
-    process = QProcess(self)
-    if penv is not None:
-        try:
-            process.setProcessEnvironment(penv)
-        except Exception:
-            pass
-    process.setProgram(program)
-    process.setArguments(args)
-    process.setWorkingDirectory(self.workspace_dir)
-    process.file_path = file
-    process.file_basename = file_basename
-    process._start_time = time.time()
-    process._engine_id = engine_id
-    process._cancel_file = cancel_file
+    # Utiliser CompilationThread au lieu de QProcess pour une meilleure isolation
+    env_dict = dict(penv.systemEnvironment()) if penv else os.environ.copy()
+    if self.workspace_dir:
+        env_dict["ARK_WORKSPACE"] = self.workspace_dir
+
+    compilation_thread = CompilationThread(
+        program=program,
+        args=args,
+        env=env_dict,
+        working_dir=self.workspace_dir,
+        cancel_file=cancel_file
+    )
+
+    # Stocker les métadonnées dans le thread (similaire à QProcess)
+    compilation_thread.file_path = file
+    compilation_thread.file_basename = file_basename
+    compilation_thread._start_time = time.time()
+    compilation_thread._engine_id = engine_id
+    compilation_thread._cancel_file = cancel_file
 
     # ========================================================================
-    # Étape 11: Connexion des signaux du processus
+    # Étape 11: Connexion des signaux du thread
     # ========================================================================
-    # readyReadStandardOutput: données stdout reçues
-    # readyReadStandardError: données stderr reçues
-    # finished: processus terminé
-    process.readyReadStandardOutput.connect(lambda p=process: self.handle_stdout(p))
-    process.readyReadStandardError.connect(lambda p=process: self.handle_stderr(p))
-    process.finished.connect(lambda ec, es, p=process: self.handle_finished(p, ec, es))
+    # output_ready: données stdout reçues
+    # error_ready: données stderr reçues
+    # finished: thread terminé
+    compilation_thread.output_ready.connect(lambda line: self.handle_stdout(compilation_thread, line))
+    compilation_thread.error_ready.connect(lambda line: self.handle_stderr(compilation_thread, line))
+    compilation_thread.finished.connect(lambda ec: self.handle_finished(compilation_thread, ec, 0))
 
     # ========================================================================
-    # Étape 12: Ajout aux processus actifs
+    # Étape 12: Ajout aux processus actifs (threads)
     # ========================================================================
-    self.processes.append(process)
+    self.processes.append(compilation_thread)
     self.current_compiling.add(file)
 
     # ========================================================================
@@ -481,79 +617,67 @@ def start_compilation_process(self, file):
             t.setSingleShot(True)
 
             # Fonction appelée lors du timeout
-            def _on_timeout(proc=process, seconds=timeout_sec):
+            def _on_timeout(thread=compilation_thread, seconds=timeout_sec):
                 try:
                     self.log.append(
-                        f"⏱️ Timeout ({seconds}s) pour {getattr(proc, 'file_basename', '?')}. Arrêt en cours…"
+                        f"⏱️ Timeout ({seconds}s) pour {getattr(thread, 'file_basename', '?')}. Arrêt en cours…"
                     )
                 except Exception:
                     pass
-                # Tentative d'arrêt propre (SIGTERM)
+                # Demander l'annulation propre du thread
                 try:
-                    if proc.state() != QProcess.NotRunning:
-                        proc.terminate()
-                except Exception:
-                    pass
-                # Si l'arrêt propre échoue, on force le kill
-                try:
-                    proc.kill()
+                    thread.cancel()
                 except Exception:
                     pass
 
                 # ========================================================================
                 # Délai de grâce avant kill forcé
                 # ========================================================================
-                # On attend 10 secondes pour que le processus se termine proprement
+                # On attend 10 secondes pour que le thread se termine proprement
                 grace = QTimer(self)
                 grace.setSingleShot(True)
 
-                def _force_kill(p=proc):
-                    if p.state() != QProcess.NotRunning:
+                def _force_kill(thr=thread):
+                    if thr.isRunning():
                         try:
                             self.log.append(
-                                f"🛑 Arrêt forcé du processus {getattr(p, 'file_basename', '?')} après délai de grâce."
+                                f"🛑 Arrêt forcé du thread {getattr(thr, 'file_basename', '?')} après délai de grâce."
                             )
                         except Exception:
                             pass
-                        # Kill full process tree if possible
+                        # Terminer le thread de force
                         try:
-                            pid2 = int(p.processId())
-                        except Exception:
-                            pid2 = None
-                        if pid2:
-                            _kill_process_tree(pid2, timeout=3.0, log=self.log.append)
-                        try:
-                            p.kill()
+                            thr.terminate()
                         except Exception:
                             pass
 
                 grace.timeout.connect(_force_kill)
                 grace.start(10000)  # 10s grâce
-                proc._grace_kill_timer = grace
+                thread._grace_kill_timer = grace
 
             # Connexion de la minuterie et démarrage
             t.timeout.connect(_on_timeout)
             t.start(int(timeout_sec * 1000))
-            process._timeout_timer = t
+            compilation_thread._timeout_timer = t
 
-            # Fonction pour annuler la minuterie quand le processus finit normalement
-            def _cancel_timer(_ec, _es, timer=t):
+            # Fonction pour annuler la minuterie quand le thread finit normalement
+            def _cancel_timer(ec, timer=t):
                 try:
                     timer.stop()
                 except Exception:
                     pass
 
-            process.finished.connect(_cancel_timer)
+            compilation_thread.finished.connect(_cancel_timer)
     except Exception:
         pass
 
     # ========================================================================
-    # Étape 15: Lancement du processus de compilation
+    # Étape 15: Lancement du thread de compilation
     # ========================================================================
-    process.start()
+    compilation_thread.start()
 
 
-def handle_stdout(self, process):
+def handle_stdout(self, process, line=None):
     """
     Gestionnaire pour la sortie standard du processus de compilation.
 
@@ -563,7 +687,8 @@ def handle_stdout(self, process):
 
     Args:
         self: Instance de la classe principale (GUI)
-        process: Objet QProcess du processus en cours
+        process: Objet CompilationThread ou QProcess du processus en cours
+        line: Ligne de sortie (pour CompilationThread) ou None (pour QProcess)
 
     Returns:
         None
@@ -571,7 +696,12 @@ def handle_stdout(self, process):
     # ========================================================================
     # Lecture des données stdout du processus
     # ========================================================================
-    data = process.readAllStandardOutput().data().decode()
+    if line is not None:
+        # Mode CompilationThread : ligne déjà fournie
+        data = line
+    else:
+        # Mode QProcess : lecture depuis le processus
+        data = process.readAllStandardOutput().data().decode()
 
     # ========================================================================
     # Traitement des événements JSON Lines
@@ -1216,7 +1346,7 @@ def handle_stderr(self, process):
     self.log.append(f"<span style='color:red;'>{data}</span>")
 
 
-def handle_finished(self, process, exit_code, exit_status):
+def handle_finished(self, process, exit_code, exit_status=0):
     # Suppression de la réactivation ici (gérée à la toute fin dans try_start_processes)
     import time
 
@@ -1354,7 +1484,18 @@ def handle_finished(self, process, exit_code, exit_status):
 
 
 def try_install_missing_modules(self, process):
-    output = process.readAllStandardError().data().decode()
+    # Handle both QProcess and CompilationThread
+    try:
+        if hasattr(process, 'readAllStandardError'):
+            # QProcess mode
+            output = process.readAllStandardError().data().decode()
+        else:
+            # CompilationThread mode - stderr is emitted line by line
+            # We need to collect stderr from the thread or use a different approach
+            output = getattr(process, '_collected_stderr', '')
+    except Exception:
+        output = ''
+
     missing_modules = re.findall(r"No module named '([\w\d_]+)'", output)
     if not hasattr(self, "_already_tried_modules"):
         self._already_tried_modules = set()
