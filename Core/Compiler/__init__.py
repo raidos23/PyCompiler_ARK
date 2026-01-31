@@ -62,7 +62,7 @@ Fonctions Publiques (Exportées):
     │ • show_error_dialog       → Affiche une boîte de dialogue d'erreur      │
     │ • clamp_text              → Tronque le texte pour l'affichage           │
     │ • redact_secrets          → Masque les secrets dans les logs            │
-    │ • compute_for_all         → Construit les commandes de compilation      │
+    │ •          → Construit les commandes de compilation      │
     │ • engines_loader          → Charge et gère les moteurs de compilation   │
     └─────────────────────────────────────────────────────────────────────────┘
 
@@ -113,7 +113,6 @@ from .mainprocess import (
     # --- Utilitaires ---
     clamp_text,  # Tronque le texte pour l'affichage
     redact_secrets,  # Masque les secrets dans les logs
-    compute_for_all,  # Construit les commandes de compilation
     engines_loader,  # Gestionnaire de moteurs de compilation
 )
 
@@ -141,7 +140,7 @@ __all__ = [
     # --- Utilitaires et Chargement ---
     "redact_secrets",
     "compiler",
-    "compute_for_all",
+    "",
     "engines_loader",
     "compile_all",
 ]

@@ -33,7 +33,7 @@ FONCTIONS PRINCIPALES:
     │ • compile_all()           → Point d'entrée principal, lance la         │
     │                             compilation après exécution des plugins    │
     │                             BCASL                                      │
-    │ • _continue_compile_all() → Suite de la compilation après BCASL,      │
+    │ • _continue_compile_all() → Suite de la compilation après BCASL,       │
     │                             filtrage et préparation de la file         │
     │ • _kill_all_processes()   → Nettoyage d'urgence en cas d'erreur,       │
     │                             tue tous les processus et réinitialise     │
@@ -45,19 +45,19 @@ FLUX DE COMPILATION:
     │ 1. compile_all(self)                                                  │
     │    ├─ Vérifications préliminaires (processus actifs, fichiers)        │
     │    ├─ Désactivation des contrôles UI                                  │
-    │    └─ Exécution asynchrone de BCASL (_run_bcasl_async)               │
-    │                                                                      │
+    │    └─ Exécution asynchrone de BCASL (_run_bcasl_async)                │
+    │                                                                       │
     │ 2. Callback _after_bcasl(report)                                      │
-    │    ├─ Vérification du rapport BCASL (erreurs, statut)                │
-    │    ├─ Si OK: appel de _continue_compile_all()                        │
+    │    ├─ Vérification du rapport BCASL (erreurs, statut)                 │
+    │    ├─ Si OK: appel de _continue_compile_all()                         │
     │    └─ Si erreur: nettoyage et réactivation UI                         │
-    │                                                                      │
+    │                                                                       │
     │ 3. _continue_compile_all(self)                                        │
     │    ├─ Chargement configuration ARK                                    │
     │    ├─ Filtrage des fichiers (exclusions, points d'entrée)             │
     │    ├─ Construction de la file d'attente                               │
     │    ├─ Configuration UI (barre de progression, logs)                   │
-    │    └─ Appel de try_start_processes() pour lancer les compilations    │
+    │    └─ Appel de try_start_processes() pour lancer les compilations     │
     └───────────────────────────────────────────────────────────────────────┘
 
 INTEGRATION BCASL:
@@ -80,7 +80,7 @@ FILTRAGE DES FICHIERS:
 
 DÉPENDANCES:
     - PySide6.QtWidgets : Boîtes de dialogue (QMessageBox)
-    - Core.ark_config_loader : Chargement de la configuration ARK
+    - Core.ArkConfigManager : Chargement de la configuration ARK
     - bcasl.Loader : Exécution des plugins de pré-compilation
 
 ================================================================================
@@ -96,7 +96,7 @@ import os
 import traceback
 
 # Imports des modules de configuration et de chargement ARK
-from Core.ark_config_loader import (
+from Core.ArkConfigManager import (
     load_ark_config,
     should_exclude_file,
     get_compiler_options,

@@ -272,7 +272,7 @@ Tests/
 ```python
 import unittest
 from pathlib import Path
-from Core.ark_config_loader import load_ark_config
+from Core.ArkConfigManager import load_ark_config
 
 class TestArkConfigLoader(unittest.TestCase):
     def setUp(self):
@@ -301,10 +301,10 @@ pytest Tests/
 pytest --cov=Core --cov=bcasl --cov=Plugins_SDK Tests/
 
 # Run specific test file
-pytest Tests/test_ark_config_loader.py
+pytest Tests/test_ArkConfigManager.py
 
 # Run specific test
-pytest Tests/test_ark_config_loader.py::TestArkConfigLoader::test_load_config
+pytest Tests/test_ArkConfigManager.py::TestArkConfigLoader::test_load_config
 
 # Run with verbose output
 pytest -v Tests/

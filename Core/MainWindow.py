@@ -346,7 +346,7 @@ class PyCompilerArkGui(QWidget):
         self.update_command_preview()
 
     def add_py_files_from_folder(self, folder):
-        from Core.ark_config_loader import load_ark_config, should_exclude_file
+        from Core.ArkConfigManager import load_ark_config, should_exclude_file
 
         count = 0
         excluded_count = 0
@@ -594,7 +594,7 @@ class PyCompilerArkGui(QWidget):
         # Créer le fichier s'il n'existe pas
         if not os.path.exists(config_path):
             try:
-                from Core.ark_config_loader import create_default_ark_config
+                from Core.ArkConfigManager import create_default_ark_config
 
                 if create_default_ark_config(self.workspace_dir):
                     self.log_i18n(
@@ -894,7 +894,6 @@ class PyCompilerArkGui(QWidget):
         try_start_processes,
         compile_all,
         start_compilation_process,
-        compute_for_all,
         _continue_compile_all,
     )
 
