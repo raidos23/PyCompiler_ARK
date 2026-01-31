@@ -317,7 +317,7 @@ def get_current_language_sync() -> str:
     """Retourne la langue actuelle depuis les préférences utilisateur (synchrone)."""
     try:
         # Importer ici pour éviter les imports circulaires
-        from .preferences import PREFS_FILE
+        from .PreferencesManager import PREFS_FILE
 
         if os.path.isfile(PREFS_FILE):
             with open(PREFS_FILE, encoding="utf-8") as f:

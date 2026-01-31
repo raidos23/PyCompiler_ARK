@@ -987,7 +987,7 @@ class PyCompilerArkGui(QWidget):
         except Exception:
             pass
 
-    from .preferences import load_preferences, save_preferences, update_ui_state
+    from .PreferencesManager import load_preferences, save_preferences, update_ui_state
 
     def show_statistics(self):
         import psutil
