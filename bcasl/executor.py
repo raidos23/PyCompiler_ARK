@@ -54,7 +54,7 @@ class BCASL:
         # Timeout settings
         self.plugin_timeout_s = float(plugin_timeout_s)
 
-    # API publique
+    # Plugins publique
     def add_plugin(self, plugin: BcPluginBase) -> None:
         if not isinstance(plugin, BcPluginBase):
             raise TypeError("Le plugin doit être une instance de BcPluginBase")
@@ -129,7 +129,7 @@ class BCASL:
             init_file = pkg_dir / "__init__.py"
             if not init_file.exists():
                 continue
-            mod_name = f"bcasl_api_{pkg_dir.name}"
+            mod_name = f"bcasl_Plugins_{pkg_dir.name}"
             try:
                 spec = importlib.util.spec_from_file_location(
                     mod_name, str(init_file), submodule_search_locations=[str(pkg_dir)]
@@ -489,7 +489,7 @@ class BCASL:
         if not eff_sandbox or parallelism <= 1:
             order: list[str] = []
             tmp_ready = list(ready)
-            heapq.heapify(tmp_ready)
+            heapq.hePluginsfy(tmp_ready)
             while tmp_ready:
                 _, _, pid = heapq.heappop(tmp_ready)
                 order.append(pid)

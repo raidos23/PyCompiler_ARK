@@ -23,7 +23,7 @@ Kit de développement pour plugins ARK++ couvrant:
 - Contexte CE (Core Extension)
 - Contexte UI (boîtes de dialogue, i18n)
 
-Ce package expose une API stable pour les plugins tiers.
+Ce package expose une Plugins stable pour les plugins tiers.
 """
 
 # Expose uniquement les sous-packages pour éviter les imports précoces

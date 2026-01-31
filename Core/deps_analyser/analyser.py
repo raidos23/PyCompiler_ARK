@@ -27,7 +27,7 @@ from Core.dialogs import ProgressDialog
 
 # NOTE PRODUCTION-HARDENING:
 # Les fonctionnalités non finalisées sont encapsulées dans des gardes afin de ne jamais
-# faire échouer l'application. Les API publiques restent stables; les chemins non
+# faire échouer l'application. Les Plugins publiques restent stables; les chemins non
 # implémentés renvoient silencieusement.
 
 # Liste explicite de modules de la bibliothèque standard à exclure
@@ -130,7 +130,7 @@ def _is_stdlib_module(module_name: str) -> bool:
 
 def _check_module_installed(module: str) -> bool:
     """
-    Vérifie si un module est installé via importlib.metadata (plus rapide que subprocess pip show).
+    Vérifie si un module est installé via importlib.metadata (plus rPluginsde que subprocess pip show).
     """
     try:
         distribution(module)

@@ -57,7 +57,7 @@ def _has_bcasl_marker(pkg_dir: Path) -> bool:
         return False
 
 
-def _discover_bcasl_meta(api_dir: Path) -> dict[str, dict[str, Any]]:
+def _discover_bcasl_meta(Plugins_dir: Path) -> dict[str, dict[str, Any]]:
     """Découvre les plugins en important chaque package et en appelant bcasl_register(manager).
     Supporte également les plugins enregistrés avec le décorateur @bc_register.
     Retourne un mapping plugin_id -> meta dict {id, name, version, description, author, requirements}
@@ -67,7 +67,7 @@ def _discover_bcasl_meta(api_dir: Path) -> dict[str, dict[str, Any]]:
         import importlib.util as _ilu
         import sys as _sys
 
-        for pkg_dir in sorted(api_dir.iterdir(), key=lambda p: p.name):
+        for pkg_dir in sorted(Plugins_dir.iterdir(), key=lambda p: p.name):
             try:
                 if not pkg_dir.is_dir():
                     continue
@@ -85,7 +85,7 @@ def _discover_bcasl_meta(api_dir: Path) -> dict[str, dict[str, Any]]:
                 spec.loader.exec_module(module)  # type: ignore[attr-defined]
 
                 # Utilise un gestionnaire temporaire pour enregistrer et lire les métadonnées
-                mgr = BCASL(api_dir, config={}, sandbox=False, plugin_timeout_s=0.0)  # type: ignore[call-arg]
+                mgr = BCASL(Plugins_dir, config={}, sandbox=False, plugin_timeout_s=0.0)  # type: ignore[call-arg]
 
                 # Méthode 1: chercher fonction bcasl_register
                 reg = getattr(module, "bcasl_register", None)
@@ -244,9 +244,9 @@ def _load_workspace_config(workspace_root: Path) -> dict[str, Any]:
     default_cfg: dict[str, Any] = {}
     try:
         repo_root = Path(__file__).resolve().parents[1]
-        api_dir = repo_root / "Plugins"
+        Plugins_dir = repo_root / "Plugins"
         detected_plugins: dict[str, Any] = {}
-        meta_map = _discover_bcasl_meta(api_dir) if api_dir.exists() else {}
+        meta_map = _discover_bcasl_meta(Plugins_dir) if Plugins_dir.exists() else {}
         if meta_map:
             order = compute_tag_order(meta_map)
             for idx, pid in enumerate(order):
@@ -257,7 +257,7 @@ def _load_workspace_config(workspace_root: Path) -> dict[str, Any]:
             try:
                 names = [
                     p.name
-                    for p in sorted(api_dir.iterdir())
+                    for p in sorted(Plugins_dir.iterdir())
                     if (p.is_dir() and _has_bcasl_marker(p))
                 ]
             except Exception:
@@ -343,13 +343,13 @@ if QObject is not None and Signal is not None:  # pragma: no cover
         def __init__(
             self,
             workspace_root: Path,
-            api_dir: Path,
+            Plugins_dir: Path,
             cfg: dict[str, Any],
             plugin_timeout: float,
         ) -> None:
             super().__init__()
             self.workspace_root = workspace_root
-            self.api_dir = api_dir
+            self.Plugins_dir = Plugins_dir
             self.cfg = cfg
             self.plugin_timeout = plugin_timeout
 
@@ -361,7 +361,7 @@ if QObject is not None and Signal is not None:  # pragma: no cover
                     config=self.cfg,
                     plugin_timeout_s=self.plugin_timeout,
                 )
-                loaded, errors = manager.load_plugins_from_directory(self.api_dir)
+                loaded, errors = manager.load_plugins_from_directory(self.Plugins_dir)
                 try:
                     self.log.emit(
                         f"🧩 BCASL: {loaded} package(s) chargé(s) depuis Plugins/\n"
@@ -400,7 +400,7 @@ if QObject is not None and Signal is not None:  # pragma: no cover
                     order_list = []
                 if not order_list:
                     try:
-                        meta_en = _discover_bcasl_meta(self.api_dir)
+                        meta_en = _discover_bcasl_meta(self.Plugins_dir)
                         order_list = list(compute_tag_order(meta_en))
                     except Exception:
                         order_list = []
@@ -485,7 +485,7 @@ if QObject is not None and Signal is not None:  # pragma: no cover
                     pass
 
 
-# --- API publique attendue par le reste de l'app ---
+# --- Plugins publique attendue par le reste de l'app ---
 
 
 def ensure_bcasl_thread_stopped(self, timeout_ms: int = 5000) -> None:
@@ -587,8 +587,8 @@ def open_bc_loader_dialog(self) -> None:  # UI minimale
             return
         workspace_root = Path(self.workspace_dir).resolve()
         repo_root = Path(__file__).resolve().parents[1]
-        api_dir = repo_root / "Plugins"
-        if not api_dir.exists():
+        Plugins_dir = repo_root / "Plugins"
+        if not Plugins_dir.exists():
             QMessageBox.information(
                 self,
                 self.tr("Information", "Information"),
@@ -598,7 +598,7 @@ def open_bc_loader_dialog(self) -> None:  # UI minimale
                 ),
             )
             return
-        meta_map = _discover_bcasl_meta(api_dir)
+        meta_map = _discover_bcasl_meta(Plugins_dir)
         plugin_ids = list(sorted(meta_map.keys()))
         if not plugin_ids:
             QMessageBox.information(
@@ -849,11 +849,11 @@ def open_bc_loader_dialog(self) -> None:  # UI minimale
             pass
 
 
-# API
+# Plugins
 
 
 def run_pre_compile_async(self, on_done: Optional[callable] = None) -> None:
-    """Lance BCASL en arrière-plan si QtCore est dispo; sinon, exécution bloquante rapide.
+    """Lance BCASL en arrière-plan si QtCore est dispo; sinon, exécution bloquante rPluginsde.
     on_done(report) appelé à la fin si fourni.
     """
     try:
@@ -866,7 +866,7 @@ def run_pre_compile_async(self, on_done: Optional[callable] = None) -> None:
             return
         workspace_root = Path(self.workspace_dir).resolve()
         repo_root = Path(__file__).resolve().parents[1]
-        api_dir = repo_root / "Plugins"
+        Plugins_dir = repo_root / "Plugins"
 
         cfg = _load_workspace_config(workspace_root)
         # Timeout: <= 0 => illimité
@@ -916,7 +916,7 @@ def run_pre_compile_async(self, on_done: Optional[callable] = None) -> None:
 
         if QThread is not None and QObject is not None and Signal is not None:
             thread = QThread()
-            worker = _BCASLWorker(workspace_root, api_dir, cfg, plugin_timeout)  # type: ignore[name-defined]
+            worker = _BCASLWorker(workspace_root, Plugins_dir, cfg, plugin_timeout)  # type: ignore[name-defined]
             try:
                 self._bcasl_thread = thread
                 self._bcasl_worker = worker
@@ -941,7 +941,7 @@ def run_pre_compile_async(self, on_done: Optional[callable] = None) -> None:
         # Repli: exécution synchrone
         try:
             manager = BCASL(workspace_root, config=cfg, plugin_timeout_s=plugin_timeout)
-            loaded, errors = manager.load_plugins_from_directory(api_dir)
+            loaded, errors = manager.load_plugins_from_directory(Plugins_dir)
             if hasattr(self, "log") and self.log is not None:
                 self.log.append(
                     f"🧩 BCASL: {loaded} package(s) chargé(s) depuis Plugins/\n"
@@ -972,7 +972,7 @@ def run_pre_compile_async(self, on_done: Optional[callable] = None) -> None:
             )
             if not order_list:
                 try:
-                    meta_en = _discover_bcasl_meta(api_dir)
+                    meta_en = _discover_bcasl_meta(Plugins_dir)
                     order_list = list(compute_tag_order(meta_en))
                 except Exception:
                     order_list = []
@@ -1029,7 +1029,7 @@ def run_pre_compile(self) -> Optional[object]:
             return None
         workspace_root = Path(self.workspace_dir).resolve()
         repo_root = Path(__file__).resolve().parents[1]
-        api_dir = repo_root / "Plugins"
+        Plugins_dir = repo_root / "Plugins"
 
         cfg = _load_workspace_config(workspace_root)
         try:
@@ -1069,7 +1069,7 @@ def run_pre_compile(self) -> Optional[object]:
             return None
 
         manager = BCASL(workspace_root, config=cfg, plugin_timeout_s=plugin_timeout)
-        loaded, errors = manager.load_plugins_from_directory(api_dir)
+        loaded, errors = manager.load_plugins_from_directory(Plugins_dir)
         if hasattr(self, "log") and self.log is not None:
             self.log.append(
                 f"🧩 BCASL: {loaded} package(s) chargé(s) depuis Plugins/\n"
@@ -1106,7 +1106,7 @@ def run_pre_compile(self) -> Optional[object]:
                 order_list = []
             if not order_list:
                 try:
-                    meta_en = _discover_bcasl_meta(api_dir)
+                    meta_en = _discover_bcasl_meta(Plugins_dir)
                     order_list = list(compute_tag_order(meta_en))
                 except Exception:
                     order_list = []
