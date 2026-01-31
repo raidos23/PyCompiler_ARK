@@ -45,3 +45,8 @@ mypy
 bandit
 pip-audit
 safety
+click
+rich
+conda
+colorama
+poetry

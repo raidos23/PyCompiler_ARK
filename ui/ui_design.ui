@@ -121,7 +121,7 @@
            </widget>
           </item>
           <item>
-           <widget class="QPushButton" name="btn_build_all">
+           <widget class="QPushButton" name="compile_btn">
             <property name="text">
              <string>🚀 Compiler</string>
             </property>
@@ -131,7 +131,7 @@
            </widget>
           </item>
           <item>
-           <widget class="QPushButton" name="btn_cancel_all">
+           <widget class="QPushButton" name="cancel_btn">
             <property name="text">
              <string>⛔ Annuler</string>
             </property>

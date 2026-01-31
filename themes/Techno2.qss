@@ -50,22 +50,22 @@ QPushButton:disabled { color: #9aa4b3; background: #1c2431; border-color: rgba(2
 QPushButton:focus { outline: none; border-color: #4aa8ff; }
 
 /* Primary (soft white) */
-#btn_build_all, #btn_show_stats {
+#compile_btn, #btn_show_stats {
   background: #f5f7fa;
   color: #151b24;
   border: none;
 }
-#btn_build_all:hover, #btn_show_stats:hover { background: #eef2f6; }
-#btn_build_all:pressed, #btn_show_stats:pressed { background: #e6ebf2; }
+#compile_btn:hover, #btn_show_stats:hover { background: #eef2f6; }
+#compile_btn:pressed, #btn_show_stats:pressed { background: #e6ebf2; }
 
 /* Danger/Cancel */
-#btn_cancel_all {
+#cancel_btn {
   background: #3a2430;
   border: 1px solid #52303f;
   color: #ffd6dc;
 }
-#btn_cancel_all:hover { background: #442a38; border-color: #6b3c50; }
-#btn_cancel_all:pressed { background: #331f2b; }
+#cancel_btn:hover { background: #442a38; border-color: #6b3c50; }
+#cancel_btn:pressed { background: #331f2b; }
 
 /* Secondary icon/button consistency */
 #btn_select_icon { border-color: rgba(255,255,255,0.18); }

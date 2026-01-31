@@ -52,16 +52,16 @@ QPushButton:pressed { background: #1A261E; }
 QPushButton:disabled { color: #6A7A72; background: #2A3A2F; }
 
 /* Bouton principal (vert accent) */
-QPushButton#btn_build_all {
+QPushButton#compile_btn {
   background: #4CAF50;
   color: #FFFFFF;
   border: 1px solid #66BB6A;
 }
-QPushButton#btn_build_all:hover { background: #66BB6A; }
-QPushButton#btn_cancel_all {
+QPushButton#compile_btn:hover { background: #66BB6A; }
+QPushButton#cancel_btn {
   background: #4A2A2A; color: #FFC6CD; border: 1px solid #5E3630;
 }
-QPushButton#btn_cancel_all:hover { background: #5E3630; }
+QPushButton#cancel_btn:hover { background: #5E3630; }
 
 /* Cases à cocher */
 QCheckBox { color: #A7B8B0; }

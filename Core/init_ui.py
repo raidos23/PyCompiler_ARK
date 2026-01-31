@@ -252,8 +252,8 @@ def init_ui(self):
             pass
     self.btn_select_files = self.ui.findChild(QPushButton, "btn_select_files")
     self.btn_remove_file = self.ui.findChild(QPushButton, "btn_remove_file")
-    self.btn_build_all = self.ui.findChild(QPushButton, "btn_build_all")
-    self.btn_cancel_all = self.ui.findChild(QPushButton, "btn_cancel_all")
+    self.compile_btn = self.ui.findChild(QPushButton, "compile_btn")
+    self.cancel_btn = self.ui.findChild(QPushButton, "cancel_btn")
     self.btn_help = self.ui.findChild(QPushButton, "btn_help")
     self.btn_suggest_deps = self.ui.findChild(QPushButton, "btn_suggest_deps")
     self.btn_bc_loader = self.ui.findChild(QPushButton, "btn_bc_loader")
@@ -284,8 +284,8 @@ def init_ui(self):
         except Exception:
             pass
 
-    self.btn_build_all = self.ui.findChild(QPushButton, "btn_build_all")
-    self.btn_cancel_all = self.ui.findChild(QPushButton, "btn_cancel_all")
+    self.compile_btn = self.ui.findChild(QPushButton, "compile_btn")
+    self.cancel_btn = self.ui.findChild(QPushButton, "cancel_btn")
     self.progress = self.ui.findChild(QProgressBar, "progress")
     self.log = self.ui.findChild(QTextEdit, "log")
     self.btn_export_config = self.ui.findChild(QPushButton, "btn_export_config")
@@ -297,8 +297,8 @@ def init_ui(self):
     self.venv_button.clicked.connect(self.select_venv_manually)
     self.btn_select_files.clicked.connect(self.select_files_manually)
     self.btn_remove_file.clicked.connect(self.remove_selected_file)
-    self.btn_build_all.clicked.connect(self.compile_all)
-    self.btn_cancel_all.clicked.connect(self.cancel_all_compilations)
+    self.compile_btn.clicked.connect(self.compile_all)
+    self.cancel_btn.clicked.connect(self.cancel_all_compilations)
 
     from bcasl import open_bc_loader_dialog
 

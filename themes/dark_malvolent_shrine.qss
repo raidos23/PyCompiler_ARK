@@ -51,17 +51,17 @@ QPushButton:pressed { background: #13141B; }
 QPushButton:disabled { color: #8B8F96; background: #101115; }
 
 /* Bouton principal (cramoisi) */
-QPushButton#btn_build_all {
+QPushButton#compile_btn {
   background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #D32F2F, stop:1 #B71C1C);
   color: #FFFFFF; border: 1px solid #B71C1C;
 }
-QPushButton#btn_build_all:hover {
+QPushButton#compile_btn:hover {
   background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #C62828, stop:1 #A11212);
 }
-QPushButton#btn_cancel_all {
+QPushButton#cancel_btn {
   background: #2A1619; color: #FFB4BC; border: 1px solid #47242A;
 }
-QPushButton#btn_cancel_all:hover { background: #321B1F; }
+QPushButton#cancel_btn:hover { background: #321B1F; }
 
 /* Cases à cocher */
 QCheckBox { color: #E8E8EA; }
