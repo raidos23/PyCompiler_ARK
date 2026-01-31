@@ -18,7 +18,7 @@ from __future__ import annotations
 from typing import Optional
 
 # Import des classes et fonctions de Core.dialogs
-from Core.dialogs import (
+from Core.WidgetsCreator import (
     show_msgbox,
     sys_msgbox_for_installing,
     ProgressDialog,

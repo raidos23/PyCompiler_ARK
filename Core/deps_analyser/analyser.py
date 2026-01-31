@@ -23,7 +23,7 @@ from importlib.metadata import distribution, PackageNotFoundError
 from PySide6.QtCore import QProcess
 from PySide6.QtWidgets import QMessageBox
 
-from Core.dialogs import ProgressDialog
+from Core.WidgetsCreator import ProgressDialog
 
 # NOTE PRODUCTION-HARDENING:
 # Les fonctionnalités non finalisées sont encapsulées dans des gardes afin de ne jamais
