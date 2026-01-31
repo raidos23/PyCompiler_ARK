@@ -40,9 +40,9 @@ QPushButton:pressed { background-color: #1a2028; border-color: #2f3540; }
 QPushButton:disabled { background-color: #171c23; color: #8e99a8; border-color: #20252d; }
 
 /* CTA accent if needed */
-#btn_build_all { background-color: #213447; border-color: #34506c; }
-#btn_build_all:hover { background-color: #264055; border-color: #3d5c7a; }
-#btn_build_all:pressed { background-color: #1e2e40; }
+#compile_btn { background-color: #213447; border-color: #34506c; }
+#compile_btn:hover { background-color: #264055; border-color: #3d5c7a; }
+#compile_btn:pressed { background-color: #1e2e40; }
 
 /* ===== Inputs ===== */
 QLineEdit, QTextEdit, QPlainTextEdit {

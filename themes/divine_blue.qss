@@ -39,15 +39,15 @@ QPushButton:pressed { background: #122441; }
 QPushButton:disabled { color: #98A7C5; background: #0F1B33; }
 
 /* Bouton principal */
-QPushButton#btn_build_all {
+QPushButton#compile_btn {
   background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #2A6BFF, stop:1 #3C8CFF);
   color: #ffffff; border: 1px solid #3278FF;
 }
-QPushButton#btn_build_all:hover { background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #2A64F0, stop:1 #3A84F0); }
-QPushButton#btn_cancel_all {
+QPushButton#compile_btn:hover { background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #2A64F0, stop:1 #3A84F0); }
+QPushButton#cancel_btn {
   background: #2A1A22; color: #FFC7D1; border: 1px solid #4C2A36;
 }
-QPushButton#btn_cancel_all:hover { background: #311E28; }
+QPushButton#cancel_btn:hover { background: #311E28; }
 
 /* Cases à cocher */
 QCheckBox { color: #E8F0FF; }

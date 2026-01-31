@@ -365,10 +365,10 @@ def _apply_main_app_translations(self, tr: dict[str, object]) -> None:
         # Sidebar & main buttons
         _set("btn_select_folder", "select_folder")
         _set("btn_select_files", "select_files")
-        _set("btn_build_all", "build_all")
+        _set("compile_btn", "build_all")
         _set("btn_export_config", "export_config")
         _set("btn_import_config", "import_config")
-        _set("btn_cancel_all", "cancel_all")
+        _set("cancel_btn", "cancel_all")
         _set("btn_suggest_deps", "suggest_deps")
         _set("btn_help", "help")
         _set("btn_show_stats", "show_stats")
@@ -494,9 +494,9 @@ def _apply_main_app_translations(self, tr: dict[str, object]) -> None:
             self.btn_select_files.setToolTip(
                 _tt("tt_select_files", self.btn_select_files.toolTip())
             )
-        if getattr(self, "btn_build_all", None):
-            self.btn_build_all.setToolTip(
-                _tt("tt_build_all", self.btn_build_all.toolTip())
+        if getattr(self, "compile_btn", None):
+            self.compile_btn.setToolTip(
+                _tt("tt_build_all", self.compile_btn.toolTip())
             )
         if getattr(self, "btn_export_config", None):
             self.btn_export_config.setToolTip(
@@ -506,9 +506,9 @@ def _apply_main_app_translations(self, tr: dict[str, object]) -> None:
             self.btn_import_config.setToolTip(
                 _tt("tt_import_config", self.btn_import_config.toolTip())
             )
-        if getattr(self, "btn_cancel_all", None):
-            self.btn_cancel_all.setToolTip(
-                _tt("tt_cancel_all", self.btn_cancel_all.toolTip())
+        if getattr(self, "cancel_btn", None):
+            self.cancel_btn.setToolTip(
+                _tt("tt_cancel_all", self.cancel_btn.toolTip())
             )
         if getattr(self, "btn_remove_file", None):
             self.btn_remove_file.setToolTip(

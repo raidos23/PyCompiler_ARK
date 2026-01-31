@@ -898,16 +898,16 @@ class PyCompilerArkGui(QWidget):
     )
 
     def set_controls_enabled(self, enabled):
-        self.btn_build_all.setEnabled(enabled)
+        self.compile_btn.setEnabled(enabled)
         # Forcer une mise à jour visuelle pour refléter l'état grisé avec certains thèmes
         try:
-            if self.btn_build_all and hasattr(self.btn_build_all, "style"):
-                self.btn_build_all.style().unpolish(self.btn_build_all)
-                self.btn_build_all.style().polish(self.btn_build_all)
-                self.btn_build_all.update()
+            if self.compile_btn and hasattr(self.compile_btn, "style"):
+                self.compile_btn.style().unpolish(self.compile_btn)
+                self.compile_btn.style().polish(self.compile_btn)
+                self.compile_btn.update()
         except Exception:
             pass
-        self.btn_cancel_all.setEnabled(not enabled)
+        self.cancel_btn.setEnabled(not enabled)
         self.btn_select_folder.setEnabled(enabled)
         self.btn_select_files.setEnabled(enabled)
         self.btn_remove_file.setEnabled(enabled)
@@ -954,7 +954,7 @@ class PyCompilerArkGui(QWidget):
         # Rafraîchir visuellement l'état grisé de tous les contrôles sensibles
         try:
             grey_targets = [
-                getattr(self, "btn_build_all", None),
+                getattr(self, "compile_btn", None),
                 getattr(self, "btn_select_folder", None),
                 getattr(self, "btn_select_files", None),
                 getattr(self, "btn_remove_file", None),
@@ -976,11 +976,11 @@ class PyCompilerArkGui(QWidget):
                 except Exception:
                     pass
             # S'assurer que Cancel reflète visuellement son état inverse
-            if hasattr(self, "btn_cancel_all") and self.btn_cancel_all:
+            if hasattr(self, "cancel_btn") and self.cancel_btn:
                 try:
-                    self.btn_cancel_all.style().unpolish(self.btn_cancel_all)
-                    self.btn_cancel_all.style().polish(self.btn_cancel_all)
-                    self.btn_cancel_all.update()
+                    self.cancel_btn.style().unpolish(self.cancel_btn)
+                    self.cancel_btn.style().polish(self.cancel_btn)
+                    self.cancel_btn.update()
                 except Exception:
                     pass
         except Exception:
