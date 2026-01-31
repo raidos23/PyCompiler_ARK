@@ -235,7 +235,7 @@ Tags are used to determine plugin execution order. Common tags include:
 
 ## 4) User interaction and logging
 
-### Dialog API
+### Dialog Plugins
 
 The `Dialog` class from `Plugins_SDK.GeneralContext` provides thread-safe UI interactions:
 
@@ -336,9 +336,9 @@ def on_pre_compile(self, ctx: PreCompileContext) -> None:
 
 ## 6) Testing and debugging
 
-### Rapid Testing with BCASL Standalone Module
+### RPluginsd Testing with BCASL Standalone Module
 
-The **BCASL Standalone Module** (`bcasl.only_mod`) is specifically designed for rapid plugin testing on a workspace without launching the full PyCompiler ARK++ application.
+The **BCASL Standalone Module** (`bcasl.only_mod`) is specifically designed for rPluginsd plugin testing on a workspace without launching the full PyCompiler ARK++ application.
 
 #### Quick Start
 

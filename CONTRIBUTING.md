@@ -203,7 +203,7 @@ bandit -r Core/ bcasl/ Plugins_SDK/
 
 ### Type Hints
 
-- Required for all public APIs and functions
+- Required for all public Plugins and functions
 - Use `from __future__ import annotations` for forward references
 - Example:
   ```python
@@ -324,7 +324,7 @@ pytest -v Tests/
 
 ### Code Documentation
 
-- **Docstrings**: Required for all public APIs
+- **Docstrings**: Required for all public Plugins
 - **Comments**: Use for complex logic, not obvious code
 - **Type hints**: Required for function signatures
 
@@ -333,7 +333,7 @@ pytest -v Tests/
 Located in `docs/` directory:
 
 - **User guides**: Step-by-step instructions
-- **API reference**: Detailed API documentation
+- **Plugins reference**: Detailed Plugins documentation
 - **Examples**: Code examples and tutorials
 
 ### Updating Documentation

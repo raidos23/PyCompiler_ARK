@@ -232,18 +232,18 @@ def _load_export(name: str) -> Any:
 
 
 def __getattr__(name: str) -> Any:
-    """Lazy attribute resolver for the public utils API (PEP 562).
+    """Lazy attribute resolver for the public utils Plugins (PEP 562).
 
     - If 'name' is declared in _EXPORTS, resolve it lazily and cache it.
-    - If 'name' == 'api', compute and cache a structured snapshot of the
+    - If 'name' == 'Plugins', compute and cache a structured snapshot of the
       high-level public surface for discoverability and IDE help.
     """
     # Lazy resolution for declared exports
     if name in _EXPORTS:
         return _load_export(name)
-    # Build a structured API snapshot lazily on first access
-    if name == "api":
-        api = {
+    # Build a structured Plugins snapshot lazily on first access
+    if name == "Plugins":
+        Plugins = {
             "preferences": {
                 "MAX_PARALLEL": _load_export("MAX_PARALLEL"),
                 "PREFS_FILE": _load_export("PREFS_FILE"),
@@ -292,8 +292,8 @@ def __getattr__(name: str) -> Any:
                 "SysDependencyManager": _load_export("SysDependencyManager"),
             },
         }
-        globals()["api"] = api  # cache snapshot
-        return api
+        globals()["Plugins"] = Plugins  # cache snapshot
+        return Plugins
     raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
 
 
@@ -308,13 +308,13 @@ def _clear_lazy_caches() -> None:
         _MODULE_TARGET.clear()
         _CANDIDATES_CACHE.clear()
     try:
-        globals().pop("api", None)
+        globals().pop("Plugins", None)
     except Exception:
         pass
 
 
 # Precompute directory listing and __all__ for faster introspection
-_DIR: list[str] = sorted(list(_EXPORTS.keys()) + ["api", "__version__"])
+_DIR: list[str] = sorted(list(_EXPORTS.keys()) + ["Plugins", "__version__"])
 
 
 def __dir__() -> list[str]:  # aid IDEs and dir(utils)

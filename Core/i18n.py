@@ -35,7 +35,7 @@ FALLBACK_EN: dict[str, Any] = {
     "suggest_deps": "🔎 Analyze dependencies",
     "help": "❓ Help",
     "help_title": "Help",
-    "help_text": "<b>PyCompiler ARK++ — Quick Help</b><br><ul><li>1) Select the Workspace and add your .py files.</li><li>2) Configure pre‑compile plugins via <b>Bc Plugins Loader</b> (BCASL).</li><li>3) Configure options in the <b>PyInstaller</b>, <b>Nuitka</b> or <b>CX_Freeze</b> tab.</li><li>4) Click <b>Build</b> and follow the logs.</li></ul><b>Notes</b><br><ul><li>When a build starts, all action controls are disabled (including Bc Plugins Loader) until it finishes or is canceled.</li><li>Pre‑compilation (BCASL) completes before compilation.</li><li>A <i>venv</i> can be created automatically; requirements.txt is installed if present; tools are installed into the venv as needed.</li><li>API‑initiated workspace changes are auto‑applied; running builds are canceled before switching.</li></ul><b>License</b>: Apache-2.0 — <a href='https://www.apache.org/licenses/LICENSE-2.0'>apache.org/licenses/LICENSE-2.0</a><br><b>Author</b>: Ague Samuel Amen<br>© 2026 Ague Samuel Amen",
+    "help_text": "<b>PyCompiler ARK++ — Quick Help</b><br><ul><li>1) Select the Workspace and add your .py files.</li><li>2) Configure pre‑compile plugins via <b>Bc Plugins Loader</b> (BCASL).</li><li>3) Configure options in the <b>PyInstaller</b>, <b>Nuitka</b> or <b>CX_Freeze</b> tab.</li><li>4) Click <b>Build</b> and follow the logs.</li></ul><b>Notes</b><br><ul><li>When a build starts, all action controls are disabled (including Bc Plugins Loader) until it finishes or is canceled.</li><li>Pre‑compilation (BCASL) completes before compilation.</li><li>A <i>venv</i> can be created automatically; requirements.txt is installed if present; tools are installed into the venv as needed.</li><li>Plugins‑initiated workspace changes are auto‑applied; running builds are canceled before switching.</li></ul><b>License</b>: Apache-2.0 — <a href='https://www.apache.org/licenses/LICENSE-2.0'>apache.org/licenses/LICENSE-2.0</a><br><b>Author</b>: Ague Samuel Amen<br>© 2026 Ague Samuel Amen",
     "show_stats": "📊 Statistics",
     "select_lang": "Choose language",
     "venv_button": "Choose venv folder manually",
@@ -61,7 +61,7 @@ FALLBACK_EN: dict[str, Any] = {
     "tt_cancel_all": "Cancel all ongoing builds.",
     "tt_remove_file": "Remove the selected file(s) from the list.",
     "tt_help": "Open help and information about the software.",
-    "tt_bc_loader": "Configure API (BCASL) plugins to run before compilation.",
+    "tt_bc_loader": "Configure Plugins (BCASL) plugins to run before compilation.",
     "tt_venv_button": "Manually select a venv directory to use for compilation.",
     "tt_suggest_deps": "Analyze the project for missing Python dependencies.",
     "tt_show_stats": "Show build statistics (time, number of files, memory).",
@@ -172,7 +172,7 @@ def _available_languages_sync() -> list[dict[str, str]]:
     return langs
 
 
-# Public async API with real-time caching and error handling
+# Public async Plugins with real-time caching and error handling
 
 
 async def resolve_system_language() -> str:
@@ -188,7 +188,7 @@ async def available_languages() -> list[dict[str, str]]:
     global _LANGUAGES_CACHE
 
     try:
-        # Vérifier le cache d'abord (rapide)
+        # Vérifier le cache d'abord (rPluginsde)
         if _LANGUAGES_CACHE is not None:
             return _LANGUAGES_CACHE
 
@@ -215,7 +215,7 @@ async def get_translations(lang_pref: str | None) -> dict[str, Any]:
         if code == "System":
             code = await resolve_system_language()
 
-        # Vérifier le cache d'abord (très rapide)
+        # Vérifier le cache d'abord (très rPluginsde)
         if code in _TRANSLATION_CACHE:
             return _TRANSLATION_CACHE[code]
 

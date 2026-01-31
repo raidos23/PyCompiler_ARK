@@ -16,7 +16,7 @@
 """
 BCASL - Before-Compilation Actions System Loader
 
-Point d'entrée du package: expose l'API publique minimale et stable.
+Point d'entrée du package: expose l'Plugins publique minimale et stable.
 
     from bcasl import (
         BCASL, PluginBase, PluginMeta, PreCompileContext, ExecutionReport,

@@ -189,7 +189,7 @@ We welcome contributions from the community! PyCompiler ARK++ follows structured
 
 ### Quality Standards
 - Code Coverage: Minimum 80% for new features
-- Type Hints: Required for all public APIs
+- Type Hints: Required for all public Plugins
 - Security Review: Automated and manual security checks
 - Documentation: User and developer documentation updates
 - Testing: Unit, integration, and security tests
@@ -225,7 +225,7 @@ PyCompiler ARK++ represents a comprehensive upgrade with:
 ### Breaking Changes
 - Python 3.10+: Dropped support for Python 3.9 and below
 - New plugin system: BCASL replaces legacy plugin architecture
-- Enhanced APIs: Backward compatibility with deprecation warnings
+- Enhanced Plugins: Backward compatibility with deprecation warnings
 
 ---
 

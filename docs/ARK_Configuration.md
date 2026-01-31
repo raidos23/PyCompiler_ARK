@@ -11,7 +11,7 @@ The ARK configuration system provides centralized configuration management for P
 - [Dependencies](#dependencies-configuration)
 - [Environment Manager](#environment-manager-configuration)
 - [Plugins](#plugins-configuration)
-- [API Reference](#api-reference)
+- [Plugins Reference](#Plugins-reference)
 
 ---
 
@@ -300,7 +300,7 @@ See [BCASL Configuration Guide](./BCASL_Configuration.md) for more details.
 
 ---
 
-## API Reference
+## Plugins Reference
 
 ### Loading Configuration
 

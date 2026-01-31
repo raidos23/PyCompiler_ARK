@@ -178,7 +178,7 @@ engine_register(MyEngine)
 
 ## 3) Engine registration
 
-### 3.1) Registry API
+### 3.1) Registry Plugins
 
 The `engine_sdk` module provides the registration system via `engine_register`:
 
@@ -765,7 +765,7 @@ print(get_engine("my_engine"))  # Should return your engine class
 
 ## See Also
 
-- [Engine SDK Documentation](./About_Sdks.md) - Engine SDK API reference
+- [Engine SDK Documentation](./About_Sdks.md) - Engine SDK Plugins reference
 - [ARK Configuration Guide](./ARK_Configuration.md) - Global configuration system
 - [How to Create a BC Plugin](./how_to_create_a_BC_plugin.md) - Creating BC plugins
 - [Existing Engines](../ENGINES/) - Reference implementations (PyInstaller, Nuitka, cx_Freeze)

@@ -14,7 +14,7 @@
 # limitations under the License.
 
 """
-Thin bridge API between engines and the operating system for system-level interactions.
+Thin bridge Plugins between engines and the operating system for system-level interactions.
 
 This module exposes generic helpers only. Engines (Nuitka, PyOxidizer, etc.)
 are responsible for their own dependency policy and user interaction logic

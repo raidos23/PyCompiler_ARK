@@ -1942,8 +1942,8 @@ def scan_for_secrets(root: Pathish) -> List[SecurityIssue]:
     # Patterns pour détecter les secrets
     patterns = {
         "aws_key": re.compile(r"AKIA[0-9A-Z]{16}"),
-        "api_key": re.compile(
-            r'api[_-]?key["\']?\s*[:=]\s*["\']([^"\']+)["\']', re.IGNORECASE
+        "Plugins_key": re.compile(
+            r'Plugins[_-]?key["\']?\s*[:=]\s*["\']([^"\']+)["\']', re.IGNORECASE
         ),
         "password": re.compile(
             r'password["\']?\s*[:=]\s*["\']([^"\']+)["\']', re.IGNORECASE
@@ -2443,7 +2443,7 @@ def get_external_ip() -> Optional[str]:
         ...     print(f"IP externe: {ip}")
     """
     try:
-        req = urllib.request.Request("https://api.ipify.org?format=json")
+        req = urllib.request.Request("https://Plugins.ipify.org?format=json")
         req.add_header("User-Agent", "PyCompiler-BC-Plugin/1.0")
 
         with urllib.request.urlopen(req, timeout=5) as response:
@@ -2865,7 +2865,7 @@ def Generate_Bc_Plugin_Template() -> str:
     - Exposes a plugin class with proper metadata
     - Provides the global PLUGIN variable for execution
     - Provides the bcasl_register(manager) function for direct registration
-    - Includes Dialog API for user interaction and logging
+    - Includes Dialog Plugins for user interaction and logging
     - Includes proper version requirements
 
     Returns:
@@ -2951,7 +2951,7 @@ def bcasl_register(manager):
 
 
 # -----------------------------
-# Public API exports
+# Public APIs exports
 # -----------------------------
 
 __all__ = [

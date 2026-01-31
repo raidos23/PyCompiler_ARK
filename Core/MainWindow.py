@@ -34,7 +34,7 @@ from .i18n import (
     show_language_dialog as _i18n_show_dialog,
 )
 
-# Référence globale vers l'instance GUI pour récupération du workspace par l'API_SDK
+# Référence globale vers l'instance GUI pour récupération du workspace par l'Plugins_SDK
 _latest_gui_instance = None
 
 # Non-blocking workspace cache for cross-thread access
@@ -382,7 +382,7 @@ class PyCompilerArkGui(QWidget):
                         self.file_list.addItem(relative_path)
                         count += 1
 
-        # Afficher un message récapitulatif si des fichiers ont été exclus
+        # Afficher un message récPluginstulatif si des fichiers ont été exclus
         if excluded_count > 0:
             self.log_i18n(
                 f"⏩ Exclusion appliquée : {excluded_count} fichier(s) exclu(s) selon ARK_Main_Config.yml",
@@ -443,15 +443,15 @@ class PyCompilerArkGui(QWidget):
                         )
                     except Exception:
                         pass
-            # Confirmation when API requests workspace change
+            # Confirmation when Plugins requests workspace change
             if str(source).lower() == "plugin":
-                # Auto-approve API workspace switch; cancel running builds if any
+                # Auto-approve Plugins workspace switch; cancel running builds if any
                 try:
                     if getattr(self, "processes", None) and self.processes:
                         try:
                             self.log_i18n(
-                                "⛔ Arrêt des compilations en cours pour changer de workspace (API).",
-                                "⛔ Stopping ongoing builds to switch workspace (API).",
+                                "⛔ Arrêt des compilations en cours pour changer de workspace (Plugins).",
+                                "⛔ Stopping ongoing builds to switch workspace (Plugins).",
                             )
                         except Exception:
                             pass
@@ -462,7 +462,7 @@ class PyCompilerArkGui(QWidget):
                 except Exception:
                     pass
             else:
-                # Non-API requests: never refuse; cancel running builds if any
+                # Non-Plugins requests: never refuse; cancel running builds if any
                 if getattr(self, "processes", None) and self.processes:
                     try:
                         self.log_i18n(

@@ -25,7 +25,7 @@ BC plugins are pre-compilation plugins that validate, prepare, and optimize the 
 **Key Characteristics:**
 - **Registration:** Uses `@bc_register` decorator or `bcasl_register(manager)` function
 - **Version Compatibility:** Plugins declare required versions for BCASL, Core, and SDK components
-- **User Interaction:** Uses `Dialog` API from `Plugins_SDK.GeneralContext` for logging and user prompts
+- **User Interaction:** Uses `Dialog` Plugins from `Plugins_SDK.GeneralContext` for logging and user prompts
 - **Context Access:** Receives `PreCompileContext` with workspace info and file iteration utilities
 - **Tag-Based Ordering:** Execution order determined by tags (e.g., "clean", "check", "prepare")
 - **Configuration:** Managed via `bcasl.yml` (YML only) and `ARK_Main_Config.yml`
@@ -295,7 +295,7 @@ See [ARK Configuration Guide](./ARK_Configuration.md) for global configuration d
 │
 └── Plugins_SDK/
     ├── BcPluginContext.py      # Plugin base classes and context
-    └── GeneralContext.py       # Dialog API for user interaction
+    └── GeneralContext.py       # Dialog Plugins for user interaction
 ```
 
 ---
@@ -308,9 +308,9 @@ See [ARK Configuration Guide](./ARK_Configuration.md) for global configuration d
 | **When** | Before build starts | During build |
 | **Registration** | `@bc_register` or `bcasl_register(manager)` | `engine_register(MyEngine)` or `register(MyEngine)` |
 | **Discovery** | `Plugins/` directory | `ENGINES/` directory |
-| **UI** | None (uses Dialog API) | Optional tab via `create_tab()` |
+| **UI** | None (uses Dialog Plugins) | Optional tab via `create_tab()` |
 | **i18n** | No (static messages) | Yes (via `apply_i18n()`) |
-| **User Interaction** | Dialog API (thread-safe) | Direct Qt widgets |
+| **User Interaction** | Dialog Plugins (thread-safe) | Direct Qt widgets |
 | **State Persistence** | Via configuration files | Automatic UI state saving |
 | **Execution** | Sequential with priorities | Single engine at a time |
 | **Can Abort Build** | Yes (raise exception) | Yes (return False from preflight) |

@@ -14,7 +14,7 @@
   "suggest_deps": "🔎 Abhängigkeiten analysieren",
   "help": "❓ Hilfe",
   "help_title": "Hilfe",
-  "help_text": "<b>PyCompiler ARK++ — Schnellhilfe</b><br><ul><li>1) Wählen Sie den Arbeitsbereich und fügen Sie Ihre .py-Dateien hinzu.</li><li>2) Konfigurieren Sie Pre-Compile-Plugins über <b>Bc Plugins Loader</b> (BCASL).</li><li>3) Passen Sie die Optionen im <b>PyInstaller</b>-, <b>Nuitka</b>- oder <b>CX_Freeze</b>-Tab an.</li><li>4) Klicken Sie auf <b>Erstellen</b> und folgen Sie den Logs.</li></ul><b>Hinweise</b><br><ul><li>Beim Start eines Builds werden alle Aktionssteuerungen deaktiviert (einschließlich Bc Plugins Loader), bis er abgeschlossen oder abgebrochen ist.</li><li>Pre-Compilation (BCASL) wird vor der Compilation abgeschlossen.</li><li>Ein <i>venv</i> kann automatisch erstellt werden; requirements.txt wird installiert, falls vorhanden; Tools werden bei Bedarf in der venv installiert.</li><li>API-initiierte Arbeitsbereichsänderungen werden automatisch angewendet; laufende Builds werden vor dem Wechsel abgebrochen.</li></ul><b>Lizenz</b>: Apache-2.0 — <a href='https://www.apache.org/licenses/LICENSE-2.0'>apache.org/licenses/LICENSE-2.0</a><br><b>Autor</b>: Ague Samuel Amen<br>© 2026 Ague Samuel Amen",
+  "help_text": "<b>PyCompiler ARK++ — Schnellhilfe</b><br><ul><li>1) Wählen Sie den Arbeitsbereich und fügen Sie Ihre .py-Dateien hinzu.</li><li>2) Konfigurieren Sie Pre-Compile-Plugins über <b>Bc Plugins Loader</b> (BCASL).</li><li>3) Passen Sie die Optionen im <b>PyInstaller</b>-, <b>Nuitka</b>- oder <b>CX_Freeze</b>-Tab an.</li><li>4) Klicken Sie auf <b>Erstellen</b> und folgen Sie den Logs.</li></ul><b>Hinweise</b><br><ul><li>Beim Start eines Builds werden alle Aktionssteuerungen deaktiviert (einschließlich Bc Plugins Loader), bis er abgeschlossen oder abgebrochen ist.</li><li>Pre-Compilation (BCASL) wird vor der Compilation abgeschlossen.</li><li>Ein <i>venv</i> kann automatisch erstellt werden; requirements.txt wird installiert, falls vorhanden; Tools werden bei Bedarf in der venv installiert.</li><li>Plugins-initiierte Arbeitsbereichsänderungen werden automatisch angewendet; laufende Builds werden vor dem Wechsel abgebrochen.</li></ul><b>Lizenz</b>: Apache-2.0 — <a href='https://www.apache.org/licenses/LICENSE-2.0'>apache.org/licenses/LICENSE-2.0</a><br><b>Autor</b>: Ague Samuel Amen<br>© 2026 Ague Samuel Amen",
   "show_stats": "📊 Statistiken",
   "select_lang": "Sprache wählen",
   "venv_button": "venv-Ordner manuell auswählen",
@@ -41,7 +41,7 @@
   "tt_cancel_all": "Alle laufenden Builds abbrechen.",
   "tt_remove_file": "Die ausgewählten Datei(en) aus der Liste entfernen.",
   "tt_help": "Hilfe und Informationen zur Software öffnen.",
-  "tt_bc_loader": "API-(BCASL)-Plugins konfigurieren, die vor der Kompilierung ausgeführt werden.",
+  "tt_bc_loader": "Plugins-(BCASL)-Plugins konfigurieren, die vor der Kompilierung ausgeführt werden.",
   "tt_venv_button": "Venv-Verzeichnis manuell für die Kompilierung auswählen.",
   "tt_suggest_deps": "Projekt auf fehlende Python-Abhängigkeiten analysieren.",
   "tt_show_stats": "Build-Statistiken anzeigen (Zeit, Anzahl der Dateien, Speicher)."
