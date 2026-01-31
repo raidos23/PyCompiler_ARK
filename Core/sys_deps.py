@@ -39,7 +39,7 @@ from typing import Optional, Union
 from PySide6.QtCore import QProcess, QTimer
 from PySide6.QtWidgets import QInputDialog, QLineEdit, QMessageBox
 
-from .dialogs import ProgressDialog
+from .WidgetsCreator import ProgressDialog
 
 # Import du système Dialog thread-safe de Plugins_SDK
 try:

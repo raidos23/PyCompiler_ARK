@@ -27,7 +27,7 @@ from PySide6.QtGui import QDropEvent, QPixmap
 from PySide6.QtWidgets import QApplication, QFileDialog, QMessageBox, QWidget
 
 from .utils import _UiInvoker, _run_coro_async
-from .dialogs import ProgressDialog, CompilationProcessDialog
+from .WidgetsCreator import ProgressDialog, CompilationProcessDialog
 from .Venv_Manager import VenvManager
 from .i18n import (
     _apply_main_app_translations as _i18n_apply_translations,
@@ -191,7 +191,7 @@ class PyCompilerArkGui(QWidget):
             pass
         self.update_ui_state()
 
-    from .init_ui import init_ui
+    from .UiConnection import init_ui
 
     def add_pyinstaller_data(self):
         import os
@@ -857,7 +857,7 @@ class PyCompilerArkGui(QWidget):
                 try:
                     theme_pref = prefs.get("theme", None)
                     if theme_pref is not None:
-                        from .init_ui import apply_theme
+                        from .UiConnection import apply_theme
 
                         self.theme = theme_pref
                         apply_theme(self, theme_pref)
