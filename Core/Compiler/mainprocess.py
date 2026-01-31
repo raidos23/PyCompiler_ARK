@@ -48,17 +48,14 @@ import platform  # Détection du système d'exploitation (Windows/Linux)
 import re  # Expressions régulières (détection de modules manquants)
 import subprocess  # Exécution de processus externes (pip install)
 import time  # Minuteries et délais (pour pip install retry et mesure de temps)
-from datetime import datetime  # Horodatage précis pour la mesure de performance
 from typing import Any, Optional  # Type hints pour les fonctions
 
 # --- Imports du framework PySide6 (Qt pour Python) ---
 # QProcess : Gestion des processus externes avec signaux/slots Qt
 # QTimer : Minuteries pour les timeouts et délais de grâce
-from PySide6.QtCore import QProcess, QTimer, QAtomicInt, QThread, Signal  # QAtomicInt pour flag d'annulation thread-safe
+from PySide6.QtCore import QProcess, QTimer, QThread, Signal  # QAtomicInt pour flag d'annulation thread-safe
 
 # --- Imports pour le threading avancé (inspiré de gui.py) ---
-import threading
-import select
 import time
 
 # --- Imports des widgets Qt utilisés pour l'interface dynamique ---
@@ -81,13 +78,12 @@ from PySide6.QtWidgets import (
 # process_killer : Fonctions pour tuer les arbres de processus
 # engines_loader : Gestionnaire de moteurs de compilation
 # clamp_text, redact_secrets : Utilitaires pour le logging sécurisé
-# compute_for_all : Constructeur automatique de commandes
+#  : Constructeur automatique de commandes
 # MAX_PARALLEL : Constante définissant le nombre max de compilations parallèles
 from Core.Compiler.process_killer import _kill_process_tree, _kill_all_descendants
 import EngineLoader as engines_loader
 from engine_sdk.utils import clamp_text, redact_secrets
 from Core.Compiler.command_helpers import run_process
-from Core.Auto_Command_Builder import compute_for_all
 from Core.PreferencesManager import MAX_PARALLEL
 
 # Note : Support ACASL supprimé (obsolète)

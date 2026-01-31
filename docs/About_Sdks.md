@@ -283,7 +283,7 @@ See [ARK Configuration Guide](./ARK_Configuration.md) for global configuration d
 │
 ├── Core/
 │   ├── engines_loader/         # Engine discovery and registry
-│   └── ark_config_loader.py    # Configuration management
+│   └── ArkConfigManager.py    # Configuration management
 │
 ├── bcasl/
 │   ├── Loader.py               # Plugin discovery and execution

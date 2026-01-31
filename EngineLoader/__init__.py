@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import os
 
-from EngineLoader.EnginesDir.enginesdirdetection import _auto_discover
+from EngineLoader.Loader.EngineLoader import _auto_discover
 
 from . import registry as registry  # re-export registry module
 from .base import CompilerEngine  # re-export base type

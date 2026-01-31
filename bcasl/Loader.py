@@ -204,7 +204,7 @@ def _load_workspace_config(workspace_root: Path) -> dict[str, Any]:
                 # IMPORTANT: bcasl config takes priority over ARK config
                 # ARK config only fills in missing values
                 try:
-                    from Core.ark_config_loader import load_ark_config
+                    from Core.ArkConfigManager import load_ark_config
 
                     ark_config = load_ark_config(str(workspace_root))
 
@@ -287,7 +287,7 @@ def _load_workspace_config(workspace_root: Path) -> dict[str, Any]:
         plugin_timeout = 0.0
 
         try:
-            from Core.ark_config_loader import load_ark_config
+            from Core.ArkConfigManager import load_ark_config
 
             ark_config = load_ark_config(str(workspace_root))
 

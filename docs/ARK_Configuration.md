@@ -41,7 +41,7 @@ Configuration files must be placed in the **workspace root directory** (the dire
 To create a default configuration file:
 
 ```python
-from Core.ark_config_loader import create_default_ark_config
+from Core.ArkConfigManager import create_default_ark_config
 
 success = create_default_ark_config("/path/to/workspace")
 ```
@@ -305,7 +305,7 @@ See [BCASL Configuration Guide](./BCASL_Configuration.md) for more details.
 ### Loading Configuration
 
 ```python
-from Core.ark_config_loader import load_ark_config
+from Core.ArkConfigManager import load_ark_config
 
 # Load configuration for a workspace
 config = load_ark_config("/path/to/workspace")
@@ -318,7 +318,7 @@ dependencies = config["dependencies"]
 ### Getting Specific Options
 
 ```python
-from Core.ark_config_loader import (
+from Core.ArkConfigManager import (
     get_compiler_options,
     get_dependency_options,
     get_environment_manager_options,
@@ -338,7 +338,7 @@ env_opts = get_environment_manager_options(config)
 ### File Exclusion Check
 
 ```python
-from Core.ark_config_loader import should_exclude_file
+from Core.ArkConfigManager import should_exclude_file
 
 # Check if a file should be excluded
 is_excluded = should_exclude_file(
@@ -351,7 +351,7 @@ is_excluded = should_exclude_file(
 ### Creating Default Configuration
 
 ```python
-from Core.ark_config_loader import create_default_ark_config
+from Core.ArkConfigManager import create_default_ark_config
 
 # Create default configuration file
 success = create_default_ark_config("/path/to/workspace")
