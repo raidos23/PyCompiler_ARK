@@ -29,7 +29,7 @@ Fournit une interface utilisateur moderne permettant de:
 
 from __future__ import annotations
 
-from .gui import BcaslStandaloneGui
+from .gui import BcaslStandaloneGui, launch_bcasl_gui
 from .app import BcaslOnlyModApp
 
 __version__ = "1.0.0"
@@ -38,5 +38,6 @@ __author__ = "Ague Samuel Amen"
 __all__ = [
     "BcaslStandaloneGui",
     "BcaslOnlyModApp",
+    "launch_bcasl_gui",
 ]
 
