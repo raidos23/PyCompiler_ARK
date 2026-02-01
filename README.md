@@ -4,7 +4,7 @@
 
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](http://www.apache.org/licenses/LICENSE-2.0)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
-[![GitHub Sponsors](https://img.shields.io/github/sponsors/raidos23?label=Sponsor&logo=github)](https://github.com/sponsors/raidos23)
+
 
 ## 🎯 Key Features
 
@@ -164,7 +164,6 @@ See [SUPPORTED_MATRIX.md](SUPPORTED_MATRIX.md) for detailed compatibility inform
 
 ### BCASL Standalone Module
 - [BCASL Standalone README](bcasl/only_mod/README.md) - Complete BCASL standalone documentation
-- [BCASL CLI Guide](bcasl/only_mod/CLI_GUIDE.md) - Command-line interface usage
 
 ### Engines Standalone Module
 - [Engines Standalone README](Core/engines_loader/engines_only_mod/README.md) - Complete Engines standalone documentation
