@@ -49,7 +49,6 @@ from datetime import datetime
 
 # Importations des modules PyCompiler ARK
 from Core.allversion import get_core_version, get_bcasl_version
-from Core.i18n import tr
 
 # Importations BCASL
 from bcasl import (
@@ -58,13 +57,21 @@ from bcasl import (
     PluginMeta,
     PreCompileContext,
     ExecutionReport,
-    run_pre_compile,
-    _discover_bcasl_meta,
-    compute_tag_order,
 )
+from bcasl.Loader import _discover_bcasl_meta
+from bcasl.tagging import compute_tag_order
 
 # Importations GUI
-from .gui import BcaslStandaloneGui, BcaslExecutionThread
+from .gui import BcaslStandaloneGui
+
+
+# Variable globale pour la langue
+_CURRENT_LANGUAGE = 'en'
+
+
+def tr(en_text: str, fr_text: str) -> str:
+    """Fonction de traduction simple pour BcaslOnlyMod."""
+    return fr_text if _CURRENT_LANGUAGE == 'fr' else en_text
 
 
 class LanguageManager:
@@ -72,6 +79,8 @@ class LanguageManager:
 
     def __init__(self, lang_code: str = "en"):
         self.current_language = lang_code
+        global _CURRENT_LANGUAGE
+        _CURRENT_LANGUAGE = lang_code
         self.strings = self._get_strings()
 
     def _get_strings(self) -> Dict[str, Dict[str, str]]:
@@ -83,7 +92,7 @@ class LanguageManager:
                 "plugins": "Plugins",
                 "execution": "Execution",
                 "log": "Execution Log",
-                "run": "▶ Run Plugins",
+                "run": "Run Plugins",
                 "cancel": "Cancel",
                 "clear_log": "Clear Log",
                 "ready": "Ready",
@@ -106,9 +115,9 @@ class LanguageManager:
                 "app_title": "BCASL Standalone - Gestionnaire de Plugins",
                 "global_enable": "Activer BCASL",
                 "plugins": "Plugins",
-                "execution": "Exécution",
+                "execution": "Execution",
                 "log": "Journal d'Exécution",
-                "run": "▶ Exécuter les Plugins",
+                "run": "Exécuter les Plugins",
                 "cancel": "Annuler",
                 "clear_log": "Effacer Log",
                 "ready": "Prêt",
@@ -186,55 +195,6 @@ class ThemeManager:
             return True
         return False
 
-    def get_stylesheet(self) -> str:
-        """Génère la feuille de style complète."""
-        c = self.colors
-        return f"""
-            QWidget {{
-                background-color: {c['bg_primary']};
-                color: {c['text_primary']};
-            }}
-            QGroupBox {{
-                font-weight: bold;
-                font-size: 12px;
-                border: 1px solid {c['border']};
-                border-radius: 5px;
-                margin-top: 8px;
-                padding-top: 8px;
-            }}
-            QGroupBox::title {{
-                subcontrol-origin: margin;
-                left: 8px;
-                padding: 0 5px;
-            }}
-            QListWidget {{
-                background-color: {c['bg_secondary']};
-                color: {c['text_primary']};
-                border: 1px solid {c['border']};
-                border-radius: 4px;
-            }}
-            QListWidget::item:selected {{
-                background-color: {c['accent']};
-                color: white;
-            }}
-            QTextEdit {{
-                background-color: {c['bg_secondary']};
-                color: {c['text_primary']};
-                border: 1px solid {c['border']};
-                border-radius: 4px;
-                font-family: Consolas, monospace;
-            }}
-            QCheckBox {{
-                color: {c['text_primary']};
-                spacing: 5px;
-            }}
-            QStatusBar {{
-                background-color: {c['group_bg']};
-                color: {c['text_secondary']};
-                font-size: 11px;
-            }}
-        """
-
 
 class BcaslOnlyModApp:
     """
@@ -246,16 +206,10 @@ class BcaslOnlyModApp:
     - Réordonner l'exécution des plugins
     - Exécuter les plugins de pré-compilation
     - Afficher les rapports d'exécution
-
-    Attributes:
-        workspace_dir: Chemin du workspace
-        language: Langue de l'interface
-        theme: Thème visuel
-        language_manager: Gestionnaire de langues
-        theme_manager: Gestionnaire de thèmes
-        plugins_meta: Métadonnées des plugins découverts
-        config: Configuration BCASL chargée
     """
+
+    # Variable de classe pour la langue
+    _language = 'en'
 
     def __init__(
         self,
@@ -275,6 +229,7 @@ class BcaslOnlyModApp:
         """
         self.workspace_dir = workspace_dir
         self.headless = headless
+        BcaslOnlyModApp._language = language
 
         # Gestionnaires
         self.language_manager = LanguageManager(language)
@@ -316,12 +271,7 @@ class BcaslOnlyModApp:
         self.plugins_meta = _discover_bcasl_meta(self.Plugins_dir)
 
     def get_plugins_info(self) -> List[Dict[str, Any]]:
-        """
-        Retourne la liste des plugins avec leurs informations.
-
-        Returns:
-            Liste de dictionnaires contenant les informations des plugins
-        """
+        """Retourne la liste des plugins avec leurs informations."""
         if not self.plugins_meta:
             return []
 
@@ -346,23 +296,13 @@ class BcaslOnlyModApp:
         return plugins
 
     def get_plugin_order(self, config: Optional[Dict[str, Any]] = None) -> List[str]:
-        """
-        Calcule l'ordre d'exécution des plugins.
-
-        Args:
-            config: Configuration optionnelle (utilise self.config par défaut)
-
-        Returns:
-            Liste des IDs de plugins dans l'ordre d'exécution
-        """
+        """Calcule l'ordre d'exécution des plugins."""
         cfg = config or self.config
         plugin_order = cfg.get("plugin_order", []) if isinstance(cfg, dict) else []
 
         if plugin_order:
-            # Filtrer pour ne garder que les plugins existants
             plugin_order = [pid for pid in plugin_order if pid in self.plugins_meta]
         else:
-            # Calculer l'ordre basé sur les tags
             try:
                 plugin_order = compute_tag_order(self.plugins_meta)
             except Exception:
@@ -371,15 +311,7 @@ class BcaslOnlyModApp:
         return plugin_order
 
     def get_enabled_plugins(self, config: Optional[Dict[str, Any]] = None) -> Dict[str, bool]:
-        """
-        Retourne l'état d'activation des plugins.
-
-        Args:
-            config: Configuration optionnelle (utilise self.config par défaut)
-
-        Returns:
-            Dictionnaire {plugin_id: enabled}
-        """
+        """Retourne l'état d'activation des plugins."""
         cfg = config or self.config
         plugins_cfg = cfg.get("plugins", {}) if isinstance(cfg, dict) else {}
 
@@ -407,20 +339,7 @@ class BcaslOnlyModApp:
         timeout: float = 0.0,
         log_callback: Optional[callable] = None,
     ) -> Optional[ExecutionReport]:
-        """
-        Exécute les plugins BCASL de manière synchrone.
-
-        Args:
-            workspace_dir: Chemin du workspace (utilise self.workspace_dir par défaut)
-            plugin_order: Ordre d'exécution des plugins
-            enabled_plugins: Plugins à activer
-            config: Configuration BCASL
-            timeout: Timeout en secondes (0 = illimité)
-            log_callback: Fonction de callback pour les logs
-
-        Returns:
-            Rapport d'exécution ou None en cas d'erreur
-        """
+        """Exécute les plugins BCASL de manière synchrone."""
         ws_dir = workspace_dir or self.workspace_dir
         if not ws_dir:
             if log_callback:
@@ -435,18 +354,15 @@ class BcaslOnlyModApp:
                 log_callback(f"Error: Workspace not found: {ws_root}")
             return None
 
-        # Récupérer l'ordre et les plugins activés
         order = plugin_order or self.get_plugin_order(cfg)
         enabled = enabled_plugins or self.get_enabled_plugins(cfg)
 
-        # Filtrer les plugins activés
         active_order = [pid for pid in order if enabled.get(pid, False)]
         if not active_order:
             if log_callback:
                 log_callback(self.language_manager.get("no_plugins_enabled"))
             return None
 
-        # Logger
         if log_callback:
             log_callback("=" * 50)
             log_callback(self.language_manager.get("starting"))
@@ -454,7 +370,6 @@ class BcaslOnlyModApp:
             log_callback(self.language_manager.get("enabled", count=len(active_order)))
             log_callback("=" * 50)
 
-        # Créer le gestionnaire BCASL
         try:
             manager = BCASL(
                 ws_root,
@@ -466,27 +381,23 @@ class BcaslOnlyModApp:
                 log_callback(f"Error creating BCASL manager: {e}")
             return None
 
-        # Charger les plugins
         if self.Plugins_dir and self.Plugins_dir.exists():
             loaded, errors = manager.load_plugins_from_directory(self.Plugins_dir)
             if log_callback:
-                log_callback(f"🔌 BCASL: {loaded} plugin(s) chargé(s)")
+                log_callback(f"BCASL: {loaded} plugin(s) charge(s)")
                 for mod, msg in errors or []:
-                    log_callback(f"⚠️ Plugin '{mod}': {msg}")
+                    log_callback(f"Plugin '{mod}': {msg}")
 
-        # Appliquer la configuration
         for pid, is_enabled in enabled.items():
             if not is_enabled:
                 manager.disable_plugin(pid)
 
-        # Appliquer les priorités
         for idx, pid in enumerate(order):
             try:
                 manager.set_priority(pid, idx)
             except Exception:
                 pass
 
-        # Préparer le contexte
         workspace_meta = {
             "workspace_name": ws_root.name,
             "workspace_path": str(ws_root),
@@ -501,7 +412,6 @@ class BcaslOnlyModApp:
             workspace_metadata=workspace_meta,
         )
 
-        # Exécuter les plugins
         try:
             report = manager.run_pre_compile(ctx)
         except Exception as e:
@@ -509,14 +419,13 @@ class BcaslOnlyModApp:
                 log_callback(f"Error running plugins: {e}")
             return None
 
-        # Afficher le rapport
         if log_callback:
             log_callback("=" * 50)
             log_callback(self.language_manager.get("report"))
             log_callback("-" * 30)
 
             for item in report:
-                state = "✓ OK" if item.success else f"✗ FAIL: {item.error}"
+                state = "OK" if item.success else f"FAIL: {item.error}"
                 log_callback(f"  - {item.name}: {state} ({item.duration_ms:.1f} ms)")
 
             log_callback("-" * 30)
@@ -568,17 +477,7 @@ class BcaslOnlyModApp:
         language: Optional[str] = None,
         theme: Optional[str] = None,
     ) -> int:
-        """
-        Lance l'interface graphique.
-
-        Args:
-            workspace_dir: Chemin du workspace (optionnel)
-            language: Code de langue (optionnel)
-            theme: Nom du thème (optionnel)
-
-        Returns:
-            Code de retour de l'application
-        """
+        """Lance l'interface graphique."""
         from .gui import launch_bcasl_gui
 
         ws = workspace_dir or self.workspace_dir
@@ -600,17 +499,10 @@ def run_cli(
     run: bool = False,
     timeout: float = 0.0,
 ) -> None:
-    """
-    Point d'entrée CLI pour l'application standalone BCASL.
+    """Point d'entrée CLI pour l'application standalone BCASL."""
+    global _CURRENT_LANGUAGE
+    _CURRENT_LANGUAGE = language
 
-    Args:
-        workspace_dir: Chemin du workspace
-        language: Langue de l'interface
-        theme: Thème visuel
-        list_plugins: Lister les plugins disponibles
-        run: Exécuter les plugins
-        timeout: Timeout en secondes
-    """
     app = BcaslOnlyModApp(
         workspace_dir=workspace_dir,
         language=language,
@@ -628,7 +520,7 @@ def run_cli(
             tags = plugin.get("tags", [])
             phase = get_tag_phase_name(tags[0]) if tags else "Default"
 
-            print(f"  • {plugin['name']}")
+            print(f"  * {plugin['name']}")
             print(f"      ID: {plugin['id']}")
             print(f"      Version: {plugin['version']}")
             if plugin.get('description'):
@@ -651,12 +543,11 @@ def run_cli(
 
         if report:
             if report.ok:
-                print("\n✓ All plugins executed successfully")
+                print("\nAll plugins executed successfully")
             else:
-                print(f"\n✗ {sum(1 for item in report if not item.success)} plugin(s) failed")
+                print(f"\n{sum(1 for item in report if not item.success)} plugin(s) failed")
         return
 
-    # Afficher le résumé
     app.print_summary()
 
 
@@ -682,20 +573,17 @@ Examples:
     )
 
     parser.add_argument(
-        "-w",
-        "--workspace",
+        "-w", "--workspace",
         help="Project workspace directory",
     )
     parser.add_argument(
-        "-l",
-        "--language",
+        "-l", "--language",
         choices=["en", "fr"],
         default="en",
         help="Interface language (default: en)",
     )
     parser.add_argument(
-        "-t",
-        "--theme",
+        "-t", "--theme",
         choices=["light", "dark"],
         default="dark",
         help="UI theme (default: dark)",
@@ -706,8 +594,7 @@ Examples:
         help="List available BCASL plugins",
     )
     parser.add_argument(
-        "-r",
-        "--run",
+        "-r", "--run",
         action="store_true",
         help="Execute BCASL plugins",
     )
@@ -718,15 +605,13 @@ Examples:
         help="Plugin execution timeout in seconds (0 = unlimited)",
     )
     parser.add_argument(
-        "-g",
-        "--gui",
+        "-g", "--gui",
         action="store_true",
         help="Launch GUI interface",
     )
 
     args = parser.parse_args()
 
-    # Si GUI demandé, lancer l'interface graphique
     if args.gui:
         from .gui import launch_bcasl_gui
 
@@ -736,7 +621,6 @@ Examples:
             theme=args.theme,
         ))
 
-    # Sinon, mode CLI
     run_cli(
         workspace_dir=args.workspace,
         language=args.language,

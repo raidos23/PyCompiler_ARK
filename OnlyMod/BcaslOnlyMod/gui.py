@@ -54,6 +54,7 @@ from PySide6.QtWidgets import (
     QMessageBox,
     QFrame,
     QSplitter,
+    QSizePolicy,
 )
 from PySide6.QtGui import QFont, QIcon
 
