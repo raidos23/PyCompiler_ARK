@@ -32,6 +32,15 @@ from PySide6.QtWidgets import (
 from Core import i18n as _i18n
 from .i18n import _apply_main_app_translations, show_language_dialog
 
+# Import du module Compiler
+from Core.Compiler import (
+    MainProcess,
+    ProcessState,
+    CompilationStatus,
+    kill_process_tree,
+    get_process_info,
+)
+
 
 def _detect_system_color_scheme() -> str:
     """
@@ -303,7 +312,6 @@ def init_ui(self):
     from bcasl import open_bc_loader_dialog
 
     self.btn_bc_loader.clicked.connect(lambda: open_bc_loader_dialog(self))
-    # ACASL removed: do not import or connect ACASL loader
 
     if self.btn_help:
         self.btn_help.clicked.connect(self.show_help_dialog)
