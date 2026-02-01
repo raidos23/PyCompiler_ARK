@@ -68,23 +68,12 @@ class CompilerEngine:
         """
         return None
 
-    def environment(self, gui, file: str) -> Optional[dict[str, str]]:
+    def environment(self) -> Optional[dict[str, str]]:
         """
         Optionally return a mapping of environment variables to inject for the engine process.
         Values here will override the current process environment. Return None for no changes.
         """
         return None
-
-    def should_compile_file(
-        self, gui, file: str, selected_files: list[str], python_files: list[str]
-    ) -> bool:
-        """
-        Determine if a file should be included in the compilation queue.
-        Called by the compiler to filter files based on engine-specific criteria.
-        Default implementation returns True for all files.
-        Override to implement custom filtering logic.
-        """
-        return True
 
     @property
     def required_tools(self) -> dict[str, list[str]]:

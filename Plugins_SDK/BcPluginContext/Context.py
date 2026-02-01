@@ -294,7 +294,7 @@ def set_selected_workspace(path: Pathish) -> bool:
         pass
     # Try to inform the GUI when running with UI; ignore result and accept by contract
     try:
-        from Core.MainWindow import request_workspace_change_from_BcPlugin  # type: ignore
+        from Core.Api import request_workspace_change_from_BcPlugin  # type: ignore
 
         try:
             request_workspace_change_from_BcPlugin(str(path))

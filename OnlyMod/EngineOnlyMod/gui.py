@@ -38,7 +38,7 @@ from datetime import datetime
 from PySide6.QtCore import Qt, QSize, QTimer, QProcess, QThread, Signal
 from PySide6.QtWidgets import (
     QApplication,
-    QMainWindow,
+    QPyCompilerArkGui,
     QWidget,
     QVBoxLayout,
     QHBoxLayout,
@@ -164,7 +164,7 @@ class CompilationThread(QThread):
         self.cancel_requested = True
 
 
-class EnginesStandaloneGui(QMainWindow):
+class EnginesStandaloneGui(QPyCompilerArkGui):
     """
     Application autonome GUI pour gérer et exécuter les moteurs de compilation.
 
@@ -512,7 +512,7 @@ class EnginesStandaloneGui(QMainWindow):
         if theme_name == "dark":
             self.setStyleSheet(
                 """
-                QMainWindow, QWidget {
+                QPyCompilerArkGui, QWidget {
                     background-color: #1e1e1e;
                     color: #ffffff;
                 }
@@ -581,7 +581,7 @@ class EnginesStandaloneGui(QMainWindow):
         else:  # light theme
             self.setStyleSheet(
                 """
-                QMainWindow, QWidget {
+                QPyCompilerArkGui, QWidget {
                     background-color: #f5f5f5;
                     color: #000000;
                 }
@@ -981,7 +981,8 @@ class EnginesStandaloneGui(QMainWindow):
                 env = os.environ.copy()
                 if self.workspace_dir:
                     env["ARK_WORKSPACE"] = self.workspace_dir
-
+                    
+                    
                 # Exécuter la commande dans un thread séparé
                 self._log("Executing...")
 

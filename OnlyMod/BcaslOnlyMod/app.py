@@ -32,7 +32,7 @@ from typing import Optional, Callable, Dict, Any
 try:
     from PySide6.QtWidgets import (
         QApplication,
-        QMainWindow,
+        QPyCompilerArkGui,
         QWidget,
         QVBoxLayout,
         QHBoxLayout,
@@ -266,7 +266,7 @@ class ThemeManager:
     def get_stylesheet(self) -> str:
         """Generate stylesheet for current theme."""
         return f"""
-            QMainWindow {{
+            QPyCompilerArkGui {{
                 background-color: {self.colors['bg_primary']};
                 color: {self.colors['text_primary']};
             }}
@@ -383,7 +383,7 @@ class ThemeManager:
             return color
 
 
-class BcaslStandaloneApp(QMainWindow):
+class BcaslStandaloneApp(QPyCompilerArkGui):
     """Application autonome pour exécuter BCASL avec système de thème.
 
     Fournit une interface utilisateur pour:

@@ -524,7 +524,7 @@ def connect_to_app(main_window):
     created afterwards will automatically inherit the application's theme.
 
     Args:
-        main_window: The main application window (usually self from MainWindow)
+        main_window: The main application window (usually self from PyCompilerArkGui)
     """
     global _app_main_window
     _app_main_window = main_window

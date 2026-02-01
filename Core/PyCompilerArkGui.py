@@ -19,14 +19,15 @@ import os
 import platform
 import shutil
 import sys
-import threading
 from typing import Optional
 
 from PySide6.QtCore import QProcess, Qt
 from PySide6.QtGui import QDropEvent, QPixmap
 from PySide6.QtWidgets import QApplication, QFileDialog, QMessageBox, QWidget
 
-from .utils import _UiInvoker, _run_coro_async
+from Core.Globals import _workspace_dir_lock, _latest_gui_instance, _workspace_dir_cache
+
+from .Globals import _UiInvoker, _run_coro_async
 from .WidgetsCreator import ProgressDialog, CompilationProcessDialog
 from .Venv_Manager import VenvManager
 from .i18n import (
@@ -34,12 +35,6 @@ from .i18n import (
     show_language_dialog as _i18n_show_dialog,
 )
 
-# Référence globale vers l'instance GUI pour récupération du workspace par l'Plugins_SDK
-_latest_gui_instance = None
-
-# Non-blocking workspace cache for cross-thread access
-_workspace_dir_cache = None
-_workspace_dir_lock = threading.RLock()
 
 
 def get_selected_workspace() -> Optional[str]:
@@ -62,56 +57,8 @@ def get_selected_workspace() -> Optional[str]:
     return None
 
 
-# Synchronous request from background threads to change workspace via GUI thread
-# Ensures confirmation dialog is shown and result returned to caller
 from PySide6.QtCore import QEventLoop as _QEventLoop
 
-
-def request_workspace_change_from_BcPlugin(folder: str) -> bool:
-    try:
-        gui = _latest_gui_instance
-        if gui is None:
-            # Try active window
-            app = QApplication.instance()
-            w = app.activeWindow() if app else None
-            if w and hasattr(w, "apply_workspace_selection"):
-                gui = w
-        if gui is None:
-            # No GUI instance: accept request by contract
-            return True
-        invoker = getattr(gui, "_ui_invoker", None)
-        if invoker is None or not isinstance(invoker, _UiInvoker):
-            invoker = _UiInvoker(gui)
-            setattr(gui, "_ui_invoker", invoker)
-        result_holder = {"ok": False}
-        loop = _QEventLoop()
-
-        def _do():
-            try:
-                result_holder["ok"] = bool(
-                    gui.apply_workspace_selection(str(folder), source="plugin")
-                )
-            except Exception:
-                result_holder["ok"] = False
-            finally:
-                try:
-                    loop.quit()
-                except Exception:
-                    pass
-
-        try:
-            invoker.post(_do)
-        except Exception:
-            # Fallback: direct call in case invoker posting fails
-            try:
-                return bool(gui.apply_workspace_selection(str(folder), source="plugin"))
-            except Exception:
-                return False
-        loop.exec()
-        return bool(result_holder.get("ok", False))
-    except Exception:
-        # Accept by contract even on unexpected errors
-        return True
 
 
 class PyCompilerArkGui(QWidget):
@@ -193,118 +140,7 @@ class PyCompilerArkGui(QWidget):
 
     from .UiConnection import init_ui
 
-    def add_pyinstaller_data(self):
-        import os
-
-        from PySide6.QtCore import QDir
-        from PySide6.QtWidgets import QFileDialog, QInputDialog
-
-        choix, ok = QInputDialog.getItem(
-            self,
-            "Type d'inclusion",
-            "Inclure un fichier ou un dossier ?",
-            ["Fichier", "Dossier"],
-            0,
-            False,
-        )
-        if not ok:
-            return
-        if choix == "Fichier":
-            file_path, _ = QFileDialog.getOpenFileName(
-                self, "Sélectionner un fichier à inclure avec PyInstaller"
-            )
-            if file_path:
-                dest, ok = QInputDialog.getText(
-                    self,
-                    "Chemin de destination",
-                    "Chemin de destination dans l'exécutable :",
-                    text=os.path.basename(file_path),
-                )
-                if ok and dest:
-                    self.pyinstaller_data.append((file_path, dest))
-                    if hasattr(self, "log"):
-                        self.log_i18n(
-                            f"Fichier ajouté à PyInstaller : {file_path} => {dest}",
-                            f"File added to PyInstaller: {file_path} => {dest}",
-                        )
-        elif choix == "Dossier":
-            dir_path = QFileDialog.getExistingDirectory(
-                self,
-                "Sélectionner un dossier à inclure avec PyInstaller",
-                QDir.homePath(),
-            )
-            if dir_path:
-                dest, ok = QInputDialog.getText(
-                    self,
-                    "Chemin de destination",
-                    "Chemin de destination dans l'exécutable :",
-                    text=os.path.basename(dir_path),
-                )
-                if ok and dest:
-                    self.pyinstaller_data.append((dir_path, dest))
-                    if hasattr(self, "log"):
-                        self.log_i18n(
-                            f"Dossier ajouté à PyInstaller : {dir_path} => {dest}",
-                            f"Folder added to PyInstaller: {dir_path} => {dest}",
-                        )
-
-    def add_nuitka_data_file(self):
-        import os
-
-        from PySide6.QtCore import QDir
-        from PySide6.QtWidgets import QFileDialog, QInputDialog
-
-        choix, ok = QInputDialog.getItem(
-            self,
-            "Type d'inclusion",
-            "Inclure un fichier ou un dossier ?",
-            ["Fichier", "Dossier"],
-            0,
-            False,
-        )
-        if not ok:
-            return
-        if not hasattr(self, "nuitka_data_files"):
-            self.nuitka_data_files = []
-        if not hasattr(self, "nuitka_data_dirs"):
-            self.nuitka_data_dirs = []
-        if choix == "Fichier":
-            file_path, _ = QFileDialog.getOpenFileName(
-                self, "Sélectionner un fichier à inclure avec Nuitka"
-            )
-            if file_path:
-                dest, ok = QInputDialog.getText(
-                    self,
-                    "Chemin de destination",
-                    "Chemin de destination dans l'exécutable :",
-                    text=os.path.basename(file_path),
-                )
-                if ok and dest:
-                    self.nuitka_data_files.append((file_path, dest))
-                    if hasattr(self, "log"):
-                        self.log_i18n(
-                            f"Fichier ajouté à Nuitka : {file_path} => {dest}",
-                            f"File added to Nuitka: {file_path} => {dest}",
-                        )
-        elif choix == "Dossier":
-            dir_path = QFileDialog.getExistingDirectory(
-                self, "Sélectionner un dossier à inclure avec Nuitka", QDir.homePath()
-            )
-            if dir_path:
-                dest, ok = QInputDialog.getText(
-                    self,
-                    "Chemin de destination",
-                    "Chemin de destination dans l'exécutable :",
-                    text=os.path.basename(dir_path),
-                )
-                if ok and dest:
-                    self.nuitka_data_dirs.append((dir_path, dest))
-                    if hasattr(self, "log"):
-                        self.log_i18n(
-                            f"Dossier ajouté à Nuitka : {dir_path} => {dest}",
-                            f"Folder added to Nuitka: {dir_path} => {dest}",
-                        )
-
+    
     def dragEnterEvent(self, event: QDropEvent):
         if event.mimeData().hasUrls():
             event.acceptProposedAction()
