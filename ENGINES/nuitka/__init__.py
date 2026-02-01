@@ -158,7 +158,7 @@ class NuitkaEngine(CompilerEngine):
             return None
         return cmd[0], cmd[1:]
 
-    def environment(self, gui, file: str) -> Optional[dict[str, str]]:
+    def environment(self) -> Optional[dict[str, str]]:
         """Return environment variables for the compilation process."""
         try:
             env = {}
@@ -298,14 +298,7 @@ class NuitkaEngine(CompilerEngine):
     def get_log_prefix(self, file_basename: str) -> str:
         return f"Nuitka ({self.version})"
 
-    def should_compile_file(
-        self, gui, file: str, selected_files: list[str], python_files: list[str]
-    ) -> bool:
-        """Determine if a file should be included in the compilation queue."""
-        # Skip non-Python files
-        if not file.endswith(".py"):
-            return False
-        return True
+
 
     def apply_i18n(self, gui, tr: dict) -> None:
         """Apply internationalization translations to the engine UI."""

@@ -25,7 +25,7 @@ from os.path import dirname as _dirname
 from threading import RLock
 from types import ModuleType
 from typing import Any
-from .MainWindow import PyCompilerArkGui
+from .PyCompilerArkGui import PyCompilerArkGui
 
 __version__ = "1.0.0"
 

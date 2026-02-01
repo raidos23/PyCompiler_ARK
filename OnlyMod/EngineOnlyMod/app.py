@@ -258,7 +258,7 @@ class ThemeManager:
         """Génère la feuille de style pour le thème actuel."""
         c = self.colors
         return f"""
-            QMainWindow {{
+            QPyCompilerArkGui {{
                 background-color: {c['bg_primary']};
                 color: {c['text_primary']};
             }}

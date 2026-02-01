@@ -63,3 +63,11 @@ def _run_coro_async(coro, on_result, ui_owner=None):
             pass
 
     threading.Thread(target=_runner, daemon=True).start()
+
+
+_workspace_dir_lock = threading.RLock()
+# Référence globale vers l'instance GUI pour récupération du workspace par l'Plugins_SDK
+_latest_gui_instance = None
+
+# Non-blocking workspace cache for cross-thread access
+_workspace_dir_cache = None

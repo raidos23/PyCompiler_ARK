@@ -60,7 +60,7 @@ class MyEngine(CompilerEngine):
             return None
         return cmd[0], cmd[1:]
 
-    def environment(self, gui, file: str) -> Optional[dict[str, str]]:
+    def environment(self) -> Optional[dict[str, str]]:
         """Return environment variables to inject. Return None for no changes."""
         return None
 
@@ -327,7 +327,7 @@ def program_and_args(self, gui, file: str) -> Optional[tuple[str, list[str]]]:
 Return environment variables to inject into the build process:
 
 ```python
-def environment(self, gui, file: str) -> Optional[dict[str, str]]:
+def environment(self) -> Optional[dict[str, str]]:
     """
     Return environment variables to inject for the build process.
     

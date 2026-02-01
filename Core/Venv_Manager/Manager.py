@@ -2051,7 +2051,7 @@ class VenvManager:
         """Setup a workspace with venv and dependencies.
 
         This centralizes the workspace setup logic that was previously
-        scattered in MainWindow.apply_workspace_selection().
+        scattered in PyCompilerArkGui.apply_workspace_selection().
 
         Args:
             workspace_dir: Path to the workspace directory
