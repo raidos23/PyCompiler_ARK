@@ -1139,7 +1139,7 @@ def launch_engines_gui(
     """
     app = QApplication(sys.argv)
     app.setApplicationName("PyCompiler ARK++ Engines")
-    app.setOrganizationName("PyCompiler")
+    app.setOrganizationName("raidos23")
 
     window = EnginesStandaloneGui(
         workspace_dir=workspace_dir, language=language, theme=theme
