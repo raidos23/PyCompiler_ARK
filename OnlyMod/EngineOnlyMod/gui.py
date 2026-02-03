@@ -38,7 +38,7 @@ from datetime import datetime
 from PySide6.QtCore import Qt, QSize, QTimer, QProcess, QThread, Signal
 from PySide6.QtWidgets import (
     QApplication,
-    QPyCompilerArkGui,
+    QMainWindow,
     QWidget,
     QVBoxLayout,
     QHBoxLayout,
@@ -164,7 +164,7 @@ class CompilationThread(QThread):
         self.cancel_requested = True
 
 
-class EnginesStandaloneGui(QPyCompilerArkGui):
+class EnginesStandaloneGui(QMainWindow):
     """
     Application autonome GUI pour gérer et exécuter les moteurs de compilation.
 
@@ -512,7 +512,7 @@ class EnginesStandaloneGui(QPyCompilerArkGui):
         if theme_name == "dark":
             self.setStyleSheet(
                 """
-                QPyCompilerArkGui, QWidget {
+                QMainWindow, QWidget {
                     background-color: #1e1e1e;
                     color: #ffffff;
                 }
@@ -581,7 +581,7 @@ class EnginesStandaloneGui(QPyCompilerArkGui):
         else:  # light theme
             self.setStyleSheet(
                 """
-                QPyCompilerArkGui, QWidget {
+                QMainWindow, QWidget {
                     background-color: #f5f5f5;
                     color: #000000;
                 }
