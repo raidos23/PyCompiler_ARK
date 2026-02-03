@@ -81,14 +81,14 @@ from Core.allversion import get_core_version, get_bcasl_version
 
 def tr(en_text: str, fr_text: str) -> str:
     """Fonction de traduction simple pour BcaslOnlyMod.
-    
+
     Utilise la variable globale _CURRENT_LANGUAGE pour déterminer la langue.
     """
-    return fr_text if _CURRENT_LANGUAGE == 'fr' else en_text
+    return fr_text if _CURRENT_LANGUAGE == "fr" else en_text
 
 
 # Variable globale pour la langue (mise à jour par l'application)
-_CURRENT_LANGUAGE = 'en'
+_CURRENT_LANGUAGE = "en"
 
 
 class BcaslExecutionThread(QThread):
@@ -207,7 +207,12 @@ class BcaslStandaloneGui(QWidget):
         self.execution_thread: Optional[BcaslExecutionThread] = None
 
         # Configuration de la fenêtre
-        self.setWindowTitle(tr("BCASL Standalone - Plugin Manager", "BCASL Standalone - Gestionnaire de Plugins"))
+        self.setWindowTitle(
+            tr(
+                "BCASL Standalone - Plugin Manager",
+                "BCASL Standalone - Gestionnaire de Plugins",
+            )
+        )
         self.resize(1200, 800)
         self.setMinimumSize(900, 600)
 
@@ -248,7 +253,11 @@ class BcaslStandaloneGui(QWidget):
         """Configure l'interface utilisateur."""
         # Widget central
         central_widget = QWidget()
-        self.setCentralWidget(central_widget) if hasattr(self, 'setCentralWidget') else None
+        (
+            self.setCentralWidget(central_widget)
+            if hasattr(self, "setCentralWidget")
+            else None
+        )
 
         # Layout principal
         main_layout = QVBoxLayout(central_widget)
@@ -267,7 +276,7 @@ class BcaslStandaloneGui(QWidget):
         # Version info
         version_text = tr(
             f"Core: {get_core_version()} | BCASL: {get_bcasl_version()}",
-            f"Core: {get_core_version()} | BCASL: {get_bcasl_version()}"
+            f"Core: {get_core_version()} | BCASL: {get_bcasl_version()}",
         )
         version_label = QLabel(version_text)
         version_label.setStyleSheet("color: #888; font-size: 11px;")
@@ -305,9 +314,7 @@ class BcaslStandaloneGui(QWidget):
         global_layout = QVBoxLayout()
         global_layout.setSpacing(5)
 
-        self.global_enable_check = QCheckBox(
-            tr("Enable BCASL", "Activer BCASL")
-        )
+        self.global_enable_check = QCheckBox(tr("Enable BCASL", "Activer BCASL"))
         self.global_enable_check.setChecked(True)
         self.global_enable_check.toggled.connect(self._on_global_toggle)
         global_layout.addWidget(self.global_enable_check)
@@ -318,7 +325,7 @@ class BcaslStandaloneGui(QWidget):
                 "BCASL executes plugins before compilation.\n"
                 "Configure plugins and their execution order below.",
                 "BCASL exécute les plugins avant la compilation.\n"
-                "Configurez les plugins et leur ordre d'exécution ci-dessous."
+                "Configurez les plugins et leur ordre d'exécution ci-dessous.",
             )
         )
         self.global_info_label.setStyleSheet("color: #888; font-size: 11px;")
@@ -340,9 +347,7 @@ class BcaslStandaloneGui(QWidget):
         self.plugins_list.setSelectionMode(
             QAbstractItemView.SelectionMode.SingleSelection
         )
-        self.plugins_list.setDragDropMode(
-            QAbstractItemView.DragDropMode.InternalMove
-        )
+        self.plugins_list.setDragDropMode(QAbstractItemView.DragDropMode.InternalMove)
         self.plugins_list.setAlternatingRowColors(True)
         self.plugins_list.setSizePolicy(
             QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding
@@ -368,7 +373,9 @@ class BcaslStandaloneGui(QWidget):
         # Bouton refresh
         self.btn_refresh = QPushButton("🔄")
         self.btn_refresh.setMinimumSize(40, 30)
-        self.btn_refresh.setToolTip(tr("Refresh plugins list", "Rafraîchir la liste des plugins"))
+        self.btn_refresh.setToolTip(
+            tr("Refresh plugins list", "Rafraîchir la liste des plugins")
+        )
         self.btn_refresh.clicked.connect(self._discover_plugins)
         nav_layout.addWidget(self.btn_refresh)
 
@@ -500,7 +507,7 @@ class BcaslStandaloneGui(QWidget):
             QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed
         )
         self.statusBar.setMinimumHeight(20)
-        if hasattr(self, 'setStatusBar'):
+        if hasattr(self, "setStatusBar"):
             self.setStatusBar(self.statusBar)
         self.statusBar.showMessage(tr("Ready", "Prêt"))
 
@@ -634,16 +641,25 @@ class BcaslStandaloneGui(QWidget):
         self.plugins_meta = {}
 
         if not self.Plugins_dir or not self.Plugins_dir.exists():
-            self._log(tr("Plugins directory not found", "Répertoire Plugins non trouvé"))
+            self._log(
+                tr("Plugins directory not found", "Répertoire Plugins non trouvé")
+            )
             return
 
         # Découvrir les plugins
         self.plugins_meta = _discover_bcasl_meta(self.Plugins_dir)
 
         if not self.plugins_meta:
-            self._log(tr("No plugins detected in Plugins/", "Aucun plugin détecté dans Plugins/"))
+            self._log(
+                tr(
+                    "No plugins detected in Plugins/",
+                    "Aucun plugin détecté dans Plugins/",
+                )
+            )
             # Créer un message dans la liste
-            item = QListWidgetItem(tr("No plugins available", "Aucun plugin disponible"))
+            item = QListWidgetItem(
+                tr("No plugins available", "Aucun plugin disponible")
+            )
             item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEnabled)
             self.plugins_list.addItem(item)
             return
@@ -661,7 +677,9 @@ class BcaslStandaloneGui(QWidget):
 
         # Nombre de plugins
         count = len(self.plugins_meta)
-        self._log(tr(f"Discovered {count} plugin(s)", f"{count} plugin(s) découvert(s)"))
+        self._log(
+            tr(f"Discovered {count} plugin(s)", f"{count} plugin(s) découvert(s)")
+        )
 
     def _add_plugin_item(self, plugin_id: str, meta: Dict[str, Any]):
         """Ajoute un plugin à la liste."""
@@ -794,8 +812,8 @@ class BcaslStandaloneGui(QWidget):
                 tr("Warning", "Avertissement"),
                 tr(
                     "Please select a workspace folder first.",
-                    "Veuillez d'abord sélectionner un dossier workspace."
-                )
+                    "Veuillez d'abord sélectionner un dossier workspace.",
+                ),
             )
             return
 
@@ -807,8 +825,8 @@ class BcaslStandaloneGui(QWidget):
                 tr("Warning", "Avertissement"),
                 tr(
                     "Workspace folder does not exist.",
-                    "Le dossier workspace n'existe pas."
-                )
+                    "Le dossier workspace n'existe pas.",
+                ),
             )
             return
 
@@ -822,23 +840,26 @@ class BcaslStandaloneGui(QWidget):
                 tr("Warning", "Avertissement"),
                 tr(
                     "No plugins enabled. Please enable at least one plugin.",
-                    "Aucun plugin activé. Veuillez activer au moins un plugin."
-                )
+                    "Aucun plugin activé. Veuillez activer au moins un plugin.",
+                ),
             )
             return
 
         # Récupérer le timeout
         try:
             env_timeout = float(
-                __import__("os")
-                .environ.get("PYCOMPILER_BCASL_PLUGIN_TIMEOUT", "0")
+                __import__("os").environ.get("PYCOMPILER_BCASL_PLUGIN_TIMEOUT", "0")
             )
         except Exception:
             env_timeout = 0.0
 
         try:
             opt = self.config.get("options", {}) or {}
-            cfg_timeout = float(opt.get("plugin_timeout_s", 0.0)) if isinstance(opt, dict) else 0.0
+            cfg_timeout = (
+                float(opt.get("plugin_timeout_s", 0.0))
+                if isinstance(opt, dict)
+                else 0.0
+            )
         except Exception:
             cfg_timeout = 0.0
 
@@ -862,7 +883,9 @@ class BcaslStandaloneGui(QWidget):
         self._log(tr("Starting BCASL execution", "Début de l'exécution BCASL"))
         self._log(tr(f"Workspace: {workspace_root}", f"Workspace: {workspace_root}"))
         enabled_count = sum(1 for v in enabled_plugins.values() if v)
-        self._log(tr(f"Enabled plugins: {enabled_count}", f"Plugins activés: {enabled_count}"))
+        self._log(
+            tr(f"Enabled plugins: {enabled_count}", f"Plugins activés: {enabled_count}")
+        )
         self._log("=" * 50)
 
         # Créer et démarrer le thread
@@ -896,7 +919,9 @@ class BcaslStandaloneGui(QWidget):
         self.progress_bar.setRange(0, total)
         self.progress_bar.setValue(current)
 
-    def _on_execution_finished(self, report: Optional[ExecutionReport], cancelled: bool = False):
+    def _on_execution_finished(
+        self, report: Optional[ExecutionReport], cancelled: bool = False
+    ):
         """Appelé lorsque l'exécution est terminée."""
         # Réactiver les contrôles
         self.btn_run.setEnabled(True)
@@ -926,19 +951,24 @@ class BcaslStandaloneGui(QWidget):
 
         for item in report:
             state = "✓ OK" if item.success else f"✗ FAIL: {item.error}"
-            self._log(
-                f"  - {item.name}: {state} ({item.duration_ms:.1f} ms)"
-            )
+            self._log(f"  - {item.name}: {state} ({item.duration_ms:.1f} ms)")
 
         self._log("-" * 30)
         self._log(report.summary())
 
         if report.ok:
-            self._log(tr("All plugins executed successfully", "Tous les plugins exécutés avec succès"))
+            self._log(
+                tr(
+                    "All plugins executed successfully",
+                    "Tous les plugins exécutés avec succès",
+                )
+            )
             self.statusBar.showMessage(tr("Completed", "Terminé"))
         else:
             self._log(tr("Some plugins failed", "Certains plugins ont échoué"))
-            self.statusBar.showMessage(tr("Completed with errors", "Terminé avec erreurs"))
+            self.statusBar.showMessage(
+                tr("Completed with errors", "Terminé avec erreurs")
+            )
 
         self._log("=" * 50)
 
@@ -998,4 +1028,3 @@ def launch_bcasl_gui(
 
 if __name__ == "__main__":
     sys.exit(launch_bcasl_gui())
-

@@ -48,6 +48,7 @@ from Core.Compiler.compiler import (
 
 class ProcessState(Enum):
     """États possibles du processus principal."""
+
     IDLE = "idle"
     INITIALIZING = "initializing"
     READY = "ready"
@@ -58,7 +59,7 @@ class ProcessState(Enum):
 
 class MainProcessSignals(QObject):
     """Signaux pour la communication avec l'interface utilisateur."""
-    
+
     state_changed = Signal(ProcessState)
     log_message = Signal(str, str)  # niveau, message
     compilation_started = Signal(dict)  # infos de compilation
@@ -70,13 +71,13 @@ class MainProcessSignals(QObject):
 class MainProcess(QObject):
     """
     Classe principale de processus pour la compilation.
-    
+
     Coordonne l'ensemble du processus de compilation:
     - Initialisation du workspace
     - Sélection et configuration du moteur
     - Exécution de la compilation
     - Gestion des erreurs et annulation
-    
+
     Utilise CompilerCore pour l'exécution réelle.
     """
 
@@ -92,13 +93,11 @@ class MainProcess(QObject):
     progress_update = Signal(int, str)
 
     def __init__(
-        self,
-        workspace_dir: Optional[str] = None,
-        parent: Optional[QObject] = None
+        self, workspace_dir: Optional[str] = None, parent: Optional[QObject] = None
     ):
         """
         Initialise le processus principal.
-        
+
         Args:
             workspace_dir: Chemin du workspace (optionnel)
             parent: Widget parent (optionnel)
@@ -174,19 +173,21 @@ class MainProcess(QObject):
     def set_workspace(self, workspace_dir: str) -> bool:
         """
         Définit le workspace de travail.
-        
+
         Args:
             workspace_dir: Chemin du workspace
-            
+
         Returns:
             True si le workspace a été défini, False sinon
         """
         if not workspace_dir or not os.path.isdir(workspace_dir):
-            self.log_message.emit("error", f"Invalid workspace directory: {workspace_dir}")
+            self.log_message.emit(
+                "error", f"Invalid workspace directory: {workspace_dir}"
+            )
             return False
 
         self._workspace_dir = workspace_dir
-        
+
         # Configurer les variables d'environnement
         os.environ["ARK_WORKSPACE"] = workspace_dir
 
@@ -198,10 +199,10 @@ class MainProcess(QObject):
     def set_file(self, file_path: str) -> bool:
         """
         Définit le fichier à compiler.
-        
+
         Args:
             file_path: Chemin du fichier Python
-            
+
         Returns:
             True si le fichier a été défini, False sinon
         """
@@ -217,7 +218,7 @@ class MainProcess(QObject):
     def set_engine(self, engine_id: str) -> None:
         """
         Définit le moteur de compilation à utiliser.
-        
+
         Args:
             engine_id: Identifiant du moteur
         """
@@ -232,11 +233,11 @@ class MainProcess(QObject):
         env: Optional[Dict[str, str]] = None,
         engine_id: Optional[str] = None,
         file_path: Optional[str] = None,
-        workspace_dir: Optional[str] = None
+        workspace_dir: Optional[str] = None,
     ) -> bool:
         """
         Démarre une compilation.
-        
+
         Args:
             program: Programme à exécuter
             args: Arguments de compilation
@@ -244,7 +245,7 @@ class MainProcess(QObject):
             engine_id: Identifiant du moteur (optionnel)
             file_path: Chemin du fichier (optionnel)
             workspace_dir: Répertoire de travail (optionnel)
-            
+
         Returns:
             True si la compilation a démarré, False sinon
         """
@@ -281,7 +282,7 @@ class MainProcess(QObject):
             working_dir=working_dir,
             engine_id=engine_id or self._current_engine,
             file_path=file_path or self._current_file,
-            workspace_dir=working_dir
+            workspace_dir=working_dir,
         )
 
         if success:
@@ -293,7 +294,7 @@ class MainProcess(QObject):
     def cancel(self) -> bool:
         """
         Annule la compilation en cours.
-        
+
         Returns:
             True si l'annulation a été demandée, False sinon
         """
@@ -308,17 +309,17 @@ class MainProcess(QObject):
         program: str,
         args: List[str],
         env: Optional[Dict[str, str]] = None,
-        workspace_dir: Optional[str] = None
+        workspace_dir: Optional[str] = None,
     ) -> str:
         """
         Simule une compilation sans l'exécuter.
-        
+
         Args:
             program: Programme à exécuter
             args: Arguments
             env: Variables d'environnement (optionnel)
             workspace_dir: Répertoire de travail (optionnel)
-            
+
         Returns:
             Description de la commande à exécuter
         """
@@ -360,7 +361,7 @@ class MainProcess(QObject):
     def get_compilation_info(self) -> Dict[str, Any]:
         """
         Retourne les informations de compilation actuelles.
-        
+
         Returns:
             Dictionnaire avec les infos de compilation
         """
@@ -379,4 +380,3 @@ class MainProcess(QObject):
         self._current_engine = None
         self._set_state(ProcessState.READY)
         self.log_message.emit("info", "Process reset")
-

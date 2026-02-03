@@ -36,7 +36,6 @@ from .i18n import (
 )
 
 
-
 def get_selected_workspace() -> Optional[str]:
     """Retourne le workspace sélectionné d'une manière non bloquante et thread-safe."""
     # Fast path: cached value with lock, no UI access
@@ -58,7 +57,6 @@ def get_selected_workspace() -> Optional[str]:
 
 
 from PySide6.QtCore import QEventLoop as _QEventLoop
-
 
 
 class PyCompilerArkGui(QWidget):
@@ -140,7 +138,6 @@ class PyCompilerArkGui(QWidget):
 
     from .UiConnection import init_ui
 
-    
     def dragEnterEvent(self, event: QDropEvent):
         if event.mimeData().hasUrls():
             event.acceptProposedAction()
@@ -360,8 +357,6 @@ class PyCompilerArkGui(QWidget):
                 pass
             return False
 
-
-
     def select_venv_manually(self):
         self.venv_manager.select_venv_manually()
 
@@ -370,8 +365,6 @@ class PyCompilerArkGui(QWidget):
 
     def install_requirements_if_needed(self, path):
         self.venv_manager.install_requirements_if_needed(path)
-
-
 
     def select_files_manually(self):
         if not self.workspace_dir:

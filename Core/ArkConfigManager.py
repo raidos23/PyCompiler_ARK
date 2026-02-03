@@ -87,14 +87,12 @@ DEFAULT_CONFIG = {
     # -----------------------------------------------------------------------------
     "exclusion_patterns": DEFAULT_EXCLUSION_PATTERNS,
     "inclusion_patterns": ["**/*.py"],
-    
     # -----------------------------------------------------------------------------
     # COMPORTEMENT DE COMPILATION
     # -----------------------------------------------------------------------------
     "compile_only_main": False,
     "main_file_names": ["main.py", "app.py"],
     "auto_detect_entry_points": True,
-    
     # -----------------------------------------------------------------------------
     # GESTION DES DÉPENDANCES
     # -----------------------------------------------------------------------------
@@ -116,7 +114,6 @@ DEFAULT_CONFIG = {
         # Génération automatique de requirements.txt depuis les imports du projet
         "auto_generate_from_imports": True,
     },
-    
     # -----------------------------------------------------------------------------
     # GESTIONNAIRES D'ENVIRONNEMENT VIRTUEL
     # -----------------------------------------------------------------------------
@@ -128,7 +125,6 @@ DEFAULT_CONFIG = {
         # Revenir à pip si aucun gestionnaire n'est détecté
         "fallback_to_pip": True,
     },
-    
     # -----------------------------------------------------------------------------
     # CONFIGURATION DES PLUGINS
     # -----------------------------------------------------------------------------
@@ -142,15 +138,15 @@ DEFAULT_CONFIG = {
 def _deep_merge_dict(base: dict, override: dict) -> dict:
     """
     Fusionne récursivement deux dictionnaires.
-    
+
     Cette fonction permet de combiner une configuration de base avec des
     valeurs personnalisées. Les dictionnaires imbriqués sont fusionnés
     plutôt que remplacés, permettant une configuration modulaire.
-    
+
     Args:
         base: Dictionnaire de configuration de base
         override: Dictionnaire contenant les valeurs à surcharger
-        
+
     Returns:
         Un nouveau dictionnaire avec les valeurs fusionnées
     """
@@ -168,20 +164,20 @@ def _deep_merge_dict(base: dict, override: dict) -> dict:
 def load_ark_config(workspace_dir: str) -> dict[str, Any]:
     """
     Charge la configuration ARK depuis un fichier YAML.
-    
+
     Cette fonction recherche un fichier de configuration dans le workspace
     selon un ordre de priorité prédéfini et fusionne la configuration
     utilisateur avec les valeurs par défaut.
-    
+
     Fichiers recherchés (ordre de priorité):
     1. ARK_Main_Config.yaml
     2. ARK_Main_Config.yml
     3. .ARK_Main_Config.yaml
     4. .ARK_Main_Config.yml
-    
+
     Args:
         workspace_dir: Chemin absolu vers le répertoire du workspace
-        
+
     Returns:
         Dictionnaire complet de configuration, incluant les valeurs par défaut
         et les personnalisations utilisateur
@@ -262,21 +258,23 @@ def load_ark_config(workspace_dir: str) -> dict[str, Any]:
         return config
 
     except Exception as e:
-        print(f"Attention: Échec du chargement de la config ARK depuis {config_file}: {e}")
+        print(
+            f"Attention: Échec du chargement de la config ARK depuis {config_file}: {e}"
+        )
         return config
 
 
 def get_compiler_options(config: dict[str, Any], compiler: str) -> dict[str, Any]:
     """
     Récupère les options spécifiques à un compilateur.
-    
+
     Cette fonction permet d'extraire les options de configuration
     dédiées à un compilateur particulier (pyinstaller, nuitka, cx_freeze).
-    
+
     Args:
         config: Dictionnaire de configuration complet
         compiler: Nom du compilateur (ex: "pyinstaller", "nuitka")
-        
+
     Returns:
         Dictionnaire des options du compilateur, ou un dictionnaire vide
     """
@@ -287,7 +285,7 @@ def get_compiler_options(config: dict[str, Any], compiler: str) -> dict[str, Any
 def get_output_options(config: dict[str, Any]) -> dict[str, Any]:
     """
     Récupère les options de sortie pour les exécutables compilés.
-    
+
     Returns:
         Dictionnaire des options de sortie (répertoire, nettoyage, etc.)
     """
@@ -297,7 +295,7 @@ def get_output_options(config: dict[str, Any]) -> dict[str, Any]:
 def get_dependency_options(config: dict[str, Any]) -> dict[str, Any]:
     """
     Récupère les options de gestion des dépendances.
-    
+
     Returns:
         Dictionnaire des options de dépendances
     """
@@ -307,7 +305,7 @@ def get_dependency_options(config: dict[str, Any]) -> dict[str, Any]:
 def get_environment_manager_options(config: dict[str, Any]) -> dict[str, Any]:
     """
     Récupère les options du gestionnaire d'environnement virtuel.
-    
+
     Returns:
         Dictionnaire des options du gestionnaire d'environnement
     """
@@ -319,16 +317,16 @@ def should_exclude_file(
 ) -> bool:
     """
     Détermine si un fichier doit être exclu de la compilation.
-    
+
     Cette fonction compare le chemin du fichier avec les patterns
     d'exclusion définis dans la configuration. Elle utilise la méthode
     Path.match() qui supporte les patterns glob standards.
-    
+
     Args:
         file_path: Chemin absolu du fichier à vérifier
         workspace_dir: Chemin absolu du workspace
         exclusion_patterns: Liste des patterns d'exclusion
-        
+
     Returns:
         True si le fichier doit être exclu, False sinon
     """
@@ -362,14 +360,14 @@ def should_exclude_file(
 def create_default_ark_config(workspace_dir: str) -> bool:
     """
     Crée un fichier ARK_Main_Config.yml avec la configuration par défaut.
-    
+
     Cette fonction génère un fichier de configuration complet avec
     toutes les options disponibles et leurs valeurs par défaut.
     Elle ne remplace pas un fichier existant.
-    
+
     Args:
         workspace_dir: Chemin du répertoire du workspace
-        
+
     Returns:
         True si le fichier a été créé avec succès, False s'il existe déjà
         ou si une erreur s'est produite
@@ -469,4 +467,3 @@ environment_manager:
     except Exception as e:
         print(f"Attention: Échec de la création de ARK_Main_Config.yml: {e}")
         return False
-

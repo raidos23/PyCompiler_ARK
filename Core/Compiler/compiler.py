@@ -43,6 +43,7 @@ from PySide6.QtCore import QThread, Signal, QObject
 
 class CompilationStatus(Enum):
     """Statut de la compilation."""
+
     IDLE = "idle"
     RUNNING = "running"
     CANCELLED = "cancelled"
@@ -52,10 +53,10 @@ class CompilationStatus(Enum):
 
 class CompilationSignals(QObject):
     """Signaux pour la communication avec l'interface utilisateur."""
-    
+
     output_ready = Signal(str)  # Signal pour stdout
-    error_ready = Signal(str)   # Signal pour stderr
-    finished = Signal(int)      # Code de retour
+    error_ready = Signal(str)  # Signal pour stderr
+    finished = Signal(int)  # Code de retour
     status_changed = Signal(CompilationStatus)  # Changement de statut
     progress_update = Signal(int, str)  # Progression, message
 
@@ -63,7 +64,7 @@ class CompilationSignals(QObject):
 class CompilationThread(QThread):
     """
     Thread pour exécuter la compilation sans bloquer l'UI.
-    
+
     Gère l'exécution d'un processus de compilation avec:
     - Lecture en temps réel de stdout et stderr
     - Support de l'annulation
@@ -81,11 +82,11 @@ class CompilationThread(QThread):
         args: List[str],
         env: Optional[Dict[str, str]] = None,
         working_dir: Optional[str] = None,
-        timeout: Optional[int] = None
+        timeout: Optional[int] = None,
     ):
         """
         Initialise le thread de compilation.
-        
+
         Args:
             program: Chemin de l'exécutable
             args: Liste des arguments
@@ -158,10 +159,7 @@ class CompilationThread(QThread):
             # Utiliser select pour attendre des données
             try:
                 ready, _, _ = select.select(
-                    [self.process.stdout, self.process.stderr],
-                    [],
-                    [],
-                    0.1
+                    [self.process.stdout, self.process.stderr], [], [], 0.1
                 )
 
                 for stream in ready:
@@ -216,6 +214,7 @@ class CompilationThread(QThread):
 
         for pattern in progress_patterns:
             import re
+
             match = re.search(pattern, line)
             if match:
                 if len(match.groups()) == 1:
@@ -258,7 +257,7 @@ class CompilationThread(QThread):
 class CompilerCore(QObject):
     """
     Classe principale du compilateur.
-    
+
     Gère la compilation avec support pour:
     - Exécution asynchrone via threads
     - Annulation en temps réel
@@ -277,7 +276,7 @@ class CompilerCore(QObject):
     def __init__(self, parent: Optional[QObject] = None):
         """
         Initialise le compilateur.
-        
+
         Args:
             parent: Widget parent (optionnel)
         """
@@ -323,11 +322,11 @@ class CompilerCore(QObject):
         working_dir: Optional[str] = None,
         engine_id: Optional[str] = None,
         file_path: Optional[str] = None,
-        workspace_dir: Optional[str] = None
+        workspace_dir: Optional[str] = None,
     ) -> bool:
         """
         Démarre une compilation.
-        
+
         Args:
             program: Chemin de l'exécutable
             args: Liste des arguments
@@ -336,7 +335,7 @@ class CompilerCore(QObject):
             engine_id: Identifiant du moteur (optionnel)
             file_path: Chemin du fichier à compiler (optionnel)
             workspace_dir: Chemin du workspace (optionnel)
-            
+
         Returns:
             True si la compilation a démarré, False sinon
         """
@@ -351,10 +350,7 @@ class CompilerCore(QObject):
 
         # Créer le thread
         self._thread = CompilationThread(
-            program=program,
-            args=args,
-            env=env,
-            working_dir=working_dir
+            program=program, args=args, env=env, working_dir=working_dir
         )
 
         # Connecter les signaux
@@ -365,7 +361,9 @@ class CompilerCore(QObject):
 
         # Changer le statut
         self._set_status(CompilationStatus.RUNNING)
-        self.log_message.emit("info", f"Starting compilation with {engine_id or 'unknown'}")
+        self.log_message.emit(
+            "info", f"Starting compilation with {engine_id or 'unknown'}"
+        )
 
         # Démarrer le thread
         self._thread.start()
@@ -375,7 +373,7 @@ class CompilerCore(QObject):
     def cancel(self) -> bool:
         """
         Annule la compilation en cours.
-        
+
         Returns:
             True si l'annulation a été demandée, False sinon
         """
@@ -401,27 +399,34 @@ class CompilerCore(QObject):
             self._set_status(CompilationStatus.SUCCESS)
             duration = self.duration
             if duration:
-                self.log_message.emit("success", f"Compilation successful! ({duration:.2f}s)")
+                self.log_message.emit(
+                    "success", f"Compilation successful! ({duration:.2f}s)"
+                )
             else:
                 self.log_message.emit("success", "Compilation successful!")
         else:
             self._set_status(CompilationStatus.FAILED)
             duration = self.duration
             if duration:
-                self.log_message.emit("error", f"Compilation failed (code {return_code}) in {duration:.2f}s")
+                self.log_message.emit(
+                    "error",
+                    f"Compilation failed (code {return_code}) in {duration:.2f}s",
+                )
             else:
-                self.log_message.emit("error", f"Compilation failed with code {return_code}")
+                self.log_message.emit(
+                    "error", f"Compilation failed with code {return_code}"
+                )
 
         self.finished.emit(return_code)
 
     def get_command_line(self, program: str, args: List[str]) -> str:
         """
         Retourne la ligne de commande formatée.
-        
+
         Args:
             program: Programme à exécuter
             args: Arguments
-            
+
         Returns:
             Ligne de commande formatée
         """
@@ -433,27 +438,28 @@ class CompilerCore(QObject):
         program: str,
         args: List[str],
         env: Optional[Dict[str, str]] = None,
-        working_dir: Optional[str] = None
+        working_dir: Optional[str] = None,
     ) -> str:
         """
         Simule une compilation et retourne la commande.
-        
+
         Args:
             program: Programme à exécuter
             args: Arguments
             env: Variables d'environnement (optionnel)
             working_dir: Répertoire de travail (optionnel)
-            
+
         Returns:
             Commande formatée
         """
         cmd = self.get_command_line(program, args)
         result = f"[DRY RUN] Command: {cmd}\n"
         result += f"Working directory: {working_dir or 'current'}\n"
-        
-        if env:
-            env_info = "\n  ".join([f"{k}={v}" for k, v in env.items() if 'ARK' in k or 'PATH' in k])
-            result += f"Environment:\n  {env_info}"
-        
-        return result
 
+        if env:
+            env_info = "\n  ".join(
+                [f"{k}={v}" for k, v in env.items() if "ARK" in k or "PATH" in k]
+            )
+            result += f"Environment:\n  {env_info}"
+
+        return result

@@ -713,7 +713,9 @@ class EnginesStandaloneGui(QMainWindow):
             # Pas de moteurs : afficher un message
             no_engine_widget = QWidget()
             no_engine_layout = QVBoxLayout()
-            no_engine_label = QLabel("No engines available.\nPlease check ENGINES folder.")
+            no_engine_label = QLabel(
+                "No engines available.\nPlease check ENGINES folder."
+            )
             no_engine_label.setStyleSheet("color: #888; font-size: 14px;")
             no_engine_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
             no_engine_layout.addWidget(no_engine_label)
@@ -981,8 +983,7 @@ class EnginesStandaloneGui(QMainWindow):
                 env = os.environ.copy()
                 if self.workspace_dir:
                     env["ARK_WORKSPACE"] = self.workspace_dir
-                    
-                    
+
                 # Exécuter la commande dans un thread séparé
                 self._log("Executing...")
 
@@ -991,7 +992,9 @@ class EnginesStandaloneGui(QMainWindow):
 
                 # Créer et configurer le thread
                 working_dir = os.path.dirname(file_path) if file_path else None
-                self.compilation_thread = CompilationThread(program, args, env, working_dir)
+                self.compilation_thread = CompilationThread(
+                    program, args, env, working_dir
+                )
                 self.compilation_thread.output_ready.connect(self._log)
                 self.compilation_thread.error_ready.connect(self._on_compilation_error)
                 self.compilation_thread.finished.connect(self._on_compilation_finished)
@@ -1009,7 +1012,11 @@ class EnginesStandaloneGui(QMainWindow):
 
     def _cancel_compilation(self):
         """Annule la compilation en cours."""
-        if hasattr(self, 'compilation_thread') and self.compilation_thread and self.compilation_thread.isRunning():
+        if (
+            hasattr(self, "compilation_thread")
+            and self.compilation_thread
+            and self.compilation_thread.isRunning()
+        ):
             self._log("Cancelling compilation...")
             self.statusBar.showMessage(
                 "Cancelling compilation..."
@@ -1151,4 +1158,3 @@ def launch_engines_gui(
 
 if __name__ == "__main__":
     sys.exit(launch_engines_gui())
-
