@@ -97,12 +97,10 @@ __all__ = [
     "CompilationSignals",
     "CompilationThread",
     "CompilerCore",
-    
     # mainprocess.py
     "ProcessState",
     "MainProcessSignals",
     "MainProcess",
-    
     # command_helpers.py
     "build_command",
     "validate_command",
@@ -112,14 +110,12 @@ __all__ = [
     "detect_python_executable",
     "get_interpreter_version",
     "check_module_available",
-    
     # process_killer.py
     "ProcessInfo",
     "ProcessKiller",
     "kill_process",
     "kill_process_tree",
     "get_process_info",
-    
     # UI Connection functions
     "compile_all",
     "cancel_all_compilations",
@@ -166,30 +162,26 @@ def compile_all(self) -> None:
     files_to_compile = self.python_files.copy()
     if not files_to_compile:
         self.log_i18n(
-            "⚠️ Aucun fichier Python sélectionné.",
-            "⚠️ No Python files selected."
+            "⚠️ Aucun fichier Python sélectionné.", "⚠️ No Python files selected."
         )
         return
 
     # Vérifier le workspace
     if not self.workspace_dir:
-        self.log_i18n(
-            "⚠️ Aucun workspace sélectionné.",
-            "⚠️ No workspace selected."
-        )
+        self.log_i18n("⚠️ Aucun workspace sélectionné.", "⚠️ No workspace selected.")
         return
 
     # Obtenir le moteur de compilation actif
     engine_id = None
     try:
         import EngineLoader as engines_loader
-        if hasattr(self, 'compiler_tabs') and self.compiler_tabs:
+
+        if hasattr(self, "compiler_tabs") and self.compiler_tabs:
             idx = self.compiler_tabs.currentIndex()
             engine_id = engines_loader.registry.get_engine_for_tab(idx)
     except Exception as e:
         self.log_i18n(
-            f"⚠️ Erreur détection moteur: {e}",
-            f"⚠️ Engine detection error: {e}"
+            f"⚠️ Erreur détection moteur: {e}", f"⚠️ Engine detection error: {e}"
         )
 
     if not engine_id:
@@ -200,13 +192,13 @@ def compile_all(self) -> None:
     if not engine:
         self.log_i18n(
             f"❌ Moteur de compilation '{engine_id}' non trouvé.",
-            f"❌ Compilation engine '{engine_id}' not found."
+            f"❌ Compilation engine '{engine_id}' not found.",
         )
         return
 
     self.log_i18n(
         f"🚀 Démarrage de la compilation avec {engine.name}...",
-        f"🚀 Starting compilation with {engine.name}..."
+        f"🚀 Starting compilation with {engine.name}...",
     )
 
     # Initialiser MainProcess si nécessaire
@@ -226,30 +218,37 @@ def _start_compilation_queue(self, engine, files_to_compile: list) -> None:
     main_process = _get_main_process()
 
     # Connecter les signaux de MainProcess si pas déjà fait
-    if not hasattr(main_process, '_gui_connected'):
+    if not hasattr(main_process, "_gui_connected"):
         main_process.output_ready.connect(lambda msg: _handle_output(self, msg))
         main_process.error_ready.connect(lambda msg: _handle_error(self, msg))
-        main_process.progress_update.connect(lambda pct, msg: _handle_progress(self, pct, msg))
-        main_process.log_message.connect(lambda level, msg: _handle_log(self, level, msg))
-        main_process.compilation_finished.connect(lambda code, info: handle_finished(self, code, info))
-        main_process.state_changed.connect(lambda state: _handle_state_changed(self, state))
+        main_process.progress_update.connect(
+            lambda pct, msg: _handle_progress(self, pct, msg)
+        )
+        main_process.log_message.connect(
+            lambda level, msg: _handle_log(self, level, msg)
+        )
+        main_process.compilation_finished.connect(
+            lambda code, info: handle_finished(self, code, info)
+        )
+        main_process.state_changed.connect(
+            lambda state: _handle_state_changed(self, state)
+        )
         main_process._gui_connected = True
 
     # Compiler chaque fichier
     for file_path in files_to_compile:
         if not os.path.exists(file_path):
             self.log_i18n(
-                f"⚠️ Fichier non trouvé: {file_path}",
-                f"⚠️ File not found: {file_path}"
+                f"⚠️ Fichier non trouvé: {file_path}", f"⚠️ File not found: {file_path}"
             )
             continue
 
         # Vérifier les prérequis du moteur
-        if hasattr(engine, 'ensure_tools_installed'):
+        if hasattr(engine, "ensure_tools_installed"):
             if not engine.ensure_tools_installed(self):
                 self.log_i18n(
                     "⚠️ Outils manquants, compilation annulée.",
-                    "⚠️ Missing tools, compilation cancelled."
+                    "⚠️ Missing tools, compilation cancelled.",
                 )
                 self.set_controls_enabled(True)
                 return
@@ -259,12 +258,12 @@ def _start_compilation_queue(self, engine, files_to_compile: list) -> None:
         if not cmd:
             self.log_i18n(
                 f"❌ Erreur construction commande pour {file_path}",
-                f"❌ Command build error for {file_path}"
+                f"❌ Command build error for {file_path}",
             )
             continue
 
         # Obtenir l'environnement
-        env = engine.environment() if hasattr(engine, 'environment') else None
+        env = engine.environment() if hasattr(engine, "environment") else None
 
         # Lancer la compilation
         program = cmd[0]
@@ -276,15 +275,15 @@ def _start_compilation_queue(self, engine, files_to_compile: list) -> None:
             env=env,
             engine_id=engine.id,
             file_path=file_path,
-            workspace_dir=self.workspace_dir
+            workspace_dir=self.workspace_dir,
         )
 
         self.log_i18n(
             f"📦 Compilation de {os.path.basename(file_path)}...",
-            f"📦 Compiling {os.path.basename(file_path)}..."
+            f"📦 Compiling {os.path.basename(file_path)}...",
         )
 
-        #break  # Un seul fichier à la fois pour l'instant
+        # break  # Un seul fichier à la fois pour l'instant
 
 
 def cancel_all_compilations(self) -> bool:
@@ -293,25 +292,22 @@ def cancel_all_compilations(self) -> bool:
     Cancels all ongoing compilations.
     """
     main_process = _get_main_process()
-    
+
     if main_process.is_compiling:
         success = main_process.cancel()
         if success:
             self.log_i18n(
                 "⏹️ Annulation de la compilation demandée...",
-                "⏹️ Compilation cancellation requested..."
+                "⏹️ Compilation cancellation requested...",
             )
         else:
             self.log_i18n(
                 "⚠️ Impossible d'annuler la compilation.",
-                "⚠️ Unable to cancel compilation."
+                "⚠️ Unable to cancel compilation.",
             )
         return success
     else:
-        self.log_i18n(
-            "ℹ️ Aucune compilation en cours.",
-            "ℹ️ No compilation in progress."
-        )
+        self.log_i18n("ℹ️ Aucune compilation en cours.", "ℹ️ No compilation in progress.")
         return False
 
 
@@ -321,7 +317,7 @@ def handle_stdout(self, proc: QProcess) -> None:
     if data.isEmpty():
         return
     try:
-        text = bytes(data).decode('utf-8', errors='replace').strip()
+        text = bytes(data).decode("utf-8", errors="replace").strip()
         if text:
             self.log.append(text)
     except Exception:
@@ -334,7 +330,7 @@ def handle_stderr(self, proc: QProcess) -> None:
     if data.isEmpty():
         return
     try:
-        text = bytes(data).decode('utf-8', errors='replace').strip()
+        text = bytes(data).decode("utf-8", errors="replace").strip()
         if text:
             self.log.append(f"❌ {text}")
     except Exception:
@@ -343,11 +339,7 @@ def handle_stderr(self, proc: QProcess) -> None:
 
 def show_error_dialog(self, title: str, message: str) -> None:
     """Show an error dialog."""
-    QMessageBox.critical(
-        self,
-        self.tr("Erreur", "Error"),
-        message
-    )
+    QMessageBox.critical(self, self.tr("Erreur", "Error"), message)
 
 
 def try_install_missing_modules(self, modules: list) -> bool:
@@ -360,11 +352,11 @@ def try_install_missing_modules(self, modules: list) -> bool:
 
     self.log_i18n(
         f"📦 Installation des modules manquants: {modules}",
-        f"📦 Installing missing modules: {modules}"
+        f"📦 Installing missing modules: {modules}",
     )
 
     # Delegates to venv_manager
-    if hasattr(self, 'venv_manager') and self.venv_manager:
+    if hasattr(self, "venv_manager") and self.venv_manager:
         venv_path = self.venv_manager.resolve_project_venv()
         if venv_path:
             return self.venv_manager.ensure_tools_installed(venv_path, modules)
@@ -375,12 +367,12 @@ def try_install_missing_modules(self, modules: list) -> bool:
 def start_compilation_process(self, engine_id: str, file_path: str) -> bool:
     """
     Start a single compilation process using MainProcess.
-    
+
     Args:
         self: GUI instance
         engine_id: ID of the compilation engine
         file_path: Path to the Python file to compile
-        
+
     Returns:
         True if compilation started, False otherwise
     """
@@ -389,12 +381,12 @@ def start_compilation_process(self, engine_id: str, file_path: str) -> bool:
     if not engine:
         self.log_i18n(
             f"❌ Moteur '{engine_id}' non trouvé.",
-            f"❌ Engine '{engine_id}' not found."
+            f"❌ Engine '{engine_id}' not found.",
         )
         return False
 
     # Vérifier les prérequis
-    if hasattr(engine, 'ensure_tools_installed'):
+    if hasattr(engine, "ensure_tools_installed"):
         if not engine.ensure_tools_installed(self):
             return False
 
@@ -403,12 +395,12 @@ def start_compilation_process(self, engine_id: str, file_path: str) -> bool:
     if not cmd:
         self.log_i18n(
             f"❌ Erreur construction commande pour {file_path}",
-            f"❌ Command build error for {file_path}"
+            f"❌ Command build error for {file_path}",
         )
         return False
 
     # Obtenir l'environnement
-    env = engine.environment() if hasattr(engine, 'environment') else None
+    env = engine.environment() if hasattr(engine, "environment") else None
 
     # Initialiser MainProcess
     main_process = _get_main_process()
@@ -416,13 +408,21 @@ def start_compilation_process(self, engine_id: str, file_path: str) -> bool:
     main_process.set_engine(engine_id)
 
     # Connecter les signaux si pas déjà fait
-    if not hasattr(main_process, '_gui_connected'):
+    if not hasattr(main_process, "_gui_connected"):
         main_process.output_ready.connect(lambda msg: _handle_output(self, msg))
         main_process.error_ready.connect(lambda msg: _handle_error(self, msg))
-        main_process.progress_update.connect(lambda pct, msg: _handle_progress(self, pct, msg))
-        main_process.log_message.connect(lambda level, msg: _handle_log(self, level, msg))
-        main_process.compilation_finished.connect(lambda code, info: handle_finished(self, code, info))
-        main_process.state_changed.connect(lambda state: _handle_state_changed(self, state))
+        main_process.progress_update.connect(
+            lambda pct, msg: _handle_progress(self, pct, msg)
+        )
+        main_process.log_message.connect(
+            lambda level, msg: _handle_log(self, level, msg)
+        )
+        main_process.compilation_finished.connect(
+            lambda code, info: handle_finished(self, code, info)
+        )
+        main_process.state_changed.connect(
+            lambda state: _handle_state_changed(self, state)
+        )
         main_process._gui_connected = True
 
     # Lancer la compilation
@@ -435,13 +435,13 @@ def start_compilation_process(self, engine_id: str, file_path: str) -> bool:
         env=env,
         engine_id=engine_id,
         file_path=file_path,
-        workspace_dir=self.workspace_dir
+        workspace_dir=self.workspace_dir,
     )
 
     if success:
         self.log_i18n(
             f"🚀 Démarrage {engine.name} pour {os.path.basename(file_path)}...",
-            f"🚀 Starting {engine.name} for {os.path.basename(file_path)}..."
+            f"🚀 Starting {engine.name} for {os.path.basename(file_path)}...",
         )
 
     return success
@@ -453,17 +453,15 @@ def try_start_processes(self) -> bool:
     Returns True if at least one process started.
     """
     if not self.python_files:
-        self.log_i18n(
-            "⚠️ Aucun fichier à compiler.",
-            "⚠️ No files to compile."
-        )
+        self.log_i18n("⚠️ Aucun fichier à compiler.", "⚠️ No files to compile.")
         return False
 
     # Obtenir le moteur actif
     engine_id = None
     try:
         import EngineLoader as engines_loader
-        if hasattr(self, 'compiler_tabs') and self.compiler_tabs:
+
+        if hasattr(self, "compiler_tabs") and self.compiler_tabs:
             idx = self.compiler_tabs.currentIndex()
             engine_id = engines_loader.registry.get_engine_for_tab(idx)
     except Exception:
@@ -500,7 +498,7 @@ def _handle_error(self, message: str) -> None:
 
 def _handle_progress(self, progress: int, message: str) -> None:
     """Handle progress update from MainProcess."""
-    if hasattr(self, 'progress') and self.progress:
+    if hasattr(self, "progress") and self.progress:
         self.progress.setValue(progress)
 
 
@@ -520,41 +518,37 @@ def handle_finished(self, return_code: int, info: dict) -> None:
     # Réactiver les contrôles
     self.set_controls_enabled(True)
 
-    if hasattr(self, 'progress') and self.progress:
+    if hasattr(self, "progress") and self.progress:
         self.progress.setValue(100 if return_code == 0 else 0)
 
     if return_code == 0:
         self.log_i18n(
             "✅ Compilation terminée avec succès!",
-            "✅ Compilation completed successfully!"
+            "✅ Compilation completed successfully!",
         )
-        
+
         # Appeler on_success du moteur si disponible
         engine_id = info.get("engine")
         if engine_id:
             engine = get_engine(engine_id)
-            if engine and hasattr(engine, 'on_success'):
+            if engine and hasattr(engine, "on_success"):
                 file_path = info.get("file")
                 if file_path:
                     try:
                         engine.on_success(self, file_path)
                     except Exception as e:
                         self.log_i18n(
-                            f"⚠️ Erreur on_success: {e}",
-                            f"⚠️ on_success error: {e}"
+                            f"⚠️ Erreur on_success: {e}", f"⚠️ on_success error: {e}"
                         )
-        
+
         # Continuer avec les autres fichiers si nécessaire
         _continue_compile_all(self)
     elif return_code == -1:
-        self.log_i18n(
-            "⏹️ Compilation annulée.",
-            "⏹️ Compilation cancelled."
-        )
+        self.log_i18n("⏹️ Compilation annulée.", "⏹️ Compilation cancelled.")
     else:
         self.log_i18n(
             f"❌ Compilation échouée (code: {return_code})",
-            f"❌ Compilation failed (code: {return_code})"
+            f"❌ Compilation failed (code: {return_code})",
         )
 
 
@@ -570,9 +564,3 @@ def _handle_state_changed(self, state: ProcessState) -> None:
     }
     state_name = state_names.get(state, str(state))
     self.log.append(f"📊 État: {state_name}")
-
-
-# ============================================================================
-# FIN DES FONCTIONS DE CONNEXION UI
-# ============================================================================
-

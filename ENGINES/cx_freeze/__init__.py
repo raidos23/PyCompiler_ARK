@@ -237,7 +237,6 @@ class CXFreezeEngine(CompilerEngine):
     def get_log_prefix(self, file_basename: str) -> str:
         return f"CX_Freeze ({self.version})"
 
-
     def apply_i18n(self, gui, tr: dict) -> None:
         """Apply internationalization translations to the engine UI."""
         try:

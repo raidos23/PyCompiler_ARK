@@ -40,4 +40,3 @@ __all__ = [
     "BcaslOnlyModApp",
     "launch_bcasl_gui",
 ]
-

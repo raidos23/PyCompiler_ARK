@@ -495,9 +495,7 @@ def _apply_main_app_translations(self, tr: dict[str, object]) -> None:
                 _tt("tt_select_files", self.btn_select_files.toolTip())
             )
         if getattr(self, "compile_btn", None):
-            self.compile_btn.setToolTip(
-                _tt("tt_build_all", self.compile_btn.toolTip())
-            )
+            self.compile_btn.setToolTip(_tt("tt_build_all", self.compile_btn.toolTip()))
         if getattr(self, "btn_export_config", None):
             self.btn_export_config.setToolTip(
                 _tt("tt_export_config", self.btn_export_config.toolTip())
@@ -507,9 +505,7 @@ def _apply_main_app_translations(self, tr: dict[str, object]) -> None:
                 _tt("tt_import_config", self.btn_import_config.toolTip())
             )
         if getattr(self, "cancel_btn", None):
-            self.cancel_btn.setToolTip(
-                _tt("tt_cancel_all", self.cancel_btn.toolTip())
-            )
+            self.cancel_btn.setToolTip(_tt("tt_cancel_all", self.cancel_btn.toolTip()))
         if getattr(self, "btn_remove_file", None):
             self.btn_remove_file.setToolTip(
                 _tt("tt_remove_file", self.btn_remove_file.toolTip())

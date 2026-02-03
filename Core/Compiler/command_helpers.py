@@ -42,18 +42,18 @@ def build_command(
     args: Optional[List[str]] = None,
     working_dir: Optional[str] = None,
     env: Optional[Dict[str, str]] = None,
-    use_shell: bool = False
+    use_shell: bool = False,
 ) -> Tuple[str, Dict[str, str]]:
     """
     Construit une commande de compilation complète.
-    
+
     Args:
         program: Programme principal (python, pyinstaller, etc.)
         args: Arguments de la commande
         working_dir: Répertoire de travail
         env: Variables d'environnement supplémentaires
         use_shell: Utiliser shell pour l'exécution
-        
+
     Returns:
         Tuple (commande str, environnement dict)
     """
@@ -72,7 +72,7 @@ def build_command(
     full_env = os.environ.copy()
     if env:
         full_env.update(env)
-    
+
     # Ajouter des variables par défaut
     full_env.setdefault("PYTHONUNBUFFERED", "1")
     full_env.setdefault("ARK_COMPILER", "PyCompiler_ARK")
@@ -81,18 +81,16 @@ def build_command(
 
 
 def validate_command(
-    program: str,
-    args: Optional[List[str]] = None,
-    working_dir: Optional[str] = None
+    program: str, args: Optional[List[str]] = None, working_dir: Optional[str] = None
 ) -> Tuple[bool, str]:
     """
     Valide une commande de compilation.
-    
+
     Args:
         program: Programme principal
         args: Arguments
         working_dir: Répertoire de travail
-        
+
     Returns:
         Tuple (est_valide, message_erreur)
     """
@@ -102,21 +100,21 @@ def validate_command(
 
     # Vérifier si le programme existe
     program_path = None
-    
+
     # Chercher dans le PATH
     for path in os.environ.get("PATH", "").split(os.pathsep):
         test_path = os.path.join(path, program)
         if os.path.isfile(test_path) and os.access(test_path, os.X_OK):
             program_path = test_path
             break
-    
+
     # Vérifier si c'est un chemin absolu
     if not program_path and os.path.isabs(program):
         if os.path.isfile(program) and os.access(program, os.X_OK):
             program_path = program
 
     # Si pas trouvé et pas d'extension, essayer avec .py
-    if not program_path and not program.endswith(('.exe', '.py')):
+    if not program_path and not program.endswith((".exe", ".py")):
         py_program = program + ".py"
         for path in os.environ.get("PATH", "").split(os.pathsep):
             test_path = os.path.join(path, py_program)
@@ -126,7 +124,7 @@ def validate_command(
 
     if not program_path:
         # Pour Python, on peut utiliser sys.executable
-        if program in ('python', 'python3'):
+        if program in ("python", "python3"):
             program_path = sys.executable
         else:
             return False, f"Program not found: {program}"
@@ -147,10 +145,10 @@ def validate_command(
 def escape_arguments(args: List[str]) -> List[str]:
     """
     Échappe les arguments pour une utilisation sécurisée.
-    
+
     Args:
         args: Liste d'arguments
-        
+
     Returns:
         Liste d'arguments échappés
     """
@@ -164,19 +162,35 @@ def escape_arguments(args: List[str]) -> List[str]:
 def sanitize_path(path: str) -> str:
     """
     Sanitize un chemin pour éviter les injections.
-    
+
     Args:
         path: Chemin à sanitizer
-        
+
     Returns:
         Chemin sanitisé
     """
     # Supprimer les caractères dangereux
-    dangerous_chars = [';', '|', '&', '$', '`', '(', ')', '{', '}', '[', ']', '<', '>', '\n', '\r']
+    dangerous_chars = [
+        ";",
+        "|",
+        "&",
+        "$",
+        "`",
+        "(",
+        ")",
+        "{",
+        "}",
+        "[",
+        "]",
+        "<",
+        ">",
+        "\n",
+        "\r",
+    ]
     sanitized = path
     for char in dangerous_chars:
-        sanitized = sanitized.replace(char, '')
-    
+        sanitized = sanitized.replace(char, "")
+
     # Normaliser le chemin
     try:
         sanitized = os.path.normpath(sanitized)
@@ -184,15 +198,15 @@ def sanitize_path(path: str) -> str:
         if not os.path.isabs(sanitized):
             sanitized = os.path.abspath(sanitized)
     except Exception:
-        return ''
-    
+        return ""
+
     return sanitized
 
 
 class CommandBuilder:
     """
     Classe pour construire des commandes de compilation complexes.
-    
+
     Supporte:
     - Arguments positionnels et nommés
     - Options conditionnelles
@@ -203,7 +217,7 @@ class CommandBuilder:
     def __init__(self, program: str):
         """
         Initialise le builder avec un programme.
-        
+
         Args:
             program: Programme principal
         """
@@ -217,30 +231,32 @@ class CommandBuilder:
     def add_arg(self, arg: str) -> "CommandBuilder":
         """
         Ajoute un argument simple.
-        
+
         Args:
             arg: Argument à ajouter
-            
+
         Returns:
             self pour chainage
         """
-        sanitized = sanitize_path(arg) if any(c in arg for c in [' ', '(', ')', '&']) else arg
+        sanitized = (
+            sanitize_path(arg) if any(c in arg for c in [" ", "(", ")", "&"]) else arg
+        )
         self.args.append(sanitized)
         return self
 
     def add_option(self, option: str, value: Any) -> "CommandBuilder":
         """
         Ajoute une option avec valeur.
-        
+
         Args:
             option: Nom de l'option (avec ou sans --)
             value: Valeur de l'option
-            
+
         Returns:
             self pour chainage
         """
-        if not option.startswith('--'):
-            option = '--' + option
+        if not option.startswith("--"):
+            option = "--" + option
         self.args.append(option)
         self.args.append(str(value))
         return self
@@ -248,28 +264,28 @@ class CommandBuilder:
     def add_flag(self, flag: str, condition: bool = True) -> "CommandBuilder":
         """
         Ajoute un flag conditionnel.
-        
+
         Args:
             flag: Nom du flag (avec ou sans --)
             condition: Condition pour ajouter le flag
-            
+
         Returns:
             self pour chainage
         """
         if condition:
-            if not flag.startswith('--'):
-                flag = '--' + flag
+            if not flag.startswith("--"):
+                flag = "--" + flag
             self.args.append(flag)
         return self
 
     def add_file_option(self, option: str, file_path: str) -> "CommandBuilder":
         """
         Ajoute une option de fichier avec validation.
-        
+
         Args:
             option: Nom de l'option
             file_path: Chemin du fichier
-            
+
         Returns:
             self pour chainage
         """
@@ -281,11 +297,11 @@ class CommandBuilder:
     def add_directory_option(self, option: str, dir_path: str) -> "CommandBuilder":
         """
         Ajoute une option de répertoire avec validation.
-        
+
         Args:
             option: Nom de l'option
             dir_path: Chemin du répertoire
-            
+
         Returns:
             self pour chainage
         """
@@ -297,11 +313,11 @@ class CommandBuilder:
     def set_env(self, key: str, value: str) -> "CommandBuilder":
         """
         Définit une variable d'environnement.
-        
+
         Args:
             key: Nom de la variable
             value: Valeur
-            
+
         Returns:
             self pour chainage
         """
@@ -311,10 +327,10 @@ class CommandBuilder:
     def set_working_dir(self, path: str) -> "CommandBuilder":
         """
         Définit le répertoire de travail.
-        
+
         Args:
             path: Chemin du répertoire
-            
+
         Returns:
             self pour chainage
         """
@@ -326,11 +342,11 @@ class CommandBuilder:
     def add_multiple(self, option: str, values: List[str]) -> "CommandBuilder":
         """
         Ajoute plusieurs valeurs pour une même option.
-        
+
         Args:
             option: Nom de l'option
             values: Liste de valeurs
-            
+
         Returns:
             self pour chainage
         """
@@ -341,7 +357,7 @@ class CommandBuilder:
     def build(self) -> Tuple[str, Dict[str, str], Optional[str]]:
         """
         Construit la commande finale.
-        
+
         Returns:
             Tuple (commande str, environnement, répertoire de travail)
         """
@@ -357,7 +373,7 @@ class CommandBuilder:
     def build_for_execution(self) -> Tuple[List[str], Dict[str, str], Optional[str]]:
         """
         Construit la commande pour exécution directe.
-        
+
         Returns:
             Tuple (commande list, environnement, répertoire de travail)
         """
@@ -370,7 +386,7 @@ class CommandBuilder:
     def get_summary(self) -> Dict[str, Any]:
         """
         Retourne un résumé de la commande.
-        
+
         Returns:
             Dictionnaire avec le résumé
         """
@@ -385,7 +401,7 @@ class CommandBuilder:
     def copy(self) -> "CommandBuilder":
         """
         Crée une copie du builder.
-        
+
         Returns:
             Nouvelle instance avec les mêmes paramètres
         """
@@ -399,7 +415,7 @@ class CommandBuilder:
 def detect_python_executable() -> str:
     """
     Détecte l'exécutable Python à utiliser.
-    
+
     Returns:
         Chemin de l'exécutable Python
     """
@@ -410,10 +426,10 @@ def detect_python_executable() -> str:
 def get_interpreter_version(python_path: Optional[str] = None) -> Tuple[int, int, int]:
     """
     Retourne la version de l'interpréteur Python.
-    
+
     Args:
         python_path: Chemin de l'interpréteur (défaut: sys.executable)
-        
+
     Returns:
         Tuple (major, minor, patch)
     """
@@ -422,13 +438,10 @@ def get_interpreter_version(python_path: Optional[str] = None) -> Tuple[int, int
 
     try:
         result = subprocess.run(
-            [python_path, '--version'],
-            capture_output=True,
-            text=True,
-            timeout=5
+            [python_path, "--version"], capture_output=True, text=True, timeout=5
         )
         version_str = result.stdout or result.stderr
-        match = re.search(r'(\d+)\.(\d+)\.(\d+)', version_str)
+        match = re.search(r"(\d+)\.(\d+)\.(\d+)", version_str)
         if match:
             return int(match.group(1)), int(match.group(2)), int(match.group(3))
     except Exception:
@@ -440,27 +453,27 @@ def get_interpreter_version(python_path: Optional[str] = None) -> Tuple[int, int
 def check_module_available(module_name: str, python_path: Optional[str] = None) -> bool:
     """
     Vérifie si un module Python est disponible.
-    
+
     Args:
         module_name: Nom du module
         python_path: Chemin de l'interpréteur
-        
+
     Returns:
         True si le module est disponible
     """
     try:
         if python_path:
             result = subprocess.run(
-                [python_path, '-c', f'import {module_name}'],
+                [python_path, "-c", f"import {module_name}"],
                 capture_output=True,
                 text=True,
-                timeout=5
+                timeout=5,
             )
             return result.returncode == 0
         else:
             import importlib
+
             importlib.import_module(module_name)
             return True
     except Exception:
         return False
-

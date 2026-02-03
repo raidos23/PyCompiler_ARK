@@ -21,5 +21,6 @@ from Core.WidgetsCreator import CompilationProcessDialog
 from PySide6.QtCore import QEventLoop as _QEventLoop
 from PySide6.QtWidgets import QApplication, QFileDialog
 
-class WorkspaceAdvancedManipulation():
+
+class WorkspaceAdvancedManipulation:
     pass

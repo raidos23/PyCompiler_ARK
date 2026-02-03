@@ -14,19 +14,99 @@
 # limitations under the License.
 
 """
-PyCompiler Ark++ - Package Public Core
+PyCompiler ARK - Compiler Core Module
+
+Module principal du compilateur pour PyCompiler ARK.
+Gère l'exécution des processus de compilation avec support threading
+et communication en temps réel avec l'interface utilisateur.
+
+Classes principales:
+- CompilerCore: Classe principale du compilateur
+- CompilationThread: Thread pour exécution non-bloquante
+- MainProcess: Processus principal de compilation
+- ProcessKiller: Gestion des processus
+
+Fonctions:
+- compile_all: Compile tous les fichiers sélectionnés
+- cancel_all_compilations: Annule toutes les compilations en cours
+- kill_process: Tue un processus
+- kill_process_tree: Tue un processus et ses enfants
+- build_command: Construit une commande de compilation
+- validate_command: Valide une commande de compilation
 """
 
 from __future__ import annotations
 
-import sys as _sys
-from importlib import import_module as _import_module
-from os.path import dirname as _dirname
-from threading import RLock
-from types import ModuleType
-from typing import Any
-from .Gui import PyCompilerArkGui
+# Instance globale du MainProcess (pour compatibilité avec l'UI)
+_global_main_process = None
 
+
+def _get_main_process():
+    """Retourne l'instance globale du MainProcess."""
+    global _global_main_process
+    if _global_main_process is None:
+        _global_main_process = MainProcess()
+    return _global_main_process
+
+
+# Importations de compiler.py
+from Core.Compiler.compiler import (
+    CompilationStatus,
+    CompilationSignals,
+    CompilationThread,
+    CompilerCore,
+)
+
+# Importations de mainprocess.py
+from Core.Compiler.mainprocess import (
+    ProcessState,
+    MainProcessSignals,
+    MainProcess,
+)
+
+# Importations de command_helpers.py
+from Core.Compiler.command_helpers import (
+    build_command,
+    validate_command,
+    escape_arguments,
+    sanitize_path,
+    CommandBuilder,
+    detect_python_executable,
+    get_interpreter_version,
+    check_module_available,
+)
+
+# Importations de process_killer.py
+from Core.Compiler.process_killer import (
+    ProcessInfo,
+    ProcessKiller,
+    kill_process,
+    kill_process_tree,
+    get_process_info,
+)
+
+
+__all__ = [
+    "CompilationStatus",
+    "CompilationSignals",
+    "CompilationThread",
+    "CompilerCore",
+    "ProcessState",
+    "MainProcessSignals",
+    "MainProcess",
+    "build_command",
+    "validate_command",
+    "escape_arguments",
+    "sanitize_path",
+    "CommandBuilder",
+    "detect_python_executable",
+    "get_interpreter_version",
+    "check_module_available",
+    "ProcessInfo",
+    "ProcessKiller",
+    "kill_process",
+    "kill_process_tree",
+    "get_process_info",
+]
 __version__ = "1.0.0"
-
-__all__ = []
+__author__ = "Ague Samuel Amen"

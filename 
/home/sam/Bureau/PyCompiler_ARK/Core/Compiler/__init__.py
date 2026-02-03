@@ -89,52 +89,53 @@ from Core.Compiler.process_killer import (
 def compile_all(gui_instance) -> bool:
     """
     Compile tous les fichiers sélectionnés en utilisant l'instance GUI.
-    
+
     Args:
         gui_instance: Instance de l'interface graphique PyCompilerArkGui
-        
+
     Returns:
         True si la compilation a démarrer, False sinon
     """
     mp = _get_main_process()
-    
+
     # Synchroniser le workspace
-    if hasattr(gui_instance, 'workspace_dir') and gui_instance.workspace_dir:
+    if hasattr(gui_instance, "workspace_dir") and gui_instance.workspace_dir:
         mp.set_workspace(gui_instance.workspace_dir)
-    
+
     # Récupérer les fichiers à compiler
     files = []
-    if hasattr(gui_instance, 'python_files'):
+    if hasattr(gui_instance, "python_files"):
         files = gui_instance.python_files
-    
+
     if not files:
-        if hasattr(gui_instance, 'log') and gui_instance.log:
+        if hasattr(gui_instance, "log") and gui_instance.log:
             gui_instance.log.append("⚠️ Aucun fichier à compiler")
         return False
-    
+
     # Vérifier qu'un moteur est sélectionné
-    if not hasattr(gui_instance, 'compiler_tabs') or not gui_instance.compiler_tabs:
-        if hasattr(gui_instance, 'log') and gui_instance.log:
+    if not hasattr(gui_instance, "compiler_tabs") or not gui_instance.compiler_tabs:
+        if hasattr(gui_instance, "log") and gui_instance.log:
             gui_instance.log.append("⚠️ Aucun moteur de compilation disponible")
         return False
-    
+
     try:
         import EngineLoader as engines_loader
+
         idx = gui_instance.compiler_tabs.currentIndex()
         engine_id = engines_loader.registry.get_engine_for_tab(idx)
-        
+
         if not engine_id:
-            if hasattr(gui_instance, 'log') and gui_instance.log:
+            if hasattr(gui_instance, "log") and gui_instance.log:
                 gui_instance.log.append("⚠️ Aucun moteur sélectionné")
             return False
-        
+
         mp.set_engine(engine_id)
-        
+
     except Exception as e:
-        if hasattr(gui_instance, 'log') and gui_instance.log:
+        if hasattr(gui_instance, "log") and gui_instance.log:
             gui_instance.log.append(f"⚠️ Erreur lors de la sélection du moteur: {e}")
         return False
-    
+
     # Démarrer la compilation pour chaque fichier
     success_count = 0
     for file_path in files:
@@ -143,21 +144,23 @@ def compile_all(gui_instance) -> bool:
             # La commande sera générée par le moteur
             # Pour l'instant, on retourne True si le MainProcess est prêt
             success_count += 1
-            
+
         except Exception as e:
-            if hasattr(gui_instance, 'log') and gui_instance.log:
+            if hasattr(gui_instance, "log") and gui_instance.log:
                 gui_instance.log.append(f"❌ Erreur pour {file_path}: {e}")
-    
-    if hasattr(gui_instance, 'log') and gui_instance.log:
-        gui_instance.log.append(f"✅ {success_count} fichier(s) prêt(s) pour compilation")
-    
+
+    if hasattr(gui_instance, "log") and gui_instance.log:
+        gui_instance.log.append(
+            f"✅ {success_count} fichier(s) prêt(s) pour compilation"
+        )
+
     return success_count > 0
 
 
 def cancel_all_compilations() -> bool:
     """
     Annule toutes les compilations en cours.
-    
+
     Returns:
         True si l'annulation a été demandée, False sinon
     """
@@ -168,7 +171,7 @@ def cancel_all_compilations() -> bool:
 def handle_finished(return_code: int) -> None:
     """
     Gère la fin d'une compilation.
-    
+
     Args:
         return_code: Code de retour du processus
     """
@@ -178,7 +181,7 @@ def handle_finished(return_code: int) -> None:
 def handle_stderr(error: str) -> None:
     """
     Gère les erreurs stderr.
-    
+
     Args:
         error: Message d'erreur
     """
@@ -188,7 +191,7 @@ def handle_stderr(error: str) -> None:
 def handle_stdout(output: str) -> None:
     """
     Gère la sortie stdout.
-    
+
     Args:
         output: Sortie standard
     """
@@ -198,24 +201,25 @@ def handle_stdout(output: str) -> None:
 def show_error_dialog(parent, title: str, message: str) -> None:
     """
     Affiche une boîte de dialogue d'erreur.
-    
+
     Args:
         parent: Widget parent
         title: Titre de la boîte de dialogue
         message: Message d'erreur
     """
     from PySide6.QtWidgets import QMessageBox
+
     QMessageBox.critical(parent, title, message)
 
 
 def try_install_missing_modules(parent, missing: list) -> bool:
     """
     Tente d'installer les modules manquants.
-    
+
     Args:
         parent: Widget parent
         missing: Liste des modules manquants
-        
+
     Returns:
         True si l'installation a réussi, False sinon
     """
@@ -226,10 +230,10 @@ def try_install_missing_modules(parent, missing: list) -> bool:
 def try_start_processes(gui_instance) -> bool:
     """
     Tente de démarrer les processus de compilation.
-    
+
     Args:
         gui_instance: Instance de l'interface graphique
-        
+
     Returns:
         True si les processus ont démarrer, False sinon
     """
@@ -239,10 +243,10 @@ def try_start_processes(gui_instance) -> bool:
 def start_compilation_process(gui_instance) -> bool:
     """
     Démarre un processus de compilation.
-    
+
     Args:
         gui_instance: Instance de l'interface graphique
-        
+
     Returns:
         True si le processus a démarrer, False sinon
     """
@@ -252,10 +256,10 @@ def start_compilation_process(gui_instance) -> bool:
 def _continue_compile_all(gui_instance) -> bool:
     """
     Continue la compilation de tous les fichiers.
-    
+
     Args:
         gui_instance: Instance de l'interface graphique
-        
+
     Returns:
         True si la compilation continue, False sinon
     """
@@ -268,12 +272,10 @@ __all__ = [
     "CompilationSignals",
     "CompilationThread",
     "CompilerCore",
-    
     # Classes de mainprocess.py
     "ProcessState",
     "MainProcessSignals",
     "MainProcess",
-    
     # Fonctions de command_helpers.py
     "build_command",
     "validate_command",
@@ -283,14 +285,12 @@ __all__ = [
     "detect_python_executable",
     "get_interpreter_version",
     "check_module_available",
-    
     # Classes et fonctions de process_killer.py
     "ProcessInfo",
     "ProcessKiller",
     "kill_process",
     "kill_process_tree",
     "get_process_info",
-    
     # Fonctions de compatibilité UI
     "compile_all",
     "cancel_all_compilations",
@@ -306,4 +306,3 @@ __all__ = [
 
 __version__ = "1.0.0"
 __author__ = "Ague Samuel Amen"
-

@@ -298,8 +298,6 @@ class NuitkaEngine(CompilerEngine):
     def get_log_prefix(self, file_basename: str) -> str:
         return f"Nuitka ({self.version})"
 
-
-
     def apply_i18n(self, gui, tr: dict) -> None:
         """Apply internationalization translations to the engine UI."""
         try:

@@ -47,11 +47,11 @@ _IS_MACOS = sys.platform == "darwin"
 
 class ProcessInfo:
     """Informations sur un processus."""
-    
+
     def __init__(self, pid: int, name: str, command: str):
         """
         Initialise les infos du processus.
-        
+
         Args:
             pid: ID du processus
             name: Nom du processus
@@ -77,7 +77,7 @@ class ProcessInfo:
 class ProcessKiller:
     """
     Classe pour tuer proprement les processus de compilation.
-    
+
     Supporte:
     - Terminaison simple de processus
     - Terminaison d'arborescence de processus (parents + enfants)
@@ -87,31 +87,28 @@ class ProcessKiller:
 
     # Délais de terminaison en secondes
     TERMINATE_TIMEOUT = 5.0  # Temps pour terminate()
-    KILL_TIMEOUT = 2.0       # Temps pour kill() après terminate
+    KILL_TIMEOUT = 2.0  # Temps pour kill() après terminate
 
     def __init__(self, timeout: Optional[float] = None):
         """
         Initialise le killer de processus.
-        
+
         Args:
             timeout: Timeout global pour la terminaison (optionnel)
         """
         self.timeout = timeout or (self.TERMINATE_TIMEOUT + self.KILL_TIMEOUT)
 
     def kill(
-        self,
-        pid: int,
-        force: bool = False,
-        recursive: bool = False
+        self, pid: int, force: bool = False, recursive: bool = False
     ) -> Dict[str, Any]:
         """
         Tue un processus.
-        
+
         Args:
             pid: ID du processus à tuer
             force: Utiliser kill() directement au lieu de terminate()
             recursive: Tuer aussi les processus enfants
-            
+
         Returns:
             Dictionnaire avec le résultat
         """
@@ -167,17 +164,15 @@ class ProcessKiller:
         return result
 
     def kill_process_tree(
-        self,
-        pid: int,
-        include_parent: bool = True
+        self, pid: int, include_parent: bool = True
     ) -> Dict[str, Any]:
         """
         Tue un processus et tous ses enfants.
-        
+
         Args:
             pid: ID du processus parent
             include_parent: Inclure le processus parent dans la terminaison
-            
+
         Returns:
             Dictionnaire avec le résultat
         """
@@ -192,7 +187,7 @@ class ProcessKiller:
         start_time = time.time()
 
         try:
-            #收集所有进程ID
+            # 收集所有进程ID
             all_pids = [pid] if include_parent else []
             all_pids.extend(self.get_child_pids(pid))
 
@@ -218,17 +213,15 @@ class ProcessKiller:
         return result
 
     def kill_by_name(
-        self,
-        process_name: str,
-        exclude_pids: Optional[List[int]] = None
+        self, process_name: str, exclude_pids: Optional[List[int]] = None
     ) -> Dict[str, Any]:
         """
         Tue tous les processus avec un nom donné.
-        
+
         Args:
             process_name: Nom du processus à tuer
             exclude_pids: Liste de PID à exclure
-            
+
         Returns:
             Dictionnaire avec le résultat
         """
@@ -252,7 +245,9 @@ class ProcessKiller:
                         result["killed_pids"].append(pid)
 
             result["success"] = len(result["killed_pids"]) > 0
-            result["message"] = f"Found {len(pids)} process(es), killed {len(result['killed_pids'])}"
+            result["message"] = (
+                f"Found {len(pids)} process(es), killed {len(result['killed_pids'])}"
+            )
 
         except Exception as e:
             result["message"] = f"Error killing by name: {str(e)}"
@@ -262,10 +257,10 @@ class ProcessKiller:
     def get_child_pids(self, pid: int) -> List[int]:
         """
         Retourne la liste des PID enfants d'un processus.
-        
+
         Args:
             pid: ID du processus parent
-            
+
         Returns:
             Liste des PID enfants
         """
@@ -275,10 +270,17 @@ class ProcessKiller:
             # Sur Windows, utiliser tasklist
             try:
                 result = subprocess.run(
-                    ['wmic', 'process', 'where', f'ParentProcessId={pid}', 'get', 'ProcessId'],
+                    [
+                        "wmic",
+                        "process",
+                        "where",
+                        f"ParentProcessId={pid}",
+                        "get",
+                        "ProcessId",
+                    ],
                     capture_output=True,
                     text=True,
-                    timeout=5
+                    timeout=5,
                 )
                 for line in result.stdout.splitlines():
                     if line.strip().isdigit():
@@ -312,10 +314,10 @@ class ProcessKiller:
     def find_pids_by_name(self, process_name: str) -> List[int]:
         """
         Trouve tous les PID correspondant à un nom de processus.
-        
+
         Args:
             process_name: Nom du processus
-            
+
         Returns:
             Liste des PID trouvés
         """
@@ -324,10 +326,10 @@ class ProcessKiller:
         if _IS_WINDOWS:
             try:
                 result = subprocess.run(
-                    ['tasklist', '/FO', 'CSV', '/NH'],
+                    ["tasklist", "/FO", "CSV", "/NH"],
                     capture_output=True,
                     text=True,
-                    timeout=10
+                    timeout=10,
                 )
                 for line in result.stdout.splitlines():
                     if process_name.lower() in line.lower():
@@ -342,10 +344,10 @@ class ProcessKiller:
         else:
             try:
                 result = subprocess.run(
-                    ['pgrep', '-f', process_name],
+                    ["pgrep", "-f", process_name],
                     capture_output=True,
                     text=True,
-                    timeout=10
+                    timeout=10,
                 )
                 for line in result.stdout.strip().splitlines():
                     try:
@@ -385,7 +387,7 @@ class ProcessKiller:
         try:
             cmdline_file = Path(f"/proc/{pid}/cmdline")
             if cmdline_file.exists():
-                return cmdline_file.read_text().replace('\x00', ' ')
+                return cmdline_file.read_text().replace("\x00", " ")
         except Exception:
             pass
         return None
@@ -395,10 +397,10 @@ class ProcessKiller:
         if _IS_WINDOWS:
             try:
                 result = subprocess.run(
-                    ['tasklist', '/FI', f'PID eq {pid}', '/FO', 'CSV'],
+                    ["tasklist", "/FI", f"PID eq {pid}", "/FO", "CSV"],
                     capture_output=True,
                     text=True,
-                    timeout=5
+                    timeout=5,
                 )
                 return str(pid) in result.stdout
             except Exception:
@@ -444,18 +446,16 @@ class ProcessKiller:
 
 
 def kill_process(
-    pid: int,
-    force: bool = False,
-    recursive: bool = False
+    pid: int, force: bool = False, recursive: bool = False
 ) -> Dict[str, Any]:
     """
     Tue un processus (fonction utilitaire).
-    
+
     Args:
         pid: ID du processus
         force: Utiliser kill() directement
         recursive: Tuer aussi les enfants
-        
+
     Returns:
         Dictionnaire avec le résultat
     """
@@ -463,17 +463,14 @@ def kill_process(
     return killer.kill(pid, force, recursive)
 
 
-def kill_process_tree(
-    pid: int,
-    include_parent: bool = True
-) -> Dict[str, Any]:
+def kill_process_tree(pid: int, include_parent: bool = True) -> Dict[str, Any]:
     """
     Tue un processus et tous ses enfants (fonction utilitaire).
-    
+
     Args:
         pid: ID du processus parent
         include_parent: Inclure le parent
-        
+
     Returns:
         Dictionnaire avec le résultat
     """
@@ -484,32 +481,31 @@ def kill_process_tree(
 def get_process_info(pid: int) -> Optional[ProcessInfo]:
     """
     Retourne les informations sur un processus.
-    
+
     Args:
         pid: ID du processus
-        
+
     Returns:
         ProcessInfo ou None si non trouvé
     """
     try:
         if _IS_WINDOWS:
             result = subprocess.run(
-                ['tasklist', '/FI', f'PID eq {pid}', '/FO', 'CSV'],
+                ["tasklist", "/FI", f"PID eq {pid}", "/FO", "CSV"],
                 capture_output=True,
                 text=True,
-                timeout=5
+                timeout=5,
             )
             lines = result.stdout.strip().splitlines()
             if len(lines) > 1:
-                parts = lines[1].split(',')
+                parts = lines[1].split(",")
                 if len(parts) >= 2:
                     name = parts[0].strip('"')
                     return ProcessInfo(pid, name, "")
         else:
-            cmdline = Path(f"/proc/{pid}/cmdline").read_text().replace('\x00', ' ')
+            cmdline = Path(f"/proc/{pid}/cmdline").read_text().replace("\x00", " ")
             comm = Path(f"/proc/{pid}/comm").read_text().strip()
             return ProcessInfo(pid, comm, cmdline)
     except Exception:
         pass
     return None
-

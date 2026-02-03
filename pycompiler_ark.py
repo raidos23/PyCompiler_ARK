@@ -497,7 +497,7 @@ def launch_engines_only_standalone(workspace_dir: Optional[str] = None) -> int:
         except Exception:
             pass
         window = EnginesStandaloneGui(workspace_dir=workspace_dir)
-        
+
         window.show()
         return app.exec()
     except ImportError as e:
@@ -511,9 +511,7 @@ def launch_engines_only_standalone(workspace_dir: Optional[str] = None) -> int:
             )
         else:
             print(f"❌ Error: Failed to import Engines standalone module: {e}")
-            print(
-                "Make sure OnlyMod.EngineOnlyMod is properly installed."
-            )
+            print("Make sure OnlyMod.EngineOnlyMod is properly installed.")
         return 1
     except Exception as e:
         if click:

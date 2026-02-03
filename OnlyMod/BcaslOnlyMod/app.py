@@ -66,12 +66,12 @@ from .gui import BcaslStandaloneGui
 
 
 # Variable globale pour la langue
-_CURRENT_LANGUAGE = 'en'
+_CURRENT_LANGUAGE = "en"
 
 
 def tr(en_text: str, fr_text: str) -> str:
     """Fonction de traduction simple pour BcaslOnlyMod."""
-    return fr_text if _CURRENT_LANGUAGE == 'fr' else en_text
+    return fr_text if _CURRENT_LANGUAGE == "fr" else en_text
 
 
 class LanguageManager:
@@ -142,9 +142,9 @@ class LanguageManager:
         """Récupère une chaîne traduite avec formatage optionnel."""
         lang_strings = self.strings.get(self.current_language, self.strings["en"])
         default_strings = self.strings.get("en", {})
-        
+
         text = lang_strings.get(key, default_strings.get(key, key))
-        
+
         try:
             return text.format(**kwargs) if kwargs else text
         except (KeyError, ValueError):
@@ -209,7 +209,7 @@ class BcaslOnlyModApp:
     """
 
     # Variable de classe pour la langue
-    _language = 'en'
+    _language = "en"
 
     def __init__(
         self,
@@ -283,15 +283,17 @@ class BcaslOnlyModApp:
         plugins = []
         for pid in order:
             meta = self.plugins_meta.get(pid, {})
-            plugins.append({
-                "id": pid,
-                "name": meta.get("name", pid),
-                "version": meta.get("version", ""),
-                "description": meta.get("description", ""),
-                "author": meta.get("author", ""),
-                "tags": meta.get("tags", []),
-                "requirements": meta.get("requirements", []),
-            })
+            plugins.append(
+                {
+                    "id": pid,
+                    "name": meta.get("name", pid),
+                    "version": meta.get("version", ""),
+                    "description": meta.get("description", ""),
+                    "author": meta.get("author", ""),
+                    "tags": meta.get("tags", []),
+                    "requirements": meta.get("requirements", []),
+                }
+            )
 
         return plugins
 
@@ -310,7 +312,9 @@ class BcaslOnlyModApp:
 
         return plugin_order
 
-    def get_enabled_plugins(self, config: Optional[Dict[str, Any]] = None) -> Dict[str, bool]:
+    def get_enabled_plugins(
+        self, config: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, bool]:
         """Retourne l'état d'activation des plugins."""
         cfg = config or self.config
         plugins_cfg = cfg.get("plugins", {}) if isinstance(cfg, dict) else {}
@@ -460,6 +464,7 @@ class BcaslOnlyModApp:
             phase = ""
             if tags:
                 from bcasl.tagging import get_tag_phase_name
+
                 phase = get_tag_phase_name(tags[0])
 
             print(f"  - {plugin['name']} ({plugin['id']})")
@@ -523,7 +528,7 @@ def run_cli(
             print(f"  * {plugin['name']}")
             print(f"      ID: {plugin['id']}")
             print(f"      Version: {plugin['version']}")
-            if plugin.get('description'):
+            if plugin.get("description"):
                 print(f"      Description: {plugin['description']}")
             print(f"      Phase: {phase}")
             if tags:
@@ -532,6 +537,7 @@ def run_cli(
         return
 
     if run:
+
         def log_callback(msg: str):
             print(f"[LOG] {msg}")
 
@@ -545,7 +551,9 @@ def run_cli(
             if report.ok:
                 print("\nAll plugins executed successfully")
             else:
-                print(f"\n{sum(1 for item in report if not item.success)} plugin(s) failed")
+                print(
+                    f"\n{sum(1 for item in report if not item.success)} plugin(s) failed"
+                )
         return
 
     app.print_summary()
@@ -573,17 +581,20 @@ Examples:
     )
 
     parser.add_argument(
-        "-w", "--workspace",
+        "-w",
+        "--workspace",
         help="Project workspace directory",
     )
     parser.add_argument(
-        "-l", "--language",
+        "-l",
+        "--language",
         choices=["en", "fr"],
         default="en",
         help="Interface language (default: en)",
     )
     parser.add_argument(
-        "-t", "--theme",
+        "-t",
+        "--theme",
         choices=["light", "dark"],
         default="dark",
         help="UI theme (default: dark)",
@@ -594,7 +605,8 @@ Examples:
         help="List available BCASL plugins",
     )
     parser.add_argument(
-        "-r", "--run",
+        "-r",
+        "--run",
         action="store_true",
         help="Execute BCASL plugins",
     )
@@ -605,7 +617,8 @@ Examples:
         help="Plugin execution timeout in seconds (0 = unlimited)",
     )
     parser.add_argument(
-        "-g", "--gui",
+        "-g",
+        "--gui",
         action="store_true",
         help="Launch GUI interface",
     )
@@ -615,11 +628,13 @@ Examples:
     if args.gui:
         from .gui import launch_bcasl_gui
 
-        sys.exit(launch_bcasl_gui(
-            workspace_dir=args.workspace,
-            language=args.language,
-            theme=args.theme,
-        ))
+        sys.exit(
+            launch_bcasl_gui(
+                workspace_dir=args.workspace,
+                language=args.language,
+                theme=args.theme,
+            )
+        )
 
     run_cli(
         workspace_dir=args.workspace,
@@ -633,4 +648,3 @@ Examples:
 
 if __name__ == "__main__":
     main()
-

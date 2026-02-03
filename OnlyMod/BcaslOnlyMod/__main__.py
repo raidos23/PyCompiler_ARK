@@ -34,13 +34,13 @@ Options:
 Exemples:
     # Lancer l'interface graphique
     python -m OnlyMod.BcaslOnlyMod --gui
-    
+
     # Lancer avec workspace spécifique
     python -m OnlyMod.BcaslOnlyMod --gui --workspace /path/to/workspace
-    
+
     # Lister les plugins (mode CLI)
     python -m OnlyMod.BcaslOnlyMod --list-plugins
-    
+
     # Exécuter les plugins (mode CLI)
     python -m OnlyMod.BcaslOnlyMod --run --workspace /path/to/workspace
 """
@@ -59,4 +59,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
