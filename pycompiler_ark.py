@@ -167,7 +167,7 @@ from PySide6.QtWidgets import QApplication, QSplashScreen
 
 # Application metadata and high-DPI attributes BEFORE QApplication
 try:
-    QCoreApplication.setOrganizationName("PyCompiler")
+    QCoreApplication.setOrganizationName("raidos23")
     QCoreApplication.setOrganizationDomain("pycompiler.local")
     QCoreApplication.setApplicationName("PyCompiler ARK++")
     QCoreApplication.setApplicationVersion(APP_VERSION)

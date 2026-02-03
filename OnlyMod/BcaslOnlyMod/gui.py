@@ -986,7 +986,7 @@ def launch_bcasl_gui(
     """
     app = QApplication(sys.argv)
     app.setApplicationName("PyCompiler ARK++ BCASL")
-    app.setOrganizationName("PyCompiler")
+    app.setOrganizationName("raidos23")
 
     window = BcaslStandaloneGui(
         workspace_dir=workspace_dir, language=language, theme=theme
