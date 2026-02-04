@@ -1,47 +1,72 @@
-# Plan de Correction - Erreur TypeError: CompilerEngine.ensure_tools_installed()
+# Plan de Correction - RuntimeError QListWidget
 
 ## Problème Identifié
-
-Dans `Core/Compiler/__init__.py`, la fonction `get_engine(engine_id)` retourne la **classe** de l'engine, mais le code appelle des méthodes d'instance (`ensure_tools_installed`, `build_command`, `on_success`) sur cette classe au lieu d'une instance.
-
-### Lieux du problème (ligne 221 et suivantes):
-1. `compile_all()` - ligne ~221: `engine = get_engine(engine_id)` puis `engine.ensure_tools_installed(self)`
-2. `_start_compilation_queue()` - ligne ~249: `if not engine.ensure_tools_installed(self)`
-3. `start_compilation_process()` - ligne ~308: `engine = get_engine(engine_id)` puis `engine.ensure_tools_installed(self)`
-4. `handle_finished()` - ligne ~400: `engine.on_success(self, file_path)`
+L'erreur `RuntimeError: Internal C++ object (PySide6.QtWidgets.QListWidget) already deleted.` se produit car:
+- L'attribut `plugins_list` existe toujours dans l'objet Python
+- Mais l'objet C++ sous-jacent a été détruit
+- `hasattr()` retourne `True` car l'attribut existe, même si l'objet interne est invalide
 
 ## Solution
-
-Remplacer `get_engine(engine_id)` par `create(engine_id)` dans `Core/Compiler/__init__.py` là où des méthodes d'instance sont appelées sur l'engine.
-
-La fonction `create()` dans `EngineLoader/registry.py` instancie correctement l'engine:
-```python
-def create(eid: str) -> CompilerEngine:
-    cls = get_engine(eid)
-    if not cls:
-        raise KeyError(f"Engine '{eid}' is not registered")
-    try:
-        return cls()  # Crée une instance!
-    except Exception as e:
-        raise RuntimeError(f"Failed to instantiate engine '{eid}': {e}")
-```
+Créer une méthode utilitaire robuste pour vérifier la validité des widgets Qt avant utilisation.
 
 ## Fichiers à Modifier
+1. `/home/sam/PyCompiler_ARK/OnlyMod/BcaslOnlyMod/gui.py`
 
-| Fichier | Modification |
-|---------|--------------|
-| `Core/Compiler/__init__.py` | Remplacer `get_engine()` par `create()` pour les appels aux méthodes d'instance |
+## Modifications Détaillées
 
-## Étapes de Correction
+### 1. Ajouter une méthode utilitaire `_is_valid()` après `_center_window()`
 
-1. Importer `create` depuis EngineLoader.registry
-2. Remplacer `get_engine(engine_id)` par `create(engine_id)` dans:
-   - `compile_all()` - pour l'appel à `ensure_tools_installed()`
-   - `_start_compilation_queue()` - pour les appels à `ensure_tools_installed()`, `build_command()`, et `environment()`
-   - `start_compilation_process()` - pour les appels à `ensure_tools_installed()`, `build_command()`, et `on_success()`
-   - `handle_finished()` - pour l'appel à `on_success()`
+```python
+def _is_valid(self, widget) -> bool:
+    """Vérifie si un widget Qt est toujours valide.
+    
+    Contrairement à hasattr(), cette méthode vérifie si l'objet C++
+    sous-jacent n'a pas été détruit.
+    
+    Args:
+        widget: Le widget Qt à vérifier
+        
+    Returns:
+        True si le widget est valide, False sinon
+    """
+    if widget is None:
+        return False
+    try:
+        # Vérification par la présence de l'objet Qt
+        # isValid() n'existe pas pour QListWidget, on utilise une vérification indirecte
+        # La tentative d'accès au widget lui-même détecte si l'objet C++ est détruit
+        widget.objectName()
+        return True
+    except RuntimeError:
+        return False
+```
 
-## Note Importante
+### 2. Modifier `_discover_plugins()` pour utiliser la nouvelle méthode
 
-Ne pas modifier les imports de `get_engine` car il est toujours utilisé ailleurs dans le code (par exemple pour obtenir la classe sans l'instancier).
+Lignes ~640-645: Remplacer la vérification actuelle par une vérification robuste.
+
+### 3. Modifier `_on_global_toggle()` pour vérifier la validité
+
+Lignes ~716-730: Ajouter des vérifications avant d'accéder à `plugins_list`.
+
+### 4. Modifier `_move_plugin_up()` et `_move_plugin_down()`
+
+Ajouter des vérifications au début de ces méthodes.
+
+### 5. Modifier `_get_plugin_order()` et `_get_enabled_plugins()`
+
+Ajouter des vérifications de validité.
+
+### 6. Modifier `_run_plugins()`
+
+Ajouter des vérifications avant de désactiver le widget.
+
+### 7. Modifier `_on_execution_finished()` et `_on_execution_error()`
+
+Ajouter des vérifications avant d'activer/désactiver le widget.
+
+## Critères de Succès
+- L'application se lance sans erreur
+- La liste des plugins s'affiche correctement
+- Les interactions avec la liste (déplacer, activer/désactiver) fonctionnent sans erreur
 

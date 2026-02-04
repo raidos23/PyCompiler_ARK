@@ -524,6 +524,28 @@ class BcaslStandaloneGui(QWidget):
         except Exception:
             pass
 
+    def _is_valid(self, widget) -> bool:
+        """Vérifie si un widget Qt est toujours valide.
+
+        Contrairement à hasattr(), cette méthode vérifie si l'objet C++
+        sous-jacent n'a pas été détruit.
+
+        Args:
+            widget: Le widget Qt à vérifier
+
+        Returns:
+            True si le widget est valide, False sinon
+        """
+        if widget is None:
+            return False
+        try:
+            # Tentative d'accès à une propriété du widget
+            # Si l'objet C++ a été détruit, une RuntimeError sera levée
+            widget.objectName()
+            return True
+        except RuntimeError:
+            return False
+
     def _apply_theme(self, theme_name: str):
         """Applique le thème visuel."""
         if theme_name == "dark":
@@ -633,11 +655,24 @@ class BcaslStandaloneGui(QWidget):
         _CURRENT_LANGUAGE = lang_code
 
         # Les traductions sont gérées via tr() dans setup_ui
-        self._log(tr("Language set to English", "Langue définie sur Français"))
+        # Note: On utilise une vérification pour éviter l'erreur si log_text n'est pas encore initialisé
+        if self._is_valid(self.log_text):
+            try:
+                self._log(tr("Language set to English", "Langue définie sur Français"))
+            except (RuntimeError, AttributeError):
+                pass  # Ignorer si le widget a été supprimé
 
     def _discover_plugins(self):
         """Découvre et affiche les plugins BCASL disponibles."""
-        self.plugins_list.clear()
+        # Vérifier que les widgets sont initialisés et valides
+        if not self._is_valid(self.plugins_list):
+            return
+        
+        try:
+            self.plugins_list.clear()
+        except (RuntimeError, AttributeError):
+            return  # Widget supprimé
+        
         self.plugins_meta = {}
 
         if not self.Plugins_dir or not self.Plugins_dir.exists():
@@ -657,11 +692,14 @@ class BcaslStandaloneGui(QWidget):
                 )
             )
             # Créer un message dans la liste
-            item = QListWidgetItem(
-                tr("No plugins available", "Aucun plugin disponible")
-            )
-            item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEnabled)
-            self.plugins_list.addItem(item)
+            try:
+                item = QListWidgetItem(
+                    tr("No plugins available", "Aucun plugin disponible")
+                )
+                item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEnabled)
+                self.plugins_list.addItem(item)
+            except (RuntimeError, AttributeError):
+                pass  # Widget supprimé
             return
 
         # Trier les plugins par ordre de priorité (tags)
@@ -744,17 +782,25 @@ class BcaslStandaloneGui(QWidget):
 
     def _on_global_toggle(self, checked: bool):
         """Gère l'activation/désactivation globale de BCASL."""
+        # Vérifier que la liste des plugins est valide
+        if not self._is_valid(self.plugins_list):
+            return
+        
         # Activer/désactiver tous les items
-        for i in range(self.plugins_list.count()):
-            item = self.plugins_list.item(i)
-            plugin_id = item.data(Qt.ItemDataRole.UserRole)
-            if plugin_id:
-                item.setCheckState(
-                    Qt.CheckState.Checked if checked else Qt.CheckState.Unchecked
-                )
+        try:
+            for i in range(self.plugins_list.count()):
+                item = self.plugins_list.item(i)
+                plugin_id = item.data(Qt.ItemDataRole.UserRole)
+                if plugin_id:
+                    item.setCheckState(
+                        Qt.CheckState.Checked if checked else Qt.CheckState.Unchecked
+                    )
+        except (RuntimeError, AttributeError):
+            return  # Widget supprimé
 
         # Activer/désactiver les contrôles
-        self.plugins_list.setEnabled(checked)
+        if self._is_valid(self.plugins_list):
+            self.plugins_list.setEnabled(checked)
         self.btn_move_up.setEnabled(checked)
         self.btn_move_down.setEnabled(checked)
         self.btn_run.setEnabled(checked)
@@ -766,42 +812,70 @@ class BcaslStandaloneGui(QWidget):
 
     def _move_plugin_up(self):
         """Déplace le plugin sélectionné vers le haut."""
+        # Vérifier que la liste des plugins est valide
+        if not self._is_valid(self.plugins_list):
+            return
+        
         row = self.plugins_list.currentRow()
         if row <= 0:
             return
 
-        item = self.plugins_list.takeItem(row)
-        self.plugins_list.insertItem(row - 1, item)
-        self.plugins_list.setCurrentRow(row - 1)
+        try:
+            item = self.plugins_list.takeItem(row)
+            self.plugins_list.insertItem(row - 1, item)
+            self.plugins_list.setCurrentRow(row - 1)
+        except (RuntimeError, AttributeError):
+            pass  # Widget supprimé
 
     def _move_plugin_down(self):
         """Déplace le plugin sélectionné vers le bas."""
+        # Vérifier que la liste des plugins est valide
+        if not self._is_valid(self.plugins_list):
+            return
+        
         row = self.plugins_list.currentRow()
         if row < 0 or row >= self.plugins_list.count() - 1:
             return
 
-        item = self.plugins_list.takeItem(row)
-        self.plugins_list.insertItem(row + 1, item)
-        self.plugins_list.setCurrentRow(row + 1)
+        try:
+            item = self.plugins_list.takeItem(row)
+            self.plugins_list.insertItem(row + 1, item)
+            self.plugins_list.setCurrentRow(row + 1)
+        except (RuntimeError, AttributeError):
+            pass  # Widget supprimé
 
     def _get_plugin_order(self) -> List[str]:
         """Récupère l'ordre actuel des plugins."""
+        # Vérifier que la liste des plugins est valide
+        if not self._is_valid(self.plugins_list):
+            return []
+        
         order = []
-        for i in range(self.plugins_list.count()):
-            item = self.plugins_list.item(i)
-            plugin_id = item.data(Qt.ItemDataRole.UserRole)
-            if plugin_id:
-                order.append(plugin_id)
+        try:
+            for i in range(self.plugins_list.count()):
+                item = self.plugins_list.item(i)
+                plugin_id = item.data(Qt.ItemDataRole.UserRole)
+                if plugin_id:
+                    order.append(plugin_id)
+        except (RuntimeError, AttributeError):
+            return []  # Widget supprimé
         return order
 
     def _get_enabled_plugins(self) -> Dict[str, bool]:
         """Récupère l'état d'activation des plugins."""
+        # Vérifier que la liste des plugins est valide
+        if not self._is_valid(self.plugins_list):
+            return {}
+        
         enabled = {}
-        for i in range(self.plugins_list.count()):
-            item = self.plugins_list.item(i)
-            plugin_id = item.data(Qt.ItemDataRole.UserRole)
-            if plugin_id:
-                enabled[plugin_id] = item.checkState() == Qt.CheckState.Checked
+        try:
+            for i in range(self.plugins_list.count()):
+                item = self.plugins_list.item(i)
+                plugin_id = item.data(Qt.ItemDataRole.UserRole)
+                if plugin_id:
+                    enabled[plugin_id] = item.checkState() == Qt.CheckState.Checked
+        except (RuntimeError, AttributeError):
+            return {}  # Widget supprimé
         return enabled
 
     def _run_plugins(self):
@@ -868,7 +942,8 @@ class BcaslStandaloneGui(QWidget):
         # Désactiver les contrôles pendant l'exécution
         self.btn_run.setEnabled(False)
         self.btn_cancel.setEnabled(True)
-        self.plugins_list.setEnabled(False)
+        if self._is_valid(self.plugins_list):
+            self.plugins_list.setEnabled(False)
         self.btn_move_up.setEnabled(False)
         self.btn_move_down.setEnabled(False)
         self.global_enable_check.setEnabled(False)
@@ -926,7 +1001,8 @@ class BcaslStandaloneGui(QWidget):
         # Réactiver les contrôles
         self.btn_run.setEnabled(True)
         self.btn_cancel.setEnabled(False)
-        self.plugins_list.setEnabled(self.global_enable_check.isChecked())
+        if self._is_valid(self.plugins_list):
+            self.plugins_list.setEnabled(self.global_enable_check.isChecked())
         self.btn_move_up.setEnabled(self.global_enable_check.isChecked())
         self.btn_move_down.setEnabled(self.global_enable_check.isChecked())
         self.global_enable_check.setEnabled(True)
@@ -980,7 +1056,8 @@ class BcaslStandaloneGui(QWidget):
         # Réactiver les contrôles
         self.btn_run.setEnabled(True)
         self.btn_cancel.setEnabled(False)
-        self.plugins_list.setEnabled(self.global_enable_check.isChecked())
+        if self._is_valid(self.plugins_list):
+            self.plugins_list.setEnabled(self.global_enable_check.isChecked())
         self.btn_move_up.setEnabled(self.global_enable_check.isChecked())
         self.btn_move_down.setEnabled(self.global_enable_check.isChecked())
         self.global_enable_check.setEnabled(True)
@@ -988,15 +1065,25 @@ class BcaslStandaloneGui(QWidget):
 
     def _clear_log(self):
         """Efface le log."""
-        self.log_text.clear()
+        if self._is_valid(self.log_text):
+            try:
+                self.log_text.clear()
+            except (RuntimeError, AttributeError):
+                pass  # Ignorer si le widget a été supprimé
 
     def _log(self, message: str):
         """Ajoute un message au log."""
-        timestamp = datetime.now().strftime("%H:%M:%S")
-        self.log_text.append(f"[{timestamp}] {message}")
-        # Défiler automatiquement vers le bas
-        scrollbar = self.log_text.verticalScrollBar()
-        scrollbar.setValue(scrollbar.maximum())
+        # Vérifier que le widget existe et n'a pas été supprimé
+        if not self._is_valid(self.log_text):
+            return
+        try:
+            timestamp = datetime.now().strftime("%H:%M:%S")
+            self.log_text.append(f"[{timestamp}] {message}")
+            # Défiler automatiquement vers le bas
+            scrollbar = self.log_text.verticalScrollBar()
+            scrollbar.setValue(scrollbar.maximum())
+        except (RuntimeError, AttributeError):
+            pass  # Ignorer si le widget a été supprimé
 
 
 def launch_bcasl_gui(

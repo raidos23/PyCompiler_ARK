@@ -507,6 +507,28 @@ class EnginesStandaloneGui(QMainWindow):
         y = (screen_geometry.height() - self.height()) // 2
         self.move(x, y)
 
+    def _is_valid(self, widget) -> bool:
+        """Vérifie si un widget Qt est toujours valide.
+
+        Contrairement à hasattr(), cette méthode vérifie si l'objet C++
+        sous-jacent n'a pas été détruit.
+
+        Args:
+            widget: Le widget Qt à vérifier
+
+        Returns:
+            True si le widget est valide, False sinon
+        """
+        if widget is None:
+            return False
+        try:
+            # Tentative d'accès à une propriété du widget
+            # Si l'objet C++ a été détruit, une RuntimeError sera levée
+            widget.objectName()
+            return True
+        except RuntimeError:
+            return False
+
     def _apply_theme(self, theme_name: str):
         """Applique le thème visuel."""
         if theme_name == "dark":
@@ -1120,15 +1142,25 @@ class EnginesStandaloneGui(QMainWindow):
 
     def _clear_log(self):
         """Efface le log."""
-        self.log_text.clear()
+        if self._is_valid(self.log_text):
+            try:
+                self.log_text.clear()
+            except (RuntimeError, AttributeError):
+                pass  # Ignorer si le widget a été supprimé
 
     def _log(self, message: str):
         """Ajoute un message au log."""
-        timestamp = datetime.now().strftime("%H:%M:%S")
-        self.log_text.append(f"[{timestamp}] {message}")
-        # Défiler automatiquement vers le bas
-        scrollbar = self.log_text.verticalScrollBar()
-        scrollbar.setValue(scrollbar.maximum())
+        # Vérifier que le widget existe et n'a pas été supprimé
+        if not self._is_valid(self.log_text):
+            return
+        try:
+            timestamp = datetime.now().strftime("%H:%M:%S")
+            self.log_text.append(f"[{timestamp}] {message}")
+            # Défiler automatiquement vers le bas
+            scrollbar = self.log_text.verticalScrollBar()
+            scrollbar.setValue(scrollbar.maximum())
+        except (RuntimeError, AttributeError):
+            pass  # Ignorer si le widget a été supprimé
 
 
 def launch_engines_gui(
