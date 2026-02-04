@@ -196,6 +196,10 @@ class EnginesStandaloneGui(QMainWindow):
         self.theme = theme
         self.selected_engine_id = None
         self.selected_file = None
+        
+        # État du venv
+        self.venv_path: Optional[str] = None
+        self.venv_manager = None
 
         # Configuration de la fenêtre
         self.setWindowTitle("Engines Standalone - PyCompiler ARK++")
@@ -213,6 +217,9 @@ class EnginesStandaloneGui(QMainWindow):
 
         # Chargement des moteurs
         self._refresh_engines()
+
+        # Initialisation du gestionnaire de venv
+        self._init_venv_manager()
 
         # Centre la fenêtre sur l'écran
         self._center_window()
@@ -254,6 +261,102 @@ class EnginesStandaloneGui(QMainWindow):
         header_layout.addWidget(title_label)
 
         header_layout.addStretch()
+
+        # === Section Venv ===
+        venv_layout = QHBoxLayout()
+        venv_layout.setSpacing(8)
+
+        # Label venv
+        venv_label = QLabel("Venv:")
+        venv_label.setStyleSheet("font-weight: bold; font-size: 12px; color: #aaaaaa;")
+        venv_layout.addWidget(venv_label)
+
+        # Champ d'affichage du chemin du venv
+        self.venv_path_edit = QLineEdit()
+        self.venv_path_edit.setPlaceholderText("Select a virtual environment...")
+        self.venv_path_edit.setReadOnly(True)
+        self.venv_path_edit.setMinimumWidth(150)
+        self.venv_path_edit.setMaximumWidth(250)
+        self.venv_path_edit.setStyleSheet(
+            """
+            QLineEdit {
+                background-color: #2d2d2d;
+                color: #ffffff;
+                border: 1px solid #404040;
+                border-radius: 4px;
+                padding: 4px 8px;
+                font-size: 11px;
+            }
+        """
+        )
+        venv_layout.addWidget(self.venv_path_edit)
+
+        # Bouton sélectionner venv
+        self.btn_select_venv = QPushButton("📁")
+        self.btn_select_venv.setMinimumSize(32, 28)
+        self.btn_select_venv.setToolTip("Select virtual environment folder")
+        self.btn_select_venv.setStyleSheet(
+            """
+            QPushButton {
+                background-color: #404040;
+                color: white;
+                border-radius: 4px;
+                padding: 4px 8px;
+                font-size: 14px;
+            }
+            QPushButton:hover {
+                background-color: #4da6ff;
+            }
+        """
+        )
+        self.btn_select_venv.clicked.connect(self._select_venv)
+        venv_layout.addWidget(self.btn_select_venv)
+
+        # Bouton auto-détecter venv
+        self.btn_autodetect_venv = QPushButton("🔍")
+        self.btn_autodetect_venv.setMinimumSize(32, 28)
+        self.btn_autodetect_venv.setToolTip("Auto-detect best virtual environment")
+        self.btn_autodetect_venv.setStyleSheet(
+            """
+            QPushButton {
+                background-color: #404040;
+                color: white;
+                border-radius: 4px;
+                padding: 4px 8px;
+                font-size: 14px;
+            }
+            QPushButton:hover {
+                background-color: #4caf50;
+            }
+        """
+        )
+        self.btn_autodetect_venv.clicked.connect(self._autodetect_venv)
+        venv_layout.addWidget(self.btn_autodetect_venv)
+
+        # Bouton clear venv
+        self.btn_clear_venv = QPushButton("✕")
+        self.btn_clear_venv.setMinimumSize(32, 28)
+        self.btn_clear_venv.setToolTip("Clear venv selection")
+        self.btn_clear_venv.setStyleSheet(
+            """
+            QPushButton {
+                background-color: #404040;
+                color: white;
+                border-radius: 4px;
+                padding: 4px 8px;
+                font-size: 12px;
+            }
+            QPushButton:hover {
+                background-color: #f44336;
+            }
+        """
+        )
+        self.btn_clear_venv.clicked.connect(self._clear_venv)
+        venv_layout.addWidget(self.btn_clear_venv)
+
+        header_layout.addLayout(venv_layout)
+
+        header_layout.addSpacing(15)
 
         # Version info
         version_label = QLabel(
@@ -506,6 +609,119 @@ class EnginesStandaloneGui(QMainWindow):
         x = (screen_geometry.width() - self.width()) // 2
         y = (screen_geometry.height() - self.height()) // 2
         self.move(x, y)
+
+    def _init_venv_manager(self):
+        """Initialise le gestionnaire de venv et détecte le venv."""
+        try:
+            from Core.Venv_Manager.Manager import VenvManager
+            self.venv_manager = VenvManager(self)
+            self._detect_venv()
+        except Exception as e:
+            self._log(f"⚠️ Impossible d'initialiser le gestionnaire de venv: {e}")
+
+    def _detect_venv(self):
+        """Détecte automatiquement le meilleur venv disponible."""
+        if not self.venv_manager or not self.workspace_dir:
+            return
+        
+        try:
+            best_venv = self.venv_manager.select_best_venv(self.workspace_dir)
+            if best_venv:
+                self.venv_path = best_venv
+                if self._is_valid(self.venv_path_edit):
+                    self.venv_path_edit.setText(best_venv)
+                self._log(f"✅ Venv auto-détecté: {best_venv}")
+            else:
+                existing, default_path = self.venv_manager._detect_venv_in(self.workspace_dir)
+                if existing:
+                    self.venv_path = existing
+                    if self._is_valid(self.venv_path_edit):
+                        self.venv_path_edit.setText(existing)
+                    self._log(f"✅ Venv existant trouvé: {existing}")
+        except Exception as e:
+            self._log(f"⚠️ Erreur détection venv: {e}")
+
+    def _select_venv(self):
+        """Ouvre une boîte de dialogue pour sélectionner le venv."""
+        if not self.venv_manager:
+            QMessageBox.warning(
+                self,
+                "Warning",
+                "Venv manager not initialized.",
+            )
+            return
+
+        current_path = self.venv_path or ""
+
+        folder = QFileDialog.getExistingDirectory(
+            self,
+            "Select Virtual Environment Folder",
+            current_path,
+            QFileDialog.Option.ShowDirsOnly,
+        )
+
+        if folder:
+            ok, reason = self.venv_manager.validate_venv_strict(folder)
+            if ok:
+                self.venv_path = folder
+                self.venv_path_edit.setText(folder)
+                self._log(f"✅ Virtual environment selected: {folder}")
+            else:
+                QMessageBox.warning(
+                    self,
+                    "Invalid Venv",
+                    f"The selected folder is not a valid virtual environment:\n{reason}",
+                )
+                self._log(f"❌ Invalid venv selected: {reason}")
+
+    def _autodetect_venv(self):
+        """Auto-détecte le meilleur venv disponible."""
+        if not self.venv_manager:
+            QMessageBox.warning(
+                self,
+                "Warning",
+                "Venv manager not initialized.",
+            )
+            return
+
+        if not self.workspace_dir:
+            QMessageBox.warning(
+                self,
+                "Warning",
+                "Please select a workspace folder first.",
+            )
+            return
+
+        self._log("Auto-detecting virtual environment...")
+
+        best_venv = self.venv_manager.select_best_venv(self.workspace_dir)
+        
+        if best_venv:
+            self.venv_path = best_venv
+            self.venv_path_edit.setText(best_venv)
+            self._log(f"✅ Best venv auto-detected: {best_venv}")
+        else:
+            existing, default_path = self.venv_manager._detect_venv_in(self.workspace_dir)
+            if existing:
+                self.venv_path = existing
+                self.venv_path_edit.setText(existing)
+                self._log(f"✅ Existing venv found: {existing}")
+            else:
+                self._log("No virtual environment found in workspace.")
+                QMessageBox.information(
+                    self,
+                    "No Venv Found",
+                    "No valid virtual environment was found in the workspace.\n"
+                    "Please select one manually or create a new venv.",
+                )
+
+    def _clear_venv(self):
+        """Efface la sélection du venv."""
+        self.venv_path = None
+        self.venv_path_edit.clear()
+        self.venv_path_edit.setPlaceholderText("Select a virtual environment...")
+
+        self._log("Venv selection cleared")
 
     def _is_valid(self, widget) -> bool:
         """Vérifie si un widget Qt est toujours valide.
@@ -1001,10 +1217,23 @@ class EnginesStandaloneGui(QMainWindow):
 
                 self._log(f"Command: {cmd_str}")
 
+                # Récupérer le venv à utiliser
+                if not self.venv_path and self.venv_manager and self.workspace_dir:
+                    best_venv = self.venv_manager.select_best_venv(self.workspace_dir)
+                    if best_venv:
+                        self.venv_path = best_venv
+                        if self._is_valid(self.venv_path_edit):
+                            self.venv_path_edit.setText(best_venv)
+
+                if self.venv_path:
+                    self._log(f"Using virtual environment: {self.venv_path}")
+
                 # Préparer l'environnement
                 env = os.environ.copy()
                 if self.workspace_dir:
                     env["ARK_WORKSPACE"] = self.workspace_dir
+                if self.venv_path:
+                    env["ARK_VENV_PATH"] = self.venv_path
 
                 # Exécuter la commande dans un thread séparé
                 self._log("Executing...")
