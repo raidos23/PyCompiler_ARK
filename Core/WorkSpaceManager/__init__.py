@@ -12,3 +12,18 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+"""
+WorkSpaceManager Module
+
+Ce module gère toutes les opérations liées au workspace :
+- Configuration initiale du workspace
+- Manipulation avancée (drag & drop, sélection de fichiers)
+- Gestion des fichiers Python dans le workspace
+"""
+
+from .SetupWorkspace import SetupWorkspace
+from .WorkspaceAdvancedManipulation import WorkspaceAdvancedManipulation
+
+__all__ = ["SetupWorkspace", "WorkspaceAdvancedManipulation"]
+

@@ -1,4 +1,4 @@
-﻿# SPDX-License-Identifier: Apache-2.0
+# SPDX-License-Identifier: Apache-2.0
 # Copyright 2026 Ague Samuel Amen
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -34,6 +34,10 @@ from .i18n import (
     _apply_main_app_translations as _i18n_apply_translations,
     show_language_dialog as _i18n_show_dialog,
 )
+
+# Import des classes de gestion du workspace
+from Core.WorkSpaceManager.SetupWorkspace import SetupWorkspace
+from Core.WorkSpaceManager.WorkspaceAdvancedManipulation import WorkspaceAdvancedManipulation
 
 
 def get_selected_workspace() -> Optional[str]:
@@ -139,223 +143,26 @@ class PyCompilerArkGui(QWidget):
     from .UiConnection import init_ui
 
     def dragEnterEvent(self, event: QDropEvent):
-        if event.mimeData().hasUrls():
-            event.acceptProposedAction()
-        else:
-            event.ignore()
+        """Gère l'événement dragEnter en déléguant à WorkspaceAdvancedManipulation."""
+        WorkspaceAdvancedManipulation.handle_drag_enter_event(self, event)
 
     def dropEvent(self, event: QDropEvent):
-        urls = event.mimeData().urls()
-        added = 0
-        for url in urls:
-            path = url.toLocalFile()
-            if os.path.isdir(path):
-                added += self.add_py_files_from_folder(path)
-            elif path.endswith(".py"):
-                # Vérifie que le fichier est dans workspace (si défini)
-                if (
-                    self.workspace_dir
-                    and not os.path.commonpath([path, self.workspace_dir])
-                    == self.workspace_dir
-                ):
-                    self.log_i18n(
-                        f"⚠️ Ignoré (hors workspace): {path}",
-                        f"⚠️ Ignored (outside workspace): {path}",
-                    )
-                    continue
-                if path not in self.python_files:
-                    self.python_files.append(path)
-                    relative_path = (
-                        os.path.relpath(path, self.workspace_dir)
-                        if self.workspace_dir
-                        else path
-                    )
-                    self.file_list.addItem(relative_path)
-                    added += 1
-        self.log_i18n(
-            f"✅ {added} fichier(s) ajouté(s) via drag & drop.",
-            f"✅ {added} file(s) added via drag & drop.",
-        )
-        self.update_command_preview()
+        """Gère l'événement drop en déléguant à WorkspaceAdvancedManipulation."""
+        WorkspaceAdvancedManipulation.handle_drop_event(self, event)
 
     def add_py_files_from_folder(self, folder):
-        from Core.ArkConfigManager import load_ark_config, should_exclude_file
-
-        count = 0
-        excluded_count = 0
-        # Charger la configuration ARK pour les patterns d'exclusion
-        ark_config = load_ark_config(self.workspace_dir)
-        exclusion_patterns = ark_config.get("exclusion_patterns", [])
-
-        for root, _, files in os.walk(folder):
-            for f in files:
-                if f.endswith(".py"):
-                    full_path = os.path.join(root, f)
-                    if (
-                        self.workspace_dir
-                        and not os.path.commonpath([full_path, self.workspace_dir])
-                        == self.workspace_dir
-                    ):
-                        continue
-
-                    # Vérifier les patterns d'exclusion depuis ARK_Main_Config.yml
-                    if should_exclude_file(
-                        full_path, self.workspace_dir, exclusion_patterns
-                    ):
-                        excluded_count += 1
-                        continue
-
-                    if full_path not in self.python_files:
-                        self.python_files.append(full_path)
-                        relative_path = (
-                            os.path.relpath(full_path, self.workspace_dir)
-                            if self.workspace_dir
-                            else full_path
-                        )
-                        self.file_list.addItem(relative_path)
-                        count += 1
-
-        # Afficher un message récPluginstulatif si des fichiers ont été exclus
-        if excluded_count > 0:
-            self.log_i18n(
-                f"⏩ Exclusion appliquée : {excluded_count} fichier(s) exclu(s) selon ARK_Main_Config.yml",
-                f"⏩ Exclusion applied: {excluded_count} file(s) excluded according to ARK_Main_Config.yml",
-            )
-
-        return count
+        """Ajoute les fichiers Python du dossier en déléguant à SetupWorkspace."""
+        return SetupWorkspace.add_py_files_from_folder(self, folder)
 
     def select_workspace(self):
-        folder = QFileDialog.getExistingDirectory(self, "Choisir le dossier du projet")
+        """Ouvre une boîte de dialogue pour sélectionner le workspace."""
+        folder = SetupWorkspace.select_workspace(self)
         if folder:
             self.apply_workspace_selection(folder, source="ui")
 
     def apply_workspace_selection(self, folder: str, source: str = "ui") -> bool:
-        try:
-            # Afficher le dialog de chargement du workspace
-            try:
-                loading_dialog = CompilationProcessDialog(
-                    "Chargement de l'espace de travail", self
-                )
-                loading_dialog.set_status("📁 Chargement de l'espace de travail...")
-                loading_dialog.btn_cancel.setEnabled(False)
-                loading_dialog.show()
-                QApplication.processEvents()
-            except Exception:
-                loading_dialog = None
-
-            # Ensure target folder exists; auto-create if missing; never refuse
-            if not folder:
-                try:
-                    self.log_i18n(
-                        "⚠️ Chemin de workspace vide fourni; aucune modification appliquée (accepté).",
-                        "⚠️ Empty workspace path provided; no changes applied (accepted).",
-                    )
-                except Exception:
-                    pass
-                try:
-                    if loading_dialog:
-                        loading_dialog.close()
-                except Exception:
-                    pass
-                return True
-            if not os.path.isdir(folder):
-                try:
-                    os.makedirs(folder, exist_ok=True)
-                    try:
-                        self.log_i18n(
-                            f"📁 Dossier cré�� automatiquement: {folder}",
-                            f"📁 Folder created automatically: {folder}",
-                        )
-                    except Exception:
-                        pass
-                except Exception:
-                    try:
-                        self.log_i18n(
-                            f"⚠️ Impossible de créer le dossier, poursuite quand même: {folder}",
-                            f"⚠️ Unable to create folder, continuing anyway: {folder}",
-                        )
-                    except Exception:
-                        pass
-            # Confirmation when Plugins requests workspace change
-            if str(source).lower() == "plugin":
-                # Auto-approve Plugins workspace switch; cancel running builds if any
-                try:
-                    if getattr(self, "processes", None) and self.processes:
-                        try:
-                            self.log_i18n(
-                                "⛔ Arrêt des compilations en cours pour changer de workspace (Plugins).",
-                                "⛔ Stopping ongoing builds to switch workspace (Plugins).",
-                            )
-                        except Exception:
-                            pass
-                        try:
-                            self.cancel_all_compilations()
-                        except Exception:
-                            pass
-                except Exception:
-                    pass
-            else:
-                # Non-Plugins requests: never refuse; cancel running builds if any
-                if getattr(self, "processes", None) and self.processes:
-                    try:
-                        self.log_i18n(
-                            "⛔ Arrêt des compilations en cours pour changer de workspace (UI).",
-                            "⛔ Stopping ongoing builds to switch workspace (UI).",
-                        )
-                    except Exception:
-                        pass
-                    try:
-                        self.cancel_all_compilations()
-                    except Exception:
-                        pass
-            self.workspace_dir = folder
-            try:
-                global _workspace_dir_cache
-                with _workspace_dir_lock:
-                    _workspace_dir_cache = folder
-            except Exception:
-                pass
-            self.label_folder.setText(f"Dossier sélectionné : {folder}")
-            self.python_files.clear()
-            self.file_list.clear()
-            self.add_py_files_from_folder(folder)
-            self.selected_files.clear()
-            self.update_command_preview()
-            try:
-                self.save_preferences()
-            except Exception:
-                pass
-            # -- Configuration centralisée du workspace --
-            try:
-                self.venv_manager.setup_workspace(folder)
-            except Exception as e:
-                self.log_i18n(
-                    f"⚠️ Erreur lors de la configuration du workspace: {e}",
-                    f"⚠️ Error during workspace setup: {e}",
-                )
-
-            # Fermer le dialog de chargement
-            try:
-                if loading_dialog:
-                    loading_dialog.close()
-            except Exception:
-                pass
-
-            return True
-        except Exception as _e:
-            try:
-                self.log_i18n(
-                    f"❌ Échec application workspace: {_e}",
-                    f"❌ Failed to apply workspace: {_e}",
-                )
-            except Exception:
-                pass
-            try:
-                if loading_dialog:
-                    loading_dialog.close()
-            except Exception:
-                pass
-            return False
+        """Applique la sélection du workspace en déléguant à SetupWorkspace."""
+        return SetupWorkspace.apply_workspace_selection(self, folder, source)
 
     def select_venv_manually(self):
         self.venv_manager.select_venv_manually()
@@ -367,106 +174,12 @@ class PyCompilerArkGui(QWidget):
         self.venv_manager.install_requirements_if_needed(path)
 
     def select_files_manually(self):
-        if not self.workspace_dir:
-            QMessageBox.warning(
-                self,
-                self.tr("Attention", "Warning"),
-                self.tr(
-                    "Veuillez d'abord sélectionner un dossier workspace.",
-                    "Please select a workspace folder first.",
-                ),
-            )
-            return
-        files, _ = QFileDialog.getOpenFileNames(
-            self,
-            "Sélectionner des fichiers Python",
-            self.workspace_dir,
-            "Python Files (*.py)",
-        )
-        if files:
-            valid_files = []
-            for f in files:
-                if os.path.commonpath([f, self.workspace_dir]) == self.workspace_dir:
-                    valid_files.append(f)
-                else:
-                    QMessageBox.warning(
-                        self,
-                        self.tr("Fichier hors workspace", "File outside workspace"),
-                        self.tr(
-                            f"Le fichier {f} est en dehors du workspace et sera ignoré.",
-                            f"The file {f} is outside the workspace and will be ignored.",
-                        ),
-                    )
-            if valid_files:
-                self.selected_files = valid_files
-                self.log_i18n(
-                    f"✅ {len(valid_files)} fichier(s) sélectionné(s) manuellement.\n",
-                    f"✅ {len(valid_files)} file(s) selected manually.\n",
-                )
-                self.update_command_preview()
+        """Ouvre une boîte de dialogue pour sélectionner des fichiers en déléguant à WorkspaceAdvancedManipulation."""
+        WorkspaceAdvancedManipulation.select_files_manually(self)
 
     def open_ark_config(self):
-        """Ouvre le fichier ARK_Main_Config.yml dans l'éditeur par défaut"""
-        if not self.workspace_dir:
-            QMessageBox.warning(
-                self,
-                self.tr("Attention", "Warning"),
-                self.tr(
-                    "Veuillez d'abord sélectionner un dossier workspace.",
-                    "Please select a workspace folder first.",
-                ),
-            )
-            return
-
-        config_path = os.path.join(self.workspace_dir, "ARK_Main_Config.yml")
-
-        # Créer le fichier s'il n'existe pas
-        if not os.path.exists(config_path):
-            try:
-                from Core.ArkConfigManager import create_default_ark_config
-
-                if create_default_ark_config(self.workspace_dir):
-                    self.log_i18n(
-                        "📋 Fichier ARK_Main_Config.yml créé.",
-                        "📋 ARK_Main_Config.yml file created.",
-                    )
-            except Exception as e:
-                QMessageBox.critical(
-                    self,
-                    self.tr("Erreur", "Error"),
-                    self.tr(
-                        f"Impossible de créer ARK_Main_Config.yml: {e}",
-                        f"Failed to create ARK_Main_Config.yml: {e}",
-                    ),
-                )
-                return
-
-        # Ouvrir le fichier dans l'éditeur par défaut
-        try:
-            import subprocess
-            import platform
-
-            system = platform.system()
-            if system == "Windows":
-                os.startfile(config_path)
-            elif system == "Darwin":  # macOS
-                subprocess.run(["open", config_path])
-            else:  # Linux
-                subprocess.run(["xdg-open", config_path])
-
-            self.log_i18n(
-                f"📝 Ouverture de {config_path}",
-                f"📝 Opening {config_path}",
-            )
-        except Exception as e:
-            QMessageBox.warning(
-                self,
-                self.tr("Attention", "Warning"),
-                self.tr(
-                    f"Impossible d'ouvrir le fichier: {e}\nChemin: {config_path}",
-                    f"Failed to open file: {e}\nPath: {config_path}",
-                ),
-            )
+        """Ouvre le fichier ARK_Main_Config.yml dans l'éditeur par défaut en déléguant à SetupWorkspace."""
+        SetupWorkspace.open_ark_config(self)
 
     def on_main_only_changed(self):
         if self.opt_main_only.isChecked():
@@ -543,25 +256,8 @@ class PyCompilerArkGui(QWidget):
         pass
 
     def remove_selected_file(self):
-        selected_items = self.file_list.selectedItems()
-        for item in selected_items:
-            # Récupère le chemin relatif affiché
-            rel_path = item.text()
-            # Construit le chemin absolu si workspace_dir défini
-            abs_path = (
-                os.path.join(self.workspace_dir, rel_path)
-                if self.workspace_dir
-                else rel_path
-            )
-            # Supprime de python_files si présent
-            if abs_path in self.python_files:
-                self.python_files.remove(abs_path)
-            # Supprime de selected_files si présent
-            if abs_path in self.selected_files:
-                self.selected_files.remove(abs_path)
-            # Supprime l'item de la liste graphique
-            self.file_list.takeItem(self.file_list.row(item))
-        self.update_command_preview()
+        """Supprime les fichiers sélectionnés en déléguant à WorkspaceAdvancedManipulation."""
+        WorkspaceAdvancedManipulation.remove_selected_file(self)
 
     def show_help_dialog(self):
         # Minimal help dialog with current license information
@@ -1087,3 +783,4 @@ class PyCompilerArkGui(QWidget):
             except Exception:
                 pass
             event.accept()
+
