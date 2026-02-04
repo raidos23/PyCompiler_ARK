@@ -38,6 +38,7 @@ from PySide6.QtCore import Qt, QSize, QThread, Signal, Slot
 from PySide6.QtWidgets import (
     QApplication,
     QWidget,
+    QMainWindow,
     QVBoxLayout,
     QHBoxLayout,
     QGridLayout,
@@ -170,7 +171,7 @@ class BcaslExecutionThread(QThread):
             self.error.emit(str(e))
 
 
-class BcaslStandaloneGui(QWidget):
+class BcaslStandaloneGui(QMainWindow):
     """
     Interface graphique principale pour gérer les plugins BCASL.
 
@@ -253,11 +254,7 @@ class BcaslStandaloneGui(QWidget):
         """Configure l'interface utilisateur."""
         # Widget central
         central_widget = QWidget()
-        (
-            self.setCentralWidget(central_widget)
-            if hasattr(self, "setCentralWidget")
-            else None
-        )
+        self.setCentralWidget(central_widget)
 
         # Layout principal
         main_layout = QVBoxLayout(central_widget)
