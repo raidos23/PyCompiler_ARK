@@ -56,6 +56,8 @@ from PySide6.QtWidgets import (
     QFrame,
     QSplitter,
     QSizePolicy,
+    QFileDialog,
+    QLineEdit,
 )
 from PySide6.QtGui import QFont, QIcon
 
@@ -269,6 +271,90 @@ class BcaslStandaloneGui(QMainWindow):
         header_layout.addWidget(title_label)
 
         header_layout.addStretch()
+
+        # === Section Workspace ===
+        workspace_layout = QHBoxLayout()
+        workspace_layout.setSpacing(8)
+
+        # Label workspace
+        workspace_label = QLabel(tr("Workspace:", "Workspace :"))
+        workspace_label.setStyleSheet("font-weight: bold; font-size: 12px;")
+        workspace_layout.addWidget(workspace_label)
+
+        # Champ de显示 du chemin du workspace
+        self.workspace_path_edit = QLineEdit()
+        self.workspace_path_edit.setPlaceholderText(
+            tr("Select a workspace folder...", "Sélectionner un dossier workspace...")
+        )
+        self.workspace_path_edit.setReadOnly(True)
+        self.workspace_path_edit.setMinimumWidth(250)
+        self.workspace_path_edit.setMaximumWidth(400)
+        self.workspace_path_edit.setStyleSheet(
+            """
+            QLineEdit {
+                background-color: #2d2d2d;
+                color: #ffffff;
+                border: 1px solid #404040;
+                border-radius: 4px;
+                padding: 4px 8px;
+                font-size: 11px;
+            }
+        """
+        )
+        # Afficher le workspace actuel si défini
+        if self.workspace_dir:
+            self.workspace_path_edit.setText(str(Path(self.workspace_dir).resolve()))
+        workspace_layout.addWidget(self.workspace_path_edit)
+
+        # Bouton sélectionner workspace
+        self.btn_select_workspace = QPushButton("📁")
+        self.btn_select_workspace.setMinimumSize(32, 28)
+        self.btn_select_workspace.setToolTip(
+            tr("Select workspace folder", "Sélectionner le dossier workspace")
+        )
+        self.btn_select_workspace.setStyleSheet(
+            """
+            QPushButton {
+                background-color: #404040;
+                color: white;
+                border-radius: 4px;
+                padding: 4px 8px;
+                font-size: 14px;
+            }
+            QPushButton:hover {
+                background-color: #4da6ff;
+            }
+        """
+        )
+        self.btn_select_workspace.clicked.connect(self._select_workspace)
+        workspace_layout.addWidget(self.btn_select_workspace)
+
+        # Bouton clear workspace
+        self.btn_clear_workspace = QPushButton("✕")
+        self.btn_clear_workspace.setMinimumSize(32, 28)
+        self.btn_clear_workspace.setToolTip(
+            tr("Clear workspace", "Effacer le workspace")
+        )
+        self.btn_clear_workspace.setStyleSheet(
+            """
+            QPushButton {
+                background-color: #404040;
+                color: white;
+                border-radius: 4px;
+                padding: 4px 8px;
+                font-size: 12px;
+            }
+            QPushButton:hover {
+                background-color: #f44336;
+            }
+        """
+        )
+        self.btn_clear_workspace.clicked.connect(self._clear_workspace)
+        workspace_layout.addWidget(self.btn_clear_workspace)
+
+        header_layout.addLayout(workspace_layout)
+
+        header_layout.addSpacing(20)
 
         # Version info
         version_text = tr(
@@ -521,6 +607,49 @@ class BcaslStandaloneGui(QMainWindow):
         except Exception:
             pass
 
+    def _select_workspace(self):
+        """Ouvre une boîte de dialogue pour sélectionner le workspace."""
+        current_path = self.workspace_dir or ""
+
+        folder = QFileDialog.getExistingDirectory(
+            self,
+            tr("Select Workspace Folder", "Sélectionner le dossier Workspace"),
+            current_path,
+            QFileDialog.Option.ShowDirsOnly,
+        )
+
+        if folder:
+            self.workspace_dir = folder
+            self.workspace_path_edit.setText(str(Path(folder).resolve()))
+
+            # Recharger la configuration et les plugins
+            self._load_config()
+            self._discover_plugins()
+
+            self._log(
+                tr(
+                    f"Workspace selected: {folder}",
+                    f"Workspace sélectionné : {folder}",
+                )
+            )
+            self.statusBar.showMessage(tr("Workspace updated", "Workspace mis à jour"))
+
+    def _clear_workspace(self):
+        """Efface la sélection du workspace."""
+        self.workspace_dir = None
+        self.workspace_path_edit.clear()
+        self.workspace_path_edit.setPlaceholderText(
+            tr("Select a workspace folder...", "Sélectionner un dossier workspace...")
+        )
+
+        # Recharger avec workspace vide
+        self._load_config()
+        self.plugins_meta = {}
+        self._discover_plugins()
+
+        self._log(tr("Workspace cleared", "Workspace effacé"))
+        self.statusBar.showMessage(tr("Workspace cleared", "Workspace effacé"))
+
     def _is_valid(self, widget) -> bool:
         """Vérifie si un widget Qt est toujours valide.
 
@@ -636,6 +765,14 @@ class BcaslStandaloneGui(QMainWindow):
                 QCheckBox {
                     color: #000000;
                     spacing: 5px;
+                }
+                QLineEdit {
+                    background-color: #ffffff;
+                    color: #000000;
+                    border: 1px solid #cccccc;
+                    border-radius: 4px;
+                    padding: 4px 8px;
+                    font-size: 11px;
                 }
                 QStatusBar {
                     background-color: #e0e0e0;
