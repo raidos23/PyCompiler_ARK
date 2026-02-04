@@ -110,6 +110,7 @@ class BcaslExecutionThread(QThread):
         enabled_plugins: Dict[str, bool],
         config: Dict[str, Any],
         plugin_timeout: float = 0.0,
+        venv_path: Optional[str] = None,
     ):
         super().__init__()
         self.workspace_root = workspace_root
@@ -118,10 +119,17 @@ class BcaslExecutionThread(QThread):
         self.enabled_plugins = enabled_plugins
         self.config = config
         self.plugin_timeout = plugin_timeout
+        self.venv_path = venv_path
 
     def run(self):
         """Exécute les plugins BCASL dans un thread séparé."""
         try:
+            # Log du venv utilisé
+            if self.venv_path:
+                self.log_message.emit(
+                    f"🐍 Utilisation de l'environnement virtuel: {self.venv_path}"
+                )
+            
             # Créer le gestionnaire BCASL
             manager = BCASL(
                 self.workspace_root,
@@ -204,6 +212,10 @@ class BcaslStandaloneGui(QMainWindow):
         self.workspace_dir = workspace_dir
         self.language = language
         self.theme = theme
+        
+        # État du venv
+        self.venv_path: Optional[str] = None
+        self.venv_manager = None
 
         # État de l'application
         self.plugins_meta: Dict[str, Dict[str, Any]] = {}
@@ -251,6 +263,37 @@ class BcaslStandaloneGui(QMainWindow):
             self.Plugins_dir = self.repo_root / "Plugins"
         except Exception:
             pass
+
+        # Initialiser le gestionnaire de venv
+        try:
+            from Core.Venv_Manager.Manager import VenvManager
+            self.venv_manager = VenvManager(self)
+            self._detect_venv()
+        except Exception as e:
+            self._log(f"⚠️ Impossible d'initialiser le gestionnaire de venv: {e}")
+
+    def _detect_venv(self):
+        """Détecte automatiquement le meilleur venv disponible."""
+        if not self.venv_manager or not self.workspace_dir:
+            return
+        
+        try:
+            best_venv = self.venv_manager.select_best_venv(self.workspace_dir)
+            if best_venv:
+                self.venv_path = best_venv
+                if self._is_valid(self.venv_path_edit):
+                    self.venv_path_edit.setText(best_venv)
+                self._log(f"✅ Venv auto-détecté: {best_venv}")
+            else:
+                # Essayer de détecter un venv dans le workspace
+                existing, default_path = self.venv_manager._detect_venv_in(self.workspace_dir)
+                if existing:
+                    self.venv_path = existing
+                    if self._is_valid(self.venv_path_edit):
+                        self.venv_path_edit.setText(existing)
+                    self._log(f"✅ Venv existant trouvé: {existing}")
+        except Exception as e:
+            self._log(f"⚠️ Erreur détection venv: {e}")
 
     def _setup_ui(self):
         """Configure l'interface utilisateur."""
@@ -353,6 +396,110 @@ class BcaslStandaloneGui(QMainWindow):
         workspace_layout.addWidget(self.btn_clear_workspace)
 
         header_layout.addLayout(workspace_layout)
+
+        header_layout.addSpacing(20)
+
+        # === Section Venv ===
+        venv_layout = QHBoxLayout()
+        venv_layout.setSpacing(8)
+
+        # Label venv
+        venv_label = QLabel(tr("Venv:", "Venv :"))
+        venv_label.setStyleSheet("font-weight: bold; font-size: 12px;")
+        venv_layout.addWidget(venv_label)
+
+        # Champ d'affichage du chemin du venv
+        self.venv_path_edit = QLineEdit()
+        self.venv_path_edit.setPlaceholderText(
+            tr("Select a virtual environment...", "Sélectionner un environnement virtuel...")
+        )
+        self.venv_path_edit.setReadOnly(True)
+        self.venv_path_edit.setMinimumWidth(200)
+        self.venv_path_edit.setMaximumWidth(300)
+        self.venv_path_edit.setStyleSheet(
+            """
+            QLineEdit {
+                background-color: #2d2d2d;
+                color: #ffffff;
+                border: 1px solid #404040;
+                border-radius: 4px;
+                padding: 4px 8px;
+                font-size: 11px;
+            }
+        """
+        )
+        venv_layout.addWidget(self.venv_path_edit)
+
+        # Bouton sélectionner venv
+        self.btn_select_venv = QPushButton("📁")
+        self.btn_select_venv.setMinimumSize(32, 28)
+        self.btn_select_venv.setToolTip(
+            tr("Select virtual environment folder", "Sélectionner le dossier venv")
+        )
+        self.btn_select_venv.setStyleSheet(
+            """
+            QPushButton {
+                background-color: #404040;
+                color: white;
+                border-radius: 4px;
+                padding: 4px 8px;
+                font-size: 14px;
+            }
+            QPushButton:hover {
+                background-color: #4da6ff;
+            }
+        """
+        )
+        self.btn_select_venv.clicked.connect(self._select_venv)
+        venv_layout.addWidget(self.btn_select_venv)
+
+        # Bouton auto-détecter venv
+        self.btn_autodetect_venv = QPushButton("🔍")
+        self.btn_autodetect_venv.setMinimumSize(32, 28)
+        self.btn_autodetect_venv.setToolTip(
+            tr("Auto-detect best virtual environment", "Auto-détecter le meilleur venv")
+        )
+        self.btn_autodetect_venv.setStyleSheet(
+            """
+            QPushButton {
+                background-color: #404040;
+                color: white;
+                border-radius: 4px;
+                padding: 4px 8px;
+                font-size: 14px;
+            }
+            QPushButton:hover {
+                background-color: #4caf50;
+            }
+        """
+        )
+        self.btn_autodetect_venv.clicked.connect(self._autodetect_venv)
+        venv_layout.addWidget(self.btn_autodetect_venv)
+
+        # Bouton clear venv
+        self.btn_clear_venv = QPushButton("✕")
+        self.btn_clear_venv.setMinimumSize(32, 28)
+        self.btn_clear_venv.setToolTip(
+            tr("Clear venv selection", "Effacer la sélection venv")
+        )
+        self.btn_clear_venv.setStyleSheet(
+            """
+            QPushButton {
+                background-color: #404040;
+                color: white;
+                border-radius: 4px;
+                padding: 4px 8px;
+                font-size: 12px;
+            }
+            QPushButton:hover {
+                background-color: #f44336;
+            }
+        """
+        )
+        self.btn_clear_venv.clicked.connect(self._clear_venv)
+        venv_layout.addWidget(self.btn_clear_venv)
+
+        header_layout.addLayout(venv_layout)
 
         header_layout.addSpacing(20)
 
@@ -650,6 +797,137 @@ class BcaslStandaloneGui(QMainWindow):
         self._log(tr("Workspace cleared", "Workspace effacé"))
         self.statusBar.showMessage(tr("Workspace cleared", "Workspace effacé"))
 
+    def _select_venv(self):
+        """Ouvre une boîte de dialogue pour sélectionner le venv."""
+        if not self.venv_manager:
+            QMessageBox.warning(
+                self,
+                tr("Warning", "Avertissement"),
+                tr(
+                    "Venv manager not initialized.",
+                    "Gestionnaire de venv non initialisé.",
+                ),
+            )
+            return
+
+        current_path = self.venv_path or ""
+
+        folder = QFileDialog.getExistingDirectory(
+            self,
+            tr("Select Virtual Environment Folder", "Sélectionner le dossier Venv"),
+            current_path,
+            QFileDialog.Option.ShowDirsOnly,
+        )
+
+        if folder:
+            # Valider que c'est un venv valide
+            ok, reason = self.venv_manager.validate_venv_strict(folder)
+            if ok:
+                self.venv_path = folder
+                self.venv_path_edit.setText(folder)
+                self._log(
+                    tr(
+                        f"Virtual environment selected: {folder}",
+                        f"Environnement virtuel sélectionné : {folder}",
+                    )
+                )
+                self.statusBar.showMessage(tr("Venv updated", "Venv mis à jour"))
+            else:
+                QMessageBox.warning(
+                    self,
+                    tr("Invalid Venv", "Venv invalide"),
+                    tr(
+                        f"The selected folder is not a valid virtual environment:\n{reason}",
+                        f"Le dossier sélectionné n'est pas un environnement virtuel valide :\n{reason}",
+                    ),
+                )
+                self._log(
+                    tr(
+                        f"Invalid venv selected: {reason}",
+                        f"Venv invalide sélectionné : {reason}",
+                    )
+                )
+
+    def _autodetect_venv(self):
+        """Auto-détecte le meilleur venv disponible."""
+        if not self.venv_manager:
+            QMessageBox.warning(
+                self,
+                tr("Warning", "Avertissement"),
+                tr(
+                    "Venv manager not initialized.",
+                    "Gestionnaire de venv non initialisé.",
+                ),
+            )
+            return
+
+        if not self.workspace_dir:
+            QMessageBox.warning(
+                self,
+                tr("Warning", "Avertissement"),
+                tr(
+                    "Please select a workspace folder first.",
+                    "Veuillez d'abord sélectionner un dossier workspace.",
+                ),
+            )
+            return
+
+        self._log(tr("Auto-detecting virtual environment...", "Auto-détection de l'environnement virtuel..."))
+
+        # Chercher d'abord dans le workspace
+        best_venv = self.venv_manager.select_best_venv(self.workspace_dir)
+        
+        if best_venv:
+            self.venv_path = best_venv
+            self.venv_path_edit.setText(best_venv)
+            self._log(
+                tr(
+                    f"Best venv auto-detected: {best_venv}",
+                    f"Meilleur venv auto-détecté : {best_venv}",
+                )
+            )
+            self.statusBar.showMessage(tr("Venv auto-detected", "Venv auto-détecté"))
+        else:
+            # Essayer de trouver n'importe quel venv dans le workspace
+            existing, default_path = self.venv_manager._detect_venv_in(self.workspace_dir)
+            if existing:
+                self.venv_path = existing
+                self.venv_path_edit.setText(existing)
+                self._log(
+                    tr(
+                        f"Existing venv found: {existing}",
+                        f"Venv existant trouvé : {existing}",
+                    )
+                )
+            else:
+                self._log(
+                    tr(
+                        "No virtual environment found in workspace.",
+                        "Aucun environnement virtuel trouvé dans le workspace.",
+                    )
+                )
+                QMessageBox.information(
+                    self,
+                    tr("No Venv Found", "Aucun Venv Trouvé"),
+                    tr(
+                        "No valid virtual environment was found in the workspace.\n"
+                        "Please select one manually or create a new venv.",
+                        "Aucun environnement virtuel valide n'a été trouvé dans le workspace.\n"
+                        "Veuillez en sélectionner un manuellement ou créer un nouveau venv.",
+                    ),
+                )
+
+    def _clear_venv(self):
+        """Efface la sélection du venv."""
+        self.venv_path = None
+        self.venv_path_edit.clear()
+        self.venv_path_edit.setPlaceholderText(
+            tr("Select a virtual environment...", "Sélectionner un environnement virtuel...")
+        )
+
+        self._log(tr("Venv selection cleared", "Sélection venv effacée"))
+        self.statusBar.showMessage(tr("Venv selection cleared", "Sélection venv effacée"))
+
     def _is_valid(self, widget) -> bool:
         """Vérifie si un widget Qt est toujours valide.
 
@@ -773,6 +1051,16 @@ class BcaslStandaloneGui(QMainWindow):
                     border-radius: 4px;
                     padding: 4px 8px;
                     font-size: 11px;
+                }
+                QPushButton {
+                    background-color: #cccccc;
+                    color: #000000;
+                    border-radius: 4px;
+                    padding: 4px 8px;
+                    font-size: 12px;
+                }
+                QPushButton:hover {
+                    background-color: #4da6ff;
                 }
                 QStatusBar {
                     background-color: #e0e0e0;
@@ -1073,6 +1361,27 @@ class BcaslStandaloneGui(QMainWindow):
 
         plugin_timeout = cfg_timeout if cfg_timeout != 0.0 else env_timeout
 
+        # Récupérer le chemin du venv
+        venv_path = None
+        if self.venv_path:
+            venv_path = self.venv_path
+        elif self.venv_manager and self.workspace_dir:
+            # Auto-détecter si pas de venv sélectionné
+            best_venv = self.venv_manager.select_best_venv(self.workspace_dir)
+            if best_venv:
+                venv_path = best_venv
+                self.venv_path = venv_path
+                if self._is_valid(self.venv_path_edit):
+                    self.venv_path_edit.setText(venv_path)
+
+        if venv_path:
+            self._log(
+                tr(
+                    f"Using virtual environment: {venv_path}",
+                    f"Utilisation de l'environnement virtuel : {venv_path}",
+                )
+            )
+
         # Désactiver les contrôles pendant l'exécution
         self.btn_run.setEnabled(False)
         self.btn_cancel.setEnabled(True)
@@ -1091,6 +1400,8 @@ class BcaslStandaloneGui(QMainWindow):
         self._log("=" * 50)
         self._log(tr("Starting BCASL execution", "Début de l'exécution BCASL"))
         self._log(tr(f"Workspace: {workspace_root}", f"Workspace: {workspace_root}"))
+        if venv_path:
+            self._log(tr(f"Venv: {venv_path}", f"Venv: {venv_path}"))
         enabled_count = sum(1 for v in enabled_plugins.values() if v)
         self._log(
             tr(f"Enabled plugins: {enabled_count}", f"Plugins activés: {enabled_count}")
@@ -1105,6 +1416,7 @@ class BcaslStandaloneGui(QMainWindow):
             enabled_plugins=enabled_plugins,
             config=self.config,
             plugin_timeout=plugin_timeout,
+            venv_path=venv_path,
         )
 
         self.execution_thread.log_message.connect(self._log)
