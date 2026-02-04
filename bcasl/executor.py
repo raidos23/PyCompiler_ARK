@@ -489,7 +489,7 @@ class BCASL:
         if not eff_sandbox or parallelism <= 1:
             order: list[str] = []
             tmp_ready = list(ready)
-            heapq.hePluginsfy(tmp_ready)
+            heapq.heapify(tmp_ready)
             while tmp_ready:
                 _, _, pid = heapq.heappop(tmp_ready)
                 order.append(pid)
