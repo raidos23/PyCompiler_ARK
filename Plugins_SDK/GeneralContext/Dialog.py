@@ -16,6 +16,8 @@
 from __future__ import annotations
 
 from typing import Optional
+import colorama
+from rich.console import Console
 
 # Import des classes et fonctions de Core.dialogs
 from Core.WidgetsCreator import (
@@ -31,6 +33,10 @@ from Core.WidgetsCreator import (
 
 class Dialog:
     """Dialog class for plugins - uses Core.dialogs classes for all UI operations."""
+
+    def __init__(self):
+        colorama.init()
+        self.console = Console()
 
     def show_msgbox(
         self, kind: str, title: str, text: str, *, default: Optional[str] = None
@@ -71,15 +77,15 @@ class Dialog:
 
     def log_info(self, message: str) -> None:
         """Log an info message."""
-        self.log(f"[INFO] {message}")
+        self.console.print(f"[bold green][INFO][/bold green] {message}")
 
     def log_warn(self, message: str) -> None:
         """Log a warning message."""
-        self.log(f"[WARN] {message}")
+        self.console.print(f"[bold yellow][WARN][/bold yellow] {message}")
 
     def log_error(self, message: str) -> None:
         """Log an error message."""
-        self.log(f"[ERROR] {message}")
+        self.console.print(f"[bold red][ERROR][/bold red] {message}")
 
     def sys_msgbox_for_installing(
         self,
