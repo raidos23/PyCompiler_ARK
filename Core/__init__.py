@@ -85,6 +85,21 @@ from Core.Compiler.process_killer import (
     get_process_info,
 )
 
+# Importations de Venv_Manager/Manager.py
+from Core.Venv_Manager.Manager import (
+    VenvManager,
+)
+
+# Importations de allversion.py
+from Core.allversion import (
+    get_core_version,
+    get_bcasl_version,
+    get_engine_sdk_version,
+)
+
+# Importations de Gui.py
+from Core.Gui import PyCompilerArkGui
+
 
 __all__ = [
     "CompilationStatus",
@@ -107,6 +122,11 @@ __all__ = [
     "kill_process",
     "kill_process_tree",
     "get_process_info",
+    "VenvManager",
+    "get_core_version",
+    "get_bcasl_version",
+    "get_engine_sdk_version",
+    "PyCompilerArkGui",
 ]
 __version__ = "1.0.0"
 __author__ = "Ague Samuel Amen"
