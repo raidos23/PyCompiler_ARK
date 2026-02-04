@@ -89,7 +89,7 @@ from Core.Compiler.process_killer import (
 )
 
 # Importations de EngineLoader
-from EngineLoader.registry import get_engine
+from EngineLoader.registry import get_engine, create
 
 __all__ = [
     # compiler.py
@@ -187,12 +187,13 @@ def compile_all(self) -> None:
     if not engine_id:
         engine_id = "pyinstaller"  # Moteur par défaut
 
-    # Obtenir le moteur
-    engine = get_engine(engine_id)
-    if not engine:
+    # Obtenir le moteur (instance)
+    try:
+        engine = create(engine_id)
+    except Exception as e:
         self.log_i18n(
-            f"❌ Moteur de compilation '{engine_id}' non trouvé.",
-            f"❌ Compilation engine '{engine_id}' not found.",
+            f"❌ Erreur création moteur '{engine_id}': {e}",
+            f"❌ Engine creation error '{engine_id}': {e}",
         )
         return
 
@@ -376,19 +377,19 @@ def start_compilation_process(self, engine_id: str, file_path: str) -> bool:
     Returns:
         True if compilation started, False otherwise
     """
-    # Obtenir le moteur
-    engine = get_engine(engine_id)
-    if not engine:
+    # Obtenir le moteur (instance)
+    try:
+        engine = create(engine_id)
+    except Exception as e:
         self.log_i18n(
-            f"❌ Moteur '{engine_id}' non trouvé.",
-            f"❌ Engine '{engine_id}' not found.",
+            f"❌ Erreur création moteur '{engine_id}': {e}",
+            f"❌ Engine creation error '{engine_id}': {e}",
         )
         return False
 
     # Vérifier les prérequis
-    if hasattr(engine, "ensure_tools_installed"):
-        if not engine.ensure_tools_installed(self):
-            return False
+    if not engine.ensure_tools_installed(self):
+        return False
 
     # Construire la commande
     cmd = engine.build_command(self, file_path)
@@ -530,7 +531,10 @@ def handle_finished(self, return_code: int, info: dict) -> None:
         # Appeler on_success du moteur si disponible
         engine_id = info.get("engine")
         if engine_id:
-            engine = get_engine(engine_id)
+            try:
+                engine = create(engine_id)
+            except Exception:
+                engine = None
             if engine and hasattr(engine, "on_success"):
                 file_path = info.get("file")
                 if file_path:
