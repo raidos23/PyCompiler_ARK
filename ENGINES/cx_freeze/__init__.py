@@ -226,6 +226,20 @@ class CXFreezeEngine(CompilerEngine):
                 pass
             return None
 
+    def _get_opt(self, name: str):
+        """Get option widget from engine instance or GUI."""
+        # Try engine instance first (dynamic tabs)
+        if hasattr(self, f"_cx_{name}"):
+            return getattr(self, f"_cx_{name}")
+        # Fallback to GUI widget (static UI)
+        return getattr(self._gui, name, None) if hasattr(self, "_gui") else None
+
+    def _get_input(self, name: str):
+        """Get input widget from engine instance or GUI."""
+        if hasattr(self, f"_cx_{name}"):
+            return getattr(self, f"_cx_{name}")
+        return getattr(self._gui, name, None) if hasattr(self, "_gui") else None
+
     def _get_btn(self, name: str):
         """Get button widget from engine instance or GUI."""
         if hasattr(self, f"_cx_btn_{name}"):
