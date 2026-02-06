@@ -228,6 +228,9 @@ def _start_compilation_queue(self, engine, files_to_compile: list) -> None:
         main_process.log_message.connect(
             lambda level, msg: _handle_log(self, level, msg)
         )
+        main_process.compilation_started.connect(
+            lambda info: _handle_compilation_started(self, info)
+        )
         main_process.compilation_finished.connect(
             lambda code, info: handle_finished(self, code, info)
         )
@@ -236,8 +239,21 @@ def _start_compilation_queue(self, engine, files_to_compile: list) -> None:
         )
         main_process._gui_connected = True
 
-    # Compiler chaque fichier
+    # Charger les patterns d'exclusion depuis ArkConfigManager
+    exclusion_patterns = main_process.get_exclusion_patterns()
+    excluded_count = 0
+    
+    # Compiler chaque fichier avec vérification des exclusions
     for file_path in files_to_compile:
+        # Vérifier si le fichier doit être exclu
+        if main_process.should_exclude(file_path):
+            self.log_i18n(
+                f"⏩ Fichier exclu: {os.path.basename(file_path)}",
+                f"⏩ File excluded: {os.path.basename(file_path)}",
+            )
+            excluded_count += 1
+            continue
+
         if not os.path.exists(file_path):
             self.log_i18n(
                 f"⚠️ Fichier non trouvé: {file_path}", f"⚠️ File not found: {file_path}"
@@ -285,6 +301,13 @@ def _start_compilation_queue(self, engine, files_to_compile: list) -> None:
         )
 
         # break  # Un seul fichier à la fois pour l'instant
+    
+    # Afficher le résumé des exclusions
+    if excluded_count > 0:
+        self.log_i18n(
+            f"⏩ {excluded_count} fichier(s) exclu(s) selon les patterns de ARK_Main_Config.yml",
+            f"⏩ {excluded_count} file(s) excluded according to ARK_Main_Config.yml patterns",
+        )
 
 
 def cancel_all_compilations(self) -> bool:
@@ -489,6 +512,17 @@ def _handle_output(self, message: str) -> None:
     """Handle output from MainProcess."""
     if message:
         self.log.append(message)
+
+
+def _handle_compilation_started(self, info: dict) -> None:
+    """Handle compilation started signal from MainProcess."""
+    file_path = info.get("file", "")
+    engine = info.get("engine", "")
+    if file_path and engine:
+        self.log_i18n(
+            f"🚀 Démarrage compilation: {os.path.basename(file_path)} avec {engine}",
+            f"🚀 Starting compilation: {os.path.basename(file_path)} with {engine}",
+        )
 
 
 def _handle_error(self, message: str) -> None:
