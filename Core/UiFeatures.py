@@ -41,7 +41,7 @@ from PySide6.QtWidgets import QFileDialog, QMessageBox
 class UiFeatures:
     """
     Classe de fonctionnalités UI pour PyCompiler ARK.
-    
+
     Cette classe contient les méthodes liées à l'interface utilisateur
     et peut être utilisée comme mixin ou importée séparément.
     """
@@ -200,6 +200,7 @@ class UiFeatures:
                             self.language_pref = "System"
                             self.apply_language("System")
                             if getattr(self, "select_lang", None):
+
                                 async def _fetch_sys():
                                     code = await resolve_system_language()
                                     return await get_translations(code)
@@ -282,7 +283,7 @@ class UiFeatures:
         self.btn_select_folder.setEnabled(enabled)
         self.btn_select_files.setEnabled(enabled)
         self.btn_remove_file.setEnabled(enabled)
-        
+
         # Check if buttons exist before calling setEnabled
         try:
             if hasattr(self, "btn_export_config") and self.btn_export_config:
@@ -320,7 +321,7 @@ class UiFeatures:
         except Exception:
             pass
         self.venv_button.setEnabled(enabled)
-        
+
         # Rafraîchir visuellement l'état grisé
         self._refresh_grey_targets()
 
@@ -431,6 +432,7 @@ class UiFeatures:
                         pass
                 try:
                     import EngineLoader as engines_loader
+
                     engines_loader.registry.apply_translations(self, tr)
                 except Exception:
                     pass
@@ -483,10 +485,11 @@ class UiFeatures:
     def show_language_dialog(self) -> None:
         """Affiche la boîte de dialogue de sélection de langue."""
         from .i18n import show_language_dialog as _i18n_show_dialog
+
         _i18n_show_dialog(self)
 
     def _apply_main_app_translations(self, tr: dict) -> None:
         """Applique les traductions aux éléments UI."""
         from .i18n import _apply_main_app_translations as _i18n_apply_translations
-        _i18n_apply_translations(self, tr)
 
+        _i18n_apply_translations(self, tr)

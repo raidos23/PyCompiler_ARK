@@ -242,7 +242,7 @@ def _start_compilation_queue(self, engine, files_to_compile: list) -> None:
     # Charger les patterns d'exclusion depuis ArkConfigManager
     exclusion_patterns = main_process.get_exclusion_patterns()
     excluded_count = 0
-    
+
     # Compiler chaque fichier avec vérification des exclusions
     for file_path in files_to_compile:
         # Vérifier si le fichier doit être exclu
@@ -301,7 +301,7 @@ def _start_compilation_queue(self, engine, files_to_compile: list) -> None:
         )
 
         # break  # Un seul fichier à la fois pour l'instant
-    
+
     # Afficher le résumé des exclusions
     if excluded_count > 0:
         self.log_i18n(

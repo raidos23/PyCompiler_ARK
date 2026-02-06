@@ -129,7 +129,7 @@ class BcaslExecutionThread(QThread):
                 self.log_message.emit(
                     f"🐍 Utilisation de l'environnement virtuel: {self.venv_path}"
                 )
-            
+
             # Créer le gestionnaire BCASL
             manager = BCASL(
                 self.workspace_root,
@@ -212,7 +212,7 @@ class BcaslStandaloneGui(QMainWindow):
         self.workspace_dir = workspace_dir
         self.language = language
         self.theme = theme
-        
+
         # État du venv
         self.venv_path: Optional[str] = None
         self.venv_manager = None
@@ -267,6 +267,7 @@ class BcaslStandaloneGui(QMainWindow):
         # Initialiser le gestionnaire de venv
         try:
             from Core.Venv_Manager.Manager import VenvManager
+
             self.venv_manager = VenvManager(self)
             self._detect_venv()
         except Exception as e:
@@ -276,7 +277,7 @@ class BcaslStandaloneGui(QMainWindow):
         """Détecte automatiquement le meilleur venv disponible."""
         if not self.venv_manager or not self.workspace_dir:
             return
-        
+
         try:
             best_venv = self.venv_manager.select_best_venv(self.workspace_dir)
             if best_venv:
@@ -286,7 +287,9 @@ class BcaslStandaloneGui(QMainWindow):
                 self._log(f"✅ Venv auto-détecté: {best_venv}")
             else:
                 # Essayer de détecter un venv dans le workspace
-                existing, default_path = self.venv_manager._detect_venv_in(self.workspace_dir)
+                existing, default_path = self.venv_manager._detect_venv_in(
+                    self.workspace_dir
+                )
                 if existing:
                     self.venv_path = existing
                     if self._is_valid(self.venv_path_edit):
@@ -411,7 +414,10 @@ class BcaslStandaloneGui(QMainWindow):
         # Champ d'affichage du chemin du venv
         self.venv_path_edit = QLineEdit()
         self.venv_path_edit.setPlaceholderText(
-            tr("Select a virtual environment...", "Sélectionner un environnement virtuel...")
+            tr(
+                "Select a virtual environment...",
+                "Sélectionner un environnement virtuel...",
+            )
         )
         self.venv_path_edit.setReadOnly(True)
         self.venv_path_edit.setMinimumWidth(200)
@@ -872,11 +878,16 @@ class BcaslStandaloneGui(QMainWindow):
             )
             return
 
-        self._log(tr("Auto-detecting virtual environment...", "Auto-détection de l'environnement virtuel..."))
+        self._log(
+            tr(
+                "Auto-detecting virtual environment...",
+                "Auto-détection de l'environnement virtuel...",
+            )
+        )
 
         # Chercher d'abord dans le workspace
         best_venv = self.venv_manager.select_best_venv(self.workspace_dir)
-        
+
         if best_venv:
             self.venv_path = best_venv
             self.venv_path_edit.setText(best_venv)
@@ -889,7 +900,9 @@ class BcaslStandaloneGui(QMainWindow):
             self.statusBar.showMessage(tr("Venv auto-detected", "Venv auto-détecté"))
         else:
             # Essayer de trouver n'importe quel venv dans le workspace
-            existing, default_path = self.venv_manager._detect_venv_in(self.workspace_dir)
+            existing, default_path = self.venv_manager._detect_venv_in(
+                self.workspace_dir
+            )
             if existing:
                 self.venv_path = existing
                 self.venv_path_edit.setText(existing)
@@ -922,11 +935,16 @@ class BcaslStandaloneGui(QMainWindow):
         self.venv_path = None
         self.venv_path_edit.clear()
         self.venv_path_edit.setPlaceholderText(
-            tr("Select a virtual environment...", "Sélectionner un environnement virtuel...")
+            tr(
+                "Select a virtual environment...",
+                "Sélectionner un environnement virtuel...",
+            )
         )
 
         self._log(tr("Venv selection cleared", "Sélection venv effacée"))
-        self.statusBar.showMessage(tr("Venv selection cleared", "Sélection venv effacée"))
+        self.statusBar.showMessage(
+            tr("Venv selection cleared", "Sélection venv effacée")
+        )
 
     def _is_valid(self, widget) -> bool:
         """Vérifie si un widget Qt est toujours valide.
@@ -1089,12 +1107,12 @@ class BcaslStandaloneGui(QMainWindow):
         # Vérifier que les widgets sont initialisés et valides
         if not self._is_valid(self.plugins_list):
             return
-        
+
         try:
             self.plugins_list.clear()
         except (RuntimeError, AttributeError):
             return  # Widget supprimé
-        
+
         self.plugins_meta = {}
 
         if not self.Plugins_dir or not self.Plugins_dir.exists():
@@ -1207,7 +1225,7 @@ class BcaslStandaloneGui(QMainWindow):
         # Vérifier que la liste des plugins est valide
         if not self._is_valid(self.plugins_list):
             return
-        
+
         # Activer/désactiver tous les items
         try:
             for i in range(self.plugins_list.count()):
@@ -1237,7 +1255,7 @@ class BcaslStandaloneGui(QMainWindow):
         # Vérifier que la liste des plugins est valide
         if not self._is_valid(self.plugins_list):
             return
-        
+
         row = self.plugins_list.currentRow()
         if row <= 0:
             return
@@ -1254,7 +1272,7 @@ class BcaslStandaloneGui(QMainWindow):
         # Vérifier que la liste des plugins est valide
         if not self._is_valid(self.plugins_list):
             return
-        
+
         row = self.plugins_list.currentRow()
         if row < 0 or row >= self.plugins_list.count() - 1:
             return
@@ -1271,7 +1289,7 @@ class BcaslStandaloneGui(QMainWindow):
         # Vérifier que la liste des plugins est valide
         if not self._is_valid(self.plugins_list):
             return []
-        
+
         order = []
         try:
             for i in range(self.plugins_list.count()):
@@ -1288,7 +1306,7 @@ class BcaslStandaloneGui(QMainWindow):
         # Vérifier que la liste des plugins est valide
         if not self._is_valid(self.plugins_list):
             return {}
-        
+
         enabled = {}
         try:
             for i in range(self.plugins_list.count()):
