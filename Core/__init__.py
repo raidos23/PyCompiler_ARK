@@ -64,8 +64,10 @@ from Core.Compiler.mainprocess import (
     MainProcess,
 )
 
-# Importations de command_helpers.py
-from Core.Compiler.command_helpers import (
+# Importations de mainprocess.py (fonctions intégrées depuis command_helpers.py)
+# Note: command_helpers.py a été supprimé et ses fonctions ont été
+# intégrées dans mainprocess.py avec la gestion ArkConfigManager
+from Core.Compiler.mainprocess import (
     build_command,
     validate_command,
     escape_arguments,
