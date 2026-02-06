@@ -1,7 +1,6 @@
-# TODO for Enhancing Dialog Class
+# TODO: Changer l'interface graphique pour utiliser QMainWindow
 
-- [x] Add imports for colorama and rich
-- [x] Modify log_info to use green color
-- [x] Modify log_warn to use yellow color
-- [x] Modify log_error to use red color
-- [x] Ensure compatibility and test output
+## Étapes à suivre
+- [ ] Mettre à jour les imports et l'héritage dans Core/Gui.py
+- [ ] Ajuster la configuration de l'UI dans Core/UiConnection.py pour utiliser setCentralWidget
+- [ ] Tester les changements pour s'assurer que l'interface fonctionne correctement

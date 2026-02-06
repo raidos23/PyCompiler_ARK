@@ -1,4 +1,4 @@
-﻿# SPDX-License-Identifier: Apache-2.0
+# SPDX-License-Identifier: Apache-2.0
 # Copyright 2026 Ague Samuel Amen
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -187,10 +187,8 @@ def init_ui(self):
     except Exception:
         pass
 
-    # Remplacer le layout principal par celui du .ui
-    layout = QVBoxLayout(self)
-    layout.addWidget(self.ui)
-    self.setLayout(layout)
+    # Définir l'UI chargée comme widget central de QMainWindow
+    self.setCentralWidget(self.ui)
 
     # Récupérer les widgets depuis l'UI chargée
     self.sidebar_logo = self.ui.findChild(QLabel, "sidebar_logo")
