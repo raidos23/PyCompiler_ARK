@@ -24,10 +24,10 @@ Ce module est responsable de:
 
 Le fichier de configuration utilise le format YAML et permet de personnaliser:
 - Les patterns de fichiers à inclure/exclure de la compilation
-- Le comportement de compilation (fichier principal, points d'entrée)
 - Les gestionnaires d'environnement virtuel (Poetry, Pipenv, Conda, etc.)
 - Les options de dépendances
-- La configuration des plugins
+
+Note: La configuration des plugins BCASL est gérée exclusivement par bcasl.yml
 """
 
 import os
@@ -88,12 +88,6 @@ DEFAULT_CONFIG = {
     "exclusion_patterns": DEFAULT_EXCLUSION_PATTERNS,
     "inclusion_patterns": ["**/*.py"],
     # -----------------------------------------------------------------------------
-    # COMPORTEMENT DE COMPILATION
-    # -----------------------------------------------------------------------------
-    "compile_only_main": False,
-    "main_file_names": ["main.py", "app.py"],
-    "auto_detect_entry_points": True,
-    # -----------------------------------------------------------------------------
     # GESTION DES DÉPENDANCES
     # -----------------------------------------------------------------------------
     "dependencies": {
@@ -124,13 +118,6 @@ DEFAULT_CONFIG = {
         "auto_detect": True,
         # Revenir à pip si aucun gestionnaire n'est détecté
         "fallback_to_pip": True,
-    },
-    # -----------------------------------------------------------------------------
-    # CONFIGURATION DES PLUGINS
-    # -----------------------------------------------------------------------------
-    "plugins": {
-        "bcasl_enabled": True,
-        "plugin_timeout": 0.0,
     },
 }
 
@@ -246,15 +233,6 @@ def load_ark_config(workspace_dir: str) -> dict[str, Any]:
                     str(p) for p in config["inclusion_patterns"] if p
                 ]
 
-        # -----------------------------------------------------------------------------
-        # VALIDATION DES NOMS DE FICHIERS PRINCIPAUX
-        # -----------------------------------------------------------------------------
-        if "main_file_names" in config:
-            if isinstance(config["main_file_names"], list):
-                config["main_file_names"] = [
-                    str(n) for n in config["main_file_names"] if n
-                ]
-
         return config
 
     except Exception as e:
@@ -264,32 +242,7 @@ def load_ark_config(workspace_dir: str) -> dict[str, Any]:
         return config
 
 
-def get_compiler_options(config: dict[str, Any], compiler: str) -> dict[str, Any]:
-    """
-    Récupère les options spécifiques à un compilateur.
 
-    Cette fonction permet d'extraire les options de configuration
-    dédiées à un compilateur particulier (pyinstaller, nuitka, cx_freeze).
-
-    Args:
-        config: Dictionnaire de configuration complet
-        compiler: Nom du compilateur (ex: "pyinstaller", "nuitka")
-
-    Returns:
-        Dictionnaire des options du compilateur, ou un dictionnaire vide
-    """
-    compiler_lower = compiler.lower()
-    return config.get(compiler_lower, {})
-
-
-def get_output_options(config: dict[str, Any]) -> dict[str, Any]:
-    """
-    Récupère les options de sortie pour les exécutables compilés.
-
-    Returns:
-        Dictionnaire des options de sortie (répertoire, nettoyage, etc.)
-    """
-    return config.get("output", {})
 
 
 def get_dependency_options(config: dict[str, Any]) -> dict[str, Any]:
@@ -417,24 +370,7 @@ exclusion_patterns:
 inclusion_patterns:
   - "**/*.py"
 
-# -----------------------------------------------------------------------------
-# COMPORTEMENT DE COMPILATION
-# -----------------------------------------------------------------------------
-# Compiler uniquement le fichier principal (désactivé par défaut)
-compile_only_main: false
-# Noms de fichiers recherchés comme points d'entrée
-main_file_names:
-  - "main.py"
-  - "app.py"
-# Détection automatique des points d'entrée dans le code
-auto_detect_entry_points: true
 
-# -----------------------------------------------------------------------------
-# CONFIGURATION DE LA SORTIE
-# -----------------------------------------------------------------------------
-output:
-  directory: "dist"
-  clean_before_build: false
 
 # -----------------------------------------------------------------------------
 # GESTION DES DÉPENDANCES

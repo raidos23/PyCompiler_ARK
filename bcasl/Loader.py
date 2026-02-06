@@ -200,44 +200,6 @@ def _load_workspace_config(workspace_root: Path) -> dict[str, Any]:
             data = _read_yml(p)
 
             if isinstance(data, dict) and data:
-                # Fusionner avec ARK_Main_Config.yml si disponible
-                # IMPORTANT: bcasl config takes priority over ARK config
-                # ARK config only fills in missing values
-                try:
-                    from Core.ArkConfigManager import load_ark_config
-
-                    ark_config = load_ark_config(str(workspace_root))
-
-                    # Fusionner les patterns d'exclusion (additive merge)
-                    if "exclusion_patterns" in ark_config:
-                        existing_excludes = data.get("exclude_patterns", [])
-                        data["exclude_patterns"] = list(
-                            set(existing_excludes + ark_config["exclusion_patterns"])
-                        )
-
-                    # ARK inclusion patterns always override bcasl file_patterns
-                    if "inclusion_patterns" in ark_config:
-                        data["file_patterns"] = ark_config["inclusion_patterns"]
-
-                    # Merge plugin options from ARK only if not explicitly set in bcasl config
-                    plugin_opts = ark_config.get("plugins", {})
-                    if plugin_opts:
-                        opts = data.get("options", {})
-                        # Only use ARK's bcasl_enabled if not explicitly set in bcasl config
-                        if "enabled" not in opts and "bcasl_enabled" in plugin_opts:
-                            opts["enabled"] = plugin_opts["bcasl_enabled"]
-                        # Only use ARK's plugin_timeout if not explicitly set in bcasl config
-                        if (
-                            "plugin_timeout_s" not in opts
-                            and "plugin_timeout" in plugin_opts
-                        ):
-                            opts["plugin_timeout_s"] = float(
-                                plugin_opts["plugin_timeout"]
-                            )
-                        data["options"] = opts
-                except Exception:
-                    pass
-
                 return data
 
     # 2) Génération défaut avec fusion ARK
