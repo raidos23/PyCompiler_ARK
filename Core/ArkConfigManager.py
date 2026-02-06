@@ -242,9 +242,6 @@ def load_ark_config(workspace_dir: str) -> dict[str, Any]:
         return config
 
 
-
-
-
 def get_dependency_options(config: dict[str, Any]) -> dict[str, Any]:
     """
     Récupère les options de gestion des dépendances.

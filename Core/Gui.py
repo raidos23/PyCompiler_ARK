@@ -43,7 +43,9 @@ from .UiFeatures import UiFeatures
 
 # Import des classes de gestion du workspace
 from Core.WorkSpaceManager.SetupWorkspace import SetupWorkspace
-from Core.WorkSpaceManager.WorkspaceAdvancedManipulation import WorkspaceAdvancedManipulation
+from Core.WorkSpaceManager.WorkspaceAdvancedManipulation import (
+    WorkspaceAdvancedManipulation,
+)
 
 
 def get_selected_workspace() -> Optional[str]:
@@ -67,7 +69,7 @@ def get_selected_workspace() -> Optional[str]:
 class PyCompilerArkGui(QMainWindow, UiFeatures):
     """
     Classe principale de la fenêtre GUI pour PyCompiler ARK.
-    
+
     Hérité de UiFeatures pour les fonctionnalités UI déléguées.
     """
 
@@ -75,7 +77,7 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
         super().__init__()
         global _latest_gui_instance
         _latest_gui_instance = self
-        
+
         self.setWindowTitle("PyCompiler ARK++")
         self.setGeometry(100, 100, 1280, 720)
         self.setAcceptDrops(True)
@@ -91,7 +93,7 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
         self.current_compiling = set()
         self._closing = False
         self._language_refresh_callbacks = []
-        
+
         # Gestion du venv via VenvManager
         self.venv_manager = VenvManager(self)
 
@@ -101,13 +103,16 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
 
         # Détection et application de la langue système
         import locale
+
         sys_lang = None
         try:
             loc = locale.getdefaultlocale()[0] or ""
-            sys_lang = "Français" if loc.lower().startswith(("fr", "fr_")) else "English"
+            sys_lang = (
+                "Français" if loc.lower().startswith(("fr", "fr_")) else "English"
+            )
         except Exception:
             sys_lang = "English"
-        
+
         pref_lang = getattr(self, "language_pref", getattr(self, "language", "System"))
         chosen_lang = sys_lang if pref_lang == "System" else pref_lang
         self.apply_language(chosen_lang)
@@ -116,13 +121,22 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
         # Afficher le mode de langue sur le bouton
         try:
             if self.select_lang:
+
                 async def _fetch_tr():
-                    effective_code = await resolve_system_language() if pref_lang == "System" else pref_lang
+                    effective_code = (
+                        await resolve_system_language()
+                        if pref_lang == "System"
+                        else pref_lang
+                    )
                     return await get_translations(effective_code)
 
                 def _apply_label(tr):
                     try:
-                        key = "choose_language_system_button" if pref_lang == "System" else "choose_language_button"
+                        key = (
+                            "choose_language_system_button"
+                            if pref_lang == "System"
+                            else "choose_language_button"
+                        )
                         self.select_lang.setText(
                             (tr.get(key) if isinstance(tr, dict) else "")
                             or (tr.get("select_lang") if isinstance(tr, dict) else "")
@@ -134,14 +148,14 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
                 _run_coro_async(_fetch_tr(), _apply_label, ui_owner=self)
         except Exception:
             pass
-        
+
         self.update_ui_state()
 
     # =========================================================================
     # DÉLÉGATION UI À UiFeatures
     # =========================================================================
     # Les méthodes suivantes sont déléguées à UiFeatures via l'héritage multiple
-    
+
     select_icon = UiFeatures.select_icon
     select_nuitka_icon = UiFeatures.select_nuitka_icon
     show_help_dialog = UiFeatures.show_help_dialog
@@ -212,7 +226,11 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
     def on_main_only_changed(self):
         """Gestion du changement de l'option main uniquement."""
         if self.opt_main_only.isChecked():
-            mains = [f for f in self.python_files if os.path.basename(f) in ("main.py", "app.py")]
+            mains = [
+                f
+                for f in self.python_files
+                if os.path.basename(f) in ("main.py", "app.py")
+            ]
             if len(mains) > 1:
                 QMessageBox.information(
                     self,
@@ -275,7 +293,9 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
     def tr(self, fr: str, en: str) -> str:
         """Retourne le texte FR si la langue est Français, sinon EN."""
         try:
-            lang = str(getattr(self, "current_language", "English") or "English").lower()
+            lang = str(
+                getattr(self, "current_language", "English") or "English"
+            ).lower()
         except Exception:
             lang = "english"
         return fr if lang.startswith("fr") else en
@@ -305,7 +325,11 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
         """Vérifie s'il y a des tâches en arrière-plan actives."""
         if self.processes:
             return True
-        if hasattr(self, "venv_manager") and self.venv_manager and self.venv_manager.has_active_tasks():
+        if (
+            hasattr(self, "venv_manager")
+            and self.venv_manager
+            and self.venv_manager.has_active_tasks()
+        ):
             return True
         try:
             bcasl_thread = getattr(self, "_bcasl_thread", None)
@@ -386,6 +410,7 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
                 self._terminate_background_tasks()
                 try:
                     from bcasl.Loader import ensure_bcasl_thread_stopped
+
                     ensure_bcasl_thread_stopped(self)
                 except Exception:
                     pass
@@ -395,8 +420,8 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
         else:
             try:
                 from bcasl.Loader import ensure_bcasl_thread_stopped
+
                 ensure_bcasl_thread_stopped(self)
             except Exception:
                 pass
             event.accept()
-

@@ -196,7 +196,7 @@ class EnginesStandaloneGui(QMainWindow):
         self.theme = theme
         self.selected_engine_id = None
         self.selected_file = None
-        
+
         # État du venv
         self.venv_path: Optional[str] = None
         self.venv_manager = None
@@ -614,6 +614,7 @@ class EnginesStandaloneGui(QMainWindow):
         """Initialise le gestionnaire de venv et détecte le venv."""
         try:
             from Core.Venv_Manager.Manager import VenvManager
+
             self.venv_manager = VenvManager(self)
             self._detect_venv()
         except Exception as e:
@@ -623,7 +624,7 @@ class EnginesStandaloneGui(QMainWindow):
         """Détecte automatiquement le meilleur venv disponible."""
         if not self.venv_manager or not self.workspace_dir:
             return
-        
+
         try:
             best_venv = self.venv_manager.select_best_venv(self.workspace_dir)
             if best_venv:
@@ -632,7 +633,9 @@ class EnginesStandaloneGui(QMainWindow):
                     self.venv_path_edit.setText(best_venv)
                 self._log(f"✅ Venv auto-détecté: {best_venv}")
             else:
-                existing, default_path = self.venv_manager._detect_venv_in(self.workspace_dir)
+                existing, default_path = self.venv_manager._detect_venv_in(
+                    self.workspace_dir
+                )
                 if existing:
                     self.venv_path = existing
                     if self._is_valid(self.venv_path_edit):
@@ -695,13 +698,15 @@ class EnginesStandaloneGui(QMainWindow):
         self._log("Auto-detecting virtual environment...")
 
         best_venv = self.venv_manager.select_best_venv(self.workspace_dir)
-        
+
         if best_venv:
             self.venv_path = best_venv
             self.venv_path_edit.setText(best_venv)
             self._log(f"✅ Best venv auto-detected: {best_venv}")
         else:
-            existing, default_path = self.venv_manager._detect_venv_in(self.workspace_dir)
+            existing, default_path = self.venv_manager._detect_venv_in(
+                self.workspace_dir
+            )
             if existing:
                 self.venv_path = existing
                 self.venv_path_edit.setText(existing)
