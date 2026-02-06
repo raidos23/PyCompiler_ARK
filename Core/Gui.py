@@ -23,7 +23,7 @@ from typing import Optional
 
 from PySide6.QtCore import QProcess, Qt
 from PySide6.QtGui import QDropEvent, QPixmap
-from PySide6.QtWidgets import QApplication, QFileDialog, QMessageBox, QWidget
+from PySide6.QtWidgets import QApplication, QFileDialog, QMessageBox, QMainWindow, QWidget
 
 from Core.Globals import _workspace_dir_lock, _latest_gui_instance, _workspace_dir_cache
 
@@ -63,7 +63,7 @@ def get_selected_workspace() -> Optional[str]:
 from PySide6.QtCore import QEventLoop as _QEventLoop
 
 
-class PyCompilerArkGui(QWidget):
+class PyCompilerArkGui(QMainWindow):
     def __init__(self):
         super().__init__()
         global _latest_gui_instance
