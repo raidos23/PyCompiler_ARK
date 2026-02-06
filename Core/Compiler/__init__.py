@@ -31,6 +31,9 @@ Fonctions:
 - kill_process_tree: Tue un processus et ses enfants
 - build_command: Construit une commande de compilation
 - validate_command: Valide une commande de compilation
+
+Note: Les fonctions de command_helpers.py ont été intégrées dans mainprocess.py
+      pour supporter l'intégration avec ArkConfigManager pour les exclusions.
 """
 
 from __future__ import annotations
@@ -65,10 +68,7 @@ from Core.Compiler.mainprocess import (
     ProcessState,
     MainProcessSignals,
     MainProcess,
-)
-
-# Importations de command_helpers.py
-from Core.Compiler.command_helpers import (
+    # Fonctions intégrées depuis l'ancien command_helpers.py
     build_command,
     validate_command,
     escape_arguments,
@@ -101,7 +101,7 @@ __all__ = [
     "ProcessState",
     "MainProcessSignals",
     "MainProcess",
-    # command_helpers.py
+    # Fonctions de construction de commande (intégrées depuis command_helpers.py)
     "build_command",
     "validate_command",
     "escape_arguments",
