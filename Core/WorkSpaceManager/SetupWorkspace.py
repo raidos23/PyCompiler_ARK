@@ -168,6 +168,15 @@ class SetupWorkspace:
                         f"Dossier sélectionné : {folder}", f"Selected folder: {folder}"
                     )
                 )
+            if hasattr(gui_instance, "label_workspace_status"):
+                try:
+                    gui_instance.label_workspace_status.setText(
+                        gui_instance.tr(
+                            f"Workspace : {folder}", f"Workspace: {folder}"
+                        )
+                    )
+                except Exception:
+                    pass
 
             gui_instance.python_files.clear()
             if hasattr(gui_instance, "file_list"):
@@ -175,6 +184,12 @@ class SetupWorkspace:
 
             SetupWorkspace.add_py_files_from_folder(gui_instance, folder)
             gui_instance.selected_files.clear()
+
+            try:
+                if hasattr(gui_instance, "apply_file_filter"):
+                    gui_instance.apply_file_filter()
+            except Exception:
+                pass
 
             if hasattr(gui_instance, "update_command_preview"):
                 gui_instance.update_command_preview()
@@ -277,6 +292,12 @@ class SetupWorkspace:
                 f"⏩ Exclusion appliquée : {excluded_count} fichier(s) exclu(s) selon ARK_Main_Config.yml",
                 f"⏩ Exclusion applied: {excluded_count} file(s) excluded according to ARK_Main_Config.yml",
             )
+
+        try:
+            if hasattr(gui_instance, "apply_file_filter"):
+                gui_instance.apply_file_filter()
+        except Exception:
+            pass
 
         return count
 
