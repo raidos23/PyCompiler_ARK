@@ -43,5 +43,10 @@
   "tt_bc_loader": "Configurar plugins de Plugins (BCASL) para executar antes da compilação.",
   "tt_venv_button": "Selecionar manualmente um diretório venv para usar na compilação.",
   "tt_suggest_deps": "Analisar o projeto para dependências Python ausentes.",
-  "tt_show_stats": "Mostrar estatísticas da compilação (tempo, número de arquivos, memória)."
+  "tt_show_stats": "Mostrar estatísticas da compilação (tempo, número de arquivos, memória).",
+  "label_workspace_status": "Área de trabalho: {path}",
+  "label_workspace_status_none": "Área de trabalho: Nenhum",
+  "file_filter_placeholder": "Filtrar lista…",
+  "btn_clear_workspace": "🧹 Limpar workspace",
+  "tt_clear_workspace": "Limpar a lista de arquivos e redefinir a seleção."
 }

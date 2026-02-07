@@ -43,5 +43,10 @@
   "tt_bc_loader": "配置在编译前运行的 Plugins（BCASL）插件。",
   "tt_venv_button": "手动选择用于编译的 venv 目录。",
   "tt_suggest_deps": "分析项目以查找缺失的 Python 依赖项。",
-  "tt_show_stats": "显示构建统计信息（时间、文数量、内存）。"
+  "tt_show_stats": "显示构建统计信息（时间、文数量、内存）。",
+  "label_workspace_status": "工作区：{path}",
+  "label_workspace_status_none": "工作区：无",
+  "file_filter_placeholder": "筛选列表…",
+  "btn_clear_workspace": "🧹 清空工作区",
+  "tt_clear_workspace": "清空文件列表并重置选择。"
 }

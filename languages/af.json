@@ -24,7 +24,6 @@
   "label_files_section": "2. Lêers om te bou",
   "btn_remove_file": "🗑️ Verwyder gekose lêer",
   "label_logs_section": "Boulog",
-  
   "choose_language_title": "Kies taal",
   "choose_language_label": "Taal:",
   "choose_language_system": "Stelsel",
@@ -44,5 +43,10 @@
   "tt_bc_loader": "Stel Plugins (BCASL) inproppe op om voor kompilasie te loop.",
   "tt_venv_button": "Kies handmatig 'n venv-lêergids om vir kompilasie te gebruik.",
   "tt_suggest_deps": "Ontleed die projek vir ontbrekende Python-afhanklikhede.",
-  "tt_show_stats": "Wys boustatistieke (tyd, aantal lêers, geheue)."
+  "tt_show_stats": "Wys boustatistieke (tyd, aantal lêers, geheue).",
+  "label_workspace_status": "Werkruimte: {path}",
+  "label_workspace_status_none": "Werkruimte: Geen",
+  "file_filter_placeholder": "Filter lys…",
+  "btn_clear_workspace": "🧹 Maak werkruimte skoon",
+  "tt_clear_workspace": "Maak die lêerlys skoon en herstel die keuse."
 }

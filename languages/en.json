@@ -24,7 +24,6 @@
   "label_files_section": "2. Files to build",
   "btn_remove_file": "🗑️ Remove selected file",
   "label_logs_section": "Build logs",
-
   "choose_language_title": "Choose language",
   "choose_language_label": "Language:",
   "choose_language_system": "System",
@@ -33,7 +32,6 @@
   "select_theme": "Choose theme",
   "choose_theme_button": "Choose theme",
   "choose_theme_system_button": "Choose theme (System)",
-
   "tt_select_folder": "Select the workspace directory containing your Python files.",
   "tt_select_files": "Add Python files manually to the build list.",
   "tt_build_all": "Start building all selected files.",
@@ -45,6 +43,10 @@
   "tt_bc_loader": "Configure Plugins (BCASL) plugins to run before compilation.",
   "tt_venv_button": "Manually select a venv directory to use for compilation.",
   "tt_suggest_deps": "Analyze the project for missing Python dependencies.",
-  "tt_show_stats": "Show build statistics (time, number of files, memory)."
+  "tt_show_stats": "Show build statistics (time, number of files, memory).",
+  "label_workspace_status": "Workspace: {path}",
+  "label_workspace_status_none": "Workspace: None",
+  "file_filter_placeholder": "Filter list…",
+  "btn_clear_workspace": "🧹 Clear workspace",
+  "tt_clear_workspace": "Clear the file list and reset the selection."
 }
-

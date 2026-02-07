@@ -170,11 +170,18 @@ class SetupWorkspace:
                 )
             if hasattr(gui_instance, "label_workspace_status"):
                 try:
-                    gui_instance.label_workspace_status.setText(
-                        gui_instance.tr(
-                            f"Workspace : {folder}", f"Workspace: {folder}"
+                    tr_map = getattr(gui_instance, "_tr", None)
+                    if isinstance(tr_map, dict):
+                        tmpl = tr_map.get("label_workspace_status") or "Workspace: {path}"
+                        gui_instance.label_workspace_status.setText(
+                            str(tmpl).replace("{path}", str(folder))
                         )
-                    )
+                    else:
+                        gui_instance.label_workspace_status.setText(
+                            gui_instance.tr(
+                                f"Workspace : {folder}", f"Workspace: {folder}"
+                            )
+                        )
                 except Exception:
                     pass
 

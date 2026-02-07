@@ -24,7 +24,6 @@
   "label_files_section": "2. Zu erstellende Dateien",
   "btn_remove_file": "🗑️ Ausgewählte Datei entfernen",
   "label_logs_section": "Build-Protokolle",
-
   "choose_language_title": "Sprache wählen",
   "choose_language_label": "Sprache:",
   "choose_language_system": "System",
@@ -44,5 +43,10 @@
   "tt_bc_loader": "Plugins-(BCASL)-Plugins konfigurieren, die vor der Kompilierung ausgeführt werden.",
   "tt_venv_button": "Venv-Verzeichnis manuell für die Kompilierung auswählen.",
   "tt_suggest_deps": "Projekt auf fehlende Python-Abhängigkeiten analysieren.",
-  "tt_show_stats": "Build-Statistiken anzeigen (Zeit, Anzahl der Dateien, Speicher)."
+  "tt_show_stats": "Build-Statistiken anzeigen (Zeit, Anzahl der Dateien, Speicher).",
+  "label_workspace_status": "Arbeitsbereich: {path}",
+  "label_workspace_status_none": "Arbeitsbereich: Kein",
+  "file_filter_placeholder": "Liste filtern…",
+  "btn_clear_workspace": "🧹 Workspace leeren",
+  "tt_clear_workspace": "Dateiliste leeren und Auswahl zurücksetzen."
 }

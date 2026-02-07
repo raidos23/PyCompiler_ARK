@@ -266,17 +266,28 @@ class WorkspaceAdvancedManipulation:
                 )
             if hasattr(gui_instance, "label_workspace_status"):
                 try:
-                    if keep_dir and workspace_dir:
-                        gui_instance.label_workspace_status.setText(
-                            gui_instance.tr(
-                                f"Workspace : {workspace_dir}",
-                                f"Workspace: {workspace_dir}",
+                    tr_map = getattr(gui_instance, "_tr", None)
+                    if isinstance(tr_map, dict):
+                        if keep_dir and workspace_dir:
+                            tmpl = tr_map.get("label_workspace_status") or "Workspace: {path}"
+                            gui_instance.label_workspace_status.setText(
+                                str(tmpl).replace("{path}", str(workspace_dir))
                             )
-                        )
+                        else:
+                            val = tr_map.get("label_workspace_status_none") or "Workspace: None"
+                            gui_instance.label_workspace_status.setText(str(val))
                     else:
-                        gui_instance.label_workspace_status.setText(
-                            gui_instance.tr("Workspace : Aucun", "Workspace: None")
-                        )
+                        if keep_dir and workspace_dir:
+                            gui_instance.label_workspace_status.setText(
+                                gui_instance.tr(
+                                    f"Workspace : {workspace_dir}",
+                                    f"Workspace: {workspace_dir}",
+                                )
+                            )
+                        else:
+                            gui_instance.label_workspace_status.setText(
+                                gui_instance.tr("Workspace : Aucun", "Workspace: None")
+                            )
                 except Exception:
                     pass
 
