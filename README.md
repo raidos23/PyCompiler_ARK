@@ -1,54 +1,35 @@
-# 🚀 PyCompiler ARK++
+# PyCompiler ARK++
 
-> Comprehensive Python compilation toolkit with modular architecture, security features, and extensible plugin system.
+A Qt‑based workshop to compile Python projects with a **pre‑compilation plugin pipeline (BCASL)** and a **multi‑engine system**.
 
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](http://www.apache.org/licenses/LICENSE-2.0)
-[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
 
+## ✨ Signature Capabilities
 
-## 🎯 Key Features
+- **BCASL (Before Compilation Advanced System Loader)**
+  - Pre‑compile plugins: validation, preparation, transformation
+  - Ordering + dependencies, sandboxed execution, timeouts
+  - Optional parallelism for independent plugins
 
-### 🔧 Modular Plugin System
-- BCASL: Pre-compilation plugins for validation, preparation, and code transformation
-- Sandboxed execution with isolated environments
-- Dependency management with topological sorting
-- Parallel execution for independent plugins
+- **Multi‑engine compilation**
+  - **PyInstaller**, **Nuitka**, **cx_Freeze**
+  - Extensible architecture via `ENGINES/`
 
-### 🏭 Multi-Engine Compilation
-- PyInstaller: Standard Python compilation with advanced options
-- Nuitka: High-performance compilation with optimization flags
-- cx_Freeze: Cross-platform support with minimal configuration
-- Extensible architecture: Add custom compilation engines
+- **Workspace‑oriented UI workflow**
+  - Select workspace + files
+  - File filtering, exclusions via `ARK_Main_Config.yml`
+  - Integrated logs and progress
 
-### 🛠️ Developer-Friendly SDKs
-- Plugins_SDK: Complete plugin development framework
-- Progress tracking: Non-blocking UI updates with detailed metrics
-- Context management: Secure workspace and resource handling
-- Internationalization: Async i18n with plugin overlay support
+- **Dedicated tools**
+  - **BCASL Standalone** (plugin manager)
+  - **Engines Standalone** (engine manager)
 
-## 🏗️ Architecture Overview
+- **Customization**
+  - QSS themes (`themes/`)
+  - Translations (`languages/`)
 
-PyCompiler ARK++ provides a modular, extensible platform for Python compilation with comprehensive tooling and security features.
-
-### Core Components
-
-#### 🔧 BCASL (Before Compilation Advanced System Loader)
-- Pre-compilation plugins for validation, preparation, and code transformation
-- Location: `Plugins/<plugin_id>/` with `__init__.py`
-- Sandboxed execution with resource limits and timeouts
-- Type-checked interfaces with comprehensive error handling
-- Dependency resolution with topological sorting
-- Parallel execution for independent plugins
-
-#### 🏭 Multi-Engine Compilation
-- PyInstaller: Industry-standard with advanced options and auto-plugin detection
-- Nuitka: High-performance compilation with optimization flags
-- cx_Freeze: Cross-platform support with minimal configuration
-- Extensible: Plugin architecture for additional compilation engines
-
-- Built-in plugins: Code signing, SBOM generation, integrity checking
-- Isolated execution environment with audit logging
-- CI/CD integration and automated workflows
+---
 
 ## 🚀 Quick Start
 
@@ -62,170 +43,117 @@ source .venv/bin/activate  # Linux/macOS
 # or
 .venv\Scripts\activate     # Windows
 
-pip install -r requirements.txt -c constraints.txt
-
-# Install Click for enhanced CLI (optional but recommended)
-pip install click
-
-# Install development tools (optional)
-pip install -e ".[dev]"
-
-# Setup pre-commit hooks (recommended)
-pre-commit install
+pip install -r requirements.txt
 ```
 
-### Basic Usage
-
-#### GUI Application
+### Launch the Main App
 
 ```bash
-# Run the main GUI application
-python main.py
-
-# Or via pycompiler_ark.py
 python pycompiler_ark.py
+# or
+python -m pycompiler_ark
 ```
 
-#### Command-Line Interface
+### CLI Entry (same binary)
 
 ```bash
-# Show help
 python pycompiler_ark.py --help
-
-# Show version
 python pycompiler_ark.py --version
+python pycompiler_ark.py --info
 
-# Launch main application
-python pycompiler_ark.py main
-
-# Launch BCASL standalone (plugin manager)
+# BCASL standalone (GUI)
 python pycompiler_ark.py bcasl
 python pycompiler_ark.py bcasl /path/to/workspace
 
-# Launch Engines standalone (compilation engine manager)
+# Engines standalone (GUI)
 python pycompiler_ark.py engines
 python pycompiler_ark.py engines /path/to/workspace
-python pycompiler_ark.py engines --dry-run  # List available engines
+python pycompiler_ark.py engines --dry-run
 ```
-
-#### BCASL Standalone Module
-
-```bash
-# Launch BCASL directly
-python -m bcasl.only_mod
-
-# Launch with workspace
-python -m bcasl.only_mod /path/to/workspace
-python -m bcasl.only_mod .
-```
-
-### Development Setup
-
-```bash
-# Install all development dependencies
-pip install -e ".[dev,security,docs]"
-
-# Run quality checks
-ruff check .                    # Linting
-black --check .                 # Formatting
-mypy .                          # Type checking
-bandit -r .                     # Security scanning
-
-# Run tests with coverage
-pytest --cov=Core --cov=Plugins_SDK --cov=engine_sdk --cov=bcasl
-```
-
-## 🌍 Platform Support
-
-### Officially Supported Platforms
-| Platform | Versions | Architecture | Status |
-|----------|----------|--------------|--------|
-| Ubuntu | 20.04, 22.04, 24.04 LTS | x64 | ✅ Fully Supported |
-| Windows | 10, 11 | x64 | ✅ Fully Supported |
-
-### Not Supported
-- macOS: Not officially supported (code contains macOS-specific utilities for future compatibility, but no active support)
-
-### Python Versions
-- 3.10: ✅ Minimum supported version
-- 3.11: ✅ Recommended (performance optimizations)
-- 3.12: ✅ Latest stable support
-- 3.13: 🧪 Experimental support
-
-See [SUPPORTED_MATRIX.md](SUPPORTED_MATRIX.md) for detailed compatibility information.
-
-## 📚 Documentation
-
-### User Guides
-- [About SDKs](docs/About_Sdks.md) - Overview of available SDKs
-- [Create a Building Engine](docs/how_to_create_an_engine.md) - Engine development guide
-- [Create a BC Plugin](docs/how_to_create_a_BC_plugin.md) - Pre-compile plugin guide
-- [BCASL Configuration](docs/BCASL_Configuration.md) - BCASL plugin system configuration
-
-### BCASL Standalone Module
-- [BCASL Standalone README](bcasl/only_mod/README.md) - Complete BCASL standalone documentation
-
-### Engines Standalone Module
-- [Engines Standalone README](Core/engines_loader/engines_only_mod/README.md) - Complete Engines standalone documentation
-
-### Developer Documentation
-- [Contributing](CONTRIBUTING.md) - How to contribute to the project
-- [ARK Configuration](docs/ARK_Configuration.md) - Main application configuration
-
-### Operations
-- [Support Matrix](SUPPORTED_MATRIX.md) - Platform and version support
-
-## 🤝 Contributing
-
-We welcome contributions from the community! PyCompiler ARK++ follows structured development practices.
-
-### Development Process
-1. Fork the repository and create a feature branch
-2. Develop with pre-commit hooks ensuring quality
-3. Test across supported platforms and Python versions
-4. Document changes and update relevant guides
-5. Submit a pull request with comprehensive description
-
-### Quality Standards
-- Code Coverage: Minimum 80% for new features
-- Type Hints: Required for all public Plugins
-- Security Review: Automated and manual security checks
-- Documentation: User and developer documentation updates
-- Testing: Unit, integration, and security tests
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
-
-## 📄 License
-
-This project is licensed under the **Apache License 2.0**.
-
-## 🆘 Support
-
-### Community Support
-- GitHub Issues: Bug reports and feature requests
-- GitHub Discussions: Community questions and ideas
-- Documentation: Comprehensive guides and references
-
-### Security Issues
-For security vulnerabilities, please follow our Security Policy:
-- Email: ague.samuel27@gmail.com
-
-## 🎉 What's New
-
-PyCompiler ARK++ represents a comprehensive upgrade with:
-
-### Key Improvements
-- Modular architecture: Extensible plugin system with BCASL
-- Enhanced security: Comprehensive scanning and code signing
-- Complete documentation: Guides for all major features
-- Modern tooling: Latest Python practices and tools
-- Multi-platform support: Ubuntu, Windows
-
-### Breaking Changes
-- Python 3.10+: Dropped support for Python 3.9 and below
-- New plugin system: BCASL replaces legacy plugin architecture
-- Enhanced Plugins: Backward compatibility with deprecation warnings
 
 ---
 
-PyCompiler ARK++ — Comprehensive Python compilation toolkit with modular architecture and security features.
+## 🧭 Workflow (4 steps)
+
+1. **Select a workspace**
+2. **Add / filter files** to compile
+3. **Configure the engine** (PyInstaller / Nuitka / cx_Freeze)
+4. **Build** and follow logs + progress
+
+---
+
+## 🔁 BCASL Pipeline (quick view)
+
+```text
+Workspace
+  │
+  ├─ Load bcasl.yml
+  ├─ Discover plugins (Plugins/)
+  ├─ Enable / order / priorities
+  ├─ Sandboxed execution (timeouts, optional parallelism)
+  ▼
+Compilation (PyInstaller / Nuitka / cx_Freeze)
+```
+
+---
+
+## 🧩 BCASL Standalone (Plugins)
+
+```bash
+python -m OnlyMod.BcaslOnlyMod --gui
+python -m OnlyMod.BcaslOnlyMod --list-plugins
+python -m OnlyMod.BcaslOnlyMod --run --workspace /path/to/workspace
+```
+
+## ⚙️ Engines Standalone
+
+```bash
+python -m OnlyMod.EngineOnlyMod
+python -m OnlyMod.EngineOnlyMod --list-engines
+python -m OnlyMod.EngineOnlyMod --check-compat nuitka
+python -m OnlyMod.EngineOnlyMod --engine nuitka -f script.py --dry-run
+```
+
+---
+
+## 📝 Configuration
+
+- **`ARK_Main_Config.yml`** (workspace root)
+  - Inclusion/exclusion patterns
+  - Plugin options (BCASL)
+
+- **`bcasl.yml`** (workspace root)
+  - Enable/disable plugins
+  - Order and timeouts
+
+---
+
+## 🗂️ Project Layout
+
+- `Core/` — main UI logic
+- `ENGINES/` — built‑in engines
+- `EngineLoader/` — discovery/registry
+- `Plugins/` — BCASL plugins
+- `Plugins_SDK/` — plugin SDK
+- `bcasl/` — BCASL core
+- `OnlyMod/` — standalone tools (BCASL / Engines)
+- `ui/` — Qt Designer UI
+- `languages/` — translations
+- `themes/` — QSS themes
+
+---
+
+## 🧪 Development
+
+```bash
+ruff check .
+black --check .
+mypy .
+pytest
+```
+
+---
+
+## 📄 License
+
+Apache‑2.0 (see `LICENSE`).
