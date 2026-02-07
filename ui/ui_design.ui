@@ -204,6 +204,16 @@
             </property>
            </widget>
           </item>
+          <item>
+           <widget class="QPushButton" name="btn_clear_workspace">
+            <property name="text">
+             <string>🧹 Clear workspace</string>
+            </property>
+            <property name="toolTip">
+             <string>Vider la liste des fichiers et réinitialiser la sélection</string>
+            </property>
+           </widget>
+          </item>
          </layout>
         </widget>
        </item>

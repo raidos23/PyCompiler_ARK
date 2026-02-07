@@ -261,6 +261,7 @@ def init_ui(self):
             pass
     self.btn_select_files = self.ui.findChild(QPushButton, "btn_select_files")
     self.btn_remove_file = self.ui.findChild(QPushButton, "btn_remove_file")
+    self.btn_clear_workspace = self.ui.findChild(QPushButton, "btn_clear_workspace")
     self.compile_btn = self.ui.findChild(QPushButton, "compile_btn")
     self.cancel_btn = self.ui.findChild(QPushButton, "cancel_btn")
     self.btn_help = self.ui.findChild(QPushButton, "btn_help")
@@ -323,6 +324,11 @@ def init_ui(self):
     self.btn_remove_file.clicked.connect(self.remove_selected_file)
     self.compile_btn.clicked.connect(self.compile_all)
     self.cancel_btn.clicked.connect(self.cancel_all_compilations)
+    if self.btn_clear_workspace:
+        try:
+            self.btn_clear_workspace.clicked.connect(self.clear_workspace)
+        except Exception:
+            pass
 
     # Filtre de fichiers
     if self.file_filter_input:
