@@ -121,6 +121,11 @@ class Ui_PyCompilerARKGui(object):
 
         self.layout_workspace.addWidget(self.label_folder)
 
+        self.btn_clear_workspace = QPushButton(self.frame_workspace)
+        self.btn_clear_workspace.setObjectName(u"btn_clear_workspace")
+
+        self.layout_workspace.addWidget(self.btn_clear_workspace)
+
 
         self.leftLayout.addWidget(self.frame_workspace)
 
@@ -320,6 +325,10 @@ class Ui_PyCompilerARKGui(object):
         self.venv_button.setText(QCoreApplication.translate("PyCompilerARKGui", u"Choisir un dossier venv manuellement", None))
         self.venv_label.setText(QCoreApplication.translate("PyCompilerARKGui", u"venv s\u00e9lectionn\u00e9 : Aucun", None))
         self.label_folder.setText(QCoreApplication.translate("PyCompilerARKGui", u"Aucun dossier s\u00e9lectionn\u00e9", None))
+        self.btn_clear_workspace.setText(QCoreApplication.translate("PyCompilerARKGui", u"\U0001f9f9 Clear workspace", None))
+#if QT_CONFIG(tooltip)
+        self.btn_clear_workspace.setToolTip(QCoreApplication.translate("PyCompilerARKGui", u"Vider la liste des fichiers et r\u00e9initialiser la s\u00e9lection", None))
+#endif // QT_CONFIG(tooltip)
         self.label_files_section.setText(QCoreApplication.translate("PyCompilerARKGui", u"2. Fichiers \u00e0 compiler", None))
         self.file_filter_input.setPlaceholderText(QCoreApplication.translate("PyCompilerARKGui", u"Filtrer la liste\u2026", None))
         self.btn_remove_file.setText(QCoreApplication.translate("PyCompilerARKGui", u"\U0001f5d1\U0000fe0f Supprimer le fichier s\U000000e9lectionn\U000000e9", None))

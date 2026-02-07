@@ -250,6 +250,10 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
         """Supprime les fichiers sélectionnés."""
         WorkspaceAdvancedManipulation.remove_selected_file(self)
 
+    def clear_workspace(self):
+        """Vide la liste des fichiers du workspace sans changer le dossier."""
+        WorkspaceAdvancedManipulation.clear_workspace(self, keep_dir=True)
+
     def apply_file_filter(self, text: Optional[str] = None) -> None:
         """Filtre la liste des fichiers affichés selon un texte."""
         try:
