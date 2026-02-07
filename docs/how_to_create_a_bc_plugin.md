@@ -1,13 +1,17 @@
 **Overview**
-BC plugins (BCASL) run before compilation. They are Python packages placed in `Plugins/`, discovered automatically, and executed through the `on_pre_compile` hook.
+A BC plugin (BCASL) is a package placed in `Plugins/` and executed before compilation. It registers automatically, respects execution order (priority, tags, dependencies), and uses `PreCompileContext` to work with the workspace.
 
-**Steps**
-1. Create a package folder in `Plugins/<plugin_name>/` with an `__init__.py`.
-2. Implement a subclass of `BcPluginBase` and decorate it with `@bc_register`.
-3. Define a `PluginMeta` with a unique `id`.
-4. Configure the plugin in `bcasl.yml` (optional but recommended for ordering and enable/disable).
+**Discovery And Loading**
+- Plugins are discovered in `Plugins/<plugin_name>/`.
+- The folder must contain an `__init__.py`.
+- The loader imports each package and detects plugins via `@bc_register` or `bcasl_register(manager)`.
+- If `bcasl.yml` is missing, a default file is generated.
 
-**Minimal Plugin**
+**Package Layout**
+- `Plugins/<plugin_name>/__init__.py`: main plugin code.
+- Optional internal modules: helpers, config, assets.
+
+**Recommended Registration (Decorator)**
 ```python
 from __future__ import annotations
 
@@ -50,8 +54,41 @@ class ExampleClean(BcPluginBase):
                 log.log_warn(f"Failed to remove {pyc}: {exc}")
 ```
 
-**Configuration**
+**Legacy Registration (Function)**
+```python
+from bcasl import BCASL
+from Plugins_SDK.BcPluginContext import BcPluginBase, PluginMeta
+
+class MyPlugin(BcPluginBase):
+    meta = PluginMeta(id="legacy", name="Legacy", version="1.0.0")
+    def on_pre_compile(self, ctx):
+        pass
+
+
+def bcasl_register(manager: BCASL) -> None:
+    manager.add_plugin(MyPlugin())
+```
+
+**PluginMeta And Compatibility**
+Important fields.
+- `id`: unique and stable id (used in `bcasl.yml`).
+- `name`, `version`, `description`, `author`.
+- `tags`: used for default ordering when no explicit order is provided.
+- `required_*_version`: compatibility requirements (BCASL, Core, SDK, Context).
+
+Validation.
+- `bcasl/validator.py` provides compatibility utilities.
+
+**Ordering And Dependencies**
+- `priority`: lower runs earlier.
+- `requires`: list of required plugin IDs.
+- `tags`: used for default ordering if `plugin_order` is absent.
+- If a dependency cycle is found, BCASL falls back to a safe ordering.
+
+**Configuration (bcasl.yml)**
 BCASL reads `bcasl.yml` or `.bcasl.yml` in the workspace root. Only the `.yml` extension is supported.
+
+Example.
 ```yaml
 required_files:
 - main.py
@@ -66,6 +103,11 @@ options:
   plugin_timeout_s: 5
   plugin_parallelism: 0
   iter_files_cache: true
+  plugin_limits:
+    mem_mb: 0
+    cpu_time_s: 0
+    nofile: 0
+    fsize_mb: 0
 plugins:
   example.clean:
     enabled: true
@@ -74,9 +116,61 @@ plugin_order:
 - example.clean
 ```
 
-**Notes**
-- Plugin ids come from `PluginMeta.id`, and configuration uses those ids.
-- Plugins can also register via a legacy `bcasl_register(manager)` function, but `@bc_register` is preferred.
-- Use `Plugins_SDK.GeneralContext.Dialog` for UI interactions and logging. Direct Qt dialogs are blocked in sandboxed runs.
-- Timeouts can be controlled with `options.plugin_timeout_s` or the env var `PYCOMPILER_BCASL_PLUGIN_TIMEOUT`.
-- Parallelism can be controlled with `options.plugin_parallelism` or the env var `PYCOMPILER_BCASL_PARALLELISM`.
+Important notes.
+- Keys in `plugins` are the `PluginMeta.id` values.
+- `plugin_order` forces ordering and adjusts priority.
+- If `bcasl.yml` is missing, a default file is generated.
+
+**Execution Context (PreCompileContext)**
+Key methods.
+- `get_workspace_root()` and `get_workspace_name()`.
+- `get_workspace_config()` and `get_workspace_metadata()`.
+- `get_file_patterns()` and `get_exclude_patterns()`.
+- `get_required_files()` and `has_required_file(name)`.
+- `iter_files(include, exclude)` with optional cache.
+- `is_workspace_valid()` checks presence of `bcasl.yml`.
+
+Pattern usage example.
+```python
+for path in ctx.iter_files(ctx.get_file_patterns(), ctx.get_exclude_patterns()):
+    ...
+```
+
+**Workspace Switch (Allowed)**
+A plugin can request a workspace change via the SDK.
+
+```python
+from Plugins_SDK.BcPluginContext import set_selected_workspace
+
+ok = set_selected_workspace("/path/to/new/workspace")
+```
+
+Behavior.
+- The request is accepted by contract (returns True).
+- The target directory is created if needed (best‑effort).
+- If the UI is present, the Core applies the change and may stop ongoing builds.
+- After requesting a switch, avoid using the old `ctx` for sensitive actions.
+
+**UI And Logs**
+- Use `Plugins_SDK.GeneralContext.Dialog` for messages and progress.
+- Dialogs are routed through the UI thread and inherit the theme.
+- Direct Qt dialogs (like `QProgressDialog`) are blocked in sandboxed runs.
+
+**Sandbox, Timeout, Parallelism**
+- If `options.sandbox` is `true`, plugins can run in isolated processes.
+- Timeout via `options.plugin_timeout_s` or `PYCOMPILER_BCASL_PLUGIN_TIMEOUT`.
+- Parallelism via `options.plugin_parallelism` or `PYCOMPILER_BCASL_PARALLELISM`.
+- Resource limits via `options.plugin_limits` (mem, cpu, files, size).
+
+**Plugins_SDK Utilities**
+The SDK provides many helpers.
+- Project and Python file analysis.
+- Dependency and venv inspection.
+- Git, Docker, CI, tests, metrics, security utilities.
+- Template generation with `Generate_Bc_Plugin_Template()`.
+
+**Best Practices**
+- Keep plugins idempotent and error‑tolerant.
+- Use `ctx.iter_files` so you respect `exclude_patterns`.
+- Avoid relying on global state if sandbox is enabled.
+- Minimize external dependencies (stdlib preferred).

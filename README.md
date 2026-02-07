@@ -82,6 +82,13 @@ python pycompiler_ark.py engines --dry-run
 
 ---
 
+## 📚 Documentation
+
+- [How to create an engine](docs/how_to_create_an_engine.md)
+- [How to create a BC plugin](docs/how_to_create_a_bc_plugin.md)
+
+---
+
 ## 🔁 BCASL Pipeline (quick view)
 
 ```text
