@@ -40,7 +40,7 @@ class Ui_PyCompilerARKGui(object):
         self.sidebar_logo = QLabel(self.header)
         self.sidebar_logo.setObjectName(u"sidebar_logo")
         self.sidebar_logo.setMinimumSize(QSize(48, 48))
-        self.sidebar_logo.setMaximumSize(QSize(120, 120))
+        self.sidebar_logo.setMaximumSize(QSize(200, 200))
         self.sidebar_logo.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.headerLayout.addWidget(self.sidebar_logo)

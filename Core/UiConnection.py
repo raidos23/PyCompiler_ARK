@@ -241,6 +241,12 @@ def init_ui(self):
     if logo_path:
         pixmap = QPixmap(logo_path)
         target_size = 200
+        try:
+            max_sz = self.sidebar_logo.maximumSize()
+            if max_sz and max_sz.width() > 0 and max_sz.height() > 0:
+                target_size = min(target_size, max_sz.width(), max_sz.height())
+        except Exception:
+            pass
         self.sidebar_logo.setPixmap(
             pixmap.scaled(
                 target_size,
@@ -625,6 +631,14 @@ def apply_theme(self, pref: str):
                 if logo_path:
                     pixmap = QPixmap(logo_path)
                     target_size = 200
+                    try:
+                        max_sz = self.sidebar_logo.maximumSize()
+                        if max_sz and max_sz.width() > 0 and max_sz.height() > 0:
+                            target_size = min(
+                                target_size, max_sz.width(), max_sz.height()
+                            )
+                    except Exception:
+                        pass
                     self.sidebar_logo.setPixmap(
                         pixmap.scaled(
                             target_size,
