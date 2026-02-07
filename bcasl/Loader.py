@@ -300,6 +300,97 @@ def _run_bcasl_sync(
     )
 
 
+def _get_plugins_dir() -> Path:
+    try:
+        return Path(__file__).resolve().parents[1] / "Plugins"
+    except Exception:
+        return Path("Plugins")
+
+
+def _resolve_ordered_plugin_ids(
+    plugin_ids: list[str], meta_map: dict[str, dict[str, Any]], cfg: dict[str, Any]
+) -> list[str]:
+    order: list[str] = []
+    try:
+        order = cfg.get("plugin_order", []) if isinstance(cfg, dict) else []
+        order = [pid for pid in order if pid in plugin_ids]
+    except Exception:
+        order = []
+    if not order:
+        try:
+            order = [pid for pid in compute_tag_order(meta_map) if pid in plugin_ids]
+        except Exception:
+            order = sorted(plugin_ids)
+    remaining = [pid for pid in plugin_ids if pid not in order]
+    return order + remaining
+
+
+def _plugin_enabled(plugins_cfg: dict[str, Any], pid: str) -> bool:
+    try:
+        pentry = plugins_cfg.get(pid, {})
+        if isinstance(pentry, dict):
+            return bool(pentry.get("enabled", True))
+        if isinstance(pentry, bool):
+            return bool(pentry)
+    except Exception:
+        pass
+    return True
+
+
+def _build_plugin_item(
+    pid: str,
+    meta: dict[str, Any],
+    plugins_cfg: dict[str, Any],
+    Qt,
+    QListWidgetItem,
+) -> Any:
+    # Importer les fonctions de tagging pour afficher les phases
+    from .tagging import get_tag_phase_name
+
+    label = meta.get("name") or pid
+    ver = meta.get("version") or ""
+    tags = meta.get("tags") or []
+
+    phase_name = get_tag_phase_name(tags[0]) if tags else ""
+    text = f"{label} ({pid})" + (f" v{ver}" if ver else "")
+    if phase_name:
+        text += f" [Phase: {phase_name}]"
+
+    item = QListWidgetItem(text)
+
+    # Tooltip avec description, tags et requirements
+    try:
+        desc = meta.get("description") or ""
+        tooltip = desc
+        if tags:
+            tooltip += f"\n\nTags: {', '.join(tags)}"
+        reqs = meta.get("requirements", [])
+        if reqs:
+            tooltip += f"\n\nRequirements:\n" + "\n".join(f"  • {req}" for req in reqs)
+        if tooltip:
+            item.setToolTip(tooltip)
+    except Exception:
+        pass
+
+    enabled = _plugin_enabled(plugins_cfg, pid)
+    try:
+        item.setData(0x0100, pid)
+    except Exception:
+        pass
+    if Qt is not None:
+        item.setFlags(
+            item.flags()
+            | Qt.ItemIsUserCheckable
+            | Qt.ItemIsEnabled
+            | Qt.ItemIsSelectable
+            | Qt.ItemIsDragEnabled
+        )
+        item.setCheckState(
+            Qt.CheckState.Checked if enabled else Qt.CheckState.Unchecked
+        )
+    return item
+
+
 def _load_workspace_config(workspace_root: Path) -> dict[str, Any]:
     """Charge bcasl.yml si présent, sinon génère une config par défaut minimale et l'écrit.
 
@@ -326,8 +417,7 @@ def _load_workspace_config(workspace_root: Path) -> dict[str, Any]:
     # 2) Génération défaut avec fusion ARK
     default_cfg: dict[str, Any] = {}
     try:
-        repo_root = Path(__file__).resolve().parents[1]
-        Plugins_dir = repo_root / "Plugins"
+        Plugins_dir = _get_plugins_dir()
         detected_plugins: dict[str, Any] = {}
         meta_map = _discover_bcasl_meta(Plugins_dir) if Plugins_dir.exists() else {}
         if meta_map:
@@ -588,8 +678,7 @@ def open_bc_loader_dialog(self) -> None:  # UI minimale
             )
             return
         workspace_root = Path(self.workspace_dir).resolve()
-        repo_root = Path(__file__).resolve().parents[1]
-        Plugins_dir = repo_root / "Plugins"
+        Plugins_dir = _get_plugins_dir()
         if not Plugins_dir.exists():
             QMessageBox.information(
                 self,
@@ -643,89 +732,10 @@ def open_bc_loader_dialog(self) -> None:  # UI minimale
         lst.setSelectionMode(QAbstractItemView.SingleSelection)
         lst.setDragDropMode(QAbstractItemView.InternalMove)
 
-        # Ordre initial: plugin_order si présent; sinon heuristique par tags; sinon alphabétique
-        order = []
-        try:
-            order = cfg.get("plugin_order", []) if isinstance(cfg, dict) else []
-            order = [pid for pid in order if pid in plugin_ids]
-        except Exception:
-            order = []
-        if not order:
-            try:
-                order = [
-                    pid for pid in compute_tag_order(meta_map) if pid in plugin_ids
-                ]
-            except Exception:
-                order = sorted(plugin_ids)
-
-        remaining = [pid for pid in plugin_ids if pid not in order]
-        ordered_ids = order + remaining
-
-        # Importer les fonctions de tagging pour afficher les phases
-        from .tagging import get_tag_phase_name
-
+        ordered_ids = _resolve_ordered_plugin_ids(plugin_ids, meta_map, cfg)
         for pid in ordered_ids:
             meta = meta_map.get(pid, {})
-            label = meta.get("name") or pid
-            ver = meta.get("version") or ""
-            tags = meta.get("tags") or []
-
-            # Déterminer la phase d'exécution
-            phase_name = ""
-            if tags:
-                # Utiliser le premier tag pour déterminer la phase
-                phase_name = get_tag_phase_name(tags[0])
-
-            # Construire le texte avec la phase
-            text = f"{label} ({pid})" + (f" v{ver}" if ver else "")
-            if phase_name:
-                text += f" [Phase: {phase_name}]"
-
-            item = QListWidgetItem(text)
-            # Tooltip avec description, tags et requirements
-            try:
-                desc = meta.get("description") or ""
-                tooltip = desc
-                if tags:
-                    tooltip += f"\n\nTags: {', '.join(tags)}"
-
-                # Ajouter les requirements du plugin depuis meta_map
-                reqs = meta.get("requirements", [])
-                if reqs:
-                    tooltip += f"\n\nRequirements:\n" + "\n".join(
-                        f"  • {req}" for req in reqs
-                    )
-
-                if tooltip:
-                    item.setToolTip(tooltip)
-            except Exception:
-                pass
-            # Etat
-            enabled = True
-            try:
-                pentry = plugins_cfg.get(pid, {})
-                if isinstance(pentry, dict):
-                    enabled = bool(pentry.get("enabled", True))
-                elif isinstance(pentry, bool):
-                    enabled = pentry
-            except Exception:
-                pass
-            try:
-                item.setData(0x0100, pid)
-            except Exception:
-                pass
-            if Qt is not None:
-                item.setFlags(
-                    item.flags()
-                    | Qt.ItemIsUserCheckable
-                    | Qt.ItemIsEnabled
-                    | Qt.ItemIsSelectable
-                    | Qt.ItemIsDragEnabled
-                )
-            if Qt is not None:
-                item.setCheckState(
-                    Qt.CheckState.Checked if enabled else Qt.CheckState.Unchecked
-                )
+            item = _build_plugin_item(pid, meta, plugins_cfg, Qt, QListWidgetItem)
             lst.addItem(item)
         layout.addWidget(lst)
 
@@ -867,8 +877,7 @@ def run_pre_compile_async(self, on_done: Optional[callable] = None) -> None:
                     pass
             return
         workspace_root = Path(self.workspace_dir).resolve()
-        repo_root = Path(__file__).resolve().parents[1]
-        Plugins_dir = repo_root / "Plugins"
+        Plugins_dir = _get_plugins_dir()
 
         cfg = _load_workspace_config(workspace_root)
         plugin_timeout = _resolve_plugin_timeout(cfg)
@@ -960,8 +969,7 @@ def run_pre_compile(self) -> Optional[object]:
         if not getattr(self, "workspace_dir", None):
             return None
         workspace_root = Path(self.workspace_dir).resolve()
-        repo_root = Path(__file__).resolve().parents[1]
-        Plugins_dir = repo_root / "Plugins"
+        Plugins_dir = _get_plugins_dir()
 
         cfg = _load_workspace_config(workspace_root)
         plugin_timeout = _resolve_plugin_timeout(cfg)

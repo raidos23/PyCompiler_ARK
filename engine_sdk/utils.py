@@ -267,47 +267,34 @@ def open_dir_candidates(candidates: Sequence[Pathish]) -> Optional[str]:
 # ---------------------------------------------
 # Universal output directory discovery and open
 # ---------------------------------------------
-def discover_output_candidates(
-    gui: Any,
-    engine_id: Optional[str] = None,
-    source_file: Optional[Pathish] = None,
-    artifacts: Optional[Sequence[Pathish]] = None,
-) -> list[str]:
-    """Discover plausible output directory candidates in a plug-and-play manner.
-
-    Strategy (generic; no engine-specific dependencies):
-      1) GUI fields likely representing output directories (heuristic: names containing 'output'/'dist' and 'dir'/'path').
-      2) Directories of known artifacts (if provided).
-      3) Conventional fallbacks under the workspace (dist/, build/, <base>.dist).
-
-    Returns an ordered list of unique path strings; non-existing paths are allowed (will be filtered by opener).
-    """
-    cands: list[str] = []
-
-    def _add(p: Optional[Pathish]) -> None:
-        try:
-            if not p:
-                return
-            s = str(p).strip()
-            if s and s not in cands:
-                cands.append(s)
-        except Exception:
-            pass
-
+def _append_candidate(cands: list[str], p: Optional[Pathish]) -> None:
     try:
-        ws = getattr(gui, "workspace_dir", None) or os.getcwd()
-    except Exception:
-        ws = os.getcwd()
-
-    # 1) GUI fields (global common fields and heuristic scan)
-    try:
-        out = getattr(gui, "output_dir_input", None)
-        if out and hasattr(out, "text") and callable(out.text):
-            _add(out.text())
+        if not p:
+            return
+        s = str(p).strip()
+        if s and s not in cands:
+            cands.append(s)
     except Exception:
         pass
 
-    # Heuristic scan of GUI attributes for line edits that look like output fields
+
+def _get_workspace_dir(gui: Any) -> str:
+    try:
+        return getattr(gui, "workspace_dir", None) or os.getcwd()
+    except Exception:
+        return os.getcwd()
+
+
+def _add_output_dir_input(gui: Any, cands: list[str]) -> None:
+    try:
+        out = getattr(gui, "output_dir_input", None)
+        if out and hasattr(out, "text") and callable(out.text):
+            _append_candidate(cands, out.text())
+    except Exception:
+        pass
+
+
+def _add_output_dir_heuristics(gui: Any, cands: list[str]) -> None:
     try:
         for nm in dir(gui):
             try:
@@ -338,13 +325,16 @@ def discover_output_candidates(
                 tok in lab for tok in ("dir", "path")
             ):
                 try:
-                    _add(w.text())
+                    _append_candidate(cands, w.text())
                 except Exception:
                     pass
     except Exception:
         pass
 
-    # 2) Artifacts parents (most recent first)
+
+def _add_artifact_parents(
+    gui: Any, cands: list[str], artifacts: Optional[Sequence[Pathish]]
+) -> None:
     try:
         arts = artifacts
         if arts is None:
@@ -360,22 +350,49 @@ def discover_output_candidates(
                 except Exception:
                     continue
             for _mt, d in sorted(parents, key=lambda t: t[0], reverse=True):
-                _add(d)
+                _append_candidate(cands, d)
     except Exception:
         pass
 
-    # 3) Conventional fallbacks
+
+def _add_conventional_fallbacks(
+    cands: list[str], ws: str, source_file: Optional[Pathish]
+) -> None:
     try:
-        _add(os.path.join(ws, "dist"))
-        _add(os.path.join(ws, "build"))
+        _append_candidate(cands, os.path.join(ws, "dist"))
+        _append_candidate(cands, os.path.join(ws, "build"))
         if source_file:
             try:
                 base = os.path.splitext(os.path.basename(str(source_file)))[0]
-                _add(os.path.join(ws, f"{base}.dist"))
+                _append_candidate(cands, os.path.join(ws, f"{base}.dist"))
             except Exception:
                 pass
     except Exception:
         pass
+
+
+def discover_output_candidates(
+    gui: Any,
+    engine_id: Optional[str] = None,
+    source_file: Optional[Pathish] = None,
+    artifacts: Optional[Sequence[Pathish]] = None,
+) -> list[str]:
+    """Discover plausible output directory candidates in a plug-and-play manner.
+
+    Strategy (generic; no engine-specific dependencies):
+      1) GUI fields likely representing output directories (heuristic: names containing 'output'/'dist' and 'dir'/'path').
+      2) Directories of known artifacts (if provided).
+      3) Conventional fallbacks under the workspace (dist/, build/, <base>.dist).
+
+    Returns an ordered list of unique path strings; non-existing paths are allowed (will be filtered by opener).
+    """
+    cands: list[str] = []
+    ws = _get_workspace_dir(gui)
+
+    _add_output_dir_input(gui, cands)
+    _add_output_dir_heuristics(gui, cands)
+    _add_artifact_parents(gui, cands, artifacts)
+    _add_conventional_fallbacks(cands, ws, source_file)
 
     return cands
 

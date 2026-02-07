@@ -147,6 +147,426 @@ def _record_timeout(
     _logger.error("Plugin %s timeout après %.1fs", plugin_id, timeout_s)
 
 
+def _resolve_exec_options(config: dict[str, Any], default_sandbox: bool) -> tuple[bool, int]:
+    try:
+        opts = dict(config or {}).get("options", {}) if isinstance(config, dict) else {}
+    except Exception:
+        opts = {}
+    eff_sandbox = bool(opts.get("sandbox", default_sandbox))
+    try:
+        par_env = int(os.environ.get("PYCOMPILER_BCASL_PARALLELISM", "0"))
+    except Exception:
+        par_env = 0
+    try:
+        par_opt = int(opts.get("plugin_parallelism", 0))
+    except Exception:
+        par_opt = 0
+    try:
+        cpu_def = max(1, (mp.cpu_count() or 2) - 1)
+    except Exception:
+        cpu_def = 2
+    parallelism = par_env or par_opt or cpu_def
+    if parallelism < 1:
+        parallelism = 1
+    return eff_sandbox, parallelism
+
+
+def _build_dependency_graph(
+    active_items: dict[str, _PluginRecord],
+) -> tuple[dict[str, int], dict[str, list[str]]]:
+    indeg: dict[str, int] = {pid: 0 for pid in active_items}
+    children: dict[str, list[str]] = {pid: [] for pid in active_items}
+    for pid, rec in active_items.items():
+        for dep in rec.requires:
+            if dep not in active_items:
+                _logger.warning("Dépendance manquante pour %s: '%s' (ignorée)", pid, dep)
+                continue
+            indeg[pid] += 1
+            children[dep].append(pid)
+    return indeg, children
+
+
+def _build_ready_queue(
+    active_items: dict[str, _PluginRecord], indeg: dict[str, int]
+) -> list[tuple[int, int, str]]:
+    ready: list[tuple[int, int, str]] = []
+    for pid, rec in active_items.items():
+        if indeg.get(pid, 0) == 0:
+            heapq.heappush(ready, (rec.priority, rec.insert_idx, pid))
+    return ready
+
+
+def _compute_sequential_order(
+    ready: list[tuple[int, int, str]],
+    children: dict[str, list[str]],
+    indeg: dict[str, int],
+    active_items: dict[str, _PluginRecord],
+) -> list[str]:
+    order: list[str] = []
+    tmp_ready = list(ready)
+    heapq.heapify(tmp_ready)
+    while tmp_ready:
+        _, _, pid = heapq.heappop(tmp_ready)
+        order.append(pid)
+        for ch in children[pid]:
+            indeg[ch] -= 1
+            if indeg[ch] == 0:
+                rch = active_items[ch]
+                heapq.heappush(tmp_ready, (rch.priority, rch.insert_idx, ch))
+    return order
+
+
+def _run_plugin_sequential(
+    report: ExecutionReport,
+    rec: _PluginRecord,
+    ctx: PreCompileContext,
+    project_root: Path,
+    timeout_s: float,
+    eff_sandbox: bool,
+) -> None:
+    plg = rec.plugin
+    start = time.perf_counter()
+    if eff_sandbox and getattr(rec, "module_path", None):
+        _ctx = mp.get_context("spawn")
+        q = _ctx.Queue()
+        p = _ctx.Process(
+            target=_plugin_worker,
+            args=(
+                str(rec.module_path),
+                plg.meta.id,
+                str(project_root),
+                ctx.config,
+                q,
+            ),
+        )
+        p.start()
+        if timeout_s and timeout_s > 0:
+            p.join(timeout_s)
+        else:
+            p.join()
+        if p.is_alive():
+            try:
+                p.terminate()
+            except Exception:
+                pass
+            try:
+                p.join(1.0)
+            except Exception:
+                pass
+            _record_timeout(
+                report,
+                plugin_id=plg.meta.id,
+                name=plg.meta.name,
+                start_t=start,
+                timeout_s=timeout_s,
+            )
+        else:
+            _record_worker_result(
+                report,
+                plugin_id=plg.meta.id,
+                name=plg.meta.name,
+                start_t=start,
+                q=q,
+            )
+    else:
+        try:
+            plg.on_pre_compile(ctx)
+            duration_ms = (time.perf_counter() - start) * 1000.0
+            _add_report_item(
+                report,
+                plugin_id=plg.meta.id,
+                name=plg.meta.name,
+                success=True,
+                duration_ms=duration_ms,
+            )
+        except Exception as exc:
+            duration_ms = (time.perf_counter() - start) * 1000.0
+            _add_report_item(
+                report,
+                plugin_id=plg.meta.id,
+                name=plg.meta.name,
+                success=False,
+                duration_ms=duration_ms,
+                error=str(exc),
+            )
+
+
+def _run_parallel_sandbox(
+    report: ExecutionReport,
+    active_items: dict[str, _PluginRecord],
+    children: dict[str, list[str]],
+    indeg: dict[str, int],
+    ready: list[tuple[int, int, str]],
+    ctx: PreCompileContext,
+    project_root: Path,
+    timeout_s: float,
+    parallelism: int,
+) -> None:
+    _ctx = mp.get_context("spawn")
+    running: dict[str, tuple[mp.Process, mp.Queue, float]] = {}
+    while ready or running:
+        while ready and len(running) < parallelism:
+            _, _, pid = heapq.heappop(ready)
+            rec = active_items[pid]
+            q = _ctx.Queue()
+            p = _ctx.Process(
+                target=_plugin_worker,
+                args=(
+                    str(rec.module_path),
+                    pid,
+                    str(project_root),
+                    ctx.config,
+                    q,
+                ),
+            )
+            p.start()
+            running[pid] = (p, q, time.perf_counter())
+
+        to_remove: list[str] = []
+        for pid, (proc, q, start_t) in list(running.items()):
+            alive = proc.is_alive()
+            timed_out = False
+            if timeout_s and timeout_s > 0 and alive:
+                if (time.perf_counter() - start_t) >= timeout_s:
+                    timed_out = True
+                    try:
+                        proc.terminate()
+                    except Exception:
+                        pass
+                    try:
+                        proc.join(1.0)
+                    except Exception:
+                        pass
+            if not alive or timed_out:
+                rec = active_items[pid]
+                plg = rec.plugin
+                if not timed_out:
+                    _record_worker_result(
+                        report,
+                        plugin_id=pid,
+                        name=plg.meta.name,
+                        start_t=start_t,
+                        q=q,
+                    )
+                else:
+                    _record_timeout(
+                        report,
+                        plugin_id=pid,
+                        name=plg.meta.name,
+                        start_t=start_t,
+                        timeout_s=timeout_s,
+                    )
+                for ch in children[pid]:
+                    indeg[ch] -= 1
+                    if indeg[ch] == 0:
+                        rch = active_items[ch]
+                        heapq.heappush(ready, (rch.priority, rch.insert_idx, ch))
+                to_remove.append(pid)
+
+        for pid in to_remove:
+            try:
+                proc, _q, _t = running.pop(pid)
+                if proc.is_alive():
+                    try:
+                        proc.join(0.1)
+                    except Exception:
+                        pass
+            except Exception:
+                pass
+
+        if running and not ready:
+            time.sleep(0.01)
+
+
+def _configure_worker_env(config: dict[str, Any]) -> None:
+    try:
+        _opts = dict(config or {}).get("options", {}) if isinstance(config, dict) else {}
+        _env_nonint = os.environ.get("PYCOMPILER_NONINTERACTIVE_PLUGINS")
+        _env_offscreen = os.environ.get("PYCOMPILER_OFFSCREEN_PLUGINS")
+        _noninteractive = (
+            (str(_env_nonint).strip().lower() in ("1", "true", "yes"))
+            if (_env_nonint is not None)
+            else bool(_opts.get("noninteractive_plugins", False))
+        )
+        _offscreen = (
+            (str(_env_offscreen).strip().lower() in ("1", "true", "yes"))
+            if (_env_offscreen is not None)
+            else bool(_opts.get("offscreen_plugins", False))
+        )
+        try:
+            import platform as _plat
+
+            _is_windows = _plat.system().lower().startswith("win")
+        except Exception:
+            _is_windows = False
+        if not _is_windows and (
+            not os.environ.get("DISPLAY") and not os.environ.get("WAYLAND_DISPLAY")
+        ):
+            _noninteractive = True
+        if _noninteractive:
+            os.environ["PYCOMPILER_NONINTERACTIVE"] = "1"
+        if _offscreen and "QT_QPA_PLATFORM" not in os.environ:
+            os.environ["QT_QPA_PLATFORM"] = "offscreen"
+    except Exception:
+        pass
+
+
+def _maybe_init_qt_app(config: dict[str, Any]) -> None:
+    try:
+        _opts2 = dict(config or {}).get("options", {}) if isinstance(config, dict) else {}
+        _env_allow = os.environ.get("PYCOMPILER_SANDBOX_DIALOGS")
+        _allow_dialogs = (
+            (str(_env_allow).strip().lower() in ("1", "true", "yes"))
+            if (_env_allow is not None)
+            else bool(_opts2.get("allow_sandbox_dialogs", True))
+        )
+        if _allow_dialogs and (
+            str(os.environ.get("PYCOMPILER_NONINTERACTIVE", "")).strip().lower()
+            not in ("1", "true", "yes")
+        ):
+            os.environ.setdefault("QT_WAYLAND_DISABLE_FRACTIONAL_SCALE", "1")
+            try:
+                from PySide6.QtWidgets import QApplication as _QApp  # type: ignore
+            except Exception:
+                try:
+                    from PyQt5.QtWidgets import QApplication as _QApp  # type: ignore
+                except Exception:
+                    _QApp = None  # type: ignore
+            if _QApp is not None:
+                try:
+                    if _QApp.instance() is None:
+                        _sandbox_qapp = _QApp([])  # noqa: F841
+                except Exception:
+                    pass
+    except Exception:
+        pass
+
+
+def _enforce_sdk_progress() -> None:
+    try:
+        os.environ["PYCOMPILER_ENFORCE_SDK_PROGRESS"] = "1"
+    except Exception:
+        pass
+    try:
+        from PySide6 import QtWidgets as _QtW2  # type: ignore
+
+        class _NoDirectProgressDialog:  # type: ignore
+            def __init__(self, *args, **kwargs) -> None:
+                raise RuntimeError(
+                    "Plugins must use Plugins_SDK.progress(...) instead of PySide6.QProgressDialog"
+                )
+
+        try:
+            _QtW2.QProgressDialog = _NoDirectProgressDialog  # type: ignore[attr-defined]
+        except Exception:
+            pass
+    except Exception:
+        try:
+            from PyQt5 import QtWidgets as _QtW2  # type: ignore
+
+            class _NoDirectProgressDialog:  # type: ignore
+                def __init__(self, *args, **kwargs) -> None:
+                    raise RuntimeError(
+                        "Plugins must use Plugins_SDK.progress(...) instead of PyQt.QProgressDialog"
+                    )
+
+            try:
+                _QtW2.QProgressDialog = _NoDirectProgressDialog  # type: ignore[attr-defined]
+            except Exception:
+                pass
+        except Exception:
+            pass
+
+
+def _apply_resource_limits(config: dict[str, Any]) -> None:
+    try:
+        _opts3 = dict(config or {}).get("options", {}) if isinstance(config, dict) else {}
+        _limits = _opts3.get("plugin_limits", {}) if isinstance(_opts3, dict) else {}
+        _mem_mb = int(_limits.get("mem_mb", 0))
+        _cpu_s = int(_limits.get("cpu_time_s", 0))
+        _nofile = int(_limits.get("nofile", 0))
+        _fsize_mb = int(_limits.get("fsize_mb", 0))
+        try:
+            import resource as _res  # POSIX only
+
+            def _set(limit, soft, hard):
+                try:
+                    _res.setrlimit(limit, (soft, hard))
+                except Exception:
+                    pass
+
+            if _mem_mb > 0:
+                _set(_res.RLIMIT_AS, _mem_mb * 1024 * 1024, _mem_mb * 1024 * 1024)
+            if _cpu_s > 0:
+                _set(_res.RLIMIT_CPU, _cpu_s, _cpu_s)
+            if _nofile > 0:
+                _set(_res.RLIMIT_NOFILE, _nofile, _nofile)
+            if _fsize_mb > 0:
+                _set(
+                    _res.RLIMIT_FSIZE,
+                    _fsize_mb * 1024 * 1024,
+                    _fsize_mb * 1024 * 1024,
+                )
+        except Exception:
+            pass
+    except Exception:
+        pass
+
+
+def _load_plugin_instance(
+    module_path: str, plugin_id: str, project_root: str, config: dict[str, Any]
+):
+    import importlib.util as _ilu
+    import sys as _sys
+    from pathlib import Path as _Path
+
+    spec = _ilu.spec_from_file_location(
+        "bcasl_sandbox_module",
+        module_path,
+        submodule_search_locations=[str(_Path(module_path).parent)],
+    )
+    if spec is None or spec.loader is None:
+        raise ImportError("spec invalide")
+    module = _ilu.module_from_spec(spec)
+    _sys.modules[spec.name] = module
+    spec.loader.exec_module(module)  # type: ignore[attr-defined]
+    plg = getattr(module, "PLUGIN", None)
+    if plg is None or getattr(getattr(plg, "meta", None), "id", None) != plugin_id:
+        try:
+            mgr = BCASL(_Path(project_root), config=config, sandbox=False)
+            if hasattr(module, "bcasl_register") and callable(getattr(module, "bcasl_register")):
+                module.bcasl_register(mgr)
+            rec = getattr(mgr, "_registry", {}).get(plugin_id)
+            if rec is None:
+                for attr_name in dir(module):
+                    try:
+                        attr = getattr(module, attr_name, None)
+                        if attr is None:
+                            continue
+                        if not isinstance(attr, type):
+                            continue
+                        if not getattr(attr, "__bcasl_plugin__", False):
+                            continue
+                        plugin_instance = getattr(attr, "_bcasl_instance_", None)
+                        if plugin_instance is None:
+                            try:
+                                plugin_instance = attr()
+                            except Exception:
+                                continue
+                        if getattr(plugin_instance.meta, "id", None) == plugin_id:
+                            plg = plugin_instance
+                            break
+                    except Exception:
+                        continue
+            else:
+                plg = rec.plugin
+            if plg is None:
+                raise RuntimeError(f"Plugin '{plugin_id}' introuvable dans le module")
+        except Exception as ex:
+            raise RuntimeError(f"Impossible d'instancier le plugin: {ex}")
+    return plg
+
+
 class BCASL:
     """Gestionnaire principal des plugins et de leur exécution avant compilation."""
 
@@ -501,220 +921,50 @@ class BCASL:
             ctx.config = dict(self.config) | dict(ctx.config or {})
 
         report = ExecutionReport()
-        # Options d'exécution
-        try:
-            opts = (
-                dict(self.config or {}).get("options", {})
-                if isinstance(self.config, dict)
-                else {}
-            )
-        except Exception:
-            opts = {}
-        eff_sandbox = bool(opts.get("sandbox", self.sandbox))
-        # Déterminer le parallélisme cible
-        try:
-            par_env = int(os.environ.get("PYCOMPILER_BCASL_PARALLELISM", "0"))
-        except Exception:
-            par_env = 0
-        try:
-            par_opt = int(opts.get("plugin_parallelism", 0))
-        except Exception:
-            par_opt = 0
-        try:
-            cpu_def = max(1, (mp.cpu_count() or 2) - 1)
-        except Exception:
-            cpu_def = 2
-        parallelism = par_env or par_opt or cpu_def
-        if parallelism < 1:
-            parallelism = 1
+        eff_sandbox, parallelism = _resolve_exec_options(self.config, self.sandbox)
 
         # Construire graphe des dépendances des plugins actifs
         active_items = {pid: rec for pid, rec in self._registry.items() if rec.active}
         if not active_items:
             _logger.info("Aucun plugin Bcasl actif")
             return report
-        indeg: dict[str, int] = {pid: 0 for pid in active_items}
-        children: dict[str, list[str]] = {pid: [] for pid in active_items}
-        for pid, rec in active_items.items():
-            for dep in rec.requires:
-                if dep not in active_items:
-                    _logger.warning(
-                        "Dépendance manquante pour %s: '%s' (ignorée)", pid, dep
-                    )
-                    continue
-                indeg[pid] += 1
-                children[dep].append(pid)
+        indeg, children = _build_dependency_graph(active_items)
 
         # File d'attente initiale (indeg=0) triée par (priority, insert_idx, pid)
 
-        ready: list[tuple[int, int, str]] = []
-        for pid, rec in active_items.items():
-            if indeg[pid] == 0:
-                heapq.heappush(ready, (rec.priority, rec.insert_idx, pid))
+        ready = _build_ready_queue(active_items, indeg)
 
         # Fallback: si pas de sandbox ou parallélisme=1, revient au mode séquentiel
         if not eff_sandbox or parallelism <= 1:
-            order: list[str] = []
-            tmp_ready = list(ready)
-            heapq.heapify(tmp_ready)
-            while tmp_ready:
-                _, _, pid = heapq.heappop(tmp_ready)
-                order.append(pid)
-                for ch in children[pid]:
-                    indeg[ch] -= 1
-                    if indeg[ch] == 0:
-                        rch = active_items[ch]
-                        heapq.heappush(tmp_ready, (rch.priority, rch.insert_idx, ch))
+            indeg_seq = dict(indeg)
+            order = _compute_sequential_order(ready, children, indeg_seq, active_items)
             # Séquentiel sandbox/non-sandbox
             for pid in order:
                 rec = active_items[pid]
-                plg = rec.plugin
-                start = time.perf_counter()
-                if eff_sandbox and getattr(rec, "module_path", None):
-                    _ctx = mp.get_context("spawn")
-                    q = _ctx.Queue()
-                    p = _ctx.Process(
-                        target=_plugin_worker,
-                        args=(
-                            str(rec.module_path),
-                            pid,
-                            str(self.project_root),
-                            ctx.config,
-                            q,
-                        ),
-                    )
-                    p.start()
-                    timeout = self.plugin_timeout_s
-                    if timeout and timeout > 0:
-                        p.join(timeout)
-                    else:
-                        p.join()
-                    if p.is_alive():
-                        try:
-                            p.terminate()
-                        except Exception:
-                            pass
-                        try:
-                            p.join(1.0)
-                        except Exception:
-                            pass
-                        _record_timeout(
-                            report,
-                            plugin_id=pid,
-                            name=plg.meta.name,
-                            start_t=start,
-                            timeout_s=self.plugin_timeout_s,
-                        )
-                    else:
-                        _record_worker_result(
-                            report,
-                            plugin_id=pid,
-                            name=plg.meta.name,
-                            start_t=start,
-                            q=q,
-                        )
-                else:
-                    try:
-                        plg.on_pre_compile(ctx)
-                        duration_ms = (time.perf_counter() - start) * 1000.0
-                        _add_report_item(
-                            report,
-                            plugin_id=pid,
-                            name=plg.meta.name,
-                            success=True,
-                            duration_ms=duration_ms,
-                        )
-                    except Exception as exc:
-                        duration_ms = (time.perf_counter() - start) * 1000.0
-                        _add_report_item(
-                            report,
-                            plugin_id=pid,
-                            name=plg.meta.name,
-                            success=False,
-                            duration_ms=duration_ms,
-                            error=str(exc),
-                        )
+                _run_plugin_sequential(
+                    report,
+                    rec,
+                    ctx,
+                    self.project_root,
+                    self.plugin_timeout_s,
+                    eff_sandbox,
+                )
             _logger.info(report.summary())
             return report
 
         # Exécution parallèle (sandbox True)
-        _ctx = mp.get_context("spawn")
-        running: dict[str, tuple[mp.Process, mp.Queue, float]] = {}
-        # Scheduler principal
-        while ready or running:
-            # Lancer tant que possible
-            while ready and len(running) < parallelism:
-                _, _, pid = heapq.heappop(ready)
-                rec = active_items[pid]
-                q = _ctx.Queue()
-                p = _ctx.Process(
-                    target=_plugin_worker,
-                    args=(
-                        str(rec.module_path),
-                        pid,
-                        str(self.project_root),
-                        ctx.config,
-                        q,
-                    ),
-                )
-                p.start()
-                running[pid] = (p, q, time.perf_counter())
-            # Collecte non bloquante et gestion timeouts
-            to_remove: list[str] = []
-            for pid, (proc, q, start_t) in list(running.items()):
-                timeout = self.plugin_timeout_s
-                alive = proc.is_alive()
-                timed_out = False
-                if timeout and timeout > 0 and alive:
-                    if (time.perf_counter() - start_t) >= timeout:
-                        timed_out = True
-                        try:
-                            proc.terminate()
-                        except Exception:
-                            pass
-                        try:
-                            proc.join(1.0)
-                        except Exception:
-                            pass
-                if not alive or timed_out:
-                    rec = active_items[pid]
-                    plg = rec.plugin
-                    if not timed_out:
-                        _record_worker_result(
-                            report,
-                            plugin_id=pid,
-                            name=plg.meta.name,
-                            start_t=start_t,
-                            q=q,
-                        )
-                    else:
-                        _record_timeout(
-                            report,
-                            plugin_id=pid,
-                            name=plg.meta.name,
-                            start_t=start_t,
-                            timeout_s=self.plugin_timeout_s,
-                        )
-                    # Débloquer les enfants
-                    for ch in children[pid]:
-                        indeg[ch] -= 1
-                        if indeg[ch] == 0:
-                            rch = active_items[ch]
-                            heapq.heappush(ready, (rch.priority, rch.insert_idx, ch))
-                    to_remove.append(pid)
-            for pid in to_remove:
-                try:
-                    proc, _q, _t = running.pop(pid)
-                    if proc.is_alive():
-                        try:
-                            proc.join(0.1)
-                        except Exception:
-                            pass
-                except Exception:
-                    pass
-            if running and not ready:
-                # Attendre un court instant avant prochain tour pour éviter busy-wait
-                time.sleep(0.01)
+        indeg_par = dict(indeg)
+        _run_parallel_sandbox(
+            report,
+            active_items,
+            children,
+            indeg_par,
+            ready,
+            ctx,
+            self.project_root,
+            self.plugin_timeout_s,
+            parallelism,
+        )
         _logger.info(report.summary())
         return report
 
@@ -726,216 +976,18 @@ def _plugin_worker(
 
     Renvoie un dict via la queue: {ok: bool, error: str, duration_ms: float}
     """
-    import importlib.util as _ilu
-    import os as _os
-    import sys as _sys
     import time as _time
     import traceback as _tb
     from pathlib import Path as _Path
 
-    # Configure interactivity and Qt platform for sandbox worker based on config/env
+    _configure_worker_env(config)
+    _maybe_init_qt_app(config)
+    _enforce_sdk_progress()
+    _apply_resource_limits(config)
     try:
-        _opts = (
-            dict(config or {}).get("options", {}) if isinstance(config, dict) else {}
-        )
-        _env_nonint = _os.environ.get("PYCOMPILER_NONINTERACTIVE_PLUGINS")
-        _env_offscreen = _os.environ.get("PYCOMPILER_OFFSCREEN_PLUGINS")
-        _noninteractive = (
-            (str(_env_nonint).strip().lower() in ("1", "true", "yes"))
-            if (_env_nonint is not None)
-            else bool(_opts.get("noninteractive_plugins", False))
-        )
-        _offscreen = (
-            (str(_env_offscreen).strip().lower() in ("1", "true", "yes"))
-            if (_env_offscreen is not None)
-            else bool(_opts.get("offscreen_plugins", False))
-        )
-        # Headless auto-detect (Linux/macOS only): if no DISPLAY and no WAYLAND_DISPLAY, force non-interactive (no Qt)
-        try:
-            import platform as _plat
-
-            _is_windows = _plat.system().lower().startswith("win")
-        except Exception:
-            _is_windows = False
-        if not _is_windows and (
-            not _os.environ.get("DISPLAY") and not _os.environ.get("WAYLAND_DISPLAY")
-        ):
-            _noninteractive = True
-        if _noninteractive:
-            _os.environ["PYCOMPILER_NONINTERACTIVE"] = "1"
-        # Offscreen is opt-in only (config/env). No auto-offscreen by default.
-        if _offscreen and "QT_QPA_PLATFORM" not in _os.environ:
-            _os.environ["QT_QPA_PLATFORM"] = "offscreen"
-    except Exception:
-        pass
-    # Optionally initialize a minimal Qt application so plugins can show message boxes in sandbox
-    try:
-        _opts2 = (
-            dict(config or {}).get("options", {}) if isinstance(config, dict) else {}
-        )
-        _env_allow = _os.environ.get("PYCOMPILER_SANDBOX_DIALOGS")
-        _allow_dialogs = (
-            (str(_env_allow).strip().lower() in ("1", "true", "yes"))
-            if (_env_allow is not None)
-            else bool(_opts2.get("allow_sandbox_dialogs", True))
-        )
-        # Respect non-interactive/headless
-        if _allow_dialogs and (
-            str(_os.environ.get("PYCOMPILER_NONINTERACTIVE", ""))
-        ).strip().lower() not in (
-            "1",
-            "true",
-            "yes",
-        ):
-            # Wayland fractional scaling safety
-            _os.environ.setdefault("QT_WAYLAND_DISABLE_FRACTIONAL_SCALE", "1")
-            try:
-                from PySide6.QtWidgets import QApplication as _QApp  # type: ignore
-            except Exception:
-                try:
-                    from PyQt5.QtWidgets import QApplication as _QApp  # type: ignore
-                except Exception:
-                    _QApp = None  # type: ignore
-            if _QApp is not None:
-                try:
-                    if _QApp.instance() is None:
-                        _sandbox_qapp = _QApp(
-                            []
-                        )  # noqa: F841 - keep reference alive during worker
-                except Exception:
-                    pass
-    except Exception:
-        pass
-    # Enforce Plugins_SDK.progress usage: block direct Qt QProgressDialog in plugins
-    try:
-        _os.environ["PYCOMPILER_ENFORCE_SDK_PROGRESS"] = "1"
-    except Exception:
-        pass
-    try:
-        from PySide6 import QtWidgets as _QtW2  # type: ignore
-
-        class _NoDirectProgressDialog:  # type: ignore
-            def __init__(self, *args, **kwargs) -> None:
-                raise RuntimeError(
-                    "Plugins must use Plugins_SDK.progress(...) instead of PySide6.QProgressDialog"
-                )
-
-        try:
-            _QtW2.QProgressDialog = _NoDirectProgressDialog  # type: ignore[attr-defined]
-        except Exception:
-            pass
-    except Exception:
-        try:
-            from PyQt5 import QtWidgets as _QtW2  # type: ignore
-
-            class _NoDirectProgressDialog:  # type: ignore
-                def __init__(self, *args, **kwargs) -> None:
-                    raise RuntimeError(
-                        "Plugins must use Plugins_SDK.progress(...) instead of PyQt.QProgressDialog"
-                    )
-
-            try:
-                _QtW2.QProgressDialog = _NoDirectProgressDialog  # type: ignore[attr-defined]
-            except Exception:
-                pass
-        except Exception:
-            pass
-    # Apply resource limits (POSIX) if configured
-    try:
-        _opts3 = (
-            dict(config or {}).get("options", {}) if isinstance(config, dict) else {}
-        )
-        _limits = _opts3.get("plugin_limits", {}) if isinstance(_opts3, dict) else {}
-        _mem_mb = int(_limits.get("mem_mb", 0))
-        _cpu_s = int(_limits.get("cpu_time_s", 0))
-        _nofile = int(_limits.get("nofile", 0))
-        _fsize_mb = int(_limits.get("fsize_mb", 0))
-        try:
-            import resource as _res  # POSIX only
-
-            def _set(limit, soft, hard):
-                try:
-                    _res.setrlimit(limit, (soft, hard))
-                except Exception:
-                    pass
-
-            if _mem_mb > 0:
-                _set(_res.RLIMIT_AS, _mem_mb * 1024 * 1024, _mem_mb * 1024 * 1024)
-            if _cpu_s > 0:
-                _set(_res.RLIMIT_CPU, _cpu_s, _cpu_s)
-            if _nofile > 0:
-                _set(_res.RLIMIT_NOFILE, _nofile, _nofile)
-            if _fsize_mb > 0:
-                _set(
-                    _res.RLIMIT_FSIZE,
-                    _fsize_mb * 1024 * 1024,
-                    _fsize_mb * 1024 * 1024,
-                )
-        except Exception:
-            pass
-    except Exception:
-        pass
-    try:
-        spec = _ilu.spec_from_file_location(
-            "bcasl_sandbox_module",
-            module_path,
-            submodule_search_locations=[str(_Path(module_path).parent)],
-        )
-        if spec is None or spec.loader is None:
-            raise ImportError("spec invalide")
-        module = _ilu.module_from_spec(spec)
-        _sys.modules[spec.name] = module
-        spec.loader.exec_module(module)  # type: ignore[attr-defined]
-        # Récupérer PLUGIN ou fallback via bcasl_register ou décorateur @bc_register
-        plg = getattr(module, "PLUGIN", None)
-        if plg is None or getattr(getattr(plg, "meta", None), "id", None) != plugin_id:
-            try:
-                # Fallback: ré-enregistrer dans un gestionnaire temporaire
-                from bcasl import PreCompileContext as _PCC
-
-                mgr = BCASL(
-                    _Path(project_root), config=config, sandbox=False
-                )  # pas de sandbox récursif
-                if hasattr(module, "bcasl_register") and callable(
-                    getattr(module, "bcasl_register")
-                ):
-                    module.bcasl_register(mgr)
-                rec = getattr(mgr, "_registry", {}).get(plugin_id)
-                if rec is None:
-                    # Nouveau style: chercher les classes marquées avec @bc_register
-                    # Ces classes ont l'attribut __bcasl_plugin__ = True
-                    # et peuvent avoir _bcasl_instance_ pour l'instance
-                    for attr_name in dir(module):
-                        try:
-                            attr = getattr(module, attr_name, None)
-                            if attr is None:
-                                continue
-                            if not isinstance(attr, type):
-                                continue
-                            if not getattr(attr, "__bcasl_plugin__", False):
-                                continue
-                            plugin_instance = getattr(attr, "_bcasl_instance_", None)
-                            if plugin_instance is None:
-                                try:
-                                    plugin_instance = attr()
-                                except Exception:
-                                    continue
-                            if getattr(plugin_instance.meta, "id", None) == plugin_id:
-                                plg = plugin_instance
-                                break
-                        except Exception:
-                            continue
-                else:
-                    plg = rec.plugin
-                if plg is None:
-                    raise RuntimeError(
-                        f"Plugin '{plugin_id}' introuvable dans le module"
-                    )
-            except Exception as ex:
-                raise RuntimeError(f"Impossible d'instancier le plugin: {ex}")
-        # Exécution
         from bcasl import PreCompileContext as _PCC
 
+        plg = _load_plugin_instance(module_path, plugin_id, project_root, config)
         ctx = _PCC(_Path(project_root), config=dict(config or {}))
         t0 = _time.perf_counter()
         plg.on_pre_compile(ctx)
