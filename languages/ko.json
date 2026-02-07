@@ -43,5 +43,10 @@
   "tt_bc_loader": "컴파일 전에 실행할 Plugins(BCASL) 플러그인을 구성합니다.",
   "tt_venv_button": "컴파일에 사용할 venv 디렉터리를 수동으로 선택합니다.",
   "tt_suggest_deps": "프로젝트를 분석하여 누락된 Python 의존성을 찾습니다.",
-  "tt_show_stats": "빌드 통계(시간, 파일 수, 메모리)를 표시합니다."
+  "tt_show_stats": "빌드 통계(시간, 파일 수, 메모리)를 표시합니다.",
+  "label_workspace_status": "워크스페이스: {path}",
+  "label_workspace_status_none": "워크스페이스: 없음",
+  "file_filter_placeholder": "목록 필터…",
+  "btn_clear_workspace": "🧹 워크스페이스 비우기",
+  "tt_clear_workspace": "파일 목록을 비우고 선택을 초기화합니다."
 }

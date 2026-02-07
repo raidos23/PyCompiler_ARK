@@ -24,7 +24,6 @@
   "label_files_section": "2. Fichiers à compiler",
   "btn_remove_file": "🗑️ Supprimer le fichier sélectionné",
   "label_logs_section": "Logs de compilation",
-  
   "choose_language_title": "Choisir la langue",
   "choose_language_label": "Langue :",
   "choose_language_system": "Système",
@@ -44,5 +43,10 @@
   "tt_bc_loader": "Configurer les plugins Plugins (BCASL) à exécuter avant la compilation.",
   "tt_venv_button": "Sélectionner manuellement un dossier venv à utiliser pour la compilation.",
   "tt_suggest_deps": "Analyser le projet pour détecter les dépendances Python manquantes.",
-  "tt_show_stats": "Afficher les statistiques de compilation (temps, nombre de fichiers, mémoire)."
+  "tt_show_stats": "Afficher les statistiques de compilation (temps, nombre de fichiers, mémoire).",
+  "label_workspace_status": "Espace de travail : {path}",
+  "label_workspace_status_none": "Espace de travail : Aucun",
+  "file_filter_placeholder": "Filtrer la liste…",
+  "btn_clear_workspace": "🧹 Vider le workspace",
+  "tt_clear_workspace": "Vider la liste des fichiers et réinitialiser la sélection."
 }

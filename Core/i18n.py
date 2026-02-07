@@ -45,6 +45,10 @@ FALLBACK_EN: dict[str, Any] = {
     "label_files_section": "2. Files to build",
     "btn_remove_file": "🗑️ Remove selected file",
     "label_logs_section": "Build logs",
+    "label_workspace_status": "Workspace: {path}",
+    "label_workspace_status_none": "Workspace: None",
+    "file_filter_placeholder": "Filter list…",
+    "btn_clear_workspace": "🧹 Clear workspace",
     "choose_language_title": "Choose language",
     "choose_language_label": "Language:",
     "choose_language_system": "System",
@@ -65,6 +69,7 @@ FALLBACK_EN: dict[str, Any] = {
     "tt_venv_button": "Manually select a venv directory to use for compilation.",
     "tt_suggest_deps": "Analyze the project for missing Python dependencies.",
     "tt_show_stats": "Show build statistics (time, number of files, memory).",
+    "tt_clear_workspace": "Clear the file list and reset the selection.",
 }
 
 
@@ -373,6 +378,7 @@ def _apply_main_app_translations(self, tr: dict[str, object]) -> None:
         _set("btn_help", "help")
         _set("btn_show_stats", "show_stats")
         _set("btn_remove_file", "btn_remove_file")
+        _set("btn_clear_workspace", "btn_clear_workspace")
 
         # Bouton de langue (variante System vs simple), sans valeur de secours
         try:
@@ -416,6 +422,21 @@ def _apply_main_app_translations(self, tr: dict[str, object]) -> None:
         _set("label_folder", "label_folder")
         _set("label_files_section", "label_files_section")
         _set("label_logs_section", "label_logs_section")
+
+        # Workspace status label (dynamic path if available)
+        if getattr(self, "label_workspace_status", None):
+            try:
+                ws = getattr(self, "workspace_dir", None)
+                if ws:
+                    tmpl = tr.get("label_workspace_status") or "Workspace: {path}"
+                    self.label_workspace_status.setText(
+                        str(tmpl).replace("{path}", str(ws))
+                    )
+                else:
+                    val = tr.get("label_workspace_status_none") or "Workspace: None"
+                    self.label_workspace_status.setText(str(val))
+            except Exception:
+                pass
 
         # === TABS ===
         if getattr(self, "compiler_tabs", None):
@@ -483,6 +504,13 @@ def _apply_main_app_translations(self, tr: dict[str, object]) -> None:
                     self.nuitka_output_dir.setPlaceholderText(ph)
             except Exception:
                 pass
+        if getattr(self, "file_filter_input", None):
+            try:
+                ph = tr.get("file_filter_placeholder")
+                if isinstance(ph, str) and ph.strip():
+                    self.file_filter_input.setPlaceholderText(ph)
+            except Exception:
+                pass
 
         # === TOOLTIPS ===
         # Main buttons tooltips
@@ -535,6 +563,10 @@ def _apply_main_app_translations(self, tr: dict[str, object]) -> None:
         if getattr(self, "btn_show_stats", None):
             self.btn_show_stats.setToolTip(
                 _tt("tt_show_stats", self.btn_show_stats.toolTip())
+            )
+        if getattr(self, "btn_clear_workspace", None):
+            self.btn_clear_workspace.setToolTip(
+                _tt("tt_clear_workspace", self.btn_clear_workspace.toolTip())
             )
 
         # Output directory tooltip
