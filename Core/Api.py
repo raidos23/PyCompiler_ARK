@@ -22,6 +22,34 @@ class Api:
     """API bridge helpers for Core integrations."""
 
     @staticmethod
+    def _confirm_workspace_change(gui, folder: str) -> bool:
+        try:
+            from Core.WidgetsCreator import show_msgbox
+
+            title = "Confirmation"
+            message = (
+                f"Un plugin demande de changer le workspace vers :\n{folder}\n\n"
+                "Voulez-vous continuer ?"
+            )
+            try:
+                if hasattr(gui, "tr"):
+                    title = gui.tr("Confirmation", "Confirmation")
+                    message = gui.tr(
+                        f"Un plugin demande de changer le workspace vers :\n{folder}\n\n"
+                        "Voulez-vous continuer ?",
+                        f"A plugin requests changing the workspace to:\n{folder}\n\n"
+                        "Do you want to continue?",
+                    )
+            except Exception:
+                pass
+
+            res = show_msgbox("question", title, message, parent=gui, default="Yes")
+            return bool(res)
+        except Exception:
+            # If confirmation UI fails, accept by contract
+            return True
+
+    @staticmethod
     def request_workspace_change_from_BcPlugin(folder: str) -> bool:
         try:
             gui = _latest_gui_instance
@@ -38,34 +66,37 @@ class Api:
             if invoker is None or not isinstance(invoker, _UiInvoker):
                 invoker = _UiInvoker(gui)
                 setattr(gui, "_ui_invoker", invoker)
-            result_holder = {"ok": False}
-            loop = _QEventLoop()
+        result_holder = {"ok": False}
+        loop = _QEventLoop()
 
-            def _do():
-                try:
-                    result_holder["ok"] = bool(
-                        gui.apply_workspace_selection(str(folder), source="plugin")
-                    )
-                except Exception:
-                    result_holder["ok"] = False
-                finally:
-                    try:
-                        loop.quit()
-                    except Exception:
-                        pass
-
+        def _do():
             try:
-                invoker.post(_do)
+                if not Api._confirm_workspace_change(gui, str(folder)):
+                    result_holder["ok"] = False
+                    return
+                result_holder["ok"] = bool(
+                    gui.apply_workspace_selection(str(folder), source="plugin")
+                )
             except Exception:
-                # Fallback: direct call in case invoker posting fails
+                result_holder["ok"] = False
+            finally:
                 try:
-                    return bool(
-                        gui.apply_workspace_selection(str(folder), source="plugin")
-                    )
+                    loop.quit()
                 except Exception:
+                    pass
+
+        try:
+            invoker.post(_do)
+        except Exception:
+            # Fallback: direct call in case invoker posting fails
+            try:
+                if not Api._confirm_workspace_change(gui, str(folder)):
                     return False
-            loop.exec()
-            return bool(result_holder.get("ok", False))
+                return bool(gui.apply_workspace_selection(str(folder), source="plugin"))
+            except Exception:
+                return False
+        loop.exec()
+        return bool(result_holder.get("ok", False))
         except Exception:
             # Accept by contract even on unexpected errors
             return True
