@@ -60,8 +60,8 @@
         </property>
         <property name="maximumSize">
          <size>
-          <width>120</width>
-          <height>120</height>
+          <width>200</width>
+          <height>200</height>
          </size>
         </property>
         <property name="alignment">
