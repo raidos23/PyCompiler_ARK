@@ -175,6 +175,64 @@ except Exception:
     pass
 
 
+def _get_icon_path() -> Optional[str]:
+    """Return the best available application icon path."""
+    try:
+        path = os.path.join(ROOT_DIR, "logo", "logo2.png")
+        return path if os.path.isfile(path) else None
+    except Exception:
+        return None
+
+
+def _set_window_icon(target) -> None:
+    """Set the window/application icon if available."""
+    try:
+        icon_path = _get_icon_path()
+        if icon_path:
+            target.setWindowIcon(QIcon(icon_path))
+    except Exception:
+        pass
+
+
+def _apply_small_screen_compaction(app: QApplication, window) -> None:
+    """Resserre l'UI pour les petits écrans."""
+    try:
+        from PySide6.QtWidgets import QLabel, QLayout
+
+        screen = app.primaryScreen()
+        geo = screen.availableGeometry() if screen is not None else None
+        if geo and (geo.width() < 1000 or geo.height() < 650):
+            try:
+                lays = window.ui.findChildren(QLayout) if hasattr(window, "ui") else []
+                for _l in lays:
+                    try:
+                        _l.setContentsMargins(6, 6, 6, 6)
+                        _l.setSpacing(6)
+                    except Exception:
+                        pass
+            except Exception:
+                pass
+            try:
+                lbl = getattr(window, "sidebar_logo", None)
+                if lbl is None and hasattr(window, "ui"):
+                    lbl = window.ui.findChild(QLabel, "sidebar_logo")
+                if lbl is not None and lbl.pixmap() is not None:
+                    pm = lbl.pixmap()
+                    if pm is not None:
+                        lbl.setPixmap(
+                            pm.scaled(
+                                120,
+                                120,
+                                Qt.AspectRatioMode.KeepAspectRatio,
+                                Qt.TransformationMode.SmoothTransformation,
+                            )
+                        )
+            except Exception:
+                pass
+    except Exception:
+        pass
+
+
 def _qt_message_handler(mode, context, message):
     # Écrit tous les messages Qt dans logs/crash.log. À l'écran, supprime warnings/info/debug si non-verbose.
     suppressed = (not os.environ.get("PYCOMPILER_VERBOSE")) and mode in (
@@ -420,7 +478,7 @@ def launch_bcasl_standalone(workspace_dir: Optional[str] = None) -> int:
         Exit code (0 for success, 1 for error)
     """
     try:
-        from OnlyMod.BcaslOnlyMod import BcaslStandaloneApp
+        from OnlyMod.BcaslOnlyMod import BcaslStandaloneGui
         from PySide6.QtWidgets import QApplication
 
         # Validate and resolve workspace
@@ -436,13 +494,11 @@ def launch_bcasl_standalone(workspace_dir: Optional[str] = None) -> int:
             WorkspaceManager.save_workspace(workspace_dir)
 
         app = QApplication(sys.argv)
-        window = BcaslStandaloneApp(workspace_dir=workspace_dir)
-        try:
-            _icon_path = os.path.join(ROOT_DIR, "logo", "logo2.png")
-            if os.path.isfile(_icon_path):
-                app.setWindowIcon(QIcon(_icon_path))
-        except Exception:
-            pass
+        app.setApplicationName("PyCompiler ARK++ BCASL")
+        app.setOrganizationName("raidos23")
+        _set_window_icon(app)
+        window = BcaslStandaloneGui(workspace_dir=workspace_dir)
+        _set_window_icon(window)
         window.show()
         return app.exec()
     except ImportError as e:
@@ -450,10 +506,10 @@ def launch_bcasl_standalone(workspace_dir: Optional[str] = None) -> int:
             click.echo(
                 f"❌ Error: Failed to import BCASL standalone module: {e}", err=True
             )
-            click.echo("Make sure bcasl.only_mod is properly installed.", err=True)
+            click.echo("Make sure OnlyMod.BcaslOnlyMod is properly installed.", err=True)
         else:
             print(f"❌ Error: Failed to import BCASL standalone module: {e}")
-            print("Make sure bcasl.only_mod is properly installed.")
+            print("Make sure OnlyMod.BcaslOnlyMod is properly installed.")
         return 1
     except Exception as e:
         if click:
@@ -490,13 +546,10 @@ def launch_engines_only_standalone(workspace_dir: Optional[str] = None) -> int:
 
         app = QApplication(sys.argv)
         app.setApplicationName("PyCompiler ARK++ Engines")
-        try:
-            _icon_path = os.path.join(ROOT_DIR, "logo", "logo2.png")
-            if os.path.isfile(_icon_path):
-                app.setWindowIcon(QIcon(_icon_path))
-        except Exception:
-            pass
+        app.setOrganizationName("raidos23")
+        _set_window_icon(app)
         window = EnginesStandaloneGui(workspace_dir=workspace_dir)
+        _set_window_icon(window)
 
         window.show()
         return app.exec()
@@ -529,13 +582,7 @@ def launch_main_application() -> int:
     """
     try:
         app = QApplication(sys.argv)
-        # Use logo/logo2.png as application icon if available
-        try:
-            _icon_path = os.path.join(ROOT_DIR, "logo", "logo2.png")
-            if os.path.isfile(_icon_path):
-                app.setWindowIcon(QIcon(_icon_path))
-        except Exception:
-            pass
+        _set_window_icon(app)
 
         # Splash screen: affiche l'image 'splash.*' depuis le dossier 'logo' si disponible
         splash = None
@@ -640,56 +687,9 @@ def launch_main_application() -> int:
             def _launch_main():
                 try:
                     w = PyCompilerArkGui()
-                    # ensure main window uses the same icon if available
-                    try:
-                        if os.path.isfile(_icon_path):
-                            w.setWindowIcon(QIcon(_icon_path))
-                    except Exception:
-                        pass
+                    _set_window_icon(w)
                     w.show()
-
-                    # Resserrement auto pour très petits écrans
-                    try:
-                        from PySide6.QtWidgets import QLabel, QLayout
-
-                        screen2 = app.primaryScreen()
-                        geo2 = (
-                            screen2.availableGeometry() if screen2 is not None else None
-                        )
-                        if geo2 and (geo2.width() < 1000 or geo2.height() < 650):
-                            try:
-                                lays = (
-                                    w.ui.findChildren(QLayout)
-                                    if hasattr(w, "ui")
-                                    else []
-                                )
-                                for _l in lays:
-                                    try:
-                                        _l.setContentsMargins(6, 6, 6, 6)
-                                        _l.setSpacing(6)
-                                    except Exception:
-                                        pass
-                            except Exception:
-                                pass
-                            try:
-                                lbl = getattr(w, "sidebar_logo", None)
-                                if lbl is None and hasattr(w, "ui"):
-                                    lbl = w.ui.findChild(QLabel, "sidebar_logo")
-                                if lbl is not None and lbl.pixmap() is not None:
-                                    pm = lbl.pixmap()
-                                    if pm is not None:
-                                        lbl.setPixmap(
-                                            pm.scaled(
-                                                120,
-                                                120,
-                                                Qt.AspectRatioMode.KeepAspectRatio,
-                                                Qt.TransformationMode.SmoothTransformation,
-                                            )
-                                        )
-                            except Exception:
-                                pass
-                    except Exception:
-                        pass
+                    _apply_small_screen_compaction(app, w)
 
                     try:
                         splash.finish(w)
@@ -701,49 +701,9 @@ def launch_main_application() -> int:
             QTimer.singleShot(max(0, delay_ms), _launch_main)
         else:
             w = PyCompilerArkGui()
-            # ensure main window uses the same icon if available
-            try:
-                if os.path.isfile(_icon_path):
-                    w.setWindowIcon(QIcon(_icon_path))
-            except Exception:
-                pass
+            _set_window_icon(w)
             w.show()
-            # Resserrement auto pour très petits écrans
-            try:
-                from PySide6.QtWidgets import QLabel, QLayout
-
-                screen3 = app.primaryScreen()
-                geo3 = screen3.availableGeometry() if screen3 is not None else None
-                if geo3 and (geo3.width() < 1000 or geo3.height() < 650):
-                    try:
-                        lays = w.ui.findChildren(QLayout) if hasattr(w, "ui") else []
-                        for _l in lays:
-                            try:
-                                _l.setContentsMargins(6, 6, 6, 6)
-                                _l.setSpacing(6)
-                            except Exception:
-                                pass
-                    except Exception:
-                        pass
-                    try:
-                        lbl = getattr(w, "sidebar_logo", None)
-                        if lbl is None and hasattr(w, "ui"):
-                            lbl = w.ui.findChild(QLabel, "sidebar_logo")
-                        if lbl is not None and lbl.pixmap() is not None:
-                            pm = lbl.pixmap()
-                            if pm is not None:
-                                lbl.setPixmap(
-                                    pm.scaled(
-                                        120,
-                                        120,
-                                        Qt.AspectRatioMode.KeepAspectRatio,
-                                        Qt.TransformationMode.SmoothTransformation,
-                                    )
-                                )
-                    except Exception:
-                        pass
-            except Exception:
-                pass
+            _apply_small_screen_compaction(app, w)
         rc = app.exec()
         return int(rc) if isinstance(rc, int) else 0
     except Exception:
