@@ -224,6 +224,7 @@ def init_ui(self):
     except Exception:
         eff_mode = "light"
     candidates = [
+        os.path.join(project_dir, "logo", "image-9.png"),
         (
             os.path.join(project_dir, "logo", "sidebar_logo2.png")
             if eff_mode == "dark"
@@ -607,6 +608,7 @@ def apply_theme(self, pref: str):
 
                 project_dir = os.path.abspath(os.path.dirname(sys.argv[0]))
                 candidates = [
+                    os.path.join(project_dir, "logo", "image-9.png"),
                     (
                         os.path.join(project_dir, "logo", "sidebar_logo2.png")
                         if effective_mode == "dark"
