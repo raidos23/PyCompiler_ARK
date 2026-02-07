@@ -19,6 +19,7 @@ from PySide6.QtGui import QDropEvent
 from PySide6.QtWidgets import QFileDialog, QMessageBox
 
 from Core.Globals import _workspace_dir_cache, _workspace_dir_lock
+from Core.ArkConfigManager import load_ark_config, should_exclude_file
 
 
 class WorkspaceAdvancedManipulation:
@@ -138,6 +139,10 @@ class WorkspaceAdvancedManipulation:
 
         urls = event.mimeData().urls()
         added = 0
+        excluded = 0
+        workspace_dir = getattr(gui_instance, "workspace_dir", None)
+        ark_config = load_ark_config(workspace_dir) if workspace_dir else {}
+        exclusion_patterns = ark_config.get("exclusion_patterns", [])
 
         for url in urls:
             path = url.toLocalFile()
@@ -145,7 +150,6 @@ class WorkspaceAdvancedManipulation:
                 added += SetupWorkspace.add_py_files_from_folder(gui_instance, path)
             elif path.endswith(".py"):
                 # Vérifie que le fichier est dans workspace (si défini)
-                workspace_dir = getattr(gui_instance, "workspace_dir", None)
                 if (
                     workspace_dir
                     and not os.path.commonpath([path, workspace_dir]) == workspace_dir
@@ -154,6 +158,12 @@ class WorkspaceAdvancedManipulation:
                         f"⚠️ Ignoré (hors workspace): {path}",
                         f"⚠️ Ignored (outside workspace): {path}",
                     )
+                    continue
+                # Vérifie les patterns d'exclusion ARK
+                if workspace_dir and should_exclude_file(
+                    path, workspace_dir, exclusion_patterns
+                ):
+                    excluded += 1
                     continue
                 if path not in gui_instance.python_files:
                     gui_instance.python_files.append(path)
@@ -168,6 +178,11 @@ class WorkspaceAdvancedManipulation:
             f"✅ {added} fichier(s) ajouté(s) via drag & drop.",
             f"✅ {added} file(s) added via drag & drop.",
         )
+        if excluded > 0:
+            gui_instance.log_i18n(
+                f"⏩ Exclusion appliquée : {excluded} fichier(s) ignoré(s) (ARK_Main_Config.yml).",
+                f"⏩ Exclusion applied: {excluded} file(s) ignored (ARK_Main_Config.yml).",
+            )
 
         if hasattr(gui_instance, "update_command_preview"):
             gui_instance.update_command_preview()
