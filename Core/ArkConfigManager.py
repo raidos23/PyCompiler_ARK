@@ -31,8 +31,9 @@ Note: La configuration des plugins BCASL est gérée exclusivement par bcasl.yml
 """
 
 import os
-from pathlib import Path
-from typing import Any
+import fnmatch
+from pathlib import Path, PurePosixPath
+from typing import Any, Optional
 import yaml
 
 
@@ -262,15 +263,35 @@ def get_environment_manager_options(config: dict[str, Any]) -> dict[str, Any]:
     return config.get("environment_manager", {})
 
 
+def _normalize_exclusion_pattern(pattern: str) -> str:
+    """
+    Normalise un pattern d'exclusion pour un matching fiable cross-plateforme.
+
+    - Convertit les séparateurs Windows en "/"
+    - Retire le préfixe "./"
+    - Si le pattern se termine par "/", on l'étend à "/**"
+    """
+    p = str(pattern).strip()
+    if not p:
+        return ""
+    p = p.replace("\\", "/")
+    if p.startswith("./"):
+        p = p[2:]
+    if p.endswith("/"):
+        p = p.rstrip("/") + "/**"
+    return p
+
+
 def should_exclude_file(
-    file_path: str, workspace_dir: str, exclusion_patterns: list[str]
+    file_path: str, workspace_dir: str, exclusion_patterns: Optional[list[str]]
 ) -> bool:
     """
     Détermine si un fichier doit être exclu de la compilation.
 
     Cette fonction compare le chemin du fichier avec les patterns
-    d'exclusion définis dans la configuration. Elle utilise la méthode
-    Path.match() qui supporte les patterns glob standards.
+    d'exclusion définis dans la configuration. Elle normalise les
+    séparateurs puis combine Path.match() et fnmatch pour supporter
+    les patterns glob avec "**" de façon cross-plateforme.
 
     Args:
         file_path: Chemin absolu du fichier à vérifier
@@ -281,23 +302,59 @@ def should_exclude_file(
         True si le fichier doit être exclu, False sinon
     """
     try:
+        if not file_path or not workspace_dir:
+            return False
+
         file_path_obj = Path(file_path)
         workspace_path_obj = Path(workspace_dir)
 
+        # Résolution pour éviter les surprises (symlinks, chemins relatifs)
+        try:
+            file_abs = file_path_obj.resolve()
+            workspace_abs = workspace_path_obj.resolve()
+        except Exception:
+            file_abs = file_path_obj
+            workspace_abs = workspace_path_obj
+
         # Calcul du chemin relatif par rapport au workspace
         try:
-            relative_path = file_path_obj.relative_to(workspace_path_obj)
+            relative_path = file_abs.relative_to(workspace_abs)
         except ValueError:
             # Le fichier est hors du workspace
             return True
 
+        # Normalisation vers POSIX pour matcher les patterns avec "/"
+        rel_posix = PurePosixPath(relative_path.as_posix())
+        abs_posix = PurePosixPath(file_abs.as_posix())
+        rel_str = rel_posix.as_posix()
+        abs_str = abs_posix.as_posix()
+        file_name = file_abs.name
+
+        patterns = exclusion_patterns or []
+
         # Vérification des patterns d'exclusion
-        for pattern in exclusion_patterns:
-            # Comparaison avec le chemin relatif complet
-            if relative_path.match(pattern):
-                return True
+        for pattern in patterns:
+            pat = _normalize_exclusion_pattern(pattern)
+            if not pat:
+                continue
+
+            # Patterns avec "**" : matcher via fnmatch pour supporter les répertoires
+            if "**" in pat:
+                if fnmatch.fnmatch(rel_str, pat):
+                    return True
+                if fnmatch.fnmatch(abs_str, pat):
+                    return True
+            else:
+                # Comparaison avec le chemin relatif complet
+                if rel_posix.match(pat):
+                    return True
+
+                # Autoriser les patterns absolus si fournis par l'utilisateur
+                if abs_posix.match(pat):
+                    return True
+
             # Comparaison avec juste le nom du fichier (pour patterns comme "*.pyc")
-            if file_path_obj.match(pattern):
+            if "/" not in pat and PurePosixPath(file_name).match(pat):
                 return True
 
         return False
