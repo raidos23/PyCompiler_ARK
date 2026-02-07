@@ -263,6 +263,18 @@ class MainProcess(QObject):
             self.log_message.emit("warning", "Compilation already in progress")
             return False
 
+        # Mettre à jour le workspace si fourni
+        if workspace_dir and workspace_dir != self._workspace_dir:
+            self._workspace_dir = workspace_dir
+
+        # Vérifier l'exclusion avant de lancer la compilation
+        if file_path and self._workspace_dir:
+            if self.should_exclude(file_path):
+                self.log_message.emit(
+                    "warning", f"File excluded by ARK config: {file_path}"
+                )
+                return False
+
         # Déterminer le répertoire de travail
         working_dir = workspace_dir or self._workspace_dir
         if file_path:
