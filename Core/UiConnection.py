@@ -202,10 +202,12 @@ def init_ui(self):
     self.venv_button = self.ui.findChild(QPushButton, "venv_button")
     self.venv_label = self.ui.findChild(QLabel, "venv_label")
     self.label_folder = self.ui.findChild(QLabel, "label_folder")
+    self.label_workspace_status = self.ui.findChild(QLabel, "label_workspace_status")
     self.label_workspace_section = self.ui.findChild(QLabel, "label_workspace_section")
     self.label_files_section = self.ui.findChild(QLabel, "label_files_section")
     self.label_logs_section = self.ui.findChild(QLabel, "label_logs_section")
     self.file_list = self.ui.findChild(QListWidget, "file_list")
+    self.file_filter_input = self.ui.findChild(QLineEdit, "file_filter_input")
     # Afficher le logo dans la sidebar (chemin absolu depuis le dossier projet)
     from PySide6.QtGui import QPixmap
     from PySide6.QtWidgets import QApplication
@@ -262,6 +264,21 @@ def init_ui(self):
     self.compile_btn = self.ui.findChild(QPushButton, "compile_btn")
     self.cancel_btn = self.ui.findChild(QPushButton, "cancel_btn")
     self.btn_help = self.ui.findChild(QPushButton, "btn_help")
+
+    # Statut workspace dans l'en-tête
+    if self.label_workspace_status:
+        try:
+            ws = getattr(self, "workspace_dir", None)
+            if ws:
+                self.label_workspace_status.setText(
+                    self.tr(f"Workspace : {ws}", f"Workspace: {ws}")
+                )
+            else:
+                self.label_workspace_status.setText(
+                    self.tr("Workspace : Aucun", "Workspace: None")
+                )
+        except Exception:
+            pass
     self.btn_suggest_deps = self.ui.findChild(QPushButton, "btn_suggest_deps")
     self.btn_bc_loader = self.ui.findChild(QPushButton, "btn_bc_loader")
     self.btn_acasl_loader = self.ui.findChild(QPushButton, "btn_acasl_loader")
@@ -306,6 +323,13 @@ def init_ui(self):
     self.btn_remove_file.clicked.connect(self.remove_selected_file)
     self.compile_btn.clicked.connect(self.compile_all)
     self.cancel_btn.clicked.connect(self.cancel_all_compilations)
+
+    # Filtre de fichiers
+    if self.file_filter_input:
+        try:
+            self.file_filter_input.textChanged.connect(self.apply_file_filter)
+        except Exception:
+            pass
 
     from bcasl import open_bc_loader_dialog
 

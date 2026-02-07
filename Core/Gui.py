@@ -250,6 +250,27 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
         """Supprime les fichiers sélectionnés."""
         WorkspaceAdvancedManipulation.remove_selected_file(self)
 
+    def apply_file_filter(self, text: Optional[str] = None) -> None:
+        """Filtre la liste des fichiers affichés selon un texte."""
+        try:
+            if text is None:
+                try:
+                    if getattr(self, "file_filter_input", None):
+                        text = self.file_filter_input.text()
+                except Exception:
+                    text = ""
+            needle = (text or "").strip().lower()
+            if not getattr(self, "file_list", None):
+                return
+            for i in range(self.file_list.count()):
+                item = self.file_list.item(i)
+                if item is None:
+                    continue
+                hay = item.text().lower()
+                item.setHidden(bool(needle) and needle not in hay)
+        except Exception:
+            pass
+
     # =========================================================================
     # COMPILATION (délégation à Compiler)
     # =========================================================================

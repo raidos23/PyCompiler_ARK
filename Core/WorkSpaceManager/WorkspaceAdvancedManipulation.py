@@ -89,6 +89,11 @@ class WorkspaceAdvancedManipulation:
                     )
                 if hasattr(gui_instance, "update_command_preview"):
                     gui_instance.update_command_preview()
+                try:
+                    if hasattr(gui_instance, "apply_file_filter"):
+                        gui_instance.apply_file_filter()
+                except Exception:
+                    pass
 
     @staticmethod
     def remove_selected_file(gui_instance):
@@ -196,6 +201,11 @@ class WorkspaceAdvancedManipulation:
                 f"⏩ Exclusion appliquée : {excluded} fichier(s) ignoré(s) (ARK_Main_Config.yml).",
                 f"⏩ Exclusion applied: {excluded} file(s) ignored (ARK_Main_Config.yml).",
             )
+        try:
+            if hasattr(gui_instance, "apply_file_filter"):
+                gui_instance.apply_file_filter()
+        except Exception:
+            pass
 
         if hasattr(gui_instance, "update_command_preview"):
             gui_instance.update_command_preview()
@@ -254,6 +264,21 @@ class WorkspaceAdvancedManipulation:
                         "Dossier sélectionné : (aucun)", "Selected folder: (none)"
                     )
                 )
+            if hasattr(gui_instance, "label_workspace_status"):
+                try:
+                    if keep_dir and workspace_dir:
+                        gui_instance.label_workspace_status.setText(
+                            gui_instance.tr(
+                                f"Workspace : {workspace_dir}",
+                                f"Workspace: {workspace_dir}",
+                            )
+                        )
+                    else:
+                        gui_instance.label_workspace_status.setText(
+                            gui_instance.tr("Workspace : Aucun", "Workspace: None")
+                        )
+                except Exception:
+                    pass
 
             gui_instance.workspace_dir = None if not keep_dir else workspace_dir
 
