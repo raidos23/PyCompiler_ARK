@@ -53,9 +53,17 @@ class WorkspaceAdvancedManipulation:
             gui_instance.tr("Fichiers Python (*.py)", "Python Files (*.py)"),
         )
         if files:
+            ark_config = load_ark_config(workspace_dir) if workspace_dir else {}
+            exclusion_patterns = ark_config.get("exclusion_patterns", [])
             valid_files = []
+            excluded = 0
             for f in files:
                 if os.path.commonpath([f, workspace_dir]) == workspace_dir:
+                    if workspace_dir and should_exclude_file(
+                        f, workspace_dir, exclusion_patterns
+                    ):
+                        excluded += 1
+                        continue
                     valid_files.append(f)
                 else:
                     QMessageBox.warning(
@@ -67,13 +75,18 @@ class WorkspaceAdvancedManipulation:
                             f"Le fichier {f} est en dehors du workspace et sera ignoré.",
                             f"The file {f} is outside the workspace and will be ignored.",
                         ),
-                    )
+                )
             if valid_files:
                 gui_instance.selected_files = valid_files
                 gui_instance.log_i18n(
                     f"✅ {len(valid_files)} fichier(s) sélectionné(s) manuellement.\n",
                     f"✅ {len(valid_files)} file(s) selected manually.\n",
                 )
+                if excluded > 0:
+                    gui_instance.log_i18n(
+                        f"⏩ Exclusion appliquée : {excluded} fichier(s) ignoré(s) (ARK_Main_Config.yml).",
+                        f"⏩ Exclusion applied: {excluded} file(s) ignored (ARK_Main_Config.yml).",
+                    )
                 if hasattr(gui_instance, "update_command_preview"):
                     gui_instance.update_command_preview()
 
