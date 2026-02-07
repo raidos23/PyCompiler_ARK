@@ -34,6 +34,119 @@ from pathlib import Path
 from typing import Any, Optional
 
 
+def _normalize_tags(tags: Any) -> list[str]:
+    """Normalise les tags en liste de chaînes minuscules."""
+    if not tags:
+        return []
+    if isinstance(tags, str):
+        parts = [t.strip() for t in tags.split(",")]
+    elif isinstance(tags, (list, tuple, set)):
+        parts = list(tags)
+    else:
+        return []
+    return [str(t).strip().lower() for t in parts if str(t).strip()]
+
+
+def _tag_priority_from_tags(tags: Any) -> int:
+    """Calcule la priorité basée sur les tags."""
+    try:
+        from .tagging import TAG_PRIORITY_MAP, DEFAULT_TAG_PRIORITY
+
+        norm = _normalize_tags(tags)
+        if not norm:
+            return DEFAULT_TAG_PRIORITY
+        scores = [
+            TAG_PRIORITY_MAP.get(t, DEFAULT_TAG_PRIORITY) for t in norm if t is not None
+        ]
+        return min(scores) if scores else DEFAULT_TAG_PRIORITY
+    except Exception:
+        # Fallback conservateur
+        try:
+            from .tagging import DEFAULT_TAG_PRIORITY
+
+            return DEFAULT_TAG_PRIORITY
+        except Exception:
+            return 100
+
+
+def _add_report_item(
+    report: ExecutionReport,
+    *,
+    plugin_id: str,
+    name: str,
+    success: bool,
+    duration_ms: float,
+    error: str = "",
+) -> None:
+    report.add(
+        ExecutionItem(
+            plugin_id=plugin_id,
+            name=name,
+            success=success,
+            duration_ms=duration_ms,
+            error=error if not success else "",
+        )
+    )
+
+
+def _record_worker_result(
+    report: ExecutionReport,
+    *,
+    plugin_id: str,
+    name: str,
+    start_t: float,
+    q,
+) -> None:
+    try:
+        res = q.get_nowait()
+    except Exception:
+        res = {
+            "ok": False,
+            "error": "aucun résultat renvoyé (crash du processus enfant ?)",
+            "duration_ms": (time.perf_counter() - start_t) * 1000.0,
+        }
+    duration_ms = float(
+        res.get("duration_ms", (time.perf_counter() - start_t) * 1000.0)
+    )
+    if res.get("ok"):
+        _add_report_item(
+            report,
+            plugin_id=plugin_id,
+            name=name,
+            success=True,
+            duration_ms=duration_ms,
+        )
+    else:
+        _add_report_item(
+            report,
+            plugin_id=plugin_id,
+            name=name,
+            success=False,
+            duration_ms=duration_ms,
+            error=str(res.get("error", "")),
+        )
+
+
+def _record_timeout(
+    report: ExecutionReport,
+    *,
+    plugin_id: str,
+    name: str,
+    start_t: float,
+    timeout_s: float,
+) -> None:
+    duration_ms = (time.perf_counter() - start_t) * 1000.0
+    _add_report_item(
+        report,
+        plugin_id=plugin_id,
+        name=name,
+        success=False,
+        duration_ms=duration_ms,
+        error=f"timeout après {timeout_s:.1f}s",
+    )
+    _logger.error("Plugin %s timeout après %.1fs", plugin_id, timeout_s)
+
+
 class BCASL:
     """Gestionnaire principal des plugins et de leur exécution avant compilation."""
 
@@ -182,27 +295,11 @@ class BCASL:
                                 # Appliquer la priorité basée sur les tags si pas déjà définie
                                 # et si la priorité par défaut (100) est utilisée
                                 if plugin_instance.priority == 100:
-                                    from .tagging import (
-                                        TAG_PRIORITY_MAP,
-                                        DEFAULT_TAG_PRIORITY,
+                                    tag_priority = _tag_priority_from_tags(
+                                        getattr(plugin_instance.meta, "tags", ())
                                     )
-
-                                    tags = (
-                                        getattr(plugin_instance.meta, "tags", ()) or ()
-                                    )
-                                    if tags:
-                                        scores = []
-                                        for tag in tags:
-                                            tag_str = str(tag).strip().lower()
-                                            if tag_str:
-                                                score = TAG_PRIORITY_MAP.get(
-                                                    tag_str, DEFAULT_TAG_PRIORITY
-                                                )
-                                                scores.append(score)
-                                        if scores:
-                                            tag_priority = min(scores)
-                                            if tag_priority != DEFAULT_TAG_PRIORITY:
-                                                plugin_instance.priority = tag_priority
+                                    if tag_priority != _tag_priority_from_tags([]):
+                                        plugin_instance.priority = tag_priority
                                 self.add_plugin(plugin_instance)
                                 new_ids.append(pid)
                                 is_decorator_plugin = True
@@ -249,45 +346,30 @@ class BCASL:
         - Phase 5: Obfuscation (obfuscate, transpile, protect, encrypt)
         - Phase 100: Défaut (aucun tag reconnu)
         """
-        from .tagging import (
-            TAG_PRIORITY_MAP,
-            DEFAULT_TAG_PRIORITY,
-            describe_plugin_priority,
-        )
-
         active_items = {pid: rec for pid, rec in self._registry.items() if rec.active}
         if not active_items:
             return []
 
         # Calculer la priorité basée sur les tags pour chaque plugin
-        def _compute_tag_priority(pid: str) -> int:
-            """Calcule la priorité basée sur les tags du plugin."""
+        tag_priority: dict[str, int] = {}
+        for pid, rec in active_items.items():
             try:
-                rec = active_items.get(pid)
-                if not rec:
-                    return DEFAULT_TAG_PRIORITY
-
-                tags = getattr(rec.plugin.meta, "tags", ())
-                if not tags:
-                    return DEFAULT_TAG_PRIORITY
-
-                # Normaliser et traiter les tags
-                if isinstance(tags, str):
-                    tags = [t.strip() for t in tags.split(",") if t.strip()]
-                elif not isinstance(tags, (list, tuple)):
-                    tags = []
-
-                # Trouver le score minimum parmi les tags
-                scores = []
-                for tag in tags:
-                    tag_lower = str(tag).strip().lower()
-                    if tag_lower:
-                        score = TAG_PRIORITY_MAP.get(tag_lower, DEFAULT_TAG_PRIORITY)
-                        scores.append(score)
-
-                return min(scores) if scores else DEFAULT_TAG_PRIORITY
+                tag_priority[pid] = _tag_priority_from_tags(
+                    getattr(rec.plugin.meta, "tags", ())
+                )
             except Exception:
-                return DEFAULT_TAG_PRIORITY
+                tag_priority[pid] = _tag_priority_from_tags([])
+
+        default_tag_priority = _tag_priority_from_tags([])
+
+        def _order_key(pid: str) -> tuple[int, int, int, str]:
+            rec = active_items[pid]
+            return (
+                tag_priority.get(pid, default_tag_priority),
+                rec.priority,
+                rec.insert_idx,
+                pid,
+            )
 
         # Construire graphe des dépendances
         indeg: dict[str, int] = {pid: 0 for pid in active_items}
@@ -304,21 +386,13 @@ class BCASL:
                 children[dep].append(pid)
 
         # File de départ triée par (tag_priority, priority, insert_idx, id)
-        roots = sorted(
-            [pid for pid, d in indeg.items() if d == 0],
-            key=lambda x: (
-                _compute_tag_priority(x),
-                active_items[x].priority,
-                active_items[x].insert_idx,
-                x,
-            ),
-        )
+        roots = sorted([pid for pid, d in indeg.items() if d == 0], key=_order_key)
         order: list[str] = []
 
         heap: list[tuple[int, int, int, str]] = []
         for pid in roots:
             rec = active_items[pid]
-            tag_prio = _compute_tag_priority(pid)
+            tag_prio = tag_priority.get(pid, default_tag_priority)
             heapq.heappush(heap, (tag_prio, rec.priority, rec.insert_idx, pid))
 
         while heap:
@@ -328,21 +402,14 @@ class BCASL:
                 indeg[ch] -= 1
                 if indeg[ch] == 0:
                     rch = active_items[ch]
-                    tag_prio = _compute_tag_priority(ch)
+                    tag_prio = tag_priority.get(ch, default_tag_priority)
                     heapq.heappush(heap, (tag_prio, rch.priority, rch.insert_idx, ch))
 
         if len(order) != len(active_items):
             # Cycle détecté; insérer les restants par priorité
             remaining = [pid for pid in active_items if pid not in order]
             _logger.error("Cycle de dépendances détecté: %s", ", ".join(remaining))
-            remaining.sort(
-                key=lambda x: (
-                    _compute_tag_priority(x),
-                    active_items[x].priority,
-                    active_items[x].insert_idx,
-                    x,
-                )
-            )
+            remaining.sort(key=_order_key)
             order.extend(remaining)
 
         # Logging lisible des phases d'exécution
@@ -351,7 +418,7 @@ class BCASL:
             for i, pid in enumerate(order, 1):
                 rec = active_items[pid]
                 tags = getattr(rec.plugin.meta, "tags", ()) or ()
-                tag_prio = _compute_tag_priority(pid)
+                tag_prio = tag_priority.get(pid, default_tag_priority)
                 _logger.info(
                     "%d. %s (priorité=%d, tag_phase=%d)", i, pid, rec.priority, tag_prio
                 )
@@ -531,74 +598,41 @@ class BCASL:
                             p.join(1.0)
                         except Exception:
                             pass
-                        duration_ms = (time.perf_counter() - start) * 1000.0
-                        report.add(
-                            ExecutionItem(
-                                plugin_id=pid,
-                                name=plg.meta.name,
-                                success=False,
-                                duration_ms=duration_ms,
-                                error=f"timeout après {self.plugin_timeout_s:.1f}s",
-                            )
-                        )
-                        _logger.error(
-                            "Plugin %s timeout après %.1fs", pid, self.plugin_timeout_s
+                        _record_timeout(
+                            report,
+                            plugin_id=pid,
+                            name=plg.meta.name,
+                            start_t=start,
+                            timeout_s=self.plugin_timeout_s,
                         )
                     else:
-                        try:
-                            res = q.get_nowait()
-                        except Exception:
-                            res = {
-                                "ok": False,
-                                "error": "aucun résultat renvoyé (crash du processus enfant ?)",
-                                "duration_ms": (time.perf_counter() - start) * 1000.0,
-                            }
-                        duration_ms = float(
-                            res.get(
-                                "duration_ms", (time.perf_counter() - start) * 1000.0
-                            )
+                        _record_worker_result(
+                            report,
+                            plugin_id=pid,
+                            name=plg.meta.name,
+                            start_t=start,
+                            q=q,
                         )
-                        if res.get("ok"):
-                            report.add(
-                                ExecutionItem(
-                                    plugin_id=pid,
-                                    name=plg.meta.name,
-                                    success=True,
-                                    duration_ms=duration_ms,
-                                )
-                            )
-                        else:
-                            report.add(
-                                ExecutionItem(
-                                    plugin_id=pid,
-                                    name=plg.meta.name,
-                                    success=False,
-                                    duration_ms=duration_ms,
-                                    error=str(res.get("error", "")),
-                                )
-                            )
                 else:
                     try:
                         plg.on_pre_compile(ctx)
                         duration_ms = (time.perf_counter() - start) * 1000.0
-                        report.add(
-                            ExecutionItem(
-                                plugin_id=pid,
-                                name=plg.meta.name,
-                                success=True,
-                                duration_ms=duration_ms,
-                            )
+                        _add_report_item(
+                            report,
+                            plugin_id=pid,
+                            name=plg.meta.name,
+                            success=True,
+                            duration_ms=duration_ms,
                         )
                     except Exception as exc:
                         duration_ms = (time.perf_counter() - start) * 1000.0
-                        report.add(
-                            ExecutionItem(
-                                plugin_id=pid,
-                                name=plg.meta.name,
-                                success=False,
-                                duration_ms=duration_ms,
-                                error=str(exc),
-                            )
+                        _add_report_item(
+                            report,
+                            plugin_id=pid,
+                            name=plg.meta.name,
+                            success=False,
+                            duration_ms=duration_ms,
+                            error=str(exc),
                         )
             _logger.info(report.summary())
             return report
@@ -646,51 +680,20 @@ class BCASL:
                     rec = active_items[pid]
                     plg = rec.plugin
                     if not timed_out:
-                        try:
-                            res = q.get_nowait()
-                        except Exception:
-                            res = {
-                                "ok": False,
-                                "error": "aucun résultat renvoyé (crash du processus enfant ?)",
-                                "duration_ms": (time.perf_counter() - start_t) * 1000.0,
-                            }
-                        duration_ms = float(
-                            res.get(
-                                "duration_ms", (time.perf_counter() - start_t) * 1000.0
-                            )
+                        _record_worker_result(
+                            report,
+                            plugin_id=pid,
+                            name=plg.meta.name,
+                            start_t=start_t,
+                            q=q,
                         )
-                        if res.get("ok"):
-                            report.add(
-                                ExecutionItem(
-                                    plugin_id=pid,
-                                    name=plg.meta.name,
-                                    success=True,
-                                    duration_ms=duration_ms,
-                                )
-                            )
-                        else:
-                            report.add(
-                                ExecutionItem(
-                                    plugin_id=pid,
-                                    name=plg.meta.name,
-                                    success=False,
-                                    duration_ms=duration_ms,
-                                    error=str(res.get("error", "")),
-                                )
-                            )
                     else:
-                        duration_ms = (time.perf_counter() - start_t) * 1000.0
-                        report.add(
-                            ExecutionItem(
-                                plugin_id=pid,
-                                name=plg.meta.name,
-                                success=False,
-                                duration_ms=duration_ms,
-                                error=f"timeout après {self.plugin_timeout_s:.1f}s",
-                            )
-                        )
-                        _logger.error(
-                            "Plugin %s timeout après %.1fs", pid, self.plugin_timeout_s
+                        _record_timeout(
+                            report,
+                            plugin_id=pid,
+                            name=plg.meta.name,
+                            start_t=start_t,
+                            timeout_s=self.plugin_timeout_s,
                         )
                     # Débloquer les enfants
                     for ch in children[pid]:

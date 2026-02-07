@@ -267,14 +267,11 @@ def open_dir_candidates(candidates: Sequence[Pathish]) -> Optional[str]:
 # ---------------------------------------------
 # Universal output directory discovery and open
 # ---------------------------------------------
-from collections.abc import Sequence as _Seq
-
-
 def discover_output_candidates(
     gui: Any,
     engine_id: Optional[str] = None,
     source_file: Optional[Pathish] = None,
-    artifacts: Optional[_Seq[Pathish]] = None,
+    artifacts: Optional[Sequence[Pathish]] = None,
 ) -> list[str]:
     """Discover plausible output directory candidates in a plug-and-play manner.
 
@@ -387,7 +384,7 @@ def open_output_directory(
     gui: Any,
     engine_id: Optional[str] = None,
     source_file: Optional[Pathish] = None,
-    artifacts: Optional[_Seq[Pathish]] = None,
+    artifacts: Optional[Sequence[Pathish]] = None,
 ) -> Optional[str]:
     """Open a plausible output directory for the last successful build using generic discovery.
 
