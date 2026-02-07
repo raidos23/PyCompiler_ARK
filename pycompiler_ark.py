@@ -224,7 +224,7 @@ def _get_app_icon_path() -> Optional[str]:
     try:
         candidates = [
             os.path.join(ROOT_DIR, "logo", "image-6.png"),
-            os.path.join(ROOT_DIR, "logo", "logo2.png"),
+            os.path.join(ROOT_DIR, "logo", "image-6.png"),
         ]
         for path in candidates:
             if os.path.isfile(path):
@@ -238,7 +238,7 @@ def _get_window_icon_path() -> Optional[str]:
     """Return the best available window icon path (GUI usage)."""
     try:
         candidates = [
-            os.path.join(ROOT_DIR, "logo", "logo2.png"),
+            os.path.join(ROOT_DIR, "logo", "image-6.png"),
             os.path.join(ROOT_DIR, "logo", "logo.png"),
         ]
         for path in candidates:
