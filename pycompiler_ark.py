@@ -56,6 +56,7 @@ import json
 from pathlib import Path
 from typing import Optional, List, Dict, Any
 import logging
+from datetime import datetime
 
 # Ensure project root has priority on sys.path
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -77,6 +78,49 @@ logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
+
+# Centralized logging for OnlyMod GUIs
+_ONLYMOD_LOG_HISTORY: list[str] = []
+
+
+def onlymod_log(message: str, gui: Optional[object] = None) -> str:
+    """Centralized logging for OnlyMod GUIs.
+
+    - Adds a timestamp
+    - Appends to the GUI log widget when provided
+    - Mirrors to the standard logger
+    """
+    try:
+        ts = datetime.now().strftime("%H:%M:%S")
+    except Exception:
+        ts = ""
+    line = f"[{ts}] {message}" if ts else str(message)
+
+    try:
+        _ONLYMOD_LOG_HISTORY.append(line)
+    except Exception:
+        pass
+
+    try:
+        logger.info("[OnlyMod] %s", message)
+    except Exception:
+        pass
+
+    # Push to GUI log widget if available
+    if gui is not None:
+        try:
+            log_text = getattr(gui, "log_text", None)
+            is_valid = getattr(gui, "_is_valid", None)
+            if callable(is_valid) and not is_valid(log_text):
+                return line
+            if log_text is not None:
+                log_text.append(line)
+                scrollbar = log_text.verticalScrollBar()
+                scrollbar.setValue(scrollbar.maximum())
+        except Exception:
+            pass
+
+    return line
 
 IS_WINDOWS = os.name == "nt" or platform.system().lower().startswith("win")
 IS_DARWIN = platform.system().lower().startswith("darwin")
@@ -175,19 +219,50 @@ except Exception:
     pass
 
 
-def _get_icon_path() -> Optional[str]:
-    """Return the best available application icon path."""
+def _get_app_icon_path() -> Optional[str]:
+    """Return the best available application icon path (non-GUI usage)."""
     try:
-        path = os.path.join(ROOT_DIR, "logo", "logo2.png")
-        return path if os.path.isfile(path) else None
+        candidates = [
+            os.path.join(ROOT_DIR, "logo", "image-6.png"),
+            os.path.join(ROOT_DIR, "logo", "logo2.png"),
+        ]
+        for path in candidates:
+            if os.path.isfile(path):
+                return path
     except Exception:
-        return None
+        pass
+    return None
+
+
+def _get_window_icon_path() -> Optional[str]:
+    """Return the best available window icon path (GUI usage)."""
+    try:
+        candidates = [
+            os.path.join(ROOT_DIR, "logo", "logo2.png"),
+            os.path.join(ROOT_DIR, "logo", "logo.png"),
+        ]
+        for path in candidates:
+            if os.path.isfile(path):
+                return path
+    except Exception:
+        pass
+    return None
+
+
+def _set_app_icon(target) -> None:
+    """Set the application icon if available."""
+    try:
+        icon_path = _get_app_icon_path()
+        if icon_path:
+            target.setWindowIcon(QIcon(icon_path))
+    except Exception:
+        pass
 
 
 def _set_window_icon(target) -> None:
-    """Set the window/application icon if available."""
+    """Set the window (GUI) icon if available."""
     try:
-        icon_path = _get_icon_path()
+        icon_path = _get_window_icon_path()
         if icon_path:
             target.setWindowIcon(QIcon(icon_path))
     except Exception:
@@ -496,7 +571,7 @@ def launch_bcasl_standalone(workspace_dir: Optional[str] = None) -> int:
         app = QApplication(sys.argv)
         app.setApplicationName("PyCompiler ARK++ BCASL")
         app.setOrganizationName("raidos23")
-        _set_window_icon(app)
+        _set_app_icon(app)
         window = BcaslStandaloneGui(workspace_dir=workspace_dir)
         _set_window_icon(window)
         window.show()
@@ -547,7 +622,7 @@ def launch_engines_only_standalone(workspace_dir: Optional[str] = None) -> int:
         app = QApplication(sys.argv)
         app.setApplicationName("PyCompiler ARK++ Engines")
         app.setOrganizationName("raidos23")
-        _set_window_icon(app)
+        _set_app_icon(app)
         window = EnginesStandaloneGui(workspace_dir=workspace_dir)
         _set_window_icon(window)
 
@@ -582,7 +657,7 @@ def launch_main_application() -> int:
     """
     try:
         app = QApplication(sys.argv)
-        _set_window_icon(app)
+        _set_app_icon(app)
 
         # Splash screen: affiche l'image 'splash.*' depuis le dossier 'logo' si disponible
         splash = None

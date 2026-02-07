@@ -1384,17 +1384,24 @@ class EnginesStandaloneGui(QMainWindow):
 
     def _log(self, message: str):
         """Ajoute un message au log."""
-        # Vérifier que le widget existe et n'a pas été supprimé
+        try:
+            from pycompiler_ark import onlymod_log
+
+            onlymod_log(message, gui=self)
+            return
+        except Exception:
+            pass
+
+        # Fallback direct (si le centraliseur n'est pas dispo)
         if not self._is_valid(self.log_text):
             return
         try:
             timestamp = datetime.now().strftime("%H:%M:%S")
             self.log_text.append(f"[{timestamp}] {message}")
-            # Défiler automatiquement vers le bas
             scrollbar = self.log_text.verticalScrollBar()
             scrollbar.setValue(scrollbar.maximum())
         except (RuntimeError, AttributeError):
-            pass  # Ignorer si le widget a été supprimé
+            pass
 
 
 def launch_engines_gui(
