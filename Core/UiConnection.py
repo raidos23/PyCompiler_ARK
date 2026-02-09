@@ -224,14 +224,14 @@ def init_ui(self):
     except Exception:
         eff_mode = "light"
     candidates = [
-        os.path.join(project_dir, "logo", "image-9.png"),
+        os.path.join(project_dir, "logo", "SideLogo.png"),
         (
-            os.path.join(project_dir, "logo", "sidebar_logo2.png")
+            os.path.join(project_dir, "logo", "SideLogo2.png")
             if eff_mode == "dark"
-            else os.path.join(project_dir, "logo", "sidebar_logo.png")
+            else os.path.join(project_dir, "logo", "SideLogo.png")
         ),
-        os.path.join(project_dir, "logo", "sidebar_logo.png"),
-        os.path.join(project_dir, "logo", "sidebar_logo2.png"),
+        os.path.join(project_dir, "logo", "SideLogo.png"),
+        os.path.join(project_dir, "logo", "SideLogo2.png"),
     ]
     logo_path = None
     for p in candidates:
@@ -614,14 +614,14 @@ def apply_theme(self, pref: str):
 
                 project_dir = os.path.abspath(os.path.dirname(sys.argv[0]))
                 candidates = [
-                    os.path.join(project_dir, "logo", "image-9.png"),
+                    os.path.join(project_dir, "logo", "SideLogo.png"),
                     (
-                        os.path.join(project_dir, "logo", "sidebar_logo2.png")
+                        os.path.join(project_dir, "logo", "SideLogo2.png")
                         if effective_mode == "dark"
-                        else os.path.join(project_dir, "logo", "sidebar_logo.png")
+                        else os.path.join(project_dir, "logo", "SideLogo.png")
                     ),
-                    os.path.join(project_dir, "logo", "sidebar_logo.png"),
-                    os.path.join(project_dir, "logo", "sidebar_logo2.png"),
+                    os.path.join(project_dir, "logo", "SideLogo.png"),
+                    os.path.join(project_dir, "logo", "SideLogo2.png"),
                 ]
                 logo_path = None
                 for p in candidates:
