@@ -36,38 +36,59 @@
      </property>
      <layout class="QHBoxLayout" name="headerLayout">
       <property name="spacing">
-       <number>8</number>
+       <number>10</number>
       </property>
       <property name="leftMargin">
-       <number>8</number>
+       <number>10</number>
       </property>
       <property name="topMargin">
-       <number>8</number>
+       <number>10</number>
       </property>
       <property name="rightMargin">
-       <number>8</number>
+       <number>10</number>
       </property>
       <property name="bottomMargin">
-       <number>8</number>
+       <number>10</number>
       </property>
       <item>
-       <widget class="QLabel" name="label_app_title">
-        <property name="font">
-         <font>
-          <pointsize>14</pointsize>
-          <bold>true</bold>
-         </font>
-        </property>
-        <property name="text">
-         <string>PyCompiler ARK++</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QLabel" name="label_workspace_status">
-        <property name="text">
-         <string>Workspace : Aucun</string>
-        </property>
+       <widget class="QWidget" name="header_left">
+        <layout class="QVBoxLayout" name="headerLeftLayout">
+         <property name="spacing">
+          <number>2</number>
+         </property>
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <property name="topMargin">
+          <number>0</number>
+         </property>
+         <property name="rightMargin">
+          <number>0</number>
+         </property>
+         <property name="bottomMargin">
+          <number>0</number>
+         </property>
+         <item>
+          <widget class="QLabel" name="label_app_title">
+           <property name="font">
+            <font>
+             <pointsize>16</pointsize>
+             <bold>true</bold>
+            </font>
+           </property>
+           <property name="text">
+            <string>PyCompiler ARK++</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="label_workspace_status">
+           <property name="text">
+            <string>Workspace : Aucun</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
        </widget>
       </item>
       <item>
@@ -84,43 +105,64 @@
        </spacer>
       </item>
       <item>
-       <widget class="QPushButton" name="btn_select_folder">
-        <property name="text">
-         <string>📁 Workspace</string>
-        </property>
-        <property name="toolTip">
-         <string>Sélectionner le dossier de travail</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QPushButton" name="btn_select_files">
-        <property name="text">
-         <string>📋 Fichiers</string>
-        </property>
-        <property name="toolTip">
-         <string>Ajouter des fichiers à compiler</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QPushButton" name="compile_btn">
-        <property name="text">
-         <string>🚀 Compiler</string>
-        </property>
-        <property name="toolTip">
-         <string>Lancer la compilation</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QPushButton" name="cancel_btn">
-        <property name="text">
-         <string>⛔ Annuler</string>
-        </property>
-        <property name="toolTip">
-         <string>Annuler la compilation en cours</string>
-        </property>
+       <widget class="QWidget" name="header_right">
+        <layout class="QHBoxLayout" name="headerRightLayout">
+         <property name="spacing">
+          <number>8</number>
+         </property>
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <property name="topMargin">
+          <number>0</number>
+         </property>
+         <property name="rightMargin">
+          <number>0</number>
+         </property>
+         <property name="bottomMargin">
+          <number>0</number>
+         </property>
+         <item>
+          <widget class="QPushButton" name="btn_select_folder">
+           <property name="text">
+            <string>📁 Workspace</string>
+           </property>
+           <property name="toolTip">
+            <string>Sélectionner le dossier de travail</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="btn_select_files">
+           <property name="text">
+            <string>📋 Fichiers</string>
+           </property>
+           <property name="toolTip">
+            <string>Ajouter des fichiers à compiler</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="compile_btn">
+           <property name="text">
+            <string>🚀 Compiler</string>
+           </property>
+           <property name="toolTip">
+            <string>Lancer la compilation</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="cancel_btn">
+           <property name="text">
+            <string>⛔ Annuler</string>
+           </property>
+           <property name="toolTip">
+            <string>Annuler la compilation en cours</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
        </widget>
       </item>
      </layout>
@@ -131,23 +173,32 @@
      <property name="orientation">
       <enum>Qt::Orientation::Horizontal</enum>
      </property>
-     <widget class="QWidget" name="leftPanel">
-      <layout class="QVBoxLayout" name="leftLayout">
-       <property name="spacing">
-        <number>12</number>
-       </property>
-       <property name="leftMargin">
-        <number>0</number>
-       </property>
-       <property name="topMargin">
-        <number>0</number>
-       </property>
-       <property name="rightMargin">
-        <number>0</number>
-       </property>
-       <property name="bottomMargin">
-        <number>0</number>
-       </property>
+    <widget class="QWidget" name="leftPanel">
+     <property name="minimumWidth">
+      <number>340</number>
+     </property>
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <layout class="QVBoxLayout" name="leftLayout">
+      <property name="spacing">
+       <number>12</number>
+      </property>
+      <property name="leftMargin">
+       <number>6</number>
+      </property>
+      <property name="topMargin">
+       <number>6</number>
+      </property>
+      <property name="rightMargin">
+       <number>6</number>
+      </property>
+      <property name="bottomMargin">
+       <number>6</number>
+      </property>
        <item>
         <widget class="QFrame" name="frame_workspace">
          <property name="frameShape">
@@ -156,6 +207,18 @@
          <layout class="QVBoxLayout" name="layout_workspace">
           <property name="spacing">
            <number>12</number>
+          </property>
+          <property name="leftMargin">
+           <number>10</number>
+          </property>
+          <property name="topMargin">
+           <number>10</number>
+          </property>
+          <property name="rightMargin">
+           <number>10</number>
+          </property>
+          <property name="bottomMargin">
+           <number>10</number>
           </property>
           <item>
            <widget class="QLabel" name="label_workspace_section">
@@ -207,6 +270,18 @@
           <property name="spacing">
            <number>12</number>
           </property>
+          <property name="leftMargin">
+           <number>10</number>
+          </property>
+          <property name="topMargin">
+           <number>10</number>
+          </property>
+          <property name="rightMargin">
+           <number>10</number>
+          </property>
+          <property name="bottomMargin">
+           <number>10</number>
+          </property>
           <item>
            <widget class="QLabel" name="label_files_section">
             <property name="text">
@@ -224,7 +299,7 @@
           <item>
            <widget class="QListWidget" name="file_list">
             <property name="minimumHeight">
-             <number>150</number>
+             <number>180</number>
             </property>
            </widget>
           </item>
@@ -246,6 +321,18 @@
          <layout class="QVBoxLayout" name="layout_tools">
           <property name="spacing">
            <number>8</number>
+          </property>
+          <property name="leftMargin">
+           <number>10</number>
+          </property>
+          <property name="topMargin">
+           <number>10</number>
+          </property>
+          <property name="rightMargin">
+           <number>10</number>
+          </property>
+          <property name="bottomMargin">
+           <number>10</number>
           </property>
           <item>
            <widget class="QLabel" name="label_tools">
@@ -306,6 +393,18 @@
           <property name="spacing">
            <number>8</number>
           </property>
+          <property name="leftMargin">
+           <number>10</number>
+          </property>
+          <property name="topMargin">
+           <number>10</number>
+          </property>
+          <property name="rightMargin">
+           <number>10</number>
+          </property>
+          <property name="bottomMargin">
+           <number>10</number>
+          </property>
           <item>
            <widget class="QLabel" name="label_settings">
             <property name="text">
@@ -351,23 +450,32 @@
        </item>
       </layout>
      </widget>
-     <widget class="QWidget" name="rightPanel">
-      <layout class="QVBoxLayout" name="rightLayout">
-       <property name="spacing">
-        <number>16</number>
-       </property>
-       <property name="leftMargin">
-        <number>0</number>
-       </property>
-       <property name="topMargin">
-        <number>0</number>
-       </property>
-       <property name="rightMargin">
-        <number>0</number>
-       </property>
-       <property name="bottomMargin">
-        <number>0</number>
-       </property>
+    <widget class="QWidget" name="rightPanel">
+     <property name="minimumWidth">
+      <number>600</number>
+     </property>
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+       <horstretch>1</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <layout class="QVBoxLayout" name="rightLayout">
+      <property name="spacing">
+       <number>16</number>
+      </property>
+      <property name="leftMargin">
+       <number>6</number>
+      </property>
+      <property name="topMargin">
+       <number>6</number>
+      </property>
+      <property name="rightMargin">
+       <number>6</number>
+      </property>
+      <property name="bottomMargin">
+       <number>6</number>
+      </property>
        <item>
         <widget class="QFrame" name="frame_options">
          <property name="frameShape">
@@ -376,6 +484,18 @@
          <layout class="QVBoxLayout" name="layout_options">
           <property name="spacing">
            <number>12</number>
+          </property>
+          <property name="leftMargin">
+           <number>10</number>
+          </property>
+          <property name="topMargin">
+           <number>10</number>
+          </property>
+          <property name="rightMargin">
+           <number>10</number>
+          </property>
+          <property name="bottomMargin">
+           <number>10</number>
           </property>
           <item>
            <widget class="QLabel" name="label_options_section">
@@ -403,6 +523,18 @@
           <property name="spacing">
            <number>12</number>
           </property>
+          <property name="leftMargin">
+           <number>10</number>
+          </property>
+          <property name="topMargin">
+           <number>10</number>
+          </property>
+          <property name="rightMargin">
+           <number>10</number>
+          </property>
+          <property name="bottomMargin">
+           <number>10</number>
+          </property>
           <item>
            <widget class="QLabel" name="label_logs_section">
             <property name="text">
@@ -413,7 +545,7 @@
           <item>
            <widget class="QTextEdit" name="log">
             <property name="minimumHeight">
-             <number>200</number>
+             <number>220</number>
             </property>
            </widget>
           </item>
@@ -428,6 +560,18 @@
          <layout class="QVBoxLayout" name="layout_progress">
           <property name="spacing">
            <number>8</number>
+          </property>
+          <property name="leftMargin">
+           <number>10</number>
+          </property>
+          <property name="topMargin">
+           <number>10</number>
+          </property>
+          <property name="rightMargin">
+           <number>10</number>
+          </property>
+          <property name="bottomMargin">
+           <number>10</number>
           </property>
           <item>
            <widget class="QLabel" name="label_progress">

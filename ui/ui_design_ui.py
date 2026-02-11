@@ -34,46 +34,64 @@ class Ui_PyCompilerARKGui(object):
         self.header.setMinimumHeight(72)
         self.header.setFrameShape(QFrame.Shape.StyledPanel)
         self.headerLayout = QHBoxLayout(self.header)
-        self.headerLayout.setSpacing(8)
+        self.headerLayout.setSpacing(10)
         self.headerLayout.setObjectName(u"headerLayout")
-        self.headerLayout.setContentsMargins(8, 8, 8, 8)
-        self.label_app_title = QLabel(self.header)
+        self.headerLayout.setContentsMargins(10, 10, 10, 10)
+        self.header_left = QWidget(self.header)
+        self.header_left.setObjectName(u"header_left")
+        self.headerLeftLayout = QVBoxLayout(self.header_left)
+        self.headerLeftLayout.setSpacing(2)
+        self.headerLeftLayout.setObjectName(u"headerLeftLayout")
+        self.headerLeftLayout.setContentsMargins(0, 0, 0, 0)
+        self.label_app_title = QLabel(self.header_left)
         self.label_app_title.setObjectName(u"label_app_title")
         font = QFont()
-        font.setPointSize(14)
+        font.setPointSize(16)
         font.setBold(True)
         self.label_app_title.setFont(font)
 
-        self.headerLayout.addWidget(self.label_app_title)
+        self.headerLeftLayout.addWidget(self.label_app_title)
 
-        self.label_workspace_status = QLabel(self.header)
+        self.label_workspace_status = QLabel(self.header_left)
         self.label_workspace_status.setObjectName(u"label_workspace_status")
 
-        self.headerLayout.addWidget(self.label_workspace_status)
+        self.headerLeftLayout.addWidget(self.label_workspace_status)
+
+
+        self.headerLayout.addWidget(self.header_left)
 
         self.headerSpacer = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
 
         self.headerLayout.addItem(self.headerSpacer)
 
-        self.btn_select_folder = QPushButton(self.header)
+        self.header_right = QWidget(self.header)
+        self.header_right.setObjectName(u"header_right")
+        self.headerRightLayout = QHBoxLayout(self.header_right)
+        self.headerRightLayout.setSpacing(8)
+        self.headerRightLayout.setObjectName(u"headerRightLayout")
+        self.headerRightLayout.setContentsMargins(0, 0, 0, 0)
+        self.btn_select_folder = QPushButton(self.header_right)
         self.btn_select_folder.setObjectName(u"btn_select_folder")
 
-        self.headerLayout.addWidget(self.btn_select_folder)
+        self.headerRightLayout.addWidget(self.btn_select_folder)
 
-        self.btn_select_files = QPushButton(self.header)
+        self.btn_select_files = QPushButton(self.header_right)
         self.btn_select_files.setObjectName(u"btn_select_files")
 
-        self.headerLayout.addWidget(self.btn_select_files)
+        self.headerRightLayout.addWidget(self.btn_select_files)
 
-        self.compile_btn = QPushButton(self.header)
+        self.compile_btn = QPushButton(self.header_right)
         self.compile_btn.setObjectName(u"compile_btn")
 
-        self.headerLayout.addWidget(self.compile_btn)
+        self.headerRightLayout.addWidget(self.compile_btn)
 
-        self.cancel_btn = QPushButton(self.header)
+        self.cancel_btn = QPushButton(self.header_right)
         self.cancel_btn.setObjectName(u"cancel_btn")
 
-        self.headerLayout.addWidget(self.cancel_btn)
+        self.headerRightLayout.addWidget(self.cancel_btn)
+
+
+        self.headerLayout.addWidget(self.header_right)
 
 
         self.rootLayout.addWidget(self.header)
@@ -83,16 +101,23 @@ class Ui_PyCompilerARKGui(object):
         self.mainSplitter.setOrientation(Qt.Orientation.Horizontal)
         self.leftPanel = QWidget(self.mainSplitter)
         self.leftPanel.setObjectName(u"leftPanel")
+        self.leftPanel.setMinimumWidth(340)
+        sizePolicy = QSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Expanding)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.leftPanel.sizePolicy().hasHeightForWidth())
+        self.leftPanel.setSizePolicy(sizePolicy)
         self.leftLayout = QVBoxLayout(self.leftPanel)
         self.leftLayout.setSpacing(12)
         self.leftLayout.setObjectName(u"leftLayout")
-        self.leftLayout.setContentsMargins(0, 0, 0, 0)
+        self.leftLayout.setContentsMargins(6, 6, 6, 6)
         self.frame_workspace = QFrame(self.leftPanel)
         self.frame_workspace.setObjectName(u"frame_workspace")
         self.frame_workspace.setFrameShape(QFrame.Shape.StyledPanel)
         self.layout_workspace = QVBoxLayout(self.frame_workspace)
         self.layout_workspace.setSpacing(12)
         self.layout_workspace.setObjectName(u"layout_workspace")
+        self.layout_workspace.setContentsMargins(10, 10, 10, 10)
         self.label_workspace_section = QLabel(self.frame_workspace)
         self.label_workspace_section.setObjectName(u"label_workspace_section")
 
@@ -127,6 +152,7 @@ class Ui_PyCompilerARKGui(object):
         self.layout_files = QVBoxLayout(self.frame_files)
         self.layout_files.setSpacing(12)
         self.layout_files.setObjectName(u"layout_files")
+        self.layout_files.setContentsMargins(10, 10, 10, 10)
         self.label_files_section = QLabel(self.frame_files)
         self.label_files_section.setObjectName(u"label_files_section")
 
@@ -139,7 +165,7 @@ class Ui_PyCompilerARKGui(object):
 
         self.file_list = QListWidget(self.frame_files)
         self.file_list.setObjectName(u"file_list")
-        self.file_list.setMinimumHeight(150)
+        self.file_list.setMinimumHeight(180)
 
         self.layout_files.addWidget(self.file_list)
 
@@ -157,6 +183,7 @@ class Ui_PyCompilerARKGui(object):
         self.layout_tools = QVBoxLayout(self.frame_tools)
         self.layout_tools.setSpacing(8)
         self.layout_tools.setObjectName(u"layout_tools")
+        self.layout_tools.setContentsMargins(10, 10, 10, 10)
         self.label_tools = QLabel(self.frame_tools)
         self.label_tools.setObjectName(u"label_tools")
 
@@ -191,6 +218,7 @@ class Ui_PyCompilerARKGui(object):
         self.layout_settings = QVBoxLayout(self.frame_settings)
         self.layout_settings.setSpacing(8)
         self.layout_settings.setObjectName(u"layout_settings")
+        self.layout_settings.setContentsMargins(10, 10, 10, 10)
         self.label_settings = QLabel(self.frame_settings)
         self.label_settings.setObjectName(u"label_settings")
 
@@ -216,16 +244,23 @@ class Ui_PyCompilerARKGui(object):
         self.mainSplitter.addWidget(self.leftPanel)
         self.rightPanel = QWidget(self.mainSplitter)
         self.rightPanel.setObjectName(u"rightPanel")
+        self.rightPanel.setMinimumWidth(600)
+        sizePolicy1 = QSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        sizePolicy1.setHorizontalStretch(1)
+        sizePolicy1.setVerticalStretch(0)
+        sizePolicy1.setHeightForWidth(self.rightPanel.sizePolicy().hasHeightForWidth())
+        self.rightPanel.setSizePolicy(sizePolicy1)
         self.rightLayout = QVBoxLayout(self.rightPanel)
         self.rightLayout.setSpacing(16)
         self.rightLayout.setObjectName(u"rightLayout")
-        self.rightLayout.setContentsMargins(0, 0, 0, 0)
+        self.rightLayout.setContentsMargins(6, 6, 6, 6)
         self.frame_options = QFrame(self.rightPanel)
         self.frame_options.setObjectName(u"frame_options")
         self.frame_options.setFrameShape(QFrame.Shape.StyledPanel)
         self.layout_options = QVBoxLayout(self.frame_options)
         self.layout_options.setSpacing(12)
         self.layout_options.setObjectName(u"layout_options")
+        self.layout_options.setContentsMargins(10, 10, 10, 10)
         self.label_options_section = QLabel(self.frame_options)
         self.label_options_section.setObjectName(u"label_options_section")
 
@@ -245,6 +280,7 @@ class Ui_PyCompilerARKGui(object):
         self.layout_logs = QVBoxLayout(self.frame_logs)
         self.layout_logs.setSpacing(12)
         self.layout_logs.setObjectName(u"layout_logs")
+        self.layout_logs.setContentsMargins(10, 10, 10, 10)
         self.label_logs_section = QLabel(self.frame_logs)
         self.label_logs_section.setObjectName(u"label_logs_section")
 
@@ -252,7 +288,7 @@ class Ui_PyCompilerARKGui(object):
 
         self.log = QTextEdit(self.frame_logs)
         self.log.setObjectName(u"log")
-        self.log.setMinimumHeight(200)
+        self.log.setMinimumHeight(220)
 
         self.layout_logs.addWidget(self.log)
 
@@ -265,6 +301,7 @@ class Ui_PyCompilerARKGui(object):
         self.layout_progress = QVBoxLayout(self.frame_progress)
         self.layout_progress.setSpacing(8)
         self.layout_progress.setObjectName(u"layout_progress")
+        self.layout_progress.setContentsMargins(10, 10, 10, 10)
         self.label_progress = QLabel(self.frame_progress)
         self.label_progress.setObjectName(u"label_progress")
 
