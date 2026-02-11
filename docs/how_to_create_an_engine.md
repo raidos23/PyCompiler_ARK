@@ -1,3 +1,6 @@
+**PyCompiler_ARK Engine Guide**
+Practical reference for building, packaging, and integrating custom compilation engines.
+
 **Overview**
 A PyCompiler_ARK engine is a Python package placed in `ENGINES/` and auto‑loaded at startup. It registers itself with `@engine_register` and provides a `CompilerEngine` that builds the compile command and, optionally, a dedicated UI tab.
 
