@@ -31,7 +31,7 @@ from typing import Optional
 from PySide6.QtCore import QDir
 from PySide6.QtWidgets import QFileDialog, QInputDialog
 
-from engine_sdk import CompilerEngine, engine_register
+from engine_sdk import CompilerEngine, compute_auto_for_engine, engine_register
 
 
 @engine_register
@@ -121,6 +121,14 @@ class PyInstallerEngine(CompilerEngine):
             name_input = self._get_input("output_name_input")
             if name_input and name_input.text().strip():
                 cmd.extend(["--name", name_input.text().strip()])
+
+            # Auto-mapping args (mapping.json / auto builder)
+            try:
+                auto_args = compute_auto_for_engine(gui, self.id)
+                if auto_args:
+                    cmd.extend(auto_args)
+            except Exception:
+                pass
 
             # Add the target file
             cmd.append(file)
