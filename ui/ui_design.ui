@@ -123,26 +123,6 @@
           <number>0</number>
          </property>
          <item>
-          <widget class="QPushButton" name="btn_select_folder">
-           <property name="text">
-            <string>📁 Workspace</string>
-           </property>
-           <property name="toolTip">
-            <string>Sélectionner le dossier de travail</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QPushButton" name="btn_select_files">
-           <property name="text">
-            <string>📋 Fichiers</string>
-           </property>
-           <property name="toolTip">
-            <string>Ajouter des fichiers à compiler</string>
-           </property>
-          </widget>
-         </item>
-         <item>
           <widget class="QPushButton" name="compile_btn">
            <property name="text">
             <string>🚀 Compiler</string>
@@ -204,7 +184,7 @@
          <property name="frameShape">
           <enum>QFrame::Shape::StyledPanel</enum>
          </property>
-         <layout class="QVBoxLayout" name="layout_workspace">
+         <layout class="QGridLayout" name="layout_workspace_grid">
           <property name="spacing">
            <number>12</number>
           </property>
@@ -220,35 +200,38 @@
           <property name="bottomMargin">
            <number>10</number>
           </property>
-          <item>
-           <widget class="QLabel" name="label_workspace_section">
-            <property name="text">
-             <string>1. Sélection du dossier de travail</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QPushButton" name="venv_button">
-            <property name="text">
-             <string>Choisir un dossier venv manuellement</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QLabel" name="venv_label">
-            <property name="text">
-             <string>venv sélectionné : Aucun</string>
-            </property>
-           </widget>
-          </item>
-          <item>
+          <item row="0" column="0" colspan="2">
            <widget class="QLabel" name="label_folder">
             <property name="text">
              <string>Aucun dossier sélectionné</string>
             </property>
            </widget>
           </item>
-          <item>
+          <item row="1" column="0">
+           <widget class="QLabel" name="venv_label">
+            <property name="text">
+             <string>venv sélectionné : Aucun</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="1">
+           <widget class="QPushButton" name="venv_button">
+            <property name="text">
+             <string>Choisir un dossier venv manuellement</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="0">
+           <widget class="QPushButton" name="btn_select_folder">
+            <property name="text">
+             <string>📁 Workspace</string>
+            </property>
+            <property name="toolTip">
+             <string>Sélectionner le dossier de travail</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="1">
            <widget class="QPushButton" name="btn_clear_workspace">
             <property name="text">
              <string>🧹 Clear workspace</string>
@@ -266,7 +249,7 @@
          <property name="frameShape">
           <enum>QFrame::Shape::StyledPanel</enum>
          </property>
-         <layout class="QVBoxLayout" name="layout_files">
+         <layout class="QGridLayout" name="layout_files_grid">
           <property name="spacing">
            <number>12</number>
           </property>
@@ -282,33 +265,75 @@
           <property name="bottomMargin">
            <number>10</number>
           </property>
-          <item>
+          <item row="0" column="0" colspan="2">
            <widget class="QLabel" name="label_files_section">
             <property name="text">
              <string>2. Fichiers à compiler</string>
             </property>
            </widget>
           </item>
-          <item>
+          <item row="1" column="0" colspan="2">
            <widget class="QLineEdit" name="file_filter_input">
             <property name="placeholderText">
              <string>Filtrer la liste…</string>
             </property>
            </widget>
           </item>
-          <item>
+          <item row="2" column="0">
            <widget class="QListWidget" name="file_list">
             <property name="minimumHeight">
              <number>180</number>
             </property>
            </widget>
           </item>
-          <item>
-           <widget class="QPushButton" name="btn_remove_file">
-            <property name="text">
-             <string>🗑️ Supprimer le fichier sélectionné</string>
+          <item row="2" column="1">
+           <layout class="QVBoxLayout" name="layout_file_actions">
+            <property name="spacing">
+             <number>8</number>
             </property>
-           </widget>
+            <property name="leftMargin">
+             <number>0</number>
+            </property>
+            <property name="topMargin">
+             <number>0</number>
+            </property>
+            <property name="rightMargin">
+             <number>0</number>
+            </property>
+            <property name="bottomMargin">
+             <number>0</number>
+            </property>
+           <item>
+             <widget class="QPushButton" name="btn_select_files">
+              <property name="text">
+               <string>📋 Fichiers</string>
+              </property>
+              <property name="toolTip">
+               <string>Ajouter des fichiers à compiler</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="btn_remove_file">
+              <property name="text">
+               <string>🗑️ Supprimer le fichier sélectionné</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <spacer name="fileActionsSpacer">
+              <property name="orientation">
+               <enum>Qt::Orientation::Vertical</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>20</width>
+                <height>40</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+           </layout>
           </item>
          </layout>
         </widget>
@@ -318,9 +343,9 @@
          <property name="frameShape">
           <enum>QFrame::Shape::StyledPanel</enum>
          </property>
-         <layout class="QVBoxLayout" name="layout_tools">
+         <layout class="QGridLayout" name="layout_tools_grid">
           <property name="spacing">
-           <number>8</number>
+           <number>10</number>
           </property>
           <property name="leftMargin">
            <number>10</number>
@@ -334,14 +359,14 @@
           <property name="bottomMargin">
            <number>10</number>
           </property>
-          <item>
+          <item row="0" column="0" colspan="2">
            <widget class="QLabel" name="label_tools">
             <property name="text">
              <string>Outils</string>
             </property>
            </widget>
           </item>
-          <item>
+          <item row="1" column="0">
            <widget class="QPushButton" name="btn_suggest_deps">
             <property name="text">
              <string>🔎 Dépendances</string>
@@ -351,7 +376,7 @@
             </property>
            </widget>
           </item>
-          <item>
+          <item row="1" column="1">
            <widget class="QPushButton" name="btn_bc_loader">
             <property name="text">
              <string>🧩 Bc Plugins Loader</string>
@@ -361,7 +386,7 @@
             </property>
            </widget>
           </item>
-          <item>
+          <item row="2" column="0">
            <widget class="QPushButton" name="btn_show_stats">
             <property name="text">
              <string>📊 Statistiques</string>
@@ -371,7 +396,7 @@
             </property>
            </widget>
           </item>
-          <item>
+          <item row="2" column="1">
            <widget class="QPushButton" name="btn_help">
             <property name="text">
              <string>❓ Aide</string>
