@@ -66,37 +66,39 @@ class Api:
             if invoker is None or not isinstance(invoker, _UiInvoker):
                 invoker = _UiInvoker(gui)
                 setattr(gui, "_ui_invoker", invoker)
-        result_holder = {"ok": False}
-        loop = _QEventLoop()
+            result_holder = {"ok": False}
+            loop = _QEventLoop()
 
-        def _do():
-            try:
-                if not Api._confirm_workspace_change(gui, str(folder)):
-                    result_holder["ok"] = False
-                    return
-                result_holder["ok"] = bool(
-                    gui.apply_workspace_selection(str(folder), source="plugin")
-                )
-            except Exception:
-                result_holder["ok"] = False
-            finally:
+            def _do():
                 try:
-                    loop.quit()
+                    if not Api._confirm_workspace_change(gui, str(folder)):
+                        result_holder["ok"] = False
+                        return
+                    result_holder["ok"] = bool(
+                        gui.apply_workspace_selection(str(folder), source="plugin")
+                    )
                 except Exception:
-                    pass
+                    result_holder["ok"] = False
+                finally:
+                    try:
+                        loop.quit()
+                    except Exception:
+                        pass
 
-        try:
-            invoker.post(_do)
-        except Exception:
-            # Fallback: direct call in case invoker posting fails
             try:
-                if not Api._confirm_workspace_change(gui, str(folder)):
-                    return False
-                return bool(gui.apply_workspace_selection(str(folder), source="plugin"))
+                invoker.post(_do)
             except Exception:
-                return False
-        loop.exec()
-        return bool(result_holder.get("ok", False))
+                # Fallback: direct call in case invoker posting fails
+                try:
+                    if not Api._confirm_workspace_change(gui, str(folder)):
+                        return False
+                    return bool(
+                        gui.apply_workspace_selection(str(folder), source="plugin")
+                    )
+                except Exception:
+                    return False
+            loop.exec()
+            return bool(result_holder.get("ok", False))
         except Exception:
             # Accept by contract even on unexpected errors
             return True

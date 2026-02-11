@@ -172,7 +172,9 @@ class SetupWorkspace:
                 try:
                     tr_map = getattr(gui_instance, "_tr", None)
                     if isinstance(tr_map, dict):
-                        tmpl = tr_map.get("label_workspace_status") or "Workspace: {path}"
+                        tmpl = (
+                            tr_map.get("label_workspace_status") or "Workspace: {path}"
+                        )
                         gui_instance.label_workspace_status.setText(
                             str(tmpl).replace("{path}", str(folder))
                         )
