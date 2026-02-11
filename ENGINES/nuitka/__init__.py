@@ -30,7 +30,13 @@ from typing import Optional
 from PySide6.QtCore import QDir
 from PySide6.QtWidgets import QFileDialog, QInputDialog, QCheckBox, QLineEdit
 
-from engine_sdk import CompilerEngine, compute_auto_for_engine, engine_register
+from engine_sdk import (
+    CompilerEngine,
+    add_icon_selector,
+    add_output_dir,
+    compute_auto_for_engine,
+    engine_register,
+)
 
 
 @engine_register
@@ -264,23 +270,17 @@ class NuitkaEngine(CompilerEngine):
             layout.addWidget(self._nuitka_add_data)
 
             # Output directory
-            output_layout = QHBoxLayout()
-            self._nuitka_output_dir = QLineEdit()
-            self._nuitka_output_dir.setObjectName("nuitka_output_dir_dynamic")
-            self._nuitka_output_dir.setPlaceholderText(
-                "Dossier de sortie (--output-dir)"
+            self._nuitka_output_dir = add_output_dir(
+                layout, "Dossier de sortie (--output-dir)", "nuitka_output_dir_dynamic"
             )
-            output_layout.addWidget(self._nuitka_output_dir)
-            layout.addLayout(output_layout)
 
             # Icon button
-            icon_layout = QHBoxLayout()
-            self._btn_nuitka_icon = QPushButton("🎨 Choisir une icône (.ico) Nuitka")
-            self._btn_nuitka_icon.setObjectName("btn_nuitka_icon_dynamic")
-            self._btn_nuitka_icon.clicked.connect(self.select_icon)
-            icon_layout.addWidget(self._btn_nuitka_icon)
-            icon_layout.addStretch()
-            layout.addLayout(icon_layout)
+            self._btn_nuitka_icon = add_icon_selector(
+                layout,
+                "🎨 Choisir une icône (.ico) Nuitka",
+                self.select_icon,
+                "btn_nuitka_icon_dynamic",
+            )
 
             layout.addStretch()
 

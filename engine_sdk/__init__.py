@@ -21,6 +21,7 @@ from .auto_build_command import (
     compute_for_all,
     register_auto_builder,
 )
+from .ui_helpers import add_form_checkbox, add_icon_selector, add_output_dir
 
 __version__ = "1.0.0"
 # Re-export the base interface used by the host
@@ -220,6 +221,9 @@ __all__ = [
     "compute_auto_for_engine",
     "compute_for_all",
     "register_auto_builder",
+    "add_form_checkbox",
+    "add_icon_selector",
+    "add_output_dir",
     "registry",
     # Utilities for engine authors
     "redact_secrets",
