@@ -27,7 +27,7 @@ import platform
 import sys
 from typing import Optional
 
-from engine_sdk import CompilerEngine, engine_register
+from engine_sdk import CompilerEngine, compute_auto_for_engine, engine_register
 
 
 @engine_register
@@ -95,6 +95,14 @@ class CXFreezeEngine(CompilerEngine):
             # Icon
             if hasattr(self, "_selected_icon") and self._selected_icon:
                 cmd.extend(["--icon", self._selected_icon])
+
+            # Auto-mapping args (mapping.json / auto builder)
+            try:
+                auto_args = compute_auto_for_engine(gui, self.id)
+                if auto_args:
+                    cmd.extend(auto_args)
+            except Exception:
+                pass
 
             # Add the target file
             cmd.append(file)
