@@ -32,7 +32,7 @@ class Ui_PyCompilerARKGui(object):
         self.rootLayout.setContentsMargins(12, 12, 12, 12)
         self.header = QFrame(PyCompilerARKGui)
         self.header.setObjectName(u"header")
-        self.header.setMinimumHeight(72)
+        self.header.setMinimumHeight(56)
         self.header.setFrameShape(QFrame.Shape.StyledPanel)
         self.headerLayout = QHBoxLayout(self.header)
         self.headerLayout.setSpacing(10)
@@ -71,6 +71,16 @@ class Ui_PyCompilerARKGui(object):
         self.headerRightLayout.setSpacing(8)
         self.headerRightLayout.setObjectName(u"headerRightLayout")
         self.headerRightLayout.setContentsMargins(0, 0, 0, 0)
+        self.select_lang = QPushButton(self.header_right)
+        self.select_lang.setObjectName(u"select_lang")
+
+        self.headerRightLayout.addWidget(self.select_lang)
+
+        self.select_theme = QPushButton(self.header_right)
+        self.select_theme.setObjectName(u"select_theme")
+
+        self.headerRightLayout.addWidget(self.select_theme)
+
         self.compile_btn = QPushButton(self.header_right)
         self.compile_btn.setObjectName(u"compile_btn")
 
@@ -92,7 +102,7 @@ class Ui_PyCompilerARKGui(object):
         self.mainSplitter.setOrientation(Qt.Orientation.Horizontal)
         self.leftPanel = QWidget(self.mainSplitter)
         self.leftPanel.setObjectName(u"leftPanel")
-        self.leftPanel.setMinimumWidth(340)
+        self.leftPanel.setMinimumWidth(280)
         sizePolicy = QSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Expanding)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -146,6 +156,11 @@ class Ui_PyCompilerARKGui(object):
         self.layout_files_grid.setContentsMargins(10, 10, 10, 10)
         self.label_files_section = QLabel(self.frame_files)
         self.label_files_section.setObjectName(u"label_files_section")
+        font1 = QFont()
+        font1.setPointSize(12)
+        font1.setBold(False)
+        self.label_files_section.setFont(font1)
+        self.label_files_section.setWordWrap(True)
 
         self.layout_files_grid.addWidget(self.label_files_section, 0, 0, 1, 2)
 
@@ -156,7 +171,12 @@ class Ui_PyCompilerARKGui(object):
 
         self.file_list = QListWidget(self.frame_files)
         self.file_list.setObjectName(u"file_list")
-        self.file_list.setMinimumHeight(180)
+        self.file_list.setMinimumHeight(140)
+        sizePolicy1 = QSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        sizePolicy1.setHorizontalStretch(0)
+        sizePolicy1.setVerticalStretch(1)
+        sizePolicy1.setHeightForWidth(self.file_list.sizePolicy().hasHeightForWidth())
+        self.file_list.setSizePolicy(sizePolicy1)
 
         self.layout_files_grid.addWidget(self.file_list, 2, 0, 1, 1)
 
@@ -219,31 +239,6 @@ class Ui_PyCompilerARKGui(object):
 
         self.leftLayout.addWidget(self.frame_tools)
 
-        self.frame_settings = QFrame(self.leftPanel)
-        self.frame_settings.setObjectName(u"frame_settings")
-        self.frame_settings.setFrameShape(QFrame.Shape.StyledPanel)
-        self.layout_settings = QVBoxLayout(self.frame_settings)
-        self.layout_settings.setSpacing(8)
-        self.layout_settings.setObjectName(u"layout_settings")
-        self.layout_settings.setContentsMargins(10, 10, 10, 10)
-        self.label_settings = QLabel(self.frame_settings)
-        self.label_settings.setObjectName(u"label_settings")
-
-        self.layout_settings.addWidget(self.label_settings)
-
-        self.select_lang = QPushButton(self.frame_settings)
-        self.select_lang.setObjectName(u"select_lang")
-
-        self.layout_settings.addWidget(self.select_lang)
-
-        self.select_theme = QPushButton(self.frame_settings)
-        self.select_theme.setObjectName(u"select_theme")
-
-        self.layout_settings.addWidget(self.select_theme)
-
-
-        self.leftLayout.addWidget(self.frame_settings)
-
         self.leftSpacer = QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
 
         self.leftLayout.addItem(self.leftSpacer)
@@ -251,12 +246,12 @@ class Ui_PyCompilerARKGui(object):
         self.mainSplitter.addWidget(self.leftPanel)
         self.rightPanel = QWidget(self.mainSplitter)
         self.rightPanel.setObjectName(u"rightPanel")
-        self.rightPanel.setMinimumWidth(600)
-        sizePolicy1 = QSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
-        sizePolicy1.setHorizontalStretch(1)
-        sizePolicy1.setVerticalStretch(0)
-        sizePolicy1.setHeightForWidth(self.rightPanel.sizePolicy().hasHeightForWidth())
-        self.rightPanel.setSizePolicy(sizePolicy1)
+        self.rightPanel.setMinimumWidth(420)
+        sizePolicy2 = QSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        sizePolicy2.setHorizontalStretch(1)
+        sizePolicy2.setVerticalStretch(0)
+        sizePolicy2.setHeightForWidth(self.rightPanel.sizePolicy().hasHeightForWidth())
+        self.rightPanel.setSizePolicy(sizePolicy2)
         self.rightLayout = QVBoxLayout(self.rightPanel)
         self.rightLayout.setSpacing(16)
         self.rightLayout.setObjectName(u"rightLayout")
@@ -295,7 +290,9 @@ class Ui_PyCompilerARKGui(object):
 
         self.log = QTextEdit(self.frame_logs)
         self.log.setObjectName(u"log")
-        self.log.setMinimumHeight(220)
+        self.log.setMinimumHeight(160)
+        sizePolicy1.setHeightForWidth(self.log.sizePolicy().hasHeightForWidth())
+        self.log.setSizePolicy(sizePolicy1)
 
         self.layout_logs.addWidget(self.log)
 
@@ -318,7 +315,7 @@ class Ui_PyCompilerARKGui(object):
         self.progress.setObjectName(u"progress")
         self.progress.setValue(0)
         self.progress.setTextVisible(True)
-        self.progress.setMinimumHeight(24)
+        self.progress.setMinimumHeight(18)
 
         self.layout_progress.addWidget(self.progress)
 
@@ -341,6 +338,14 @@ class Ui_PyCompilerARKGui(object):
     def retranslateUi(self, PyCompilerARKGui):
         self.label_app_title.setText(QCoreApplication.translate("PyCompilerARKGui", u"PyCompiler ARK++", None))
         self.label_workspace_status.setText(QCoreApplication.translate("PyCompilerARKGui", u"Workspace : Aucun", None))
+        self.select_lang.setText(QCoreApplication.translate("PyCompilerARKGui", u"\U0001f310 Langue", None))
+#if QT_CONFIG(tooltip)
+        self.select_lang.setToolTip(QCoreApplication.translate("PyCompilerARKGui", u"Choisir la langue de l'interface", None))
+#endif // QT_CONFIG(tooltip)
+        self.select_theme.setText(QCoreApplication.translate("PyCompilerARKGui", u"\U0001f3a8 Th\U000000e8me", None))
+#if QT_CONFIG(tooltip)
+        self.select_theme.setToolTip(QCoreApplication.translate("PyCompilerARKGui", u"Choisir le th\u00e8me de l'interface", None))
+#endif // QT_CONFIG(tooltip)
         self.compile_btn.setText(QCoreApplication.translate("PyCompilerARKGui", u"\U0001f680 Compiler", None))
 #if QT_CONFIG(tooltip)
         self.compile_btn.setToolTip(QCoreApplication.translate("PyCompilerARKGui", u"Lancer la compilation", None))
@@ -383,15 +388,6 @@ class Ui_PyCompilerARKGui(object):
         self.btn_help.setText(QCoreApplication.translate("PyCompilerARKGui", u"\u2753 Aide", None))
 #if QT_CONFIG(tooltip)
         self.btn_help.setToolTip(QCoreApplication.translate("PyCompilerARKGui", u"Afficher l'aide", None))
-#endif // QT_CONFIG(tooltip)
-        self.label_settings.setText(QCoreApplication.translate("PyCompilerARKGui", u"Param\u00e8tres", None))
-        self.select_lang.setText(QCoreApplication.translate("PyCompilerARKGui", u"\U0001f310 Langue", None))
-#if QT_CONFIG(tooltip)
-        self.select_lang.setToolTip(QCoreApplication.translate("PyCompilerARKGui", u"Choisir la langue de l'interface", None))
-#endif // QT_CONFIG(tooltip)
-        self.select_theme.setText(QCoreApplication.translate("PyCompilerARKGui", u"\U0001f3a8 Th\U000000e8me", None))
-#if QT_CONFIG(tooltip)
-        self.select_theme.setToolTip(QCoreApplication.translate("PyCompilerARKGui", u"Choisir le th\u00e8me de l'interface", None))
 #endif // QT_CONFIG(tooltip)
         self.label_options_section.setText(QCoreApplication.translate("PyCompilerARKGui", u"3. Options de compilation", None))
         self.label_logs_section.setText(QCoreApplication.translate("PyCompilerARKGui", u"4. Logs de compilation", None))
