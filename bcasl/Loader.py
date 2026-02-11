@@ -253,7 +253,9 @@ def _apply_plugins_config(
         for pid, val in pmap.items():
             try:
                 enabled = (
-                    val if isinstance(val, bool) else bool((val or {}).get("enabled", True))
+                    val
+                    if isinstance(val, bool)
+                    else bool((val or {}).get("enabled", True))
                 )
                 if not enabled:
                     manager.disable_plugin(pid)
@@ -294,9 +296,7 @@ def _run_bcasl_sync(
 
     workspace_meta = _build_workspace_meta(workspace_root, cfg)
     return manager.run_pre_compile(
-        PreCompileContext(
-            workspace_root, config=cfg, workspace_metadata=workspace_meta
-        )
+        PreCompileContext(workspace_root, config=cfg, workspace_metadata=workspace_meta)
     )
 
 

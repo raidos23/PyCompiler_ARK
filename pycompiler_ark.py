@@ -122,6 +122,7 @@ def onlymod_log(message: str, gui: Optional[object] = None) -> str:
 
     return line
 
+
 IS_WINDOWS = os.name == "nt" or platform.system().lower().startswith("win")
 IS_DARWIN = platform.system().lower().startswith("darwin")
 IS_LINUX = platform.system().lower().startswith("linux")
@@ -564,7 +565,9 @@ def launch_bcasl_standalone(workspace_dir: Optional[str] = None) -> int:
             click.echo(
                 f"❌ Error: Failed to import BCASL standalone module: {e}", err=True
             )
-            click.echo("Make sure OnlyMod.BcaslOnlyMod is properly installed.", err=True)
+            click.echo(
+                "Make sure OnlyMod.BcaslOnlyMod is properly installed.", err=True
+            )
         else:
             print(f"❌ Error: Failed to import BCASL standalone module: {e}")
             print("Make sure OnlyMod.BcaslOnlyMod is properly installed.")

@@ -147,7 +147,9 @@ def _record_timeout(
     _logger.error("Plugin %s timeout après %.1fs", plugin_id, timeout_s)
 
 
-def _resolve_exec_options(config: dict[str, Any], default_sandbox: bool) -> tuple[bool, int]:
+def _resolve_exec_options(
+    config: dict[str, Any], default_sandbox: bool
+) -> tuple[bool, int]:
     try:
         opts = dict(config or {}).get("options", {}) if isinstance(config, dict) else {}
     except Exception:
@@ -179,7 +181,9 @@ def _build_dependency_graph(
     for pid, rec in active_items.items():
         for dep in rec.requires:
             if dep not in active_items:
-                _logger.warning("Dépendance manquante pour %s: '%s' (ignorée)", pid, dep)
+                _logger.warning(
+                    "Dépendance manquante pour %s: '%s' (ignorée)", pid, dep
+                )
                 continue
             indeg[pid] += 1
             children[dep].append(pid)
@@ -380,7 +384,9 @@ def _run_parallel_sandbox(
 
 def _configure_worker_env(config: dict[str, Any]) -> None:
     try:
-        _opts = dict(config or {}).get("options", {}) if isinstance(config, dict) else {}
+        _opts = (
+            dict(config or {}).get("options", {}) if isinstance(config, dict) else {}
+        )
         _env_nonint = os.environ.get("PYCOMPILER_NONINTERACTIVE_PLUGINS")
         _env_offscreen = os.environ.get("PYCOMPILER_OFFSCREEN_PLUGINS")
         _noninteractive = (
@@ -413,7 +419,9 @@ def _configure_worker_env(config: dict[str, Any]) -> None:
 
 def _maybe_init_qt_app(config: dict[str, Any]) -> None:
     try:
-        _opts2 = dict(config or {}).get("options", {}) if isinstance(config, dict) else {}
+        _opts2 = (
+            dict(config or {}).get("options", {}) if isinstance(config, dict) else {}
+        )
         _env_allow = os.environ.get("PYCOMPILER_SANDBOX_DIALOGS")
         _allow_dialogs = (
             (str(_env_allow).strip().lower() in ("1", "true", "yes"))
@@ -480,7 +488,9 @@ def _enforce_sdk_progress() -> None:
 
 def _apply_resource_limits(config: dict[str, Any]) -> None:
     try:
-        _opts3 = dict(config or {}).get("options", {}) if isinstance(config, dict) else {}
+        _opts3 = (
+            dict(config or {}).get("options", {}) if isinstance(config, dict) else {}
+        )
         _limits = _opts3.get("plugin_limits", {}) if isinstance(_opts3, dict) else {}
         _mem_mb = int(_limits.get("mem_mb", 0))
         _cpu_s = int(_limits.get("cpu_time_s", 0))
@@ -534,7 +544,9 @@ def _load_plugin_instance(
     if plg is None or getattr(getattr(plg, "meta", None), "id", None) != plugin_id:
         try:
             mgr = BCASL(_Path(project_root), config=config, sandbox=False)
-            if hasattr(module, "bcasl_register") and callable(getattr(module, "bcasl_register")):
+            if hasattr(module, "bcasl_register") and callable(
+                getattr(module, "bcasl_register")
+            ):
                 module.bcasl_register(mgr)
             rec = getattr(mgr, "_registry", {}).get(plugin_id)
             if rec is None:

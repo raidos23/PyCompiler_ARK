@@ -75,7 +75,7 @@ class WorkspaceAdvancedManipulation:
                             f"Le fichier {f} est en dehors du workspace et sera ignoré.",
                             f"The file {f} is outside the workspace and will be ignored.",
                         ),
-                )
+                    )
             if valid_files:
                 gui_instance.selected_files = valid_files
                 gui_instance.log_i18n(
@@ -269,12 +269,18 @@ class WorkspaceAdvancedManipulation:
                     tr_map = getattr(gui_instance, "_tr", None)
                     if isinstance(tr_map, dict):
                         if keep_dir and workspace_dir:
-                            tmpl = tr_map.get("label_workspace_status") or "Workspace: {path}"
+                            tmpl = (
+                                tr_map.get("label_workspace_status")
+                                or "Workspace: {path}"
+                            )
                             gui_instance.label_workspace_status.setText(
                                 str(tmpl).replace("{path}", str(workspace_dir))
                             )
                         else:
-                            val = tr_map.get("label_workspace_status_none") or "Workspace: None"
+                            val = (
+                                tr_map.get("label_workspace_status_none")
+                                or "Workspace: None"
+                            )
                             gui_instance.label_workspace_status.setText(str(val))
                     else:
                         if keep_dir and workspace_dir:
