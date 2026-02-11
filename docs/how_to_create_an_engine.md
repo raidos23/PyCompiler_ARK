@@ -80,6 +80,7 @@ Tools and dependencies.
 - Avoid heavy work in `__init__` to keep loading fast.
 - Wire signals locally and use `gui.log.append(...)` for logs.
 - If your engine tab becomes large, wrap it in a scroll area so the UI stays usable.
+- Prefer shared UI helpers from the SDK for common patterns (icon selector, output dir, checkbox rows).
 
 **Monolithic Tab Example**
 The following dummy engine shows how to build a very large UI tab with a scroll area to keep it usable.
@@ -175,6 +176,30 @@ class MonolithicEngine(CompilerEngine):
                 w.setChecked(False)
         if getattr(self, "_output_dir", None):
             self._output_dir.setText("")
+```
+
+**SDK UI Helpers**
+Use the shared helpers to reduce duplication across engines.
+```python
+from engine_sdk import add_form_checkbox, add_icon_selector, add_output_dir
+
+# Inside create_tab(...)
+form = QFormLayout()
+self._opt_onefile = add_form_checkbox(form, "Mode:", "Onefile", "opt_onefile_dynamic")
+self._opt_windowed = add_form_checkbox(form, "Console:", "Windowed", "opt_windowed_dynamic")
+
+self._btn_select_icon = add_icon_selector(
+    layout,
+    "🎨 Choose icon (.ico)",
+    self.select_icon,
+    "btn_select_icon_dynamic",
+)
+
+self._output_dir_input = add_output_dir(
+    layout,
+    "Output directory",
+    "output_dir_input_dynamic",
+)
 ```
 **I18n**
 - Add `languages/en.json`, `languages/fr.json`, etc. in your engine package.
