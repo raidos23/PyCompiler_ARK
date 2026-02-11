@@ -191,13 +191,6 @@ def init_ui(self):
     self.setCentralWidget(self.ui)
 
     # Récupérer les widgets depuis l'UI chargée
-    self.sidebar_logo = self.ui.findChild(QLabel, "sidebar_logo")
-    # Forcer la suppression de toute bordure sur le logo, quel que soit le thème
-    try:
-        if self.sidebar_logo:
-            self.sidebar_logo.setStyleSheet("border: none; background: transparent;")
-    except Exception:
-        pass
     self.btn_select_folder = self.ui.findChild(QPushButton, "btn_select_folder")
     self.venv_button = self.ui.findChild(QPushButton, "venv_button")
     self.venv_label = self.ui.findChild(QLabel, "venv_label")
@@ -208,64 +201,6 @@ def init_ui(self):
     self.label_logs_section = self.ui.findChild(QLabel, "label_logs_section")
     self.file_list = self.ui.findChild(QListWidget, "file_list")
     self.file_filter_input = self.ui.findChild(QLineEdit, "file_filter_input")
-    # Afficher le logo dans la sidebar (chemin absolu depuis le dossier projet)
-    from PySide6.QtGui import QPixmap
-    from PySide6.QtWidgets import QApplication
-
-    project_dir = os.path.abspath(os.path.dirname(sys.argv[0]))
-    # Choose logo based on effective theme from QSS when available; fallback to system scheme
-    try:
-        app = QApplication.instance()
-        css = app.styleSheet() if app else ""
-        if css:
-            eff_mode = "dark" if _is_qss_dark(css) else "light"
-        else:
-            eff_mode = _detect_system_color_scheme()
-    except Exception:
-        eff_mode = "light"
-    candidates = [
-        os.path.join(project_dir, "logo", "SideLogo.png"),
-        (
-            os.path.join(project_dir, "logo", "SideLogo2.png")
-            if eff_mode == "dark"
-            else os.path.join(project_dir, "logo", "SideLogo.png")
-        ),
-        os.path.join(project_dir, "logo", "SideLogo.png"),
-        os.path.join(project_dir, "logo", "SideLogo2.png"),
-    ]
-    logo_path = None
-    for p in candidates:
-        if os.path.exists(p):
-            logo_path = p
-            break
-    if logo_path:
-        pixmap = QPixmap(logo_path)
-        target_size = 200
-        try:
-            max_sz = self.sidebar_logo.maximumSize()
-            if max_sz and max_sz.width() > 0 and max_sz.height() > 0:
-                target_size = min(target_size, max_sz.width(), max_sz.height())
-        except Exception:
-            pass
-        self.sidebar_logo.setPixmap(
-            pixmap.scaled(
-                target_size,
-                target_size,
-                Qt.AspectRatioMode.KeepAspectRatio,
-                Qt.TransformationMode.SmoothTransformation,
-            )
-        )
-        self.sidebar_logo.setToolTip("PyCompiler")
-        try:
-            self.sidebar_logo.setContentsMargins(13, 0, 0, 0)
-        except Exception:
-            pass
-    else:
-        self.sidebar_logo.setText("PyCompiler")
-        try:
-            self.sidebar_logo.setContentsMargins(12, 0, 0, 0)
-        except Exception:
-            pass
     self.btn_select_files = self.ui.findChild(QPushButton, "btn_select_files")
     self.btn_remove_file = self.ui.findChild(QPushButton, "btn_remove_file")
     self.btn_clear_workspace = self.ui.findChild(QPushButton, "btn_clear_workspace")
@@ -599,57 +534,6 @@ def apply_theme(self, pref: str):
                         self.select_theme.setText(val)
             except Exception:
                 pass
-        # Update sidebar logo according to effective theme (dark/light)
-        try:
-            # Determine effective theme mode from applied QSS when available
-            if css:
-                effective_mode = "dark" if _is_qss_dark(css) else "light"
-            elif not pref or pref == "System":
-                effective_mode = _detect_system_color_scheme()
-            else:
-                base = os.path.basename(chosen_path) if chosen_path else ""
-                effective_mode = "dark" if "dark" in base.lower() else "light"
-            if getattr(self, "sidebar_logo", None) is not None:
-                from PySide6.QtGui import QPixmap
-
-                project_dir = os.path.abspath(os.path.dirname(sys.argv[0]))
-                candidates = [
-                    os.path.join(project_dir, "logo", "SideLogo.png"),
-                    (
-                        os.path.join(project_dir, "logo", "SideLogo2.png")
-                        if effective_mode == "dark"
-                        else os.path.join(project_dir, "logo", "SideLogo.png")
-                    ),
-                    os.path.join(project_dir, "logo", "SideLogo.png"),
-                    os.path.join(project_dir, "logo", "SideLogo2.png"),
-                ]
-                logo_path = None
-                for p in candidates:
-                    if os.path.exists(p):
-                        logo_path = p
-                        break
-                if logo_path:
-                    pixmap = QPixmap(logo_path)
-                    target_size = 200
-                    try:
-                        max_sz = self.sidebar_logo.maximumSize()
-                        if max_sz and max_sz.width() > 0 and max_sz.height() > 0:
-                            target_size = min(
-                                target_size, max_sz.width(), max_sz.height()
-                            )
-                    except Exception:
-                        pass
-                    self.sidebar_logo.setPixmap(
-                        pixmap.scaled(
-                            target_size,
-                            target_size,
-                            Qt.AspectRatioMode.KeepAspectRatio,
-                            Qt.TransformationMode.SmoothTransformation,
-                        )
-                    )
-                    self.sidebar_logo.setToolTip("PyCompiler")
-        except Exception:
-            pass
         # Log
         if hasattr(self, "log") and self.log:
             if chosen_path:

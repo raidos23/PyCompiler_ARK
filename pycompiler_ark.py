@@ -272,7 +272,7 @@ def _set_window_icon(target) -> None:
 def _apply_small_screen_compaction(app: QApplication, window) -> None:
     """Resserre l'UI pour les petits écrans."""
     try:
-        from PySide6.QtWidgets import QLabel, QLayout
+        from PySide6.QtWidgets import QLayout
 
         screen = app.primaryScreen()
         geo = screen.availableGeometry() if screen is not None else None
@@ -285,23 +285,6 @@ def _apply_small_screen_compaction(app: QApplication, window) -> None:
                         _l.setSpacing(6)
                     except Exception:
                         pass
-            except Exception:
-                pass
-            try:
-                lbl = getattr(window, "sidebar_logo", None)
-                if lbl is None and hasattr(window, "ui"):
-                    lbl = window.ui.findChild(QLabel, "sidebar_logo")
-                if lbl is not None and lbl.pixmap() is not None:
-                    pm = lbl.pixmap()
-                    if pm is not None:
-                        lbl.setPixmap(
-                            pm.scaled(
-                                120,
-                                120,
-                                Qt.AspectRatioMode.KeepAspectRatio,
-                                Qt.TransformationMode.SmoothTransformation,
-                            )
-                        )
             except Exception:
                 pass
     except Exception:
