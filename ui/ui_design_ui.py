@@ -37,14 +37,6 @@ class Ui_PyCompilerARKGui(object):
         self.headerLayout.setSpacing(8)
         self.headerLayout.setObjectName(u"headerLayout")
         self.headerLayout.setContentsMargins(8, 8, 8, 8)
-        self.sidebar_logo = QLabel(self.header)
-        self.sidebar_logo.setObjectName(u"sidebar_logo")
-        self.sidebar_logo.setMinimumSize(QSize(48, 48))
-        self.sidebar_logo.setMaximumSize(QSize(200, 200))
-        self.sidebar_logo.setAlignment(Qt.AlignmentFlag.AlignCenter)
-
-        self.headerLayout.addWidget(self.sidebar_logo)
-
         self.label_app_title = QLabel(self.header)
         self.label_app_title.setObjectName(u"label_app_title")
         font = QFont()
