@@ -27,7 +27,14 @@ import platform
 import sys
 from typing import Optional
 
-from engine_sdk import CompilerEngine, compute_auto_for_engine, engine_register
+from engine_sdk import (
+    CompilerEngine,
+    add_form_checkbox,
+    add_icon_selector,
+    add_output_dir,
+    compute_auto_for_engine,
+    engine_register,
+)
 
 
 @engine_register
@@ -191,33 +198,29 @@ class CXFreezeEngine(CompilerEngine):
             form_layout.setSpacing(8)
 
             # Onefile option
-            self._cx_onefile = QCheckBox("Onefile")
-            self._cx_onefile.setObjectName("cx_onefile_dynamic")
-            form_layout.addRow("Mode:", self._cx_onefile)
+            self._cx_onefile = add_form_checkbox(
+                form_layout, "Mode:", "Onefile", "cx_onefile_dynamic"
+            )
 
             # Windowed option
-            self._cx_windowed = QCheckBox("Windowed")
-            self._cx_windowed.setObjectName("cx_windowed_dynamic")
-            form_layout.addRow("Console:", self._cx_windowed)
+            self._cx_windowed = add_form_checkbox(
+                form_layout, "Console:", "Windowed", "cx_windowed_dynamic"
+            )
 
             layout.addLayout(form_layout)
 
             # Icon button
-            icon_layout = QHBoxLayout()
-            self._cx_btn_select_icon = QPushButton("🎨 Choisir une icône (.ico)")
-            self._cx_btn_select_icon.setObjectName("cx_btn_select_icon_dynamic")
-            self._cx_btn_select_icon.clicked.connect(self.select_icon)
-            icon_layout.addWidget(self._cx_btn_select_icon)
-            icon_layout.addStretch()
-            layout.addLayout(icon_layout)
+            self._cx_btn_select_icon = add_icon_selector(
+                layout,
+                "🎨 Choisir une icône (.ico)",
+                self.select_icon,
+                "cx_btn_select_icon_dynamic",
+            )
 
             # Output directory
-            output_layout = QHBoxLayout()
-            self._cx_output_dir = QLineEdit()
-            self._cx_output_dir.setObjectName("cx_output_dir_dynamic")
-            self._cx_output_dir.setPlaceholderText("Dossier de sortie")
-            output_layout.addWidget(self._cx_output_dir)
-            layout.addLayout(output_layout)
+            self._cx_output_dir = add_output_dir(
+                layout, "Dossier de sortie", "cx_output_dir_dynamic"
+            )
 
             layout.addStretch()
 

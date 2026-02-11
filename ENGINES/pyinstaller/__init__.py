@@ -31,7 +31,14 @@ from typing import Optional
 from PySide6.QtCore import QDir
 from PySide6.QtWidgets import QFileDialog, QInputDialog
 
-from engine_sdk import CompilerEngine, compute_auto_for_engine, engine_register
+from engine_sdk import (
+    CompilerEngine,
+    add_form_checkbox,
+    add_icon_selector,
+    add_output_dir,
+    compute_auto_for_engine,
+    engine_register,
+)
 
 
 @engine_register
@@ -222,14 +229,14 @@ class PyInstallerEngine(CompilerEngine):
             form_layout.setSpacing(8)
 
             # Onefile option
-            self._opt_onefile = QCheckBox("Onefile")
-            self._opt_onefile.setObjectName("opt_onefile_dynamic")
-            form_layout.addRow("Mode:", self._opt_onefile)
+            self._opt_onefile = add_form_checkbox(
+                form_layout, "Mode:", "Onefile", "opt_onefile_dynamic"
+            )
 
             # Windowed option
-            self._opt_windowed = QCheckBox("Windowed")
-            self._opt_windowed.setObjectName("opt_windowed_dynamic")
-            form_layout.addRow("Console:", self._opt_windowed)
+            self._opt_windowed = add_form_checkbox(
+                form_layout, "Console:", "Windowed", "opt_windowed_dynamic"
+            )
 
             # Noconfirm option
             self._opt_noconfirm = QCheckBox("Noconfirm")
@@ -254,13 +261,12 @@ class PyInstallerEngine(CompilerEngine):
             layout.addLayout(form_layout)
 
             # Icon button
-            icon_layout = QHBoxLayout()
-            self._btn_select_icon = QPushButton("🎨 Choisir une icône (.ico)")
-            self._btn_select_icon.setObjectName("btn_select_icon_dynamic")
-            self._btn_select_icon.clicked.connect(self.select_icon)
-            icon_layout.addWidget(self._btn_select_icon)
-            icon_layout.addStretch()
-            layout.addLayout(icon_layout)
+            self._btn_select_icon = add_icon_selector(
+                layout,
+                "🎨 Choisir une icône (.ico)",
+                self.select_icon,
+                "btn_select_icon_dynamic",
+            )
 
             # Debug option
             self._opt_debug = QCheckBox("Mode debug (--debug)")
@@ -274,14 +280,11 @@ class PyInstallerEngine(CompilerEngine):
             layout.addWidget(self._pyinstaller_add_data)
 
             # Output directory
-            output_layout = QHBoxLayout()
-            self._output_dir_input = QLineEdit()
-            self._output_dir_input.setObjectName("output_dir_input_dynamic")
-            self._output_dir_input.setPlaceholderText(
-                "Dossier de sortie (--distpath). Laisser vide pour ./dist"
+            self._output_dir_input = add_output_dir(
+                layout,
+                "Dossier de sortie (--distpath). Laisser vide pour ./dist",
+                "output_dir_input_dynamic",
             )
-            output_layout.addWidget(self._output_dir_input)
-            layout.addLayout(output_layout)
 
             layout.addStretch()
 
