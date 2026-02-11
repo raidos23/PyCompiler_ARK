@@ -209,7 +209,9 @@ class SetupWorkspace:
             # Configuration du venv
             try:
                 if hasattr(gui_instance, "venv_manager") and gui_instance.venv_manager:
-                    gui_instance.venv_manager.setup_workspace(folder)
+                    # Do not auto-install engine tools on workspace selection.
+                    # Tools are installed only when compiling with the selected engine.
+                    gui_instance.venv_manager.setup_workspace(folder, check_tools=False)
             except Exception as e:
                 gui_instance.log_i18n(
                     f"⚠️ Erreur lors de la configuration du workspace: {e}",

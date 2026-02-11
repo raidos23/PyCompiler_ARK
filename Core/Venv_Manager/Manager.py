@@ -252,8 +252,14 @@ class VenvManager:
         except Exception:
             return "[Decode Error]"
 
-    def _safe_log(self, text: str):
+    def _safe_log(self, text: str, text_en: str | None = None):
         try:
+            # If both FR/EN provided and parent has translator, resolve first.
+            if text_en is not None and hasattr(self.parent, "tr"):
+                try:
+                    text = self.parent.tr(text, text_en)
+                except Exception:
+                    pass
             if hasattr(self.parent, "_safe_log"):
                 self.parent._safe_log(text)
                 return
