@@ -19,6 +19,10 @@
   "icon_button": "🎨 Choisir une icône (.ico)",
   "debug_checkbox": "Mode debug (--debug)",
   "add_data_button": "add_data",
-  "output_placeholder": "Dossier de sortie (--distpath). Laisser vide pour ./dist"
+  "output_placeholder": "Dossier de sortie (--distpath). Laisser vide pour ./dist",
+  "tt_noconfirm": "Écraser la sortie sans confirmation.",
+  "tt_clean": "Nettoyer le cache avant compilation.",
+  "tt_noupx": "Désactiver la compression UPX.",
+  "tt_main_only": "Compiler uniquement main.py ou app.py si présent.",
+  "tt_debug": "Activer le mode débogage pour la compilation."
 }
-

@@ -14,5 +14,7 @@
   "show_progress_checkbox": "進捗を表示 (--show-progress)",
   "add_data_button": "add_data",
   "output_placeholder": "出力ディレクトリ (--output-dir)",
-  "icon_button": "🎨 アイコンを選択 (.ico) Nuitka"
+  "icon_button": "🎨 アイコンを選択 (.ico) Nuitka",
+  "tt_disable_console": "Disable console window for Windows builds.",
+  "tt_show_progress": "Show compilation progress."
 }

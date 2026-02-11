@@ -14,5 +14,10 @@
   "debug_checkbox": "디버그 모드 (--debug)",
   "add_data_button": "add_data",
   "output_placeholder": "출력 디렉터리 (--distpath). ./dist로 두려면 비워두세요",
-  "icon_button": "🎨 아이콘 선택 (.ico)"
+  "icon_button": "🎨 아이콘 선택 (.ico)",
+  "tt_noconfirm": "Overwrite output without confirmation.",
+  "tt_clean": "Clean build caches before compiling.",
+  "tt_noupx": "Disable UPX compression.",
+  "tt_main_only": "Build only main.py or app.py if present.",
+  "tt_debug": "Enable debug mode in the build."
 }
