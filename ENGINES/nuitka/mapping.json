@@ -1,0 +1,100 @@
+{
+  "__meta__": {
+    "title": "Nuitka auto-mapping",
+    "version": "1.0.0",
+    "description": "Auto args for Nuitka based on detected packages."
+  },
+  "__aliases__": {
+    "import_to_package": {
+      "cv2": "opencv-python",
+      "pil": "Pillow",
+      "sklearn": "scikit-learn",
+      "skimage": "scikit-image",
+      "yaml": "PyYAML",
+      "bs4": "beautifulsoup4"
+    },
+    "package_to_import_name": {
+      "opencv-python": "cv2",
+      "Pillow": "PIL",
+      "scikit-learn": "sklearn",
+      "scikit-image": "skimage",
+      "PyYAML": "yaml",
+      "beautifulsoup4": "bs4"
+    }
+  },
+  "numpy": {
+    "nuitka": {
+      "args": ["--enable-plugin=numpy"]
+    }
+  },
+  "matplotlib": {
+    "nuitka": {
+      "args": ["--include-package-data={import_name}"]
+    }
+  },
+  "Pillow": {
+    "nuitka": {
+      "args": ["--include-package-data={import_name}"]
+    }
+  },
+  "opencv-python": {
+    "nuitka": {
+      "args": ["--include-module={import_name}"]
+    }
+  },
+  "pandas": {
+    "nuitka": {
+      "args": ["--include-package={import_name}"]
+    }
+  },
+  "scipy": {
+    "nuitka": {
+      "args": ["--include-package={import_name}"]
+    }
+  },
+  "scikit-learn": {
+    "nuitka": {
+      "args": ["--include-package={import_name}"]
+    }
+  },
+  "scikit-image": {
+    "nuitka": {
+      "args": ["--include-package={import_name}"]
+    }
+  },
+  "lxml": {
+    "nuitka": {
+      "args": ["--include-package={import_name}"]
+    }
+  },
+  "PyYAML": {
+    "nuitka": {
+      "args": ["--include-module={import_name}"]
+    }
+  },
+  "multiprocessing": {
+    "nuitka": {
+      "args": ["--enable-plugin=multiprocessing"]
+    }
+  },
+  "PySide6": {
+    "nuitka": {
+      "args": ["--enable-plugin=pyside6"]
+    }
+  },
+  "PySide2": {
+    "nuitka": {
+      "args": ["--enable-plugin=pyside2"]
+    }
+  },
+  "PyQt5": {
+    "nuitka": {
+      "args": ["--enable-plugin=pyqt5"]
+    }
+  },
+  "PyQt6": {
+    "nuitka": {
+      "args": ["--enable-plugin=pyqt6"]
+    }
+  }
+}

@@ -16,7 +16,11 @@
 from __future__ import annotations
 
 # Re-export auto_plugins helpers for convenience
-from .auto_build_command import compute_for_all, register_auto_builder
+from .auto_build_command import (
+    compute_auto_for_engine,
+    compute_for_all,
+    register_auto_builder,
+)
 
 __version__ = "1.0.0"
 # Re-export the base interface used by the host
@@ -213,6 +217,7 @@ __all__ = [
     "CompilerEngine",
     "engine_register",
     "register",
+    "compute_auto_for_engine",
     "compute_for_all",
     "register_auto_builder",
     "registry",

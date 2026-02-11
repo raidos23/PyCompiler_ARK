@@ -30,7 +30,7 @@ from typing import Optional
 from PySide6.QtCore import QDir
 from PySide6.QtWidgets import QFileDialog, QInputDialog, QCheckBox, QLineEdit
 
-from engine_sdk import CompilerEngine, engine_register
+from engine_sdk import CompilerEngine, compute_auto_for_engine, engine_register
 
 
 @engine_register
@@ -137,6 +137,14 @@ class NuitkaEngine(CompilerEngine):
             selected_icon = getattr(self, "_nuitka_selected_icon", None)
             if selected_icon:
                 cmd.extend(["--windows-icon", selected_icon])
+
+            # Auto-mapping args (mapping.json / auto builder)
+            try:
+                auto_args = compute_auto_for_engine(gui, self.id)
+                if auto_args:
+                    cmd.extend(auto_args)
+            except Exception:
+                pass
 
             # Add the target file
             cmd.append(file)
