@@ -239,23 +239,31 @@ class PyInstallerEngine(CompilerEngine):
             )
 
             # Noconfirm option
-            self._opt_noconfirm = QCheckBox("Noconfirm")
+            self._opt_noconfirm = QCheckBox("No confirm")
             self._opt_noconfirm.setObjectName("opt_noconfirm_dynamic")
+            self._opt_noconfirm.setToolTip(
+                "Overwrite output without confirmation."
+            )
             form_layout.addRow("Confirmation:", self._opt_noconfirm)
 
             # Clean option
-            self._opt_clean = QCheckBox("Clean")
+            self._opt_clean = QCheckBox("Clean build")
             self._opt_clean.setObjectName("opt_clean_dynamic")
+            self._opt_clean.setToolTip("Clean build caches before compiling.")
             form_layout.addRow("Nettoyage:", self._opt_clean)
 
             # No UPX option
             self._opt_noupx = QCheckBox("No UPX")
             self._opt_noupx.setObjectName("opt_noupx_dynamic")
+            self._opt_noupx.setToolTip("Disable UPX compression.")
             form_layout.addRow("Compression:", self._opt_noupx)
 
             # Main only option
-            self._opt_main_only = QCheckBox("Compiler uniquement main.py ou app.py")
+            self._opt_main_only = QCheckBox("Main only")
             self._opt_main_only.setObjectName("opt_main_only_dynamic")
+            self._opt_main_only.setToolTip(
+                "Build only main.py or app.py if present."
+            )
             form_layout.addRow("Fichiers:", self._opt_main_only)
 
             layout.addLayout(form_layout)
@@ -269,8 +277,9 @@ class PyInstallerEngine(CompilerEngine):
             )
 
             # Debug option
-            self._opt_debug = QCheckBox("Mode debug (--debug)")
+            self._opt_debug = QCheckBox("Debug")
             self._opt_debug.setObjectName("opt_debug_dynamic")
+            self._opt_debug.setToolTip("Enable debug mode in the build.")
             layout.addWidget(self._opt_debug)
 
             # Add data button
@@ -336,16 +345,26 @@ class PyInstallerEngine(CompilerEngine):
                 self._opt_windowed.setText(lang_data["windowed_checkbox"])
             if hasattr(self, "_opt_noconfirm") and "noconfirm_checkbox" in lang_data:
                 self._opt_noconfirm.setText(lang_data["noconfirm_checkbox"])
+            if hasattr(self, "_opt_noconfirm") and "tt_noconfirm" in lang_data:
+                self._opt_noconfirm.setToolTip(lang_data["tt_noconfirm"])
             if hasattr(self, "_opt_clean") and "clean_checkbox" in lang_data:
                 self._opt_clean.setText(lang_data["clean_checkbox"])
+            if hasattr(self, "_opt_clean") and "tt_clean" in lang_data:
+                self._opt_clean.setToolTip(lang_data["tt_clean"])
             if hasattr(self, "_opt_noupx") and "noupx_checkbox" in lang_data:
                 self._opt_noupx.setText(lang_data["noupx_checkbox"])
+            if hasattr(self, "_opt_noupx") and "tt_noupx" in lang_data:
+                self._opt_noupx.setToolTip(lang_data["tt_noupx"])
             if hasattr(self, "_opt_main_only") and "main_only_checkbox" in lang_data:
                 self._opt_main_only.setText(lang_data["main_only_checkbox"])
+            if hasattr(self, "_opt_main_only") and "tt_main_only" in lang_data:
+                self._opt_main_only.setToolTip(lang_data["tt_main_only"])
             if hasattr(self, "_btn_select_icon") and "icon_button" in lang_data:
                 self._btn_select_icon.setText(lang_data["icon_button"])
             if hasattr(self, "_opt_debug") and "debug_checkbox" in lang_data:
                 self._opt_debug.setText(lang_data["debug_checkbox"])
+            if hasattr(self, "_opt_debug") and "tt_debug" in lang_data:
+                self._opt_debug.setToolTip(lang_data["tt_debug"])
             if (
                 hasattr(self, "_pyinstaller_add_data")
                 and "add_data_button" in lang_data

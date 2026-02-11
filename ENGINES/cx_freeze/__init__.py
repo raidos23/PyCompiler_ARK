@@ -206,6 +206,7 @@ class CXFreezeEngine(CompilerEngine):
             self._cx_windowed = add_form_checkbox(
                 form_layout, "Console:", "Windowed", "cx_windowed_dynamic"
             )
+            self._cx_windowed.setToolTip("Disable the console window.")
 
             layout.addLayout(form_layout)
 
@@ -278,6 +279,8 @@ class CXFreezeEngine(CompilerEngine):
                 self._cx_onefile.setText(lang_data["onefile_checkbox"])
             if hasattr(self, "_cx_windowed") and "windowed_checkbox" in lang_data:
                 self._cx_windowed.setText(lang_data["windowed_checkbox"])
+            if hasattr(self, "_cx_windowed") and "tt_windowed" in lang_data:
+                self._cx_windowed.setToolTip(lang_data["tt_windowed"])
             if hasattr(self, "_cx_btn_select_icon") and "icon_button" in lang_data:
                 self._cx_btn_select_icon.setText(lang_data["icon_button"])
             if hasattr(self, "_cx_output_dir") and "output_placeholder" in lang_data:

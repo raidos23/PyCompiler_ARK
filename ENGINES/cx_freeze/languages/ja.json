@@ -9,5 +9,6 @@
   "console_label": "コンソール:",
   "windowed_checkbox": "Windowed",
   "icon_button": "🎨 アイコンを選択 (.ico)",
-  "output_placeholder": "出力ディレクトリ"
+  "output_placeholder": "出力ディレクトリ",
+  "tt_windowed": "Disable the console window."
 }

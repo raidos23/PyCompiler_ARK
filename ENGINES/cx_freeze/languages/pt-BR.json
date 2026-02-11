@@ -9,5 +9,6 @@
   "console_label": "Console:",
   "windowed_checkbox": "Windowed",
   "icon_button": "🎨 Escolher ícone (.ico)",
-  "output_placeholder": "Diretório de saída"
+  "output_placeholder": "Diretório de saída",
+  "tt_windowed": "Disable the console window."
 }

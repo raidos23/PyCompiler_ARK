@@ -14,5 +14,7 @@
   "show_progress_checkbox": "Fortschritt anzeigen (--show-progress)",
   "add_data_button": "add_data",
   "output_placeholder": "Ausgabeverzeichnis (--output-dir)",
-  "icon_button": "🎨 Icon auswählen (.ico) Nuitka"
+  "icon_button": "🎨 Icon auswählen (.ico) Nuitka",
+  "tt_disable_console": "Disable console window for Windows builds.",
+  "tt_show_progress": "Show compilation progress."
 }

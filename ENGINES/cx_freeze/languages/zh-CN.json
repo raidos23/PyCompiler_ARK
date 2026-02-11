@@ -9,5 +9,6 @@
   "console_label": "控制台:",
   "windowed_checkbox": "Windowed",
   "icon_button": "🎨 选择图标 (.ico)",
-  "output_placeholder": "输出目录"
+  "output_placeholder": "输出目录",
+  "tt_windowed": "Disable the console window."
 }
