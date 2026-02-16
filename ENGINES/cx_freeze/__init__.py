@@ -238,6 +238,51 @@ class CXFreezeEngine(CompilerEngine):
                 pass
             return None
 
+    def get_config(self, gui) -> dict:
+        """Return a JSON-serializable snapshot of current CX_Freeze UI options."""
+        try:
+            cfg = {}
+            if hasattr(self, "_cx_onefile") and self._cx_onefile is not None:
+                cfg["onefile"] = bool(self._cx_onefile.isChecked())
+            if hasattr(self, "_cx_windowed") and self._cx_windowed is not None:
+                cfg["windowed"] = bool(self._cx_windowed.isChecked())
+            if hasattr(self, "_cx_output_dir") and self._cx_output_dir is not None:
+                cfg["output_dir"] = self._cx_output_dir.text().strip()
+            if hasattr(self, "_selected_icon") and self._selected_icon:
+                cfg["selected_icon"] = self._selected_icon
+            return cfg
+        except Exception:
+            return {}
+
+    def set_config(self, gui, cfg: dict) -> None:
+        """Apply a config dict to CX_Freeze UI widgets."""
+        if not isinstance(cfg, dict):
+            return
+        try:
+            if (
+                hasattr(self, "_cx_onefile")
+                and self._cx_onefile is not None
+                and "onefile" in cfg
+            ):
+                self._cx_onefile.setChecked(bool(cfg.get("onefile")))
+            if (
+                hasattr(self, "_cx_windowed")
+                and self._cx_windowed is not None
+                and "windowed" in cfg
+            ):
+                self._cx_windowed.setChecked(bool(cfg.get("windowed")))
+            if (
+                hasattr(self, "_cx_output_dir")
+                and self._cx_output_dir is not None
+                and "output_dir" in cfg
+            ):
+                val = cfg.get("output_dir") or ""
+                self._cx_output_dir.setText(str(val))
+            if "selected_icon" in cfg:
+                self._selected_icon = cfg.get("selected_icon") or None
+        except Exception:
+            pass
+
     def _get_opt(self, name: str):
         """Get option widget from engine instance or GUI."""
         # Try engine instance first (dynamic tabs)

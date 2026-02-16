@@ -297,6 +297,97 @@ class NuitkaEngine(CompilerEngine):
                 pass
             return None
 
+    def get_config(self, gui) -> dict:
+        """Return a JSON-serializable snapshot of current Nuitka UI options."""
+        try:
+            cfg = {}
+            if hasattr(self, "_nuitka_onefile") and self._nuitka_onefile is not None:
+                cfg["onefile"] = bool(self._nuitka_onefile.isChecked())
+            if (
+                hasattr(self, "_nuitka_standalone")
+                and self._nuitka_standalone is not None
+            ):
+                cfg["standalone"] = bool(self._nuitka_standalone.isChecked())
+            if (
+                hasattr(self, "_nuitka_disable_console")
+                and self._nuitka_disable_console is not None
+            ):
+                cfg["disable_console"] = bool(self._nuitka_disable_console.isChecked())
+            if (
+                hasattr(self, "_nuitka_show_progress")
+                and self._nuitka_show_progress is not None
+            ):
+                cfg["show_progress"] = bool(self._nuitka_show_progress.isChecked())
+            if (
+                hasattr(self, "_nuitka_output_dir")
+                and self._nuitka_output_dir is not None
+            ):
+                cfg["output_dir"] = self._nuitka_output_dir.text().strip()
+            if hasattr(self, "_nuitka_data_files") and isinstance(
+                self._nuitka_data_files, list
+            ):
+                cfg["data_files"] = list(self._nuitka_data_files)
+            if hasattr(self, "_nuitka_data_dirs") and isinstance(
+                self._nuitka_data_dirs, list
+            ):
+                cfg["data_dirs"] = list(self._nuitka_data_dirs)
+            if hasattr(self, "_nuitka_selected_icon") and self._nuitka_selected_icon:
+                cfg["selected_icon"] = self._nuitka_selected_icon
+            elif hasattr(self, "_selected_icon") and self._selected_icon:
+                cfg["selected_icon"] = self._selected_icon
+            return cfg
+        except Exception:
+            return {}
+
+    def set_config(self, gui, cfg: dict) -> None:
+        """Apply a config dict to Nuitka UI widgets."""
+        if not isinstance(cfg, dict):
+            return
+        try:
+            if (
+                hasattr(self, "_nuitka_onefile")
+                and self._nuitka_onefile is not None
+                and "onefile" in cfg
+            ):
+                self._nuitka_onefile.setChecked(bool(cfg.get("onefile")))
+            if (
+                hasattr(self, "_nuitka_standalone")
+                and self._nuitka_standalone is not None
+                and "standalone" in cfg
+            ):
+                self._nuitka_standalone.setChecked(bool(cfg.get("standalone")))
+            if (
+                hasattr(self, "_nuitka_disable_console")
+                and self._nuitka_disable_console is not None
+                and "disable_console" in cfg
+            ):
+                self._nuitka_disable_console.setChecked(
+                    bool(cfg.get("disable_console"))
+                )
+            if (
+                hasattr(self, "_nuitka_show_progress")
+                and self._nuitka_show_progress is not None
+                and "show_progress" in cfg
+            ):
+                self._nuitka_show_progress.setChecked(bool(cfg.get("show_progress")))
+            if (
+                hasattr(self, "_nuitka_output_dir")
+                and self._nuitka_output_dir is not None
+                and "output_dir" in cfg
+            ):
+                val = cfg.get("output_dir") or ""
+                self._nuitka_output_dir.setText(str(val))
+            if "data_files" in cfg and isinstance(cfg.get("data_files"), list):
+                self._nuitka_data_files = list(cfg.get("data_files"))
+            if "data_dirs" in cfg and isinstance(cfg.get("data_dirs"), list):
+                self._nuitka_data_dirs = list(cfg.get("data_dirs"))
+            if "selected_icon" in cfg:
+                icon = cfg.get("selected_icon") or None
+                self._nuitka_selected_icon = icon
+                self._selected_icon = icon
+        except Exception:
+            pass
+
     def _get_btn(self, name: str):
         """Get button widget from engine instance or GUI."""
         if hasattr(self, f"_btn_{name}"):
