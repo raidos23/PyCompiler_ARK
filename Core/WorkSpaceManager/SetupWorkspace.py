@@ -220,6 +220,14 @@ class SetupWorkspace:
                     f"⚠️ Error during workspace setup: {e}",
                 )
 
+            # Appliquer la configuration des engines depuis .ark/<engine_id>/config.json
+            try:
+                from Core.EngineConfigManager import apply_engine_configs_for_workspace
+
+                apply_engine_configs_for_workspace(gui_instance, folder)
+            except Exception:
+                pass
+
             # Fermer le dialog de chargement
             try:
                 if loading_dialog:

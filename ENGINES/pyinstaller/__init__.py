@@ -310,6 +310,98 @@ class PyInstallerEngine(CompilerEngine):
                 pass
             return None
 
+    def get_config(self, gui) -> dict:
+        """Return a JSON-serializable snapshot of current PyInstaller UI options."""
+        try:
+            cfg = {}
+            if hasattr(self, "_opt_onefile") and self._opt_onefile is not None:
+                cfg["onefile"] = bool(self._opt_onefile.isChecked())
+            if hasattr(self, "_opt_windowed") and self._opt_windowed is not None:
+                cfg["windowed"] = bool(self._opt_windowed.isChecked())
+            if hasattr(self, "_opt_noconfirm") and self._opt_noconfirm is not None:
+                cfg["noconfirm"] = bool(self._opt_noconfirm.isChecked())
+            if hasattr(self, "_opt_clean") and self._opt_clean is not None:
+                cfg["clean"] = bool(self._opt_clean.isChecked())
+            if hasattr(self, "_opt_noupx") and self._opt_noupx is not None:
+                cfg["noupx"] = bool(self._opt_noupx.isChecked())
+            if hasattr(self, "_opt_main_only") and self._opt_main_only is not None:
+                cfg["main_only"] = bool(self._opt_main_only.isChecked())
+            if hasattr(self, "_opt_debug") and self._opt_debug is not None:
+                cfg["debug"] = bool(self._opt_debug.isChecked())
+            if (
+                hasattr(self, "_output_dir_input")
+                and self._output_dir_input is not None
+            ):
+                cfg["output_dir"] = self._output_dir_input.text().strip()
+            if hasattr(self, "_selected_icon") and self._selected_icon:
+                cfg["selected_icon"] = self._selected_icon
+            if hasattr(self, "_data_files") and isinstance(self._data_files, list):
+                cfg["data_files"] = list(self._data_files)
+            return cfg
+        except Exception:
+            return {}
+
+    def set_config(self, gui, cfg: dict) -> None:
+        """Apply a config dict to PyInstaller UI widgets."""
+        if not isinstance(cfg, dict):
+            return
+        try:
+            if (
+                hasattr(self, "_opt_onefile")
+                and self._opt_onefile is not None
+                and "onefile" in cfg
+            ):
+                self._opt_onefile.setChecked(bool(cfg.get("onefile")))
+            if (
+                hasattr(self, "_opt_windowed")
+                and self._opt_windowed is not None
+                and "windowed" in cfg
+            ):
+                self._opt_windowed.setChecked(bool(cfg.get("windowed")))
+            if (
+                hasattr(self, "_opt_noconfirm")
+                and self._opt_noconfirm is not None
+                and "noconfirm" in cfg
+            ):
+                self._opt_noconfirm.setChecked(bool(cfg.get("noconfirm")))
+            if (
+                hasattr(self, "_opt_clean")
+                and self._opt_clean is not None
+                and "clean" in cfg
+            ):
+                self._opt_clean.setChecked(bool(cfg.get("clean")))
+            if (
+                hasattr(self, "_opt_noupx")
+                and self._opt_noupx is not None
+                and "noupx" in cfg
+            ):
+                self._opt_noupx.setChecked(bool(cfg.get("noupx")))
+            if (
+                hasattr(self, "_opt_main_only")
+                and self._opt_main_only is not None
+                and "main_only" in cfg
+            ):
+                self._opt_main_only.setChecked(bool(cfg.get("main_only")))
+            if (
+                hasattr(self, "_opt_debug")
+                and self._opt_debug is not None
+                and "debug" in cfg
+            ):
+                self._opt_debug.setChecked(bool(cfg.get("debug")))
+            if (
+                hasattr(self, "_output_dir_input")
+                and self._output_dir_input is not None
+                and "output_dir" in cfg
+            ):
+                val = cfg.get("output_dir") or ""
+                self._output_dir_input.setText(str(val))
+            if "selected_icon" in cfg:
+                self._selected_icon = cfg.get("selected_icon") or None
+            if "data_files" in cfg and isinstance(cfg.get("data_files"), list):
+                self._data_files = list(cfg.get("data_files"))
+        except Exception:
+            pass
+
     def _get_opt(self, name: str):
         """Get option widget from engine instance or GUI."""
         # Try engine instance first (dynamic tabs)

@@ -187,15 +187,37 @@ def compile_all(self) -> None:
     if not engine_id:
         engine_id = "pyinstaller"  # Moteur par défaut
 
-    # Obtenir le moteur (instance)
+    # Sauvegarder la configuration UI de l'engine actif dans le workspace
     try:
-        engine = create(engine_id)
-    except Exception as e:
-        self.log_i18n(
-            f"❌ Erreur création moteur '{engine_id}': {e}",
-            f"❌ Engine creation error '{engine_id}': {e}",
-        )
-        return
+        from Core.EngineConfigManager import save_engine_config_for_gui
+
+        save_engine_config_for_gui(self, engine_id)
+    except Exception:
+        pass
+
+    # Obtenir le moteur (instance)
+    engine = None
+    try:
+        import EngineLoader as engines_loader
+
+        engine = engines_loader.registry.get_instance(engine_id)
+    except Exception:
+        engine = None
+    if engine is None:
+        try:
+            engine = create(engine_id)
+        except Exception as e:
+            self.log_i18n(
+                f"❌ Erreur création moteur '{engine_id}': {e}",
+                f"❌ Engine creation error '{engine_id}': {e}",
+            )
+            return
+    else:
+        try:
+            if not getattr(engine, "_gui", None):
+                engine._gui = self
+        except Exception:
+            pass
 
     self.log_i18n(
         f"🚀 Démarrage de la compilation avec {engine.name}...",
@@ -400,15 +422,37 @@ def start_compilation_process(self, engine_id: str, file_path: str) -> bool:
     Returns:
         True if compilation started, False otherwise
     """
-    # Obtenir le moteur (instance)
+    # Sauvegarder la configuration UI de l'engine actif dans le workspace
     try:
-        engine = create(engine_id)
-    except Exception as e:
-        self.log_i18n(
-            f"❌ Erreur création moteur '{engine_id}': {e}",
-            f"❌ Engine creation error '{engine_id}': {e}",
-        )
-        return False
+        from Core.EngineConfigManager import save_engine_config_for_gui
+
+        save_engine_config_for_gui(self, engine_id)
+    except Exception:
+        pass
+
+    # Obtenir le moteur (instance)
+    engine = None
+    try:
+        import EngineLoader as engines_loader
+
+        engine = engines_loader.registry.get_instance(engine_id)
+    except Exception:
+        engine = None
+    if engine is None:
+        try:
+            engine = create(engine_id)
+        except Exception as e:
+            self.log_i18n(
+                f"❌ Erreur création moteur '{engine_id}': {e}",
+                f"❌ Engine creation error '{engine_id}': {e}",
+            )
+            return False
+    else:
+        try:
+            if not getattr(engine, "_gui", None):
+                engine._gui = self
+        except Exception:
+            pass
 
     # Vérifier les prérequis
     if not engine.ensure_tools_installed(self):

@@ -68,6 +68,14 @@ class CompilerEngine:
         """
         return None
 
+    def get_config(self, gui) -> dict:
+        """Return a JSON-serializable dict of current engine UI options."""
+        return {}
+
+    def set_config(self, gui, cfg: dict) -> None:
+        """Apply a config dict to engine UI widgets."""
+        pass
+
     def environment(self) -> Optional[dict[str, str]]:
         """
         Optionally return a mapping of environment variables to inject for the engine process.
