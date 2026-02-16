@@ -27,6 +27,10 @@ _TAB_INDEX: dict[str, int] = {}
 # Keep live engine instances to support dynamic interactions (e.g., i18n refresh)
 _INSTANCES: dict[str, CompilerEngine] = {}
 
+# Default scroll behavior for engine tabs: wrap in a scroll area so large
+# option panels stay usable without bloating the overall UI.
+_ENGINE_TAB_SCROLL_MAX_HEIGHT: Optional[int] = None
+
 # Language code aliases for normalization
 _LANG_ALIASES: dict[str, str] = {
     "en-us": "en",
@@ -215,6 +219,40 @@ def bind_tabs(gui) -> None:
         # Track if any engine created a tab
         any_engine_tab_created = False
 
+        def _wrap_tab_scroll(widget):
+            try:
+                from PySide6.QtCore import Qt
+                from PySide6.QtWidgets import QFrame, QScrollArea, QSizePolicy
+
+                if isinstance(widget, QScrollArea):
+                    scroll = widget
+                else:
+                    scroll = QScrollArea()
+                    scroll.setWidget(widget)
+
+                scroll.setWidgetResizable(True)
+                scroll.setFrameShape(QFrame.Shape.NoFrame)
+                scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+                scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+                scroll.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+
+                if _ENGINE_TAB_SCROLL_MAX_HEIGHT:
+                    try:
+                        scroll.setMaximumHeight(int(_ENGINE_TAB_SCROLL_MAX_HEIGHT))
+                    except Exception:
+                        pass
+
+                try:
+                    name = widget.objectName()
+                    if name:
+                        scroll.setObjectName(f"{name}_scroll")
+                except Exception:
+                    pass
+
+                return scroll
+            except Exception:
+                return widget
+
         for eid in list(_ORDER):
             try:
                 engine = create(eid)
@@ -228,6 +266,7 @@ def bind_tabs(gui) -> None:
                     continue
                 any_engine_tab_created = True
                 widget, label = pair
+                widget = _wrap_tab_scroll(widget)
                 try:
                     existing = tabs.indexOf(widget)
                 except Exception:
