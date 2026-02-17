@@ -5,6 +5,10 @@ A Qt‑based workshop to compile Python projects with a **pre‑compilation plug
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](http://www.apache.org/licenses/LICENSE-2.0)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
 
+<p align="center">
+  <img src="./logo/logo2.png" alt="drawing" width="70%"/>
+</p>
+
 ## ✨ Signature Capabilities
 
 - **BCASL (Before Compilation Advanced System Loader)**
