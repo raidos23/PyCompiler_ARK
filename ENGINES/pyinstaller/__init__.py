@@ -241,9 +241,7 @@ class PyInstallerEngine(CompilerEngine):
             # Noconfirm option
             self._opt_noconfirm = QCheckBox("No confirm")
             self._opt_noconfirm.setObjectName("opt_noconfirm_dynamic")
-            self._opt_noconfirm.setToolTip(
-                "Overwrite output without confirmation."
-            )
+            self._opt_noconfirm.setToolTip("Overwrite output without confirmation.")
             form_layout.addRow("Confirmation:", self._opt_noconfirm)
 
             # Clean option
@@ -261,9 +259,7 @@ class PyInstallerEngine(CompilerEngine):
             # Main only option
             self._opt_main_only = QCheckBox("Main only")
             self._opt_main_only.setObjectName("opt_main_only_dynamic")
-            self._opt_main_only.setToolTip(
-                "Build only main.py or app.py if present."
-            )
+            self._opt_main_only.setToolTip("Build only main.py or app.py if present.")
             form_layout.addRow("Fichiers:", self._opt_main_only)
 
             layout.addLayout(form_layout)
