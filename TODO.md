@@ -10,7 +10,8 @@
   - [ ] `_connect_signals`
   - [ ] `_setup_compiler_tabs`
   - [ ] `_show_initial_help_message`
-- [ ] Add docstrings to all functions
+- [ ] Add english docstrings to all functions ( and you do a comment who is french version
+      of docstring for french developper)and do french several comment(all docstring must be in english and all comment mut be in french)
 - [ ] Simplify try-except blocks where possible
 - [ ] Organize code logically within the file
 - [ ] Test UI initialization after refactoring
