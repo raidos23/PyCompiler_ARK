@@ -14,3 +14,14 @@
 - [ ] Simplify try-except blocks where possible
 - [ ] Organize code logically within the file
 - [ ] Test UI initialization after refactoring
+
+
+# Amélioration de la logique de compatibilité
+
+## Tasks
+# fichier concerné : Core/compatibility.py
+
+-[ ] lancer une recherche dynamique des version au lieuu de les coder en dur dans le source code
+- [] refactoriser le fichier concerné
+- [ ] deporter le apply lnguage vers
+     i18n.py pour centraliser les competence, importation depuis Core/UiFeatures.py
