@@ -618,11 +618,11 @@ def launch_main_application() -> int:
         except Exception:
             splash = None
         if splash is not None:
-            delay_ms = 3500
+            delay_ms = 4000
             try:
-                delay_ms = int(os.environ.get("PYCOMPILER_SPLASH_DELAY_MS", "3500"))
+                delay_ms = int(os.environ.get("PYCOMPILER_SPLASH_DELAY_MS", "4000"))
             except Exception:
-                delay_ms = 3500
+                delay_ms = 4000
 
             def _launch_main():
                 try:
