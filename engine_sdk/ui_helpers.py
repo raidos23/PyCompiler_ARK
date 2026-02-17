@@ -48,7 +48,10 @@ def add_output_dir(
 
 
 def add_form_checkbox(
-    form, row_label: str, checkbox_label: str | None = None, object_name: str | None = None
+    form,
+    row_label: str,
+    checkbox_label: str | None = None,
+    object_name: str | None = None,
 ) -> QCheckBox:
     """Add a labeled checkbox row to a QFormLayout."""
     cb = QCheckBox(checkbox_label or row_label)

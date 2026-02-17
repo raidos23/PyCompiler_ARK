@@ -423,14 +423,20 @@ class NuitkaEngine(CompilerEngine):
                 self._nuitka_disable_console.setText(
                     lang_data["disable_console_checkbox"]
                 )
-            if hasattr(self, "_nuitka_disable_console") and "tt_disable_console" in lang_data:
+            if (
+                hasattr(self, "_nuitka_disable_console")
+                and "tt_disable_console" in lang_data
+            ):
                 self._nuitka_disable_console.setToolTip(lang_data["tt_disable_console"])
             if (
                 hasattr(self, "_nuitka_show_progress")
                 and "show_progress_checkbox" in lang_data
             ):
                 self._nuitka_show_progress.setText(lang_data["show_progress_checkbox"])
-            if hasattr(self, "_nuitka_show_progress") and "tt_show_progress" in lang_data:
+            if (
+                hasattr(self, "_nuitka_show_progress")
+                and "tt_show_progress" in lang_data
+            ):
                 self._nuitka_show_progress.setToolTip(lang_data["tt_show_progress"])
             if hasattr(self, "_nuitka_add_data") and "add_data_button" in lang_data:
                 self._nuitka_add_data.setText(lang_data["add_data_button"])
