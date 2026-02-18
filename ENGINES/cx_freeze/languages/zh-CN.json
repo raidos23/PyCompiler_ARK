@@ -4,11 +4,9 @@
     "name": "中文 (简体)"
   },
   "tab_label": "CX_Freeze",
-  "mode_label": "模式:",
-  "onefile_checkbox": "Onefile",
   "console_label": "控制台:",
-  "windowed_checkbox": "Windowed",
-  "icon_button": "🎨 选择图标 (.ico)",
+  "windowed_checkbox": "无控制台",
+  "icon_button": "选择图标 (.ico)",
   "output_placeholder": "输出目录",
   "tt_windowed": "Disable the console window."
 }

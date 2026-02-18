@@ -4,11 +4,9 @@
     "name": "Français"
   },
   "tab_label": "CX_Freeze",
-  "mode_label": "Mode :",
-  "onefile_checkbox": "Onefile",
   "console_label": "Console :",
-  "windowed_checkbox": "Windowed",
-  "icon_button": "🎨 Choisir une icône (.ico)",
+  "windowed_checkbox": "Sans console",
+  "icon_button": "Choisir une icone (.ico)",
   "output_placeholder": "Dossier de sortie",
   "tt_windowed": "Désactiver la fenêtre console."
 }
