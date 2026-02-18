@@ -6,6 +6,9 @@ on:
       - 'v*.*.*'
   workflow_dispatch:
 
+env:
+  PYCOMPILER_BINARY_BUILD_CMD: ''
+
 jobs:
   build:
     name: Build release artifacts (${{ matrix.os }})
@@ -33,14 +36,17 @@ jobs:
         run: python -m pip install -r requirements.txt
 
       - name: Install build tooling
-        run: python -m pip install build pip-licenses
+        run: python -m pip install pip-licenses
 
-      - name: Build distributions (sdist+wheel) if packaging configured
-        if: >-
-          hashFiles('pyproject.toml') != '' ||
-          hashFiles('setup.cfg') != '' ||
-          hashFiles('setup.py') != ''
-        run: python -m build --sdist --wheel
+      - name: Build binary (optional)
+        shell: bash
+        run: |
+          if [ -n "${PYCOMPILER_BINARY_BUILD_CMD:-}" ]; then
+            echo "Running binary build command: $PYCOMPILER_BINARY_BUILD_CMD"
+            bash -lc "$PYCOMPILER_BINARY_BUILD_CMD"
+          else
+            echo "No binary build command configured."
+          fi
 
       - name: Generate third-party licenses (if requirements)
         if: hashFiles('requirements.txt') != ''
