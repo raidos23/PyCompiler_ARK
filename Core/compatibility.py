@@ -22,8 +22,9 @@ with the current version of PyCompiler ARK++.
 
 from __future__ import annotations
 
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, List, Tuple
 from dataclasses import dataclass
+import importlib
 
 
 @dataclass
@@ -57,6 +58,105 @@ def parse_version(version_string: str) -> Tuple[int, int, int]:
         return (0, 0, 0)
 
 
+def _is_unknown_version(value: str | None) -> bool:
+    if value is None:
+        return True
+    if not isinstance(value, str):
+        return True
+    return value.strip().lower() in ("", "unknown", "none", "n/a")
+
+
+def _stringify_version(value: object) -> str:
+    if value is None:
+        return "unknown"
+    if isinstance(value, str):
+        return value.strip() or "unknown"
+    try:
+        return str(value).strip() or "unknown"
+    except Exception:
+        return "unknown"
+
+
+def _get_meta_value(meta: object, key: str) -> str | None:
+    try:
+        if meta is None:
+            return None
+        if isinstance(meta, dict):
+            return meta.get(key)
+        return getattr(meta, key, None)
+    except Exception:
+        return None
+
+
+def _resolve_module_version(component: object) -> str | None:
+    try:
+        module_name = getattr(component, "__module__", None)
+        if not module_name:
+            return None
+        module = importlib.import_module(module_name)
+        version = getattr(module, "__version__", None)
+        return _stringify_version(version)
+    except Exception:
+        return None
+
+
+def _resolve_component_name(component: object, meta: object, fallback: str) -> str:
+    for cand in (
+        _get_meta_value(meta, "name"),
+        getattr(component, "name", None),
+        getattr(component, "id", None),
+        getattr(component, "__name__", None),
+    ):
+        if isinstance(cand, str) and cand.strip():
+            return cand.strip()
+    return fallback
+
+
+def _resolve_component_version(component: object, meta: object) -> str:
+    for cand in (
+        _get_meta_value(meta, "version"),
+        getattr(component, "version", None),
+        getattr(component, "__version__", None),
+        _resolve_module_version(component),
+    ):
+        ver = _stringify_version(cand)
+        if not _is_unknown_version(ver):
+            return ver
+    return "unknown"
+
+
+def _resolve_required_core_version(component: object, meta: object) -> str:
+    for cand in (
+        getattr(component, "required_core_version", None),
+        _get_meta_value(meta, "required_core_version"),
+    ):
+        ver = _stringify_version(cand)
+        if not _is_unknown_version(ver):
+            return ver
+    return "unknown"
+
+
+def _resolve_current_core_version(current_core_version: str | None) -> str:
+    if not _is_unknown_version(current_core_version):
+        return _stringify_version(current_core_version)
+    try:
+        from .allversion import get_core_version
+
+        version = get_core_version()
+        if not _is_unknown_version(version):
+            return _stringify_version(version)
+    except Exception:
+        pass
+    try:
+        from . import __version__
+
+        if not _is_unknown_version(__version__):
+            return _stringify_version(__version__)
+    except Exception:
+        pass
+    return "unknown"
+
+
 def compare_versions(current: str, required: str, mode: str = "gte") -> bool:
     """
     Compare two version strings.
@@ -69,6 +169,11 @@ def compare_versions(current: str, required: str, mode: str = "gte") -> bool:
     Returns:
         True if the comparison is satisfied, False otherwise
     """
+    if _is_unknown_version(required):
+        return True
+    if _is_unknown_version(current):
+        return False
+
     curr_tuple = parse_version(current)
     req_tuple = parse_version(required)
 
@@ -82,12 +187,41 @@ def compare_versions(current: str, required: str, mode: str = "gte") -> bool:
         return curr_tuple <= req_tuple
     elif mode == "lt":
         return curr_tuple < req_tuple
-    else:
-        return False
+    return False
+
+
+def _build_compat_message(
+    component_label: str,
+    component_name: str,
+    component_version: str,
+    required_core_version: str,
+    current_core_version: str,
+    is_compatible: bool,
+) -> str:
+    display_version = component_version if component_version else "unknown"
+    if _is_unknown_version(required_core_version):
+        return (
+            f"{component_label} '{component_name}' (v{display_version}) "
+            f"has no minimum Core requirement (current: v{current_core_version})"
+        )
+    if _is_unknown_version(current_core_version):
+        return (
+            f"{component_label} '{component_name}' (v{display_version}) requires "
+            f"Core v{required_core_version} or higher (current: unknown)"
+        )
+    if is_compatible:
+        return (
+            f"{component_label} '{component_name}' (v{display_version}) is compatible "
+            f"with Core v{current_core_version}"
+        )
+    return (
+        f"{component_label} '{component_name}' (v{display_version}) requires "
+        f"Core v{required_core_version} or higher (current: v{current_core_version})"
+    )
 
 
 def check_engine_compatibility(
-    engine_class, current_core_version: str
+    engine_class, current_core_version: str | None = None
 ) -> CompatibilityResult:
     """
     Check if an engine is compatible with the current core version.
@@ -99,19 +233,21 @@ def check_engine_compatibility(
     Returns:
         CompatibilityResult with compatibility information
     """
-    engine_name = getattr(engine_class, "name", "Unknown Engine")
-    engine_id = getattr(engine_class, "id", "unknown")
-
-    # Check if engine has version metadata
-    engine_version = getattr(engine_class, "version", "1.0.0")
-    required_core_version = getattr(engine_class, "required_core_version", "1.0.0")
+    meta = getattr(engine_class, "meta", None)
+    engine_name = _resolve_component_name(engine_class, meta, "Unknown Engine")
+    engine_version = _resolve_component_version(engine_class, meta)
+    required_core_version = _resolve_required_core_version(engine_class, meta)
+    current_core_version = _resolve_current_core_version(current_core_version)
 
     is_compatible = compare_versions(current_core_version, required_core_version, "gte")
 
-    message = (
-        f"Engine '{engine_name}' (v{engine_version}) is compatible with Core v{current_core_version}"
-        if is_compatible
-        else f"Engine '{engine_name}' (v{engine_version}) requires Core v{required_core_version} or higher (current: v{current_core_version})"
+    message = _build_compat_message(
+        "Engine",
+        engine_name,
+        engine_version,
+        required_core_version,
+        current_core_version,
+        is_compatible,
     )
 
     return CompatibilityResult(
@@ -124,7 +260,7 @@ def check_engine_compatibility(
 
 
 def check_plugin_compatibility(
-    plugin_class, current_core_version: str
+    plugin_class, current_core_version: str | None = None
 ) -> CompatibilityResult:
     """
     Check if a plugin is compatible with the current core version.
@@ -136,27 +272,21 @@ def check_plugin_compatibility(
     Returns:
         CompatibilityResult with compatibility information
     """
-    # Try to get plugin metadata
-    try:
-        meta = getattr(plugin_class, "meta", None)
-        if meta:
-            plugin_name = getattr(meta, "name", "Unknown Plugin")
-            plugin_version = getattr(meta, "version", "1.0.0")
-        else:
-            plugin_name = getattr(plugin_class, "name", "Unknown Plugin")
-            plugin_version = getattr(plugin_class, "version", "1.0.0")
-    except Exception:
-        plugin_name = "Unknown Plugin"
-        plugin_version = "1.0.0"
-
-    required_core_version = getattr(plugin_class, "required_core_version", "1.0.0")
+    meta = getattr(plugin_class, "meta", None)
+    plugin_name = _resolve_component_name(plugin_class, meta, "Unknown Plugin")
+    plugin_version = _resolve_component_version(plugin_class, meta)
+    required_core_version = _resolve_required_core_version(plugin_class, meta)
+    current_core_version = _resolve_current_core_version(current_core_version)
 
     is_compatible = compare_versions(current_core_version, required_core_version, "gte")
 
-    message = (
-        f"Plugin '{plugin_name}' (v{plugin_version}) is compatible with Core v{current_core_version}"
-        if is_compatible
-        else f"Plugin '{plugin_name}' (v{plugin_version}) requires Core v{required_core_version} or higher (current: v{current_core_version})"
+    message = _build_compat_message(
+        "Plugin",
+        plugin_name,
+        plugin_version,
+        required_core_version,
+        current_core_version,
+        is_compatible,
     )
 
     return CompatibilityResult(
@@ -182,13 +312,26 @@ def check_sdk_compatibility(
     Returns:
         CompatibilityResult with compatibility information
     """
+    sdk_version = _stringify_version(sdk_version)
+    required_version = _stringify_version(required_version)
     is_compatible = compare_versions(sdk_version, required_version, "gte")
 
-    message = (
-        f"{sdk_name} v{sdk_version} is compatible with required version v{required_version}"
-        if is_compatible
-        else f"{sdk_name} v{sdk_version} does not meet minimum requirement v{required_version}"
-    )
+    if _is_unknown_version(required_version):
+        message = (
+            f"{sdk_name} v{sdk_version} has no minimum required version specified."
+        )
+    elif _is_unknown_version(sdk_version):
+        message = (
+            f"{sdk_name} version is unknown; requires v{required_version} or higher."
+        )
+    elif is_compatible:
+        message = (
+            f"{sdk_name} v{sdk_version} is compatible with required version v{required_version}"
+        )
+    else:
+        message = (
+            f"{sdk_name} v{sdk_version} does not meet minimum requirement v{required_version}"
+        )
 
     return CompatibilityResult(
         is_compatible=is_compatible,
@@ -200,7 +343,7 @@ def check_sdk_compatibility(
 
 
 def validate_engines(
-    engines: List, current_core_version: str
+    engines: List, current_core_version: str | None = None
 ) -> Dict[str, CompatibilityResult]:
     """
     Validate a list of engines for compatibility.
@@ -213,9 +356,10 @@ def validate_engines(
         Dictionary mapping engine names to CompatibilityResult
     """
     results = {}
+    resolved_core = _resolve_current_core_version(current_core_version)
     for engine in engines:
         try:
-            result = check_engine_compatibility(engine, current_core_version)
+            result = check_engine_compatibility(engine, resolved_core)
             engine_name = getattr(engine, "name", "Unknown")
             results[engine_name] = result
         except Exception as e:
@@ -231,7 +375,7 @@ def validate_engines(
 
 
 def validate_plugins(
-    plugins: List, current_core_version: str
+    plugins: List, current_core_version: str | None = None
 ) -> Dict[str, CompatibilityResult]:
     """
     Validate a list of plugins for compatibility.
@@ -244,9 +388,10 @@ def validate_plugins(
         Dictionary mapping plugin names to CompatibilityResult
     """
     results = {}
+    resolved_core = _resolve_current_core_version(current_core_version)
     for plugin in plugins:
         try:
-            result = check_plugin_compatibility(plugin, current_core_version)
+            result = check_plugin_compatibility(plugin, resolved_core)
             plugin_name = result.component_name
             results[plugin_name] = result
         except Exception as e:

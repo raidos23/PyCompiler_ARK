@@ -337,6 +337,57 @@ def get_current_language_sync() -> str:
         return "en"
 
 
+def apply_language(self, lang_display: str) -> None:
+    """Applique la langue sélectionnée (centralisé)."""
+    from .Globals import _run_coro_async
+
+    async def _do():
+        code = (
+            await resolve_system_language()
+            if lang_display == "System"
+            else await normalize_lang_pref(lang_display)
+        )
+        tr = await get_translations(code)
+        return code, tr
+
+    def _on_result(res):
+        if isinstance(res, Exception):
+            return
+        code, tr = res
+        _apply_main_app_translations(self, tr)
+        # Notifier les moteurs pour rafraîchir leurs libellés
+        try:
+            for cb in getattr(self, "_language_refresh_callbacks", []) or []:
+                try:
+                    cb()
+                except Exception:
+                    pass
+            try:
+                import EngineLoader as engines_loader
+
+                engines_loader.registry.apply_translations(self, tr)
+            except Exception:
+                pass
+        except Exception:
+            pass
+        meta = tr.get("_meta", {})
+        self.current_language = meta.get("name", lang_display)
+        self.language = lang_display
+        try:
+            self.save_preferences()
+        except Exception:
+            pass
+        try:
+            self.log_i18n(
+                f"🌐 Langue appliquée : {self.current_language}",
+                f"🌐 Language applied: {self.current_language}",
+            )
+        except Exception:
+            pass
+
+    _run_coro_async(_do(), _on_result, ui_owner=self)
+
+
 # PyCompiler ARK main GUI translation - FUSED VERSION
 def _apply_main_app_translations(self, tr: dict[str, object]) -> None:
     """Apply translations to main app UI elements.

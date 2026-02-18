@@ -13,11 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import asyncio
 import os
-import sys
 
 from PySide6.QtCore import QFile, Qt
+from PySide6.QtGui import QPixmap
 from PySide6.QtUiTools import QUiLoader
 from PySide6.QtWidgets import (
     QLabel,
@@ -26,29 +25,18 @@ from PySide6.QtWidgets import (
     QProgressBar,
     QPushButton,
     QTextEdit,
-    QVBoxLayout,
 )
 
-from Core import i18n as _i18n
-from .i18n import _apply_main_app_translations, show_language_dialog
-
-# Import du module Compiler
-from Core.Compiler import (
-    MainProcess,
-    ProcessState,
-    CompilationStatus,
-    kill_process_tree,
-    get_process_info,
-)
+from .i18n import show_language_dialog
 
 
 def _detect_system_color_scheme() -> str:
     """
-    Retourne "dark" ou "light" selon le thème système détecté.
-    - Windows: registre AppsUseLightTheme (0 = dark, 1 = light)
-    - macOS: defaults read -g AppleInterfaceStyle (Dark = dark)
-    - Linux (GNOME/KDE): gsettings ou kdeglobals, repli sur GTK_THEME
-    En cas d'échec, renvoie "light".
+    Retourne "sombre" ou "clair" selon le thème système détecté.
+    - Windows : registre AppsUseLightTheme (0 = sombre, 1 = clair)
+    - macOS : defaults read -g AppleInterfaceStyle (Dark = sombre)
+    - Linux (GNOME/KDE) : gsettings ou kdeglobals, repli sur GTK_THEME
+    En cas d'échec, renvoie "clair".
     """
     try:
         import os as _os
@@ -71,14 +59,14 @@ def _detect_system_color_scheme() -> str:
                     text=True,
                 )
                 if out.returncode == 0 and out.stdout:
-                    # Value like: REG_DWORD    0x1 (light) or 0x0 (dark)
+                    # Valeur comme : REG_DWORD    0x1 (clair) ou 0x0 (sombre)
                     val = out.stdout.lower()
                     if "0x0" in val or " 0x0\n" in val:
-                        return "dark"
-                    return "light"
+                        return "sombre"
+                    return "clair"
             except Exception:
                 pass
-            return "light"
+            return "clair"
         # macOS
         if sysname == "Darwin":
             try:
@@ -88,98 +76,101 @@ def _detect_system_color_scheme() -> str:
                     text=True,
                 )
                 if out.returncode == 0 and "dark" in out.stdout.strip().lower():
-                    return "dark"
+                    return "sombre"
             except Exception:
                 pass
-            return "light"
+            return "clair"
         # Linux (GNOME/KDE)
         if sysname == "Linux":
-            # GNOME 42+: color-scheme
+            # GNOME 42+ : color-scheme
             try:
                 out = subprocess.run(
-                    ["gsettings", "get", "org.gnome.desktop.interface", "color-scheme"],
+                    [
+                        "gsettings",
+                        "get",
+                        "org.gnome.desktop.interface",
+                        "color-scheme",
+                    ],
                     capture_output=True,
                     text=True,
                 )
                 if out.returncode == 0 and "prefer-dark" in out.stdout:
-                    return "dark"
+                    return "sombre"
             except Exception:
                 pass
-            # GNOME: gtk-theme contains "dark"
+            # GNOME : gtk-theme contient "dark"
             try:
                 out = subprocess.run(
-                    ["gsettings", "get", "org.gnome.desktop.interface", "gtk-theme"],
+                    [
+                        "gsettings",
+                        "get",
+                        "org.gnome.desktop.interface",
+                        "gtk-theme",
+                    ],
                     capture_output=True,
                     text=True,
                 )
                 if out.returncode == 0 and "dark" in out.stdout.lower():
-                    return "dark"
+                    return "sombre"
             except Exception:
                 pass
-            # KDE: kdeglobals
+            # KDE : kdeglobals
             try:
                 kdeglobals = _os.path.expanduser("~/.config/kdeglobals")
                 if _os.path.isfile(kdeglobals):
                     with open(kdeglobals, encoding="utf-8", errors="ignore") as f:
                         txt = f.read().lower()
                     if "colorscheme" in txt and "dark" in txt:
-                        return "dark"
+                        return "sombre"
             except Exception:
                 pass
-            # Env GTK_THEME
+            # Variable d'environnement GTK_THEME
             try:
                 gtk_theme = _os.environ.get("GTK_THEME", "").lower()
                 if gtk_theme and "dark" in gtk_theme:
-                    return "dark"
+                    return "sombre"
             except Exception:
                 pass
-            return "light"
+            return "clair"
         # Autres systèmes
-        return "light"
+        return "clair"
     except Exception:
-        return "light"
+        return "clair"
 
 
-def init_ui(self):
+# =========================================================================
+# INITIALISATION UI
+# =========================================================================
+
+
+def _load_ui_file(self) -> None:
+    """Charge le fichier .ui et installe le widget central."""
     loader = QUiLoader()
     ui_path = os.path.join(
         os.path.dirname(os.path.abspath(__file__)), "..", "ui", "ui_design.ui"
     )
     ui_file = QFile(os.path.abspath(ui_path))
-    ui_file.open(QFile.ReadOnly)
+    if not ui_file.open(QFile.ReadOnly):
+        raise RuntimeError(f"Impossible d'ouvrir le fichier UI : {ui_path}")
     self.ui = loader.load(ui_file, self)
     ui_file.close()
+    if self.ui is None:
+        raise RuntimeError(f"Échec du chargement du fichier UI : {ui_path}")
+    self.setCentralWidget(self.ui)
 
-    # Supprimer tous les styles inline du .ui pour laisser le style global s'appliquer
-    try:
-        from PySide6.QtWidgets import QWidget
 
-        widgets = [self.ui] + self.ui.findChildren(QWidget)
-        for w in widgets:
-            if hasattr(w, "styleSheet") and w.styleSheet():
-                w.setStyleSheet("")
-    except Exception:
-        pass
+def _clear_inline_styles(self) -> None:
+    """Supprime les styles inline pour laisser le style global s'appliquer."""
+    from PySide6.QtWidgets import QWidget
 
-    # Charger le thème (light/dark) selon préférence ou système, avec repli
-    try:
-        pref = getattr(self, "theme", "System")
-        apply_theme(self, pref)
-        # Après application, sauvegarder la préférence pour persistance immédiate
-        try:
-            if hasattr(self, "save_preferences"):
-                self.save_preferences()
-        except Exception:
-            pass
-    except Exception as _e:
-        # En cas d'échec de chargement du style, on loggue sans casser l'UI
-        try:
-            if hasattr(self, "log") and self.log:
-                self.log.append(f"⚠️ Échec application du thème: {_e}")
-        except Exception:
-            pass
+    widgets = [self.ui] + self.ui.findChildren(QWidget)
+    for widget in widgets:
+        if widget.styleSheet():
+            widget.setStyleSheet("")
 
-    # Connecter les dialogs à l'application pour synchronisation du thème
+
+def _connect_dialogs_to_app(self) -> None:
+    """Connecte les dialogues à l'application pour synchroniser le thème."""
     try:
         from Core.WidgetsCreator import connect_to_app
 
@@ -187,28 +178,93 @@ def init_ui(self):
     except Exception:
         pass
 
-    # Définir l'UI chargée comme widget central de QMainWindow
-    self.setCentralWidget(self.ui)
 
-    # Récupérer les widgets depuis l'UI chargée
-    self.btn_select_folder = self.ui.findChild(QPushButton, "btn_select_folder")
-    self.venv_button = self.ui.findChild(QPushButton, "venv_button")
-    self.venv_label = self.ui.findChild(QLabel, "venv_label")
-    self.label_folder = self.ui.findChild(QLabel, "label_folder")
-    self.label_workspace_status = self.ui.findChild(QLabel, "label_workspace_status")
-    self.label_workspace_section = self.ui.findChild(QLabel, "label_workspace_section")
-    self.label_files_section = self.ui.findChild(QLabel, "label_files_section")
-    self.label_logs_section = self.ui.findChild(QLabel, "label_logs_section")
-    self.file_list = self.ui.findChild(QListWidget, "file_list")
-    self.file_filter_input = self.ui.findChild(QLineEdit, "file_filter_input")
-    self.btn_select_files = self.ui.findChild(QPushButton, "btn_select_files")
-    self.btn_remove_file = self.ui.findChild(QPushButton, "btn_remove_file")
-    self.btn_clear_workspace = self.ui.findChild(QPushButton, "btn_clear_workspace")
-    self.compile_btn = self.ui.findChild(QPushButton, "compile_btn")
-    self.cancel_btn = self.ui.findChild(QPushButton, "cancel_btn")
-    self.btn_help = self.ui.findChild(QPushButton, "btn_help")
+def _apply_initial_theme(self) -> None:
+    """Applique le thème initial selon les préférences utilisateur."""
+    pref = getattr(self, "theme", "System")
+    apply_theme(self, pref)
+    try:
+        if hasattr(self, "save_preferences"):
+            self.save_preferences()
+    except Exception:
+        pass
 
-    # Statut workspace dans l'en-tête
+
+def _setup_sidebar_logo(self) -> None:
+    """Configure le logo latéral si un QLabel dédié est présent dans l'UI."""
+    if not getattr(self, "ui", None):
+        return
+    candidates = [
+        "sidebar_logo",
+        "label_logo",
+        "label_app_logo",
+        "logo_label",
+    ]
+    logo_label = None
+    for name in candidates:
+        logo_label = self.ui.findChild(QLabel, name)
+        if logo_label is not None:
+            break
+    if logo_label is None:
+        return
+    logo_path = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), "..", "logo", "logo2.png"
+    )
+    if not os.path.isfile(logo_path):
+        return
+    pixmap = QPixmap(logo_path)
+    if pixmap.isNull():
+        return
+    logo_label.setPixmap(pixmap)
+    logo_label.setAlignment(Qt.AlignCenter)
+    logo_label.setScaledContents(True)
+
+
+def _setup_widgets(self) -> None:
+    """Récupère les widgets depuis l'UI et initialise les attributs."""
+    if not getattr(self, "ui", None):
+        return
+
+    def _find(cls, name: str):
+        """Raccourci pour trouver un widget par nom."""
+        return self.ui.findChild(cls, name)
+
+    self.btn_select_folder = _find(QPushButton, "btn_select_folder")
+    self.venv_button = _find(QPushButton, "venv_button")
+    self.venv_label = _find(QLabel, "venv_label")
+    self.label_folder = _find(QLabel, "label_folder")
+    self.label_workspace_status = _find(QLabel, "label_workspace_status")
+    self.label_workspace_section = _find(QLabel, "label_workspace_section")
+    self.label_files_section = _find(QLabel, "label_files_section")
+    self.label_logs_section = _find(QLabel, "label_logs_section")
+
+    self.file_list = _find(QListWidget, "file_list")
+    self.file_filter_input = _find(QLineEdit, "file_filter_input")
+
+    self.btn_select_files = _find(QPushButton, "btn_select_files")
+    self.btn_remove_file = _find(QPushButton, "btn_remove_file")
+    self.btn_clear_workspace = _find(QPushButton, "btn_clear_workspace")
+
+    self.compile_btn = _find(QPushButton, "compile_btn")
+    self.cancel_btn = _find(QPushButton, "cancel_btn")
+    self.btn_help = _find(QPushButton, "btn_help")
+
+    self.btn_suggest_deps = _find(QPushButton, "btn_suggest_deps")
+    self.btn_bc_loader = _find(QPushButton, "btn_bc_loader")
+    self.btn_acasl_loader = _find(QPushButton, "btn_acasl_loader")
+
+    self.progress = _find(QProgressBar, "progress")
+    self.log = _find(QTextEdit, "log")
+    self.btn_export_config = _find(QPushButton, "btn_export_config")
+    self.btn_import_config = _find(QPushButton, "btn_import_config")
+    self.btn_show_stats = _find(QPushButton, "btn_show_stats")
+    self.select_lang = _find(QPushButton, "select_lang")
+    self.select_theme = _find(QPushButton, "select_theme")
+
+    if self.btn_acasl_loader:
+        self.btn_acasl_loader.hide()
+        self.btn_acasl_loader.setEnabled(False)
+
     if self.label_workspace_status:
         try:
             ws = getattr(self, "workspace_dir", None)
@@ -222,27 +278,18 @@ def init_ui(self):
                 )
         except Exception:
             pass
-    self.btn_suggest_deps = self.ui.findChild(QPushButton, "btn_suggest_deps")
-    self.btn_bc_loader = self.ui.findChild(QPushButton, "btn_bc_loader")
-    self.btn_acasl_loader = self.ui.findChild(QPushButton, "btn_acasl_loader")
-    if self.btn_acasl_loader:
-        try:
-            self.btn_acasl_loader.hide()
-            self.btn_acasl_loader.setEnabled(False)
-        except Exception:
-            pass
-    # Onglets compilateur (correction robuste)
+
+
+def _setup_compiler_tabs(self) -> None:
+    """Configure les onglets de compilation et charge les moteurs."""
     from PySide6.QtWidgets import QTabWidget, QWidget
 
-    # Ensure engines package is imported to register engines dynamically
-    try:
-        pass  # triggers discovery
-    except Exception:
-        pass
+    if not getattr(self, "ui", None):
+        return
+
     self.compiler_tabs = self.ui.findChild(QTabWidget, "compiler_tabs")
-    # Hello tab is now the default tab - it's defined in the UI
     self.tab_hello = self.ui.findChild(QWidget, "tab_hello")
-    # Lier dynamiquement les onglets des moteurs plug-and-play (only if compiler_tabs exists)
+
     if self.compiler_tabs:
         try:
             import EngineLoader as engines_loader
@@ -251,118 +298,115 @@ def init_ui(self):
         except Exception:
             pass
 
-    self.compile_btn = self.ui.findChild(QPushButton, "compile_btn")
-    self.cancel_btn = self.ui.findChild(QPushButton, "cancel_btn")
-    self.progress = self.ui.findChild(QProgressBar, "progress")
-    self.log = self.ui.findChild(QTextEdit, "log")
-    self.btn_export_config = self.ui.findChild(QPushButton, "btn_export_config")
-    self.btn_import_config = self.ui.findChild(QPushButton, "btn_import_config")
-    self.btn_help = self.ui.findChild(QPushButton, "btn_help")
 
-    # Connecter les signaux (only for widgets that exist in the UI)
-    self.btn_select_folder.clicked.connect(self.select_workspace)
-    self.venv_button.clicked.connect(self.select_venv_manually)
-    self.btn_select_files.clicked.connect(self.select_files_manually)
-    self.btn_remove_file.clicked.connect(self.remove_selected_file)
-    self.compile_btn.clicked.connect(self.compile_all)
-    self.cancel_btn.clicked.connect(self.cancel_all_compilations)
+def _connect_signals(self) -> None:
+    """Connecte les signaux des widgets lorsque disponibles."""
+
+    def _connect_clicked(widget, handler) -> None:
+        """Connecte le signal clicked d'un bouton si possible."""
+        if widget is None:
+            return
+        try:
+            widget.clicked.connect(handler)
+        except Exception:
+            pass
+
+    def _connect_text(widget, handler) -> None:
+        """Connecte le signal textChanged d'un champ si possible."""
+        if widget is None:
+            return
+        try:
+            widget.textChanged.connect(handler)
+        except Exception:
+            pass
+
+    _connect_clicked(self.btn_select_folder, self.select_workspace)
+    _connect_clicked(self.venv_button, self.select_venv_manually)
+    _connect_clicked(self.btn_select_files, self.select_files_manually)
+    _connect_clicked(self.btn_remove_file, self.remove_selected_file)
+    _connect_clicked(self.compile_btn, self.compile_all)
+    _connect_clicked(self.cancel_btn, self.cancel_all_compilations)
+
     if self.btn_clear_workspace:
+        _connect_clicked(self.btn_clear_workspace, self.clear_workspace)
+
+    _connect_text(self.file_filter_input, self.apply_file_filter)
+
+    if self.btn_bc_loader:
         try:
-            self.btn_clear_workspace.clicked.connect(self.clear_workspace)
+            from bcasl import open_bc_loader_dialog
+
+            self.btn_bc_loader.clicked.connect(lambda: open_bc_loader_dialog(self))
         except Exception:
             pass
 
-    # Filtre de fichiers
-    if self.file_filter_input:
-        try:
-            self.file_filter_input.textChanged.connect(self.apply_file_filter)
-        except Exception:
-            pass
+    _connect_clicked(self.btn_help, self.show_help_dialog)
 
-    from bcasl import open_bc_loader_dialog
-
-    self.btn_bc_loader.clicked.connect(lambda: open_bc_loader_dialog(self))
-
-    if self.btn_help:
-        self.btn_help.clicked.connect(self.show_help_dialog)
-    # Find btn_show_stats widget if it exists in the UI
-    self.btn_show_stats = self.ui.findChild(QPushButton, "btn_show_stats")
-    if getattr(self, "btn_show_stats", None):
+    if self.btn_show_stats:
         self.btn_show_stats.setToolTip(
             "Afficher les statistiques de compilation (temps, nombre de fichiers, mémoire)"
         )
-        self.btn_show_stats.clicked.connect(self.show_statistics)
-    # Static checkbox widgets are None - options are now in dynamic tabs
-    # No signal connections needed for static widgets
-    # self.custom_args supprimé (widget inutilisé)
-    # Find select_lang widget if it exists in the UI
-    self.select_lang = self.ui.findChild(QPushButton, "select_lang")
-    if getattr(self, "select_lang", None):
+        _connect_clicked(self.btn_show_stats, self.show_statistics)
+
+    if self.select_lang:
         self.select_lang.setToolTip("Choisir la langue de l'interface utilisateur.")
-        try:
-            self.select_lang.clicked.connect(lambda: show_language_dialog(self))
-        except Exception:
-            pass
+        _connect_clicked(self.select_lang, lambda: show_language_dialog(self))
 
-    # Find select_theme widget if it exists in the UI and connect it
-    self.select_theme = self.ui.findChild(QPushButton, "select_theme")
-    if getattr(self, "select_theme", None):
-        try:
-            self.select_theme.clicked.connect(lambda: show_theme_dialog(self))
-        except Exception:
-            pass
+    if self.select_theme:
+        _connect_clicked(self.select_theme, lambda: show_theme_dialog(self))
 
-    # Désactivation croisée des options selon le moteur actif
-    import platform
-
-    def update_compiler_options_enabled():
+    def update_compiler_options_enabled() -> None:
+        """Met à jour l'état des options selon l'onglet actif."""
         if not self.compiler_tabs:
             return
         try:
             import EngineLoader as engines_loader
 
             idx = self.compiler_tabs.currentIndex()
-            engine_id = engines_loader.registry.get_engine_for_tab(idx)
+            engines_loader.registry.get_engine_for_tab(idx)
         except Exception:
-            engine_id = None
+            pass
 
-        # Helper to enable/disable widgets safely
-        def set_enabled_safe(widget, enabled):
-            if widget is None:
-                return
-            try:
-                if enabled:
-                    widget.setEnabled(True)
-                else:
-                    widget.setEnabled(False)
-            except Exception:
-                pass
-
-        # Helper to set checkbox checked state safely
-        def set_checked_safe(widget, checked):
-            if widget is None:
-                return
-            try:
-                widget.setChecked(checked)
-            except Exception:
-                pass
-
-    self.compiler_tabs.currentChanged.connect(update_compiler_options_enabled)
     if self.compiler_tabs:
+        self.compiler_tabs.currentChanged.connect(update_compiler_options_enabled)
         update_compiler_options_enabled()
 
-    # Message d'aide contextuel à la première utilisation
-    if not self.workspace_dir:
-        self.log.append(
-            "Astuce : Commencez par sélectionner un dossier workspace, puis ajoutez vos fichiers Python à compiler. Configurez les options selon vos besoins et cliquez sur Compiler."
-        )
-
-    self.btn_suggest_deps = self.ui.findChild(QPushButton, "btn_suggest_deps")
     if self.btn_suggest_deps:
-        self.btn_suggest_deps.clicked.connect(self.suggest_missing_dependencies)
+        _connect_clicked(self.btn_suggest_deps, self.suggest_missing_dependencies)
+
+
+def _show_initial_help_message(self) -> None:
+    """Affiche un message d'aide si aucun workspace n'est sélectionné."""
+    if not getattr(self, "workspace_dir", None) and getattr(self, "log", None):
+        try:
+            self.log.append(
+                "Astuce : Commencez par sélectionner un dossier workspace, puis ajoutez vos fichiers "
+                "Python à compiler. Configurez les options selon vos besoins et cliquez sur Compiler."
+            )
+        except Exception:
+            pass
+
+
+def init_ui(self) -> None:
+    """Initialise l'interface utilisateur et branche les fonctionnalités."""
+    _load_ui_file(self)
+    _clear_inline_styles(self)
+    _apply_initial_theme(self)
+    _connect_dialogs_to_app(self)
+    _setup_widgets(self)
+    _setup_sidebar_logo(self)
+    _setup_compiler_tabs(self)
+    _connect_signals(self)
+    _show_initial_help_message(self)
+
+
+# =========================================================================
+# THÈMES
+# =========================================================================
 
 
 def _themes_dir() -> str:
+    """Retourne le chemin absolu du dossier themes."""
     return os.path.abspath(
         os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "themes")
     )
@@ -389,17 +433,13 @@ def _list_available_themes() -> list[tuple[str, str]]:
 
 
 def _is_qss_dark(css: str) -> bool:
-    """Heuristic to determine if a QSS stylesheet is dark or light.
-    - Prefer background/background-color/window/base declarations when present
-    - Fallback to all color tokens found
-    - Compute average luminance; return True if dark
-    """
+    """Heuristique pour déterminer si un QSS est sombre ou clair."""
     try:
         import re
 
         if not css or not isinstance(css, str):
             return False
-        # Collect likely background colors first
+        # Collecter d'abord les couleurs de fond les plus probables
         bg_matches = [
             m.group(2).strip()
             for m in re.finditer(
@@ -415,6 +455,7 @@ def _is_qss_dark(css: str) -> bool:
             return False
 
         def _to_rgb(val: str):
+            """Convertit une couleur CSS en tuple RGB."""
             try:
                 v = val.strip()
                 if v.startswith("#"):
@@ -431,7 +472,7 @@ def _is_qss_dark(css: str) -> bool:
                         return None
                     return (r, g, b)
                 if v.lower().startswith("rgb"):
-                    # Support rgb/rgba with optional percentages
+                    # Supporte rgb/rgba avec pourcentages optionnels
                     nums_str = re.findall(r"([0-9.]+%?)", v)[:3]
                     if any(s.endswith("%") for s in nums_str):
                         vals = []
@@ -466,11 +507,12 @@ def _is_qss_dark(css: str) -> bool:
         return False
 
 
-def apply_theme(self, pref: str):
-    """Applique un thème depuis themes.
-    - 'System': détection (dark/light) et sélection d'un .qss correspondant si possible
-    - Sinon: appliquer le .qss dont le nom correspond (insensible à la casse/espaces)
-    - Repli: pas de stylesheet si aucun thème trouvé
+def apply_theme(self, pref: str) -> None:
+    """
+    Applique un thème depuis themes.
+    - "System" : détection (sombre/clair) et sélection d'un .qss correspondant
+    - Sinon : appliquer le .qss dont le nom correspond (insensible à la casse/espaces)
+    - Repli : pas de stylesheet si aucun thème trouvé
     """
     try:
         from PySide6.QtWidgets import QApplication
@@ -480,20 +522,20 @@ def apply_theme(self, pref: str):
         chosen_name = None
 
         if not pref or pref == "System":
-            mode = _detect_system_color_scheme()  # 'dark'/'light'
-            # préférer un fichier contenant le mot-clé
-            key = "dark" if mode == "dark" else "light"
+            mode = _detect_system_color_scheme()  # "sombre" / "clair"
+            # Préférer un fichier contenant le mot-clé
+            key = "dark" if mode == "sombre" else "light"
             for disp, path in candidates:
                 if key in os.path.basename(path).lower():
                     chosen_path = path
                     chosen_name = disp
                     break
-            # repli: premier disponible
+            # Repli : premier disponible
             if not chosen_path and candidates:
                 chosen_name, chosen_path = candidates[0]
         else:
             norm = pref.lower().replace(" ", "").replace("-", "").replace("_", "")
-            # correspondance exacte sur le stem
+            # Correspondance exacte sur le nom de fichier
             for disp, path in candidates:
                 stem = os.path.splitext(os.path.basename(path))[0]
                 stem_n = stem.lower().replace(" ", "").replace("-", "").replace("_", "")
@@ -501,7 +543,7 @@ def apply_theme(self, pref: str):
                     chosen_name = disp
                     chosen_path = path
                     break
-            # sinon, contient
+            # Sinon, correspondance partielle
             if not chosen_path:
                 for disp, path in candidates:
                     if norm in os.path.basename(path).lower().replace(" ", ""):
@@ -517,7 +559,7 @@ def apply_theme(self, pref: str):
         if app:
             app.setStyleSheet(css)
         self.theme = pref or "System"
-        # Met à jour le texte du bouton (ne pas recharger i18n; utiliser la traduction active)
+        # Met à jour le texte du bouton (ne pas recharger i18n)
         if hasattr(self, "select_theme") and self.select_theme:
             try:
                 tr = getattr(self, "_tr", None)
@@ -534,7 +576,7 @@ def apply_theme(self, pref: str):
                         self.select_theme.setText(val)
             except Exception:
                 pass
-        # Log
+        # Journalisation
         if hasattr(self, "log") and self.log:
             if chosen_path:
                 self.log.append(
@@ -552,7 +594,8 @@ def apply_theme(self, pref: str):
             pass
 
 
-def show_theme_dialog(self):
+def show_theme_dialog(self) -> None:
+    """Affiche la boîte de dialogue de sélection de thème."""
     from PySide6.QtWidgets import QInputDialog
 
     themes = _list_available_themes()
