@@ -406,54 +406,9 @@ class UiFeatures:
 
     def apply_language(self, lang_display: str) -> None:
         """Applique la langue sélectionnée."""
-        from .i18n import get_translations, normalize_lang_pref, resolve_system_language
-        from .Globals import _run_coro_async
+        from .i18n import apply_language as _i18n_apply_language
 
-        async def _do():
-            code = (
-                await resolve_system_language()
-                if lang_display == "System"
-                else await normalize_lang_pref(lang_display)
-            )
-            tr = await get_translations(code)
-            return code, tr
-
-        def _on_result(res):
-            if isinstance(res, Exception):
-                return
-            code, tr = res
-            self._apply_main_app_translations(tr)
-            # Notifier les moteurs pour rafraîchir leurs libellés
-            try:
-                for cb in getattr(self, "_language_refresh_callbacks", []) or []:
-                    try:
-                        cb()
-                    except Exception:
-                        pass
-                try:
-                    import EngineLoader as engines_loader
-
-                    engines_loader.registry.apply_translations(self, tr)
-                except Exception:
-                    pass
-            except Exception:
-                pass
-            meta = tr.get("_meta", {})
-            self.current_language = meta.get("name", lang_display)
-            self.language = lang_display
-            try:
-                self.save_preferences()
-            except Exception:
-                pass
-            try:
-                self.log_i18n(
-                    f"🌐 Langue appliquée : {self.current_language}",
-                    f"🌐 Language applied: {self.current_language}",
-                )
-            except Exception:
-                pass
-
-        _run_coro_async(_do(), _on_result, ui_owner=self)
+        _i18n_apply_language(self, lang_display)
 
     def register_language_refresh(self, callback: Callable) -> None:
         """Enregistre un callback pour le rafraîchissement de langue."""
