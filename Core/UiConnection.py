@@ -254,6 +254,7 @@ def _apply_button_icons(self) -> None:
     _set(self.cancel_btn, "icons8-pas-de-synchronisation-50.svg", size=20)
 
     _set(self.btn_select_folder, "icons8-dossier-ouvert-50.svg")
+    _set(self.venv_button, "icons8-dossier-50-2.svg")
     _set(self.btn_select_files, "icons8-document-50.svg")
     _set(self.btn_clear_workspace, "icons8-effacer-50.svg")
     _set(self.btn_remove_file, "icons8-supprimer-50.svg")
