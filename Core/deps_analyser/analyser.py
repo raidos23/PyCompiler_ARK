@@ -18,6 +18,7 @@ import os
 import platform
 import re
 import subprocess
+import yaml
 from importlib.metadata import distribution, PackageNotFoundError
 
 from PySide6.QtCore import QProcess
@@ -30,62 +31,89 @@ from Core.WidgetsCreator import ProgressDialog
 # faire échouer l'application. Les Plugins publiques restent stables; les chemins non
 # implémentés renvoient silencieusement.
 
-# Liste explicite de modules de la bibliothèque standard à exclure
-EXCLUDED_STDLIB = {
-    "sys",
-    "os",
-    "re",
-    "subprocess",
-    "json",
-    "math",
-    "time",
-    "pathlib",
-    "typing",
-    "itertools",
-    "functools",
-    "collections",
-    "asyncio",
-    "importlib",
-    "inspect",
-    "logging",
-    "argparse",
-    "dataclasses",
-    "unittest",
-    "threading",
-    "multiprocessing",
-    "http",
-    "urllib",
-    "email",
-    "socket",
-    "ssl",
-    "hashlib",
-    "hmac",
-    "gzip",
-    "bz2",
-    "lzma",
-    "base64",
-    "shutil",
-    "tempfile",
-    "glob",
-    "fnmatch",
-    "statistics",
-    "pprint",
-    "getpass",
-    "uuid",
-    "enum",
-    "contextlib",
-    "queue",
-    "traceback",
-    "warnings",
-    "gc",
-    "platform",
-    "sysconfig",
-    "pkgutil",
-    "site",
-    "venv",
-    "sqlite3",
-    "tkinter",
-}
+def _default_excluded_stdlib() -> set[str]:
+    return {
+        "sys",
+        "os",
+        "re",
+        "subprocess",
+        "json",
+        "math",
+        "time",
+        "pathlib",
+        "typing",
+        "itertools",
+        "functools",
+        "collections",
+        "asyncio",
+        "importlib",
+        "inspect",
+        "logging",
+        "argparse",
+        "dataclasses",
+        "unittest",
+        "threading",
+        "multiprocessing",
+        "http",
+        "urllib",
+        "email",
+        "socket",
+        "ssl",
+        "hashlib",
+        "hmac",
+        "gzip",
+        "bz2",
+        "lzma",
+        "base64",
+        "shutil",
+        "tempfile",
+        "glob",
+        "fnmatch",
+        "statistics",
+        "pprint",
+        "getpass",
+        "uuid",
+        "enum",
+        "contextlib",
+        "queue",
+        "traceback",
+        "warnings",
+        "gc",
+        "platform",
+        "sysconfig",
+        "pkgutil",
+        "site",
+        "venv",
+        "sqlite3",
+        "tkinter",
+    }
+
+
+def _load_excluded_stdlib() -> set[str]:
+    default = _default_excluded_stdlib()
+    mapping_path = os.path.join(os.path.dirname(__file__), "stblib.yml")
+    if not os.path.isfile(mapping_path):
+        return default
+    try:
+        with open(mapping_path, encoding="utf-8") as f:
+            data = yaml.safe_load(f)
+        modules = None
+        if isinstance(data, dict):
+            modules = data.get("excluded_stdlib")
+            if modules is None:
+                modules = data.get("modules")
+        elif isinstance(data, list):
+            modules = data
+        if not isinstance(modules, list):
+            return default
+        cleaned = [m.strip() for m in modules if isinstance(m, str) and m.strip()]
+        return set(cleaned) or default
+    except Exception:
+        return default
+
+
+# Liste explicite de modules de la bibliothèque standard à exclure (chargée du YAML)
+EXCLUDED_STDLIB = _load_excluded_stdlib()
 
 
 @functools.lru_cache(maxsize=256)
