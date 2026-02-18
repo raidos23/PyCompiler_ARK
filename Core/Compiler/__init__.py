@@ -158,8 +158,32 @@ def compile_all(self) -> None:
     Slot connected to the compile button.
     Starts compilation for all selected Python files.
     """
-    # Vérifier les fichiers sélectionnés
-    files_to_compile = self.python_files.copy()
+    # Déterminer les fichiers à compiler (point d'entrée > sélection > tout)
+    files_to_compile = []
+    entrypoint_file = None
+    try:
+        from Core.ArkConfigManager import load_ark_config, get_entrypoint
+
+        if self.workspace_dir:
+            cfg = load_ark_config(self.workspace_dir)
+            entry_rel = get_entrypoint(cfg)
+            if entry_rel:
+                entrypoint_file = os.path.join(self.workspace_dir, entry_rel)
+                if not os.path.isfile(entrypoint_file):
+                    entrypoint_file = None
+    except Exception:
+        entrypoint_file = None
+
+    if entrypoint_file:
+        files_to_compile = [entrypoint_file]
+        self.log_i18n(
+            f"Compilation du point d'entrée : {os.path.relpath(entrypoint_file, self.workspace_dir)}",
+            f"Compiling entrypoint: {os.path.relpath(entrypoint_file, self.workspace_dir)}",
+        )
+    else:
+        selected = getattr(self, "selected_files", None) or []
+        files_to_compile = selected if selected else self.python_files.copy()
+
     if not files_to_compile:
         self.log_i18n(
             "⚠️ Aucun fichier Python sélectionné.", "⚠️ No Python files selected."

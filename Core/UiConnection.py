@@ -447,6 +447,11 @@ def init_ui(self) -> None:
     _setup_sidebar_logo(self)
     _setup_compiler_tabs(self)
     _connect_signals(self)
+    try:
+        if hasattr(self, "setup_entrypoint_selector"):
+            self.setup_entrypoint_selector()
+    except Exception:
+        pass
     _show_initial_help_message(self)
 
 

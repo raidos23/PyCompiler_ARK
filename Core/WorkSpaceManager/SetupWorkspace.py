@@ -200,6 +200,12 @@ class SetupWorkspace:
             except Exception:
                 pass
 
+            try:
+                if hasattr(gui_instance, "load_entrypoint_from_config"):
+                    gui_instance.load_entrypoint_from_config()
+            except Exception:
+                pass
+
             if hasattr(gui_instance, "update_command_preview"):
                 gui_instance.update_command_preview()
 
