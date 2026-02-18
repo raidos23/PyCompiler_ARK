@@ -177,6 +177,7 @@ sys
 .kombai
 .pref/
 .qodo
+.ark/
 
 # Temporary files
 temp/
