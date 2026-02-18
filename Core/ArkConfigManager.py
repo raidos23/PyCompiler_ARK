@@ -120,6 +120,13 @@ DEFAULT_CONFIG = {
         # Revenir à pip si aucun gestionnaire n'est détecté
         "fallback_to_pip": True,
     },
+    # -----------------------------------------------------------------------------
+    # BUILD / POINT D'ENTRÉE
+    # -----------------------------------------------------------------------------
+    "build": {
+        # Chemin relatif du point d'entrée à compiler (ex: "app.py")
+        "entrypoint": None,
+    },
 }
 
 
@@ -177,6 +184,17 @@ def load_ark_config(workspace_dir: str) -> dict[str, Any]:
 
     # Validation du paramètre d'entrée
     if not workspace_dir:
+        # Normaliser la section build
+        build_opts = config.get("build", {})
+        if not isinstance(build_opts, dict):
+            build_opts = {}
+        entrypoint = build_opts.get("entrypoint")
+        if isinstance(entrypoint, str):
+            entrypoint = entrypoint.strip() or None
+        else:
+            entrypoint = None
+        build_opts["entrypoint"] = entrypoint
+        config["build"] = build_opts
         return config
 
     workspace_path = Path(workspace_dir)
@@ -261,6 +279,85 @@ def get_environment_manager_options(config: dict[str, Any]) -> dict[str, Any]:
         Dictionnaire des options du gestionnaire d'environnement
     """
     return config.get("environment_manager", {})
+
+
+def get_build_options(config: dict[str, Any]) -> dict[str, Any]:
+    """
+    Récupère les options de build.
+
+    Returns:
+        Dictionnaire des options de build
+    """
+    return config.get("build", {})
+
+
+def get_entrypoint(config: dict[str, Any]) -> Optional[str]:
+    """
+    Récupère le point d'entrée configuré.
+
+    Returns:
+        Chemin relatif du point d'entrée ou None
+    """
+    build_opts = get_build_options(config)
+    if not isinstance(build_opts, dict):
+        return None
+    entry = build_opts.get("entrypoint")
+    return entry if isinstance(entry, str) and entry.strip() else None
+
+
+def save_ark_config(workspace_dir: str, config: dict[str, Any]) -> bool:
+    """
+    Sauvegarde la configuration ARK dans ARK_Main_Config.yml.
+
+    Args:
+        workspace_dir: Chemin du workspace
+        config: Configuration complète à enregistrer
+
+    Returns:
+        True si succès, False sinon
+    """
+    if not workspace_dir or not isinstance(config, dict):
+        return False
+    try:
+        workspace_path = Path(workspace_dir)
+        config_file = workspace_path / "ARK_Main_Config.yml"
+        with open(config_file, "w", encoding="utf-8") as f:
+            yaml.safe_dump(
+                config,
+                f,
+                sort_keys=False,
+                allow_unicode=True,
+                default_flow_style=False,
+            )
+        return True
+    except Exception:
+        return False
+
+
+def set_entrypoint(workspace_dir: str, entrypoint: Optional[str]) -> bool:
+    """
+    Met à jour le point d'entrée dans ARK_Main_Config.yml.
+
+    Args:
+        workspace_dir: Chemin du workspace
+        entrypoint: Chemin relatif du point d'entrée (ou None pour effacer)
+
+    Returns:
+        True si succès, False sinon
+    """
+    if not workspace_dir:
+        return False
+    cfg = load_ark_config(workspace_dir)
+    build_opts = cfg.get("build", {})
+    if not isinstance(build_opts, dict):
+        build_opts = {}
+    if isinstance(entrypoint, str):
+        entrypoint = entrypoint.strip() or None
+    else:
+        entrypoint = None
+    build_opts["entrypoint"] = entrypoint
+    cfg["build"] = build_opts
+    return save_ark_config(workspace_dir, cfg)
 
 
 def _normalize_exclusion_pattern(pattern: str) -> str:
@@ -447,6 +544,13 @@ environment_manager:
     - "pip"
   auto_detect: true
   fallback_to_pip: true
+
+# -----------------------------------------------------------------------------
+# BUILD / POINT D'ENTRÉE
+# -----------------------------------------------------------------------------
+build:
+  # Chemin relatif du point d'entrée à compiler (ex: "app.py")
+  entrypoint: null
 """
 
         with open(config_file, "w", encoding="utf-8") as f:

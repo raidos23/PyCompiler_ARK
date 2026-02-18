@@ -34,8 +34,8 @@ import platform
 from typing import Optional, Callable
 
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QPixmap
-from PySide6.QtWidgets import QFileDialog, QMessageBox
+from PySide6.QtGui import QIcon, QPixmap
+from PySide6.QtWidgets import QFileDialog, QMessageBox, QMenu
 
 
 class UiFeatures:
@@ -126,6 +126,162 @@ class UiFeatures:
         dlg.setIcon(QMessageBox.Icon.Information)
         dlg.setStandardButtons(QMessageBox.StandardButton.Ok)
         dlg.exec()
+
+    # =========================================================================
+    # POINT D'ENTRÉE (ENTRYPOINT)
+    # =========================================================================
+
+    def setup_entrypoint_selector(self) -> None:
+        """Configure le menu contextuel pour choisir le point d'entrée."""
+        if not getattr(self, "file_list", None):
+            return
+        try:
+            self.file_list.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+            self.file_list.customContextMenuRequested.connect(
+                self._show_entrypoint_menu
+            )
+        except Exception:
+            pass
+
+    def _show_entrypoint_menu(self, pos) -> None:
+        """Affiche un menu contextuel pour gérer le point d'entrée."""
+        if not getattr(self, "file_list", None):
+            return
+        item = self.file_list.itemAt(pos)
+        menu = QMenu(self.file_list)
+
+        set_action = None
+        if item is not None:
+            set_action = menu.addAction(
+                self.tr("Définir comme point d'entrée", "Set as entrypoint")
+            )
+        clear_action = menu.addAction(
+            self.tr("Effacer le point d'entrée", "Clear entrypoint")
+        )
+
+        chosen = menu.exec(self.file_list.viewport().mapToGlobal(pos))
+        if chosen is None:
+            return
+        if chosen == set_action and item is not None:
+            self.set_entrypoint_from_item(item)
+        elif chosen == clear_action:
+            self.clear_entrypoint()
+
+    def _entrypoint_icon(self) -> QIcon | None:
+        """Retourne l'icône utilisée pour marquer le point d'entrée."""
+        icon = getattr(self, "_entrypoint_icon_cache", None)
+        if isinstance(icon, QIcon) and not icon.isNull():
+            return icon
+        try:
+            base = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+            path = os.path.join(base, "icons", "icons8-coche-50-2.svg")
+            if os.path.isfile(path):
+                icon = QIcon(path)
+                if not icon.isNull():
+                    self._entrypoint_icon_cache = icon
+                    return icon
+        except Exception:
+            pass
+        return None
+
+    def _refresh_entrypoint_marker(self) -> None:
+        """Met à jour l'affichage du point d'entrée dans la liste des fichiers."""
+        if not getattr(self, "file_list", None):
+            return
+        entry_rel = getattr(self, "_entrypoint_relpath", None)
+        icon = self._entrypoint_icon()
+        for i in range(self.file_list.count()):
+            item = self.file_list.item(i)
+            if item is None:
+                continue
+            if entry_rel and item.text() == entry_rel and icon:
+                item.setIcon(icon)
+            else:
+                item.setIcon(QIcon())
+
+    def load_entrypoint_from_config(self) -> None:
+        """Charge le point d'entrée depuis ARK_Main_Config.yml."""
+        workspace_dir = getattr(self, "workspace_dir", None)
+        if not workspace_dir:
+            return
+        try:
+            from .ArkConfigManager import load_ark_config, get_entrypoint
+
+            cfg = load_ark_config(workspace_dir)
+            entry_rel = get_entrypoint(cfg)
+        except Exception:
+            entry_rel = None
+
+        self._entrypoint_relpath = entry_rel
+        if entry_rel and workspace_dir:
+            self.entrypoint_file = os.path.join(workspace_dir, entry_rel)
+        else:
+            self.entrypoint_file = None
+        self._refresh_entrypoint_marker()
+
+    def set_entrypoint_from_item(self, item) -> None:
+        """Définit le point d'entrée à partir d'un item de la liste."""
+        if item is None:
+            return
+        rel_path = item.text()
+        self.set_entrypoint(rel_path)
+
+    def set_entrypoint(self, rel_path: str) -> None:
+        """Définit et sauvegarde le point d'entrée dans la config ARK."""
+        workspace_dir = getattr(self, "workspace_dir", None)
+        if not workspace_dir or not rel_path:
+            return
+        abs_path = os.path.join(workspace_dir, rel_path)
+        if not os.path.isfile(abs_path):
+            self.log_i18n(
+                f"⚠️ Point d'entrée introuvable: {abs_path}",
+                f"⚠️ Entrypoint not found: {abs_path}",
+            )
+            return
+        try:
+            from .ArkConfigManager import set_entrypoint
+
+            ok = set_entrypoint(workspace_dir, rel_path)
+        except Exception:
+            ok = False
+        if ok:
+            self._entrypoint_relpath = rel_path
+            self.entrypoint_file = abs_path
+            self._refresh_entrypoint_marker()
+            self.log_i18n(
+                f"✅ Point d'entrée défini : {rel_path}",
+                f"✅ Entrypoint set: {rel_path}",
+            )
+        else:
+            self.log_i18n(
+                "❌ Impossible de sauvegarder le point d'entrée.",
+                "❌ Unable to save entrypoint.",
+            )
+
+    def clear_entrypoint(self) -> None:
+        """Efface le point d'entrée et met à jour la configuration."""
+        workspace_dir = getattr(self, "workspace_dir", None)
+        if not workspace_dir:
+            return
+        try:
+            from .ArkConfigManager import set_entrypoint
+
+            ok = set_entrypoint(workspace_dir, None)
+        except Exception:
+            ok = False
+        if ok:
+            self._entrypoint_relpath = None
+            self.entrypoint_file = None
+            self._refresh_entrypoint_marker()
+            self.log_i18n(
+                "✅ Point d'entrée effacé.",
+                "✅ Entrypoint cleared.",
+            )
+        else:
+            self.log_i18n(
+                "❌ Impossible d'effacer le point d'entrée.",
+                "❌ Unable to clear entrypoint.",
+            )
 
     # =========================================================================
     # EXPORT/IMPORT CONFIGURATION
