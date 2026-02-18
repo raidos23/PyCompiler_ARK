@@ -47,6 +47,11 @@ class MyEngine(CompilerEngine):
 4. When compile is triggered, the engine provides the command via `build_command`.
 5. The process runs the command and calls `on_success` on success.
 
+**Workspace Entrypoint**
+The workspace can define a single build entrypoint in `ARK_Main_Config.yml`.
+When `build.entrypoint` is set, the Core will compile only that file and pass it
+to your engine as the `file` argument. See `docs/ark_main_config.md`.
+
 **Full API**
 Required attributes.
 - `id`: stable unique id (used by UI and config).
@@ -81,6 +86,44 @@ Tools and dependencies.
 - Wire signals locally and use `gui.log.append(...)` for logs.
 - If your engine tab becomes large, wrap it in a scroll area so the UI stays usable.
 - Prefer shared UI helpers from the SDK for common patterns (icon selector, output dir, checkbox rows).
+
+**Engine Config (get_config / set_config)**
+ARK can persist engine UI options per workspace in:
+`<workspace>/.ark/<engine_id>/config.json`.
+
+Flow:
+- `get_config(gui)` returns a JSON‑serializable dict of current UI state.
+- `set_config(gui, cfg)` applies a config dict back to the widgets.
+- The Core saves configs on compile and reloads them when a workspace is applied.
+
+Minimal example.
+```python
+class MyEngine(CompilerEngine):
+    # ...
+    def create_tab(self, gui):
+        self._opt_fast = QCheckBox("Fast")
+        self._output_dir = QLineEdit()
+        # ...
+        return tab, "My Engine"
+
+    def get_config(self, gui) -> dict:
+        return {
+            "fast": bool(self._opt_fast.isChecked()) if self._opt_fast else False,
+            "output_dir": self._output_dir.text().strip() if self._output_dir else "",
+        }
+
+    def set_config(self, gui, cfg: dict) -> None:
+        if not isinstance(cfg, dict):
+            return
+        if self._opt_fast and "fast" in cfg:
+            self._opt_fast.setChecked(bool(cfg.get("fast")))
+        if self._output_dir and "output_dir" in cfg:
+            self._output_dir.setText(str(cfg.get("output_dir") or ""))
+```
+
+Notes.
+- Keep the config flat and JSON‑safe (bool, str, list, dict).
+- Always guard for missing keys and absent widgets.
 
 **Monolithic Tab Example**
 The following dummy engine shows how to build a very large UI tab with a scroll area to keep it usable.
