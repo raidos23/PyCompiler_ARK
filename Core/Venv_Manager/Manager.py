@@ -3,6 +3,7 @@ import os
 import platform
 import shutil
 import sys
+import yaml
 
 from PySide6.QtCore import QProcess, QTimer
 from PySide6.QtWidgets import QApplication, QFileDialog, QMessageBox
@@ -69,7 +70,11 @@ class VenvManager:
 
         # Environment manager detection
         self._detected_manager = None  # 'pip', 'poetry', 'conda', 'pipenv', 'uv', 'pdm'
-        self._manager_commands = {
+        self._manager_commands = self._load_manager_mapping()
+
+    # ---------- Manager mapping ----------
+    def _default_manager_commands(self) -> dict[str, dict[str, list[str]]]:
+        return {
             "poetry": {
                 "create_venv": ["poetry", "env", "use", "python"],
                 "install": ["poetry", "install"],
@@ -116,6 +121,91 @@ class VenvManager:
                 "check": ["pip", "check"],
             },
         }
+
+    def _validate_manager_mapping(
+        self,
+        data: object,
+        allowed_actions: dict[str, set[str]] | None = None,
+    ) -> tuple[dict[str, dict[str, list[str]]], list[str]]:
+        errors: list[str] = []
+        if not isinstance(data, dict):
+            errors.append("Le fichier YAML doit contenir un objet racine (mapping).")
+            return {}, errors
+        managers = data.get("managers")
+        if managers is None:
+            errors.append("Clé 'managers' manquante.")
+            return {}, errors
+        if not isinstance(managers, dict):
+            errors.append("La clé 'managers' doit être un mapping.")
+            return {}, errors
+
+        cleaned: dict[str, dict[str, list[str]]] = {}
+        for manager, actions in managers.items():
+            if not isinstance(manager, str) or not manager.strip():
+                errors.append("Nom de gestionnaire invalide (doit être une chaîne).")
+                continue
+            if not isinstance(actions, dict):
+                errors.append(
+                    f"'{manager}': la section doit être un mapping d'actions."
+                )
+                continue
+            action_map: dict[str, list[str]] = {}
+            for action, cmd in actions.items():
+                if not isinstance(action, str) or not action.strip():
+                    errors.append(f"'{manager}': nom d'action invalide.")
+                    continue
+                if allowed_actions and manager in allowed_actions:
+                    if action not in allowed_actions[manager]:
+                        allowed = ", ".join(sorted(allowed_actions[manager]))
+                        errors.append(
+                            f"'{manager}.{action}': action non autorisée. "
+                            f"Actions autorisées: {allowed}."
+                        )
+                        continue
+                if not isinstance(cmd, list):
+                    errors.append(
+                        f"'{manager}.{action}': la commande doit être une liste."
+                    )
+                    continue
+                if not all(isinstance(item, str) and item for item in cmd):
+                    errors.append(
+                        f"'{manager}.{action}': chaque argument doit être une chaîne."
+                    )
+                    continue
+                action_map[action] = cmd
+            if not action_map:
+                errors.append(f"'{manager}': aucune action valide trouvée.")
+                continue
+            cleaned[manager] = action_map
+
+        return cleaned, errors
+
+    def _load_manager_mapping(self) -> dict[str, dict[str, list[str]]]:
+        default = self._default_manager_commands()
+        mapping_path = os.path.join(os.path.dirname(__file__), "ManagerMapping.yml")
+        if not os.path.isfile(mapping_path):
+            return default
+        try:
+            with open(mapping_path, encoding="utf-8") as f:
+                data = yaml.safe_load(f)
+            allowed_actions = {
+                manager: set(actions.keys()) for manager, actions in default.items()
+            }
+            cleaned, errors = self._validate_manager_mapping(
+                data, allowed_actions=allowed_actions
+            )
+            if errors:
+                for err in errors:
+                    self._safe_log(f"⚠️ ManagerMapping.yml: {err}")
+            if not cleaned:
+                self._safe_log(
+                    "⚠️ ManagerMapping.yml invalide, utilisation de la configuration par défaut."
+                )
+                return default
+            return cleaned
+        except Exception as e:
+            self._safe_log(f"⚠️ Erreur chargement ManagerMapping.yml: {e}")
+            return default
 
     # ---------- Public helpers for engines ----------
     def resolve_project_venv(self) -> str | None:
