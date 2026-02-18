@@ -15,8 +15,8 @@
 
 import os
 
-from PySide6.QtCore import QFile, Qt
-from PySide6.QtGui import QPixmap
+from PySide6.QtCore import QFile, Qt, QSize
+from PySide6.QtGui import QIcon, QPixmap
 from PySide6.QtUiTools import QUiLoader
 from PySide6.QtWidgets import (
     QLabel,
@@ -220,6 +220,54 @@ def _setup_sidebar_logo(self) -> None:
     logo_label.setScaledContents(True)
 
 
+def _apply_button_icons(self) -> None:
+    """Applique des icônes SVG aux boutons principaux si disponibles."""
+    if not getattr(self, "ui", None):
+        return
+    icons_dir = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), "..", "icons"
+    )
+    if not os.path.isdir(icons_dir):
+        return
+
+    def _icon(name: str) -> QIcon | None:
+        path = os.path.join(icons_dir, name)
+        if not os.path.isfile(path):
+            return None
+        icon = QIcon(path)
+        if icon.isNull():
+            return None
+        return icon
+
+    def _set(widget, icon_name: str, size: int = 18) -> None:
+        if widget is None:
+            return
+        icon = _icon(icon_name)
+        if not icon:
+            return
+        widget.setIcon(icon)
+        widget.setIconSize(QSize(size, size))
+
+    _set(self.select_lang, "icons8-bulle-50.svg")
+    _set(self.select_theme, "icons8-soleil-50.svg")
+    _set(self.compile_btn, "icons8-coche-50.svg", size=20)
+    _set(self.cancel_btn, "icons8-pas-de-synchronisation-50.svg", size=20)
+
+    _set(self.btn_select_folder, "icons8-dossier-ouvert-50.svg")
+    _set(self.btn_select_files, "icons8-document-50.svg")
+    _set(self.btn_clear_workspace, "icons8-effacer-50.svg")
+    _set(self.btn_remove_file, "icons8-supprimer-50.svg")
+    _set(self.btn_suggest_deps, "icons8-jumelles-50.svg")
+    _set(self.btn_bc_loader, "icons8-puzzle-50.svg")
+    _set(self.btn_show_stats, "icons8-horloge-50.svg")
+    _set(self.btn_help, "icons8-information-50.svg")
+
+    _set(self.btn_export_config, "icons8-télécharger-vers-le-cloud-50.svg")
+    _set(self.btn_import_config, "icons8-télécharger-depuis-le-cloud-50.svg")
+    _set(getattr(self, "btn_select_icon", None), "icons8-image-50.svg")
+    _set(getattr(self, "btn_nuitka_icon", None), "icons8-image-50.svg")
+
+
 def _setup_widgets(self) -> None:
     """Récupère les widgets depuis l'UI et initialise les attributs."""
     if not getattr(self, "ui", None):
@@ -394,6 +442,7 @@ def init_ui(self) -> None:
     _apply_initial_theme(self)
     _connect_dialogs_to_app(self)
     _setup_widgets(self)
+    _apply_button_icons(self)
     _setup_sidebar_logo(self)
     _setup_compiler_tabs(self)
     _connect_signals(self)

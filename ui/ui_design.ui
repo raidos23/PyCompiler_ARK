@@ -125,7 +125,7 @@
          <item>
           <widget class="QPushButton" name="select_lang">
            <property name="text">
-            <string>🌐 Langue</string>
+            <string>Langue</string>
            </property>
            <property name="toolTip">
             <string>Choisir la langue de l'interface</string>
@@ -135,7 +135,7 @@
          <item>
           <widget class="QPushButton" name="select_theme">
            <property name="text">
-            <string>🎨 Thème</string>
+            <string>Thème</string>
            </property>
            <property name="toolTip">
             <string>Choisir le thème de l'interface</string>
@@ -145,7 +145,7 @@
          <item>
           <widget class="QPushButton" name="compile_btn">
            <property name="text">
-            <string>🚀 Compiler</string>
+            <string>Compiler</string>
            </property>
            <property name="toolTip">
             <string>Lancer la compilation</string>
@@ -155,7 +155,7 @@
          <item>
           <widget class="QPushButton" name="cancel_btn">
            <property name="text">
-            <string>⛔ Annuler</string>
+            <string>Annuler</string>
            </property>
            <property name="toolTip">
             <string>Annuler la compilation en cours</string>
@@ -244,7 +244,7 @@
           <item row="2" column="0">
            <widget class="QPushButton" name="btn_select_folder">
             <property name="text">
-             <string>📁 Workspace</string>
+             <string>Workspace</string>
             </property>
             <property name="toolTip">
              <string>Sélectionner le dossier de travail</string>
@@ -254,7 +254,7 @@
           <item row="2" column="1">
            <widget class="QPushButton" name="btn_clear_workspace">
             <property name="text">
-             <string>🧹 Clear workspace</string>
+             <string>Clear workspace</string>
             </property>
             <property name="toolTip">
              <string>Vider la liste des fichiers et réinitialiser la sélection</string>
@@ -341,7 +341,7 @@
            <item>
              <widget class="QPushButton" name="btn_select_files">
               <property name="text">
-               <string>📋 Fichiers</string>
+               <string>Fichiers</string>
               </property>
               <property name="toolTip">
                <string>Ajouter des fichiers à compiler</string>
@@ -351,7 +351,7 @@
             <item>
              <widget class="QPushButton" name="btn_remove_file">
               <property name="text">
-               <string>🗑️ Supprimer le fichier sélectionné</string>
+               <string>Supprimer le fichier sélectionné</string>
               </property>
              </widget>
             </item>
@@ -404,7 +404,7 @@
           <item row="1" column="0">
            <widget class="QPushButton" name="btn_suggest_deps">
             <property name="text">
-             <string>🔎 Dépendances</string>
+             <string>Dépendances</string>
             </property>
             <property name="toolTip">
              <string>Analyser les dépendances du projet</string>
@@ -414,7 +414,7 @@
           <item row="1" column="1">
            <widget class="QPushButton" name="btn_bc_loader">
             <property name="text">
-             <string>🧩 Bc Plugins Loader</string>
+             <string>Bc Plugins Loader</string>
             </property>
             <property name="toolTip">
              <string>Charger Bc Plugins Loader</string>
@@ -424,7 +424,7 @@
           <item row="2" column="0">
            <widget class="QPushButton" name="btn_show_stats">
             <property name="text">
-             <string>📊 Statistiques</string>
+             <string>Statistiques</string>
             </property>
             <property name="toolTip">
              <string>Afficher les statistiques de compilation</string>
@@ -434,7 +434,7 @@
           <item row="2" column="1">
            <widget class="QPushButton" name="btn_help">
             <property name="text">
-             <string>❓ Aide</string>
+             <string>Aide</string>
             </property>
             <property name="toolTip">
              <string>Afficher l'aide</string>
