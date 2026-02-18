@@ -1,7 +1,7 @@
 # PyCompiler ARK++
 
 A Qt‑based workshop to compile Python projects with a **pre‑compilation plugin pipeline (BCASL)** and a **multi‑engine system**.
-
+##
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](http://www.apache.org/licenses/LICENSE-2.0)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
 
