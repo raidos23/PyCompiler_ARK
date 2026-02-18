@@ -4,6 +4,7 @@ A Qt-based workshop to compile Python projects with a pre-compilation plugin pip
 
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](http://www.apache.org/licenses/LICENSE-2.0)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
+[![CI](https://github.com/raidos23/PyCompiler_ARK/actions/workflows/ci.yml/badge.svg)](https://github.com/raidos23/PyCompiler_ARK/actions/workflows/ci.yml)
 
 <p align="center">
   <img src="./logo/logo2.png" alt="PyCompiler ARK++ logo" width="70%"/>
