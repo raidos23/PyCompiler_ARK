@@ -17,7 +17,7 @@
 CX_Freeze Engine for PyCompiler_ARK.
 
 This engine handles compilation of Python scripts using CX_Freeze,
-supporting onefile mode, windowed applications, and various customization options.
+supporting windowed applications and minimal essential options.
 """
 
 from __future__ import annotations
@@ -43,8 +43,7 @@ class CXFreezeEngine(CompilerEngine):
     CX_Freeze compilation engine.
 
     Features:
-    - Onefile and onedir modes
-    - Windowed/console mode selection
+    - Windowed/console mode selection (Windows)
     - Custom output directory
     - Automatic venv detection and use
     - Icon specification
@@ -84,20 +83,15 @@ class CXFreezeEngine(CompilerEngine):
             cmd = [python_path, "-m", "cx_Freeze"]
 
             # Add options from UI
-            # Onefile mode
-            onefile = self._get_opt("onefile")
-            if onefile and onefile.isChecked():
-                cmd.append("--onefile")
-
-            # Windowed mode
+            # Windowed mode (Windows only)
             windowed = self._get_opt("windowed")
-            if windowed and windowed.isChecked():
-                cmd.append("--no-console")
+            if windowed and windowed.isChecked() and platform.system() == "Windows":
+                cmd.extend(["--base", "Win32GUI"])
 
             # Output directory
             output_dir = self._get_input("output_dir")
             if output_dir and output_dir.text().strip():
-                cmd.extend(["--build-exe", output_dir.text().strip()])
+                cmd.extend(["--target-dir", output_dir.text().strip()])
 
             # Icon
             if hasattr(self, "_selected_icon") and self._selected_icon:
@@ -197,14 +191,9 @@ class CXFreezeEngine(CompilerEngine):
             form_layout = QFormLayout()
             form_layout.setSpacing(8)
 
-            # Onefile option
-            self._cx_onefile = add_form_checkbox(
-                form_layout, "Mode:", "Onefile", "cx_onefile_dynamic"
-            )
-
             # Windowed option
             self._cx_windowed = add_form_checkbox(
-                form_layout, "Console:", "Windowed", "cx_windowed_dynamic"
+                form_layout, "Console:", "No console", "cx_windowed_dynamic"
             )
             self._cx_windowed.setToolTip("Disable the console window.")
 
@@ -213,7 +202,7 @@ class CXFreezeEngine(CompilerEngine):
             # Icon button
             self._cx_btn_select_icon = add_icon_selector(
                 layout,
-                "🎨 Choisir une icône (.ico)",
+                "Choisir une icône (.ico)",
                 self.select_icon,
                 "cx_btn_select_icon_dynamic",
             )
@@ -242,8 +231,6 @@ class CXFreezeEngine(CompilerEngine):
         """Return a JSON-serializable snapshot of current CX_Freeze UI options."""
         try:
             cfg = {}
-            if hasattr(self, "_cx_onefile") and self._cx_onefile is not None:
-                cfg["onefile"] = bool(self._cx_onefile.isChecked())
             if hasattr(self, "_cx_windowed") and self._cx_windowed is not None:
                 cfg["windowed"] = bool(self._cx_windowed.isChecked())
             if hasattr(self, "_cx_output_dir") and self._cx_output_dir is not None:
@@ -259,12 +246,6 @@ class CXFreezeEngine(CompilerEngine):
         if not isinstance(cfg, dict):
             return
         try:
-            if (
-                hasattr(self, "_cx_onefile")
-                and self._cx_onefile is not None
-                and "onefile" in cfg
-            ):
-                self._cx_onefile.setChecked(bool(cfg.get("onefile")))
             if (
                 hasattr(self, "_cx_windowed")
                 and self._cx_windowed is not None
@@ -320,8 +301,6 @@ class CXFreezeEngine(CompilerEngine):
             lang_data = load_engine_language_file(__package__, code)
 
             # Apply translations to UI elements if they exist
-            if hasattr(self, "_cx_onefile") and "onefile_checkbox" in lang_data:
-                self._cx_onefile.setText(lang_data["onefile_checkbox"])
             if hasattr(self, "_cx_windowed") and "windowed_checkbox" in lang_data:
                 self._cx_windowed.setText(lang_data["windowed_checkbox"])
             if hasattr(self, "_cx_windowed") and "tt_windowed" in lang_data:

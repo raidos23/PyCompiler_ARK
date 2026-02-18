@@ -4,11 +4,9 @@
     "name": "English"
   },
   "tab_label": "CX_Freeze",
-  "mode_label": "Mode:",
-  "onefile_checkbox": "Onefile",
   "console_label": "Console:",
-  "windowed_checkbox": "Windowed",
-  "icon_button": "🎨 Choose icon (.ico)",
+  "windowed_checkbox": "No console",
+  "icon_button": "Choose icon (.ico)",
   "output_placeholder": "Output directory",
   "tt_windowed": "Disable the console window."
 }
