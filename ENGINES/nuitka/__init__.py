@@ -22,13 +22,9 @@ supporting standalone mode, onefile mode, and various optimization options.
 
 from __future__ import annotations
 
-import os
 import platform
 import sys
 from typing import Optional
-
-from PySide6.QtCore import QDir
-from PySide6.QtWidgets import QFileDialog, QInputDialog, QCheckBox, QLineEdit
 
 from engine_sdk import (
     CompilerEngine,
@@ -46,10 +42,6 @@ class NuitkaEngine(CompilerEngine):
 
     Features:
     - Standalone and onefile modes
-    - Python include options
-    - Plugin support
-    - MSVC/Clang/LLVM backend selection
-    - Data files inclusion
     - Icon specification
     """
 
@@ -115,29 +107,12 @@ class NuitkaEngine(CompilerEngine):
             ):
                 cmd.append("--windows-disable-console")
 
-            # Show progress
-            if (
-                hasattr(self, "_nuitka_show_progress")
-                and self._nuitka_show_progress.isChecked()
-            ):
-                cmd.append("--show-progress")
-
             # Output directory
             if (
                 hasattr(self, "_nuitka_output_dir")
                 and self._nuitka_output_dir.text().strip()
             ):
                 cmd.append(f"--output-dir={self._nuitka_output_dir.text().strip()}")
-
-            # Data files
-            data_files = getattr(self, "_nuitka_data_files", [])
-            for src, dst in data_files:
-                cmd.extend(["--include-data-file", f"{src}={dst}"])
-
-            # Data dirs
-            data_dirs = getattr(self, "_nuitka_data_dirs", [])
-            for src, dst in data_dirs:
-                cmd.extend(["--include-data-dir", f"{src}={dst}"])
 
             # Icon
             selected_icon = getattr(self, "_nuitka_selected_icon", None)
@@ -217,9 +192,6 @@ class NuitkaEngine(CompilerEngine):
             from PySide6.QtWidgets import (
                 QCheckBox,
                 QFormLayout,
-                QHBoxLayout,
-                QLineEdit,
-                QPushButton,
                 QVBoxLayout,
                 QWidget,
             )
@@ -254,20 +226,7 @@ class NuitkaEngine(CompilerEngine):
             )
             form_layout.addRow("Console:", self._nuitka_disable_console)
 
-            # Show progress option
-            self._nuitka_show_progress = QCheckBox("Show progress")
-            self._nuitka_show_progress.setObjectName("nuitka_show_progress_dynamic")
-            self._nuitka_show_progress.setChecked(True)
-            self._nuitka_show_progress.setToolTip("Show compilation progress.")
-            form_layout.addRow("Progression:", self._nuitka_show_progress)
-
             layout.addLayout(form_layout)
-
-            # Add data button
-            self._nuitka_add_data = QPushButton("add_data")
-            self._nuitka_add_data.setObjectName("nuitka_add_data_dynamic")
-            self._nuitka_add_data.clicked.connect(self.add_data)
-            layout.addWidget(self._nuitka_add_data)
 
             # Output directory
             self._nuitka_output_dir = add_output_dir(
@@ -319,23 +278,10 @@ class NuitkaEngine(CompilerEngine):
             ):
                 cfg["disable_console"] = bool(self._nuitka_disable_console.isChecked())
             if (
-                hasattr(self, "_nuitka_show_progress")
-                and self._nuitka_show_progress is not None
-            ):
-                cfg["show_progress"] = bool(self._nuitka_show_progress.isChecked())
-            if (
                 hasattr(self, "_nuitka_output_dir")
                 and self._nuitka_output_dir is not None
             ):
                 cfg["output_dir"] = self._nuitka_output_dir.text().strip()
-            if hasattr(self, "_nuitka_data_files") and isinstance(
-                self._nuitka_data_files, list
-            ):
-                cfg["data_files"] = list(self._nuitka_data_files)
-            if hasattr(self, "_nuitka_data_dirs") and isinstance(
-                self._nuitka_data_dirs, list
-            ):
-                cfg["data_dirs"] = list(self._nuitka_data_dirs)
             icon_path = ""
             if (
                 hasattr(self, "_nuitka_icon_path_input")
@@ -384,22 +330,12 @@ class NuitkaEngine(CompilerEngine):
                     bool(cfg.get("disable_console"))
                 )
             if (
-                hasattr(self, "_nuitka_show_progress")
-                and self._nuitka_show_progress is not None
-                and "show_progress" in cfg
-            ):
-                self._nuitka_show_progress.setChecked(bool(cfg.get("show_progress")))
-            if (
                 hasattr(self, "_nuitka_output_dir")
                 and self._nuitka_output_dir is not None
                 and "output_dir" in cfg
             ):
                 val = cfg.get("output_dir") or ""
                 self._nuitka_output_dir.setText(str(val))
-            if "data_files" in cfg and isinstance(cfg.get("data_files"), list):
-                self._nuitka_data_files = list(cfg.get("data_files"))
-            if "data_dirs" in cfg and isinstance(cfg.get("data_dirs"), list):
-                self._nuitka_data_dirs = list(cfg.get("data_dirs"))
             if "selected_icon" in cfg:
                 icon = cfg.get("selected_icon") or ""
                 self._nuitka_selected_icon = icon or None
@@ -453,18 +389,6 @@ class NuitkaEngine(CompilerEngine):
             ):
                 self._nuitka_disable_console.setToolTip(lang_data["tt_disable_console"])
             if (
-                hasattr(self, "_nuitka_show_progress")
-                and "show_progress_checkbox" in lang_data
-            ):
-                self._nuitka_show_progress.setText(lang_data["show_progress_checkbox"])
-            if (
-                hasattr(self, "_nuitka_show_progress")
-                and "tt_show_progress" in lang_data
-            ):
-                self._nuitka_show_progress.setToolTip(lang_data["tt_show_progress"])
-            if hasattr(self, "_nuitka_add_data") and "add_data_button" in lang_data:
-                self._nuitka_add_data.setText(lang_data["add_data_button"])
-            if (
                 hasattr(self, "_nuitka_output_dir")
                 and "output_placeholder" in lang_data
             ):
@@ -481,59 +405,6 @@ class NuitkaEngine(CompilerEngine):
         icon = text.strip()
         self._nuitka_selected_icon = icon or None
         self._selected_icon = icon or None
-
-    def add_data(self) -> None:
-        """Add data files or directories to be included with Nuitka."""
-        choix, ok = QInputDialog.getItem(
-            self._gui,
-            "Type d'inclusion",
-            "Inclure un fichier ou un dossier ?",
-            ["Fichier", "Dossier"],
-            0,
-            False,
-        )
-        if not ok:
-            return
-        if not hasattr(self, "_nuitka_data_files"):
-            self._nuitka_data_files = []
-        if not hasattr(self, "_nuitka_data_dirs"):
-            self._nuitka_data_dirs = []
-        if choix == "Fichier":
-            file_path, _ = QFileDialog.getOpenFileName(
-                self._gui, "Sélectionner un fichier à inclure avec Nuitka"
-            )
-            if file_path:
-                dest, ok = QInputDialog.getText(
-                    self._gui,
-                    "Chemin de destination",
-                    "Chemin de destination dans l'exécutable :",
-                    text=os.path.basename(file_path),
-                )
-                if ok and dest:
-                    self._nuitka_data_files.append((file_path, dest))
-                    if hasattr(self._gui, "log"):
-                        self._gui.log.append(
-                            f"Fichier ajouté à Nuitka : {file_path} => {dest}"
-                        )
-        elif choix == "Dossier":
-            dir_path = QFileDialog.getExistingDirectory(
-                self._gui,
-                "Sélectionner un dossier à inclure avec Nuitka",
-                QDir.homePath(),
-            )
-            if dir_path:
-                dest, ok = QInputDialog.getText(
-                    self._gui,
-                    "Chemin de destination",
-                    "Chemin de destination dans l'exécutable :",
-                    text=os.path.basename(dir_path),
-                )
-                if ok and dest:
-                    self._nuitka_data_dirs.append((dir_path, dest))
-                    if hasattr(self._gui, "log"):
-                        self._gui.log.append(
-                            f"Dossier ajouté à Nuitka : {dir_path} => {dest}"
-                        )
 
     def select_icon(self) -> None:
         """Select an icon file for the executable."""
