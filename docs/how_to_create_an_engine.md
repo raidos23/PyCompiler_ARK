@@ -232,11 +232,12 @@ form = QFormLayout()
 self._opt_onefile = add_form_checkbox(form, "Mode:", "Onefile", "opt_onefile_dynamic")
 self._opt_windowed = add_form_checkbox(form, "Console:", "Windowed", "opt_windowed_dynamic")
 
-self._btn_select_icon = add_icon_selector(
+self._btn_select_icon, self._icon_path_input = add_icon_selector(
     layout,
     "🎨 Choose icon (.ico)",
     self.select_icon,
     "btn_select_icon_dynamic",
+    "icon_path_input_dynamic",
 )
 
 self._output_dir_input = add_output_dir(

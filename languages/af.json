@@ -40,7 +40,7 @@
   "tt_cancel_all": "Kanselleer alle lopende bouprosesse.",
   "tt_remove_file": "Verwyder die geselekteerde lêer(s) uit die lys.",
   "tt_help": "Open hulp en inligting oor die sagteware.",
-  "tt_bc_loader": "Stel Plugins (BCASL) inproppe op om voor kompilasie te loop.",
+  "tt_bc_loader": "Stel BCASL-inproppe op om voor kompilasie te loop.",
   "tt_venv_button": "Kies handmatig 'n venv-lêergids om vir kompilasie te gebruik.",
   "tt_suggest_deps": "Ontleed die projek vir ontbrekende Python-afhanklikhede.",
   "tt_show_stats": "Wys boustatistieke (tyd, aantal lêers, geheue).",
