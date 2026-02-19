@@ -1,4 +1,4 @@
-# ARK_Main_Config.yml — Workspace Configuration
+## **ARK_Main_Config.yml** — Workspace Configuration
 
 This file customizes how a workspace is scanned and built. It lives at the
 workspace root and is created automatically when the workspace is first set

@@ -1,5 +1,5 @@
-**BC Plugin Guide**
-BCASL = Before Compilation Action System & Loader.
+## **BC Plugin Guide**
+## **BCASL = Before Compilation Action System & Loader.**
 
 **Overview**
 A BC plugin (BCASL) is a package placed in `Plugins/` and executed before compilation. It registers automatically, respects execution order (priority, tags, dependencies), and uses `PreCompileContext` to work with the workspace.
