@@ -15,8 +15,8 @@
 
 import os
 
-from PySide6.QtCore import QFile, Qt, QSize
-from PySide6.QtGui import QIcon, QPixmap
+from PySide6.QtCore import QFile, Qt, QSize, QByteArray, QRectF
+from PySide6.QtGui import QIcon, QPixmap, QPainter
 from PySide6.QtUiTools import QUiLoader
 from PySide6.QtWidgets import (
     QLabel,
@@ -26,6 +26,10 @@ from PySide6.QtWidgets import (
     QPushButton,
     QTextEdit,
 )
+try:
+    from PySide6.QtSvg import QSvgRenderer
+except Exception:
+    QSvgRenderer = None  # type: ignore[assignment]
 
 from .i18n import show_language_dialog
 
@@ -230,41 +234,78 @@ def _apply_button_icons(self) -> None:
     if not os.path.isdir(icons_dir):
         return
 
-    def _icon(name: str) -> QIcon | None:
-        path = os.path.join(icons_dir, name)
+    def _resolve_icon_color(css: str | None = None) -> str:
+        if not css:
+            try:
+                from PySide6.QtWidgets import QApplication
+
+                app = QApplication.instance()
+                css = app.styleSheet() if app else ""
+            except Exception:
+                css = ""
+        if css:
+            return "#FFFFFF" if _is_qss_dark(css) else "#111111"
+        return "#FFFFFF" if _detect_system_color_scheme() == "sombre" else "#111111"
+
+    def _render_svg_icon(path: str, color: str, size: int) -> QIcon | None:
         if not os.path.isfile(path):
             return None
-        icon = QIcon(path)
-        if icon.isNull():
+        if QSvgRenderer is None:
+            return QIcon(path)
+        try:
+            with open(path, encoding="utf-8") as f:
+                svg = f.read()
+        except Exception:
+            return None
+        if "currentColor" in svg:
+            svg = svg.replace("currentColor", color)
+        else:
+            svg = svg.replace("<svg ", f"<svg color=\"{color}\" ", 1)
+        renderer = QSvgRenderer(QByteArray(svg.encode("utf-8")))
+        if not renderer.isValid():
+            return None
+        pixmap = QPixmap(size, size)
+        pixmap.fill(Qt.transparent)
+        painter = QPainter(pixmap)
+        renderer.render(painter, QRectF(0, 0, size, size))
+        painter.end()
+        return QIcon(pixmap)
+
+    icon_color = _resolve_icon_color()
+
+    def _icon(name: str, size: int) -> QIcon | None:
+        path = os.path.join(icons_dir, name)
+        icon = _render_svg_icon(path, icon_color, size)
+        if not icon or icon.isNull():
             return None
         return icon
 
     def _set(widget, icon_name: str, size: int = 18) -> None:
         if widget is None:
             return
-        icon = _icon(icon_name)
-        if not icon:
+        icon = _icon(icon_name, size)
+        if icon is None:
             return
         widget.setIcon(icon)
         widget.setIconSize(QSize(size, size))
 
-    _set(self.select_lang, "globe.svg")
-    _set(self.select_theme, "sun.svg")
-    _set(self.compile_btn, "play.svg", size=20)
-    _set(self.cancel_btn, "stop-circle.svg", size=20)
+    _set(getattr(self, "select_lang", None), "globe.svg")
+    _set(getattr(self, "select_theme", None), "sun.svg")
+    _set(getattr(self, "compile_btn", None), "play.svg", size=20)
+    _set(getattr(self, "cancel_btn", None), "stop-circle.svg", size=20)
 
-    _set(self.btn_select_folder, "folder.svg")
-    _set(self.venv_button, "package.svg")
-    _set(self.btn_select_files, "file.svg")
-    _set(self.btn_clear_workspace, "trash-2.svg")
-    _set(self.btn_remove_file, "minus-circle.svg")
-    _set(self.btn_suggest_deps, "search.svg")
-    _set(self.btn_bc_loader, "sliders.svg")
-    _set(self.btn_show_stats, "bar-chart-2.svg")
-    _set(self.btn_help, "help-circle.svg")
+    _set(getattr(self, "btn_select_folder", None), "folder.svg")
+    _set(getattr(self, "venv_button", None), "package.svg")
+    _set(getattr(self, "btn_select_files", None), "file.svg")
+    _set(getattr(self, "btn_clear_workspace", None), "trash-2.svg")
+    _set(getattr(self, "btn_remove_file", None), "minus-circle.svg")
+    _set(getattr(self, "btn_suggest_deps", None), "search.svg")
+    _set(getattr(self, "btn_bc_loader", None), "sliders.svg")
+    _set(getattr(self, "btn_show_stats", None), "bar-chart-2.svg")
+    _set(getattr(self, "btn_help", None), "help-circle.svg")
 
-    _set(self.btn_export_config, "upload-cloud.svg")
-    _set(self.btn_import_config, "download-cloud.svg")
+    _set(getattr(self, "btn_export_config", None), "upload-cloud.svg")
+    _set(getattr(self, "btn_import_config", None), "download-cloud.svg")
     _set(getattr(self, "btn_select_icon", None), "image.svg")
     _set(getattr(self, "btn_nuitka_icon", None), "image.svg")
 
@@ -613,6 +654,10 @@ def apply_theme(self, pref: str) -> None:
         app = QApplication.instance()
         if app:
             app.setStyleSheet(css)
+        try:
+            _apply_button_icons(self)
+        except Exception:
+            pass
         self.theme = pref or "System"
         # Met à jour le texte du bouton (ne pas recharger i18n)
         if hasattr(self, "select_theme") and self.select_theme:
