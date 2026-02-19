@@ -139,14 +139,14 @@ def tr(gui: Any, fr: str, en: str) -> str:
             return fn(fr, en)
     except Exception:
         pass
-    # Fallback: prefer English when current_language is English
+    # Fallback: use French only if explicitly selected, otherwise English.
     try:
         cur = getattr(gui, "current_language", None)
-        if isinstance(cur, str) and cur.lower().startswith("en"):
-            return en
+        if isinstance(cur, str) and cur.lower().startswith("fr"):
+            return fr
     except Exception:
         pass
-    return fr
+    return en
 
 
 essential_log_max_len = 10000

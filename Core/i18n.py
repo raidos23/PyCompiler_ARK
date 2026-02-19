@@ -21,6 +21,8 @@ import locale
 import os
 from typing import Any
 
+from engine_sdk.utils import log_i18n_level
+
 # Built-in fallback for English if language files are missing
 FALLBACK_EN: dict[str, Any] = {
     "name": "English",
@@ -378,9 +380,11 @@ def apply_language(self, lang_display: str) -> None:
         except Exception:
             pass
         try:
-            self.log_i18n(
-                f"🌐 Langue appliquée : {self.current_language}",
-                f"🌐 Language applied: {self.current_language}",
+            log_i18n_level(
+                self,
+                "info",
+                f"Langue appliquée : {self.current_language}",
+                f"Language applied: {self.current_language}",
             )
         except Exception:
             pass
@@ -741,14 +745,31 @@ def show_language_dialog(self):
                     self.save_preferences()
             except Exception:
                 pass
-            if hasattr(self, "log") and self.log:
-                meta = tr.get("_meta", {}) if isinstance(tr, dict) else {}
-                self.log.append(
-                    f"Langue appliquée: {getattr(meta, 'get', lambda k, d=None: d)('name', lang_pref) if isinstance(meta, dict) else lang_pref}"
-                )
+            meta = tr.get("_meta", {}) if isinstance(tr, dict) else {}
+            lang_name = (
+                meta.get("name", lang_pref) if isinstance(meta, dict) else lang_pref
+            )
+            try:
+                self.current_language = lang_name
+            except Exception:
+                pass
+            log_i18n_level(
+                self,
+                "info",
+                f"Langue appliquée: {lang_name}",
+                f"Language applied: {lang_name}",
+            )
         except Exception as e:
-            if hasattr(self, "log") and self.log:
-                self.log.append(f"⚠️ Échec application de la langue: {e}")
+            log_i18n_level(
+                self,
+                "warning",
+                f"Échec application de la langue: {e}",
+                f"Failed to apply language: {e}",
+            )
     else:
-        if hasattr(self, "log") and self.log:
-            self.log.append("Sélection de la langue annulée.")
+        log_i18n_level(
+            self,
+            "info",
+            "Sélection de la langue annulée.",
+            "Language selection cancelled.",
+        )
