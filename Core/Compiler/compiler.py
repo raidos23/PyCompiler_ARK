@@ -172,6 +172,7 @@ class CompilationThread(QThread):
                         line = self.process.stderr.readline()
                         if line:
                             self.error_ready.emit(line.rstrip())
+                            self._update_progress(line)
 
             except Exception:
                 break
