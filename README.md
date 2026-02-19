@@ -1,17 +1,14 @@
-# PyCompiler ARK++
+<p align="center">
+  <img src="./logo/logo2.png" alt="PyCompiler ARK logo" width="100%"/>
+</p>
+
+# **PyCompiler ARK**
 
 A Qt-based workshop to compile Python projects with a pre-compilation plugin pipeline (BCASL) and a multi-engine system.
 
-[![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](http://www.apache.org/licenses/LICENSE-2.0)
-[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
-
-<p align="center">
-  <img src="./logo/logo2.png" alt="PyCompiler ARK++ logo" width="70%"/>
-</p>
-
 ---
 
-## Why it exists
+## Why this app ?
 
 Build Python apps with a predictable workflow, a configurable pre-compile pipeline, and the freedom to choose your build engine.
 

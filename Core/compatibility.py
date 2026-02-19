@@ -17,7 +17,7 @@
 Compatibility Module - Version compatibility checking for engines and plugins
 
 This module provides utilities to verify if engines and plugins are compatible
-with the current version of PyCompiler ARK++.
+with the current version of PyCompiler ARK.
 """
 
 from __future__ import annotations
@@ -228,7 +228,7 @@ def check_engine_compatibility(
 
     Args:
         engine_class: The engine class to check
-        current_core_version: Current version of PyCompiler ARK++ Core
+        current_core_version: Current version of PyCompiler ARK Core
 
     Returns:
         CompatibilityResult with compatibility information
@@ -267,7 +267,7 @@ def check_plugin_compatibility(
 
     Args:
         plugin_class: The plugin class to check
-        current_core_version: Current version of PyCompiler ARK++ Core
+        current_core_version: Current version of PyCompiler ARK Core
 
     Returns:
         CompatibilityResult with compatibility information
@@ -350,7 +350,7 @@ def validate_engines(
 
     Args:
         engines: List of engine classes
-        current_core_version: Current version of PyCompiler ARK++ Core
+        current_core_version: Current version of PyCompiler ARK Core
 
     Returns:
         Dictionary mapping engine names to CompatibilityResult
@@ -382,7 +382,7 @@ def validate_plugins(
 
     Args:
         plugins: List of plugin classes
-        current_core_version: Current version of PyCompiler ARK++ Core
+        current_core_version: Current version of PyCompiler ARK Core
 
     Returns:
         Dictionary mapping plugin names to CompatibilityResult

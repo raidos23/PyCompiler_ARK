@@ -1,4 +1,4 @@
-# PyCompiler ARK++ (ARK++) — Runtime requirements
+# PyCompiler ARK (ARK++) — Runtime requirements
 
 # Core GUI framework (Qt for Python)
 # Matrix:

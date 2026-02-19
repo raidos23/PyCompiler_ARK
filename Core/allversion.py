@@ -14,7 +14,7 @@
 # limitations under the License.
 
 """
-All Versions Module - Centralized version tracking for PyCompiler ARK++
+All Versions Module - Centralized version tracking for PyCompiler ARK
 
 This module provides utilities to capture and retrieve version information
 for the core application and all SDKs/engines.
@@ -57,7 +57,7 @@ class VersionInfo:
 
 
 def get_core_version() -> str:
-    """Get the version of the PyCompiler ARK++ Core."""
+    """Get the version of the PyCompiler ARK Core."""
     try:
         from . import __version__
 
@@ -139,7 +139,7 @@ def get_all_versions() -> Dict[str, VersionInfo]:
 
     # Core
     core_version = get_core_version()
-    versions["core"] = VersionInfo("PyCompiler ARK++ Core", core_version, "core")
+    versions["core"] = VersionInfo("PyCompiler ARK Core", core_version, "core")
 
     # SDKs
     engine_sdk_version = get_engine_sdk_version()
@@ -183,7 +183,7 @@ def print_all_versions() -> None:
     """Print all version information to stdout."""
     versions = get_all_versions()
     print("=" * 60)
-    print("PyCompiler ARK++ - Version Information")
+    print("PyCompiler ARK - Version Information")
     print("=" * 60)
 
     # Group by type
@@ -210,7 +210,7 @@ def get_version_string() -> str:
         Formatted string with all version information
     """
     versions = get_all_versions()
-    lines = ["PyCompiler ARK++ Version Information:"]
+    lines = ["PyCompiler ARK Version Information:"]
 
     for name, info in versions.items():
         lines.append(f"  {info.name}: {info.version}")

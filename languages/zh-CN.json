@@ -14,7 +14,7 @@
   "suggest_deps": "分析依赖",
   "help": "帮助",
   "help_title": "帮助",
-  "help_text": "<b>PyCompiler ARK++ — 快速帮助</b><br><ul><li>1) 选择工作区并添加您的 .py 文件。</li><li>2) 通过 <b>Bc Plugins Loader</b> (BCASL) 配置预编译插件。</li><li>3) 在 <b>PyInstaller</b>、<b>Nuitka</b> 或 <b>CX_Freeze</b> 选项卡中调整选项。</li><li>4) 点击 <b>构建</b> 并跟随日志。</li></ul><b>注意</b><br><ul><li>构建开始时，所有操作控件（包括 Bc Plugins Loader）将被禁用，直到完成或取消。</li><li>预编译 (BCASL) 在编译前完成。</li><li><i>venv</i> 可以自动创建；如果存在 requirements.txt，则安装；根据需要将工具安装到 venv 中。</li><li>Plugins 发起的工作区更改将自动应用；运行中的构建将在切换前取消。</li></ul><b>许可证</b>: Apache-2.0 — <a href='https://www.apache.org/licenses/LICENSE-2.0'>apache.org/licenses/LICENSE-2.0</a><br><b>作者</b>: Ague Samuel Amen<br>© 2026 Ague Samuel Amen",
+  "help_text": "<b>PyCompiler ARK — 快速帮助</b><br><ul><li>1) 选择工作区并添加您的 .py 文件。</li><li>2) 通过 <b>Bc Plugins Loader</b> (BCASL) 配置预编译插件。</li><li>3) 在 <b>PyInstaller</b>、<b>Nuitka</b> 或 <b>CX_Freeze</b> 选项卡中调整选项。</li><li>4) 点击 <b>构建</b> 并跟随日志。</li></ul><b>注意</b><br><ul><li>构建开始时，所有操作控件（包括 Bc Plugins Loader）将被禁用，直到完成或取消。</li><li>预编译 (BCASL) 在编译前完成。</li><li><i>venv</i> 可以自动创建；如果存在 requirements.txt，则安装；根据需要将工具安装到 venv 中。</li><li>Plugins 发起的工作区更改将自动应用；运行中的构建将在切换前取消。</li></ul><b>许可证</b>: Apache-2.0 — <a href='https://www.apache.org/licenses/LICENSE-2.0'>apache.org/licenses/LICENSE-2.0</a><br><b>作者</b>: Ague Samuel Amen<br>© 2026 Ague Samuel Amen",
   "show_stats": "统计",
   "select_lang": "选择语言",
   "venv_button": "手动选择 venv 文件夹",

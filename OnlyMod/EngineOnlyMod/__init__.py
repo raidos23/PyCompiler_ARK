@@ -16,7 +16,7 @@
 """
 Engines Standalone Module — Module de Gestion des Moteurs de Compilation
 
-Module autonome permettant d'exécuter les moteurs de compilation PyCompiler ARK++
+Module autonome permettant d'exécuter les moteurs de compilation PyCompiler ARK
 sans lancer l'application principale.
 
 Fonctionnalités:
