@@ -142,3 +142,47 @@ QDialogButtonBox QPushButton:default:hover, QMessageBox QPushButton:default:hove
 
 /* Log */
 QTextEdit#log { font-family: "Cascadia Code", "Fira Code", "DejaVu Sans Mono", monospace; font-size: 10pt; background: #FFFFFF; }
+
+/* === Theme polish === */
+QFrame[frameShape="4"] {
+  background: #FFFFFF;
+  border: 1px solid #F0E4C1;
+  border-radius: 12px;
+}
+
+QHeaderView::section {
+  background: #FFF1CC;
+  color: #2D2415;
+  border: 1px solid #F0E4C1;
+  padding: 6px 10px;
+}
+QHeaderView::section:hover { background: #FFE9B3; }
+
+QMenuBar {
+  background: #FFFFFF;
+  color: #2D2415;
+  border-bottom: 1px solid #F0E4C1;
+}
+QMenuBar::item { padding: 6px 10px; background: transparent; border-radius: 8px; }
+QMenuBar::item:selected { background: #FFF1CC; }
+
+QMenu {
+  background: #FFFFFF;
+  color: #2D2415;
+  border: 1px solid #F0E4C1;
+  border-radius: 10px;
+}
+QMenu::item { padding: 6px 12px; }
+QMenu::item:selected { background: #FFE79A; }
+QMenu::separator { height: 1px; background: #F0E4C1; margin: 6px 8px; }
+
+QStatusBar {
+  background: #FFFFFF;
+  color: #8A7A58;
+  border-top: 1px solid #F0E4C1;
+}
+QStatusBar::item { border: none; }
+
+QListWidget::item:hover, QTreeWidget::item:hover, QTableView::item:hover {
+  background: #FFE79A;
+}

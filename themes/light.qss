@@ -315,3 +315,41 @@ QScrollArea#sidebarScrollArea > QWidget {
 QScrollArea#dashboardScrollArea {
   background: #F5F6F8;
 }
+
+/* === Theme polish === */
+QHeaderView::section {
+  background: #F1F3F6;
+  color: #1c1f26;
+  border: 1px solid #D6D9DF;
+  padding: 6px 10px;
+}
+QHeaderView::section:hover { background: #E7EAF0; }
+
+QMenuBar {
+  background: #FFFFFF;
+  color: #1c1f26;
+  border-bottom: 1px solid #D6D9DF;
+}
+QMenuBar::item { padding: 6px 10px; background: transparent; border-radius: 8px; }
+QMenuBar::item:selected { background: #F1F3F6; }
+
+QMenu {
+  background: #FFFFFF;
+  color: #1c1f26;
+  border: 1px solid #D6D9DF;
+  border-radius: 10px;
+}
+QMenu::item { padding: 6px 12px; }
+QMenu::item:selected { background: #E4F0FF; }
+QMenu::separator { height: 1px; background: #D6D9DF; margin: 6px 8px; }
+
+QStatusBar {
+  background: #FFFFFF;
+  color: #8b8f98;
+  border-top: 1px solid #D6D9DF;
+}
+QStatusBar::item { border: none; }
+
+QListWidget::item:hover, QTreeWidget::item:hover, QTableView::item:hover {
+  background: #E4F0FF;
+}

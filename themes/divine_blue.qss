@@ -189,3 +189,47 @@ QProgressBar#progress {
   font-weight: 600;
   font-size: 10pt;
 }
+
+/* === Theme polish === */
+QFrame[frameShape="4"] {
+  background: #0F1B33;
+  border: 1px solid #1E2E4F;
+  border-radius: 12px;
+}
+
+QHeaderView::section {
+  background: #10203A;
+  color: #E8F0FF;
+  border: 1px solid #1E2E4F;
+  padding: 6px 10px;
+}
+QHeaderView::section:hover { background: #14284A; }
+
+QMenuBar {
+  background: #10203A;
+  color: #E8F0FF;
+  border-bottom: 1px solid #1E2E4F;
+}
+QMenuBar::item { padding: 6px 10px; background: transparent; border-radius: 8px; }
+QMenuBar::item:selected { background: #14284A; }
+
+QMenu {
+  background: #0F1B33;
+  color: #E8F0FF;
+  border: 1px solid #1E2E4F;
+  border-radius: 10px;
+}
+QMenu::item { padding: 6px 12px; }
+QMenu::item:selected { background: #163660; }
+QMenu::separator { height: 1px; background: #1E2E4F; margin: 6px 8px; }
+
+QStatusBar {
+  background: #10203A;
+  color: #98A7C5;
+  border-top: 1px solid #1E2E4F;
+}
+QStatusBar::item { border: none; }
+
+QListWidget::item:hover, QTreeWidget::item:hover, QTableView::item:hover {
+  background: #163660;
+}
