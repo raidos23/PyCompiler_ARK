@@ -476,6 +476,11 @@ class UiFeatures:
                 self.btn_show_stats.setEnabled(enabled)
         except Exception:
             pass
+        try:
+            if hasattr(self, "btn_clear_workspace") and self.btn_clear_workspace:
+                self.btn_clear_workspace.setEnabled(enabled)
+        except Exception:
+            pass
         self.venv_button.setEnabled(enabled)
 
         # Rafraîchir visuellement l'état grisé
@@ -496,6 +501,7 @@ class UiFeatures:
                 getattr(self, "select_lang", None),
                 getattr(self, "select_theme", None),
                 getattr(self, "btn_show_stats", None),
+                getattr(self, "btn_clear_workspace", None),
                 getattr(self, "venv_button", None),
             ]
             for w in grey_targets:
@@ -527,9 +533,17 @@ class UiFeatures:
 
     def show_statistics(self) -> None:
         """Affiche les statistiques de compilation."""
-        import psutil
+        try:
+            import psutil
+        except Exception:
+            psutil = None
 
-        if not hasattr(self, "_compilation_times") or not self._compilation_times:
+        stats = getattr(self, "_compilation_stats", None)
+        use_new = isinstance(stats, dict) and stats.get("total_count", 0) > 0
+
+        if not use_new and (
+            not hasattr(self, "_compilation_times") or not self._compilation_times
+        ):
             QMessageBox.information(
                 self,
                 self.tr("Statistiques", "Statistics"),
@@ -539,18 +553,115 @@ class UiFeatures:
                 ),
             )
             return
-        total_files = len(self._compilation_times)
-        total_time = sum(self._compilation_times.values())
-        avg_time = total_time / total_files if total_files else 0
-        try:
-            mem_info = psutil.Process().memory_info().rss / (1024 * 1024)
-        except Exception:
-            mem_info = None
+
+        if use_new:
+            total_compiles = int(stats.get("total_count", 0))
+            total_time = float(stats.get("total_time", 0.0))
+            avg_time = total_time / total_compiles if total_compiles else 0.0
+            total_files = len(stats.get("files", {}))
+            success = int(stats.get("success", 0))
+            failed = int(stats.get("failed", 0))
+            canceled = int(stats.get("canceled", 0))
+            min_time = stats.get("min_time")
+            max_time = stats.get("max_time")
+            last_file = stats.get("last_file")
+            last_duration = stats.get("last_duration")
+            engines = stats.get("engines", {})
+            slowest_file = None
+            slowest_time = None
+            for path, fstats in stats.get("files", {}).items():
+                if not isinstance(fstats, dict):
+                    continue
+                candidate = fstats.get("max_time")
+                if candidate is None:
+                    candidate = fstats.get("last_time")
+                if candidate is None:
+                    continue
+                if slowest_time is None or float(candidate) > float(slowest_time):
+                    slowest_time = float(candidate)
+                    slowest_file = path
+            slowest_files = []
+            for path, fstats in stats.get("files", {}).items():
+                if not isinstance(fstats, dict):
+                    continue
+                candidate = fstats.get("max_time")
+                if candidate is None:
+                    candidate = fstats.get("last_time")
+                if candidate is None:
+                    continue
+                slowest_files.append((path, float(candidate)))
+            slowest_files.sort(key=lambda item: item[1], reverse=True)
+        else:
+            total_files = len(self._compilation_times)
+            total_time = sum(self._compilation_times.values())
+            avg_time = total_time / total_files if total_files else 0
+            total_compiles = total_files
+            success = total_files
+            failed = 0
+            canceled = 0
+            min_time = min(self._compilation_times.values()) if total_files else None
+            max_time = max(self._compilation_times.values()) if total_files else None
+            last_file = None
+            last_duration = None
+            engines = {}
+            slowest_file = None
+            slowest_time = max_time
+            if total_files:
+                slowest_file = max(self._compilation_times, key=self._compilation_times.get)
+            slowest_files = [
+                (path, float(duration))
+                for path, duration in self._compilation_times.items()
+            ]
+            slowest_files.sort(key=lambda item: item[1], reverse=True)
+
+        mem_info = None
+        if psutil is not None:
+            try:
+                mem_info = psutil.Process().memory_info().rss / (1024 * 1024)
+            except Exception:
+                mem_info = None
         msg = "<b>Statistiques de compilation</b><br>"
-        msg += f"Fichiers compilés : {total_files}<br>"
-        msg += f"Temps total : {total_time:.2f} secondes<br>"
-        msg += f"Temps moyen par fichier : {avg_time:.2f} secondes<br>"
-        if mem_info:
+        msg += f"Fichiers distincts : {total_files}<br>"
+        msg += f"Compilations totales : {total_compiles}<br>"
+        msg += f"Succès : {success} | Échecs : {failed} | Annulées : {canceled}<br>"
+        msg += f"Temps total : {total_time:.3f} secondes<br>"
+        msg += f"Temps moyen : {avg_time:.3f} secondes<br>"
+        if min_time is not None and max_time is not None:
+            msg += (
+                f"Temps min/max : {float(min_time):.3f} / {float(max_time):.3f} secondes<br>"
+            )
+        if slowest_file and slowest_time is not None:
+            msg += (
+                f"Fichier le plus lent : {os.path.basename(str(slowest_file))}"
+                f" ({float(slowest_time):.3f} secondes)<br>"
+            )
+        if slowest_files:
+            top_n = slowest_files[:5]
+            msg += "Top 5 fichiers les plus lents :<br>"
+            for path, duration in top_n:
+                msg += (
+                    f"- {os.path.basename(str(path))} ({float(duration):.3f} secondes)<br>"
+                )
+        if isinstance(engines, dict) and engines:
+            msg += "Par moteur :<br>"
+            for engine_id, estats in engines.items():
+                if not isinstance(estats, dict):
+                    continue
+                eng_count = int(estats.get("count", 0))
+                eng_total = float(estats.get("total_time", 0.0))
+                eng_avg = eng_total / eng_count if eng_count else 0.0
+                eng_success = int(estats.get("success", 0))
+                eng_failed = int(estats.get("failed", 0))
+                eng_canceled = int(estats.get("canceled", 0))
+                msg += (
+                    f"- {engine_id} : {eng_count} compiles | "
+                    f"{eng_success} OK / {eng_failed} KO / {eng_canceled} ann. | "
+                    f"{eng_avg:.3f}s moy<br>"
+                )
+        if last_file and last_duration is not None:
+            msg += f"Dernier fichier : {os.path.basename(str(last_file))}<br>"
+            msg += f"Dernière durée : {float(last_duration):.3f} secondes<br>"
+        if mem_info is not None:
             msg += f"Mémoire utilisée (processus GUI) : {mem_info:.1f} Mo<br>"
         QMessageBox.information(
             self, self.tr("Statistiques de compilation", "Build statistics"), msg

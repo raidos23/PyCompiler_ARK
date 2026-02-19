@@ -18,7 +18,14 @@ from __future__ import annotations
 from PySide6.QtWidgets import QCheckBox, QHBoxLayout, QLineEdit, QPushButton
 
 
-def add_icon_selector(layout, text: str, callback, object_name: str | None = None):
+def add_icon_selector(
+    layout,
+    text: str,
+    callback,
+    object_name: str | None = None,
+    path_object_name: str | None = None,
+    path_placeholder: str | None = None,
+):
     """Add a standard icon selector button row to a layout."""
     row = QHBoxLayout()
     btn = QPushButton(text)
@@ -26,10 +33,16 @@ def add_icon_selector(layout, text: str, callback, object_name: str | None = Non
         btn.setObjectName(object_name)
     if callback:
         btn.clicked.connect(callback)
+    path_input = QLineEdit()
+    if path_object_name:
+        path_input.setObjectName(path_object_name)
+    if path_placeholder:
+        path_input.setPlaceholderText(path_placeholder)
+    path_input.setClearButtonEnabled(True)
     row.addWidget(btn)
-    row.addStretch()
+    row.addWidget(path_input, 1)
     layout.addLayout(row)
-    return btn
+    return btn, path_input
 
 
 def add_output_dir(
