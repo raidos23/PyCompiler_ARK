@@ -175,6 +175,124 @@ def safe_log(gui: Any, text: str, *, redact: bool = True, clamp: bool = True) ->
 
 
 # -------------------------------
+# Level-based logging (rich/colorama)
+# -------------------------------
+
+_LOG_LEVEL_LABELS = {
+    "info": "INFO",
+    "warning": "WARN",
+    "error": "ERROR",
+    "success": "SUCCESS",
+    "state": "STATE",
+}
+
+_LOG_LEVEL_RICH = {
+    "info": "cyan",
+    "warning": "yellow",
+    "error": "red",
+    "success": "green",
+    "state": "blue",
+}
+
+_LOG_LEVEL_COLORAMA = {
+    "info": "CYAN",
+    "warning": "YELLOW",
+    "error": "RED",
+    "success": "GREEN",
+    "state": "BLUE",
+}
+
+_RICH_CONSOLE = None
+_COLORAMA_READY = False
+
+
+def _get_rich_console():
+    global _RICH_CONSOLE
+    if _RICH_CONSOLE is None:
+        from rich.console import Console  # type: ignore
+
+        _RICH_CONSOLE = Console()
+    return _RICH_CONSOLE
+
+
+def _console_log(level: str, label: str, message: str) -> None:
+    # Prefer rich when available for consistent styling.
+    try:
+        console = _get_rich_console()
+        style = _LOG_LEVEL_RICH.get(level, "white")
+        console.print(f"[{style}]{label}[/] {message}")
+        return
+    except Exception:
+        pass
+
+    # Fallback to colorama for basic ANSI colors.
+    try:
+        from colorama import Fore, Style, init  # type: ignore
+
+        global _COLORAMA_READY
+        if not _COLORAMA_READY:
+            init(autoreset=True)
+            _COLORAMA_READY = True
+
+        color_name = _LOG_LEVEL_COLORAMA.get(level)
+        color = getattr(Fore, color_name, "")
+        if color:
+            print(f"{color}{label}{Style.RESET_ALL} {message}")
+        else:
+            print(f"{label} {message}")
+        return
+    except Exception:
+        pass
+
+    print(f"{label} {message}")
+
+
+def log_with_level(
+    gui: Any,
+    level: str,
+    message: str,
+    *,
+    redact: bool = True,
+    clamp: bool = True,
+) -> None:
+    """Append a level-tagged message to GUI log or print with colors in console."""
+    try:
+        lvl = str(level).lower() if level is not None else "info"
+    except Exception:
+        lvl = "info"
+    label = _LOG_LEVEL_LABELS.get(lvl, str(level).upper())
+
+    msg = str(message) if message is not None else ""
+    if redact:
+        msg = redact_secrets(msg)
+    if clamp:
+        msg = clamp_text(msg, max_len=essential_log_max_len)
+
+    line = f"[{label}] {msg}"
+    try:
+        if hasattr(gui, "log") and getattr(gui, "log") is not None:
+            gui.log.append(line)
+            return
+    except Exception:
+        pass
+
+    _console_log(lvl, label, msg)
+
+
+def log_i18n_level(
+    gui: Any,
+    level: str,
+    fr: str,
+    en: str,
+    *,
+    redact: bool = True,
+    clamp: bool = True,
+) -> None:
+    """Translate then log a level-tagged message."""
+    msg = tr(gui, fr, en)
+    log_with_level(gui, level, msg, redact=redact, clamp=clamp)
+
+# -------------------------------
 # Executable resolution helper
 # -------------------------------
 
