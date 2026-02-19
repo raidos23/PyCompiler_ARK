@@ -15,13 +15,16 @@ A Qt-based workshop to compile Python projects with a pre-compilation plugin pip
 
 Build Python apps with a predictable workflow, a configurable pre-compile pipeline, and the freedom to choose your build engine.
 
-## At a glance
+## Core capabilities
 
-- **BCASL pipeline**: validation, preparation, transformation before compilation.
-- **Multi-engine builds**: PyInstaller, Nuitka, cx_Freeze.
-- **Workspace-first UI**: filter files, manage exclusions, track progress.
-- **Standalone tools**: BCASL manager and Engines manager.
-- **Customizable**: themes and translations.
+- **BCASL pre-compile pipeline**: validation, preparation, transformation before the build, with timeouts and safety controls.
+- **Multi-engine builds**: switch between PyInstaller, Nuitka, and cx_Freeze without changing your workflow.
+- **Auto-detection for tricky dependencies**: engine-specific auto-args based on requirements or import scanning.
+- **Workspace-first UI**: filter files, manage exclusions, and follow progress and logs in one place.
+- **Venv-aware execution**: engines can use the project virtual environment automatically.
+- **Standalone tools**: dedicated BCASL and Engines managers, plus CLI entry points and dry-run support.
+- **Extensible SDKs**: create new engines and BCASL plugins with the provided SDKs.
+- **Customizable**: theming and translations out of the box.
 
 ---
 
