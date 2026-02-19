@@ -43,11 +43,12 @@ class DummyGUI:
         self.selected_files: list[str] = []
         self.workspace_dir: str | None = None
         self.compiler_tabs = None
-        self._logs: list[tuple[str, str]] = []
+        self.log: list[str] = []
         self._controls_enabled = True
+        self.current_language = "fr"
 
     def log_i18n(self, fr: str, en: str) -> None:
-        self._logs.append((fr, en))
+        self.log.append(fr)
 
     def set_controls_enabled(self, enabled: bool) -> None:
         self._controls_enabled = enabled
@@ -59,7 +60,7 @@ def test_compile_all_no_files(tmp_path) -> None:
 
     compiler_module.compile_all(gui)
 
-    assert any("Aucun fichier" in fr for fr, _ in gui._logs)
+    assert any("Aucun fichier" in msg for msg in gui.log)
 
 
 def test_compile_all_no_workspace(tmp_path) -> None:
@@ -68,19 +69,18 @@ def test_compile_all_no_workspace(tmp_path) -> None:
 
     compiler_module.compile_all(gui)
 
-    assert any("Aucun workspace" in fr for fr, _ in gui._logs)
+    assert any("Aucun workspace" in msg for msg in gui.log)
 
 
-def test_compile_all_uses_entrypoint(tmp_path, monkeypatch) -> None:
-    entry = tmp_path / "main.py"
-    other = tmp_path / "other.py"
-    entry.write_text("print('x')", encoding="utf-8")
+def test_compile_all_uses_entrypoint(test_workspace, monkeypatch) -> None:
+    entry = test_workspace / "main.py"
+    other = test_workspace / "other.py"
     other.write_text("print('y')", encoding="utf-8")
 
-    assert set_entrypoint(str(tmp_path), "main.py") is True
+    assert set_entrypoint(str(test_workspace), "main.py") is True
 
     gui = DummyGUI()
-    gui.workspace_dir = str(tmp_path)
+    gui.workspace_dir = str(test_workspace)
     gui.python_files = [str(other)]
     gui.selected_files = [str(other)]
 
@@ -92,6 +92,9 @@ def test_compile_all_uses_entrypoint(tmp_path, monkeypatch) -> None:
     monkeypatch.setattr(compiler_module, "_start_compilation_queue", fake_start)
     monkeypatch.setattr(compiler_module, "create", lambda _eid: DummyEngine())
     monkeypatch.setattr(compiler_module, "_get_main_process", lambda: DummyMainProcess())
+    monkeypatch.setattr(
+        compiler_module, "_run_bcasl_before_compile", lambda _self, cb: cb(None)
+    )
 
     compiler_module.compile_all(gui)
 

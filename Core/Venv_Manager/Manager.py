@@ -158,8 +158,8 @@ class VenvManager:
                     if action not in allowed_actions[manager]:
                         allowed = ", ".join(sorted(allowed_actions[manager]))
                         errors.append(
-                            f"'{manager}.{action}': action non autorisée. "
-                            f"Actions autorisées: {allowed}."
+                            f"'{manager}.{action}': action non autorisee. "
+                            f"Actions autorisees: {allowed}."
                         )
                         continue
                 if not isinstance(cmd, list):
