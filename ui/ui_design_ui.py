@@ -3,7 +3,7 @@
 ################################################################################
 ## Form generated from reading UI file 'ui_design.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.9.2
+## Created by: Qt User Interface Compiler version 6.10.1
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
@@ -32,19 +32,16 @@ class Ui_PyCompilerARKGui(object):
         self.rootLayout.setContentsMargins(12, 12, 12, 12)
         self.header = QFrame(PyCompilerARKGui)
         self.header.setObjectName(u"header")
-        self.header.setMinimumHeight(56)
         self.header.setFrameShape(QFrame.Shape.StyledPanel)
         self.headerLayout = QHBoxLayout(self.header)
         self.headerLayout.setSpacing(10)
         self.headerLayout.setObjectName(u"headerLayout")
         self.headerLayout.setContentsMargins(10, 10, 10, 10)
-        self.header_left = QWidget(self.header)
-        self.header_left.setObjectName(u"header_left")
-        self.headerLeftLayout = QVBoxLayout(self.header_left)
+        self.headerLeftLayout = QVBoxLayout()
         self.headerLeftLayout.setSpacing(2)
         self.headerLeftLayout.setObjectName(u"headerLeftLayout")
         self.headerLeftLayout.setContentsMargins(0, 0, 0, 0)
-        self.label_app_title = QLabel(self.header_left)
+        self.label_app_title = QLabel(self.header)
         self.label_app_title.setObjectName(u"label_app_title")
         font = QFont()
         font.setPointSize(16)
@@ -53,46 +50,44 @@ class Ui_PyCompilerARKGui(object):
 
         self.headerLeftLayout.addWidget(self.label_app_title)
 
-        self.label_workspace_status = QLabel(self.header_left)
+        self.label_workspace_status = QLabel(self.header)
         self.label_workspace_status.setObjectName(u"label_workspace_status")
 
         self.headerLeftLayout.addWidget(self.label_workspace_status)
 
 
-        self.headerLayout.addWidget(self.header_left)
+        self.headerLayout.addLayout(self.headerLeftLayout)
 
         self.headerSpacer = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
 
         self.headerLayout.addItem(self.headerSpacer)
 
-        self.header_right = QWidget(self.header)
-        self.header_right.setObjectName(u"header_right")
-        self.headerRightLayout = QHBoxLayout(self.header_right)
+        self.headerRightLayout = QHBoxLayout()
         self.headerRightLayout.setSpacing(8)
         self.headerRightLayout.setObjectName(u"headerRightLayout")
         self.headerRightLayout.setContentsMargins(0, 0, 0, 0)
-        self.select_lang = QPushButton(self.header_right)
+        self.select_lang = QPushButton(self.header)
         self.select_lang.setObjectName(u"select_lang")
 
         self.headerRightLayout.addWidget(self.select_lang)
 
-        self.select_theme = QPushButton(self.header_right)
+        self.select_theme = QPushButton(self.header)
         self.select_theme.setObjectName(u"select_theme")
 
         self.headerRightLayout.addWidget(self.select_theme)
 
-        self.compile_btn = QPushButton(self.header_right)
+        self.compile_btn = QPushButton(self.header)
         self.compile_btn.setObjectName(u"compile_btn")
 
         self.headerRightLayout.addWidget(self.compile_btn)
 
-        self.cancel_btn = QPushButton(self.header_right)
+        self.cancel_btn = QPushButton(self.header)
         self.cancel_btn.setObjectName(u"cancel_btn")
 
         self.headerRightLayout.addWidget(self.cancel_btn)
 
 
-        self.headerLayout.addWidget(self.header_right)
+        self.headerLayout.addLayout(self.headerRightLayout)
 
 
         self.rootLayout.addWidget(self.header)
@@ -102,7 +97,6 @@ class Ui_PyCompilerARKGui(object):
         self.mainSplitter.setOrientation(Qt.Orientation.Horizontal)
         self.leftPanel = QWidget(self.mainSplitter)
         self.leftPanel.setObjectName(u"leftPanel")
-        self.leftPanel.setMinimumWidth(280)
         sizePolicy = QSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Expanding)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -154,32 +148,6 @@ class Ui_PyCompilerARKGui(object):
         self.layout_files_grid.setSpacing(12)
         self.layout_files_grid.setObjectName(u"layout_files_grid")
         self.layout_files_grid.setContentsMargins(10, 10, 10, 10)
-        self.label_files_section = QLabel(self.frame_files)
-        self.label_files_section.setObjectName(u"label_files_section")
-        font1 = QFont()
-        font1.setPointSize(12)
-        font1.setBold(False)
-        self.label_files_section.setFont(font1)
-        self.label_files_section.setWordWrap(True)
-
-        self.layout_files_grid.addWidget(self.label_files_section, 0, 0, 1, 2)
-
-        self.file_filter_input = QLineEdit(self.frame_files)
-        self.file_filter_input.setObjectName(u"file_filter_input")
-
-        self.layout_files_grid.addWidget(self.file_filter_input, 1, 0, 1, 2)
-
-        self.file_list = QListWidget(self.frame_files)
-        self.file_list.setObjectName(u"file_list")
-        self.file_list.setMinimumHeight(140)
-        sizePolicy1 = QSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
-        sizePolicy1.setHorizontalStretch(0)
-        sizePolicy1.setVerticalStretch(1)
-        sizePolicy1.setHeightForWidth(self.file_list.sizePolicy().hasHeightForWidth())
-        self.file_list.setSizePolicy(sizePolicy1)
-
-        self.layout_files_grid.addWidget(self.file_list, 2, 0, 1, 1)
-
         self.layout_file_actions = QVBoxLayout()
         self.layout_file_actions.setSpacing(8)
         self.layout_file_actions.setObjectName(u"layout_file_actions")
@@ -201,8 +169,38 @@ class Ui_PyCompilerARKGui(object):
 
         self.layout_files_grid.addLayout(self.layout_file_actions, 2, 1, 1, 1)
 
+        self.file_filter_input = QLineEdit(self.frame_files)
+        self.file_filter_input.setObjectName(u"file_filter_input")
+
+        self.layout_files_grid.addWidget(self.file_filter_input, 1, 0, 1, 2)
+
+        self.file_list = QListWidget(self.frame_files)
+        self.file_list.setObjectName(u"file_list")
+        sizePolicy1 = QSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        sizePolicy1.setHorizontalStretch(0)
+        sizePolicy1.setVerticalStretch(1)
+        sizePolicy1.setHeightForWidth(self.file_list.sizePolicy().hasHeightForWidth())
+        self.file_list.setSizePolicy(sizePolicy1)
+
+        self.layout_files_grid.addWidget(self.file_list, 2, 0, 1, 1)
+
+        self.label_files_section = QLabel(self.frame_files)
+        self.label_files_section.setObjectName(u"label_files_section")
+        font1 = QFont()
+        font1.setPointSize(12)
+        font1.setBold(False)
+        self.label_files_section.setFont(font1)
+        self.label_files_section.setWordWrap(True)
+
+        self.layout_files_grid.addWidget(self.label_files_section, 0, 0, 1, 2)
+
 
         self.leftLayout.addWidget(self.frame_files)
+
+        self.verticalLayout_4 = QVBoxLayout()
+        self.verticalLayout_4.setObjectName(u"verticalLayout_4")
+
+        self.leftLayout.addLayout(self.verticalLayout_4)
 
         self.frame_tools = QFrame(self.leftPanel)
         self.frame_tools.setObjectName(u"frame_tools")
@@ -211,10 +209,10 @@ class Ui_PyCompilerARKGui(object):
         self.layout_tools_grid.setSpacing(10)
         self.layout_tools_grid.setObjectName(u"layout_tools_grid")
         self.layout_tools_grid.setContentsMargins(10, 10, 10, 10)
-        self.label_tools = QLabel(self.frame_tools)
-        self.label_tools.setObjectName(u"label_tools")
+        self.btn_show_stats = QPushButton(self.frame_tools)
+        self.btn_show_stats.setObjectName(u"btn_show_stats")
 
-        self.layout_tools_grid.addWidget(self.label_tools, 0, 0, 1, 2)
+        self.layout_tools_grid.addWidget(self.btn_show_stats, 2, 0, 1, 1)
 
         self.btn_suggest_deps = QPushButton(self.frame_tools)
         self.btn_suggest_deps.setObjectName(u"btn_suggest_deps")
@@ -226,27 +224,26 @@ class Ui_PyCompilerARKGui(object):
 
         self.layout_tools_grid.addWidget(self.btn_bc_loader, 1, 1, 1, 1)
 
-        self.btn_show_stats = QPushButton(self.frame_tools)
-        self.btn_show_stats.setObjectName(u"btn_show_stats")
-
-        self.layout_tools_grid.addWidget(self.btn_show_stats, 2, 0, 1, 1)
-
         self.btn_help = QPushButton(self.frame_tools)
         self.btn_help.setObjectName(u"btn_help")
 
         self.layout_tools_grid.addWidget(self.btn_help, 2, 1, 1, 1)
 
+        self.verticalSpacer = QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
+
+        self.layout_tools_grid.addItem(self.verticalSpacer, 3, 0, 1, 2)
+
+        self.label_tools = QLabel(self.frame_tools)
+        self.label_tools.setObjectName(u"label_tools")
+
+        self.layout_tools_grid.addWidget(self.label_tools, 0, 0, 1, 2)
+
 
         self.leftLayout.addWidget(self.frame_tools)
-
-        self.leftSpacer = QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
-
-        self.leftLayout.addItem(self.leftSpacer)
 
         self.mainSplitter.addWidget(self.leftPanel)
         self.rightPanel = QWidget(self.mainSplitter)
         self.rightPanel.setObjectName(u"rightPanel")
-        self.rightPanel.setMinimumWidth(420)
         sizePolicy2 = QSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         sizePolicy2.setHorizontalStretch(1)
         sizePolicy2.setVerticalStretch(0)
@@ -290,7 +287,6 @@ class Ui_PyCompilerARKGui(object):
 
         self.log = QTextEdit(self.frame_logs)
         self.log.setObjectName(u"log")
-        self.log.setMinimumHeight(160)
         sizePolicy1.setHeightForWidth(self.log.sizePolicy().hasHeightForWidth())
         self.log.setSizePolicy(sizePolicy1)
 
@@ -315,7 +311,6 @@ class Ui_PyCompilerARKGui(object):
         self.progress.setObjectName(u"progress")
         self.progress.setValue(0)
         self.progress.setTextVisible(True)
-        self.progress.setMinimumHeight(18)
 
         self.layout_progress.addWidget(self.progress)
 
@@ -329,7 +324,7 @@ class Ui_PyCompilerARKGui(object):
 
         self.retranslateUi(PyCompilerARKGui)
 
-        self.compiler_tabs.setCurrentIndex(0)
+        self.compiler_tabs.setCurrentIndex(-1)
 
 
         QMetaObject.connectSlotsByName(PyCompilerARKGui)
@@ -338,59 +333,59 @@ class Ui_PyCompilerARKGui(object):
     def retranslateUi(self, PyCompilerARKGui):
         self.label_app_title.setText(QCoreApplication.translate("PyCompilerARKGui", u"PyCompiler ARK++", None))
         self.label_workspace_status.setText(QCoreApplication.translate("PyCompilerARKGui", u"Workspace : Aucun", None))
-        self.select_lang.setText(QCoreApplication.translate("PyCompilerARKGui", u"Langue", None))
 #if QT_CONFIG(tooltip)
         self.select_lang.setToolTip(QCoreApplication.translate("PyCompilerARKGui", u"Choisir la langue de l'interface", None))
 #endif // QT_CONFIG(tooltip)
-        self.select_theme.setText(QCoreApplication.translate("PyCompilerARKGui", u"Th\u00e8me", None))
+        self.select_lang.setText(QCoreApplication.translate("PyCompilerARKGui", u"Langue", None))
 #if QT_CONFIG(tooltip)
         self.select_theme.setToolTip(QCoreApplication.translate("PyCompilerARKGui", u"Choisir le th\u00e8me de l'interface", None))
 #endif // QT_CONFIG(tooltip)
-        self.compile_btn.setText(QCoreApplication.translate("PyCompilerARKGui", u"Compiler", None))
+        self.select_theme.setText(QCoreApplication.translate("PyCompilerARKGui", u"Th\u00e8me", None))
 #if QT_CONFIG(tooltip)
         self.compile_btn.setToolTip(QCoreApplication.translate("PyCompilerARKGui", u"D\u00e9marrer la compilation", None))
 #endif // QT_CONFIG(tooltip)
-        self.cancel_btn.setText(QCoreApplication.translate("PyCompilerARKGui", u"Annuler", None))
+        self.compile_btn.setText(QCoreApplication.translate("PyCompilerARKGui", u"Compiler", None))
 #if QT_CONFIG(tooltip)
         self.cancel_btn.setToolTip(QCoreApplication.translate("PyCompilerARKGui", u"Annuler la compilation en cours", None))
 #endif // QT_CONFIG(tooltip)
+        self.cancel_btn.setText(QCoreApplication.translate("PyCompilerARKGui", u"Annuler", None))
         self.label_folder.setText(QCoreApplication.translate("PyCompilerARKGui", u"Aucun dossier s\u00e9lectionn\u00e9", None))
         self.venv_label.setText(QCoreApplication.translate("PyCompilerARKGui", u"Venv s\u00e9lectionn\u00e9 : Aucun", None))
         self.venv_button.setText(QCoreApplication.translate("PyCompilerARKGui", u"Choisir un dossier venv", None))
-        self.btn_select_folder.setText(QCoreApplication.translate("PyCompilerARKGui", u"Choisir le workspace", None))
 #if QT_CONFIG(tooltip)
         self.btn_select_folder.setToolTip(QCoreApplication.translate("PyCompilerARKGui", u"S\u00e9lectionner le dossier de travail", None))
 #endif // QT_CONFIG(tooltip)
-        self.btn_clear_workspace.setText(QCoreApplication.translate("PyCompilerARKGui", u"Vider le workspace", None))
+        self.btn_select_folder.setText(QCoreApplication.translate("PyCompilerARKGui", u"Choisir le workspace", None))
 #if QT_CONFIG(tooltip)
         self.btn_clear_workspace.setToolTip(QCoreApplication.translate("PyCompilerARKGui", u"Vider la liste des fichiers et r\u00e9initialiser la s\u00e9lection", None))
 #endif // QT_CONFIG(tooltip)
-        self.label_files_section.setText(QCoreApplication.translate("PyCompilerARKGui", u"2. Fichiers \u00e0 compiler", None))
-        self.file_filter_input.setPlaceholderText(QCoreApplication.translate("PyCompilerARKGui", u"Filtrer la liste\u2026", None))
-        self.btn_select_files.setText(QCoreApplication.translate("PyCompilerARKGui", u"Ajouter des fichiers", None))
+        self.btn_clear_workspace.setText(QCoreApplication.translate("PyCompilerARKGui", u"Vider le workspace", None))
 #if QT_CONFIG(tooltip)
         self.btn_select_files.setToolTip(QCoreApplication.translate("PyCompilerARKGui", u"Ajouter des fichiers \u00e0 compiler", None))
 #endif // QT_CONFIG(tooltip)
+        self.btn_select_files.setText(QCoreApplication.translate("PyCompilerARKGui", u"Ajouter des fichiers", None))
         self.btn_remove_file.setText(QCoreApplication.translate("PyCompilerARKGui", u"Supprimer le fichier s\u00e9lectionn\u00e9", None))
-        self.label_tools.setText(QCoreApplication.translate("PyCompilerARKGui", u"Outils", None))
-        self.btn_suggest_deps.setText(QCoreApplication.translate("PyCompilerARKGui", u"D\u00e9pendances", None))
-#if QT_CONFIG(tooltip)
-        self.btn_suggest_deps.setToolTip(QCoreApplication.translate("PyCompilerARKGui", u"Analyser les d\u00e9pendances du projet", None))
-#endif // QT_CONFIG(tooltip)
-        self.btn_bc_loader.setText(QCoreApplication.translate("PyCompilerARKGui", u"BC Plugins Loader", None))
-#if QT_CONFIG(tooltip)
-        self.btn_bc_loader.setToolTip(QCoreApplication.translate("PyCompilerARKGui", u"Ouvrir BC Plugins Loader", None))
-#endif // QT_CONFIG(tooltip)
-        self.btn_show_stats.setText(QCoreApplication.translate("PyCompilerARKGui", u"Statistiques", None))
+        self.file_filter_input.setPlaceholderText(QCoreApplication.translate("PyCompilerARKGui", u"Filtrer la liste\u2026", None))
+        self.label_files_section.setText(QCoreApplication.translate("PyCompilerARKGui", u"Fichiers \u00e0 compiler", None))
 #if QT_CONFIG(tooltip)
         self.btn_show_stats.setToolTip(QCoreApplication.translate("PyCompilerARKGui", u"Afficher les statistiques de compilation", None))
 #endif // QT_CONFIG(tooltip)
-        self.btn_help.setText(QCoreApplication.translate("PyCompilerARKGui", u"Aide", None))
+        self.btn_show_stats.setText(QCoreApplication.translate("PyCompilerARKGui", u"Statistiques", None))
+#if QT_CONFIG(tooltip)
+        self.btn_suggest_deps.setToolTip(QCoreApplication.translate("PyCompilerARKGui", u"Analyser les d\u00e9pendances du projet", None))
+#endif // QT_CONFIG(tooltip)
+        self.btn_suggest_deps.setText(QCoreApplication.translate("PyCompilerARKGui", u"D\u00e9pendances", None))
+#if QT_CONFIG(tooltip)
+        self.btn_bc_loader.setToolTip(QCoreApplication.translate("PyCompilerARKGui", u"Ouvrir BC Plugins Loader", None))
+#endif // QT_CONFIG(tooltip)
+        self.btn_bc_loader.setText(QCoreApplication.translate("PyCompilerARKGui", u"BC Plugins Loader", None))
 #if QT_CONFIG(tooltip)
         self.btn_help.setToolTip(QCoreApplication.translate("PyCompilerARKGui", u"Afficher l'aide", None))
 #endif // QT_CONFIG(tooltip)
-        self.label_options_section.setText(QCoreApplication.translate("PyCompilerARKGui", u"3. Options de compilation", None))
-        self.label_logs_section.setText(QCoreApplication.translate("PyCompilerARKGui", u"4. Journal de compilation", None))
+        self.btn_help.setText(QCoreApplication.translate("PyCompilerARKGui", u"Aide", None))
+        self.label_tools.setText(QCoreApplication.translate("PyCompilerARKGui", u"Outils", None))
+        self.label_options_section.setText(QCoreApplication.translate("PyCompilerARKGui", u"Options de compilation", None))
+        self.label_logs_section.setText(QCoreApplication.translate("PyCompilerARKGui", u"Journal de compilation", None))
         self.label_progress.setText(QCoreApplication.translate("PyCompilerARKGui", u"Progression de la compilation", None))
         pass
     # retranslateUi
