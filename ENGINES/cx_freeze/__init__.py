@@ -105,8 +105,8 @@ class CXFreezeEngine(CompilerEngine):
             except Exception:
                 pass
 
-            # Add the target file
-            cmd.append(file)
+            # Add the target script
+            cmd.extend(["--script", file])
 
             return cmd
 
