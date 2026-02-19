@@ -729,15 +729,8 @@ def _handle_error(self, message: str) -> None:
 
 def _handle_progress(self, progress: int, message: str) -> None:
     """Handle progress update from MainProcess."""
-    if hasattr(self, "progress") and self.progress:
-        try:
-            # Switch to determinate when a % is available
-            if self.progress.maximum() == 0:
-                self.progress.setRange(0, 100)
-            value = max(0, min(100, int(progress)))
-            self.progress.setValue(value)
-        except Exception:
-            pass
+    # Always keep indeterminate to avoid misleading progress.
+    _set_progress_indeterminate(self)
 
 
 def _handle_log(self, level: str, message: str) -> None:
