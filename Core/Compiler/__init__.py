@@ -691,6 +691,13 @@ def _handle_compilation_started(self, info: dict) -> None:
     file_path = info.get("file", "")
     engine = info.get("engine", "")
     try:
+        if hasattr(self, "progress") and self.progress:
+            # Indeterminate while the engine works (some tools don't emit %)
+            self.progress.setRange(0, 0)
+            self.progress.setValue(0)
+    except Exception:
+        pass
+    try:
         if file_path:
             if not hasattr(self, "_compilation_start"):
                 self._compilation_start = {}
@@ -715,7 +722,14 @@ def _handle_error(self, message: str) -> None:
 def _handle_progress(self, progress: int, message: str) -> None:
     """Handle progress update from MainProcess."""
     if hasattr(self, "progress") and self.progress:
-        self.progress.setValue(progress)
+        try:
+            # Switch to determinate when a % is available
+            if self.progress.maximum() == 0:
+                self.progress.setRange(0, 100)
+            value = max(0, min(100, int(progress)))
+            self.progress.setValue(value)
+        except Exception:
+            pass
 
 
 def _handle_log(self, level: str, message: str) -> None:
@@ -857,7 +871,11 @@ def handle_finished(self, return_code: int, info: dict) -> None:
     self.set_controls_enabled(True)
 
     if hasattr(self, "progress") and self.progress:
-        self.progress.setValue(100 if return_code == 0 else 0)
+        try:
+            self.progress.setRange(0, 100)
+            self.progress.setValue(100 if return_code == 0 else 0)
+        except Exception:
+            pass
 
     if return_code == 0:
         log_i18n_level(
