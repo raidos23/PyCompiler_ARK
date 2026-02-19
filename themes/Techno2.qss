@@ -438,3 +438,10 @@ QHeaderView::up-arrow, QHeaderView::down-arrow { width: 10px; height: 10px; marg
 /* Scrollbar page areas */
 QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical,
 QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal { background: transparent; }
+
+/* === Theme polish === */
+QProgressBar::chunk {
+  background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #4aa8ff, stop:1 #6bb6ff);
+  border-radius: 8px;
+  margin: 1px;
+}

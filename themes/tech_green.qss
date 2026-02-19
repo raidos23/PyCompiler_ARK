@@ -419,3 +419,33 @@ QStatusBar {
     color: #8aa88a;
     border-top: 1px solid #2a4a2a;
 }
+
+/* === Theme polish === */
+QFrame[objectName="frame_workspace"],
+QFrame[objectName="frame_files"],
+QFrame[objectName="frame_options"],
+QFrame[objectName="frame_logs"],
+QFrame[objectName="frame_tools"],
+QFrame[objectName="frame_progress"] {
+    background: rgba(15, 21, 15, 0.7);
+    border: 1px solid #2a4a2a;
+    border-radius: 12px;
+    padding: 12px;
+    margin: 4px;
+}
+
+QHeaderView::section {
+    background: #141a14;
+    color: #d4e8d4;
+    border: 1px solid #2a4a2a;
+    padding: 6px 10px;
+}
+QHeaderView::section:hover { background: #1a2a1a; }
+
+QMenu::separator { height: 1px; background: #2a4a2a; margin: 6px 8px; }
+QStatusBar::item { border: none; }
+
+QListWidget::item:hover, QTreeWidget::item:hover, QTableView::item:hover {
+    background: #2a5a2a;
+    color: #ffffff;
+}
