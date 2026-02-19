@@ -17,7 +17,44 @@ from __future__ import annotations
 
 from typing import Optional
 
-from engine_sdk.utils import log_i18n_level
+
+def log_i18n_level(gui, level: str, fr: str, en: str) -> None:
+    """Minimal i18n log helper to avoid EngineLoader <-> engine_sdk circular imports."""
+    try:
+        if hasattr(gui, "tr") and callable(getattr(gui, "tr")):
+            msg = gui.tr(fr, en)
+        else:
+            cur = getattr(gui, "current_language", "")
+            if isinstance(cur, str) and cur.lower().startswith("fr"):
+                msg = fr
+            else:
+                msg = en
+    except Exception:
+        msg = en
+
+    labels = {
+        "info": "INFO",
+        "warning": "WARN",
+        "error": "ERROR",
+        "success": "SUCCESS",
+        "state": "STATE",
+    }
+    try:
+        lvl = str(level).lower()
+    except Exception:
+        lvl = "info"
+    label = labels.get(lvl, str(level).upper())
+    line = f"[{label}] {msg}"
+    try:
+        if hasattr(gui, "log") and gui.log:
+            gui.log.append(line)
+            return
+    except Exception:
+        pass
+    try:
+        print(line)
+    except Exception:
+        pass
 
 
 class CompilerEngine:
