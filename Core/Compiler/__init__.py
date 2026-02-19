@@ -229,6 +229,8 @@ def compile_all(self) -> None:
         log_i18n_level(self, "warning", "Aucun workspace sélectionné.", "No workspace selected.")
         return
 
+    _set_progress_indeterminate(self)
+
     # Obtenir le moteur de compilation actif
     engine_id = None
     try:
@@ -619,6 +621,7 @@ def start_compilation_process(self, engine_id: str, file_path: str) -> bool:
 
     # Désactiver les contrôles pendant la pré-compilation + compilation
     self.set_controls_enabled(False)
+    _set_progress_indeterminate(self)
 
     result = {"value": None}
 
@@ -686,17 +689,22 @@ def _handle_output(self, message: str) -> None:
         self.log.append(message)
 
 
+def _set_progress_indeterminate(self) -> None:
+    """Show an indeterminate progress bar."""
+    if not getattr(self, "progress", None):
+        return
+    try:
+        self.progress.setRange(0, 0)
+        self.progress.setValue(0)
+    except Exception:
+        pass
+
+
 def _handle_compilation_started(self, info: dict) -> None:
     """Handle compilation started signal from MainProcess."""
     file_path = info.get("file", "")
     engine = info.get("engine", "")
-    try:
-        if hasattr(self, "progress") and self.progress:
-            # Indeterminate while the engine works (some tools don't emit %)
-            self.progress.setRange(0, 0)
-            self.progress.setValue(0)
-    except Exception:
-        pass
+    _set_progress_indeterminate(self)
     try:
         if file_path:
             if not hasattr(self, "_compilation_start"):
