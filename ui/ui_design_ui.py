@@ -1,18 +1,12 @@
 # -*- coding: utf-8 -*-
-# SPDX-License-Identifier: Apache-2.0
-# Copyright 2026 Ague Samuel Amen
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+
+################################################################################
+## Form generated from reading UI file 'ui_design.ui'
+##
+## Created by: Qt User Interface Compiler version 6.9.2
+##
+## WARNING! All changes made in this file will be lost when recompiling UI file!
+################################################################################
 
 from PySide6.QtCore import (QCoreApplication, QDate, QDateTime, QLocale,
     QMetaObject, QObject, QPoint, QRect,
@@ -344,60 +338,60 @@ class Ui_PyCompilerARKGui(object):
     def retranslateUi(self, PyCompilerARKGui):
         self.label_app_title.setText(QCoreApplication.translate("PyCompilerARKGui", u"PyCompiler ARK++", None))
         self.label_workspace_status.setText(QCoreApplication.translate("PyCompilerARKGui", u"Workspace : Aucun", None))
-        self.select_lang.setText(QCoreApplication.translate("PyCompilerARKGui", u"\U0001f310 Langue", None))
+        self.select_lang.setText(QCoreApplication.translate("PyCompilerARKGui", u"Langue", None))
 #if QT_CONFIG(tooltip)
         self.select_lang.setToolTip(QCoreApplication.translate("PyCompilerARKGui", u"Choisir la langue de l'interface", None))
 #endif // QT_CONFIG(tooltip)
-        self.select_theme.setText(QCoreApplication.translate("PyCompilerARKGui", u"\U0001f3a8 Th\U000000e8me", None))
+        self.select_theme.setText(QCoreApplication.translate("PyCompilerARKGui", u"Th\u00e8me", None))
 #if QT_CONFIG(tooltip)
         self.select_theme.setToolTip(QCoreApplication.translate("PyCompilerARKGui", u"Choisir le th\u00e8me de l'interface", None))
 #endif // QT_CONFIG(tooltip)
-        self.compile_btn.setText(QCoreApplication.translate("PyCompilerARKGui", u"\U0001f680 Compiler", None))
+        self.compile_btn.setText(QCoreApplication.translate("PyCompilerARKGui", u"Compiler", None))
 #if QT_CONFIG(tooltip)
-        self.compile_btn.setToolTip(QCoreApplication.translate("PyCompilerARKGui", u"Lancer la compilation", None))
+        self.compile_btn.setToolTip(QCoreApplication.translate("PyCompilerARKGui", u"D\u00e9marrer la compilation", None))
 #endif // QT_CONFIG(tooltip)
-        self.cancel_btn.setText(QCoreApplication.translate("PyCompilerARKGui", u"\u26d4 Annuler", None))
+        self.cancel_btn.setText(QCoreApplication.translate("PyCompilerARKGui", u"Annuler", None))
 #if QT_CONFIG(tooltip)
         self.cancel_btn.setToolTip(QCoreApplication.translate("PyCompilerARKGui", u"Annuler la compilation en cours", None))
 #endif // QT_CONFIG(tooltip)
         self.label_folder.setText(QCoreApplication.translate("PyCompilerARKGui", u"Aucun dossier s\u00e9lectionn\u00e9", None))
-        self.venv_label.setText(QCoreApplication.translate("PyCompilerARKGui", u"venv s\u00e9lectionn\u00e9 : Aucun", None))
-        self.venv_button.setText(QCoreApplication.translate("PyCompilerARKGui", u"Choisir un dossier venv manuellement", None))
-        self.btn_select_folder.setText(QCoreApplication.translate("PyCompilerARKGui", u"\U0001f4c1 Workspace", None))
+        self.venv_label.setText(QCoreApplication.translate("PyCompilerARKGui", u"Venv s\u00e9lectionn\u00e9 : Aucun", None))
+        self.venv_button.setText(QCoreApplication.translate("PyCompilerARKGui", u"Choisir un dossier venv", None))
+        self.btn_select_folder.setText(QCoreApplication.translate("PyCompilerARKGui", u"Choisir le workspace", None))
 #if QT_CONFIG(tooltip)
         self.btn_select_folder.setToolTip(QCoreApplication.translate("PyCompilerARKGui", u"S\u00e9lectionner le dossier de travail", None))
 #endif // QT_CONFIG(tooltip)
-        self.btn_clear_workspace.setText(QCoreApplication.translate("PyCompilerARKGui", u"\U0001f9f9 Clear workspace", None))
+        self.btn_clear_workspace.setText(QCoreApplication.translate("PyCompilerARKGui", u"Vider le workspace", None))
 #if QT_CONFIG(tooltip)
         self.btn_clear_workspace.setToolTip(QCoreApplication.translate("PyCompilerARKGui", u"Vider la liste des fichiers et r\u00e9initialiser la s\u00e9lection", None))
 #endif // QT_CONFIG(tooltip)
         self.label_files_section.setText(QCoreApplication.translate("PyCompilerARKGui", u"2. Fichiers \u00e0 compiler", None))
         self.file_filter_input.setPlaceholderText(QCoreApplication.translate("PyCompilerARKGui", u"Filtrer la liste\u2026", None))
-        self.btn_select_files.setText(QCoreApplication.translate("PyCompilerARKGui", u"\U0001f4cb Fichiers", None))
+        self.btn_select_files.setText(QCoreApplication.translate("PyCompilerARKGui", u"Ajouter des fichiers", None))
 #if QT_CONFIG(tooltip)
         self.btn_select_files.setToolTip(QCoreApplication.translate("PyCompilerARKGui", u"Ajouter des fichiers \u00e0 compiler", None))
 #endif // QT_CONFIG(tooltip)
-        self.btn_remove_file.setText(QCoreApplication.translate("PyCompilerARKGui", u"\U0001f5d1\U0000fe0f Supprimer le fichier s\U000000e9lectionn\U000000e9", None))
+        self.btn_remove_file.setText(QCoreApplication.translate("PyCompilerARKGui", u"Supprimer le fichier s\u00e9lectionn\u00e9", None))
         self.label_tools.setText(QCoreApplication.translate("PyCompilerARKGui", u"Outils", None))
-        self.btn_suggest_deps.setText(QCoreApplication.translate("PyCompilerARKGui", u"\U0001f50e D\U000000e9pendances", None))
+        self.btn_suggest_deps.setText(QCoreApplication.translate("PyCompilerARKGui", u"D\u00e9pendances", None))
 #if QT_CONFIG(tooltip)
         self.btn_suggest_deps.setToolTip(QCoreApplication.translate("PyCompilerARKGui", u"Analyser les d\u00e9pendances du projet", None))
 #endif // QT_CONFIG(tooltip)
-        self.btn_bc_loader.setText(QCoreApplication.translate("PyCompilerARKGui", u"\U0001f9e9 Bc Plugins Loader", None))
+        self.btn_bc_loader.setText(QCoreApplication.translate("PyCompilerARKGui", u"BC Plugins Loader", None))
 #if QT_CONFIG(tooltip)
-        self.btn_bc_loader.setToolTip(QCoreApplication.translate("PyCompilerARKGui", u"Charger Bc Plugins Loader", None))
+        self.btn_bc_loader.setToolTip(QCoreApplication.translate("PyCompilerARKGui", u"Ouvrir BC Plugins Loader", None))
 #endif // QT_CONFIG(tooltip)
-        self.btn_show_stats.setText(QCoreApplication.translate("PyCompilerARKGui", u"\U0001f4ca Statistiques", None))
+        self.btn_show_stats.setText(QCoreApplication.translate("PyCompilerARKGui", u"Statistiques", None))
 #if QT_CONFIG(tooltip)
         self.btn_show_stats.setToolTip(QCoreApplication.translate("PyCompilerARKGui", u"Afficher les statistiques de compilation", None))
 #endif // QT_CONFIG(tooltip)
-        self.btn_help.setText(QCoreApplication.translate("PyCompilerARKGui", u"\u2753 Aide", None))
+        self.btn_help.setText(QCoreApplication.translate("PyCompilerARKGui", u"Aide", None))
 #if QT_CONFIG(tooltip)
         self.btn_help.setToolTip(QCoreApplication.translate("PyCompilerARKGui", u"Afficher l'aide", None))
 #endif // QT_CONFIG(tooltip)
         self.label_options_section.setText(QCoreApplication.translate("PyCompilerARKGui", u"3. Options de compilation", None))
-        self.label_logs_section.setText(QCoreApplication.translate("PyCompilerARKGui", u"4. Logs de compilation", None))
-        self.label_progress.setText(QCoreApplication.translate("PyCompilerARKGui", u"Progression", None))
+        self.label_logs_section.setText(QCoreApplication.translate("PyCompilerARKGui", u"4. Journal de compilation", None))
+        self.label_progress.setText(QCoreApplication.translate("PyCompilerARKGui", u"Progression de la compilation", None))
         pass
     # retranslateUi
 
