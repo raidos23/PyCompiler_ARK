@@ -234,6 +234,48 @@ def _apply_button_icons(self) -> None:
     if not os.path.isdir(icons_dir):
         return
 
+    def _extract_accent_color(css_text: str) -> str | None:
+        try:
+            import re
+
+            def _block(selector: str) -> str | None:
+                pattern = re.compile(rf"{re.escape(selector)}\\s*\\{{([^}}]+)\\}}", re.S)
+                match = pattern.search(css_text)
+                return match.group(1) if match else None
+
+            def _colors(text: str) -> list[str]:
+                return re.findall(r"#[0-9a-fA-F]{3,6}", text)
+
+            for selector in ("QPushButton#compile_btn", "#compile_btn"):
+                block = _block(selector)
+                if block:
+                    colors = _colors(block)
+                    if colors:
+                        return colors[0]
+
+            match = re.search(r"--accent[^:]*:\\s*(#[0-9a-fA-F]{3,6})", css_text)
+            if match:
+                return match.group(1)
+
+            match = re.search(
+                r":focus[^\\{]*\\{[^}]*border[^#]*?(#[0-9a-fA-F]{3,6})",
+                css_text,
+                re.S,
+            )
+            if match:
+                return match.group(1)
+
+            match = re.search(
+                r"QProgressBar::chunk[^\\{]*\\{[^}]*?(#[0-9a-fA-F]{3,6})",
+                css_text,
+                re.S,
+            )
+            if match:
+                return match.group(1)
+        except Exception:
+            return None
+        return None
+
     def _resolve_icon_color(css: str | None = None) -> str:
         if not css:
             try:
@@ -244,6 +286,9 @@ def _apply_button_icons(self) -> None:
             except Exception:
                 css = ""
         if css:
+            accent = _extract_accent_color(css)
+            if accent:
+                return accent
             return "#FFFFFF" if _is_qss_dark(css) else "#111111"
         return "#FFFFFF" if _detect_system_color_scheme() == "sombre" else "#111111"
 
