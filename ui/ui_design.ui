@@ -148,7 +148,7 @@
             <string>Compiler</string>
            </property>
            <property name="toolTip">
-            <string>Lancer la compilation</string>
+             <string>Démarrer la compilation</string>
            </property>
           </widget>
          </item>
@@ -230,21 +230,21 @@
           <item row="1" column="0">
            <widget class="QLabel" name="venv_label">
             <property name="text">
-             <string>venv sélectionné : Aucun</string>
+             <string>Venv sélectionné : Aucun</string>
             </property>
            </widget>
           </item>
           <item row="1" column="1">
            <widget class="QPushButton" name="venv_button">
             <property name="text">
-             <string>Choisir un dossier venv manuellement</string>
+             <string>Choisir un dossier venv</string>
             </property>
            </widget>
           </item>
           <item row="2" column="0">
            <widget class="QPushButton" name="btn_select_folder">
             <property name="text">
-             <string>Workspace</string>
+             <string>Choisir le workspace</string>
             </property>
             <property name="toolTip">
              <string>Sélectionner le dossier de travail</string>
@@ -254,7 +254,7 @@
           <item row="2" column="1">
            <widget class="QPushButton" name="btn_clear_workspace">
             <property name="text">
-             <string>Clear workspace</string>
+             <string>Vider le workspace</string>
             </property>
             <property name="toolTip">
              <string>Vider la liste des fichiers et réinitialiser la sélection</string>
@@ -341,7 +341,7 @@
            <item>
              <widget class="QPushButton" name="btn_select_files">
               <property name="text">
-               <string>Fichiers</string>
+              <string>Ajouter des fichiers</string>
               </property>
               <property name="toolTip">
                <string>Ajouter des fichiers à compiler</string>
@@ -414,10 +414,10 @@
           <item row="1" column="1">
            <widget class="QPushButton" name="btn_bc_loader">
             <property name="text">
-             <string>Bc Plugins Loader</string>
+             <string>BC Plugins Loader</string>
             </property>
             <property name="toolTip">
-             <string>Charger Bc Plugins Loader</string>
+             <string>Ouvrir BC Plugins Loader</string>
             </property>
            </widget>
           </item>
@@ -547,7 +547,7 @@
           <item>
            <widget class="QLabel" name="label_logs_section">
             <property name="text">
-             <string>4. Logs de compilation</string>
+             <string>4. Journal de compilation</string>
             </property>
            </widget>
           </item>
@@ -591,7 +591,7 @@
           <item>
            <widget class="QLabel" name="label_progress">
             <property name="text">
-             <string>Progression</string>
+             <string>Progression de la compilation</string>
             </property>
            </widget>
           </item>
