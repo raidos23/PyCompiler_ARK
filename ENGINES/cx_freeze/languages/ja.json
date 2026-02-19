@@ -8,5 +8,10 @@
   "windowed_checkbox": "コンソールなし",
   "icon_button": "アイコンを選択 (.ico)",
   "output_placeholder": "出力ディレクトリ",
+  "target_name_placeholder": "出力名 (--target-name)",
+  "debug_checkbox": "デバッグ",
+  "tt_debug": "デバッグ出力を有効にします。",
+  "verbose_checkbox": "詳細",
+  "tt_verbose": "詳細出力を有効にします。",
   "tt_windowed": "Disable the console window."
 }

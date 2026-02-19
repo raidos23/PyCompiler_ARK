@@ -97,6 +97,19 @@ class CXFreezeEngine(CompilerEngine):
             if hasattr(self, "_selected_icon") and self._selected_icon:
                 cmd.extend(["--icon", self._selected_icon])
 
+            # Target name
+            target_name = self._get_input("target_name")
+            if target_name and target_name.text().strip():
+                cmd.extend(["--target-name", target_name.text().strip()])
+
+            # Debug / verbose
+            debug = self._get_opt("debug")
+            if debug and debug.isChecked():
+                cmd.append("--debug")
+            verbose = self._get_opt("verbose")
+            if verbose and verbose.isChecked():
+                cmd.append("--verbose")
+
             # Auto-mapping args (mapping.json / auto builder)
             try:
                 auto_args = compute_auto_for_engine(gui, self.id)
@@ -212,6 +225,24 @@ class CXFreezeEngine(CompilerEngine):
                     self._on_icon_path_changed
                 )
 
+            # Debug / verbose
+            self._cx_debug = QCheckBox("Debug")
+            self._cx_debug.setObjectName("cx_debug_dynamic")
+            self._cx_debug.setToolTip("Enable debug output.")
+            layout.addWidget(self._cx_debug)
+
+            self._cx_verbose = QCheckBox("Verbose")
+            self._cx_verbose.setObjectName("cx_verbose_dynamic")
+            self._cx_verbose.setToolTip("Enable verbose output.")
+            layout.addWidget(self._cx_verbose)
+
+            # Target name
+            self._cx_target_name = add_output_dir(
+                layout,
+                "Nom de sortie (--target-name)",
+                "cx_target_name_dynamic",
+            )
+
             # Output directory
             self._cx_output_dir = add_output_dir(
                 layout, "Dossier de sortie", "cx_output_dir_dynamic"
@@ -240,6 +271,15 @@ class CXFreezeEngine(CompilerEngine):
                 cfg["windowed"] = bool(self._cx_windowed.isChecked())
             if hasattr(self, "_cx_output_dir") and self._cx_output_dir is not None:
                 cfg["output_dir"] = self._cx_output_dir.text().strip()
+            if (
+                hasattr(self, "_cx_target_name")
+                and self._cx_target_name is not None
+            ):
+                cfg["target_name"] = self._cx_target_name.text().strip()
+            if hasattr(self, "_cx_debug") and self._cx_debug is not None:
+                cfg["debug"] = bool(self._cx_debug.isChecked())
+            if hasattr(self, "_cx_verbose") and self._cx_verbose is not None:
+                cfg["verbose"] = bool(self._cx_verbose.isChecked())
             icon_path = ""
             if (
                 hasattr(self, "_cx_icon_path_input")
@@ -273,6 +313,25 @@ class CXFreezeEngine(CompilerEngine):
             ):
                 val = cfg.get("output_dir") or ""
                 self._cx_output_dir.setText(str(val))
+            if (
+                hasattr(self, "_cx_target_name")
+                and self._cx_target_name is not None
+                and "target_name" in cfg
+            ):
+                val = cfg.get("target_name") or ""
+                self._cx_target_name.setText(str(val))
+            if (
+                hasattr(self, "_cx_debug")
+                and self._cx_debug is not None
+                and "debug" in cfg
+            ):
+                self._cx_debug.setChecked(bool(cfg.get("debug")))
+            if (
+                hasattr(self, "_cx_verbose")
+                and self._cx_verbose is not None
+                and "verbose" in cfg
+            ):
+                self._cx_verbose.setChecked(bool(cfg.get("verbose")))
             if "selected_icon" in cfg:
                 icon = cfg.get("selected_icon") or ""
                 self._selected_icon = icon or None
@@ -327,6 +386,21 @@ class CXFreezeEngine(CompilerEngine):
                 self._cx_windowed.setToolTip(lang_data["tt_windowed"])
             if hasattr(self, "_cx_btn_select_icon") and "icon_button" in lang_data:
                 self._cx_btn_select_icon.setText(lang_data["icon_button"])
+            if hasattr(self, "_cx_debug") and "debug_checkbox" in lang_data:
+                self._cx_debug.setText(lang_data["debug_checkbox"])
+            if hasattr(self, "_cx_debug") and "tt_debug" in lang_data:
+                self._cx_debug.setToolTip(lang_data["tt_debug"])
+            if hasattr(self, "_cx_verbose") and "verbose_checkbox" in lang_data:
+                self._cx_verbose.setText(lang_data["verbose_checkbox"])
+            if hasattr(self, "_cx_verbose") and "tt_verbose" in lang_data:
+                self._cx_verbose.setToolTip(lang_data["tt_verbose"])
+            if (
+                hasattr(self, "_cx_target_name")
+                and "target_name_placeholder" in lang_data
+            ):
+                self._cx_target_name.setPlaceholderText(
+                    lang_data["target_name_placeholder"]
+                )
             if hasattr(self, "_cx_output_dir") and "output_placeholder" in lang_data:
                 self._cx_output_dir.setPlaceholderText(lang_data["output_placeholder"])
         except Exception:

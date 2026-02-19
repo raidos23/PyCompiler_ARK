@@ -8,5 +8,10 @@
   "windowed_checkbox": "Ohne Konsole",
   "icon_button": "Symbol waehlen (.ico)",
   "output_placeholder": "Ausgabeverzeichnis",
+  "target_name_placeholder": "Ausgabename (--target-name)",
+  "debug_checkbox": "Debug",
+  "tt_debug": "Debug-Ausgabe aktivieren.",
+  "verbose_checkbox": "Ausführlich",
+  "tt_verbose": "Ausführliche Ausgabe aktivieren.",
   "tt_windowed": "Disable the console window."
 }
