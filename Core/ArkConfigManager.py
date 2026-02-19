@@ -252,6 +252,20 @@ def load_ark_config(workspace_dir: str) -> dict[str, Any]:
                     str(p) for p in config["inclusion_patterns"] if p
                 ]
 
+        # -----------------------------------------------------------------------------
+        # NORMALISATION DU BUILD / POINT D'ENTRÉE
+        # -----------------------------------------------------------------------------
+        build_opts = config.get("build", {})
+        if not isinstance(build_opts, dict):
+            build_opts = {}
+        entrypoint = build_opts.get("entrypoint")
+        if isinstance(entrypoint, str):
+            entrypoint = entrypoint.strip() or None
+        else:
+            entrypoint = None
+        build_opts["entrypoint"] = entrypoint
+        config["build"] = build_opts
+
         return config
 
     except Exception as e:
