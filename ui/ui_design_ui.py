@@ -331,7 +331,7 @@ class Ui_PyCompilerARKGui(object):
     # setupUi
 
     def retranslateUi(self, PyCompilerARKGui):
-        self.label_app_title.setText(QCoreApplication.translate("PyCompilerARKGui", u"PyCompiler ARK++", None))
+        self.label_app_title.setText(QCoreApplication.translate("PyCompilerARKGui", u"PyCompiler ARK", None))
         self.label_workspace_status.setText(QCoreApplication.translate("PyCompilerARKGui", u"Workspace : Aucun", None))
 #if QT_CONFIG(tooltip)
         self.select_lang.setToolTip(QCoreApplication.translate("PyCompilerARKGui", u"Choisir la langue de l'interface", None))

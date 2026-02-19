@@ -146,7 +146,7 @@ Desktop.ini
 *.pem
 certificates/
 
-# PyCompiler ARK++ specific
+# PyCompiler ARK specific
 experimental_file/
 cloc
 error_logs/

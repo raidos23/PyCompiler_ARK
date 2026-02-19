@@ -15,7 +15,7 @@
 # limitations under the License.
 
 """
-PyCompiler ARK++ — Cross-platform hardened bootstrap with Intelligent CLI Entry Point
+PyCompiler ARK — Cross-platform hardened bootstrap with Intelligent CLI Entry Point
 
 Features:
     - OS-specific environment safety (UTF-8, DPI, Wayland/macOS)
@@ -212,7 +212,7 @@ from PySide6.QtWidgets import QApplication, QSplashScreen
 try:
     QCoreApplication.setOrganizationName("raidos23")
     QCoreApplication.setOrganizationDomain("pycompiler.local")
-    QCoreApplication.setApplicationName("PyCompiler ARK++")
+    QCoreApplication.setApplicationName("PyCompiler ARK")
     QCoreApplication.setApplicationVersion(APP_VERSION)
 except Exception:
     pass
@@ -437,7 +437,7 @@ def launch_bcasl_standalone(workspace_dir: Optional[str] = None) -> int:
                 pass
 
         app = QApplication(sys.argv)
-        app.setApplicationName("PyCompiler ARK++ BCASL")
+        app.setApplicationName("PyCompiler ARK BCASL")
         app.setOrganizationName("raidos23")
         _set_app_icon(app)
         window = BcaslStandaloneGui(workspace_dir=workspace_dir)
@@ -485,7 +485,7 @@ def launch_engines_only_standalone(workspace_dir: Optional[str] = None) -> int:
                 pass
 
         app = QApplication(sys.argv)
-        app.setApplicationName("PyCompiler ARK++ Engines")
+        app.setApplicationName("PyCompiler ARK Engines")
         app.setOrganizationName("raidos23")
         _set_app_icon(app)
         window = EnginesStandaloneGui(workspace_dir=workspace_dir)
@@ -515,7 +515,7 @@ def launch_engines_only_standalone(workspace_dir: Optional[str] = None) -> int:
 
 
 def launch_main_application() -> int:
-    """Launch the main PyCompiler ARK++ application.
+    """Launch the main PyCompiler ARK application.
 
     Returns:
         Exit code from main application
@@ -654,7 +654,7 @@ def launch_main_application() -> int:
 def print_system_info():
     """Print system information."""
     info = {
-        "Application": "PyCompiler ARK++",
+        "Application": "PyCompiler ARK",
         "Version": APP_VERSION,
         "Python": platform.python_version(),
         "Platform": platform.system(),
@@ -694,7 +694,7 @@ if click:
     )
     @click.pass_context
     def cli(ctx, version, help_all, info, completion, unload_engines_flag):
-        """PyCompiler ARK++ — Cross-platform Python compiler with BCASL integration.
+        """PyCompiler ARK — Cross-platform Python compiler with BCASL integration.
 
         Launch the main application by default, or use subcommands for specific modes.
 
@@ -705,7 +705,7 @@ if click:
             python -m pycompiler_ark --info             # Show system info
         """
         if version:
-            click.echo(f"PyCompiler ARK++ v{APP_VERSION}")
+            click.echo(f"PyCompiler ARK v{APP_VERSION}")
             ctx.exit(0)
 
         if info:
@@ -713,7 +713,7 @@ if click:
             ctx.exit(0)
 
         if completion:
-            click.echo(f"# {completion.upper()} completion for PyCompiler ARK++")
+            click.echo(f"# {completion.upper()} completion for PyCompiler ARK")
             click.echo("# Add this to your shell configuration file")
             ctx.exit(0)
 
@@ -863,7 +863,7 @@ if click:
 
     @cli.command(context_settings=dict(help_option_names=["-h", "--help"]))
     def main_app():
-        """Launch the main PyCompiler ARK++ application."""
+        """Launch the main PyCompiler ARK application."""
         sys.exit(launch_main_application())
 
     @cli.command(
@@ -903,7 +903,7 @@ if __name__ == "__main__":
                 print(__doc__)
                 sys.exit(0)
             elif sys.argv[1] in ("--version", "-v", "version"):
-                print(f"PyCompiler ARK++ v{APP_VERSION}")
+                print(f"PyCompiler ARK v{APP_VERSION}")
                 sys.exit(0)
             elif sys.argv[1] == "--info":
                 print_system_info()

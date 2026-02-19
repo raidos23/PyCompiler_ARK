@@ -78,7 +78,7 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
         global _latest_gui_instance
         _latest_gui_instance = self
 
-        self.setWindowTitle("PyCompiler ARK++")
+        self.setWindowTitle("PyCompiler ARK")
         self.setGeometry(100, 100, 1280, 720)
         self.setAcceptDrops(True)
 

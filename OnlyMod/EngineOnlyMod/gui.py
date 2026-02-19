@@ -202,7 +202,7 @@ class EnginesStandaloneGui(QMainWindow):
         self.venv_manager = None
 
         # Configuration de la fenêtre
-        self.setWindowTitle("Engines Standalone - PyCompiler ARK++")
+        self.setWindowTitle("Engines Standalone - PyCompiler ARK")
         self.resize(1400, 850)
         self.setMinimumSize(1100, 700)
         self.showMaximized()
@@ -1418,7 +1418,7 @@ def launch_engines_gui(
         Code de retour de l'application
     """
     app = QApplication(sys.argv)
-    app.setApplicationName("PyCompiler ARK++ Engines")
+    app.setApplicationName("PyCompiler ARK Engines")
     app.setOrganizationName("raidos23")
 
     window = EnginesStandaloneGui(

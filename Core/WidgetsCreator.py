@@ -14,7 +14,7 @@
 # limitations under the License.
 
 """
-Dialogues personnalisés pour PyCompiler ARK++.
+Dialogues personnalisés pour PyCompiler ARK.
 Inclut ProgressDialog, boîtes de message, et autres dialogues spécifiques.
 
 IMPORTANT: Tous les dialogs ici exécutent les opérations Qt dans le thread principal
