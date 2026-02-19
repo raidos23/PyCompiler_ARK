@@ -264,13 +264,18 @@ class PyInstallerEngine(CompilerEngine):
 
             layout.addLayout(form_layout)
 
-            # Icon button
-            self._btn_select_icon = add_icon_selector(
+            # Icon button + path input
+            self._btn_select_icon, self._icon_path_input = add_icon_selector(
                 layout,
                 "🎨 Choisir une icône (.ico)",
                 self.select_icon,
                 "btn_select_icon_dynamic",
+                "pyinstaller_icon_path_input_dynamic",
             )
+            if self._icon_path_input is not None:
+                self._icon_path_input.textChanged.connect(
+                    self._on_icon_path_changed
+                )
 
             # Debug option
             self._opt_debug = QCheckBox("Debug")
@@ -329,8 +334,17 @@ class PyInstallerEngine(CompilerEngine):
                 and self._output_dir_input is not None
             ):
                 cfg["output_dir"] = self._output_dir_input.text().strip()
-            if hasattr(self, "_selected_icon") and self._selected_icon:
-                cfg["selected_icon"] = self._selected_icon
+            icon_path = ""
+            if (
+                hasattr(self, "_icon_path_input")
+                and self._icon_path_input is not None
+            ):
+                icon_path = self._icon_path_input.text().strip()
+            if not icon_path and hasattr(self, "_selected_icon") and self._selected_icon:
+                icon_path = str(self._selected_icon).strip()
+            if icon_path:
+                self._selected_icon = icon_path
+                cfg["selected_icon"] = icon_path
             if hasattr(self, "_data_files") and isinstance(self._data_files, list):
                 cfg["data_files"] = list(self._data_files)
             return cfg
@@ -392,7 +406,13 @@ class PyInstallerEngine(CompilerEngine):
                 val = cfg.get("output_dir") or ""
                 self._output_dir_input.setText(str(val))
             if "selected_icon" in cfg:
-                self._selected_icon = cfg.get("selected_icon") or None
+                icon = cfg.get("selected_icon") or ""
+                self._selected_icon = icon or None
+                if (
+                    hasattr(self, "_icon_path_input")
+                    and self._icon_path_input is not None
+                ):
+                    self._icon_path_input.setText(str(icon))
             if "data_files" in cfg and isinstance(cfg.get("data_files"), list):
                 self._data_files = list(cfg.get("data_files"))
         except Exception:
@@ -465,6 +485,11 @@ class PyInstallerEngine(CompilerEngine):
         except Exception:
             pass
 
+    def _on_icon_path_changed(self, text: str) -> None:
+        """Keep the selected icon path in sync with manual edits."""
+        icon = text.strip()
+        self._selected_icon = icon or None
+
     def add_data(self) -> None:
         """Add data files or directories to be included with PyInstaller."""
         choix, ok = QInputDialog.getItem(
@@ -529,6 +554,8 @@ class PyInstallerEngine(CompilerEngine):
             )
             if file_path:
                 self._selected_icon = file_path
+                if hasattr(self, "_icon_path_input") and self._icon_path_input is not None:
+                    self._icon_path_input.setText(file_path)
                 if hasattr(self._gui, "log"):
                     self._gui.log.append(
                         f"Icône sélectionnée pour PyInstaller : {file_path}"

@@ -199,13 +199,18 @@ class CXFreezeEngine(CompilerEngine):
 
             layout.addLayout(form_layout)
 
-            # Icon button
-            self._cx_btn_select_icon = add_icon_selector(
+            # Icon button + path input
+            self._cx_btn_select_icon, self._cx_icon_path_input = add_icon_selector(
                 layout,
                 "Choisir une icône (.ico)",
                 self.select_icon,
                 "cx_btn_select_icon_dynamic",
+                "cx_icon_path_input_dynamic",
             )
+            if self._cx_icon_path_input is not None:
+                self._cx_icon_path_input.textChanged.connect(
+                    self._on_icon_path_changed
+                )
 
             # Output directory
             self._cx_output_dir = add_output_dir(
@@ -235,8 +240,17 @@ class CXFreezeEngine(CompilerEngine):
                 cfg["windowed"] = bool(self._cx_windowed.isChecked())
             if hasattr(self, "_cx_output_dir") and self._cx_output_dir is not None:
                 cfg["output_dir"] = self._cx_output_dir.text().strip()
-            if hasattr(self, "_selected_icon") and self._selected_icon:
-                cfg["selected_icon"] = self._selected_icon
+            icon_path = ""
+            if (
+                hasattr(self, "_cx_icon_path_input")
+                and self._cx_icon_path_input is not None
+            ):
+                icon_path = self._cx_icon_path_input.text().strip()
+            if not icon_path and hasattr(self, "_selected_icon") and self._selected_icon:
+                icon_path = str(self._selected_icon).strip()
+            if icon_path:
+                self._selected_icon = icon_path
+                cfg["selected_icon"] = icon_path
             return cfg
         except Exception:
             return {}
@@ -260,7 +274,13 @@ class CXFreezeEngine(CompilerEngine):
                 val = cfg.get("output_dir") or ""
                 self._cx_output_dir.setText(str(val))
             if "selected_icon" in cfg:
-                self._selected_icon = cfg.get("selected_icon") or None
+                icon = cfg.get("selected_icon") or ""
+                self._selected_icon = icon or None
+                if (
+                    hasattr(self, "_cx_icon_path_input")
+                    and self._cx_icon_path_input is not None
+                ):
+                    self._cx_icon_path_input.setText(str(icon))
         except Exception:
             pass
 
@@ -312,6 +332,11 @@ class CXFreezeEngine(CompilerEngine):
         except Exception:
             pass
 
+    def _on_icon_path_changed(self, text: str) -> None:
+        """Keep the selected icon path in sync with manual edits."""
+        icon = text.strip()
+        self._selected_icon = icon or None
+
     def select_icon(self) -> None:
         """Select an icon file for the executable."""
         try:
@@ -325,6 +350,11 @@ class CXFreezeEngine(CompilerEngine):
             )
             if file_path:
                 self._selected_icon = file_path
+                if (
+                    hasattr(self, "_cx_icon_path_input")
+                    and self._cx_icon_path_input is not None
+                ):
+                    self._cx_icon_path_input.setText(file_path)
                 if hasattr(self._gui, "log"):
                     self._gui.log.append(
                         f"Icône sélectionnée pour Cx_Freeze : {file_path}"

@@ -274,13 +274,18 @@ class NuitkaEngine(CompilerEngine):
                 layout, "Dossier de sortie (--output-dir)", "nuitka_output_dir_dynamic"
             )
 
-            # Icon button
-            self._btn_nuitka_icon = add_icon_selector(
+            # Icon button + path input
+            self._btn_nuitka_icon, self._nuitka_icon_path_input = add_icon_selector(
                 layout,
                 "🎨 Choisir une icône (.ico) Nuitka",
                 self.select_icon,
                 "btn_nuitka_icon_dynamic",
+                "nuitka_icon_path_input_dynamic",
             )
+            if self._nuitka_icon_path_input is not None:
+                self._nuitka_icon_path_input.textChanged.connect(
+                    self._on_icon_path_changed
+                )
 
             layout.addStretch()
 
@@ -331,10 +336,24 @@ class NuitkaEngine(CompilerEngine):
                 self._nuitka_data_dirs, list
             ):
                 cfg["data_dirs"] = list(self._nuitka_data_dirs)
-            if hasattr(self, "_nuitka_selected_icon") and self._nuitka_selected_icon:
-                cfg["selected_icon"] = self._nuitka_selected_icon
-            elif hasattr(self, "_selected_icon") and self._selected_icon:
-                cfg["selected_icon"] = self._selected_icon
+            icon_path = ""
+            if (
+                hasattr(self, "_nuitka_icon_path_input")
+                and self._nuitka_icon_path_input is not None
+            ):
+                icon_path = self._nuitka_icon_path_input.text().strip()
+            if (
+                not icon_path
+                and hasattr(self, "_nuitka_selected_icon")
+                and self._nuitka_selected_icon
+            ):
+                icon_path = str(self._nuitka_selected_icon).strip()
+            if not icon_path and hasattr(self, "_selected_icon") and self._selected_icon:
+                icon_path = str(self._selected_icon).strip()
+            if icon_path:
+                self._nuitka_selected_icon = icon_path
+                self._selected_icon = icon_path
+                cfg["selected_icon"] = icon_path
             return cfg
         except Exception:
             return {}
@@ -382,9 +401,14 @@ class NuitkaEngine(CompilerEngine):
             if "data_dirs" in cfg and isinstance(cfg.get("data_dirs"), list):
                 self._nuitka_data_dirs = list(cfg.get("data_dirs"))
             if "selected_icon" in cfg:
-                icon = cfg.get("selected_icon") or None
-                self._nuitka_selected_icon = icon
-                self._selected_icon = icon
+                icon = cfg.get("selected_icon") or ""
+                self._nuitka_selected_icon = icon or None
+                self._selected_icon = icon or None
+                if (
+                    hasattr(self, "_nuitka_icon_path_input")
+                    and self._nuitka_icon_path_input is not None
+                ):
+                    self._nuitka_icon_path_input.setText(str(icon))
         except Exception:
             pass
 
@@ -452,6 +476,12 @@ class NuitkaEngine(CompilerEngine):
         except Exception:
             pass
 
+    def _on_icon_path_changed(self, text: str) -> None:
+        """Keep the selected icon path in sync with manual edits."""
+        icon = text.strip()
+        self._nuitka_selected_icon = icon or None
+        self._selected_icon = icon or None
+
     def add_data(self) -> None:
         """Add data files or directories to be included with Nuitka."""
         choix, ok = QInputDialog.getItem(
@@ -518,6 +548,12 @@ class NuitkaEngine(CompilerEngine):
             )
             if file_path:
                 self._selected_icon = file_path
+                self._nuitka_selected_icon = file_path
+                if (
+                    hasattr(self, "_nuitka_icon_path_input")
+                    and self._nuitka_icon_path_input is not None
+                ):
+                    self._nuitka_icon_path_input.setText(file_path)
                 if hasattr(self._gui, "log"):
                     self._gui.log.append(
                         f"Icône sélectionnée pour Nuitka : {file_path}"

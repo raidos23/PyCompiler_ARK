@@ -40,7 +40,7 @@
   "tt_cancel_all": "Cancel all ongoing builds.",
   "tt_remove_file": "Remove the selected file(s) from the list.",
   "tt_help": "Open help and information about the software.",
-  "tt_bc_loader": "Configure Plugins (BCASL) plugins to run before compilation.",
+  "tt_bc_loader": "Configure BCASL plugins to run before compilation.",
   "tt_venv_button": "Manually select a venv directory to use for compilation.",
   "tt_suggest_deps": "Analyze the project for missing Python dependencies.",
   "tt_show_stats": "Show build statistics (time, number of files, memory).",

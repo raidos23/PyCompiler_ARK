@@ -40,7 +40,7 @@
   "tt_cancel_all": "Cancelar todas las compilaciones en curso.",
   "tt_remove_file": "Eliminar de la lista el/los archivo(s) seleccionado(s).",
   "tt_help": "Abrir la ayuda e información del software.",
-  "tt_bc_loader": "Configurar plugins de Plugins (BCASL) para ejecutar antes de la compilación.",
+  "tt_bc_loader": "Configurar plugins (BCASL) para ejecutar antes de la compilación.",
   "tt_venv_button": "Seleccionar manualmente un directorio venv para usar en la compilación.",
   "tt_suggest_deps": "Analizar el proyecto en busca de dependencias de Python faltantes.",
   "tt_show_stats": "Mostrar estadísticas de compilación (tiempo, número de archivos, memoria).",
