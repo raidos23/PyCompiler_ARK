@@ -91,6 +91,7 @@ from Core.Compiler.process_killer import (
 
 # Importations de EngineLoader
 from EngineLoader.registry import get_engine, create
+from engine_sdk.utils import log_with_level, log_i18n_level
 
 __all__ = [
     # compiler.py
@@ -166,9 +167,11 @@ def _run_bcasl_before_compile(self, on_done) -> None:
                 pass
         return
     try:
-        self.log_i18n(
-            "🧩 Pré-compilation (BCASL) si activée...",
-            "🧩 Pre-compilation (BCASL) if enabled...",
+        log_i18n_level(
+            self,
+            "info",
+            "Pré-compilation (BCASL) si activée...",
+            "Pre-compilation (BCASL) if enabled...",
         )
     except Exception:
         pass
@@ -205,7 +208,9 @@ def compile_all(self) -> None:
 
     if entrypoint_file:
         files_to_compile = [entrypoint_file]
-        self.log_i18n(
+        log_i18n_level(
+            self,
+            "info",
             f"Compilation du point d'entrée : {os.path.relpath(entrypoint_file, self.workspace_dir)}",
             f"Compiling entrypoint: {os.path.relpath(entrypoint_file, self.workspace_dir)}",
         )
@@ -214,14 +219,14 @@ def compile_all(self) -> None:
         files_to_compile = selected if selected else self.python_files.copy()
 
     if not files_to_compile:
-        self.log_i18n(
-            "⚠️ Aucun fichier Python sélectionné.", "⚠️ No Python files selected."
+        log_i18n_level(
+            self, "warning", "Aucun fichier Python sélectionné.", "No Python files selected."
         )
         return
 
     # Vérifier le workspace
     if not self.workspace_dir:
-        self.log_i18n("⚠️ Aucun workspace sélectionné.", "⚠️ No workspace selected.")
+        log_i18n_level(self, "warning", "Aucun workspace sélectionné.", "No workspace selected.")
         return
 
     # Obtenir le moteur de compilation actif
@@ -233,8 +238,8 @@ def compile_all(self) -> None:
             idx = self.compiler_tabs.currentIndex()
             engine_id = engines_loader.registry.get_engine_for_tab(idx)
     except Exception as e:
-        self.log_i18n(
-            f"⚠️ Erreur détection moteur: {e}", f"⚠️ Engine detection error: {e}"
+        log_i18n_level(
+            self, "warning", f"Erreur détection moteur: {e}", f"Engine detection error: {e}"
         )
 
     if not engine_id:
@@ -260,9 +265,11 @@ def compile_all(self) -> None:
         try:
             engine = create(engine_id)
         except Exception as e:
-            self.log_i18n(
-                f"❌ Erreur création moteur '{engine_id}': {e}",
-                f"❌ Engine creation error '{engine_id}': {e}",
+            log_i18n_level(
+                self,
+                "error",
+                f"Erreur création moteur '{engine_id}': {e}",
+                f"Engine creation error '{engine_id}': {e}",
             )
             return
     else:
@@ -277,9 +284,11 @@ def compile_all(self) -> None:
 
     def _after_bcasl(_report=None) -> None:
         try:
-            self.log_i18n(
-                f"🚀 Démarrage de la compilation avec {engine.name}...",
-                f"🚀 Starting compilation with {engine.name}...",
+            log_i18n_level(
+                self,
+                "info",
+                f"Démarrage de la compilation avec {engine.name}...",
+                f"Starting compilation with {engine.name}...",
             )
             # Initialiser MainProcess si nécessaire
             main_process = _get_main_process()
@@ -289,9 +298,11 @@ def compile_all(self) -> None:
             _start_compilation_queue(self, engine, files_to_compile)
         except Exception as e:
             self.set_controls_enabled(True)
-            self.log_i18n(
-                f"❌ Erreur démarrage compilation : {e}",
-                f"❌ Compilation start error: {e}",
+            log_i18n_level(
+                self,
+                "error",
+                f"Erreur démarrage compilation : {e}",
+                f"Compilation start error: {e}",
             )
 
     _run_bcasl_before_compile(self, _after_bcasl)
@@ -330,25 +341,32 @@ def _start_compilation_queue(self, engine, files_to_compile: list) -> None:
     for file_path in files_to_compile:
         # Vérifier si le fichier doit être exclu
         if main_process.should_exclude(file_path):
-            self.log_i18n(
-                f"⏩ Fichier exclu: {os.path.basename(file_path)}",
-                f"⏩ File excluded: {os.path.basename(file_path)}",
+            log_i18n_level(
+                self,
+                "info",
+                f"Fichier exclu: {os.path.basename(file_path)}",
+                f"File excluded: {os.path.basename(file_path)}",
             )
             excluded_count += 1
             continue
 
         if not os.path.exists(file_path):
-            self.log_i18n(
-                f"⚠️ Fichier non trouvé: {file_path}", f"⚠️ File not found: {file_path}"
+            log_i18n_level(
+                self,
+                "warning",
+                f"Fichier non trouvé: {file_path}",
+                f"File not found: {file_path}",
             )
             continue
 
         # Vérifier les prérequis du moteur
         if hasattr(engine, "ensure_tools_installed"):
             if not engine.ensure_tools_installed(self):
-                self.log_i18n(
-                    "⚠️ Outils manquants, compilation annulée.",
-                    "⚠️ Missing tools, compilation cancelled.",
+                log_i18n_level(
+                    self,
+                    "warning",
+                    "Outils manquants, compilation annulée.",
+                    "Missing tools, compilation cancelled.",
                 )
                 self.set_controls_enabled(True)
                 return
@@ -356,9 +374,11 @@ def _start_compilation_queue(self, engine, files_to_compile: list) -> None:
         # Construire la commande
         cmd = engine.build_command(self, file_path)
         if not cmd:
-            self.log_i18n(
-                f"❌ Erreur construction commande pour {file_path}",
-                f"❌ Command build error for {file_path}",
+            log_i18n_level(
+                self,
+                "error",
+                f"Erreur construction commande pour {file_path}",
+                f"Command build error for {file_path}",
             )
             continue
 
@@ -378,18 +398,22 @@ def _start_compilation_queue(self, engine, files_to_compile: list) -> None:
             workspace_dir=self.workspace_dir,
         )
 
-        self.log_i18n(
-            f"📦 Compilation de {os.path.basename(file_path)}...",
-            f"📦 Compiling {os.path.basename(file_path)}...",
+        log_i18n_level(
+            self,
+            "info",
+            f"Compilation de {os.path.basename(file_path)}...",
+            f"Compiling {os.path.basename(file_path)}...",
         )
 
         # break  # Un seul fichier à la fois pour l'instant
 
     # Afficher le résumé des exclusions
     if excluded_count > 0:
-        self.log_i18n(
-            f"⏩ {excluded_count} fichier(s) exclu(s) selon les patterns de ARK_Main_Config.yml",
-            f"⏩ {excluded_count} file(s) excluded according to ARK_Main_Config.yml patterns",
+        log_i18n_level(
+            self,
+            "info",
+            f"{excluded_count} fichier(s) exclu(s) selon les patterns de ARK_Main_Config.yml",
+            f"{excluded_count} file(s) excluded according to ARK_Main_Config.yml patterns",
         )
 
 
@@ -403,18 +427,24 @@ def cancel_all_compilations(self) -> bool:
     if main_process.is_compiling:
         success = main_process.cancel()
         if success:
-            self.log_i18n(
-                "⏹️ Annulation de la compilation demandée...",
-                "⏹️ Compilation cancellation requested...",
+            log_i18n_level(
+                self,
+                "info",
+                "Annulation de la compilation demandée...",
+                "Compilation cancellation requested...",
             )
         else:
-            self.log_i18n(
-                "⚠️ Impossible d'annuler la compilation.",
-                "⚠️ Unable to cancel compilation.",
+            log_i18n_level(
+                self,
+                "warning",
+                "Impossible d'annuler la compilation.",
+                "Unable to cancel compilation.",
             )
         return success
     else:
-        self.log_i18n("ℹ️ Aucune compilation en cours.", "ℹ️ No compilation in progress.")
+        log_i18n_level(
+            self, "info", "Aucune compilation en cours.", "No compilation in progress."
+        )
         return False
 
 
@@ -439,7 +469,7 @@ def handle_stderr(self, proc: QProcess) -> None:
     try:
         text = bytes(data).decode("utf-8", errors="replace").strip()
         if text:
-            self.log.append(f"❌ {text}")
+            log_with_level(self, "error", text)
     except Exception:
         pass
 
@@ -457,9 +487,11 @@ def try_install_missing_modules(self, modules: list) -> bool:
     if not modules:
         return True
 
-    self.log_i18n(
-        f"📦 Installation des modules manquants: {modules}",
-        f"📦 Installing missing modules: {modules}",
+    log_i18n_level(
+        self,
+        "info",
+        f"Installation des modules manquants: {modules}",
+        f"Installing missing modules: {modules}",
     )
 
     # Delegates to venv_manager
@@ -503,9 +535,11 @@ def start_compilation_process(self, engine_id: str, file_path: str) -> bool:
         try:
             engine = create(engine_id)
         except Exception as e:
-            self.log_i18n(
-                f"❌ Erreur création moteur '{engine_id}': {e}",
-                f"❌ Engine creation error '{engine_id}': {e}",
+            log_i18n_level(
+                self,
+                "error",
+                f"Erreur création moteur '{engine_id}': {e}",
+                f"Engine creation error '{engine_id}': {e}",
             )
             return False
     else:
@@ -523,9 +557,11 @@ def start_compilation_process(self, engine_id: str, file_path: str) -> bool:
         # Construire la commande
         cmd = engine.build_command(self, file_path)
         if not cmd:
-            self.log_i18n(
-                f"❌ Erreur construction commande pour {file_path}",
-                f"❌ Command build error for {file_path}",
+            log_i18n_level(
+                self,
+                "error",
+                f"Erreur construction commande pour {file_path}",
+                f"Command build error for {file_path}",
             )
             return False
 
@@ -572,9 +608,11 @@ def start_compilation_process(self, engine_id: str, file_path: str) -> bool:
         )
 
         if success:
-            self.log_i18n(
-                f"🚀 Démarrage {engine.name} pour {os.path.basename(file_path)}...",
-                f"🚀 Starting {engine.name} for {os.path.basename(file_path)}...",
+            log_i18n_level(
+                self,
+                "info",
+                f"Démarrage {engine.name} pour {os.path.basename(file_path)}...",
+                f"Starting {engine.name} for {os.path.basename(file_path)}...",
             )
 
         return success
@@ -589,9 +627,11 @@ def start_compilation_process(self, engine_id: str, file_path: str) -> bool:
         try:
             ok = _do_start()
         except Exception as e:
-            self.log_i18n(
-                f"❌ Erreur démarrage compilation : {e}",
-                f"❌ Compilation start error: {e}",
+            log_i18n_level(
+                self,
+                "error",
+                f"Erreur démarrage compilation : {e}",
+                f"Compilation start error: {e}",
             )
         if not ok:
             self.set_controls_enabled(True)
@@ -609,7 +649,7 @@ def try_start_processes(self) -> bool:
     Returns True if at least one process started.
     """
     if not self.python_files:
-        self.log_i18n("⚠️ Aucun fichier à compiler.", "⚠️ No files to compile.")
+        log_i18n_level(self, "warning", "Aucun fichier à compiler.", "No files to compile.")
         return False
 
     # Obtenir le moteur actif
@@ -658,16 +698,18 @@ def _handle_compilation_started(self, info: dict) -> None:
     except Exception:
         pass
     if file_path and engine:
-        self.log_i18n(
-            f"🚀 Démarrage compilation: {os.path.basename(file_path)} avec {engine}",
-            f"🚀 Starting compilation: {os.path.basename(file_path)} with {engine}",
+        log_i18n_level(
+            self,
+            "info",
+            f"Démarrage compilation: {os.path.basename(file_path)} avec {engine}",
+            f"Starting compilation: {os.path.basename(file_path)} with {engine}",
         )
 
 
 def _handle_error(self, message: str) -> None:
     """Handle error output from MainProcess."""
     if message:
-        self.log.append(f"❌ {message}")
+        log_with_level(self, "error", message)
 
 
 def _handle_progress(self, progress: int, message: str) -> None:
@@ -678,13 +720,7 @@ def _handle_progress(self, progress: int, message: str) -> None:
 
 def _handle_log(self, level: str, message: str) -> None:
     """Handle log messages from MainProcess."""
-    prefix = {
-        "info": "ℹ️",
-        "warning": "⚠️",
-        "error": "❌",
-        "success": "✅",
-    }.get(level, "📝")
-    self.log.append(f"{prefix} {message}")
+    log_with_level(self, level, message)
 
 
 def handle_finished(self, return_code: int, info: dict) -> None:
@@ -824,9 +860,11 @@ def handle_finished(self, return_code: int, info: dict) -> None:
         self.progress.setValue(100 if return_code == 0 else 0)
 
     if return_code == 0:
-        self.log_i18n(
-            "✅ Compilation terminée avec succès!",
-            "✅ Compilation completed successfully!",
+        log_i18n_level(
+            self,
+            "success",
+            "Compilation terminée avec succès!",
+            "Compilation completed successfully!",
         )
 
         # Appeler on_success du moteur si disponible
@@ -842,18 +880,23 @@ def handle_finished(self, return_code: int, info: dict) -> None:
                     try:
                         engine.on_success(self, file_path)
                     except Exception as e:
-                        self.log_i18n(
-                            f"⚠️ Erreur on_success: {e}", f"⚠️ on_success error: {e}"
+                        log_i18n_level(
+                            self,
+                            "warning",
+                            f"Erreur on_success: {e}",
+                            f"on_success error: {e}",
                         )
 
         # Continuer avec les autres fichiers si nécessaire
         _continue_compile_all(self)
     elif return_code == -1:
-        self.log_i18n("⏹️ Compilation annulée.", "⏹️ Compilation cancelled.")
+        log_i18n_level(self, "info", "Compilation annulée.", "Compilation cancelled.")
     else:
-        self.log_i18n(
-            f"❌ Compilation échouée (code: {return_code})",
-            f"❌ Compilation failed (code: {return_code})",
+        log_i18n_level(
+            self,
+            "error",
+            f"Compilation échouée (code: {return_code})",
+            f"Compilation failed (code: {return_code})",
         )
 
 
@@ -868,4 +911,4 @@ def _handle_state_changed(self, state: ProcessState) -> None:
         ProcessState.ERROR: "Erreur",
     }
     state_name = state_names.get(state, str(state))
-    self.log.append(f"📊 État: {state_name}")
+    log_with_level(self, "state", f"État: {state_name}")

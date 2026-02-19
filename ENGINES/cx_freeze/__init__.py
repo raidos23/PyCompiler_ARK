@@ -35,6 +35,7 @@ from engine_sdk import (
     compute_auto_for_engine,
     engine_register,
 )
+from engine_sdk.utils import log_with_level
 
 
 @engine_register
@@ -126,7 +127,7 @@ class CXFreezeEngine(CompilerEngine):
         except Exception as e:
             try:
                 if hasattr(gui, "log"):
-                    gui.log.append(f"❌ Erreur construction commande CX_Freeze: {e}\n")
+                    log_with_level(gui, "error", f"Erreur construction commande CX_Freeze: {e}")
             except Exception:
                 pass
             return []
@@ -168,8 +169,10 @@ class CXFreezeEngine(CompilerEngine):
             if output_dir and output_dir.text().strip():
                 try:
                     if hasattr(gui, "log"):
-                        gui.log.append(
-                            f"📁 Compilation CX_Freeze terminée. Sortie dans: {output_dir.text().strip()}\n"
+                        log_with_level(
+                            gui,
+                            "success",
+                            f"Compilation CX_Freeze terminée. Sortie dans: {output_dir.text().strip()}",
                         )
                 except Exception:
                     pass
@@ -258,7 +261,7 @@ class CXFreezeEngine(CompilerEngine):
         except Exception as e:
             try:
                 if hasattr(gui, "log"):
-                    gui.log.append(f"❌ Erreur création onglet CX_Freeze: {e}\n")
+                    log_with_level(gui, "error", f"Erreur création onglet CX_Freeze: {e}")
             except Exception:
                 pass
             return None
@@ -435,4 +438,4 @@ class CXFreezeEngine(CompilerEngine):
                     )
         except Exception as e:
             if hasattr(self._gui, "log"):
-                self._gui.log.append(f"❌ Erreur lors de la sélection de l'icône : {e}")
+                log_with_level(self._gui, "error", f"Erreur lors de la sélection de l'icône : {e}")

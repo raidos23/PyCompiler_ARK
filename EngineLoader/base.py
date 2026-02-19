@@ -17,6 +17,8 @@ from __future__ import annotations
 
 from typing import Optional
 
+from engine_sdk.utils import log_i18n_level
+
 
 class CompilerEngine:
     """
@@ -113,13 +115,12 @@ class CompilerEngine:
                         if not gui.venv_manager.is_tool_installed(venv_path, tool):
                             missing_python.append(tool)
                     if missing_python:
-                        if hasattr(gui, "log") and gui.log:
-                            gui.log.append(
-                                gui.tr(
-                                    f"📦 Installation des outils Python manquants: {missing_python}",
-                                    f"📦 Installing missing Python tools: {missing_python}",
-                                )
-                            )
+                        log_i18n_level(
+                            gui,
+                            "info",
+                            f"Installation des outils Python manquants: {missing_python}",
+                            f"Installing missing Python tools: {missing_python}",
+                        )
                         gui.venv_manager.ensure_tools_installed(
                             venv_path, missing_python
                         )
@@ -146,13 +147,12 @@ class CompilerEngine:
                             missing_system.append(tool)
 
                     if missing_system:
-                        if hasattr(gui, "log") and gui.log:
-                            gui.log.append(
-                                gui.tr(
-                                    f"📦 Installation des outils système manquants: {missing_system}",
-                                    f"📦 Installing missing system tools: {missing_system}",
-                                )
-                            )
+                        log_i18n_level(
+                            gui,
+                            "info",
+                            f"Installation des outils système manquants: {missing_system}",
+                            f"Installing missing system tools: {missing_system}",
+                        )
 
                         # Detect platform and use appropriate installation method
                         import platform
@@ -166,39 +166,35 @@ class CompilerEngine:
                                 # Wait for completion with timeout
                                 if process.waitForFinished(600000):  # 10 minutes
                                     if process.exitCode() == 0:
-                                        if hasattr(gui, "log") and gui.log:
-                                            gui.log.append(
-                                                gui.tr(
-                                                    f"✅ Outils système installés avec succès: {missing_system}",
-                                                    f"✅ System tools installed successfully: {missing_system}",
-                                                )
-                                            )
+                                        log_i18n_level(
+                                            gui,
+                                            "success",
+                                            f"Outils système installés avec succès: {missing_system}",
+                                            f"System tools installed successfully: {missing_system}",
+                                        )
                                     else:
-                                        if hasattr(gui, "log") and gui.log:
-                                            gui.log.append(
-                                                gui.tr(
-                                                    f"❌ Échec installation outils système: {missing_system} (code: {process.exitCode()})",
-                                                    f"❌ System tools installation failed: {missing_system} (code: {process.exitCode()})",
-                                                )
-                                            )
+                                        log_i18n_level(
+                                            gui,
+                                            "error",
+                                            f"Échec installation outils système: {missing_system} (code: {process.exitCode()})",
+                                            f"System tools installation failed: {missing_system} (code: {process.exitCode()})",
+                                        )
                                         return False
                                 else:
-                                    if hasattr(gui, "log") and gui.log:
-                                        gui.log.append(
-                                            gui.tr(
-                                                "⏱️ Timeout lors de l'installation des outils système",
-                                                "⏱️ Timeout during system tools installation",
-                                            )
-                                        )
+                                    log_i18n_level(
+                                        gui,
+                                        "warning",
+                                        "Timeout lors de l'installation des outils système",
+                                        "Timeout during system tools installation",
+                                    )
                                     return False
                             else:
-                                if hasattr(gui, "log") and gui.log:
-                                    gui.log.append(
-                                        gui.tr(
-                                            "❌ Impossible de démarrer l'installation des outils système",
-                                            "❌ Unable to start system tools installation",
-                                        )
-                                    )
+                                log_i18n_level(
+                                    gui,
+                                    "error",
+                                    "Impossible de démarrer l'installation des outils système",
+                                    "Unable to start system tools installation",
+                                )
                                 return False
 
                         elif system == "windows":
@@ -233,39 +229,35 @@ class CompilerEngine:
                                 if process:
                                     if process.waitForFinished(600000):  # 10 minutes
                                         if process.exitCode() == 0:
-                                            if hasattr(gui, "log") and gui.log:
-                                                gui.log.append(
-                                                    gui.tr(
-                                                        f"✅ Outils Windows installés: {missing_system}",
-                                                        f"✅ Windows tools installed: {missing_system}",
-                                                    )
-                                                )
+                                            log_i18n_level(
+                                                gui,
+                                                "success",
+                                                f"Outils Windows installés: {missing_system}",
+                                                f"Windows tools installed: {missing_system}",
+                                            )
                                         else:
-                                            if hasattr(gui, "log") and gui.log:
-                                                gui.log.append(
-                                                    gui.tr(
-                                                        f"❌ Échec installation Windows: {missing_system}",
-                                                        f"❌ Windows installation failed: {missing_system}",
-                                                    )
-                                                )
+                                            log_i18n_level(
+                                                gui,
+                                                "error",
+                                                f"Échec installation Windows: {missing_system}",
+                                                f"Windows installation failed: {missing_system}",
+                                            )
                                             return False
                                     else:
-                                        if hasattr(gui, "log") and gui.log:
-                                            gui.log.append(
-                                                gui.tr(
-                                                    "⏱️ Timeout lors de l'installation Windows",
-                                                    "⏱️ Timeout during Windows installation",
-                                                )
-                                            )
+                                        log_i18n_level(
+                                            gui,
+                                            "warning",
+                                            "Timeout lors de l'installation Windows",
+                                            "Timeout during Windows installation",
+                                        )
                                         return False
                                 else:
-                                    if hasattr(gui, "log") and gui.log:
-                                        gui.log.append(
-                                            gui.tr(
-                                                "⚠️ winget non disponible, installation manuelle requise",
-                                                "⚠️ winget not available, manual installation required",
-                                            )
-                                        )
+                                    log_i18n_level(
+                                        gui,
+                                        "warning",
+                                        "winget non disponible, installation manuelle requise",
+                                        "winget not available, manual installation required",
+                                    )
                                     # Open documentation URL for manual installation
                                     sys_manager.open_urls(
                                         [
@@ -274,50 +266,45 @@ class CompilerEngine:
                                     )
                                     return False
                             else:
-                                if hasattr(gui, "log") and gui.log:
-                                    gui.log.append(
-                                        gui.tr(
-                                            f"⚠️ Aucun équivalent Windows pour: {missing_system}",
-                                            f"⚠️ No Windows equivalent for: {missing_system}",
-                                        )
-                                    )
+                                log_i18n_level(
+                                    gui,
+                                    "warning",
+                                    f"Aucun équivalent Windows pour: {missing_system}",
+                                    f"No Windows equivalent for: {missing_system}",
+                                )
                         else:
-                            if hasattr(gui, "log") and gui.log:
-                                gui.log.append(
-                                    gui.tr(
-                                        "⚠️ Plateforme non supportée pour l'installation automatique",
-                                        "⚠️ Platform not supported for automatic installation",
-                                    )
-                                )
-                                return False
-                    else:
-                        if hasattr(gui, "log") and gui.log:
-                            gui.log.append(
-                                gui.tr(
-                                    f"✅ Tous les outils système sont déjà installés: {system_tools}",
-                                    f"✅ All system tools are already installed: {system_tools}",
-                                )
+                            log_i18n_level(
+                                gui,
+                                "warning",
+                                "Plateforme non supportée pour l'installation automatique",
+                                "Platform not supported for automatic installation",
                             )
+                            return False
+                    else:
+                        log_i18n_level(
+                            gui,
+                            "success",
+                            f"Tous les outils système sont déjà installés: {system_tools}",
+                            f"All system tools are already installed: {system_tools}",
+                        )
 
                 except Exception as e:
-                    if hasattr(gui, "log") and gui.log:
-                        gui.log.append(
-                            gui.tr(
-                                f"⚠️ Erreur lors de la vérification/installation des outils système: {e}",
-                                f"⚠️ Error checking/installing system tools: {e}",
-                            )
-                        )
+                    log_i18n_level(
+                        gui,
+                        "warning",
+                        f"Erreur lors de la vérification/installation des outils système: {e}",
+                        f"Error checking/installing system tools: {e}",
+                    )
                     return False
 
             return True
         except Exception as e:
-            if hasattr(gui, "log") and gui.log:
-                gui.log.append(
-                    gui.tr(
-                        f"⚠️ Erreur dans ensure_tools_installed: {e}",
-                        f"⚠️ Error in ensure_tools_installed: {e}",
-                    )
-                )
+            log_i18n_level(
+                gui,
+                "warning",
+                f"Erreur dans ensure_tools_installed: {e}",
+                f"Error in ensure_tools_installed: {e}",
+            )
             return False
 
     def apply_i18n(self, gui, tr: dict) -> None:

@@ -33,6 +33,7 @@ from engine_sdk import (
     compute_auto_for_engine,
     engine_register,
 )
+from engine_sdk.utils import log_with_level
 
 
 @engine_register
@@ -135,7 +136,7 @@ class NuitkaEngine(CompilerEngine):
         except Exception as e:
             try:
                 if hasattr(gui, "log"):
-                    gui.log.append(f"❌ Erreur construction commande Nuitka: {e}\n")
+                    log_with_level(gui, "error", f"Erreur construction commande Nuitka: {e}")
             except Exception:
                 pass
             return []
@@ -175,8 +176,10 @@ class NuitkaEngine(CompilerEngine):
             ):
                 try:
                     if hasattr(gui, "log"):
-                        gui.log.append(
-                            f"📁 Compilation Nuitka terminée. Sortie dans: {self._nuitka_output_dir.text().strip()}\n"
+                        log_with_level(
+                            gui,
+                            "success",
+                            f"Compilation Nuitka terminée. Sortie dans: {self._nuitka_output_dir.text().strip()}",
                         )
                 except Exception:
                     pass
@@ -256,7 +259,7 @@ class NuitkaEngine(CompilerEngine):
         except Exception as e:
             try:
                 if hasattr(gui, "log"):
-                    gui.log.append(f"❌ Erreur création onglet Nuitka: {e}\n")
+                    log_with_level(gui, "error", f"Erreur création onglet Nuitka: {e}")
             except Exception:
                 pass
             return None
@@ -431,4 +434,4 @@ class NuitkaEngine(CompilerEngine):
                     )
         except Exception as e:
             if hasattr(self._gui, "log"):
-                self._gui.log.append(f"❌ Erreur lors de la sélection de l'icône : {e}")
+                log_with_level(self._gui, "error", f"Erreur lors de la sélection de l'icône : {e}")
