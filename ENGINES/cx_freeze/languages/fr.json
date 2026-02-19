@@ -8,5 +8,10 @@
   "windowed_checkbox": "Sans console",
   "icon_button": "Choisir une icone (.ico)",
   "output_placeholder": "Dossier de sortie",
+  "target_name_placeholder": "Nom de sortie (--target-name)",
+  "debug_checkbox": "Debug",
+  "tt_debug": "Activer la sortie de débogage.",
+  "verbose_checkbox": "Verbose",
+  "tt_verbose": "Activer la sortie verbeuse.",
   "tt_windowed": "Désactiver la fenêtre console."
 }

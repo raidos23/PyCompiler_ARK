@@ -8,5 +8,10 @@
   "windowed_checkbox": "Sem console",
   "icon_button": "Escolher icone (.ico)",
   "output_placeholder": "Diretório de saída",
+  "target_name_placeholder": "Nome de saída (--target-name)",
+  "debug_checkbox": "Depuração",
+  "tt_debug": "Ativar a saída de depuração.",
+  "verbose_checkbox": "Detalhado",
+  "tt_verbose": "Ativar a saída detalhada.",
   "tt_windowed": "Disable the console window."
 }

@@ -8,5 +8,10 @@
   "windowed_checkbox": "无控制台",
   "icon_button": "选择图标 (.ico)",
   "output_placeholder": "输出目录",
+  "target_name_placeholder": "输出名称 (--target-name)",
+  "debug_checkbox": "调试",
+  "tt_debug": "启用调试输出。",
+  "verbose_checkbox": "详细",
+  "tt_verbose": "启用详细输出。",
   "tt_windowed": "Disable the console window."
 }

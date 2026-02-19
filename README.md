@@ -19,6 +19,7 @@ Build Python apps with a predictable workflow, a configurable pre-compile pipeli
 
 - **BCASL pre-compile pipeline**: validation, preparation, transformation before the build, with timeouts and safety controls.
 - **Multi-engine builds**: switch between PyInstaller, Nuitka, and cx_Freeze without changing your workflow.
+- **Extensible engines**: create your own engine and add it to ARK++ when needed.
 - **Auto-detection for tricky dependencies**: engine-specific auto-args based on requirements or import scanning.
 - **Workspace-first UI**: filter files, manage exclusions, and follow progress and logs in one place.
 - **Venv-aware execution**: engines can use the project virtual environment automatically.
