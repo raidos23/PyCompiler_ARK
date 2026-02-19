@@ -20,3 +20,11 @@
 ## Compilation
 
 - Bcasl doit se lancer avan la compilation.
+
+## i18n 
+
+- Des error d'ecirture sont present dans languages/** pour les fichier de i18n json. le probleme vient du fait que certaine chose sont mal orthographier.
+
+## Engines
+
+- les engines sans exception presente tous un probleme de design au niveau du bouton de choix d'icon. En effet le button est un simple button donc on ne sais pas si licon est bien selectionner alors il serait pertinent dajoutetr un label a coter qui montre le chemin de licon selectionner ce qui peut aussi permetrttre un  parametrage a la foix ux/ui et manuel.
