@@ -145,6 +145,129 @@ QDialogButtonBox QPushButton:default:hover, QMessageBox QPushButton:default:hove
 /* Text edit log */
 QTextEdit#log { font-family: "Cascadia Code", "Fira Code", "DejaVu Sans Mono", monospace; font-size: 10pt; background: #FFFFFF; }
 
+
+/* === Coverage: hidden widgets === */
+QToolButton {
+  background: palette(button);
+  color: palette(text);
+  border: 1px solid palette(mid);
+  border-radius: 8px;
+  padding: 6px 10px;
+}
+QToolButton:hover { background: palette(light); }
+QToolButton:pressed, QToolButton:checked { background: palette(mid); }
+QToolButton::menu-button { border: none; width: 16px; }
+
+QCommandLinkButton {
+  background: palette(button);
+  color: palette(text);
+  border: 1px solid palette(mid);
+  border-radius: 10px;
+  padding: 8px 12px;
+}
+QCommandLinkButton:hover { background: palette(light); }
+QCommandLinkButton:pressed { background: palette(mid); }
+QCommandLinkButton:disabled { color: palette(mid); background: palette(window); border-color: palette(mid); }
+
+QToolBox::tab {
+  background: palette(button);
+  color: palette(text);
+  border: 1px solid palette(mid);
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+  padding: 6px 10px;
+}
+QToolBox::tab:selected { background: palette(base); }
+QToolBox QWidget { background: palette(window); }
+
+QDockWidget {
+  background: palette(window);
+  border: 1px solid palette(mid);
+}
+QDockWidget::title {
+  text-align: left;
+  padding: 6px 10px;
+  background: palette(base);
+  color: palette(text);
+  border-bottom: 1px solid palette(mid);
+}
+QDockWidget::close-button, QDockWidget::float-button {
+  border: none;
+  background: transparent;
+  padding: 2px;
+}
+QDockWidget::close-button:hover, QDockWidget::float-button:hover {
+  background: palette(light);
+}
+
+QCalendarWidget {
+  background: palette(base);
+  border: 1px solid palette(mid);
+  border-radius: 8px;
+}
+QCalendarWidget QWidget#qt_calendar_navigationbar {
+  background: palette(button);
+  border-bottom: 1px solid palette(mid);
+}
+QCalendarWidget QToolButton {
+  background: palette(button);
+  color: palette(text);
+  border: 1px solid palette(mid);
+  border-radius: 6px;
+  padding: 4px 8px;
+}
+QCalendarWidget QToolButton:hover { background: palette(light); }
+QCalendarWidget QSpinBox { background: palette(base); border: 1px solid palette(mid); }
+QCalendarWidget QAbstractItemView {
+  background: palette(base);
+  selection-background-color: palette(highlight);
+  selection-color: palette(highlighted-text);
+}
+QCalendarWidget QAbstractItemView:disabled { color: palette(mid); }
+
+QDateEdit, QTimeEdit, QDateTimeEdit {
+  background: palette(base);
+  color: palette(text);
+  border: 1px solid palette(mid);
+  border-radius: 6px;
+  padding: 4px 8px;
+}
+QDateEdit:focus, QTimeEdit:focus, QDateTimeEdit:focus { border-color: palette(highlight); }
+
+QSlider::groove:horizontal { height: 6px; background: palette(midlight); border-radius: 3px; }
+QSlider::handle:horizontal { width: 16px; height: 16px; margin: -5px 0; border-radius: 8px; background: palette(highlight); border: 1px solid palette(mid); }
+QSlider::sub-page:horizontal { background: palette(highlight); border-radius: 3px; }
+QSlider::add-page:horizontal { background: palette(midlight); border-radius: 3px; }
+QSlider::groove:vertical { width: 6px; background: palette(midlight); border-radius: 3px; }
+QSlider::handle:vertical { width: 16px; height: 16px; margin: 0 -5px; border-radius: 8px; background: palette(highlight); border: 1px solid palette(mid); }
+QSlider::sub-page:vertical { background: palette(highlight); border-radius: 3px; }
+QSlider::add-page:vertical { background: palette(midlight); border-radius: 3px; }
+QSlider:disabled { color: palette(mid); }
+
+QLCDNumber {
+  color: palette(highlight);
+  background: palette(base);
+  border: 1px solid palette(mid);
+  border-radius: 6px;
+  padding: 4px;
+}
+
+QToolBar {
+  background: palette(window);
+  border-bottom: 1px solid palette(mid);
+  spacing: 6px;
+}
+QToolBar::separator { background: palette(mid); width: 1px; height: 1px; margin: 4px; }
+
+QSplitter::handle { background: palette(mid); }
+QSplitter::handle:hover { background: palette(highlight); }
+
+QScrollArea {
+  background: palette(window);
+  border: 1px solid palette(mid);
+}
+QScrollArea > QWidget { background: palette(window); }
+
 /* === Theme polish === */
 QFrame[frameShape="4"] {
   background: #FFFFFF;
