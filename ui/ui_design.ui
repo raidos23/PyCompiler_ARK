@@ -175,19 +175,19 @@
       </property>
       <layout class="QVBoxLayout" name="leftLayout">
        <property name="spacing">
-        <number>12</number>
+        <number>18</number>
        </property>
        <property name="leftMargin">
-        <number>6</number>
+        <number>10</number>
        </property>
        <property name="topMargin">
-        <number>6</number>
+        <number>10</number>
        </property>
        <property name="rightMargin">
-        <number>6</number>
+        <number>10</number>
        </property>
        <property name="bottomMargin">
-        <number>6</number>
+        <number>10</number>
        </property>
        <item>
        <widget class="QSplitter" name="leftSplitter">
@@ -203,19 +203,19 @@
           </property>
           <layout class="QGridLayout" name="layout_workspace_grid">
            <property name="leftMargin">
-            <number>10</number>
+            <number>14</number>
            </property>
            <property name="topMargin">
-            <number>10</number>
+            <number>14</number>
            </property>
            <property name="rightMargin">
-            <number>10</number>
+            <number>14</number>
            </property>
            <property name="bottomMargin">
-            <number>10</number>
+            <number>14</number>
            </property>
            <property name="spacing">
-            <number>14</number>
+            <number>18</number>
            </property>
            <item row="0" column="0" colspan="2">
             <widget class="QLabel" name="label_workspace_section">
@@ -244,7 +244,7 @@
               <enum>QFrame::Shadow::Sunken</enum>
              </property>
              <property name="margin">
-              <number>4</number>
+              <number>6</number>
              </property>
              <property name="wordWrap">
               <bool>true</bool>
@@ -268,7 +268,7 @@
               <enum>QFrame::Shadow::Sunken</enum>
              </property>
              <property name="margin">
-              <number>4</number>
+              <number>6</number>
              </property>
              <property name="wordWrap">
               <bool>true</bool>
@@ -313,24 +313,24 @@
           </property>
           <layout class="QGridLayout" name="layout_files_grid">
            <property name="leftMargin">
-            <number>10</number>
+            <number>14</number>
            </property>
            <property name="topMargin">
-            <number>10</number>
+            <number>14</number>
            </property>
            <property name="rightMargin">
-            <number>10</number>
+            <number>14</number>
            </property>
            <property name="bottomMargin">
-            <number>10</number>
+            <number>14</number>
            </property>
            <property name="spacing">
-            <number>14</number>
+            <number>18</number>
            </property>
            <item row="2" column="1">
             <layout class="QVBoxLayout" name="layout_file_actions">
              <property name="spacing">
-              <number>8</number>
+              <number>12</number>
              </property>
              <property name="leftMargin">
               <number>0</number>
@@ -417,19 +417,19 @@
           </property>
           <layout class="QGridLayout" name="layout_tools_grid">
            <property name="leftMargin">
-            <number>10</number>
+            <number>14</number>
            </property>
            <property name="topMargin">
-            <number>10</number>
+            <number>14</number>
            </property>
            <property name="rightMargin">
-            <number>10</number>
+            <number>14</number>
            </property>
           <property name="bottomMargin">
-           <number>10</number>
+           <number>14</number>
           </property>
           <property name="spacing">
-           <number>12</number>
+           <number>18</number>
           </property>
            <item row="2" column="0">
             <widget class="QPushButton" name="btn_show_stats">
@@ -479,7 +479,7 @@
              <property name="sizeHint" stdset="0">
               <size>
                <width>20</width>
-               <height>40</height>
+               <height>60</height>
               </size>
              </property>
             </spacer>
