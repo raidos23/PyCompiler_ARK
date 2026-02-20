@@ -19,7 +19,7 @@
   "select_lang": "Taal",
   "venv_button": "Kies venv-lêergids",
   "label_workspace_section": "Werkruimte",
-  "venv_label": "venv gekies: Geen",
+  "venv_label": "Venv gekies: Geen",
   "label_folder": "Geen vouer gekies nie",
   "label_files_section": "Lêers om te kompileer",
   "btn_remove_file": "Verwyder gekose lêer",

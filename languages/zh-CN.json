@@ -19,7 +19,7 @@
   "select_lang": "语言",
   "venv_button": "选择 venv 文件夹",
   "label_workspace_section": "工作区",
-  "venv_label": "已选择 venv：无",
+  "venv_label": "已选择 Venv：无",
   "label_folder": "未选择文件夹",
   "label_files_section": "待编译文件",
   "btn_remove_file": "移除选中文件",

@@ -190,9 +190,12 @@
         <number>6</number>
        </property>
        <item>
-        <widget class="QSplitter" name="leftSplitter">
+       <widget class="QSplitter" name="leftSplitter">
          <property name="orientation">
           <enum>Qt::Orientation::Vertical</enum>
+         </property>
+         <property name="handleWidth">
+          <number>8</number>
          </property>
          <widget class="QFrame" name="frame_workspace">
           <property name="frameShape">
@@ -212,46 +215,93 @@
             <number>10</number>
            </property>
            <property name="spacing">
-            <number>12</number>
+            <number>14</number>
            </property>
            <item row="0" column="0" colspan="2">
+            <widget class="QLabel" name="label_workspace_section">
+             <property name="font">
+              <font>
+               <pointsize>12</pointsize>
+               <bold>true</bold>
+              </font>
+             </property>
+             <property name="text">
+              <string>Workspace</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="0" colspan="2">
             <widget class="QLabel" name="label_folder">
+             <property name="font">
+              <font>
+               <bold>true</bold>
+              </font>
+             </property>
+             <property name="frameShape">
+              <enum>QFrame::Shape::StyledPanel</enum>
+             </property>
+             <property name="frameShadow">
+              <enum>QFrame::Shadow::Sunken</enum>
+             </property>
+             <property name="margin">
+              <number>4</number>
+             </property>
+             <property name="wordWrap">
+              <bool>true</bool>
+             </property>
              <property name="text">
               <string>Aucun dossier sélectionné</string>
              </property>
             </widget>
            </item>
-           <item row="1" column="0">
+           <item row="2" column="0">
             <widget class="QLabel" name="venv_label">
+             <property name="font">
+              <font>
+               <bold>true</bold>
+              </font>
+             </property>
+             <property name="frameShape">
+              <enum>QFrame::Shape::StyledPanel</enum>
+             </property>
+             <property name="frameShadow">
+              <enum>QFrame::Shadow::Sunken</enum>
+             </property>
+             <property name="margin">
+              <number>4</number>
+             </property>
+             <property name="wordWrap">
+              <bool>true</bool>
+             </property>
              <property name="text">
               <string>Venv sélectionné : Aucun</string>
              </property>
             </widget>
            </item>
-           <item row="1" column="1">
+           <item row="2" column="1">
             <widget class="QPushButton" name="venv_button">
              <property name="text">
               <string>Choisir un dossier venv</string>
              </property>
             </widget>
            </item>
-           <item row="2" column="0">
+           <item row="3" column="0">
             <widget class="QPushButton" name="btn_select_folder">
              <property name="toolTip">
               <string>Sélectionner le dossier de travail</string>
              </property>
              <property name="text">
-              <string>Choisir le workspace</string>
+              <string>Choisir le Workspace</string>
              </property>
             </widget>
            </item>
-           <item row="2" column="1">
+           <item row="3" column="1">
             <widget class="QPushButton" name="btn_clear_workspace">
              <property name="toolTip">
               <string>Vider la liste des fichiers et réinitialiser la sélection</string>
              </property>
              <property name="text">
-              <string>Vider le workspace</string>
+              <string>Vider le Workspace</string>
              </property>
             </widget>
            </item>
@@ -275,7 +325,7 @@
             <number>10</number>
            </property>
            <property name="spacing">
-            <number>12</number>
+            <number>14</number>
            </property>
            <item row="2" column="1">
             <layout class="QVBoxLayout" name="layout_file_actions">
@@ -344,13 +394,13 @@
             </widget>
            </item>
            <item row="0" column="0" colspan="2">
-            <widget class="QLabel" name="label_files_section">
-             <property name="font">
-              <font>
-               <pointsize>12</pointsize>
-               <bold>false</bold>
-              </font>
-             </property>
+           <widget class="QLabel" name="label_files_section">
+            <property name="font">
+             <font>
+              <pointsize>12</pointsize>
+              <bold>true</bold>
+             </font>
+            </property>
              <property name="text">
               <string>Fichiers à compiler</string>
              </property>
@@ -375,12 +425,12 @@
            <property name="rightMargin">
             <number>10</number>
            </property>
-           <property name="bottomMargin">
-            <number>10</number>
-           </property>
-           <property name="spacing">
-            <number>10</number>
-           </property>
+          <property name="bottomMargin">
+           <number>10</number>
+          </property>
+          <property name="spacing">
+           <number>12</number>
+          </property>
            <item row="2" column="0">
             <widget class="QPushButton" name="btn_show_stats">
              <property name="toolTip">
@@ -434,13 +484,19 @@
              </property>
             </spacer>
            </item>
-           <item row="0" column="0" colspan="2">
-            <widget class="QLabel" name="label_tools">
-             <property name="text">
-              <string>Outils</string>
-             </property>
-            </widget>
-           </item>
+          <item row="0" column="0" colspan="2">
+           <widget class="QLabel" name="label_tools">
+            <property name="font">
+             <font>
+              <pointsize>12</pointsize>
+              <bold>true</bold>
+             </font>
+            </property>
+            <property name="text">
+             <string>Outils</string>
+            </property>
+           </widget>
+          </item>
           </layout>
          </widget>
         </widget>
@@ -471,10 +527,13 @@
         <number>6</number>
        </property>
        <item>
-        <widget class="QSplitter" name="rightSplitter">
-         <property name="orientation">
-          <enum>Qt::Orientation::Vertical</enum>
-         </property>
+       <widget class="QSplitter" name="rightSplitter">
+        <property name="orientation">
+         <enum>Qt::Orientation::Vertical</enum>
+        </property>
+        <property name="handleWidth">
+         <number>8</number>
+        </property>
          <widget class="QFrame" name="frame_options">
           <property name="frameShape">
            <enum>QFrame::Shape::StyledPanel</enum>
@@ -495,13 +554,19 @@
            <property name="bottomMargin">
             <number>10</number>
            </property>
-           <item>
-            <widget class="QLabel" name="label_options_section">
-             <property name="text">
-              <string>Options de compilation</string>
-             </property>
-            </widget>
-           </item>
+          <item>
+           <widget class="QLabel" name="label_options_section">
+            <property name="font">
+             <font>
+              <pointsize>12</pointsize>
+              <bold>true</bold>
+             </font>
+            </property>
+            <property name="text">
+             <string>Options de compilation</string>
+            </property>
+           </widget>
+          </item>
            <item>
             <widget class="QTabWidget" name="compiler_tabs">
              <property name="currentIndex">
@@ -531,13 +596,19 @@
            <property name="bottomMargin">
             <number>10</number>
            </property>
-           <item>
-            <widget class="QLabel" name="label_logs_section">
-             <property name="text">
-              <string>Journal de compilation</string>
-             </property>
-            </widget>
-           </item>
+          <item>
+           <widget class="QLabel" name="label_logs_section">
+            <property name="font">
+             <font>
+              <pointsize>12</pointsize>
+              <bold>true</bold>
+             </font>
+            </property>
+            <property name="text">
+             <string>Journal de compilation</string>
+            </property>
+           </widget>
+          </item>
            <item>
             <widget class="QTextEdit" name="log">
              <property name="sizePolicy">
@@ -570,13 +641,19 @@
            <property name="bottomMargin">
             <number>10</number>
            </property>
-           <item>
-            <widget class="QLabel" name="label_progress">
-             <property name="text">
-              <string>Progression de la compilation</string>
-             </property>
-            </widget>
-           </item>
+          <item>
+           <widget class="QLabel" name="label_progress">
+            <property name="font">
+             <font>
+              <pointsize>12</pointsize>
+              <bold>true</bold>
+             </font>
+            </property>
+            <property name="text">
+             <string>Progression de la compilation</string>
+            </property>
+           </widget>
+          </item>
            <item>
             <widget class="QProgressBar" name="progress">
              <property name="value">

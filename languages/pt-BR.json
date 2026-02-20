@@ -19,7 +19,7 @@
   "select_lang": "Idioma",
   "venv_button": "Escolher pasta venv",
   "label_workspace_section": "Área de trabalho",
-  "venv_label": "venv selecionado: Nenhum",
+  "venv_label": "Venv selecionado: Nenhum",
   "label_folder": "Nenhuma pasta selecionada",
   "label_files_section": "Arquivos para compilar",
   "btn_remove_file": "Remover arquivo selecionado",

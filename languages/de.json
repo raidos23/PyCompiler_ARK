@@ -19,7 +19,7 @@
   "select_lang": "Sprache",
   "venv_button": "venv-Ordner wählen",
   "label_workspace_section": "Arbeitsbereich",
-  "venv_label": "venv ausgewählt: Keiner",
+  "venv_label": "Venv ausgewählt: Keiner",
   "label_folder": "Kein Ordner ausgewählt",
   "label_files_section": "Zu kompilierende Dateien",
   "btn_remove_file": "Ausgewählte Datei entfernen",
