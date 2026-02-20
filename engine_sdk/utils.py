@@ -141,6 +141,22 @@ def tr(gui: Any, fr: str, en: str) -> str:
         pass
     # Fallback: use French only if explicitly selected, otherwise English.
     try:
+        pref = getattr(gui, "language_pref", None)
+        if pref is None:
+            pref = getattr(gui, "language", None)
+        if isinstance(pref, str) and pref.strip():
+            val = pref.strip().lower()
+            if val in ("system", "auto", "default"):
+                try:
+                    loc = locale.getdefaultlocale()[0] or ""
+                    return fr if loc.lower().startswith(("fr", "fr_")) else en
+                except Exception:
+                    return en
+            if val in ("fr", "français", "francais", "french") or val.startswith(
+                ("fr-", "fr_")
+            ):
+                return fr
+            return en
         cur = getattr(gui, "current_language", None)
         if isinstance(cur, str) and cur.lower().startswith("fr"):
             return fr

@@ -882,7 +882,9 @@ class VenvManager:
             pass
 
         folder = QFileDialog.getExistingDirectory(
-            self.parent, "Choisir un dossier venv", ""
+            self.parent,
+            self.parent.tr("Choisir un dossier venv", "Choose a venv folder"),
+            "",
         )
         if folder:
             path = os.path.abspath(folder)
@@ -905,6 +907,57 @@ class VenvManager:
                     pass
                 if hasattr(self.parent, "venv_label") and self.parent.venv_label:
                     self.parent.venv_label.setText("Venv sélectionné : Aucun")
+                # Message concis avec actions proposées
+                try:
+                    def _t(_key: str, fr: str, en: str) -> str:
+                        try:
+                            return self.parent.tr(fr, en)
+                        except Exception:
+                            return en
+
+                    box = QMessageBox(self.parent)
+                    box.setWindowTitle(
+                        _t("msg_invalid_venv_title", "Venv invalide", "Invalid Venv")
+                    )
+                    box.setText(
+                        _t(
+                            "msg_invalid_venv_text",
+                            "Le dossier sélectionné n'est pas un venv valide. Réessayer ou créer un venv ?",
+                            "The selected folder is not a valid venv. Retry or create a venv?",
+                        )
+                    )
+                    if reason:
+                        try:
+                            box.setInformativeText(str(reason))
+                        except Exception:
+                            pass
+                    btn_retry = box.addButton(
+                        _t("action_retry", "Réessayer", "Retry"),
+                        QMessageBox.AcceptRole,
+                    )
+                    btn_create = None
+                    workspace_dir = getattr(self.parent, "workspace_dir", None)
+                    if workspace_dir:
+                        btn_create = box.addButton(
+                            _t("action_create_venv", "Créer un venv", "Create venv"),
+                            QMessageBox.ActionRole,
+                        )
+                    box.addButton(
+                        _t("action_cancel", "Annuler", "Cancel"),
+                        QMessageBox.RejectRole,
+                    )
+                    box.exec()
+                    if box.clickedButton() == btn_retry:
+                        self.select_venv_manually()
+                        return
+                    if btn_create and box.clickedButton() == btn_create:
+                        try:
+                            self.create_venv_if_needed(workspace_dir)
+                        except Exception:
+                            pass
+                        return
+                except Exception:
+                    pass
         else:
             self.parent.venv_path_manuel = None
             try:

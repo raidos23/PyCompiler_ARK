@@ -190,6 +190,12 @@ def compile_all(self) -> None:
     Slot connected to the compile button.
     Starts compilation for all selected Python files.
     """
+    def _t(_key: str, fr: str, en: str) -> str:
+        try:
+            return self.tr(fr, en)
+        except Exception:
+            return en
+
     # Déterminer les fichiers à compiler (point d'entrée > sélection > tout)
     files_to_compile = []
     entrypoint_file = None
@@ -222,11 +228,74 @@ def compile_all(self) -> None:
         log_i18n_level(
             self, "warning", "Aucun fichier Python sélectionné.", "No Python files selected."
         )
+        try:
+            box = QMessageBox(self)
+            box.setWindowTitle(
+                _t("msg_no_files_title", "Aucun fichier à compiler", "No files to compile")
+            )
+            box.setText(
+                _t(
+                    "msg_no_files_text",
+                    "Ajoutez des fichiers ou choisissez un Workspace.",
+                    "Add files or choose a Workspace.",
+                )
+            )
+            btn_ws = box.addButton(
+                _t("action_select_workspace", "Choisir Workspace", "Select Workspace"),
+                QMessageBox.ActionRole,
+            )
+            btn_files = box.addButton(
+                _t("action_add_files", "Ajouter des fichiers", "Add files"),
+                QMessageBox.AcceptRole,
+            )
+            box.addButton(
+                _t("action_cancel", "Annuler", "Cancel"), QMessageBox.RejectRole
+            )
+            box.exec()
+            if box.clickedButton() == btn_ws:
+                try:
+                    self.select_workspace()
+                except Exception:
+                    pass
+            elif box.clickedButton() == btn_files:
+                try:
+                    self.select_files_manually()
+                except Exception:
+                    pass
+        except Exception:
+            pass
         return
 
     # Vérifier le workspace
     if not self.workspace_dir:
         log_i18n_level(self, "warning", "Aucun workspace sélectionné.", "No workspace selected.")
+        try:
+            box = QMessageBox(self)
+            box.setWindowTitle(
+                _t("msg_no_workspace_title", "Workspace manquant", "Workspace missing")
+            )
+            box.setText(
+                _t(
+                    "msg_no_workspace_text",
+                    "Sélectionnez un Workspace pour continuer.",
+                    "Select a Workspace to continue.",
+                )
+            )
+            btn_ws = box.addButton(
+                _t("action_select_workspace", "Choisir Workspace", "Select Workspace"),
+                QMessageBox.AcceptRole,
+            )
+            box.addButton(
+                _t("action_cancel", "Annuler", "Cancel"), QMessageBox.RejectRole
+            )
+            box.exec()
+            if box.clickedButton() == btn_ws:
+                try:
+                    self.select_workspace()
+                except Exception:
+                    pass
+        except Exception:
+            pass
         return
 
     _set_progress_indeterminate(self)
