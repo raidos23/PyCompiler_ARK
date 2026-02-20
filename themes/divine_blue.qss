@@ -123,7 +123,12 @@ QDialog, QMessageBox {
 }
 QDialog QLabel, QMessageBox QLabel { color: #E8F0FF; }
 QDialogButtonBox QPushButton, QMessageBox QPushButton {
-  background: #10203A; color: #E8F0FF; border: 1px solid #1E2E4F; border-radius: 10px; padding: 6px 12px; min-width: 90px;
+  background: #10203A;
+  color: #E8F0FF;
+  border: 1px solid #1E2E4F;
+  border-radius: 10px;
+  padding: 6px 12px;
+  min-width: 90px;
 }
 QDialogButtonBox QPushButton:hover, QMessageBox QPushButton:hover { background: #14284A; }
 QDialogButtonBox QPushButton:pressed, QMessageBox QPushButton:pressed { background: #122441; }

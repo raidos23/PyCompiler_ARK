@@ -39,8 +39,8 @@ QPushButton {
   background: #232c3b;
   color: #eef2f8;
   border: 1px solid rgba(255,255,255,0.14);
-  border-radius: 12px;
-  padding: 9px 16px;
+  border-radius: 10px;
+  padding: 8px 14px;
   font-weight: 600;
   letter-spacing: 0.15px;
 }

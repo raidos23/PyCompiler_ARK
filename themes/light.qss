@@ -46,7 +46,7 @@ QPushButton {
   color: #1c1f26;
   border: 1px solid #D6D9DF;
   border-radius: 10px;
-  padding: 8px 16px;
+  padding: 8px 14px;
   font-size: 10pt;
 }
 QPushButton:hover {
@@ -192,7 +192,7 @@ QDialogButtonBox QPushButton, QMessageBox QPushButton {
   background: #ffffff;
   color: #1c1f26;
   border: 1px solid #D6D9DF;
-  border-radius: 8px;
+  border-radius: 10px;
   padding: 6px 12px;
   min-width: 90px;
 }

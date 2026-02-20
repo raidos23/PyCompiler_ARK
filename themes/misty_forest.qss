@@ -135,7 +135,12 @@ QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal { width: 0; }
 QDialog, QMessageBox { background: #263238; color: #A7B8B0; border-radius: 12px; border: 1px solid #2A3A2F; }
 QDialog QLabel, QMessageBox QLabel { color: #A7B8B0; }
 QDialogButtonBox QPushButton, QMessageBox QPushButton {
-  background: #1E2B22; color: #FFFFFF; border: 1px solid #2A3A2F; border-radius: 12px; padding: 6px 12px; min-width: 90px;
+  background: #1E2B22;
+  color: #FFFFFF;
+  border: 1px solid #2A3A2F;
+  border-radius: 10px;
+  padding: 6px 12px;
+  min-width: 90px;
 }
 QDialogButtonBox QPushButton:hover, QMessageBox QPushButton:hover { background: #2A3A2F; }
 QDialogButtonBox QPushButton:pressed, QMessageBox QPushButton:pressed { background: #1A261E; }
