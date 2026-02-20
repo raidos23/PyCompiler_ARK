@@ -18,6 +18,7 @@
 from __future__ import annotations
 
 import os
+import platform
 from pathlib import Path
 
 import pytest
@@ -36,6 +37,18 @@ class DummyParent:
 
     def tr(self, fr: str, en: str) -> str:
         return en
+
+
+def _make_fake_venv(path: Path) -> Path:
+    path.mkdir(parents=True, exist_ok=True)
+    cfg = path / "pyvenv.cfg"
+    cfg.write_text("include-system-site-packages = false\n", encoding="utf-8")
+    bindir = "Scripts" if platform.system() == "Windows" else "bin"
+    bin_path = path / bindir
+    bin_path.mkdir(parents=True, exist_ok=True)
+    py_name = "python.exe" if platform.system() == "Windows" else "python"
+    (bin_path / py_name).write_text("", encoding="utf-8")
+    return path
 
 
 def test_create_venv_prefers_manager_mapping(test_workspace: Path, monkeypatch) -> None:
@@ -104,3 +117,120 @@ def test_install_requirements_prefers_manager(monkeypatch, test_workspace: Path)
     mgr.install_requirements_if_needed(str(test_workspace))
 
     assert called.get("workspace") == str(test_workspace)
+
+
+def test_detect_manager_existing_venv_poetry(test_workspace: Path, monkeypatch) -> None:
+    pyproject = test_workspace / "pyproject.toml"
+    pyproject.write_text("[tool.poetry]\nname = 'demo'\n", encoding="utf-8")
+    venv_path = _make_fake_venv(test_workspace / "poetry-venv")
+
+    mgr = VenvManager(DummyParent())
+    monkeypatch.setattr(mgr, "_is_tool_available", lambda tool: True)
+    monkeypatch.setattr(
+        mgr, "_run_cmd_capture", lambda cmd, cwd, timeout=5: str(venv_path)
+    )
+
+    result = mgr._detect_manager_existing_venv(str(test_workspace))
+    assert result == str(venv_path)
+
+
+def test_detect_manager_existing_venv_pipenv(test_workspace: Path, monkeypatch) -> None:
+    pipfile = test_workspace / "Pipfile"
+    pipfile.write_text("[packages]\n", encoding="utf-8")
+    venv_path = _make_fake_venv(test_workspace / "pipenv-venv")
+
+    mgr = VenvManager(DummyParent())
+    monkeypatch.setattr(mgr, "_is_tool_available", lambda tool: True)
+    monkeypatch.setattr(
+        mgr, "_run_cmd_capture", lambda cmd, cwd, timeout=5: str(venv_path)
+    )
+
+    result = mgr._detect_manager_existing_venv(str(test_workspace))
+    assert result == str(venv_path)
+
+
+def test_detect_manager_existing_venv_pdm(test_workspace: Path, monkeypatch) -> None:
+    pyproject = test_workspace / "pyproject.toml"
+    pyproject.write_text("[tool.pdm]\n", encoding="utf-8")
+    venv_path = _make_fake_venv(test_workspace / "pdm-venv")
+
+    mgr = VenvManager(DummyParent())
+    monkeypatch.setattr(mgr, "_is_tool_available", lambda tool: True)
+    monkeypatch.setattr(
+        mgr, "_run_cmd_capture", lambda cmd, cwd, timeout=5: str(venv_path)
+    )
+
+    result = mgr._detect_manager_existing_venv(str(test_workspace))
+    assert result == str(venv_path)
+
+
+def test_detect_manager_existing_venv_conda_prefix(
+    test_workspace: Path, monkeypatch
+) -> None:
+    venv_path = _make_fake_venv(test_workspace / "conda-env")
+    env_file = test_workspace / "environment.yml"
+    env_file.write_text(f"name: demo\nprefix: {venv_path}\n", encoding="utf-8")
+
+    mgr = VenvManager(DummyParent())
+    monkeypatch.setattr(mgr, "_is_tool_available", lambda tool: True)
+
+    result = mgr._detect_manager_existing_venv(str(test_workspace))
+    assert result == str(venv_path)
+
+
+def test_detect_manager_existing_venv_conda_name(
+    test_workspace: Path, monkeypatch
+) -> None:
+    venv_path = _make_fake_venv(test_workspace / "conda-name-env")
+    env_file = test_workspace / "environment.yml"
+    env_name = venv_path.name
+    env_file.write_text(f"name: {env_name}\n", encoding="utf-8")
+
+    mgr = VenvManager(DummyParent())
+    monkeypatch.setattr(mgr, "_is_tool_available", lambda tool: True)
+
+    class _FakeResult:
+        returncode = 0
+        stdout = f'{{"envs": ["{venv_path}"]}}'
+        stderr = ""
+
+    monkeypatch.setattr(
+        "Core.Venv_Manager.Manager.subprocess.run", lambda *a, **k: _FakeResult()
+    )
+
+    result = mgr._detect_manager_existing_venv(str(test_workspace))
+    assert result == str(venv_path)
+
+
+def test_create_venv_with_manager_fallback(monkeypatch, test_workspace: Path) -> None:
+    mgr = VenvManager(DummyParent())
+    monkeypatch.setattr(mgr, "_detect_environment_manager", lambda path: "poetry")
+    monkeypatch.setattr(mgr, "_is_tool_available", lambda tool: False)
+    called: dict[str, bool] = {}
+
+    def fake_create(path: str, prefer_manager: bool = True):
+        called["prefer_manager"] = prefer_manager
+
+    monkeypatch.setattr(mgr, "create_venv_if_needed", fake_create)
+
+    mgr.create_venv_with_manager(str(test_workspace))
+    assert called.get("prefer_manager") is False
+
+
+def test_install_dependencies_with_manager_fallback(
+    monkeypatch, test_workspace: Path
+) -> None:
+    mgr = VenvManager(DummyParent())
+    monkeypatch.setattr(mgr, "_detect_environment_manager", lambda path: "poetry")
+    monkeypatch.setattr(mgr, "_is_tool_available", lambda tool: False)
+    called: dict[str, bool] = {}
+
+    def fake_install(path: str, force_pip: bool = False):
+        called["force_pip"] = force_pip
+        called["path"] = path
+
+    monkeypatch.setattr(mgr, "install_requirements_if_needed", fake_install)
+
+    mgr.install_dependencies_with_manager(str(test_workspace))
+    assert called.get("force_pip") is True
+    assert called.get("path") == str(test_workspace)
