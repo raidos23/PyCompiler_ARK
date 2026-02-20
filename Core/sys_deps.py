@@ -141,10 +141,18 @@ class SysDependencyManager:
     # ------------- Generic helpers -------------
     def tr(self, fr: str, en: str) -> str:
         try:
-            lang = getattr(self.parent_widget, "current_language", "Français")
-            return en if lang == "English" else fr
+            pw = getattr(self, "parent_widget", None)
+            fn = getattr(pw, "tr", None)
+            if callable(fn):
+                return fn(fr, en)
         except Exception:
-            return fr
+            pass
+        try:
+            from .i18n import tr_fr_en
+
+            return tr_fr_en(getattr(self, "parent_widget", None), fr, en)
+        except Exception:
+            return en
 
     def detect_linux_package_manager(self) -> Optional[str]:
         """Detect common Linux package managers: apt, dnf, yum, pacman, zypper."""

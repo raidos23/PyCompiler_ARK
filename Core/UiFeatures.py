@@ -109,13 +109,19 @@ class UiFeatures:
     def show_help_dialog(self):
         """Affiche une boîte de dialogue d'aide."""
         try:
-            tr = getattr(self, "_tr", None)
-            if tr and isinstance(tr, dict):
-                help_title = tr.get("help_title", "Help")
-                help_text = tr.get("help_text", "")
+            from .i18n import FALLBACK_EN, is_french_language
+
+            if is_french_language(self):
+                tr = getattr(self, "_tr", None)
+                if isinstance(tr, dict):
+                    help_title = tr.get("help_title", "Aide")
+                    help_text = tr.get("help_text", FALLBACK_EN.get("help_text", ""))
+                else:
+                    help_title = "Aide"
+                    help_text = FALLBACK_EN.get("help_text", "")
             else:
-                help_title = "Help"
-                help_text = ""
+                help_title = FALLBACK_EN.get("help_title", "Help")
+                help_text = FALLBACK_EN.get("help_text", "")
         except Exception:
             help_title = "Help"
             help_text = ""

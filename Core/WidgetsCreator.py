@@ -302,15 +302,35 @@ def sys_msgbox_for_installing(
     l'installation avec élévation adaptée à l'OS.
     """
     is_windows = platform.system().lower().startswith("win")
-    msg = (
-        f"L'installation de '{subject}' nécessite des privilèges administrateur.\n"
-        + (f"\n{explanation}\n" if explanation else "")
-        + (
-            "\nSur Windows, une élévation UAC sera demandée."
-            if is_windows
-            else "\nSur Linux/macOS, votre mot de passe sudo est requis."
+    try:
+        from Core.i18n import tr_fr_en, is_french_language
+
+        if title == "Installation requise":
+            title = tr_fr_en(None, "Installation requise", "Installation required")
+        is_fr = is_french_language(None)
+    except Exception:
+        is_fr = True
+
+    if is_fr:
+        msg = (
+            f"L'installation de '{subject}' nécessite des privilèges administrateur.\n"
+            + (f"\n{explanation}\n" if explanation else "")
+            + (
+                "\nSur Windows, une élévation UAC sera demandée."
+                if is_windows
+                else "\nSur Linux/macOS, votre mot de passe sudo est requis."
+            )
         )
-    )
+    else:
+        msg = (
+            f"Installing '{subject}' requires administrator privileges.\n"
+            + (f"\n{explanation}\n" if explanation else "")
+            + (
+                "\nOn Windows, a UAC elevation will be requested."
+                if is_windows
+                else "\nOn Linux/macOS, your sudo password is required."
+            )
+        )
     # UI Qt
     if QApplication.instance() is not None:
         try:
@@ -324,7 +344,9 @@ def sys_msgbox_for_installing(
             pwd, ok = QInputDialog.getText(
                 parent,
                 title,
-                "Entrez votre mot de passe (sudo):",
+                "Entrez votre mot de passe (sudo):"
+                if is_fr
+                else "Enter your password (sudo):",
                 QLineEdit.Password,
             )
             if not ok:
@@ -337,7 +359,7 @@ def sys_msgbox_for_installing(
     # Fallback console
     try:
         print(f"[INSTALL] {title}: {msg}")
-        ans = input("Continuer ? [y/N] ").strip().lower()
+        ans = input("Continuer ? [y/N] " if is_fr else "Continue? [y/N] ").strip().lower()
         if ans not in ("y", "yes", "o", "oui"):
             return None
     except Exception:
@@ -346,7 +368,9 @@ def sys_msgbox_for_installing(
     if is_windows:
         return InstallAuth("uac", None)
     try:
-        pwd = getpass.getpass("Mot de passe (sudo): ")
+        pwd = getpass.getpass(
+            "Mot de passe (sudo): " if is_fr else "Password (sudo): "
+        )
         return InstallAuth("sudo", pwd) if pwd else None
     except Exception:
         return None

@@ -38,9 +38,15 @@ class SetupWorkspace:
         Returns:
             Le chemin du workspace sélectionné ou None si annulé
         """
+        def _t(_key: str, fr: str, en: str) -> str:
+            try:
+                return gui_instance.tr(fr, en)
+            except Exception:
+                return en
+
         folder = QFileDialog.getExistingDirectory(
             gui_instance,
-            gui_instance.tr("Choisir le dossier du projet", "Select project folder"),
+            _t("action_select_workspace", "Choisir Workspace", "Select Workspace"),
         )
         if folder:
             return folder
@@ -225,24 +231,29 @@ class SetupWorkspace:
                             folder, check_tools=False
                         )
                     else:
-                        title = gui_instance.tr(
-                            "Configuration du venv", "Venv setup"
+                        def _t(_key: str, fr: str, en: str) -> str:
+                            try:
+                                return gui_instance.tr(fr, en)
+                            except Exception:
+                                return en
+
+                        title = _t(
+                            "msg_venv_choice_title", "Configuration du Venv", "Venv setup"
                         )
-                        msg = gui_instance.tr(
-                            "Voulez-vous créer un venv automatiquement\n"
-                            "ou sélectionner un venv manuellement (Python système inclus) ?",
-                            "Do you want to create a venv automatically\n"
-                            "or select a venv manually (System Python included)?",
+                        msg = _t(
+                            "msg_venv_choice_text",
+                            "Créer un venv automatiquement ou sélectionner un venv (Python système inclus).",
+                            "Create a venv automatically or select a venv (System Python included).",
                         )
                         box = QMessageBox(gui_instance)
                         box.setWindowTitle(title)
                         box.setText(msg)
                         btn_auto = box.addButton(
-                            gui_instance.tr("Créer un venv", "Create venv"),
+                            _t("action_create_venv", "Créer un venv", "Create venv"),
                             QMessageBox.AcceptRole,
                         )
                         btn_manual = box.addButton(
-                            gui_instance.tr("Sélectionner un venv", "Select venv"),
+                            _t("action_select_venv", "Sélectionner un Venv", "Select Venv"),
                             QMessageBox.ActionRole,
                         )
                         box.setDefaultButton(btn_auto)

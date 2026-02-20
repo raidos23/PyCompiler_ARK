@@ -36,7 +36,7 @@ from Core.Globals import _latest_gui_instance, _workspace_dir_cache, _workspace_
 from .Globals import _run_coro_async
 from .WidgetsCreator import ProgressDialog, CompilationProcessDialog
 from .Venv_Manager import VenvManager
-from .i18n import resolve_system_language, get_translations
+from .i18n import resolve_system_language, get_translations, tr_fr_en, is_french_language
 
 # Import des fonctionnalités UI depuis UiFeatures
 from .UiFeatures import UiFeatures
@@ -318,13 +318,7 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
 
     def tr(self, fr: str, en: str) -> str:
         """Retourne le texte FR si la langue est Français, sinon EN."""
-        try:
-            lang = str(
-                getattr(self, "current_language", "English") or "English"
-            ).lower()
-        except Exception:
-            lang = "english"
-        return fr if lang.startswith("fr") else en
+        return tr_fr_en(self, fr, en)
 
     # =========================================================================
     # JOURNALISATION
@@ -383,18 +377,19 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
             details = []
             if self.processes:
                 details.append("compilation")
+            is_french = is_french_language(self)
             if hasattr(self, "venv_manager") and self.venv_manager:
-                details.extend(self.venv_manager.get_active_task_labels("Français"))
+                try:
+                    details.extend(
+                        self.venv_manager.get_active_task_labels(
+                            "Français" if is_french else "English"
+                        )
+                    )
+                except Exception:
+                    pass
 
-            is_english = getattr(self, "current_language", "Français") == "English"
-
-            if is_english:
-                mapping = {
-                    "compilation": "build",
-                    "création du venv": "venv creation",
-                    "installation des dépendances": "dependencies installation",
-                    "vérification/installation du venv": "venv check/installation",
-                }
+            if not is_french:
+                mapping = {"compilation": "build"}
                 details_disp = [mapping.get(d, d) for d in details]
                 title = "⚠️ Process Running"
                 msg = "A process is currently running:\n\n"

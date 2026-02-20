@@ -251,11 +251,61 @@ def suggest_missing_dependencies(self):
     Analyse les fichiers principaux à compiler, détecte les modules importés,
     vérifie leur présence dans le venv, et propose d'installer ceux qui manquent.
     """
+    def _t(_key: str, fr: str, en: str) -> str:
+        try:
+            return self.tr(fr, en)
+        except Exception:
+            return en
+
     # Vérifie que le workspace ou le venv est bien sélectionné
     if not self.workspace_dir and not self.venv_path_manuel:
         self.log.append(
-            "❌ Aucun workspace ou venv sélectionné. Veuillez d'abord sélectionner un dossier workspace ou un venv."
+            _t(
+                "msg_no_workspace_or_venv_text",
+                "❌ Workspace ou venv manquant. Sélectionnez-en un.",
+                "❌ Workspace or venv missing. Please select one.",
+            )
         )
+        try:
+            box = QMessageBox(self)
+            box.setWindowTitle(
+                _t(
+                    "msg_no_workspace_or_venv_title",
+                    "Workspace ou venv manquant",
+                    "Workspace or venv missing",
+                )
+            )
+            box.setText(
+                _t(
+                    "msg_no_workspace_or_venv_text",
+                    "Sélectionnez un Workspace ou un Venv pour analyser les dépendances.",
+                    "Select a Workspace or a Venv to analyze dependencies.",
+                )
+            )
+            btn_ws = box.addButton(
+                _t("action_select_workspace", "Choisir Workspace", "Select Workspace"),
+                QMessageBox.ActionRole,
+            )
+            btn_venv = box.addButton(
+                _t("action_select_venv", "Choisir un Venv", "Select Venv"),
+                QMessageBox.AcceptRole,
+            )
+            box.addButton(
+                _t("action_cancel", "Annuler", "Cancel"), QMessageBox.RejectRole
+            )
+            box.exec()
+            if box.clickedButton() == btn_ws:
+                try:
+                    self.select_workspace()
+                except Exception:
+                    pass
+            elif box.clickedButton() == btn_venv:
+                try:
+                    self.select_venv_manually()
+                except Exception:
+                    pass
+        except Exception:
+            pass
         return
     import ast
 
