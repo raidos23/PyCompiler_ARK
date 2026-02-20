@@ -218,6 +218,15 @@ _LOG_LEVEL_COLORAMA = {
     "state": "BLUE",
 }
 
+_LOG_LEVEL_QT_COLORS = {
+    "info": "#1E88E5",
+    "warning": "#EF6C00",
+    "error": "#D32F2F",
+    "success": "#2E7D32",
+    "state": "#00897B",
+    "debug": "#546E7A",
+}
+
 _RICH_CONSOLE = None
 _COLORAMA_READY = False
 
@@ -263,6 +272,67 @@ def _console_log(level: str, label: str, message: str) -> None:
     print(f"{label} {message}")
 
 
+def _append_gui_log(gui: Any, level: str, label: str, msg: str) -> bool:
+    """Append a log line to the GUI log, with color when possible."""
+    try:
+        log = getattr(gui, "log", None)
+    except Exception:
+        return False
+    if log is None:
+        return False
+
+    line = f"[{label}] {msg}"
+
+    # List-backed logs (tests)
+    try:
+        if isinstance(log, list):
+            log.append(line)
+            return True
+    except Exception:
+        pass
+
+    # QTextEdit with rich formatting
+    try:
+        if hasattr(log, "textCursor") and callable(log.textCursor):
+            try:
+                from PySide6.QtGui import QColor, QTextCharFormat, QTextCursor
+            except Exception:
+                return False
+            cursor = log.textCursor()
+            cursor.movePosition(QTextCursor.End)
+            fmt = QTextCharFormat()
+            color = _LOG_LEVEL_QT_COLORS.get(level)
+            if color:
+                fmt.setForeground(QColor(color))
+            cursor.insertText(line, fmt)
+            cursor.insertText("\n")
+            try:
+                log.setTextCursor(cursor)
+                log.ensureCursorVisible()
+            except Exception:
+                pass
+            return True
+    except Exception:
+        pass
+
+    # QPlainTextEdit / generic append
+    try:
+        if hasattr(log, "appendPlainText") and callable(log.appendPlainText):
+            log.appendPlainText(line)
+            return True
+    except Exception:
+        pass
+
+    try:
+        if hasattr(log, "append") and callable(log.append):
+            log.append(line)
+            return True
+    except Exception:
+        pass
+
+    return False
+
+
 def log_with_level(
     gui: Any,
     level: str,
@@ -284,10 +354,8 @@ def log_with_level(
     if clamp:
         msg = clamp_text(msg, max_len=essential_log_max_len)
 
-    line = f"[{label}] {msg}"
     try:
-        if hasattr(gui, "log") and getattr(gui, "log") is not None:
-            gui.log.append(line)
+        if _append_gui_log(gui, lvl, label, msg):
             return
     except Exception:
         pass

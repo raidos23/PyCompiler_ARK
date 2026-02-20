@@ -515,14 +515,8 @@ def _connect_signals(self) -> None:
 
 def _show_initial_help_message(self) -> None:
     """Affiche un message d'aide si aucun workspace n'est sélectionné."""
-    if not getattr(self, "workspace_dir", None) and getattr(self, "log", None):
-        try:
-            self.log.append(
-                "Astuce : Commencez par sélectionner un dossier workspace, puis ajoutez vos fichiers "
-                "Python à compiler. Configurez les options selon vos besoins et cliquez sur Compiler."
-            )
-        except Exception:
-            pass
+    # Désactivé à la demande : pas de message d'astuce par défaut dans le log.
+    return
 
 
 def init_ui(self) -> None:
@@ -532,6 +526,7 @@ def init_ui(self) -> None:
     _apply_initial_theme(self)
     _connect_dialogs_to_app(self)
     _setup_widgets(self)
+    _refresh_log_palette(self)
     _apply_button_icons(self)
     _setup_sidebar_logo(self)
     _setup_compiler_tabs(self)
@@ -651,6 +646,29 @@ def _is_qss_dark(css: str) -> bool:
         return False
 
 
+def _refresh_log_palette(self, css: str | None = None) -> None:
+    """Assure une couleur de texte lisible pour le journal, selon le thème."""
+    if not getattr(self, "log", None):
+        return
+    try:
+        from PySide6.QtGui import QColor, QPalette
+        from PySide6.QtWidgets import QApplication
+    except Exception:
+        return
+    try:
+        if css is None:
+            app = QApplication.instance()
+            css = app.styleSheet() if app else ""
+        dark = _is_qss_dark(css or "")
+        color = "#E6E8EB" if dark else "#1F2A3C"
+        pal = self.log.palette()
+        pal.setColor(QPalette.Text, QColor(color))
+        pal.setColor(QPalette.PlaceholderText, QColor(color))
+        self.log.setPalette(pal)
+    except Exception:
+        pass
+
+
 def apply_theme(self, pref: str) -> None:
     """
     Applique un thème depuis themes.
@@ -702,6 +720,7 @@ def apply_theme(self, pref: str) -> None:
         app = QApplication.instance()
         if app:
             app.setStyleSheet(css)
+        _refresh_log_palette(self, css)
         try:
             _apply_button_icons(self)
         except Exception:
