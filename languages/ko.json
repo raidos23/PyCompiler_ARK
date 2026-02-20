@@ -85,5 +85,6 @@
   "tt_nuitka_disable_console": "Disable console window for Nuitka builds.",
   "label_tools": "도구",
   "label_options_section": "컴파일 옵션",
-  "label_progress": "컴파일 진행"
+  "label_progress": "컴파일 진행",
+  "venv_label_system": "선택된 Venv: 시스템 Python"
 }

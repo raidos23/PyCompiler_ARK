@@ -14,6 +14,7 @@
 # limitations under the License.
 
 import os
+import time
 from typing import Optional
 
 from PySide6.QtWidgets import QApplication, QFileDialog, QMessageBox
@@ -219,7 +220,40 @@ class SetupWorkspace:
                 if hasattr(gui_instance, "venv_manager") and gui_instance.venv_manager:
                     # Do not auto-install engine tools on workspace selection.
                     # Tools are installed only when compiling with the selected engine.
-                    gui_instance.venv_manager.setup_workspace(folder, check_tools=False)
+                    if str(source).lower() == "plugin":
+                        gui_instance.venv_manager.setup_workspace(
+                            folder, check_tools=False
+                        )
+                    else:
+                        title = gui_instance.tr(
+                            "Configuration du venv", "Venv setup"
+                        )
+                        msg = gui_instance.tr(
+                            "Voulez-vous créer un venv automatiquement\n"
+                            "ou sélectionner un venv manuellement (Python système inclus) ?",
+                            "Do you want to create a venv automatically\n"
+                            "or select a venv manually (System Python included)?",
+                        )
+                        box = QMessageBox(gui_instance)
+                        box.setWindowTitle(title)
+                        box.setText(msg)
+                        btn_auto = box.addButton(
+                            gui_instance.tr("Créer un venv", "Create venv"),
+                            QMessageBox.AcceptRole,
+                        )
+                        btn_manual = box.addButton(
+                            gui_instance.tr("Sélectionner un venv", "Select venv"),
+                            QMessageBox.ActionRole,
+                        )
+                        box.setDefaultButton(btn_auto)
+                        box.exec()
+
+                        if box.clickedButton() == btn_manual:
+                            gui_instance.venv_manager.select_venv_manually()
+                        else:
+                            gui_instance.venv_manager.setup_workspace(
+                                folder, check_tools=False
+                            )
             except Exception as e:
                 gui_instance.log_i18n(
                     f"⚠️ Erreur lors de la configuration du workspace: {e}",
@@ -279,6 +313,7 @@ class SetupWorkspace:
         ark_config = load_ark_config(workspace_dir)
         exclusion_patterns = ark_config.get("exclusion_patterns", [])
 
+        last_pump = time.monotonic()
         for root, _, files in os.walk(folder):
             for f in files:
                 if f.endswith(".py"):
@@ -310,6 +345,11 @@ class SetupWorkspace:
                             )
                             gui_instance.file_list.addItem(relative_path)
                         count += 1
+                        if count % 200 == 0:
+                            now = time.monotonic()
+                            if now - last_pump > 0.05:
+                                QApplication.processEvents()
+                                last_pump = now
 
         # Afficher un message récapitulatif si des fichiers ont été exclus
         if excluded_count > 0:

@@ -85,5 +85,6 @@
   "tt_nuitka_disable_console": "Disable console window for Nuitka builds.",
   "label_tools": "Werkzeuge",
   "label_options_section": "Kompilierungsoptionen",
-  "label_progress": "Kompilierungsfortschritt"
+  "label_progress": "Kompilierungsfortschritt",
+  "venv_label_system": "Venv ausgewählt: System-Python"
 }
