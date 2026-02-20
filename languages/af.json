@@ -86,5 +86,21 @@
   "label_tools": "Gereedskap",
   "label_options_section": "Kompilasie-opsies",
   "label_progress": "Kompilasievordering",
-  "venv_label_system": "Venv gekies: Stelsel-Python"
+  "venv_label_system": "Venv gekies: Stelsel-Python",
+  "msg_venv_choice_title": "Venv-opstelling",
+  "msg_venv_choice_text": "Skep 'n venv outomaties of kies 'n venv (Stelsel-Python ingesluit).",
+  "msg_no_workspace_title": "Werkruimte ontbreek",
+  "msg_no_workspace_text": "Kies 'n Werkruimte om voort te gaan.",
+  "msg_no_files_title": "Geen lêers om te kompileer nie",
+  "msg_no_files_text": "Voeg lêers by of kies 'n Werkruimte.",
+  "msg_no_workspace_or_venv_title": "Werkruimte of venv ontbreek",
+  "msg_no_workspace_or_venv_text": "Kies 'n Werkruimte of Venv om afhanklikhede te ontleed.",
+  "msg_invalid_venv_title": "Ongeldige venv",
+  "msg_invalid_venv_text": "Die gekose gids is nie 'n geldige venv nie. Probeer weer of skep 'n venv?",
+  "action_select_workspace": "Kies Werkruimte",
+  "action_add_files": "Voeg lêers by",
+  "action_select_venv": "Kies Venv",
+  "action_create_venv": "Skep venv",
+  "action_retry": "Probeer weer",
+  "action_cancel": "Kanselleer"
 }

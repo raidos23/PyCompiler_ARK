@@ -86,5 +86,21 @@
   "label_tools": "Инструменты",
   "label_options_section": "Параметры компиляции",
   "label_progress": "Ход компиляции",
-  "venv_label_system": "Venv выбран: системный Python"
+  "venv_label_system": "Venv выбран: системный Python",
+  "msg_venv_choice_title": "Настройка venv",
+  "msg_venv_choice_text": "Создать venv автоматически или выбрать venv (системный Python включён).",
+  "msg_no_workspace_title": "Workspace отсутствует",
+  "msg_no_workspace_text": "Выберите Workspace, чтобы продолжить.",
+  "msg_no_files_title": "Нет файлов для компиляции",
+  "msg_no_files_text": "Добавьте файлы или выберите Workspace.",
+  "msg_no_workspace_or_venv_title": "Workspace или venv отсутствует",
+  "msg_no_workspace_or_venv_text": "Выберите Workspace или Venv для анализа зависимостей.",
+  "msg_invalid_venv_title": "Недопустимый venv",
+  "msg_invalid_venv_text": "Выбранная папка не является корректным venv. Повторить или создать venv?",
+  "action_select_workspace": "Выбрать Workspace",
+  "action_add_files": "Добавить файлы",
+  "action_select_venv": "Выбрать Venv",
+  "action_create_venv": "Создать venv",
+  "action_retry": "Повторить",
+  "action_cancel": "Отмена"
 }

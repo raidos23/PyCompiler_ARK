@@ -86,5 +86,21 @@
   "label_tools": "工具",
   "label_options_section": "编译选项",
   "label_progress": "编译进度",
-  "venv_label_system": "已选择 Venv：系统 Python"
+  "venv_label_system": "已选择 Venv：系统 Python",
+  "msg_venv_choice_title": "Venv 配置",
+  "msg_venv_choice_text": "自动创建 venv 或选择 venv（包含系统 Python）。",
+  "msg_no_workspace_title": "工作区缺失",
+  "msg_no_workspace_text": "请选择工作区以继续。",
+  "msg_no_files_title": "没有可编译的文件",
+  "msg_no_files_text": "请添加文件或选择工作区。",
+  "msg_no_workspace_or_venv_title": "工作区或 venv 缺失",
+  "msg_no_workspace_or_venv_text": "请选择工作区或 Venv 以分析依赖。",
+  "msg_invalid_venv_title": "Venv 无效",
+  "msg_invalid_venv_text": "所选文件夹不是有效的 venv。重试或创建 venv？",
+  "action_select_workspace": "选择工作区",
+  "action_add_files": "添加文件",
+  "action_select_venv": "选择 Venv",
+  "action_create_venv": "创建 venv",
+  "action_retry": "重试",
+  "action_cancel": "取消"
 }
