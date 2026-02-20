@@ -153,6 +153,7 @@ QTreeView::item:hover, QListWidget::item:hover, QTableView::item:hover { backgro
 
 /* ===== Tabs (underline indicator) ===== */
 QTabWidget::pane { border: 1px solid rgba(255,255,255,0.14); border-radius: 12px; background: #1b2332; padding: 8px; }
+QTabBar { background: #1b2332; }
 QTabBar::tab {
   background: transparent;
   border: none;
