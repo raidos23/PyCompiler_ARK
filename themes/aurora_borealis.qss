@@ -9,8 +9,7 @@
    --muted:     #98ABC6  (texte atténué)
    --border:    #22314A  (bords)
    --soft:      #12233A  (hover/panneaux légers)
-   --accent1:   #20E3B2  (turquoise)
-   --accent2:   #4BB0FF  (bleu)
+   --accent:    #4BB0FF  (bleu doux)
    --select:    #102D44  (sélection)
 */
 
@@ -50,14 +49,14 @@ QPushButton:hover { background: #12233A; }
 QPushButton:pressed { background: #0F192B; }
 QPushButton:disabled { color: #7D90AA; background: #0E1828; }
 
-/* Bouton principal (dégradé bleu -> turquoise) */
+/* Bouton principal (bleu doux) */
 QPushButton#compile_btn {
-  background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #4BB0FF, stop:1 #20E3B2);
+  background: #4BB0FF;
   color: #05111A;
-  border: 1px solid #279EDB;
+  border: 1px solid #2F8AD9;
 }
 QPushButton#compile_btn:hover {
-  background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #379EEC, stop:1 #1BD5A6);
+  background: #5AB8FF;
 }
 QPushButton#cancel_btn {
   background: #22141A; color: #FFC6CD; border: 1px solid #3E2630;
@@ -68,18 +67,18 @@ QPushButton#cancel_btn:hover { background: #2A1A22; }
 QCheckBox { color: #EAF2FF; }
 QCheckBox::indicator { width: 18px; height: 18px; }
 QCheckBox::indicator:unchecked { background: #0E1828; border: 1px solid #2A3B58; border-radius: 6px; }
-QCheckBox::indicator:checked { background: #20E3B2; border: 1px solid #18C79E; }
+QCheckBox::indicator:checked { background: #4BB0FF; border: 1px solid #2F8AD9; }
 
 /* Radio */
 QRadioButton { color: #EAF2FF; }
 QRadioButton::indicator { width: 16px; height: 16px; border: 1px solid #2A3B58; border-radius: 8px; background: #0F192B; }
-QRadioButton::indicator:checked { background: #4BB0FF; border-color: #3EA0EA; }
+QRadioButton::indicator:checked { background: #4BB0FF; border-color: #2F8AD9; }
 
 /* Entrées texte */
 QLineEdit, QTextEdit, QPlainTextEdit {
   background: #0F192B; color: #EAF2FF; border: 1px solid #22314A; border-radius: 10px; padding: 6px 12px;
 }
-QLineEdit:focus, QTextEdit:focus, QPlainTextEdit:focus { border-color: #20E3B2; }
+QLineEdit:focus, QTextEdit:focus, QPlainTextEdit:focus { border-color: #4BB0FF; }
 
 /* Listes & tables */
 QListWidget, QTreeWidget, QTableWidget, QTableView {
@@ -103,11 +102,11 @@ QTabBar::tab:hover { background: #12233A; }
 
 /* Barre de progression */
 QProgressBar { border: 1px solid #22314A; border-radius: 10px; text-align: center; background: #0F192B; color: #EAF2FF; height: 16px; }
-QProgressBar::chunk { background-color: #20E3B2; border-radius: 10px; }
+QProgressBar::chunk { background-color: #4BB0FF; border-radius: 10px; }
 
 /* ComboBox modern */
 QComboBox { background: #0F192B; color: #EAF2FF; border: 1px solid #22314A; border-radius: 12px; padding: 6px 36px 6px 12px; }
-QComboBox:focus { border-color: #20E3B2; }
+QComboBox:focus { border-color: #4BB0FF; }
 QComboBox::drop-down {
   subcontrol-origin: padding; subcontrol-position: top right; width: 30px; border-left: 1px solid #22314A; background: #10192B;
   border-top-right-radius: 12px; border-bottom-right-radius: 12px;
@@ -117,7 +116,7 @@ QComboBox QAbstractItemView::item { min-height: 26px; }
 
 /* SpinBox modern */
 QAbstractSpinBox { background: #0F192B; color: #EAF2FF; border: 1px solid #22314A; border-radius: 12px; padding: 6px 10px; }
-QAbstractSpinBox:focus { border-color: #20E3B2; }
+QAbstractSpinBox:focus { border-color: #4BB0FF; }
 QSpinBox::up-button, QDoubleSpinBox::up-button { subcontrol-origin: border; subcontrol-position: top right; width: 22px; border-left: 1px solid #22314A; background: #10192B; border-top-right-radius: 12px; }
 QSpinBox::down-button, QDoubleSpinBox::down-button { subcontrol-origin: border; subcontrol-position: bottom right; width: 22px; border-left: 1px solid #22314A; background: #10192B; border-bottom-right-radius: 12px; }
 

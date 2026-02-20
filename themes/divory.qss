@@ -1,5 +1,5 @@
 /* PyCompiler ARK — Divory Theme (ui/themes/divory.qss)
-   Fusion "Divine Blue" × "Ivory Luxury" : base ivoire lumineuse, accents bleu profond et touche dorée
+   Fusion "Divine Blue" × "Ivory Luxury" : base ivoire lumineuse, accents bleu profonds
 */
 
 /* Palette */
@@ -11,7 +11,7 @@
 /* --soft:      #F3F0E4;  */
 /* --blue:      #2D7DFF;  */
 /* --blue-2:    #226AF0;  */
-/* --gold:      #D4AF37;  */
+/* --accent:    #2D7DFF;  */
 /* --select:    #E9F2FF;  */
 
 /* Base */
@@ -87,7 +87,7 @@ QListWidget::item:selected, QTreeWidget::item:selected { background: #E9F2FF; co
 
 /* GroupBox */
 QGroupBox { border: 1px solid #E4E0CF; border-radius: 10px; margin-top: 10px; }
-QGroupBox::title { subcontrol-origin: margin; left: 10px; padding: 0 6px; color: #7A641F; background: transparent; }
+QGroupBox::title { subcontrol-origin: margin; left: 10px; padding: 0 6px; color: #2F4C7D; background: transparent; }
 
 /* Onglets */
 QTabWidget::pane { border: 1px solid #E4E0CF; border-radius: 10px; background: #FFFFFF; }
@@ -136,8 +136,8 @@ QDialogButtonBox QPushButton, QMessageBox QPushButton {
 }
 QDialogButtonBox QPushButton:hover, QMessageBox QPushButton:hover { background: #F3F0E4; }
 QDialogButtonBox QPushButton:pressed, QMessageBox QPushButton:pressed { background: #ECE7D9; }
-QDialogButtonBox QPushButton:default, QMessageBox QPushButton:default { background: #D4AF37; color: white; border-color: #C49C1E; }
-QDialogButtonBox QPushButton:default:hover, QMessageBox QPushButton:default:hover { background: #CFA633; }
+QDialogButtonBox QPushButton:default, QMessageBox QPushButton:default { background: #2D7DFF; color: white; border-color: #2D7DFF; }
+QDialogButtonBox QPushButton:default:hover, QMessageBox QPushButton:default:hover { background: #226AF0; }
 
 /* Log */
 QTextEdit#log { font-family: "Cascadia Code", "Fira Code", "DejaVu Sans Mono", monospace; font-size: 10pt; background: #FFFFFF; }

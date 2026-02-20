@@ -9,9 +9,8 @@
 /* --muted:     #9AA0A6;  */
 /* --border:    #26262C;  */
 /* --soft:      #151720;  */
-/* --crimson:   #D32F2F;  */
-/* --crimson-2: #B71C1C;  */
-/* --violet:    #7A1FA2;  */
+/* --accent:    #C14D5C;  (rouge adouci) */
+/* --accent-2:  #B04351;  */
 /* --select:    #2A1620;  */
 
 /* Base */
@@ -50,13 +49,13 @@ QPushButton:hover { background: #151720; }
 QPushButton:pressed { background: #13141B; }
 QPushButton:disabled { color: #8B8F96; background: #101115; }
 
-/* Bouton principal (cramoisi) */
+/* Bouton principal (rouge adouci) */
 QPushButton#compile_btn {
-  background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #D32F2F, stop:1 #B71C1C);
-  color: #FFFFFF; border: 1px solid #B71C1C;
+  background: #C14D5C;
+  color: #FFFFFF; border: 1px solid #B04351;
 }
 QPushButton#compile_btn:hover {
-  background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #C62828, stop:1 #A11212);
+  background: #D35A69;
 }
 QPushButton#cancel_btn {
   background: #2A1619; color: #FFB4BC; border: 1px solid #47242A;
@@ -67,18 +66,18 @@ QPushButton#cancel_btn:hover { background: #321B1F; }
 QCheckBox { color: #E8E8EA; }
 QCheckBox::indicator { width: 18px; height: 18px; }
 QCheckBox::indicator:unchecked { background: #0F1015; border: 1px solid #30323A; border-radius: 6px; }
-QCheckBox::indicator:checked { background: #D32F2F; border: 1px solid #B71C1C; }
+QCheckBox::indicator:checked { background: #C14D5C; border: 1px solid #B04351; }
 
 /* Radio */
 QRadioButton { color: #E8E8EA; }
 QRadioButton::indicator { width: 16px; height: 16px; border: 1px solid #30323A; border-radius: 8px; background: #101217; }
-QRadioButton::indicator:checked { background: #7A1FA2; border-color: #6A1A8F; }
+QRadioButton::indicator:checked { background: #C14D5C; border-color: #B04351; }
 
 /* Entrées texte */
 QLineEdit, QTextEdit, QPlainTextEdit {
   background: #101217; color: #E8E8EA; border: 1px solid #26262C; border-radius: 10px; padding: 6px 12px;
 }
-QLineEdit:focus, QTextEdit:focus, QPlainTextEdit:focus { border-color: #7A1FA2; }
+QLineEdit:focus, QTextEdit:focus, QPlainTextEdit:focus { border-color: #C14D5C; }
 
 /* Listes & tables */
 QListWidget, QTreeWidget, QTableWidget, QTableView {
@@ -102,11 +101,11 @@ QTabBar::tab:hover { background: #151720; }
 
 /* Barre de progression */
 QProgressBar { border: 1px solid #26262C; border-radius: 10px; text-align: center; background: #101217; color: #E8E8EA; height: 16px; }
-QProgressBar::chunk { background-color: #D32F2F; border-radius: 10px; }
+QProgressBar::chunk { background-color: #C14D5C; border-radius: 10px; }
 
 /* ComboBox modern */
 QComboBox { background: #101217; color: #E8E8EA; border: 1px solid #26262C; border-radius: 12px; padding: 6px 36px 6px 12px; }
-QComboBox:focus { border-color: #7A1FA2; }
+QComboBox:focus { border-color: #C14D5C; }
 QComboBox::drop-down {
   subcontrol-origin: padding; subcontrol-position: top right; width: 30px; border-left: 1px solid #26262C; background: #111218;
   border-top-right-radius: 12px; border-bottom-right-radius: 12px;
@@ -116,7 +115,7 @@ QComboBox QAbstractItemView::item { min-height: 26px; }
 
 /* SpinBox modern */
 QAbstractSpinBox { background: #101217; color: #E8E8EA; border: 1px solid #26262C; border-radius: 12px; padding: 6px 10px; }
-QAbstractSpinBox:focus { border-color: #7A1FA2; }
+QAbstractSpinBox:focus { border-color: #C14D5C; }
 QSpinBox::up-button, QDoubleSpinBox::up-button { subcontrol-origin: border; subcontrol-position: top right; width: 22px; border-left: 1px solid #26262C; background: #111218; border-top-right-radius: 12px; }
 QSpinBox::down-button, QDoubleSpinBox::down-button { subcontrol-origin: border; subcontrol-position: bottom right; width: 22px; border-left: 1px solid #26262C; background: #111218; border-bottom-right-radius: 12px; }
 
@@ -138,8 +137,8 @@ QDialogButtonBox QPushButton, QMessageBox QPushButton {
 }
 QDialogButtonBox QPushButton:hover, QMessageBox QPushButton:hover { background: #151720; }
 QDialogButtonBox QPushButton:pressed, QMessageBox QPushButton:pressed { background: #13141B; }
-QDialogButtonBox QPushButton:default, QMessageBox QPushButton:default { background: #D32F2F; color: #FFFFFF; border-color: #B71C1C; }
-QDialogButtonBox QPushButton:default:hover, QMessageBox QPushButton:default:hover { background: #C62828; }
+QDialogButtonBox QPushButton:default, QMessageBox QPushButton:default { background: #C14D5C; color: #FFFFFF; border-color: #B04351; }
+QDialogButtonBox QPushButton:default:hover, QMessageBox QPushButton:default:hover { background: #D35A69; }
 
 /* Log */
 QTextEdit#log { font-family: "Cascadia Code", "Fira Code", "DejaVu Sans Mono", monospace; font-size: 10pt; background: #0F1113; }
