@@ -85,5 +85,6 @@
   "tt_nuitka_disable_console": "Disable console window for Nuitka builds.",
   "label_tools": "Gereedskap",
   "label_options_section": "Kompilasie-opsies",
-  "label_progress": "Kompilasievordering"
+  "label_progress": "Kompilasievordering",
+  "venv_label_system": "Venv gekies: Stelsel-Python"
 }

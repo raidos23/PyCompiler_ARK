@@ -85,5 +85,6 @@
   "tt_nuitka_disable_console": "Disable console window for Nuitka builds.",
   "label_tools": "工具",
   "label_options_section": "编译选项",
-  "label_progress": "编译进度"
+  "label_progress": "编译进度",
+  "venv_label_system": "已选择 Venv：系统 Python"
 }

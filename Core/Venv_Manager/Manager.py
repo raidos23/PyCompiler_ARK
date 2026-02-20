@@ -71,6 +71,8 @@ class VenvManager:
         # Environment manager detection
         self._detected_manager = None  # 'pip', 'poetry', 'conda', 'pipenv', 'uv', 'pdm'
         self._manager_commands = self._load_manager_mapping()
+        # Cache for auto-selected venv per workspace
+        self._auto_venv_cache: dict[str, str] = {}
 
     # ---------- Manager mapping ----------
     def _default_manager_commands(self) -> dict[str, dict[str, list[str]]]:
@@ -213,12 +215,34 @@ class VenvManager:
         Prefers an existing .venv over venv; if none exists, returns the default path (.venv).
         """
         try:
+            if getattr(self.parent, "use_system_python", False):
+                return None
             manual = getattr(self.parent, "venv_path_manuel", None)
             if manual:
                 base = os.path.abspath(manual)
                 return base
             if getattr(self.parent, "workspace_dir", None):
                 base = os.path.abspath(self.parent.workspace_dir)
+                # Try cached auto-selection first
+                try:
+                    cached = self._auto_venv_cache.get(base)
+                    if cached and os.path.isdir(cached):
+                        ok, _ = self.validate_venv_strict(cached)
+                        if ok:
+                            return cached
+                except Exception:
+                    pass
+
+                # Auto-detect best venv among common names in workspace
+                best = self.select_best_venv(base)
+                if best:
+                    try:
+                        self._auto_venv_cache[base] = best
+                    except Exception:
+                        pass
+                    return best
+
+                # Fallback to default detection (.venv / venv)
                 existing, default_path = self._detect_venv_in(base)
                 return existing or default_path
         except Exception:
@@ -562,8 +586,301 @@ class VenvManager:
         ok, _ = self.validate_venv_strict(venv_root)
         return ok
 
+    # ---------- System Python suggestion ----------
+    def _normalize_dist_name(self, name: str) -> str:
+        try:
+            return name.strip().lower().replace("_", "-")
+        except Exception:
+            return str(name).strip().lower()
+
+    def _parse_requirements_file(self, req_path: str, seen: set | None = None) -> list[str]:
+        seen = seen or set()
+        try:
+            req_path = os.path.abspath(req_path)
+        except Exception:
+            return []
+        if req_path in seen:
+            return []
+        seen.add(req_path)
+
+        deps: list[str] = []
+        try:
+            with open(req_path, encoding="utf-8") as f:
+                lines = f.readlines()
+        except Exception:
+            return []
+
+        for raw in lines:
+            line = raw.strip()
+            if not line or line.startswith("#"):
+                continue
+
+            # Include other requirements files
+            if line.startswith("-r ") or line.startswith("--requirement"):
+                try:
+                    parts = line.split(maxsplit=1)
+                    if len(parts) == 2:
+                        inc = parts[1].strip()
+                        inc_path = os.path.join(os.path.dirname(req_path), inc)
+                        deps.extend(self._parse_requirements_file(inc_path, seen))
+                except Exception:
+                    pass
+                continue
+
+            # Editable installs
+            if line.startswith("-e ") or line.startswith("--editable"):
+                try:
+                    parts = line.split(maxsplit=1)
+                    line = parts[1].strip() if len(parts) == 2 else ""
+                except Exception:
+                    line = ""
+
+            if not line or line.startswith("-"):
+                # Skip other pip options (-f, --index-url, etc.)
+                continue
+
+            # Git URL with egg name
+            if "#egg=" in line:
+                try:
+                    name = line.split("#egg=", 1)[1].strip()
+                    if name:
+                        deps.append(name)
+                except Exception:
+                    pass
+                continue
+
+            # PEP 508 direct reference: name @ url
+            if " @ " in line:
+                try:
+                    name = line.split(" @ ", 1)[0].strip()
+                    if name:
+                        deps.append(name)
+                except Exception:
+                    pass
+                continue
+
+            # Strip environment markers
+            if ";" in line:
+                line = line.split(";", 1)[0].strip()
+
+            # Strip extras
+            if "[" in line:
+                line = line.split("[", 1)[0].strip()
+
+            # Strip version specifiers
+            try:
+                import re as _re
+
+                base = _re.split(r"(===|==|~=|!=|<=|>=|<|>)", line, maxsplit=1)[0]
+                base = base.strip()
+            except Exception:
+                base = line.strip()
+
+            if base:
+                deps.append(base)
+
+        # Deduplicate while preserving order
+        seen_names = set()
+        ordered = []
+        for d in deps:
+            if d not in seen_names:
+                seen_names.add(d)
+                ordered.append(d)
+        return ordered
+
+    def _collect_declared_dependencies(self, workspace_dir: str) -> tuple[list[str], bool]:
+        try:
+            workspace_dir = os.path.abspath(workspace_dir)
+        except Exception:
+            return [], False
+
+        try:
+            req_files = self._find_requirements_files(workspace_dir, workspace_dir)
+        except Exception:
+            req_files = []
+
+        if not req_files:
+            return [], False
+
+        # Rebuild patterns to prioritize
+        try:
+            from Core.ArkConfigManager import load_ark_config, get_dependency_options
+
+            ark_config = load_ark_config(workspace_dir)
+            dep_opts = get_dependency_options(ark_config)
+            patterns = dep_opts.get(
+                "requirements_files",
+                [
+                    "requirements.txt",
+                    "requirements-prod.txt",
+                    "requirements-dev.txt",
+                    "Pipfile",
+                    "Pipfile.lock",
+                    "pyproject.toml",
+                    "setup.py",
+                    "setup.cfg",
+                    "poetry.lock",
+                    "conda.yml",
+                    "environment.yml",
+                ],
+            )
+        except Exception:
+            patterns = [
+                "requirements.txt",
+                "requirements-prod.txt",
+                "requirements-dev.txt",
+                "Pipfile",
+                "Pipfile.lock",
+                "pyproject.toml",
+                "setup.py",
+                "setup.cfg",
+                "poetry.lock",
+                "conda.yml",
+                "environment.yml",
+            ]
+
+        pattern_index = {p: i for i, p in enumerate(patterns)}
+
+        def _prio(path: str) -> int:
+            base = os.path.basename(path)
+            if base in pattern_index:
+                return pattern_index[base]
+            if base.startswith("requirements-") and base.endswith(".txt"):
+                return pattern_index.get("requirements.txt", 0) + 1
+            return len(patterns) + 10
+
+        req_files.sort(key=_prio)
+        chosen = req_files[0]
+        base = os.path.basename(chosen)
+
+        deps: list[str] = []
+        if base.endswith(".txt"):
+            deps = self._parse_requirements_file(chosen)
+        elif base == "Pipfile":
+            deps = self._extract_requirements_from_pipfile(chosen)
+        elif base == "pyproject.toml":
+            deps = self._extract_requirements_from_pyproject(chosen)
+        elif base in ("setup.py", "setup.cfg"):
+            deps = self._extract_requirements_from_setup(chosen)
+        else:
+            # Unsupported source for now
+            deps = []
+
+        return deps, True
+
+    def _missing_in_system_python(self, packages: list[str]) -> list[str]:
+        try:
+            from importlib.metadata import PackageNotFoundError, distribution
+
+            missing = []
+            for pkg in packages:
+                if not pkg:
+                    continue
+                name = str(pkg).strip()
+                if not name:
+                    continue
+                normalized = self._normalize_dist_name(name)
+                try:
+                    distribution(name)
+                    continue
+                except PackageNotFoundError:
+                    pass
+                except Exception:
+                    pass
+                if normalized != name:
+                    try:
+                        distribution(normalized)
+                        continue
+                    except PackageNotFoundError:
+                        pass
+                    except Exception:
+                        pass
+                missing.append(name)
+            return missing
+        except Exception:
+            return packages
+
+    def _can_use_system_python(self) -> tuple[bool, list[str], bool]:
+        workspace_dir = getattr(self.parent, "workspace_dir", None)
+        if not workspace_dir:
+            return False, [], False
+        deps, has_source = self._collect_declared_dependencies(workspace_dir)
+        if not deps:
+            # If we have a source but no deps, allow system python (no external deps)
+            if has_source:
+                return True, [], True
+            return True, [], False
+        missing = self._missing_in_system_python(sorted(set(deps)))
+        return (len(missing) == 0), missing, has_source
+
+    def _apply_system_python(self) -> None:
+        try:
+            setattr(self.parent, "use_system_python", True)
+        except Exception:
+            pass
+        try:
+            self.parent.venv_path_manuel = None
+        except Exception:
+            pass
+        try:
+            if hasattr(self.parent, "venv_label") and self.parent.venv_label:
+                label = None
+                try:
+                    tr = getattr(self.parent, "_tr", {}) if hasattr(self.parent, "_tr") else {}
+                    label = tr.get("venv_label_system") if isinstance(tr, dict) else None
+                except Exception:
+                    label = None
+                if not label:
+                    label = self.parent.tr(
+                        "Venv sélectionné : Python système",
+                        "Venv selected: System Python",
+                    )
+                self.parent.venv_label.setText(label)
+        except Exception:
+            pass
+        try:
+            self._safe_log("✅ Utilisation de Python système pour la compilation.")
+        except Exception:
+            pass
+
     # ---------- Manual selection ----------
     def select_venv_manually(self):
+        try:
+            ok_sys, missing, has_source = self._can_use_system_python()
+            if ok_sys:
+                title = self.parent.tr("Suggestion de venv", "Venv suggestion")
+                if has_source:
+                    msg = self.parent.tr(
+                        "Python système contient les dépendances nécessaires.\n"
+                        "Souhaitez-vous l'utiliser ?",
+                        "System Python has the required dependencies.\n"
+                        "Do you want to use it?",
+                    )
+                else:
+                    msg = self.parent.tr(
+                        "Aucun fichier de dépendances détecté.\n"
+                        "Souhaitez-vous utiliser Python système ?",
+                        "No dependency file detected.\n"
+                        "Do you want to use System Python?",
+                    )
+                reply = QMessageBox.question(
+                    self.parent, title, msg, QMessageBox.Yes | QMessageBox.No
+                )
+                if reply == QMessageBox.Yes:
+                    self._apply_system_python()
+                    return
+            else:
+                if missing:
+                    try:
+                        self._safe_log(
+                            "ℹ️ Python système incomplet: "
+                            + ", ".join(sorted(set(missing)))
+                        )
+                    except Exception:
+                        pass
+        except Exception:
+            pass
+
         folder = QFileDialog.getExistingDirectory(
             self.parent, "Choisir un dossier venv", ""
         )
@@ -571,6 +888,10 @@ class VenvManager:
             path = os.path.abspath(folder)
             ok, reason = self.validate_venv_strict(path)
             if ok:
+                try:
+                    setattr(self.parent, "use_system_python", False)
+                except Exception:
+                    pass
                 self.parent.venv_path_manuel = path
                 if hasattr(self.parent, "venv_label") and self.parent.venv_label:
                     self.parent.venv_label.setText(f"Venv sélectionné : {path}")
@@ -578,10 +899,18 @@ class VenvManager:
             else:
                 self._safe_log(f"❌ Venv refusé: {reason}")
                 self.parent.venv_path_manuel = None
+                try:
+                    setattr(self.parent, "use_system_python", False)
+                except Exception:
+                    pass
                 if hasattr(self.parent, "venv_label") and self.parent.venv_label:
                     self.parent.venv_label.setText("Venv sélectionné : Aucun")
         else:
             self.parent.venv_path_manuel = None
+            try:
+                setattr(self.parent, "use_system_python", False)
+            except Exception:
+                pass
             if hasattr(self.parent, "venv_label") and self.parent.venv_label:
                 self.parent.venv_label.setText("Venv sélectionné : Aucun")
 
@@ -919,28 +1248,15 @@ class VenvManager:
             else:
                 return score, "Invalid binding (python/pip don't point to venv)"
 
-            # Check for requirements.txt
+            # Check for requirements.txt (lightweight marker only to avoid blocking UI)
             req_path = os.path.join(workspace_dir, "requirements.txt")
             if os.path.isfile(req_path):
-                # Check if requirements are already installed
-                py_exe = self.python_path(venv_path)
-                if os.path.isfile(py_exe):
-                    try:
-                        import subprocess
-
-                        result = subprocess.run(
-                            [py_exe, "-m", "pip", "check"],
-                            capture_output=True,
-                            text=True,
-                            timeout=10,
-                        )
-                        if result.returncode == 0:
-                            score += 100
-                            reasons.append("requirements_satisfied")
-                        else:
-                            reasons.append("requirements_not_satisfied")
-                    except Exception:
-                        reasons.append("requirements_check_failed")
+                marker = os.path.join(venv_path, ".requirements.sha256")
+                if os.path.isfile(marker):
+                    score += 100
+                    reasons.append("requirements_marker")
+                else:
+                    reasons.append("requirements_unknown")
 
             # Check for key tools
             tools_to_check = [

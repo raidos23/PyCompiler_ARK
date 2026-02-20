@@ -14,6 +14,7 @@
 # limitations under the License.
 
 import functools
+import json
 import os
 import platform
 import re
@@ -22,7 +23,7 @@ import yaml
 from importlib.metadata import distribution, PackageNotFoundError
 
 from PySide6.QtCore import QProcess
-from PySide6.QtWidgets import QMessageBox
+from PySide6.QtWidgets import QApplication, QMessageBox
 
 from Core.WidgetsCreator import ProgressDialog
 
@@ -313,6 +314,7 @@ def suggest_missing_dependencies(self):
         pass
 
     # Analyse chaque fichier Python pour détecter les imports
+    last_pump = 0
     for idx, file in enumerate(filtered_files):
         try:
             # Mettre à jour la progression
@@ -324,6 +326,9 @@ def suggest_missing_dependencies(self):
                     )
                 )
                 analysis_progress.set_progress(idx, len(filtered_files))
+            if idx - last_pump >= 50:
+                QApplication.processEvents()
+                last_pump = idx
 
             with open(file, encoding="utf-8") as f:
                 source = f.read()
@@ -411,33 +416,78 @@ def suggest_missing_dependencies(self):
         return
     # Vérifie la présence des modules dans le venv (via pip show)
     # Utilise la fonction robuste de détection du pip
-    pip_program, pip_prefix = _find_pip_executable(
-        venv_path=self.venv_path_manuel, workspace_dir=self.workspace_dir
-    )
+    if getattr(self, "use_system_python", False):
+        pip_program, pip_prefix = _find_pip_executable(
+            venv_path=None, workspace_dir=None
+        )
+    else:
+        pip_program, pip_prefix = _find_pip_executable(
+            venv_path=self.venv_path_manuel, workspace_dir=self.workspace_dir
+        )
     try:
         self.log.append(f"ℹ️ Utilisation de pip: {pip_program} {' '.join(pip_prefix)}")
     except Exception:
         pass
-    # Vérification des modules avec progression
+    # Vérification des modules avec progression (préférer un seul pip list pour limiter le blocage UI)
     not_installed = []
-    for idx, module in enumerate(suggestions):
-        try:
-            if analysis_progress:
-                analysis_progress.set_message(
-                    self.tr(
-                        "Vérification de {module}...", "Checking {module}..."
-                    ).format(module=module)
-                )
-                analysis_progress.set_progress(idx, len(suggestions))
+    installed = set()
+    try:
+        cmd = [pip_program, *pip_prefix, "list", "--format=json"]
+        result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        if result.returncode == 0:
+            try:
+                data = json.loads(result.stdout.decode("utf-8", errors="replace") or "[]")
+                for item in data:
+                    name = str(item.get("name", "")).strip()
+                    if name:
+                        installed.add(name.lower().replace("_", "-"))
+            except Exception:
+                installed = set()
+        else:
+            installed = set()
+    except Exception:
+        installed = set()
 
-            cmd = [pip_program, *pip_prefix, "show", module]
-            result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            if result.returncode != 0:
-                not_installed.append(module)
-        except Exception as e:
-            self.log.append(
-                f"⚠️ Erreur lors de la vérification du module {module} : {e}"
-            )
+    if installed:
+        for idx, module in enumerate(suggestions):
+            try:
+                if analysis_progress:
+                    analysis_progress.set_message(
+                        self.tr(
+                            "Vérification de {module}...", "Checking {module}..."
+                        ).format(module=module)
+                    )
+                    analysis_progress.set_progress(idx, len(suggestions))
+                if idx % 50 == 0:
+                    QApplication.processEvents()
+                key = module.lower().replace("_", "-")
+                if key not in installed:
+                    not_installed.append(module)
+            except Exception as e:
+                self.log.append(
+                    f"⚠️ Erreur lors de la vérification du module {module} : {e}"
+                )
+    else:
+        for idx, module in enumerate(suggestions):
+            try:
+                if analysis_progress:
+                    analysis_progress.set_message(
+                        self.tr(
+                            "Vérification de {module}...", "Checking {module}..."
+                        ).format(module=module)
+                    )
+                    analysis_progress.set_progress(idx, len(suggestions))
+                if idx % 20 == 0:
+                    QApplication.processEvents()
+
+                cmd = [pip_program, *pip_prefix, "show", module]
+                result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                if result.returncode != 0:
+                    not_installed.append(module)
+            except Exception as e:
+                self.log.append(
+                    f"⚠️ Erreur lors de la vérification du module {module} : {e}"
+                )
 
     # Fermer la barre de progression d'analyse
     if analysis_progress:

@@ -88,6 +88,7 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
         self.icon_path = None
         self.selected_files = []
         self.venv_path_manuel = None
+        self.use_system_python = False
         self.processes = []
         self.queue = []
         self.current_compiling = set()

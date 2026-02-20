@@ -43,6 +43,7 @@ FALLBACK_EN: dict[str, Any] = {
     "venv_button": "Choose venv folder",
     "label_workspace_section": "Workspace",
     "venv_label": "Venv selected: None",
+    "venv_label_system": "Venv selected: System Python",
     "label_folder": "No folder selected",
     "label_files_section": "Files to compile",
     "btn_remove_file": "Remove selected file",
@@ -476,7 +477,22 @@ def _apply_main_app_translations(self, tr: dict[str, object]) -> None:
 
         # === LABELS ===
         _set("label_workspace_section", "label_workspace_section")
-        _set("venv_label", "venv_label")
+        if getattr(self, "use_system_python", False) and getattr(self, "venv_label", None):
+            val = tr.get("venv_label_system") if isinstance(tr, dict) else None
+            if not val:
+                try:
+                    val = self.tr(
+                        "Venv sélectionné : Python système",
+                        "Venv selected: System Python",
+                    )
+                except Exception:
+                    val = "Venv selected: System Python"
+            try:
+                self.venv_label.setText(val)
+            except Exception:
+                pass
+        else:
+            _set("venv_label", "venv_label")
         _set("label_folder", "label_folder")
         _set("label_files_section", "label_files_section")
         _set("label_tools", "label_tools")
