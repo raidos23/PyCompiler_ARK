@@ -79,6 +79,7 @@ QGroupBox::title { subcontrol-origin: margin; left: 10px; padding: 0 6px; color:
 
 /* Onglets */
 QTabWidget::pane { border: 1px solid #1E2E4F; border-radius: 10px; background: #0F1B33; }
+QTabBar { background: #0F1B33; }
 QTabBar::tab {
   background: #10203A; color: #BFD3FF; padding: 6px 12px; border: 1px solid #1E2E4F; border-bottom: none;
   border-top-left-radius: 10px; border-top-right-radius: 10px;
@@ -304,8 +305,10 @@ QToolBar {
 }
 QToolBar::separator { background: palette(mid); width: 1px; height: 1px; margin: 4px; }
 
-QSplitter::handle { background: palette(mid); }
-QSplitter::handle:hover { background: palette(highlight); }
+QSplitter::handle { background: #1E2E4F; }
+QSplitter::handle:horizontal { width: 6px; }
+QSplitter::handle:vertical { height: 6px; }
+QSplitter::handle:hover { background: #2A3A5F; }
 
 QScrollArea {
   background: palette(window);

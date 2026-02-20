@@ -137,6 +137,7 @@ QListWidget::item:alternate {
 QTabWidget::pane {
   border: 1px solid #2A2F37; border-radius: 8px; background: #14171B;
 }
+QTabBar { background: #14171B; }
 QTabBar::tab {
   background: #1B1E23; color: #E6E8EB; padding: 6px 12px; border: 1px solid #2A2F37; border-bottom: none; border-top-left-radius: 8px; border-top-right-radius: 8px;
 }
@@ -418,8 +419,10 @@ QToolBar {
 }
 QToolBar::separator { background: palette(mid); width: 1px; height: 1px; margin: 4px; }
 
-QSplitter::handle { background: palette(mid); }
-QSplitter::handle:hover { background: palette(highlight); }
+QSplitter::handle { background: #2A2F37; }
+QSplitter::handle:horizontal { width: 6px; }
+QSplitter::handle:vertical { height: 6px; }
+QSplitter::handle:hover { background: #3A4049; }
 
 /* === Theme polish === */
 QHeaderView::section {
