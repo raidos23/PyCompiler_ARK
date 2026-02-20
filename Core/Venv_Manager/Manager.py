@@ -1,7 +1,9 @@
 import hashlib
+import json
 import os
 import platform
 import shutil
+import subprocess
 import sys
 import yaml
 
@@ -73,6 +75,8 @@ class VenvManager:
         self._manager_commands = self._load_manager_mapping()
         # Cache for auto-selected venv per workspace
         self._auto_venv_cache: dict[str, str] = {}
+        # Cache for manager-provided venv per workspace (None if not found)
+        self._manager_venv_cache: dict[str, str | None] = {}
 
     # ---------- Manager mapping ----------
     def _default_manager_commands(self) -> dict[str, dict[str, list[str]]]:
@@ -210,6 +214,57 @@ class VenvManager:
             return default
 
     # ---------- Public helpers for engines ----------
+    def resolve_existing_venv(self, workspace_dir: str | None = None) -> str | None:
+        """Resolve an existing venv path (manual/local/manager).
+
+        Returns only if a real, existing environment is found.
+        Does not return a default path when no venv exists.
+        """
+        try:
+            if getattr(self.parent, "use_system_python", False):
+                return None
+
+            manual = getattr(self.parent, "venv_path_manuel", None)
+            if manual:
+                return os.path.abspath(manual)
+
+            base = None
+            if workspace_dir:
+                base = os.path.abspath(workspace_dir)
+            elif getattr(self.parent, "workspace_dir", None):
+                base = os.path.abspath(self.parent.workspace_dir)
+
+            if not base:
+                return None
+
+            # Prefer manager-provided venv (poetry/pipenv/pdm/...) when available
+            mgr_venv = self._detect_manager_existing_venv(base)
+            if mgr_venv:
+                return mgr_venv
+
+            # Try cached auto-selection next
+            try:
+                cached = self._auto_venv_cache.get(base)
+                if cached and os.path.isdir(cached):
+                    ok, _ = self.validate_venv_strict(cached)
+                    if ok:
+                        return cached
+            except Exception:
+                pass
+
+            # Auto-detect best local venv among common names in workspace
+            best = self.select_best_venv(base)
+            if best:
+                try:
+                    self._auto_venv_cache[base] = best
+                except Exception:
+                    pass
+                return best
+
+        except Exception:
+            return None
+        return None
+
     def resolve_project_venv(self) -> str | None:
         """Resolve the venv root to use based on manual selection or workspace.
         Prefers an existing .venv over venv; if none exists, returns the default path (.venv).
@@ -219,32 +274,18 @@ class VenvManager:
                 return None
             manual = getattr(self.parent, "venv_path_manuel", None)
             if manual:
-                base = os.path.abspath(manual)
-                return base
+                return os.path.abspath(manual)
             if getattr(self.parent, "workspace_dir", None):
                 base = os.path.abspath(self.parent.workspace_dir)
-                # Try cached auto-selection first
-                try:
-                    cached = self._auto_venv_cache.get(base)
-                    if cached and os.path.isdir(cached):
-                        ok, _ = self.validate_venv_strict(cached)
-                        if ok:
-                            return cached
-                except Exception:
-                    pass
 
-                # Auto-detect best venv among common names in workspace
-                best = self.select_best_venv(base)
-                if best:
-                    try:
-                        self._auto_venv_cache[base] = best
-                    except Exception:
-                        pass
-                    return best
+                # First, use an existing environment if available
+                existing = self.resolve_existing_venv(base)
+                if existing:
+                    return existing
 
                 # Fallback to default detection (.venv / venv)
-                existing, default_path = self._detect_venv_in(base)
-                return existing or default_path
+                existing2, default_path = self._detect_venv_in(base)
+                return existing2 or default_path
         except Exception:
             return None
         return None
@@ -1400,7 +1441,7 @@ class VenvManager:
         self._check_next_venv_pkg()
 
     # ---------- Create venv if needed ----------
-    def create_venv_if_needed(self, path: str):
+    def create_venv_if_needed(self, path: str, prefer_manager: bool = True):
         existing, default_path = self._detect_venv_in(path)
         venv_path = existing or default_path
         if existing:
@@ -1413,6 +1454,23 @@ class VenvManager:
                     return
             else:
                 return
+        # Manager-aware creation when possible
+        if prefer_manager:
+            try:
+                manager = self._detect_environment_manager(path)
+            except Exception:
+                manager = "pip"
+            try:
+                cmd = self._get_manager_command(manager, "create_venv")
+            except Exception:
+                cmd = None
+            if manager and manager != "pip" and cmd and self._is_tool_available(manager):
+                self._safe_log(
+                    f"🔧 Aucun venv trouvé, création avec {manager} (ManagerMapping.yml)..."
+                )
+                self.create_venv_with_manager(path, venv_path)
+                return
+
         self._safe_log("🔧 Aucun venv trouvé, création automatique...")
         try:
             # Recherche d'un python embarqué à côté de l'exécutable
@@ -1914,20 +1972,35 @@ class VenvManager:
             return None
 
     # ---------- Install requirements.txt ----------
-    def install_requirements_if_needed(self, path: str):
+    def install_requirements_if_needed(self, path: str, force_pip: bool = False):
+        # Prefer manager-based installation when a manager is detected and no manual venv is set.
+        if not force_pip:
+            try:
+                manual = getattr(self.parent, "venv_path_manuel", None)
+                manager = self._detect_environment_manager(path)
+                if not manual and manager and manager != "pip":
+                    self.install_dependencies_with_manager(path)
+                    return
+            except Exception:
+                pass
+
         # Get or generate requirements file
         req_path = self._get_requirements_file(path)
         if not req_path:
             self._safe_log("ℹ️ Aucun fichier de dépendances trouvé ou généré.")
             return
 
-        existing, default_path = self._detect_venv_in(path)
-        venv_root = existing or default_path
-        if not existing:
-            # Create default .venv if none exists
-            self.create_venv_if_needed(path)
-            existing2, _ = self._detect_venv_in(path)
-            venv_root = existing2 or venv_root
+        manual = getattr(self.parent, "venv_path_manuel", None)
+        if manual:
+            venv_root = os.path.abspath(manual)
+        else:
+            existing, default_path = self._detect_venv_in(path)
+            venv_root = existing or default_path
+            if not existing:
+                # Create default .venv if none exists
+                self.create_venv_if_needed(path)
+                existing2, _ = self._detect_venv_in(path)
+                venv_root = existing2 or venv_root
         ok, reason = self.validate_venv_strict(venv_root)
         if not ok:
             self._safe_log(f"⚠️ Invalid venv for requirements: {reason}")
@@ -2338,6 +2411,142 @@ class VenvManager:
             pass
         return None
 
+    def _run_cmd_capture(
+        self, cmd: list[str], cwd: str, timeout: int = 5
+    ) -> str | None:
+        try:
+            result = subprocess.run(
+                cmd,
+                cwd=cwd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                timeout=timeout,
+            )
+            out = (result.stdout or "").strip()
+            if out:
+                return out
+            err = (result.stderr or "").strip()
+            if err:
+                return err
+        except Exception:
+            pass
+        return None
+
+    def _extract_existing_dir(self, output: str | None) -> str | None:
+        if not output:
+            return None
+        for line in output.splitlines():
+            cand = line.strip()
+            if not cand:
+                continue
+            for prefix in ("*", "-", ">", "•"):
+                if cand.startswith(prefix):
+                    cand = cand[len(prefix) :].strip()
+            if cand and os.path.isdir(cand):
+                return cand
+        return None
+
+    def _parse_conda_env_spec(self, workspace_dir: str) -> tuple[str | None, str | None]:
+        for fname in ("environment.yml", "conda.yml", "environment.yaml"):
+            path = os.path.join(workspace_dir, fname)
+            if not os.path.isfile(path):
+                continue
+            try:
+                name = None
+                prefix = None
+                with open(path, encoding="utf-8", errors="ignore") as f:
+                    for line in f:
+                        s = line.strip()
+                        if not s or s.startswith("#"):
+                            continue
+                        lower = s.lower()
+                        if lower.startswith("name:"):
+                            name = s.split(":", 1)[1].strip().strip("'\"")
+                        elif lower.startswith("prefix:"):
+                            prefix = s.split(":", 1)[1].strip().strip("'\"")
+                return prefix, name
+            except Exception:
+                pass
+        return None, None
+
+    def _find_conda_env_path(self, env_name: str, cwd: str) -> str | None:
+        try:
+            result = subprocess.run(
+                ["conda", "env", "list", "--json"],
+                cwd=cwd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                timeout=6,
+            )
+            if result.returncode != 0:
+                return None
+            data = json.loads(result.stdout or "{}")
+            envs = data.get("envs", []) if isinstance(data, dict) else []
+            for p in envs:
+                try:
+                    if os.path.basename(p) == env_name:
+                        return p
+                except Exception:
+                    pass
+        except Exception:
+            return None
+        return None
+
+    def _detect_manager_existing_venv(self, workspace_dir: str) -> str | None:
+        try:
+            base = os.path.abspath(workspace_dir)
+        except Exception:
+            base = workspace_dir
+
+        if base in self._manager_venv_cache:
+            return self._manager_venv_cache.get(base)
+
+        manager = self._detect_environment_manager(base)
+        if not manager or manager == "pip":
+            self._manager_venv_cache[base] = None
+            return None
+
+        if not self._is_tool_available(manager):
+            self._manager_venv_cache[base] = None
+            return None
+
+        path = None
+        if manager == "poetry":
+            out = self._run_cmd_capture(["poetry", "env", "info", "-p"], base)
+            path = self._extract_existing_dir(out)
+        elif manager == "pipenv":
+            out = self._run_cmd_capture(["pipenv", "--venv"], base)
+            path = self._extract_existing_dir(out)
+        elif manager == "pdm":
+            out = self._run_cmd_capture(["pdm", "venv", "--path"], base)
+            path = self._extract_existing_dir(out)
+            if not path:
+                out = self._run_cmd_capture(["pdm", "venv", "list"], base)
+                path = self._extract_existing_dir(out)
+        elif manager == "conda":
+            prefix, name = self._parse_conda_env_spec(base)
+            if prefix and os.path.isdir(prefix):
+                path = prefix
+            elif name:
+                path = self._find_conda_env_path(name, base)
+        elif manager == "uv":
+            path = None
+
+        if path and os.path.isdir(path):
+            ok, reason = self.validate_venv_strict(path)
+            if ok:
+                self._manager_venv_cache[base] = path
+                self._safe_log(f"✅ Venv détecté via {manager}: {path}")
+                return path
+            self._safe_log(
+                f"⚠️ Venv détecté via {manager} mais invalide: {reason}"
+            )
+
+        self._manager_venv_cache[base] = None
+        return None
+
     def create_venv_with_manager(
         self, workspace_dir: str, venv_path: str | None = None
     ):
@@ -2355,25 +2564,27 @@ class VenvManager:
                 self._safe_log(
                     f"⚠️ {manager} n'est pas disponible, utilisation de pip..."
                 )
-                self.create_venv_if_needed(workspace_dir)
+                self.create_venv_if_needed(workspace_dir, prefer_manager=False)
                 return
 
             # Get the appropriate command
             cmd = self._get_manager_command(manager, "create_venv")
             if not cmd:
                 self._safe_log(f"⚠️ Commande de création non disponible pour {manager}")
-                self.create_venv_if_needed(workspace_dir)
+                self.create_venv_if_needed(workspace_dir, prefer_manager=False)
                 return
 
             # Build full command
             if manager == "poetry":
                 full_cmd = cmd + [sys.executable]
             elif manager == "conda":
-                full_cmd = cmd + [os.path.basename(venv_path)]
+                _, env_name = self._parse_conda_env_spec(workspace_dir)
+                env_name = env_name or os.path.basename(venv_path) or "env"
+                full_cmd = cmd + [env_name]
             elif manager == "pipenv":
                 full_cmd = cmd + [sys.executable]
             elif manager == "pdm":
-                full_cmd = cmd + [os.path.basename(venv_path)]
+                full_cmd = cmd + [sys.executable]
             elif manager == "uv":
                 full_cmd = cmd + [venv_path]
             else:
@@ -2410,7 +2621,7 @@ class VenvManager:
             self._arm_process_timeout(process, 900_000, f"{manager} venv creation")
         except Exception as e:
             self._safe_log(f"❌ Erreur création venv avec manager: {e}")
-            self.create_venv_if_needed(workspace_dir)
+            self.create_venv_if_needed(workspace_dir, prefer_manager=False)
 
     def install_dependencies_with_manager(
         self, workspace_dir: str, venv_path: str | None = None
@@ -2429,7 +2640,7 @@ class VenvManager:
                 self._safe_log(
                     f"⚠️ {manager} n'est pas disponible, utilisation de pip..."
                 )
-                self.install_requirements_if_needed(workspace_dir)
+                self.install_requirements_if_needed(workspace_dir, force_pip=True)
                 return
 
             # Get the appropriate command
@@ -2438,15 +2649,24 @@ class VenvManager:
                 self._safe_log(
                     f"⚠️ Commande d'installation non disponible pour {manager}"
                 )
-                self.install_requirements_if_needed(workspace_dir)
+                self.install_requirements_if_needed(workspace_dir, force_pip=True)
                 return
 
             # Build full command
             if manager == "poetry":
                 full_cmd = cmd  # poetry install
             elif manager == "conda":
-                # conda install -y -r environment.yml
-                full_cmd = cmd + ["-r", os.path.join(workspace_dir, "environment.yml")]
+                # conda install -y -r <env_file>
+                env_file = None
+                for fname in ("environment.yml", "conda.yml", "environment.yaml"):
+                    p = os.path.join(workspace_dir, fname)
+                    if os.path.isfile(p):
+                        env_file = p
+                        break
+                if env_file:
+                    full_cmd = cmd + ["-r", env_file]
+                else:
+                    full_cmd = cmd
             elif manager == "pipenv":
                 full_cmd = cmd  # pipenv install
             elif manager == "pdm":
@@ -2491,7 +2711,7 @@ class VenvManager:
             self._arm_process_timeout(process, 1200_000, f"{manager} install")
         except Exception as e:
             self._safe_log(f"❌ Erreur installation avec manager: {e}")
-            self.install_requirements_if_needed(workspace_dir)
+            self.install_requirements_if_needed(workspace_dir, force_pip=True)
 
     def _on_manager_install_finished(self, process, code, status, manager):
         """Callback after manager-based installation."""
@@ -2529,12 +2749,14 @@ class VenvManager:
         try:
             workspace_dir = os.path.abspath(workspace_dir)
 
-            # Resolve venv path first to check if it exists
-            existing, default_path = self._detect_venv_in(workspace_dir)
-            venv_path = existing or default_path
+            # Resolve an existing environment first (local or manager-provided)
+            existing_env = self.resolve_existing_venv(workspace_dir)
 
             # Create venv if needed
-            self.create_venv_if_needed(workspace_dir)
+            if not existing_env:
+                self.create_venv_if_needed(workspace_dir)
+            else:
+                self._safe_log(f"✅ Venv existant détecté: {existing_env}")
 
             # Check and install tools if requested
             if check_tools:
