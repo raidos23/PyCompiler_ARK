@@ -371,7 +371,10 @@ def _setup_widgets(self) -> None:
     self.label_workspace_status = _find(QLabel, "label_workspace_status")
     self.label_workspace_section = _find(QLabel, "label_workspace_section")
     self.label_files_section = _find(QLabel, "label_files_section")
+    self.label_tools = _find(QLabel, "label_tools")
+    self.label_options_section = _find(QLabel, "label_options_section")
     self.label_logs_section = _find(QLabel, "label_logs_section")
+    self.label_progress = _find(QLabel, "label_progress")
 
     self.file_list = _find(QListWidget, "file_list")
     self.file_filter_input = _find(QLineEdit, "file_filter_input")
