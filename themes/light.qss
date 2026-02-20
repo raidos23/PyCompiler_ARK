@@ -431,11 +431,6 @@ QToolBar {
 }
 QToolBar::separator { background: palette(mid); width: 1px; height: 1px; margin: 4px; }
 
-QSplitter::handle { background: #D6D9DF; }
-QSplitter::handle:horizontal { width: 6px; }
-QSplitter::handle:vertical { height: 6px; }
-QSplitter::handle:hover { background: #C8CCD5; }
-
 /* === Theme polish === */
 QHeaderView::section {
   background: #F1F3F6;
