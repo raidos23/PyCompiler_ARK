@@ -288,7 +288,7 @@
            <item row="3" column="0">
             <widget class="QPushButton" name="btn_select_folder">
              <property name="toolTip">
-              <string>Sélectionner le dossier de travail</string>
+              <string>Sélectionner le Workspace</string>
              </property>
              <property name="text">
               <string>Choisir le Workspace</string>

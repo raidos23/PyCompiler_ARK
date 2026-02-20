@@ -86,5 +86,21 @@
   "label_tools": "도구",
   "label_options_section": "컴파일 옵션",
   "label_progress": "컴파일 진행",
-  "venv_label_system": "선택된 Venv: 시스템 Python"
+  "venv_label_system": "선택된 Venv: 시스템 Python",
+  "msg_venv_choice_title": "Venv 설정",
+  "msg_venv_choice_text": "venv를 자동으로 만들거나 venv를 선택합니다(시스템 Python 포함).",
+  "msg_no_workspace_title": "워크스페이스 없음",
+  "msg_no_workspace_text": "계속하려면 워크스페이스를 선택하세요.",
+  "msg_no_files_title": "컴파일할 파일 없음",
+  "msg_no_files_text": "파일을 추가하거나 워크스페이스를 선택하세요.",
+  "msg_no_workspace_or_venv_title": "워크스페이스 또는 venv 없음",
+  "msg_no_workspace_or_venv_text": "의존성 분석을 위해 워크스페이스 또는 Venv를 선택하세요.",
+  "msg_invalid_venv_title": "잘못된 venv",
+  "msg_invalid_venv_text": "선택한 폴더는 유효한 venv가 아닙니다. 다시 시도하거나 venv를 만들까요?",
+  "action_select_workspace": "워크스페이스 선택",
+  "action_add_files": "파일 추가",
+  "action_select_venv": "Venv 선택",
+  "action_create_venv": "venv 만들기",
+  "action_retry": "다시 시도",
+  "action_cancel": "취소"
 }

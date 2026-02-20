@@ -86,5 +86,21 @@
   "label_tools": "Werkzeuge",
   "label_options_section": "Kompilierungsoptionen",
   "label_progress": "Kompilierungsfortschritt",
-  "venv_label_system": "Venv ausgewählt: System-Python"
+  "venv_label_system": "Venv ausgewählt: System-Python",
+  "msg_venv_choice_title": "Venv-Einrichtung",
+  "msg_venv_choice_text": "Venv automatisch erstellen oder ein Venv auswählen (System-Python inklusive).",
+  "msg_no_workspace_title": "Workspace fehlt",
+  "msg_no_workspace_text": "Workspace auswählen, um fortzufahren.",
+  "msg_no_files_title": "Keine Dateien zu kompilieren",
+  "msg_no_files_text": "Dateien hinzufügen oder Workspace auswählen.",
+  "msg_no_workspace_or_venv_title": "Workspace oder venv fehlt",
+  "msg_no_workspace_or_venv_text": "Workspace oder Venv auswählen, um Abhängigkeiten zu prüfen.",
+  "msg_invalid_venv_title": "Ungültiges Venv",
+  "msg_invalid_venv_text": "Der ausgewählte Ordner ist kein gültiges Venv. Erneut versuchen oder ein Venv erstellen?",
+  "action_select_workspace": "Workspace wählen",
+  "action_add_files": "Dateien hinzufügen",
+  "action_select_venv": "Venv wählen",
+  "action_create_venv": "Venv erstellen",
+  "action_retry": "Erneut versuchen",
+  "action_cancel": "Abbrechen"
 }

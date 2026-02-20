@@ -86,5 +86,21 @@
   "label_tools": "ツール",
   "label_options_section": "コンパイルオプション",
   "label_progress": "コンパイル進行状況",
-  "venv_label_system": "venv 選択: システム Python"
+  "venv_label_system": "venv 選択: システム Python",
+  "msg_venv_choice_title": "Venv 設定",
+  "msg_venv_choice_text": "venv を自動作成するか、venv を選択します（システム Python を含む）。",
+  "msg_no_workspace_title": "ワークスペース未選択",
+  "msg_no_workspace_text": "続行するにはワークスペースを選択してください。",
+  "msg_no_files_title": "コンパイルするファイルがありません",
+  "msg_no_files_text": "ファイルを追加するかワークスペースを選択してください。",
+  "msg_no_workspace_or_venv_title": "ワークスペースまたは venv 未選択",
+  "msg_no_workspace_or_venv_text": "依存関係を解析するにはワークスペースまたは venv を選択してください。",
+  "msg_invalid_venv_title": "無効な venv",
+  "msg_invalid_venv_text": "選択したフォルダーは有効な venv ではありません。再試行しますか、venv を作成しますか？",
+  "action_select_workspace": "ワークスペースを選択",
+  "action_add_files": "ファイルを追加",
+  "action_select_venv": "venv を選択",
+  "action_create_venv": "venv を作成",
+  "action_retry": "再試行",
+  "action_cancel": "キャンセル"
 }

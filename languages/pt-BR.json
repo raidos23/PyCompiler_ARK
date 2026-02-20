@@ -86,5 +86,21 @@
   "label_tools": "Ferramentas",
   "label_options_section": "Opções de compilação",
   "label_progress": "Progresso da compilação",
-  "venv_label_system": "Venv selecionado: Python do sistema"
+  "venv_label_system": "Venv selecionado: Python do sistema",
+  "msg_venv_choice_title": "Configuração do Venv",
+  "msg_venv_choice_text": "Criar um venv automaticamente ou selecionar um venv (Python do sistema incluído).",
+  "msg_no_workspace_title": "Workspace ausente",
+  "msg_no_workspace_text": "Selecione um Workspace para continuar.",
+  "msg_no_files_title": "Nenhum arquivo para compilar",
+  "msg_no_files_text": "Adicione arquivos ou escolha um Workspace.",
+  "msg_no_workspace_or_venv_title": "Workspace ou venv ausente",
+  "msg_no_workspace_or_venv_text": "Selecione um Workspace ou um Venv para analisar dependências.",
+  "msg_invalid_venv_title": "Venv inválido",
+  "msg_invalid_venv_text": "A pasta selecionada não é um venv válido. Tentar novamente ou criar um venv?",
+  "action_select_workspace": "Selecionar Workspace",
+  "action_add_files": "Adicionar arquivos",
+  "action_select_venv": "Selecionar Venv",
+  "action_create_venv": "Criar venv",
+  "action_retry": "Tentar novamente",
+  "action_cancel": "Cancelar"
 }
