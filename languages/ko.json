@@ -19,7 +19,7 @@
   "select_lang": "언어",
   "venv_button": "venv 폴더 선택",
   "label_workspace_section": "워크스페이스",
-  "venv_label": "선택된 venv: 없음",
+  "venv_label": "선택된 Venv: 없음",
   "label_folder": "선택된 폴더 없음",
   "label_files_section": "컴파일할 파일",
   "btn_remove_file": "선택한 파일 제거",

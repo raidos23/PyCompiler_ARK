@@ -19,7 +19,7 @@
   "select_lang": "Язык",
   "venv_button": "Выбрать папку venv",
   "label_workspace_section": "Рабочее пространство",
-  "venv_label": "venv выбран: Нет",
+  "venv_label": "Venv выбран: Нет",
   "label_folder": "Папка не выбрана",
   "label_files_section": "Файлы для компиляции",
   "btn_remove_file": "Удалить выбранный файл",

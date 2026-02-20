@@ -42,7 +42,7 @@ FALLBACK_EN: dict[str, Any] = {
     "select_lang": "Language",
     "venv_button": "Choose venv folder",
     "label_workspace_section": "Workspace",
-    "venv_label": "venv selected: None",
+    "venv_label": "Venv selected: None",
     "label_folder": "No folder selected",
     "label_files_section": "Files to compile",
     "btn_remove_file": "Remove selected file",

@@ -19,7 +19,7 @@
   "select_lang": "言語",
   "venv_button": "venv フォルダーを選択",
   "label_workspace_section": "ワークスペース",
-  "venv_label": "venv 選択: なし",
+  "venv_label": "Venv 選択: なし",
   "label_folder": "フォルダーが選択されていません",
   "label_files_section": "コンパイルするファイル",
   "btn_remove_file": "選択したファイルを削除",
