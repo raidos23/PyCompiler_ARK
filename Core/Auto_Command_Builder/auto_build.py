@@ -20,7 +20,7 @@ import os
 import re
 from typing import Optional
 
-from engine_sdk.utils import log_with_level, log_i18n_level
+from Core.i18n import log_with_level, log_i18n_level
 
 # Optional access to registered engines for discovery
 try:
