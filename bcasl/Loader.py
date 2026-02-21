@@ -34,7 +34,7 @@ import yaml
 
 from .executor import BCASL
 
-from .Base import PreCompileContext
+from .Base import BcPluginBase, PreCompileContext
 from .tagging import compute_tag_order
 
 # Qt (facultatif). Ne pas importer QtWidgets au niveau module pour compatibilité headless.
@@ -176,6 +176,24 @@ def _discover_bcasl_meta(Plugins_dir: Path) -> dict[str, dict[str, Any]]:
     return meta
 
 
+def _discover_bcasl_plugins(
+    Plugins_dir: Path, workspace_root: Path, cfg: dict[str, Any]
+) -> dict[str, BcPluginBase]:
+    """Charge les plugins et retourne un mapping plugin_id -> instance."""
+    plugins: dict[str, BcPluginBase] = {}
+    try:
+        mgr = BCASL(workspace_root, config=cfg, sandbox=False, plugin_timeout_s=0.0)
+        mgr.load_plugins_from_directory(Plugins_dir)
+        for pid, rec in getattr(mgr, "_registry", {}).items():
+            try:
+                plugins[str(pid)] = rec.plugin
+            except Exception:
+                continue
+    except Exception:
+        pass
+    return plugins
+
+
 # --- Chargement config (YML uniquement) ---
 
 
@@ -221,7 +239,6 @@ def _build_workspace_meta(workspace_root: Path, cfg: dict[str, Any]) -> dict[str
         "workspace_path": str(workspace_root),
         "file_patterns": cfg.get("file_patterns", []),
         "exclude_patterns": cfg.get("exclude_patterns", []),
-        "required_files": cfg.get("required_files", []),
     }
 
 
@@ -439,14 +456,6 @@ def _load_workspace_config(workspace_root: Path) -> dict[str, Any]:
                 detected_plugins[pid] = {"enabled": True, "priority": idx}
             plugin_order = sorted(names)
 
-        required_files = []
-        for fname in ("main.py", "app.py", "requirements.txt", "pyproject.toml"):
-            try:
-                if (workspace_root / fname).is_file():
-                    required_files.append(fname)
-            except Exception:
-                pass
-
         # Charger ARK config pour les patterns par défaut
         file_patterns = ["**/*.py"]
         exclude_patterns = [
@@ -479,7 +488,6 @@ def _load_workspace_config(workspace_root: Path) -> dict[str, Any]:
             pass
 
         default_cfg = {
-            "required_files": required_files,
             "file_patterns": file_patterns,
             "exclude_patterns": exclude_patterns,
             "options": {
@@ -661,6 +669,8 @@ def open_bc_loader_dialog(self) -> None:  # UI minimale
             QListWidgetItem,
             QMessageBox,
             QPushButton,
+            QTabWidget,
+            QWidget,
             QVBoxLayout,
         )
     except Exception:  # pragma: no cover
@@ -703,20 +713,27 @@ def open_bc_loader_dialog(self) -> None:  # UI minimale
             return
         cfg = _load_workspace_config(workspace_root)
         plugins_cfg = cfg.get("plugins", {}) if isinstance(cfg, dict) else {}
+        plugin_instances = _discover_bcasl_plugins(Plugins_dir, workspace_root, cfg)
+        plugin_ui_state: dict[str, dict[str, Any]] = {}
 
         dlg = QDialog(self)
         dlg.setWindowTitle(self.tr("BCASL LOADER", "BCASL LOADER"))
         layout = QVBoxLayout(dlg)
+        tabs = QTabWidget(dlg)
+        layout.addWidget(tabs)
+
+        plugins_tab = QWidget(dlg)
+        plugins_layout = QVBoxLayout(plugins_tab)
         info = QLabel(
             self.tr(
                 "Activez/désactivez les plugins et définissez leur ordre d'exécution (haut = d'abord).",
                 "Enable/disable plugins and set their execution order (top = first).",
             )
         )
-        layout.addWidget(info)
+        plugins_layout.addWidget(info)
 
         # Global BCASL enable/disable
-        chk_enable = QCheckBox("Activer BCASL / Enable BCASL", dlg)
+        chk_enable = QCheckBox("Activer BCASL / Enable BCASL", plugins_tab)
         try:
             opt = cfg.get("options", {}) if isinstance(cfg, dict) else {}
             bcasl_enabled_flag = (
@@ -725,10 +742,10 @@ def open_bc_loader_dialog(self) -> None:  # UI minimale
         except Exception:
             bcasl_enabled_flag = True
         chk_enable.setChecked(bcasl_enabled_flag)
-        layout.addWidget(chk_enable)
+        plugins_layout.addWidget(chk_enable)
 
         # Liste réordonnable avec cases à cocher
-        lst = QListWidget(dlg)
+        lst = QListWidget(plugins_tab)
         lst.setSelectionMode(QAbstractItemView.SingleSelection)
         lst.setDragDropMode(QAbstractItemView.InternalMove)
 
@@ -737,7 +754,7 @@ def open_bc_loader_dialog(self) -> None:  # UI minimale
             meta = meta_map.get(pid, {})
             item = _build_plugin_item(pid, meta, plugins_cfg, Qt, QListWidgetItem)
             lst.addItem(item)
-        layout.addWidget(lst)
+        plugins_layout.addWidget(lst)
 
         # Boutons
         btns = QHBoxLayout()
@@ -764,7 +781,62 @@ def open_bc_loader_dialog(self) -> None:  # UI minimale
         btns.addStretch(1)
         btns.addWidget(btn_cancel)
         btns.addWidget(btn_save)
-        layout.addLayout(btns)
+        plugins_layout.addLayout(btns)
+        tabs.addTab(plugins_tab, self.tr("Plugins", "Plugins"))
+
+        # Plugin config tabs
+        try:
+            workspace_meta = _build_workspace_meta(workspace_root, cfg)
+            ctx = PreCompileContext(
+                workspace_root, config=cfg, workspace_metadata=workspace_meta
+            )
+        except Exception:
+            ctx = None
+
+        for pid in ordered_ids:
+            plugin = plugin_instances.get(pid)
+            if plugin is None:
+                continue
+            if not hasattr(plugin, "build_config_tab"):
+                continue
+            try:
+                entry = plugins_cfg.get(pid, {}) if isinstance(plugins_cfg, dict) else {}
+                base_cfg = {}
+                try:
+                    base_cfg = dict(entry.get("config", {}) or {})
+                except Exception:
+                    base_cfg = {}
+                tab_res = plugin.build_config_tab(tabs, ctx, base_cfg)
+                if tab_res is None:
+                    continue
+                title = None
+                widget = None
+                on_save = None
+                if isinstance(tab_res, dict):
+                    title = tab_res.get("title")
+                    widget = tab_res.get("widget")
+                    on_save = tab_res.get("on_save")
+                elif isinstance(tab_res, (list, tuple)):
+                    if len(tab_res) >= 2:
+                        title = tab_res[0]
+                        widget = tab_res[1]
+                        if len(tab_res) >= 3:
+                            on_save = tab_res[2]
+                    elif len(tab_res) == 1:
+                        widget = tab_res[0]
+                else:
+                    widget = tab_res
+                if widget is None:
+                    continue
+                if not title:
+                    try:
+                        title = getattr(plugin.meta, "name", None) or pid
+                    except Exception:
+                        title = pid
+                tabs.addTab(widget, str(title))
+                plugin_ui_state[pid] = {"config": base_cfg, "on_save": on_save}
+            except Exception:
+                continue
 
         # Enable/disable list and move buttons based on global toggle
         def _apply_enabled_state():
@@ -783,6 +855,21 @@ def open_bc_loader_dialog(self) -> None:  # UI minimale
             pass
 
         def do_save():
+            # Collect plugin UI configs
+            plugin_configs: dict[str, dict[str, Any]] = {}
+            for pid, state in plugin_ui_state.items():
+                cfg_obj = state.get("config", {}) if isinstance(state, dict) else {}
+                on_save = state.get("on_save")
+                if callable(on_save):
+                    try:
+                        res = on_save(cfg_obj)
+                        if isinstance(res, dict):
+                            cfg_obj = res
+                    except Exception:
+                        pass
+                if isinstance(cfg_obj, dict):
+                    plugin_configs[pid] = cfg_obj
+
             # Extraire ordre et états
             new_plugins: dict[str, Any] = {}
             order_ids: list[str] = []
@@ -794,7 +881,16 @@ def open_bc_loader_dialog(self) -> None:  # UI minimale
                     if Qt is not None
                     else False
                 )
-                new_plugins[str(pid)] = {"enabled": bool(en), "priority": i}
+                base_entry = (
+                    dict(plugins_cfg.get(pid, {}))
+                    if isinstance(plugins_cfg, dict)
+                    else {}
+                )
+                base_entry["enabled"] = bool(en)
+                base_entry["priority"] = i
+                if str(pid) in plugin_configs:
+                    base_entry["config"] = plugin_configs[str(pid)]
+                new_plugins[str(pid)] = base_entry
                 order_ids.append(str(pid))
             cfg_out: dict[str, Any] = dict(cfg) if isinstance(cfg, dict) else {}
             cfg_out["plugins"] = new_plugins

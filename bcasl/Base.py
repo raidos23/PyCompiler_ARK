@@ -355,6 +355,20 @@ class BcPluginBase:
     def apply_i18n(self, gui, tr: dict[str, str]) -> None:
         raise NotImplementedError
 
+    def build_config_tab(self, parent, ctx: "PreCompileContext", config: dict[str, Any]):
+        """Optionnel: construire un onglet UI de configuration pour la boîte BCASL.
+
+        Doit retourner soit:
+        - None (pas d'UI)
+        - Un widget Qt
+        - Un tuple (title, widget) ou (title, widget, on_save)
+        - Un dict {"title": ..., "widget": ..., "on_save": ...}
+
+        Le callback on_save (si fourni) sera appelé lors de l'enregistrement:
+            on_save(config_dict) -> dict | None
+        """
+        return None
+
 
 @dataclass
 class PreCompileContext:
@@ -398,14 +412,13 @@ class PreCompileContext:
         return dict(cfg) if cfg else {}
 
     def get_workspace_metadata(self) -> dict[str, Any]:
-        """Retourne les métadonnées du workspace depuis bcasl.yml (fichiers requis, patterns, etc.)."""
+        """Retourne les métadonnées du workspace depuis bcasl.yml (patterns, etc.)."""
         cfg = self._load_bcasl_config()
         return {
             "workspace_name": self.project_root.name,
             "workspace_path": str(self.project_root),
             "file_patterns": cfg.get("file_patterns", []),
             "exclude_patterns": cfg.get("exclude_patterns", []),
-            "required_files": cfg.get("required_files", []),
         }
 
     def get_file_patterns(self) -> tuple[str, ...]:
@@ -419,20 +432,6 @@ class PreCompileContext:
         cfg = self._load_bcasl_config()
         patterns = cfg.get("exclude_patterns", []) if isinstance(cfg, dict) else []
         return tuple(patterns) if patterns else ()
-
-    def get_required_files(self) -> tuple[str, ...]:
-        """Retourne la liste des fichiers requis du workspace depuis bcasl.yml."""
-        cfg = self._load_bcasl_config()
-        files = cfg.get("required_files", []) if isinstance(cfg, dict) else []
-        return tuple(files) if files else ()
-
-    def has_required_file(self, filename: str) -> bool:
-        """Vérifie si un fichier requis existe dans le workspace (basé sur bcasl.yml)."""
-        try:
-            required = self.get_required_files()
-            return filename in required and (self.project_root / filename).is_file()
-        except Exception:
-            return False
 
     def get_workspace_files(self, pattern: str = "**/*") -> list[Path]:
         """Retourne tous les fichiers du workspace correspondant au pattern (patterns depuis bcasl.yml)."""
