@@ -43,6 +43,7 @@ Typical usage (inside an engine plugin):
             return prog, args
 """
 
+import locale
 import os
 import platform
 import re
@@ -130,251 +131,259 @@ def clamp_text(text: str, *, max_len: int = 10000) -> str:
 # i18n & logging helpers
 # -------------------------------
 
+try:
+    from Core import i18n as _core_i18n  # type: ignore
 
-def tr(gui: Any, fr: str, en: str) -> str:
-    """Robust translator wrapper using the host GUI translator when available."""
-    try:
-        fn = getattr(gui, "tr", None)
-        if callable(fn):
-            return fn(fr, en)
-    except Exception:
-        pass
-    # Fallback: use French only if explicitly selected, otherwise English.
-    try:
-        pref = getattr(gui, "language_pref", None)
-        if pref is None:
-            pref = getattr(gui, "language", None)
-        if isinstance(pref, str) and pref.strip():
-            val = pref.strip().lower()
-            if val in ("system", "auto", "default"):
-                try:
-                    loc = locale.getdefaultlocale()[0] or ""
-                    return fr if loc.lower().startswith(("fr", "fr_")) else en
-                except Exception:
-                    return en
-            if val in ("fr", "français", "francais", "french") or val.startswith(
-                ("fr-", "fr_")
-            ):
+    tr = _core_i18n.tr
+    safe_log = _core_i18n.safe_log
+    log_with_level = _core_i18n.log_with_level
+    log_i18n_level = _core_i18n.log_i18n_level
+    essential_log_max_len = getattr(_core_i18n, "essential_log_max_len", 10000)
+    _USING_CORE_I18N = True
+except Exception:
+    _USING_CORE_I18N = False
+
+
+if not _USING_CORE_I18N:
+
+    def tr(gui: Any, fr: str, en: str) -> str:
+        """Robust translator wrapper using the host GUI translator when available."""
+        try:
+            fn = getattr(gui, "tr", None)
+            if callable(fn):
+                return fn(fr, en)
+        except Exception:
+            pass
+        # Fallback: use French only if explicitly selected, otherwise English.
+        try:
+            pref = getattr(gui, "language_pref", None)
+            if pref is None:
+                pref = getattr(gui, "language", None)
+            if isinstance(pref, str) and pref.strip():
+                val = pref.strip().lower()
+                if val in ("system", "auto", "default"):
+                    try:
+                        loc = locale.getdefaultlocale()[0] or ""
+                        return fr if loc.lower().startswith(("fr", "fr_")) else en
+                    except Exception:
+                        return en
+                if val in ("fr", "français", "francais", "french") or val.startswith(
+                    ("fr-", "fr_")
+                ):
+                    return fr
+                return en
+            cur = getattr(gui, "current_language", None)
+            if isinstance(cur, str) and cur.lower().startswith("fr"):
                 return fr
-            return en
-        cur = getattr(gui, "current_language", None)
-        if isinstance(cur, str) and cur.lower().startswith("fr"):
-            return fr
-    except Exception:
-        pass
-    return en
+        except Exception:
+            pass
+        return en
 
+    essential_log_max_len = 10000
 
-essential_log_max_len = 10000
+    def safe_log(
+        gui: Any, text: str, *, redact: bool = True, clamp: bool = True
+    ) -> None:
+        """Append text to GUI log safely (or print), with optional redaction and clamping."""
+        try:
+            msg = str(text)
+            if redact:
+                msg = redact_secrets(msg)
+            if clamp:
+                msg = clamp_text(msg, max_len=essential_log_max_len)
+            if hasattr(gui, "log") and getattr(gui, "log") is not None:
+                try:
+                    gui.log.append(msg)
+                    return
+                except Exception:
+                    pass
+            print(msg)
+        except Exception:
+            try:
+                print(text)
+            except Exception:
+                pass
 
+    # -------------------------------
+    # Level-based logging (rich/colorama)
+    # -------------------------------
 
-def safe_log(gui: Any, text: str, *, redact: bool = True, clamp: bool = True) -> None:
-    """Append text to GUI log safely (or print), with optional redaction and clamping."""
-    try:
-        msg = str(text)
+    _LOG_LEVEL_LABELS = {
+        "info": "INFO",
+        "warning": "WARN",
+        "error": "ERROR",
+        "success": "SUCCESS",
+        "state": "STATE",
+    }
+
+    _LOG_LEVEL_RICH = {
+        "info": "cyan",
+        "warning": "yellow",
+        "error": "red",
+        "success": "green",
+        "state": "blue",
+    }
+
+    _LOG_LEVEL_COLORAMA = {
+        "info": "CYAN",
+        "warning": "YELLOW",
+        "error": "RED",
+        "success": "GREEN",
+        "state": "BLUE",
+    }
+
+    _LOG_LEVEL_QT_COLORS = {
+        "info": "#1E88E5",
+        "warning": "#EF6C00",
+        "error": "#D32F2F",
+        "success": "#2E7D32",
+        "state": "#00897B",
+        "debug": "#546E7A",
+    }
+
+    _RICH_CONSOLE = None
+    _COLORAMA_READY = False
+
+    def _get_rich_console():
+        global _RICH_CONSOLE
+        if _RICH_CONSOLE is None:
+            from rich.console import Console  # type: ignore
+
+            _RICH_CONSOLE = Console()
+        return _RICH_CONSOLE
+
+    def _console_log(level: str, label: str, message: str) -> None:
+        # Prefer rich when available for consistent styling.
+        try:
+            console = _get_rich_console()
+            style = _LOG_LEVEL_RICH.get(level, "white")
+            console.print(f"[{style}]{label}[/] {message}")
+            return
+        except Exception:
+            pass
+
+        # Fallback to colorama for basic ANSI colors.
+        try:
+            from colorama import Fore, Style, init  # type: ignore
+
+            global _COLORAMA_READY
+            if not _COLORAMA_READY:
+                init(autoreset=True)
+                _COLORAMA_READY = True
+
+            color_name = _LOG_LEVEL_COLORAMA.get(level)
+            color = getattr(Fore, color_name, "")
+            if color:
+                print(f"{color}{label}{Style.RESET_ALL} {message}")
+            else:
+                print(f"{label} {message}")
+            return
+        except Exception:
+            pass
+
+        print(f"{label} {message}")
+
+    def _append_gui_log(gui: Any, level: str, label: str, msg: str) -> bool:
+        """Append a log line to the GUI log, with color when possible."""
+        try:
+            log = getattr(gui, "log", None)
+        except Exception:
+            return False
+        if log is None:
+            return False
+
+        line = f"[{label}] {msg}"
+
+        # List-backed logs (tests)
+        try:
+            if isinstance(log, list):
+                log.append(line)
+                return True
+        except Exception:
+            pass
+
+        # QTextEdit with rich formatting
+        try:
+            if hasattr(log, "textCursor") and callable(log.textCursor):
+                try:
+                    from PySide6.QtGui import QColor, QTextCharFormat, QTextCursor
+                except Exception:
+                    return False
+                cursor = log.textCursor()
+                cursor.movePosition(QTextCursor.End)
+                fmt = QTextCharFormat()
+                color = _LOG_LEVEL_QT_COLORS.get(level)
+                if color:
+                    fmt.setForeground(QColor(color))
+                cursor.insertText(line, fmt)
+                cursor.insertText("\n")
+                try:
+                    log.setTextCursor(cursor)
+                    log.ensureCursorVisible()
+                except Exception:
+                    pass
+                return True
+        except Exception:
+            pass
+
+        # QPlainTextEdit / generic append
+        try:
+            if hasattr(log, "appendPlainText") and callable(log.appendPlainText):
+                log.appendPlainText(line)
+                return True
+        except Exception:
+            pass
+
+        try:
+            if hasattr(log, "append") and callable(log.append):
+                log.append(line)
+                return True
+        except Exception:
+            pass
+
+        return False
+
+    def log_with_level(
+        gui: Any,
+        level: str,
+        message: str,
+        *,
+        redact: bool = True,
+        clamp: bool = True,
+    ) -> None:
+        """Append a level-tagged message to GUI log or print with colors in console."""
+        try:
+            lvl = str(level).lower() if level is not None else "info"
+        except Exception:
+            lvl = "info"
+        label = _LOG_LEVEL_LABELS.get(lvl, str(level).upper())
+
+        msg = str(message) if message is not None else ""
         if redact:
             msg = redact_secrets(msg)
         if clamp:
             msg = clamp_text(msg, max_len=essential_log_max_len)
-        if hasattr(gui, "log") and getattr(gui, "log") is not None:
-            try:
-                gui.log.append(msg)
-                return
-            except Exception:
-                pass
-        print(msg)
-    except Exception:
+
         try:
-            print(text)
+            if _append_gui_log(gui, lvl, label, msg):
+                return
         except Exception:
             pass
 
+        _console_log(lvl, label, msg)
 
-# -------------------------------
-# Level-based logging (rich/colorama)
-# -------------------------------
-
-_LOG_LEVEL_LABELS = {
-    "info": "INFO",
-    "warning": "WARN",
-    "error": "ERROR",
-    "success": "SUCCESS",
-    "state": "STATE",
-}
-
-_LOG_LEVEL_RICH = {
-    "info": "cyan",
-    "warning": "yellow",
-    "error": "red",
-    "success": "green",
-    "state": "blue",
-}
-
-_LOG_LEVEL_COLORAMA = {
-    "info": "CYAN",
-    "warning": "YELLOW",
-    "error": "RED",
-    "success": "GREEN",
-    "state": "BLUE",
-}
-
-_LOG_LEVEL_QT_COLORS = {
-    "info": "#1E88E5",
-    "warning": "#EF6C00",
-    "error": "#D32F2F",
-    "success": "#2E7D32",
-    "state": "#00897B",
-    "debug": "#546E7A",
-}
-
-_RICH_CONSOLE = None
-_COLORAMA_READY = False
-
-
-def _get_rich_console():
-    global _RICH_CONSOLE
-    if _RICH_CONSOLE is None:
-        from rich.console import Console  # type: ignore
-
-        _RICH_CONSOLE = Console()
-    return _RICH_CONSOLE
-
-
-def _console_log(level: str, label: str, message: str) -> None:
-    # Prefer rich when available for consistent styling.
-    try:
-        console = _get_rich_console()
-        style = _LOG_LEVEL_RICH.get(level, "white")
-        console.print(f"[{style}]{label}[/] {message}")
-        return
-    except Exception:
-        pass
-
-    # Fallback to colorama for basic ANSI colors.
-    try:
-        from colorama import Fore, Style, init  # type: ignore
-
-        global _COLORAMA_READY
-        if not _COLORAMA_READY:
-            init(autoreset=True)
-            _COLORAMA_READY = True
-
-        color_name = _LOG_LEVEL_COLORAMA.get(level)
-        color = getattr(Fore, color_name, "")
-        if color:
-            print(f"{color}{label}{Style.RESET_ALL} {message}")
-        else:
-            print(f"{label} {message}")
-        return
-    except Exception:
-        pass
-
-    print(f"{label} {message}")
-
-
-def _append_gui_log(gui: Any, level: str, label: str, msg: str) -> bool:
-    """Append a log line to the GUI log, with color when possible."""
-    try:
-        log = getattr(gui, "log", None)
-    except Exception:
-        return False
-    if log is None:
-        return False
-
-    line = f"[{label}] {msg}"
-
-    # List-backed logs (tests)
-    try:
-        if isinstance(log, list):
-            log.append(line)
-            return True
-    except Exception:
-        pass
-
-    # QTextEdit with rich formatting
-    try:
-        if hasattr(log, "textCursor") and callable(log.textCursor):
-            try:
-                from PySide6.QtGui import QColor, QTextCharFormat, QTextCursor
-            except Exception:
-                return False
-            cursor = log.textCursor()
-            cursor.movePosition(QTextCursor.End)
-            fmt = QTextCharFormat()
-            color = _LOG_LEVEL_QT_COLORS.get(level)
-            if color:
-                fmt.setForeground(QColor(color))
-            cursor.insertText(line, fmt)
-            cursor.insertText("\n")
-            try:
-                log.setTextCursor(cursor)
-                log.ensureCursorVisible()
-            except Exception:
-                pass
-            return True
-    except Exception:
-        pass
-
-    # QPlainTextEdit / generic append
-    try:
-        if hasattr(log, "appendPlainText") and callable(log.appendPlainText):
-            log.appendPlainText(line)
-            return True
-    except Exception:
-        pass
-
-    try:
-        if hasattr(log, "append") and callable(log.append):
-            log.append(line)
-            return True
-    except Exception:
-        pass
-
-    return False
-
-
-def log_with_level(
-    gui: Any,
-    level: str,
-    message: str,
-    *,
-    redact: bool = True,
-    clamp: bool = True,
-) -> None:
-    """Append a level-tagged message to GUI log or print with colors in console."""
-    try:
-        lvl = str(level).lower() if level is not None else "info"
-    except Exception:
-        lvl = "info"
-    label = _LOG_LEVEL_LABELS.get(lvl, str(level).upper())
-
-    msg = str(message) if message is not None else ""
-    if redact:
-        msg = redact_secrets(msg)
-    if clamp:
-        msg = clamp_text(msg, max_len=essential_log_max_len)
-
-    try:
-        if _append_gui_log(gui, lvl, label, msg):
-            return
-    except Exception:
-        pass
-
-    _console_log(lvl, label, msg)
-
-
-def log_i18n_level(
-    gui: Any,
-    level: str,
-    fr: str,
-    en: str,
-    *,
-    redact: bool = True,
-    clamp: bool = True,
-) -> None:
-    """Translate then log a level-tagged message."""
-    msg = tr(gui, fr, en)
-    log_with_level(gui, level, msg, redact=redact, clamp=clamp)
+    def log_i18n_level(
+        gui: Any,
+        level: str,
+        fr: str,
+        en: str,
+        *,
+        redact: bool = True,
+        clamp: bool = True,
+    ) -> None:
+        """Translate then log a level-tagged message."""
+        msg = tr(gui, fr, en)
+        log_with_level(gui, level, msg, redact=redact, clamp=clamp)
 
 # -------------------------------
 # Executable resolution helper
