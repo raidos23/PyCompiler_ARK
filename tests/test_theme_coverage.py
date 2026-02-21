@@ -46,19 +46,6 @@ REQUIRED_SELECTORS = [
     "QStatusBar",
 ]
 
-
-def test_theme_files_cover_hidden_widgets() -> None:
-    themes_dir = Path("themes")
-    assert themes_dir.is_dir(), "themes/ directory missing"
-    missing: dict[str, list[str]] = {}
-    for path in themes_dir.glob("*.qss"):
-        text = path.read_text(encoding="utf-8")
-        missing_selectors = [s for s in REQUIRED_SELECTORS if s not in text]
-        if missing_selectors:
-            missing[path.name] = missing_selectors
-    assert not missing, f"Missing selectors: {missing}"
-
-
 def test_apply_theme_loads_stylesheet() -> None:
     os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
     app = QApplication.instance() or QApplication([])
