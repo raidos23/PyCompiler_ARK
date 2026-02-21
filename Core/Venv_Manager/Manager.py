@@ -11,6 +11,7 @@ from PySide6.QtCore import QProcess, QTimer
 from PySide6.QtWidgets import QApplication, QFileDialog, QMessageBox
 
 from ..WidgetsCreator import ProgressDialog
+from ..i18n import log_i18n_level, log_with_level
 
 
 class VenvManager:
@@ -407,9 +408,54 @@ class VenvManager:
         except Exception:
             return "[Decode Error]"
 
-    def _safe_log(self, text: str, text_en: str | None = None):
+    def _infer_log_level(self, text: str | None) -> str:
         try:
-            # If both FR/EN provided and parent has translator, resolve first.
+            s = str(text or "").strip()
+        except Exception:
+            s = ""
+        if not s:
+            return "info"
+        emoji_levels = {
+            "❌": "error",
+            "⚠️": "warning",
+            "✅": "success",
+            "ℹ️": "info",
+            "📝": "state",
+            "📋": "state",
+            "🔍": "state",
+            "🔧": "state",
+            "🔨": "state",
+            "➡️": "state",
+            "📦": "state",
+            "🗑️": "state",
+        }
+        for emoji, lvl in emoji_levels.items():
+            if s.startswith(emoji):
+                return lvl
+        low = s.lower()
+        if any(tok in low for tok in ("error", "erreur", "échec", "echec", "failed", "invalid", "refus")):
+            return "error"
+        if any(tok in low for tok in ("warning", "avert", "warn", "attention")):
+            return "warning"
+        if any(tok in low for tok in ("success", "succès", "reussi", "réussi")):
+            return "success"
+        if any(tok in low for tok in ("state", "status", "état", "etat")):
+            return "state"
+        return "info"
+
+    def _safe_log(self, text: str, text_en: str | None = None, level: str | None = None):
+        gui = getattr(self, "parent", None) or self
+        lvl = level or self._infer_log_level(text_en if text_en is not None else text)
+        try:
+            if text_en is not None:
+                log_i18n_level(gui, lvl, text, text_en)
+            else:
+                log_with_level(gui, lvl, text)
+            return
+        except Exception:
+            pass
+        try:
+            # Fallback: If both FR/EN provided and parent has translator, resolve first.
             if text_en is not None and hasattr(self.parent, "tr"):
                 try:
                     text = self.parent.tr(text, text_en)
