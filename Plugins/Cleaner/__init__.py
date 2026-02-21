@@ -60,6 +60,48 @@ class Cleaner(BcPluginBase):
         self.cleaned_files = 0
         self.cleaned_dirs = 0
 
+    def _get_config(self, ctx: PreCompileContext) -> dict:
+        try:
+            cfg = ctx.get_workspace_config() or {}
+            plugins_cfg = cfg.get("plugins", {}) if isinstance(cfg, dict) else {}
+            entry = plugins_cfg.get(self.meta.id, {}) if isinstance(plugins_cfg, dict) else {}
+            plugin_cfg = entry.get("config", {}) if isinstance(entry, dict) else {}
+            if isinstance(plugin_cfg, dict):
+                return dict(plugin_cfg)
+        except Exception:
+            pass
+        return {}
+
+    def build_config_tab(self, parent, ctx: PreCompileContext, config: dict):
+        try:
+            from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel, QCheckBox
+        except Exception:
+            return None
+
+        w = QWidget(parent)
+        lay = QVBoxLayout(w)
+        lay.addWidget(QLabel("Cleaner settings"))
+
+        chk_confirm = QCheckBox("Ask confirmation before cleaning", w)
+        chk_pyc = QCheckBox("Remove .pyc files", w)
+        chk_pycache = QCheckBox("Remove __pycache__ folders", w)
+
+        chk_confirm.setChecked(bool(config.get("confirm", True)))
+        chk_pyc.setChecked(bool(config.get("clean_pyc", True)))
+        chk_pycache.setChecked(bool(config.get("clean_pycache", True)))
+
+        lay.addWidget(chk_confirm)
+        lay.addWidget(chk_pyc)
+        lay.addWidget(chk_pycache)
+
+        def on_save(cfg: dict):
+            cfg["confirm"] = bool(chk_confirm.isChecked())
+            cfg["clean_pyc"] = bool(chk_pyc.isChecked())
+            cfg["clean_pycache"] = bool(chk_pycache.isChecked())
+            return cfg
+
+        return ("Cleaner", w, on_save)
+
     def on_pre_compile(self, ctx: PreCompileContext) -> None:
         """Nettoie le workspace avant la compilation.
 
@@ -72,16 +114,25 @@ class Cleaner(BcPluginBase):
                 log.log_warn("Workspace is not valid or bcasl.yml not found")
                 return
 
-            # Demander confirmation à l'utilisateur
-            response = dialog.msg_question(
-                title="Cleaner",
-                text="Do you want to clean the workspace (.pyc and __pycache__)?",
-                default_yes=True,
-            )
-
-            if not response:
-                log.log_info("Cleaner cancelled by user")
+            cfg = self._get_config(ctx)
+            ask_confirm = bool(cfg.get("confirm", True))
+            clean_pyc = bool(cfg.get("clean_pyc", True))
+            clean_pycache = bool(cfg.get("clean_pycache", True))
+            if not clean_pyc and not clean_pycache:
+                log.log_info("Cleaner: nothing to do (both options disabled)")
                 return
+
+            # Demander confirmation à l'utilisateur
+            if ask_confirm:
+                response = dialog.msg_question(
+                    title="Cleaner",
+                    text="Do you want to clean the workspace (.pyc and __pycache__)?",
+                    default_yes=True,
+                )
+
+                if not response:
+                    log.log_info("Cleaner cancelled by user")
+                    return
 
             # Réinitialiser les compteurs
             self.cleaned_files = 0
@@ -107,46 +158,51 @@ class Cleaner(BcPluginBase):
                 try:
                     # Utiliser les patterns d'exclusion depuis bcasl.yml
                     exclude_patterns = ctx.get_exclude_patterns()
-                    for file_path in ctx.iter_files(["**/*.pyc"], exclude_patterns):
-                        pyc_files.append(file_path)
+                    if clean_pyc:
+                        for file_path in ctx.iter_files(["**/*.pyc"], exclude_patterns):
+                            pyc_files.append(file_path)
                 except Exception as e:
                     log.log_warn(f"Error iterating .pyc files: {e}")
 
                 # Étape 2: Supprimer les fichiers .pyc
-                progress.set_message("Removing .pyc files...")
-                progress.set_progress(0, len(pyc_files))
+                if clean_pyc:
+                    progress.set_message("Removing .pyc files...")
+                    progress.set_progress(0, len(pyc_files))
 
-                for idx, file_path in enumerate(pyc_files):
-                    if progress.is_canceled():
-                        break
-                    try:
-                        Path(file_path).unlink()
-                        self.cleaned_files += 1
-                    except Exception as e:
-                        log.log_warn(f"Failed to remove {file_path}: {e}")
-                    progress.set_progress(idx + 1, len(pyc_files))
+                    for idx, file_path in enumerate(pyc_files):
+                        if progress.is_canceled():
+                            break
+                        try:
+                            Path(file_path).unlink()
+                            self.cleaned_files += 1
+                        except Exception as e:
+                            log.log_warn(f"Failed to remove {file_path}: {e}")
+                        progress.set_progress(idx + 1, len(pyc_files))
 
                 # Étape 3: Parcourir et supprimer les dossiers __pycache__
-                progress.set_message("Removing __pycache__ directories...")
+                if clean_pycache:
+                    progress.set_message("Removing __pycache__ directories...")
 
                 pycache_dirs = []
                 try:
-                    for pycache_dir in workspace_path.rglob("__pycache__"):
-                        pycache_dirs.append(pycache_dir)
+                    if clean_pycache:
+                        for pycache_dir in workspace_path.rglob("__pycache__"):
+                            pycache_dirs.append(pycache_dir)
                 except Exception as e:
                     log.log_warn(f"Error iterating __pycache__ directories: {e}")
 
-                progress.set_progress(0, len(pycache_dirs))
+                if clean_pycache:
+                    progress.set_progress(0, len(pycache_dirs))
 
-                for idx, pycache_dir in enumerate(pycache_dirs):
-                    if progress.is_canceled():
-                        break
-                    try:
-                        shutil.rmtree(pycache_dir)
-                        self.cleaned_dirs += 1
-                    except Exception as e:
-                        log.log_warn(f"Failed to remove {pycache_dir}: {e}")
-                    progress.set_progress(idx + 1, len(pycache_dirs))
+                    for idx, pycache_dir in enumerate(pycache_dirs):
+                        if progress.is_canceled():
+                            break
+                        try:
+                            shutil.rmtree(pycache_dir)
+                            self.cleaned_dirs += 1
+                        except Exception as e:
+                            log.log_warn(f"Failed to remove {pycache_dir}: {e}")
+                        progress.set_progress(idx + 1, len(pycache_dirs))
 
             finally:
                 progress.close()

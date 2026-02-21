@@ -407,7 +407,6 @@ class BcaslOnlyModApp:
             "workspace_path": str(ws_root),
             "file_patterns": cfg.get("file_patterns", []),
             "exclude_patterns": cfg.get("exclude_patterns", []),
-            "required_files": cfg.get("required_files", []),
         }
 
         ctx = PreCompileContext(

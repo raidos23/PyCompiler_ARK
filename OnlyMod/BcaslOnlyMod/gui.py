@@ -164,7 +164,6 @@ class BcaslExecutionThread(QThread):
                 "workspace_path": str(self.workspace_root),
                 "file_patterns": self.config.get("file_patterns", []),
                 "exclude_patterns": self.config.get("exclude_patterns", []),
-                "required_files": self.config.get("required_files", []),
             }
 
             # Exécuter les plugins

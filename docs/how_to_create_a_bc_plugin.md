@@ -93,8 +93,6 @@ BCASL reads `bcasl.yml` or `.bcasl.yml` in the workspace root. Only the `.yml` e
 
 Example.
 ```yaml
-required_files:
-- main.py
 file_patterns:
 - "**/*.py"
 exclude_patterns:
@@ -129,7 +127,6 @@ Key methods.
 - `get_workspace_root()` and `get_workspace_name()`.
 - `get_workspace_config()` and `get_workspace_metadata()`.
 - `get_file_patterns()` and `get_exclude_patterns()`.
-- `get_required_files()` and `has_required_file(name)`.
 - `iter_files(include, exclude)` with optional cache.
 - `is_workspace_valid()` checks presence of `bcasl.yml`.
 
