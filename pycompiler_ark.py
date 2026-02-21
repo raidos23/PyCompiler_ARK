@@ -222,8 +222,8 @@ def _get_app_icon_path() -> Optional[str]:
     """Return the best available application icon path (non-GUI usage)."""
     try:
         candidates = [
-            os.path.join(ROOT_DIR, "logo", "logo.png"),
-            os.path.join(ROOT_DIR, "logo", "logo.png"),
+            os.path.join(ROOT_DIR, "images", "logo.png"),
+            os.path.join(ROOT_DIR, "images", "logo.png"),
         ]
         for path in candidates:
             if os.path.isfile(path):
@@ -237,8 +237,8 @@ def _get_window_icon_path() -> Optional[str]:
     """Return the best available window icon path (GUI usage)."""
     try:
         candidates = [
-            os.path.join(ROOT_DIR, "logo", "logo.png"),
-            os.path.join(ROOT_DIR, "logo", "logo.png"),
+            os.path.join(ROOT_DIR, "images", "logo.png"),
+            os.path.join(ROOT_DIR, "images", "logo.png"),
         ]
         for path in candidates:
             if os.path.isfile(path):
@@ -527,7 +527,7 @@ def launch_main_application() -> int:
         # Splash screen: affiche l'image 'splash.*' depuis le dossier 'logo' si disponible
         splash = None
         try:
-            logo_dir = os.path.join(ROOT_DIR, "logo")
+            logo_dir = os.path.join(ROOT_DIR, "images")
             safe_ver = "".join(
                 c for c in APP_VERSION if c.isalnum() or c in (".", "-", "_")
             )

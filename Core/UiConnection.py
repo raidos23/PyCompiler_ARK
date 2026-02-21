@@ -212,7 +212,7 @@ def _setup_sidebar_logo(self) -> None:
     if logo_label is None:
         return
     logo_path = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)), "..", "logo", "logo2.png"
+        os.path.dirname(os.path.abspath(__file__)), "..", "images", "logo2.png"
     )
     if not os.path.isfile(logo_path):
         return

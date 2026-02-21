@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="./logo/logo2.png" alt="PyCompiler ARK logo" width="100%"/>
+  <img src="./images/logo2.png" alt="PyCompiler ARK logo" width="100%"/>
 </p>
 
 # **PyCompiler ARK**
