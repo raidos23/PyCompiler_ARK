@@ -36,7 +36,13 @@ from Core.Globals import _latest_gui_instance, _workspace_dir_cache, _workspace_
 from .Globals import _run_coro_async
 from .WidgetsCreator import ProgressDialog, CompilationProcessDialog
 from .Venv_Manager import VenvManager
-from .i18n import resolve_system_language, get_translations, tr_fr_en, is_french_language
+from .i18n import (
+    resolve_system_language,
+    get_translations,
+    tr_fr_en,
+    is_french_language,
+    log_with_level,
+)
 
 # Import des fonctionnalités UI depuis UiFeatures
 from .UiFeatures import UiFeatures
@@ -324,18 +330,61 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
     # JOURNALISATION
     # =========================================================================
 
+    def _infer_log_level(self, text) -> str:
+        try:
+            s = str(text or "").strip()
+        except Exception:
+            s = ""
+        if not s:
+            return "info"
+        emoji_levels = {
+            "❌": "error",
+            "⚠️": "warning",
+            "✅": "success",
+            "ℹ️": "info",
+            "📝": "state",
+            "📋": "state",
+            "🔍": "state",
+            "🔧": "state",
+            "🔨": "state",
+            "➡️": "state",
+            "📦": "state",
+            "🗑️": "state",
+        }
+        for emoji, lvl in emoji_levels.items():
+            if s.startswith(emoji):
+                return lvl
+        low = s.lower()
+        if any(
+            tok in low
+            for tok in ("error", "erreur", "échec", "echec", "failed", "invalid", "refus")
+        ):
+            return "error"
+        if any(tok in low for tok in ("warning", "avert", "warn", "attention")):
+            return "warning"
+        if any(tok in low for tok in ("success", "succès", "reussi", "réussi")):
+            return "success"
+        if any(tok in low for tok in ("state", "status", "état", "etat")):
+            return "state"
+        return "info"
+
     def _safe_log(self, text):
         """Journalise de manière sécurisée."""
         try:
-            if hasattr(self, "log") and self.log:
-                self.log.append(text)
-            else:
-                print(text)
+            level = self._infer_log_level(text)
+            log_with_level(self, level, text)
+            return
         except Exception:
             try:
-                print(text)
+                if hasattr(self, "log") and self.log:
+                    self.log.append(text)
+                else:
+                    print(text)
             except Exception:
-                pass
+                try:
+                    print(text)
+                except Exception:
+                    pass
 
     # =========================================================================
     # TÂCHES EN ARRIÈRE-PLAN
