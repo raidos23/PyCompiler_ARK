@@ -116,6 +116,32 @@ def apply_engine_config(gui, engine, data: dict) -> None:
         pass
 
 
+def _engine_policy(engine, gui) -> dict:
+    try:
+        fn = getattr(engine, "config_policy", None)
+        if callable(fn):
+            pol = fn(gui)
+            return pol if isinstance(pol, dict) else {}
+    except Exception:
+        pass
+    return {}
+
+
+def _load_engine_config_for_engine(gui, engine, workspace_dir: str) -> dict[str, Any]:
+    policy = _engine_policy(engine, gui)
+    if policy.get("read") is False:
+        return {}
+    try:
+        fn = getattr(engine, "load_config", None)
+        if callable(fn):
+            data = fn(gui, workspace_dir)
+            if isinstance(data, dict):
+                return data
+    except Exception:
+        pass
+    return load_engine_config(workspace_dir, getattr(engine, "id", ""))
+
+
 def apply_engine_configs_for_workspace(gui, workspace_dir: str) -> None:
     if not workspace_dir:
         return
@@ -127,7 +153,7 @@ def apply_engine_configs_for_workspace(gui, workspace_dir: str) -> None:
                 engine = engines_loader.registry.get_instance(eid)
                 if not engine:
                     continue
-                data = load_engine_config(workspace_dir, eid)
+                data = _load_engine_config_for_engine(gui, engine, workspace_dir)
                 if data:
                     apply_engine_config(gui, engine, data)
             except Exception:
@@ -152,6 +178,9 @@ def save_engine_config_for_gui(gui, engine_id: str) -> bool:
         engine = engines_loader.registry.get_instance(engine_id)
         if not engine:
             return False
+        policy = _engine_policy(engine, gui)
+        if policy.get("write") is False or policy.get("ui_edit") is False:
+            return False
         options = {}
         try:
             fn = getattr(engine, "get_config", None)
@@ -159,6 +188,14 @@ def save_engine_config_for_gui(gui, engine_id: str) -> bool:
                 options = fn(gui) or {}
         except Exception:
             options = {}
+        try:
+            fn = getattr(engine, "save_config", None)
+            if callable(fn):
+                res = fn(gui, workspace_dir, options)
+                if isinstance(res, bool):
+                    return res
+        except Exception:
+            pass
         return save_engine_config(
             workspace_dir,
             engine_id,

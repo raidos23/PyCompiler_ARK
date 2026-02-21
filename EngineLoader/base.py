@@ -115,6 +115,31 @@ class CompilerEngine:
         """Apply a config dict to engine UI widgets."""
         pass
 
+    def config_policy(self, gui) -> dict:
+        """
+        Define how the engine wants its config to be handled.
+
+        Return a dict with any of:
+        - read (bool): allow Core to read/apply config
+        - write (bool): allow Core to persist config
+        - ui_edit (bool): allow UI-driven save of config
+        """
+        return {"read": True, "write": True, "ui_edit": True}
+
+    def load_config(self, gui, workspace_dir: str) -> Optional[dict]:
+        """
+        Optional custom config loader for special engines.
+        Return a dict (payload or options). Return None to use default storage.
+        """
+        return None
+
+    def save_config(self, gui, workspace_dir: str, options: dict) -> Optional[bool]:
+        """
+        Optional custom config saver for special engines.
+        Return True/False to override default save, or None to use default storage.
+        """
+        return None
+
     def environment(self) -> Optional[dict[str, str]]:
         """
         Optionally return a mapping of environment variables to inject for the engine process.

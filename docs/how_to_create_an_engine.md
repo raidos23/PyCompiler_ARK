@@ -126,6 +126,46 @@ Notes.
 - Keep the config flat and JSON‑safe (bool, str, list, dict).
 - Always guard for missing keys and absent widgets.
 
+### **Advanced Config Control (Special Engines)**
+Special engines can fully control where/how config is stored and whether the UI
+is allowed to save it.
+
+New hooks:
+- `config_policy(gui) -> dict`: control permissions
+  - `read`: allow Core to load/apply config
+  - `write`: allow Core to persist config
+  - `ui_edit`: allow UI‑driven save
+- `load_config(gui, workspace_dir) -> dict | None`: custom loader
+- `save_config(gui, workspace_dir, options) -> bool | None`: custom saver
+
+If a custom loader/saver returns `None`, Core falls back to the default
+`.ark/<engine_id>/config.json` behavior.
+
+#### Example: custom path + read‑only UI
+```python
+class SpecialEngine(CompilerEngine):
+    id = "special"
+    name = "Special"
+
+    def config_policy(self, gui):
+        return {"read": True, "write": True, "ui_edit": False}
+
+    def load_config(self, gui, workspace_dir):
+        # Load from a custom JSON file
+        path = os.path.join(workspace_dir, "special.engine.json")
+        if os.path.isfile(path):
+            with open(path, encoding="utf-8") as f:
+                return json.load(f)
+        return {}
+
+    def save_config(self, gui, workspace_dir, options):
+        # Persist to a custom path
+        path = os.path.join(workspace_dir, "special.engine.json")
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(options or {}, f, indent=2)
+        return True
+```
+
 **Monolithic Tab Example**
 The following dummy engine shows how to build a very large UI tab with a scroll area to keep it usable.
 ```python
