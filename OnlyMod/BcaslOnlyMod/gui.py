@@ -541,9 +541,13 @@ class BcaslStandaloneGui(QMainWindow):
 
         # === Section Configuration des plugins (gauche) ===
         config_container = QWidget()
-        config_layout = QVBoxLayout(config_container)
-        config_layout.setSpacing(10)
-        config_layout.setContentsMargins(3, 3, 3, 3)
+        config_container_layout = QVBoxLayout(config_container)
+        config_container_layout.setSpacing(6)
+        config_container_layout.setContentsMargins(3, 3, 3, 3)
+
+        config_splitter = QSplitter(Qt.Orientation.Vertical)
+        config_splitter.setChildrenCollapsible(False)
+        config_container_layout.addWidget(config_splitter)
 
         # Groupe activation globale
         global_group = QGroupBox(tr("Global Settings", "Paramètres Globaux"))
@@ -568,7 +572,7 @@ class BcaslStandaloneGui(QMainWindow):
         global_layout.addWidget(self.global_info_label)
 
         global_group.setLayout(global_layout)
-        config_layout.addWidget(global_group)
+        config_splitter.addWidget(global_group)
 
         # Groupe plugins
         plugins_group = QGroupBox(tr("Plugins", "Plugins"))
@@ -617,15 +621,19 @@ class BcaslStandaloneGui(QMainWindow):
 
         plugins_layout.addLayout(nav_layout)
         plugins_group.setLayout(plugins_layout)
-        config_layout.addWidget(plugins_group)
+        config_splitter.addWidget(plugins_group)
 
         top_splitter.addWidget(config_container)
 
         # === Section Log et rapport (droite) ===
         log_container = QWidget()
-        log_layout = QVBoxLayout(log_container)
-        log_layout.setSpacing(5)
-        log_layout.setContentsMargins(3, 3, 3, 3)
+        log_container_layout = QVBoxLayout(log_container)
+        log_container_layout.setSpacing(5)
+        log_container_layout.setContentsMargins(3, 3, 3, 3)
+
+        log_splitter = QSplitter(Qt.Orientation.Vertical)
+        log_splitter.setChildrenCollapsible(False)
+        log_container_layout.addWidget(log_splitter)
 
         # Groupe exécution
         execution_group = QGroupBox(tr("Execution", "Exécution"))
@@ -701,7 +709,7 @@ class BcaslStandaloneGui(QMainWindow):
         execution_layout.addWidget(self.progress_bar)
 
         execution_group.setLayout(execution_layout)
-        log_layout.addWidget(execution_group)
+        log_splitter.addWidget(execution_group)
 
         # Groupe log
         log_group = QGroupBox(tr("Execution Log", "Journal d'Exécution"))
@@ -728,9 +736,13 @@ class BcaslStandaloneGui(QMainWindow):
         log_layout_inner.addWidget(self.log_text)
 
         log_group.setLayout(log_layout_inner)
-        log_layout.addWidget(log_group)
+        log_splitter.addWidget(log_group)
 
         top_splitter.addWidget(log_container)
+
+        # Proportions internes
+        config_splitter.setSizes([160, 520])
+        log_splitter.setSizes([140, 540])
 
         # Définir les proportions (40% config, 60% log)
         top_splitter.setSizes([400, 600])

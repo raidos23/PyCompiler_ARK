@@ -386,13 +386,19 @@ class EnginesStandaloneGui(QMainWindow):
 
         # === Section Configuration (gauche) ===
         config_container = QWidget()
-        config_layout = QGridLayout(config_container)
-        config_layout.setSpacing(10)
-        config_layout.setContentsMargins(3, 3, 3, 3)
-        config_layout.setColumnStretch(0, 1)
-        config_layout.setColumnStretch(1, 1)
-        config_layout.setRowStretch(0, 1)
-        config_layout.setRowStretch(1, 1)
+        config_container_layout = QVBoxLayout(config_container)
+        config_container_layout.setSpacing(6)
+        config_container_layout.setContentsMargins(3, 3, 3, 3)
+
+        config_splitter = QSplitter(Qt.Vertical)
+        config_splitter.setChildrenCollapsible(False)
+        config_container_layout.addWidget(config_splitter)
+
+        top_row_splitter = QSplitter(Qt.Horizontal)
+        top_row_splitter.setChildrenCollapsible(False)
+
+        bottom_row_splitter = QSplitter(Qt.Horizontal)
+        bottom_row_splitter.setChildrenCollapsible(False)
 
         # Moteur (top-left)
         engine_group = QGroupBox("Engine Configuration")
@@ -417,7 +423,7 @@ class EnginesStandaloneGui(QMainWindow):
         engine_layout.addWidget(self.compat_status_label)
 
         engine_group.setLayout(engine_layout)
-        config_layout.addWidget(engine_group, 0, 0)
+        top_row_splitter.addWidget(engine_group)
 
         # Fichier (top-right)
         file_group = QGroupBox("File / Project Configuration")
@@ -443,7 +449,7 @@ class EnginesStandaloneGui(QMainWindow):
 
         file_layout.addLayout(file_input_layout)
         file_group.setLayout(file_layout)
-        config_layout.addWidget(file_group, 0, 1)
+        top_row_splitter.addWidget(file_group)
 
         # Workspace
         workspace_group = QGroupBox("Workspace")
@@ -469,7 +475,7 @@ class EnginesStandaloneGui(QMainWindow):
         workspace_layout.addWidget(workspace_browse_btn, 0, 2)
 
         workspace_group.setLayout(workspace_layout)
-        config_layout.addWidget(workspace_group)
+        bottom_row_splitter.addWidget(workspace_group)
 
         # Actions (bottom-right)
         actions_group = QGroupBox("Actions")
@@ -545,7 +551,14 @@ class EnginesStandaloneGui(QMainWindow):
 
         actions_layout.addLayout(button_row)
         actions_group.setLayout(actions_layout)
-        config_layout.addWidget(actions_group, 1, 1)
+        bottom_row_splitter.addWidget(actions_group)
+
+        config_splitter.addWidget(top_row_splitter)
+        config_splitter.addWidget(bottom_row_splitter)
+
+        top_row_splitter.setSizes([500, 500])
+        bottom_row_splitter.setSizes([500, 500])
+        config_splitter.setSizes([520, 320])
 
         top_splitter.addWidget(config_container)
 
