@@ -114,6 +114,8 @@ jobs:
   tests:
     name: Tests
     runs-on: ubuntu-latest
+    env:
+      QT_QPA_PLATFORM: offscreen
     strategy:
       matrix:
         python-version: ['3.10', '3.11', '3.12']
@@ -153,6 +155,8 @@ jobs:
     name: Build and test (${{ matrix.os }}, py${{ matrix.python-version }})
     runs-on: ${{ matrix.os }}
     needs: lint
+    env:
+      QT_QPA_PLATFORM: offscreen
     strategy:
       fail-fast: false
       matrix:
@@ -197,16 +201,5 @@ jobs:
           path: coverage.xml
           if-no-files-found: ignore
 
-      - name: Build distributions (sdist+wheel) if packaging configured
-        if: >-
-          hashFiles('pyproject.toml') != '' ||
-          hashFiles('setup.cfg') != '' ||
-          hashFiles('setup.py') != ''
-        run: python -m build --sdist --wheel
-
-      - name: Upload dist artifacts (if any)
-        uses: actions/upload-artifact@v4
-        with:
-          name: dist-${{ matrix.os }}-py${{ matrix.python-version }}
-          path: dist/*
-          if-no-files-found: warn
+      # Packaging (sdist/wheel) intentionally disabled.
+      # This project is distributed as a standalone binary, not a PyPI package.

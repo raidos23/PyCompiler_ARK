@@ -34,8 +34,8 @@ import platform
 from typing import Optional, Callable
 
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QPixmap
-from PySide6.QtWidgets import QFileDialog, QMessageBox
+from PySide6.QtGui import QIcon, QPixmap
+from PySide6.QtWidgets import QFileDialog, QMessageBox, QMenu
 
 
 class UiFeatures:
@@ -109,13 +109,19 @@ class UiFeatures:
     def show_help_dialog(self):
         """Affiche une boîte de dialogue d'aide."""
         try:
-            tr = getattr(self, "_tr", None)
-            if tr and isinstance(tr, dict):
-                help_title = tr.get("help_title", "Help")
-                help_text = tr.get("help_text", "")
+            from .i18n import FALLBACK_EN, is_french_language
+
+            if is_french_language(self):
+                tr = getattr(self, "_tr", None)
+                if isinstance(tr, dict):
+                    help_title = tr.get("help_title", "Aide")
+                    help_text = tr.get("help_text", FALLBACK_EN.get("help_text", ""))
+                else:
+                    help_title = "Aide"
+                    help_text = FALLBACK_EN.get("help_text", "")
             else:
-                help_title = "Help"
-                help_text = ""
+                help_title = FALLBACK_EN.get("help_title", "Help")
+                help_text = FALLBACK_EN.get("help_text", "")
         except Exception:
             help_title = "Help"
             help_text = ""
@@ -126,6 +132,162 @@ class UiFeatures:
         dlg.setIcon(QMessageBox.Icon.Information)
         dlg.setStandardButtons(QMessageBox.StandardButton.Ok)
         dlg.exec()
+
+    # =========================================================================
+    # POINT D'ENTRÉE (ENTRYPOINT)
+    # =========================================================================
+
+    def setup_entrypoint_selector(self) -> None:
+        """Configure le menu contextuel pour choisir le point d'entrée."""
+        if not getattr(self, "file_list", None):
+            return
+        try:
+            self.file_list.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+            self.file_list.customContextMenuRequested.connect(
+                self._show_entrypoint_menu
+            )
+        except Exception:
+            pass
+
+    def _show_entrypoint_menu(self, pos) -> None:
+        """Affiche un menu contextuel pour gérer le point d'entrée."""
+        if not getattr(self, "file_list", None):
+            return
+        item = self.file_list.itemAt(pos)
+        menu = QMenu(self.file_list)
+
+        set_action = None
+        if item is not None:
+            set_action = menu.addAction(
+                self.tr("Définir comme point d'entrée", "Set as entrypoint")
+            )
+        clear_action = menu.addAction(
+            self.tr("Effacer le point d'entrée", "Clear entrypoint")
+        )
+
+        chosen = menu.exec(self.file_list.viewport().mapToGlobal(pos))
+        if chosen is None:
+            return
+        if chosen == set_action and item is not None:
+            self.set_entrypoint_from_item(item)
+        elif chosen == clear_action:
+            self.clear_entrypoint()
+
+    def _entrypoint_icon(self) -> QIcon | None:
+        """Retourne l'icône utilisée pour marquer le point d'entrée."""
+        icon = getattr(self, "_entrypoint_icon_cache", None)
+        if isinstance(icon, QIcon) and not icon.isNull():
+            return icon
+        try:
+            base = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+            path = os.path.join(base, "icons", "check-circle.svg")
+            if os.path.isfile(path):
+                icon = QIcon(path)
+                if not icon.isNull():
+                    self._entrypoint_icon_cache = icon
+                    return icon
+        except Exception:
+            pass
+        return None
+
+    def _refresh_entrypoint_marker(self) -> None:
+        """Met à jour l'affichage du point d'entrée dans la liste des fichiers."""
+        if not getattr(self, "file_list", None):
+            return
+        entry_rel = getattr(self, "_entrypoint_relpath", None)
+        icon = self._entrypoint_icon()
+        for i in range(self.file_list.count()):
+            item = self.file_list.item(i)
+            if item is None:
+                continue
+            if entry_rel and item.text() == entry_rel and icon:
+                item.setIcon(icon)
+            else:
+                item.setIcon(QIcon())
+
+    def load_entrypoint_from_config(self) -> None:
+        """Charge le point d'entrée depuis ARK_Main_Config.yml."""
+        workspace_dir = getattr(self, "workspace_dir", None)
+        if not workspace_dir:
+            return
+        try:
+            from .ArkConfigManager import load_ark_config, get_entrypoint
+
+            cfg = load_ark_config(workspace_dir)
+            entry_rel = get_entrypoint(cfg)
+        except Exception:
+            entry_rel = None
+
+        self._entrypoint_relpath = entry_rel
+        if entry_rel and workspace_dir:
+            self.entrypoint_file = os.path.join(workspace_dir, entry_rel)
+        else:
+            self.entrypoint_file = None
+        self._refresh_entrypoint_marker()
+
+    def set_entrypoint_from_item(self, item) -> None:
+        """Définit le point d'entrée à partir d'un item de la liste."""
+        if item is None:
+            return
+        rel_path = item.text()
+        self.set_entrypoint(rel_path)
+
+    def set_entrypoint(self, rel_path: str) -> None:
+        """Définit et sauvegarde le point d'entrée dans la config ARK."""
+        workspace_dir = getattr(self, "workspace_dir", None)
+        if not workspace_dir or not rel_path:
+            return
+        abs_path = os.path.join(workspace_dir, rel_path)
+        if not os.path.isfile(abs_path):
+            self.log_i18n(
+                f"⚠️ Point d'entrée introuvable: {abs_path}",
+                f"⚠️ Entrypoint not found: {abs_path}",
+            )
+            return
+        try:
+            from .ArkConfigManager import set_entrypoint
+
+            ok = set_entrypoint(workspace_dir, rel_path)
+        except Exception:
+            ok = False
+        if ok:
+            self._entrypoint_relpath = rel_path
+            self.entrypoint_file = abs_path
+            self._refresh_entrypoint_marker()
+            self.log_i18n(
+                f"✅ Point d'entrée défini : {rel_path}",
+                f"✅ Entrypoint set: {rel_path}",
+            )
+        else:
+            self.log_i18n(
+                "❌ Impossible de sauvegarder le point d'entrée.",
+                "❌ Unable to save entrypoint.",
+            )
+
+    def clear_entrypoint(self) -> None:
+        """Efface le point d'entrée et met à jour la configuration."""
+        workspace_dir = getattr(self, "workspace_dir", None)
+        if not workspace_dir:
+            return
+        try:
+            from .ArkConfigManager import set_entrypoint
+
+            ok = set_entrypoint(workspace_dir, None)
+        except Exception:
+            ok = False
+        if ok:
+            self._entrypoint_relpath = None
+            self.entrypoint_file = None
+            self._refresh_entrypoint_marker()
+            self.log_i18n(
+                "✅ Point d'entrée effacé.",
+                "✅ Entrypoint cleared.",
+            )
+        else:
+            self.log_i18n(
+                "❌ Impossible d'effacer le point d'entrée.",
+                "❌ Unable to clear entrypoint.",
+            )
 
     # =========================================================================
     # EXPORT/IMPORT CONFIGURATION
@@ -320,6 +482,11 @@ class UiFeatures:
                 self.btn_show_stats.setEnabled(enabled)
         except Exception:
             pass
+        try:
+            if hasattr(self, "btn_clear_workspace") and self.btn_clear_workspace:
+                self.btn_clear_workspace.setEnabled(enabled)
+        except Exception:
+            pass
         self.venv_button.setEnabled(enabled)
 
         # Rafraîchir visuellement l'état grisé
@@ -340,6 +507,7 @@ class UiFeatures:
                 getattr(self, "select_lang", None),
                 getattr(self, "select_theme", None),
                 getattr(self, "btn_show_stats", None),
+                getattr(self, "btn_clear_workspace", None),
                 getattr(self, "venv_button", None),
             ]
             for w in grey_targets:
@@ -371,9 +539,17 @@ class UiFeatures:
 
     def show_statistics(self) -> None:
         """Affiche les statistiques de compilation."""
-        import psutil
+        try:
+            import psutil
+        except Exception:
+            psutil = None
 
-        if not hasattr(self, "_compilation_times") or not self._compilation_times:
+        stats = getattr(self, "_compilation_stats", None)
+        use_new = isinstance(stats, dict) and stats.get("total_count", 0) > 0
+
+        if not use_new and (
+            not hasattr(self, "_compilation_times") or not self._compilation_times
+        ):
             QMessageBox.information(
                 self,
                 self.tr("Statistiques", "Statistics"),
@@ -383,18 +559,115 @@ class UiFeatures:
                 ),
             )
             return
-        total_files = len(self._compilation_times)
-        total_time = sum(self._compilation_times.values())
-        avg_time = total_time / total_files if total_files else 0
-        try:
-            mem_info = psutil.Process().memory_info().rss / (1024 * 1024)
-        except Exception:
-            mem_info = None
+
+        if use_new:
+            total_compiles = int(stats.get("total_count", 0))
+            total_time = float(stats.get("total_time", 0.0))
+            avg_time = total_time / total_compiles if total_compiles else 0.0
+            total_files = len(stats.get("files", {}))
+            success = int(stats.get("success", 0))
+            failed = int(stats.get("failed", 0))
+            canceled = int(stats.get("canceled", 0))
+            min_time = stats.get("min_time")
+            max_time = stats.get("max_time")
+            last_file = stats.get("last_file")
+            last_duration = stats.get("last_duration")
+            engines = stats.get("engines", {})
+            slowest_file = None
+            slowest_time = None
+            for path, fstats in stats.get("files", {}).items():
+                if not isinstance(fstats, dict):
+                    continue
+                candidate = fstats.get("max_time")
+                if candidate is None:
+                    candidate = fstats.get("last_time")
+                if candidate is None:
+                    continue
+                if slowest_time is None or float(candidate) > float(slowest_time):
+                    slowest_time = float(candidate)
+                    slowest_file = path
+            slowest_files = []
+            for path, fstats in stats.get("files", {}).items():
+                if not isinstance(fstats, dict):
+                    continue
+                candidate = fstats.get("max_time")
+                if candidate is None:
+                    candidate = fstats.get("last_time")
+                if candidate is None:
+                    continue
+                slowest_files.append((path, float(candidate)))
+            slowest_files.sort(key=lambda item: item[1], reverse=True)
+        else:
+            total_files = len(self._compilation_times)
+            total_time = sum(self._compilation_times.values())
+            avg_time = total_time / total_files if total_files else 0
+            total_compiles = total_files
+            success = total_files
+            failed = 0
+            canceled = 0
+            min_time = min(self._compilation_times.values()) if total_files else None
+            max_time = max(self._compilation_times.values()) if total_files else None
+            last_file = None
+            last_duration = None
+            engines = {}
+            slowest_file = None
+            slowest_time = max_time
+            if total_files:
+                slowest_file = max(self._compilation_times, key=self._compilation_times.get)
+            slowest_files = [
+                (path, float(duration))
+                for path, duration in self._compilation_times.items()
+            ]
+            slowest_files.sort(key=lambda item: item[1], reverse=True)
+
+        mem_info = None
+        if psutil is not None:
+            try:
+                mem_info = psutil.Process().memory_info().rss / (1024 * 1024)
+            except Exception:
+                mem_info = None
         msg = "<b>Statistiques de compilation</b><br>"
-        msg += f"Fichiers compilés : {total_files}<br>"
-        msg += f"Temps total : {total_time:.2f} secondes<br>"
-        msg += f"Temps moyen par fichier : {avg_time:.2f} secondes<br>"
-        if mem_info:
+        msg += f"Fichiers distincts : {total_files}<br>"
+        msg += f"Compilations totales : {total_compiles}<br>"
+        msg += f"Succès : {success} | Échecs : {failed} | Annulées : {canceled}<br>"
+        msg += f"Temps total : {total_time:.3f} secondes<br>"
+        msg += f"Temps moyen : {avg_time:.3f} secondes<br>"
+        if min_time is not None and max_time is not None:
+            msg += (
+                f"Temps min/max : {float(min_time):.3f} / {float(max_time):.3f} secondes<br>"
+            )
+        if slowest_file and slowest_time is not None:
+            msg += (
+                f"Fichier le plus lent : {os.path.basename(str(slowest_file))}"
+                f" ({float(slowest_time):.3f} secondes)<br>"
+            )
+        if slowest_files:
+            top_n = slowest_files[:5]
+            msg += "Top 5 fichiers les plus lents :<br>"
+            for path, duration in top_n:
+                msg += (
+                    f"- {os.path.basename(str(path))} ({float(duration):.3f} secondes)<br>"
+                )
+        if isinstance(engines, dict) and engines:
+            msg += "Par moteur :<br>"
+            for engine_id, estats in engines.items():
+                if not isinstance(estats, dict):
+                    continue
+                eng_count = int(estats.get("count", 0))
+                eng_total = float(estats.get("total_time", 0.0))
+                eng_avg = eng_total / eng_count if eng_count else 0.0
+                eng_success = int(estats.get("success", 0))
+                eng_failed = int(estats.get("failed", 0))
+                eng_canceled = int(estats.get("canceled", 0))
+                msg += (
+                    f"- {engine_id} : {eng_count} compiles | "
+                    f"{eng_success} OK / {eng_failed} KO / {eng_canceled} ann. | "
+                    f"{eng_avg:.3f}s moy<br>"
+                )
+        if last_file and last_duration is not None:
+            msg += f"Dernier fichier : {os.path.basename(str(last_file))}<br>"
+            msg += f"Dernière durée : {float(last_duration):.3f} secondes<br>"
+        if mem_info is not None:
             msg += f"Mémoire utilisée (processus GUI) : {mem_info:.1f} Mo<br>"
         QMessageBox.information(
             self, self.tr("Statistiques de compilation", "Build statistics"), msg
@@ -406,54 +679,9 @@ class UiFeatures:
 
     def apply_language(self, lang_display: str) -> None:
         """Applique la langue sélectionnée."""
-        from .i18n import get_translations, normalize_lang_pref, resolve_system_language
-        from .Globals import _run_coro_async
+        from .i18n import apply_language as _i18n_apply_language
 
-        async def _do():
-            code = (
-                await resolve_system_language()
-                if lang_display == "System"
-                else await normalize_lang_pref(lang_display)
-            )
-            tr = await get_translations(code)
-            return code, tr
-
-        def _on_result(res):
-            if isinstance(res, Exception):
-                return
-            code, tr = res
-            self._apply_main_app_translations(tr)
-            # Notifier les moteurs pour rafraîchir leurs libellés
-            try:
-                for cb in getattr(self, "_language_refresh_callbacks", []) or []:
-                    try:
-                        cb()
-                    except Exception:
-                        pass
-                try:
-                    import EngineLoader as engines_loader
-
-                    engines_loader.registry.apply_translations(self, tr)
-                except Exception:
-                    pass
-            except Exception:
-                pass
-            meta = tr.get("_meta", {})
-            self.current_language = meta.get("name", lang_display)
-            self.language = lang_display
-            try:
-                self.save_preferences()
-            except Exception:
-                pass
-            try:
-                self.log_i18n(
-                    f"🌐 Langue appliquée : {self.current_language}",
-                    f"🌐 Language applied: {self.current_language}",
-                )
-            except Exception:
-                pass
-
-        _run_coro_async(_do(), _on_result, ui_owner=self)
+        _i18n_apply_language(self, lang_display)
 
     def register_language_refresh(self, callback: Callable) -> None:
         """Enregistre un callback pour le rafraîchissement de langue."""

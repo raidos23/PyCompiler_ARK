@@ -133,7 +133,7 @@ class TestVersionAggregation:
         """Test getting formatted version string"""
         version_str = get_version_string()
         assert isinstance(version_str, str)
-        assert "PyCompiler ARK++" in version_str
+        assert "PyCompiler ARK" in version_str
         assert "Core" in version_str or "core" in version_str.lower()
 
 

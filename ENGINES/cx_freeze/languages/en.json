@@ -4,11 +4,14 @@
     "name": "English"
   },
   "tab_label": "CX_Freeze",
-  "mode_label": "Mode:",
-  "onefile_checkbox": "Onefile",
   "console_label": "Console:",
-  "windowed_checkbox": "Windowed",
-  "icon_button": "🎨 Choose icon (.ico)",
+  "windowed_checkbox": "No console",
+  "icon_button": "Choose icon (.ico)",
   "output_placeholder": "Output directory",
+  "target_name_placeholder": "Output name (--target-name)",
+  "debug_checkbox": "Debug",
+  "tt_debug": "Enable debug output.",
+  "verbose_checkbox": "Verbose",
+  "tt_verbose": "Enable verbose output.",
   "tt_windowed": "Disable the console window."
 }

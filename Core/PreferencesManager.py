@@ -14,7 +14,7 @@
 # limitations under the License.
 
 """
-Gestion des préférences utilisateur pour PyCompiler ARK++.
+Gestion des préférences utilisateur pour PyCompiler ARK.
 Inclut la sauvegarde et le chargement des préférences.
 La langue sélectionnée par l'utilisateur (clé "language") est enregistrée et restaurée automatiquement.
 """

@@ -39,8 +39,8 @@ QPushButton {
   background: #232c3b;
   color: #eef2f8;
   border: 1px solid rgba(255,255,255,0.14);
-  border-radius: 12px;
-  padding: 9px 16px;
+  border-radius: 10px;
+  padding: 8px 14px;
   font-weight: 600;
   letter-spacing: 0.15px;
 }
@@ -153,6 +153,7 @@ QTreeView::item:hover, QListWidget::item:hover, QTableView::item:hover { backgro
 
 /* ===== Tabs (underline indicator) ===== */
 QTabWidget::pane { border: 1px solid rgba(255,255,255,0.14); border-radius: 12px; background: #1b2332; padding: 8px; }
+QTabBar { background: #1b2332; }
 QTabBar::tab {
   background: transparent;
   border: none;
@@ -438,3 +439,10 @@ QHeaderView::up-arrow, QHeaderView::down-arrow { width: 10px; height: 10px; marg
 /* Scrollbar page areas */
 QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical,
 QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal { background: transparent; }
+
+/* === Theme polish === */
+QProgressBar::chunk {
+  background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #4aa8ff, stop:1 #6bb6ff);
+  border-radius: 8px;
+  margin: 1px;
+}

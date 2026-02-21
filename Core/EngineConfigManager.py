@@ -43,11 +43,15 @@ def _safe_engine_id(engine_id: str) -> str:
 
 
 def _engine_config_dir(workspace_dir: str, engine_id: str) -> str:
-    return os.path.join(workspace_dir, ENGINE_CONFIG_DIRNAME, _safe_engine_id(engine_id))
+    return os.path.join(
+        workspace_dir, ENGINE_CONFIG_DIRNAME, _safe_engine_id(engine_id)
+    )
 
 
 def _engine_config_path(workspace_dir: str, engine_id: str) -> str:
-    return os.path.join(_engine_config_dir(workspace_dir, engine_id), ENGINE_CONFIG_BASENAME)
+    return os.path.join(
+        _engine_config_dir(workspace_dir, engine_id), ENGINE_CONFIG_BASENAME
+    )
 
 
 def _atomic_write_json(path: str, data: dict) -> None:

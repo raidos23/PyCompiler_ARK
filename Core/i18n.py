@@ -21,54 +21,76 @@ import locale
 import os
 from typing import Any
 
+from engine_sdk.utils import log_i18n_level
+
 # Built-in fallback for English if language files are missing
 FALLBACK_EN: dict[str, Any] = {
     "name": "English",
     "code": "en",
     "_meta": {"code": "en", "name": "English"},
-    "select_folder": "📁 Workspace",
-    "select_files": "📋 Files",
-    "build_all": "🚀 Build",
-    "export_config": "💾 Export config",
-    "import_config": "📥 Import config",
-    "cancel_all": "⛔ Cancel",
-    "suggest_deps": "🔎 Analyze dependencies",
-    "help": "❓ Help",
+    "select_folder": "Choose workspace",
+    "select_files": "Add files",
+    "build_all": "Compile",
+    "export_config": "Export config",
+    "import_config": "Import config",
+    "cancel_all": "Cancel",
+    "suggest_deps": "Dependencies",
+    "help": "Help",
     "help_title": "Help",
-    "help_text": "<b>PyCompiler ARK++ — Quick Help</b><br><ul><li>1) Select the Workspace and add your .py files.</li><li>2) Configure pre‑compile plugins via <b>Bc Plugins Loader</b> (BCASL).</li><li>3) Configure options in the <b>PyInstaller</b>, <b>Nuitka</b> or <b>CX_Freeze</b> tab.</li><li>4) Click <b>Build</b> and follow the logs.</li></ul><b>Notes</b><br><ul><li>When a build starts, all action controls are disabled (including Bc Plugins Loader) until it finishes or is canceled.</li><li>Pre‑compilation (BCASL) completes before compilation.</li><li>A <i>venv</i> can be created automatically; requirements.txt is installed if present; tools are installed into the venv as needed.</li><li>Plugins‑initiated workspace changes are auto‑applied; running builds are canceled before switching.</li></ul><b>License</b>: Apache-2.0 — <a href='https://www.apache.org/licenses/LICENSE-2.0'>apache.org/licenses/LICENSE-2.0</a><br><b>Author</b>: Ague Samuel Amen<br>© 2026 Ague Samuel Amen",
-    "show_stats": "📊 Statistics",
-    "select_lang": "Choose language",
-    "venv_button": "Choose venv folder manually",
-    "label_workspace_section": "1. Select workspace folder",
-    "venv_label": "venv selected: None",
+    "help_text": "<b>PyCompiler ARK — Quick Help</b><br><ul><li>1) Select the Workspace and add your .py files.</li><li>2) Configure pre‑compile plugins via <b>Bc Plugins Loader</b> (BCASL).</li><li>3) Configure options in the <b>PyInstaller</b>, <b>Nuitka</b> or <b>CX_Freeze</b> tab.</li><li>4) Click <b>Build</b> and follow the logs.</li></ul><b>Notes</b><br><ul><li>When a build starts, all action controls are disabled (including Bc Plugins Loader) until it finishes or is canceled.</li><li>Pre‑compilation (BCASL) completes before compilation.</li><li>A <i>venv</i> can be created automatically; requirements.txt is installed if present; tools are installed into the venv as needed.</li><li>Plugins‑initiated workspace changes are auto‑applied; running builds are canceled before switching.</li></ul><b>License</b>: Apache-2.0 — <a href='https://www.apache.org/licenses/LICENSE-2.0'>apache.org/licenses/LICENSE-2.0</a><br><b>Author</b>: Ague Samuel Amen<br>© 2026 Ague Samuel Amen",
+    "show_stats": "Statistics",
+    "select_lang": "Language",
+    "venv_button": "Choose venv folder",
+    "label_workspace_section": "Workspace",
+    "venv_label": "Venv selected: None",
+    "venv_label_system": "Venv selected: System Python",
     "label_folder": "No folder selected",
-    "label_files_section": "2. Files to build",
-    "btn_remove_file": "🗑️ Remove selected file",
-    "label_logs_section": "Build logs",
+    "label_files_section": "Files to compile",
+    "btn_remove_file": "Remove selected file",
+    "label_logs_section": "Compilation log",
+    "msg_venv_choice_title": "Venv setup",
+    "msg_venv_choice_text": "Create a venv automatically or select a venv (System Python included).",
+    "msg_no_workspace_title": "Workspace missing",
+    "msg_no_workspace_text": "Select a Workspace to continue.",
+    "msg_no_files_title": "No files to compile",
+    "msg_no_files_text": "Add files or choose a Workspace.",
+    "msg_no_workspace_or_venv_title": "Workspace or venv missing",
+    "msg_no_workspace_or_venv_text": "Select a Workspace or a Venv to analyze dependencies.",
+    "msg_invalid_venv_title": "Invalid Venv",
+    "msg_invalid_venv_text": "The selected folder is not a valid venv. Retry or create a venv?",
+    "action_select_workspace": "Select Workspace",
+    "action_add_files": "Add files",
+    "action_select_venv": "Select Venv",
+    "action_create_venv": "Create venv",
+    "action_retry": "Retry",
+    "action_cancel": "Cancel",
+    "label_tools": "Tools",
+    "label_options_section": "Compilation options",
+    "label_progress": "Compilation progress",
     "label_workspace_status": "Workspace: {path}",
     "label_workspace_status_none": "Workspace: None",
     "file_filter_placeholder": "Filter list…",
-    "btn_clear_workspace": "🧹 Clear workspace",
+    "btn_clear_workspace": "Clear workspace",
     "choose_language_title": "Choose language",
     "choose_language_label": "Language:",
     "choose_language_system": "System",
-    "choose_language_system_button": "Choose language (System)",
-    "choose_language_button": "Choose language",
-    "select_theme": "Choose theme",
-    "choose_theme_button": "Choose theme",
-    "choose_theme_system_button": "Choose theme (System)",
-    "tt_select_folder": "Select the workspace directory containing your Python files.",
-    "tt_select_files": "Add Python files manually to the build list.",
-    "tt_build_all": "Start building all selected files.",
+    "choose_language_system_button": "Language (System)",
+    "choose_language_button": "Language",
+    "select_theme": "Theme",
+    "choose_theme_button": "Theme",
+    "choose_theme_system_button": "Theme (System)",
+    "tt_select_folder": "Select the workspace folder.",
+    "tt_select_files": "Add files to compile.",
+    "tt_build_all": "Start compilation.",
     "tt_export_config": "Export the current configuration to a JSON file.",
     "tt_import_config": "Import a configuration from a JSON file.",
-    "tt_cancel_all": "Cancel all ongoing builds.",
+    "tt_cancel_all": "Cancel the current compilation.",
     "tt_remove_file": "Remove the selected file(s) from the list.",
-    "tt_help": "Open help and information about the software.",
-    "tt_bc_loader": "Configure Plugins (BCASL) plugins to run before compilation.",
+    "tt_help": "Show help.",
+    "tt_bc_loader": "Open BC Plugins Loader.",
     "tt_venv_button": "Manually select a venv directory to use for compilation.",
-    "tt_suggest_deps": "Analyze the project for missing Python dependencies.",
-    "tt_show_stats": "Show build statistics (time, number of files, memory).",
+    "tt_suggest_deps": "Analyze project dependencies.",
+    "tt_show_stats": "Show compilation statistics.",
     "tt_clear_workspace": "Clear the file list and reset the selection.",
 }
 
@@ -98,7 +120,15 @@ def _languages_dir() -> str:
 # Normalization helper must be pure (no I/O or system lookups)
 # Leave "System" unresolved; callers must resolve system language asynchronously when needed.
 async def normalize_lang_pref(pref: str | None) -> str:
-    if not pref or pref == "System":
+    if pref is None:
+        return "System"
+    try:
+        pref = str(pref).strip()
+    except Exception:
+        return "System"
+    if not pref:
+        return "System"
+    if pref.lower() in ("system", "auto", "default"):
         return "System"
     pref_l = pref.lower()
     if pref_l in ("english", "en"):
@@ -120,15 +150,80 @@ def _resolve_system_language_sync() -> str:
         return "en"
 
 
-def _load_language_file_sync(code: str) -> dict[str, Any] | None:
-    fpath = os.path.join(_languages_dir(), f"{code}.json")
-    if not os.path.isfile(fpath):
-        return None
+def _load_language_file_sync(code: str) -> tuple[str | None, dict[str, Any] | None]:
+    """Load a language JSON file with flexible code matching.
+
+    Returns (resolved_code, data) or (None, None) if not found/invalid.
+    """
     try:
-        with open(fpath, encoding="utf-8") as f:
-            return json.load(f)
+        raw = str(code or "").strip()
     except Exception:
-        return None
+        raw = ""
+    if not raw:
+        return None, None
+
+    lang_dir = _languages_dir()
+    if not os.path.isdir(lang_dir):
+        return None, None
+
+    candidates: list[str] = []
+
+    def _add(candidate: str) -> None:
+        try:
+            cand = str(candidate).strip()
+        except Exception:
+            return
+        if cand and cand not in candidates:
+            candidates.append(cand)
+
+    # Original and common separator variants
+    _add(raw)
+    _add(raw.replace("_", "-"))
+    _add(raw.replace("-", "_"))
+
+    # Case normalization for locale-like codes (pt-BR, zh-CN, en-US, ...)
+    try:
+        norm = raw.replace("_", "-")
+        parts = [p for p in norm.split("-") if p]
+        if len(parts) >= 2:
+            _add(f"{parts[0].lower()}-{parts[1].upper()}")
+    except Exception:
+        pass
+
+    # Base language (e.g., fr_FR -> fr)
+    try:
+        base = raw.replace("_", "-").split("-")[0]
+        _add(base)
+    except Exception:
+        pass
+
+    # Try direct file matches first
+    for cand in candidates:
+        fpath = os.path.join(lang_dir, f"{cand}.json")
+        if os.path.isfile(fpath):
+            try:
+                with open(fpath, encoding="utf-8") as f:
+                    return os.path.splitext(os.path.basename(fpath))[0], json.load(f)
+            except Exception:
+                return None, None
+
+    # Case-insensitive fallback
+    try:
+        files = [f for f in os.listdir(lang_dir) if f.endswith(".json")]
+        lower_map = {f.lower(): f for f in files}
+        for cand in candidates:
+            target = f"{cand}.json".lower()
+            if target in lower_map:
+                fpath = os.path.join(lang_dir, lower_map[target])
+                try:
+                    with open(fpath, encoding="utf-8") as f:
+                        return os.path.splitext(os.path.basename(fpath))[0], json.load(f)
+                except Exception:
+                    return None, None
+    except Exception:
+        pass
+
+    return None, None
 
 
 def _available_languages_sync() -> list[dict[str, str]]:
@@ -175,6 +270,31 @@ def _available_languages_sync() -> list[dict[str, str]]:
             {"code": FALLBACK_EN["_meta"]["code"], "name": FALLBACK_EN["_meta"]["name"]}
         ]
     return langs
+
+
+def _merge_translations(
+    base: dict[str, Any], override: dict[str, Any] | None, code: str
+) -> dict[str, Any]:
+    """Merge translations with robust fallbacks.
+
+    - Keep all keys from base (English).
+    - Override with non-empty string values from override.
+    - Preserve override metadata when valid.
+    """
+    merged: dict[str, Any] = dict(base) if isinstance(base, dict) else {}
+
+    if isinstance(override, dict):
+        for key, val in override.items():
+            if key == "_meta":
+                continue
+            if isinstance(val, str) and val.strip():
+                merged[key] = val
+        # Preserve metadata if provided
+        if isinstance(override.get("_meta"), dict):
+            merged["_meta"] = dict(override.get("_meta", {}))
+
+    # Ensure metadata is normalized and consistent
+    return _normalize_translation_meta(merged, code)
 
 
 # Public async Plugins with real-time caching and error handling
@@ -224,21 +344,25 @@ async def get_translations(lang_pref: str | None) -> dict[str, Any]:
         if code in _TRANSLATION_CACHE:
             return _TRANSLATION_CACHE[code]
 
-        # Charger depuis le disque en thread pool
-        data = await asyncio.to_thread(_load_language_file_sync, code)
+        # Charger depuis le disque en thread pool (avec résolution flexible)
+        resolved_code, data = await asyncio.to_thread(_load_language_file_sync, code)
 
-        # Valider les données
-        if not isinstance(data, dict) or not data:
-            data = FALLBACK_EN.copy()
+        # Si un code résolu différent est déjà en cache, le réutiliser
+        if resolved_code and resolved_code in _TRANSLATION_CACHE:
+            return _TRANSLATION_CACHE[resolved_code]
 
-        # Normaliser les métadonnées
-        data = _normalize_translation_meta(data, code)
+        # Merge robuste avec fallback anglais
+        merged = _merge_translations(
+            FALLBACK_EN, data if isinstance(data, dict) else None, resolved_code or code
+        )
 
-        # Mettre en cache de manière thread-safe
+        # Mettre en cache de manière thread-safe (code demandé + code résolu)
         async with _CACHE_LOCK:
-            _TRANSLATION_CACHE[code] = data
+            _TRANSLATION_CACHE[code] = merged
+            if resolved_code:
+                _TRANSLATION_CACHE[resolved_code] = merged
 
-        return data
+        return merged
 
     except Exception:
         # Fallback ultime: retourner l'anglais avec métadonnées normalisées
@@ -337,6 +461,136 @@ def get_current_language_sync() -> str:
         return "en"
 
 
+def _is_french_token(value: object | None) -> bool:
+    try:
+        if value is None:
+            return False
+        val = str(value).strip().lower()
+    except Exception:
+        return False
+    if not val:
+        return False
+    if val in ("fr", "français", "francais", "french"):
+        return True
+    return val.startswith("fr-") or val.startswith("fr_") or val.startswith("fr")
+
+
+def is_french_language(gui: object | None = None) -> bool:
+    """Return True if the effective language is French; otherwise False.
+
+    Rule enforced: French only when explicitly selected (or system language is French).
+    Any other language must fall back to English.
+    """
+    try:
+        if gui is not None:
+            for attr in ("language_pref", "language"):
+                try:
+                    pref = getattr(gui, attr, None)
+                except Exception:
+                    pref = None
+                if pref is None:
+                    continue
+                try:
+                    pref_s = str(pref).strip()
+                except Exception:
+                    pref_s = ""
+                if not pref_s:
+                    continue
+                if pref_s.lower() in ("system", "auto", "default"):
+                    try:
+                        return _is_french_token(get_current_language_sync())
+                    except Exception:
+                        return False
+                return _is_french_token(pref_s)
+
+            try:
+                tr = getattr(gui, "_tr", None)
+                if isinstance(tr, dict):
+                    meta = tr.get("_meta", {})
+                    if isinstance(meta, dict):
+                        if _is_french_token(meta.get("code")):
+                            return True
+                        if _is_french_token(meta.get("name")):
+                            return True
+            except Exception:
+                pass
+
+            try:
+                cur = getattr(gui, "current_language", None)
+                if _is_french_token(cur):
+                    return True
+            except Exception:
+                pass
+        return _is_french_token(get_current_language_sync())
+    except Exception:
+        return False
+
+
+def tr_fr_en(gui: object | None, fr: str, en: str) -> str:
+    """Force FR/EN rule: French only if language is French, else English."""
+    try:
+        return fr if is_french_language(gui) else en
+    except Exception:
+        return en
+
+
+def apply_language(self, lang_display: str) -> None:
+    """Applique la langue sélectionnée (centralisé)."""
+    from .Globals import _run_coro_async
+
+    async def _do():
+        code = (
+            await resolve_system_language()
+            if lang_display == "System"
+            else await normalize_lang_pref(lang_display)
+        )
+        tr = await get_translations(code)
+        return code, tr
+
+    def _on_result(res):
+        if isinstance(res, Exception):
+            return
+        code, tr = res
+        _apply_main_app_translations(self, tr)
+        try:
+            setattr(self, "_tr", tr)
+        except Exception:
+            pass
+        # Notifier les moteurs pour rafraîchir leurs libellés
+        try:
+            for cb in getattr(self, "_language_refresh_callbacks", []) or []:
+                try:
+                    cb()
+                except Exception:
+                    pass
+            try:
+                import EngineLoader as engines_loader
+
+                engines_loader.registry.apply_translations(self, tr)
+            except Exception:
+                pass
+        except Exception:
+            pass
+        meta = tr.get("_meta", {})
+        self.current_language = meta.get("name", lang_display)
+        self.language = lang_display
+        try:
+            self.save_preferences()
+        except Exception:
+            pass
+        try:
+            log_i18n_level(
+                self,
+                "info",
+                f"Langue appliquée : {self.current_language}",
+                f"Language applied: {self.current_language}",
+            )
+        except Exception:
+            pass
+
+    _run_coro_async(_do(), _on_result, ui_owner=self)
+
+
 # PyCompiler ARK main GUI translation - FUSED VERSION
 def _apply_main_app_translations(self, tr: dict[str, object]) -> None:
     """Apply translations to main app UI elements.
@@ -418,10 +672,28 @@ def _apply_main_app_translations(self, tr: dict[str, object]) -> None:
 
         # === LABELS ===
         _set("label_workspace_section", "label_workspace_section")
-        _set("venv_label", "venv_label")
+        if getattr(self, "use_system_python", False) and getattr(self, "venv_label", None):
+            val = tr.get("venv_label_system") if isinstance(tr, dict) else None
+            if not val:
+                try:
+                    val = self.tr(
+                        "Venv sélectionné : Python système",
+                        "Venv selected: System Python",
+                    )
+                except Exception:
+                    val = "Venv selected: System Python"
+            try:
+                self.venv_label.setText(val)
+            except Exception:
+                pass
+        else:
+            _set("venv_label", "venv_label")
         _set("label_folder", "label_folder")
         _set("label_files_section", "label_files_section")
+        _set("label_tools", "label_tools")
+        _set("label_options_section", "label_options_section")
         _set("label_logs_section", "label_logs_section")
+        _set("label_progress", "label_progress")
 
         # Workspace status label (dynamic path if available)
         if getattr(self, "label_workspace_status", None):
@@ -641,8 +913,8 @@ def show_language_dialog(self):
                 start_index = 0
     except Exception:
         start_index = 0
-    title = "Choisir la langue"
-    label = "Langue :"
+    title = tr_fr_en(self, "Choisir la langue", "Choose language")
+    label = tr_fr_en(self, "Langue :", "Language:")
     choice, ok = QInputDialog.getItem(self, title, label, options, start_index, False)
     if ok and choice:
         lang_pref = (
@@ -690,14 +962,31 @@ def show_language_dialog(self):
                     self.save_preferences()
             except Exception:
                 pass
-            if hasattr(self, "log") and self.log:
-                meta = tr.get("_meta", {}) if isinstance(tr, dict) else {}
-                self.log.append(
-                    f"Langue appliquée: {getattr(meta, 'get', lambda k, d=None: d)('name', lang_pref) if isinstance(meta, dict) else lang_pref}"
-                )
+            meta = tr.get("_meta", {}) if isinstance(tr, dict) else {}
+            lang_name = (
+                meta.get("name", lang_pref) if isinstance(meta, dict) else lang_pref
+            )
+            try:
+                self.current_language = lang_name
+            except Exception:
+                pass
+            log_i18n_level(
+                self,
+                "info",
+                f"Langue appliquée: {lang_name}",
+                f"Language applied: {lang_name}",
+            )
         except Exception as e:
-            if hasattr(self, "log") and self.log:
-                self.log.append(f"⚠️ Échec application de la langue: {e}")
+            log_i18n_level(
+                self,
+                "warning",
+                f"Échec application de la langue: {e}",
+                f"Failed to apply language: {e}",
+            )
     else:
-        if hasattr(self, "log") and self.log:
-            self.log.append("Sélection de la langue annulée.")
+        log_i18n_level(
+            self,
+            "info",
+            "Sélection de la langue annulée.",
+            "Language selection cancelled.",
+        )

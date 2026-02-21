@@ -15,7 +15,7 @@
 # limitations under the License.
 
 """
-PyCompiler ARK++ — Cross-platform hardened bootstrap with Intelligent CLI Entry Point
+PyCompiler ARK — Cross-platform hardened bootstrap with Intelligent CLI Entry Point
 
 Features:
     - OS-specific environment safety (UTF-8, DPI, Wayland/macOS)
@@ -28,7 +28,6 @@ Features:
     - BCASL standalone module with autocompletion
     - Engines standalone module for compilation engine management
     - Help and version information
-    - Workspace discovery and validation
     - Environment detection
     - Shell completion support
 
@@ -52,7 +51,6 @@ import platform
 import signal
 import sys
 import traceback
-import json
 from pathlib import Path
 from typing import Optional, List, Dict, Any
 import logging
@@ -214,7 +212,7 @@ from PySide6.QtWidgets import QApplication, QSplashScreen
 try:
     QCoreApplication.setOrganizationName("raidos23")
     QCoreApplication.setOrganizationDomain("pycompiler.local")
-    QCoreApplication.setApplicationName("PyCompiler ARK++")
+    QCoreApplication.setApplicationName("PyCompiler ARK")
     QCoreApplication.setApplicationVersion(APP_VERSION)
 except Exception:
     pass
@@ -224,8 +222,8 @@ def _get_app_icon_path() -> Optional[str]:
     """Return the best available application icon path (non-GUI usage)."""
     try:
         candidates = [
-            os.path.join(ROOT_DIR, "logo", "image-6.png"),
-            os.path.join(ROOT_DIR, "logo", "image-6.png"),
+            os.path.join(ROOT_DIR, "logo", "logo.png"),
+            os.path.join(ROOT_DIR, "logo", "logo.png"),
         ]
         for path in candidates:
             if os.path.isfile(path):
@@ -239,7 +237,7 @@ def _get_window_icon_path() -> Optional[str]:
     """Return the best available window icon path (GUI usage)."""
     try:
         candidates = [
-            os.path.join(ROOT_DIR, "logo", "image-6.png"),
+            os.path.join(ROOT_DIR, "logo", "logo.png"),
             os.path.join(ROOT_DIR, "logo", "logo.png"),
         ]
         for path in candidates:
@@ -375,115 +373,6 @@ if IS_WINDOWS and hasattr(signal, "SIGBREAK"):
         pass
 
 
-class WorkspaceManager:
-    """Intelligent workspace management with discovery and validation."""
-
-    WORKSPACE_MARKERS = [
-        "bcasl.yml",
-        ".bcasl.yml",
-        "ARK_Main_Config.yml",
-        "pyproject.toml",
-        "setup.py",
-        "requirements.txt",
-        "main.py",
-        "app.py",
-    ]
-
-    @staticmethod
-    def discover_workspaces(
-        start_path: Optional[str] = None, max_depth: int = 3
-    ) -> List[Path]:
-        """Discover potential workspaces by looking for markers."""
-        workspaces = []
-        start = Path(start_path or os.getcwd()).resolve()
-
-        try:
-            for depth in range(max_depth):
-                if depth == 0:
-                    search_path = start
-                else:
-                    search_path = start.parent
-                    for _ in range(depth - 1):
-                        search_path = search_path.parent
-
-                if not search_path.exists():
-                    break
-
-                for marker in WorkspaceManager.WORKSPACE_MARKERS:
-                    if (search_path / marker).exists():
-                        if search_path not in workspaces:
-                            workspaces.append(search_path)
-                        break
-        except Exception as e:
-            logger.debug(f"Error discovering workspaces: {e}")
-
-        return workspaces
-
-    @staticmethod
-    def validate_workspace(workspace_dir: str) -> tuple[bool, str]:
-        """Validate workspace directory."""
-        try:
-            path = Path(workspace_dir).resolve()
-
-            if not path.exists():
-                return False, f"Workspace does not exist: {workspace_dir}"
-
-            if not path.is_dir():
-                return False, f"Path is not a directory: {workspace_dir}"
-
-            # Check for workspace markers
-            has_marker = any(
-                (path / marker).exists()
-                for marker in WorkspaceManager.WORKSPACE_MARKERS
-            )
-
-            if not has_marker:
-                logger.warning(f"No workspace markers found in {workspace_dir}")
-
-            return True, str(path)
-        except Exception as e:
-            return False, str(e)
-
-    @staticmethod
-    def get_recent_workspaces() -> List[Path]:
-        """Get recently used workspaces from config."""
-        try:
-            config_file = Path.home() / ".pycompiler_ark_workspaces"
-            if config_file.exists():
-                with open(config_file, "r") as f:
-                    data = json.load(f)
-                    return [Path(p) for p in data.get("recent", []) if Path(p).exists()]
-        except Exception as e:
-            logger.debug(f"Error loading recent workspaces: {e}")
-        return []
-
-    @staticmethod
-    def save_workspace(workspace_dir: str):
-        """Save workspace to recent list."""
-        try:
-            config_file = Path.home() / ".pycompiler_ark_workspaces"
-            recent = []
-
-            if config_file.exists():
-                with open(config_file, "r") as f:
-                    data = json.load(f)
-                    recent = data.get("recent", [])
-
-            # Add to front and remove duplicates
-            workspace_str = str(Path(workspace_dir).resolve())
-            if workspace_str in recent:
-                recent.remove(workspace_str)
-            recent.insert(0, workspace_str)
-
-            # Keep only last 10
-            recent = recent[:10]
-
-            with open(config_file, "w") as f:
-                json.dump({"recent": recent}, f, indent=2)
-        except Exception as e:
-            logger.debug(f"Error saving workspace: {e}")
-
-
 class PathCompleter:
     """Intelligent path completion for workspaces."""
 
@@ -540,20 +429,15 @@ def launch_bcasl_standalone(workspace_dir: Optional[str] = None) -> int:
         from OnlyMod.BcaslOnlyMod import BcaslStandaloneGui
         from PySide6.QtWidgets import QApplication
 
-        # Validate and resolve workspace
+        # Pass-through workspace path without validation
         if workspace_dir:
-            is_valid, resolved_path = WorkspaceManager.validate_workspace(workspace_dir)
-            if not is_valid:
-                if click:
-                    click.echo(f"❌ {resolved_path}", err=True)
-                else:
-                    print(f"❌ {resolved_path}")
-                return 1
-            workspace_dir = resolved_path
-            WorkspaceManager.save_workspace(workspace_dir)
+            try:
+                workspace_dir = str(Path(workspace_dir).expanduser())
+            except Exception:
+                pass
 
         app = QApplication(sys.argv)
-        app.setApplicationName("PyCompiler ARK++ BCASL")
+        app.setApplicationName("PyCompiler ARK BCASL")
         app.setOrganizationName("raidos23")
         _set_app_icon(app)
         window = BcaslStandaloneGui(workspace_dir=workspace_dir)
@@ -593,20 +477,15 @@ def launch_engines_only_standalone(workspace_dir: Optional[str] = None) -> int:
         from OnlyMod.EngineOnlyMod.gui import EnginesStandaloneGui
         from PySide6.QtWidgets import QApplication
 
-        # Validate and resolve workspace
+        # Pass-through workspace path without validation
         if workspace_dir:
-            is_valid, resolved_path = WorkspaceManager.validate_workspace(workspace_dir)
-            if not is_valid:
-                if click:
-                    click.echo(f"❌ {resolved_path}", err=True)
-                else:
-                    print(f"❌ {resolved_path}")
-                return 1
-            workspace_dir = resolved_path
-            WorkspaceManager.save_workspace(workspace_dir)
+            try:
+                workspace_dir = str(Path(workspace_dir).expanduser())
+            except Exception:
+                pass
 
         app = QApplication(sys.argv)
-        app.setApplicationName("PyCompiler ARK++ Engines")
+        app.setApplicationName("PyCompiler ARK Engines")
         app.setOrganizationName("raidos23")
         _set_app_icon(app)
         window = EnginesStandaloneGui(workspace_dir=workspace_dir)
@@ -636,7 +515,7 @@ def launch_engines_only_standalone(workspace_dir: Optional[str] = None) -> int:
 
 
 def launch_main_application() -> int:
-    """Launch the main PyCompiler ARK++ application.
+    """Launch the main PyCompiler ARK application.
 
     Returns:
         Exit code from main application
@@ -739,11 +618,11 @@ def launch_main_application() -> int:
         except Exception:
             splash = None
         if splash is not None:
-            delay_ms = 3500
+            delay_ms = 4000
             try:
-                delay_ms = int(os.environ.get("PYCOMPILER_SPLASH_DELAY_MS", "3500"))
+                delay_ms = int(os.environ.get("PYCOMPILER_SPLASH_DELAY_MS", "4000"))
             except Exception:
-                delay_ms = 3500
+                delay_ms = 4000
 
             def _launch_main():
                 try:
@@ -775,7 +654,7 @@ def launch_main_application() -> int:
 def print_system_info():
     """Print system information."""
     info = {
-        "Application": "PyCompiler ARK++",
+        "Application": "PyCompiler ARK",
         "Version": APP_VERSION,
         "Python": platform.python_version(),
         "Platform": platform.system(),
@@ -792,33 +671,6 @@ def print_system_info():
             print(f"  {key}: {value}")
 
 
-def print_workspace_info():
-    """Print workspace discovery information."""
-    discovered = WorkspaceManager.discover_workspaces()
-    recent = WorkspaceManager.get_recent_workspaces()
-
-    if click:
-        click.echo("\n📁 Workspace Information:")
-        if discovered:
-            click.echo("  Discovered workspaces:")
-            for ws in discovered[:5]:
-                click.echo(f"    • {ws}")
-        if recent:
-            click.echo("  Recent workspaces:")
-            for ws in recent[:5]:
-                click.echo(f"    • {ws}")
-    else:
-        print("\n📁 Workspace Information:")
-        if discovered:
-            print("  Discovered workspaces:")
-            for ws in discovered[:5]:
-                print(f"    • {ws}")
-        if recent:
-            print("  Recent workspaces:")
-            for ws in recent[:5]:
-                print(f"    • {ws}")
-
-
 # Click CLI setup (if available)
 if click:
 
@@ -828,7 +680,7 @@ if click:
     )
     @click.option("--version", is_flag=True, help="Show version information")
     @click.option("--help-all", is_flag=True, help="Show detailed help with examples")
-    @click.option("--info", is_flag=True, help="Show system and workspace information")
+    @click.option("--info", is_flag=True, help="Show system information")
     @click.option(
         "--completion",
         type=click.Choice(["bash", "zsh", "fish"]),
@@ -842,7 +694,7 @@ if click:
     )
     @click.pass_context
     def cli(ctx, version, help_all, info, completion, unload_engines_flag):
-        """PyCompiler ARK++ — Cross-platform Python compiler with BCASL integration.
+        """PyCompiler ARK — Cross-platform Python compiler with BCASL integration.
 
         Launch the main application by default, or use subcommands for specific modes.
 
@@ -853,16 +705,15 @@ if click:
             python -m pycompiler_ark --info             # Show system info
         """
         if version:
-            click.echo(f"PyCompiler ARK++ v{APP_VERSION}")
+            click.echo(f"PyCompiler ARK v{APP_VERSION}")
             ctx.exit(0)
 
         if info:
             print_system_info()
-            print_workspace_info()
             ctx.exit(0)
 
         if completion:
-            click.echo(f"# {completion.upper()} completion for PyCompiler ARK++")
+            click.echo(f"# {completion.upper()} completion for PyCompiler ARK")
             click.echo("# Add this to your shell configuration file")
             ctx.exit(0)
 
@@ -904,9 +755,7 @@ if click:
             incomplete
         ),
     )
-    @click.option("--discover", is_flag=True, help="Discover workspaces automatically")
-    @click.option("--recent", is_flag=True, help="Use most recent workspace")
-    def bcasl(workspace, discover, recent):
+    def bcasl(workspace):
         """Launch BCASL standalone module for plugin management.
 
         WORKSPACE: Optional path to workspace directory
@@ -915,33 +764,11 @@ if click:
             python -m pycompiler_ark bcasl                  # No workspace
             python -m pycompiler_ark bcasl /path/to/project # With path
             python -m pycompiler_ark bcasl .                # Current directory
-            python -m pycompiler_ark bcasl --discover       # Auto-discover
-            python -m pycompiler_ark bcasl --recent         # Use recent
         """
         workspace_dir = None
 
-        # Handle auto-discovery
-        if discover:
-            discovered = WorkspaceManager.discover_workspaces()
-            if discovered:
-                workspace_dir = str(discovered[0])
-                click.echo(f"✅ Discovered workspace: {workspace_dir}")
-            else:
-                click.echo("❌ No workspaces discovered", err=True)
-                sys.exit(1)
-
-        # Handle recent workspace
-        elif recent:
-            recent_ws = WorkspaceManager.get_recent_workspaces()
-            if recent_ws:
-                workspace_dir = str(recent_ws[0])
-                click.echo(f"✅ Using recent workspace: {workspace_dir}")
-            else:
-                click.echo("❌ No recent workspaces found", err=True)
-                sys.exit(1)
-
         # Use provided workspace
-        elif workspace:
+        if workspace:
             workspace_dir = workspace
 
         # Validate workspace if provided
@@ -970,8 +797,6 @@ if click:
             incomplete
         ),
     )
-    @click.option("--discover", is_flag=True, help="Discover workspaces automatically")
-    @click.option("--recent", is_flag=True, help="Use most recent workspace")
     @click.option(
         "--dry-run",
         is_flag=True,
@@ -991,7 +816,7 @@ if click:
         default="dark",
         help="UI theme",
     )
-    def engines(workspace, discover, recent, dry_run, language, theme):
+    def engines(workspace, dry_run, language, theme):
         """Launch Engines standalone module for compilation engine management.
 
         WORKSPACE: Optional path to workspace directory
@@ -1000,34 +825,13 @@ if click:
             python -m pycompiler_ark engines                  # No workspace
             python -m pycompiler_ark engines /path/to/project # With path
             python -m pycompiler_ark engines .                # Current directory
-            python -m pycompiler_ark engines --discover       # Auto-discover
             python -m pycompiler_ark engines --dry-run        # Dry-run mode
             python -m pycompiler_ark engines --language fr    # French interface
         """
         workspace_dir = None
 
-        # Handle auto-discovery
-        if discover:
-            discovered = WorkspaceManager.discover_workspaces()
-            if discovered:
-                workspace_dir = str(discovered[0])
-                click.echo(f"✅ Discovered workspace: {workspace_dir}")
-            else:
-                click.echo("❌ No workspaces discovered", err=True)
-                sys.exit(1)
-
-        # Handle recent workspace
-        elif recent:
-            recent_ws = WorkspaceManager.get_recent_workspaces()
-            if recent_ws:
-                workspace_dir = str(recent_ws[0])
-                click.echo(f"✅ Using recent workspace: {workspace_dir}")
-            else:
-                click.echo("❌ No recent workspaces found", err=True)
-                sys.exit(1)
-
         # Use provided workspace
-        elif workspace:
+        if workspace:
             workspace_dir = workspace
 
         # Validate workspace if provided
@@ -1059,20 +863,8 @@ if click:
 
     @cli.command(context_settings=dict(help_option_names=["-h", "--help"]))
     def main_app():
-        """Launch the main PyCompiler ARK++ application."""
+        """Launch the main PyCompiler ARK application."""
         sys.exit(launch_main_application())
-
-    @cli.command(context_settings=dict(help_option_names=["-h", "--help"]))
-    def discover():
-        """Discover available workspaces."""
-        discovered = WorkspaceManager.discover_workspaces()
-
-        if discovered:
-            click.echo("🔍 Discovered workspaces:")
-            for ws in discovered:
-                click.echo(f"  • {ws}")
-        else:
-            click.echo("No workspaces discovered")
 
     @cli.command(
         context_settings=dict(help_option_names=["-h", "--help"]), name="unload"
@@ -1111,11 +903,10 @@ if __name__ == "__main__":
                 print(__doc__)
                 sys.exit(0)
             elif sys.argv[1] in ("--version", "-v", "version"):
-                print(f"PyCompiler ARK++ v{APP_VERSION}")
+                print(f"PyCompiler ARK v{APP_VERSION}")
                 sys.exit(0)
             elif sys.argv[1] == "--info":
                 print_system_info()
-                print_workspace_info()
                 sys.exit(0)
             elif sys.argv[1] == "--unload":
                 result = unload_all()
@@ -1161,15 +952,6 @@ if __name__ == "__main__":
                         break
 
                 sys.exit(launch_engines_only_standalone(workspace_dir))
-            elif sys.argv[1] == "discover":
-                discovered = WorkspaceManager.discover_workspaces()
-                if discovered:
-                    print("🔍 Discovered workspaces:")
-                    for ws in discovered:
-                        print(f"  • {ws}")
-                else:
-                    print("No workspaces discovered")
-                sys.exit(0)
             elif sys.argv[1] == "unload":
                 result = unload_all()
                 if result["status"] == "success":
