@@ -1,22 +1,23 @@
-**PyCompiler_ARK Engine Guide**
+## **PyCompiler_ARK Engine Guide**
+
 Practical reference for building, packaging, and integrating custom compilation engines.
 
-**Overview**
+### **Overview**
 A PyCompiler_ARK engine is a Python package placed in `ENGINES/` and auto‑loaded at startup. It registers itself with `@engine_register` and provides a `CompilerEngine` that builds the compile command and, optionally, a dedicated UI tab.
 
-**Discovery And Loading**
+### **Discovery And Loading**
 - Engines are discovered only in `ENGINES/<engine_id>/`.
 - The folder must contain an `__init__.py`.
 - At startup, `EngineLoader` scans `ENGINES/` and imports each package.
 - Auto discovery can be disabled with `ARK_ENGINES_AUTO_DISCOVER=0`.
 
-**Package Layout**
+### **Package Layout**
 - `ENGINES/<engine_id>/__init__.py`: engine code, registration, UI.
 - `ENGINES/<engine_id>/languages/<code>.json`: optional translations.
 - `ENGINES/<engine_id>/mapping.json`: optional mapping for the auto‑builder.
 - Optional internal modules, assets, helpers.
 
-**Minimal Example**
+#### **Minimal Example**
 ```python
 from __future__ import annotations
 
@@ -40,14 +41,19 @@ class MyEngine(CompilerEngine):
         return [sys.executable, "-m", "mytool", file]
 ```
 
-**Lifecycle**
+### **Lifecycle**
 1. Package import from `ENGINES/<engine_id>`.
 2. `@engine_register` adds the class to the registry.
 3. The GUI calls `create_tab` if present to create a tab.
 4. When compile is triggered, the engine provides the command via `build_command`.
 5. The process runs the command and calls `on_success` on success.
 
-**Full API**
+### **Workspace Entrypoint**
+The workspace can define a single build entrypoint in `ARK_Main_Config.yml`.
+When `build.entrypoint` is set, the Core will compile only that file and pass it
+to your engine as the `file` argument. See `docs/ark_main_config.md`.
+
+### **Full API**
 Required attributes.
 - `id`: stable unique id (used by UI and config).
 - `name`: display label.
@@ -70,17 +76,55 @@ Tools and dependencies.
 - `required_tools`: dict `{ "python": [...], "system": [...] }`.
 - `ensure_tools_installed(self, gui)`: installs missing tools when possible.
 
-**Tools And Dependencies**
+### **Tools And Dependencies**
 - Python tools install through the project venv when available.
 - System tools use `SysDependencyManager` (GUI supported) if available.
 - Keep the list minimal to avoid unnecessary installs.
 
-**UI Tab**
+### **UI Tab**
 - In `create_tab`, create widgets and store them on `self` (ex: `self._opt_onefile`).
 - Avoid heavy work in `__init__` to keep loading fast.
 - Wire signals locally and use `gui.log.append(...)` for logs.
 - If your engine tab becomes large, wrap it in a scroll area so the UI stays usable.
 - Prefer shared UI helpers from the SDK for common patterns (icon selector, output dir, checkbox rows).
+
+### **Engine Config (get_config / set_config)**
+ARK can persist engine UI options per workspace in:
+`<workspace>/.ark/<engine_id>/config.json`.
+
+Flow:
+- `get_config(gui)` returns a JSON‑serializable dict of current UI state.
+- `set_config(gui, cfg)` applies a config dict back to the widgets.
+- The Core saves configs on compile and reloads them when a workspace is applied.
+
+#### Minimal example.
+```python
+class MyEngine(CompilerEngine):
+    # ...
+    def create_tab(self, gui):
+        self._opt_fast = QCheckBox("Fast")
+        self._output_dir = QLineEdit()
+        # ...
+        return tab, "My Engine"
+
+    def get_config(self, gui) -> dict:
+        return {
+            "fast": bool(self._opt_fast.isChecked()) if self._opt_fast else False,
+            "output_dir": self._output_dir.text().strip() if self._output_dir else "",
+        }
+
+    def set_config(self, gui, cfg: dict) -> None:
+        if not isinstance(cfg, dict):
+            return
+        if self._opt_fast and "fast" in cfg:
+            self._opt_fast.setChecked(bool(cfg.get("fast")))
+        if self._output_dir and "output_dir" in cfg:
+            self._output_dir.setText(str(cfg.get("output_dir") or ""))
+```
+
+Notes.
+- Keep the config flat and JSON‑safe (bool, str, list, dict).
+- Always guard for missing keys and absent widgets.
 
 **Monolithic Tab Example**
 The following dummy engine shows how to build a very large UI tab with a scroll area to keep it usable.
@@ -188,11 +232,12 @@ form = QFormLayout()
 self._opt_onefile = add_form_checkbox(form, "Mode:", "Onefile", "opt_onefile_dynamic")
 self._opt_windowed = add_form_checkbox(form, "Console:", "Windowed", "opt_windowed_dynamic")
 
-self._btn_select_icon = add_icon_selector(
+self._btn_select_icon, self._icon_path_input = add_icon_selector(
     layout,
     "🎨 Choose icon (.ico)",
     self.select_icon,
     "btn_select_icon_dynamic",
+    "icon_path_input_dynamic",
 )
 
 self._output_dir_input = add_output_dir(
@@ -283,7 +328,7 @@ if auto_args:
     cmd.extend(auto_args)
 ```
 
-Minimal example.
+#### **Minimal example.**
 ```json
 {
   "numpy": {

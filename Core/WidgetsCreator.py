@@ -14,7 +14,7 @@
 # limitations under the License.
 
 """
-Dialogues personnalisés pour PyCompiler ARK++.
+Dialogues personnalisés pour PyCompiler ARK.
 Inclut ProgressDialog, boîtes de message, et autres dialogues spécifiques.
 
 IMPORTANT: Tous les dialogs ici exécutent les opérations Qt dans le thread principal
@@ -302,15 +302,35 @@ def sys_msgbox_for_installing(
     l'installation avec élévation adaptée à l'OS.
     """
     is_windows = platform.system().lower().startswith("win")
-    msg = (
-        f"L'installation de '{subject}' nécessite des privilèges administrateur.\n"
-        + (f"\n{explanation}\n" if explanation else "")
-        + (
-            "\nSur Windows, une élévation UAC sera demandée."
-            if is_windows
-            else "\nSur Linux/macOS, votre mot de passe sudo est requis."
+    try:
+        from Core.i18n import tr_fr_en, is_french_language
+
+        if title == "Installation requise":
+            title = tr_fr_en(None, "Installation requise", "Installation required")
+        is_fr = is_french_language(None)
+    except Exception:
+        is_fr = True
+
+    if is_fr:
+        msg = (
+            f"L'installation de '{subject}' nécessite des privilèges administrateur.\n"
+            + (f"\n{explanation}\n" if explanation else "")
+            + (
+                "\nSur Windows, une élévation UAC sera demandée."
+                if is_windows
+                else "\nSur Linux/macOS, votre mot de passe sudo est requis."
+            )
         )
-    )
+    else:
+        msg = (
+            f"Installing '{subject}' requires administrator privileges.\n"
+            + (f"\n{explanation}\n" if explanation else "")
+            + (
+                "\nOn Windows, a UAC elevation will be requested."
+                if is_windows
+                else "\nOn Linux/macOS, your sudo password is required."
+            )
+        )
     # UI Qt
     if QApplication.instance() is not None:
         try:
@@ -324,7 +344,9 @@ def sys_msgbox_for_installing(
             pwd, ok = QInputDialog.getText(
                 parent,
                 title,
-                "Entrez votre mot de passe (sudo):",
+                "Entrez votre mot de passe (sudo):"
+                if is_fr
+                else "Enter your password (sudo):",
                 QLineEdit.Password,
             )
             if not ok:
@@ -337,7 +359,7 @@ def sys_msgbox_for_installing(
     # Fallback console
     try:
         print(f"[INSTALL] {title}: {msg}")
-        ans = input("Continuer ? [y/N] ").strip().lower()
+        ans = input("Continuer ? [y/N] " if is_fr else "Continue? [y/N] ").strip().lower()
         if ans not in ("y", "yes", "o", "oui"):
             return None
     except Exception:
@@ -346,7 +368,9 @@ def sys_msgbox_for_installing(
     if is_windows:
         return InstallAuth("uac", None)
     try:
-        pwd = getpass.getpass("Mot de passe (sudo): ")
+        pwd = getpass.getpass(
+            "Mot de passe (sudo): " if is_fr else "Password (sudo): "
+        )
         return InstallAuth("sudo", pwd) if pwd else None
     except Exception:
         return None
@@ -361,25 +385,44 @@ class ProgressDialog(QDialog):
     - La sécurité des threads
     """
 
-    def __init__(self, title="Progression", parent=None, cancelable=False):
+    def __init__(
+        self,
+        title="Progression",
+        parent=None,
+        cancelable=False,
+        closeable=False,
+        cancel_text="Annuler",
+        close_text="Fermer",
+    ):
         super().__init__(parent or _qt_active_parent())
         self.setWindowTitle(title)
         self.setModal(False)  # Non modale pour ne pas bloquer l'UI
         self.setMinimumWidth(400)
         self._canceled = False
+        self.btn_cancel = None
+        self.btn_close = None
+
         layout = QVBoxLayout(self)
         self.label = QLabel("Préparation...", self)
         self.progress = QProgressBar(self)
         self.progress.setRange(0, 0)  # Indéterminé au début
         layout.addWidget(self.label)
         layout.addWidget(self.progress)
-        if cancelable:
+
+        if cancelable or closeable:
             btn_row = QHBoxLayout()
-            btn_cancel = QPushButton("Annuler", self)
-            btn_cancel.clicked.connect(self._on_cancel)
             btn_row.addStretch(1)
-            btn_row.addWidget(btn_cancel)
+            if cancelable:
+                self.btn_cancel = QPushButton(cancel_text, self)
+                self.btn_cancel.clicked.connect(self._on_cancel)
+                btn_row.addWidget(self.btn_cancel)
+            if closeable:
+                self.btn_close = QPushButton(close_text, self)
+                self.btn_close.setEnabled(False)
+                self.btn_close.clicked.connect(self.close)
+                btn_row.addWidget(self.btn_close)
             layout.addLayout(btn_row)
+
         self.setLayout(layout)
 
     def set_message(self, msg):
@@ -390,6 +433,10 @@ class ProgressDialog(QDialog):
             QApplication.processEvents()
 
         _invoke_in_main_thread(_set)
+
+    def set_status(self, msg):
+        """Alias de set_message pour compatibilité."""
+        self.set_message(msg)
 
     def set_progress(self, value, maximum=None):
         """Mettre à jour la barre de progression."""
@@ -432,84 +479,12 @@ class ProgressDialog(QDialog):
         return self._canceled
 
 
-class CompilationProcessDialog(QDialog):
-    """Dialog étroitement lié à l'application pour afficher le chargement du workspace.
-
-    S'exécute toujours dans le thread principal pour assurer:
-    - L'héritage du thème de l'application
-    - L'intégration visuelle avec l'application principale
-    - La sécurité des threads
-    """
+class CompilationProcessDialog(ProgressDialog):
+    """Dialog étroitement lié à l'application pour afficher le chargement du workspace."""
 
     def __init__(self, title="Chargement", parent=None):
-        super().__init__(parent or _qt_active_parent())
-        self.setWindowTitle(title)
-        self.setModal(False)
-        self.setMinimumWidth(400)
+        super().__init__(title=title, parent=parent, cancelable=True, closeable=True)
         self.setMinimumHeight(150)
-
-        layout = QVBoxLayout(self)
-
-        # Statut
-        self.status_label = QLabel("Initialisation...", self)
-        layout.addWidget(self.status_label)
-
-        # Barre de progression
-        self.progress = QProgressBar(self)
-        self.progress.setRange(0, 0)
-        layout.addWidget(self.progress)
-
-        # Boutons
-        btn_row = QHBoxLayout()
-        self.btn_cancel = QPushButton("Annuler", self)
-        self.btn_close = QPushButton("Fermer", self)
-        self.btn_close.setEnabled(False)
-
-        btn_row.addStretch(1)
-        btn_row.addWidget(self.btn_cancel)
-        btn_row.addWidget(self.btn_close)
-        layout.addLayout(btn_row)
-
-        self.setLayout(layout)
-
-    def set_status(self, status_text):
-        """Mettre à jour le statut dans le thread principal."""
-
-        def _set():
-            self.status_label.setText(status_text)
-            QApplication.processEvents()
-
-        _invoke_in_main_thread(_set)
-
-    def set_progress(self, value, maximum=None):
-        """Mettre à jour la barre de progression dans le thread principal."""
-
-        def _set():
-            if maximum is not None:
-                self.progress.setMaximum(maximum)
-            self.progress.setValue(value)
-            QApplication.processEvents()
-
-        _invoke_in_main_thread(_set)
-
-    def show(self):
-        """Afficher le dialog dans le thread principal."""
-
-        def _show():
-            super(CompilationProcessDialog, self).show()
-
-        _invoke_in_main_thread(_show)
-
-    def close(self):
-        """Fermer le dialog dans le thread principal."""
-
-        def _close():
-            try:
-                super(CompilationProcessDialog, self).close()
-            except Exception:
-                pass
-
-        _invoke_in_main_thread(_close)
 
 
 # Global reference to the main application window for theme synchronization

@@ -23,13 +23,9 @@ and various customization options.
 
 from __future__ import annotations
 
-import os
 import platform
 import sys
 from typing import Optional
-
-from PySide6.QtCore import QDir
-from PySide6.QtWidgets import QFileDialog, QInputDialog
 
 from engine_sdk import (
     CompilerEngine,
@@ -39,6 +35,7 @@ from engine_sdk import (
     compute_auto_for_engine,
     engine_register,
 )
+from engine_sdk.utils import log_with_level
 
 
 @engine_register
@@ -52,8 +49,6 @@ class PyInstallerEngine(CompilerEngine):
     - Custom output directory
     - Automatic venv detection and use
     - Icon specification
-    - Version file support
-    - Clean build option
     """
 
     id: str = "pyinstaller"
@@ -105,16 +100,6 @@ class PyInstallerEngine(CompilerEngine):
                 elif platform.system() == "Darwin":
                     cmd.append("--windowed")
 
-            # Clean build
-            clean = self._get_opt("clean")
-            if clean and clean.isChecked():
-                cmd.append("--clean")
-
-            # No UPX
-            noupx = self._get_opt("noupx")
-            if noupx and noupx.isChecked():
-                cmd.append("--noupx")
-
             # Output directory
             output_dir = self._get_input("output_dir_input")
             if output_dir and output_dir.text().strip():
@@ -145,8 +130,8 @@ class PyInstallerEngine(CompilerEngine):
         except Exception as e:
             try:
                 if hasattr(gui, "log"):
-                    gui.log.append(
-                        f"❌ Erreur construction commande PyInstaller: {e}\n"
+                    log_with_level(
+                        gui, "error", f"Erreur construction commande PyInstaller: {e}"
                     )
             except Exception:
                 pass
@@ -191,8 +176,10 @@ class PyInstallerEngine(CompilerEngine):
             if output_dir and output_dir.text().strip():
                 try:
                     if hasattr(gui, "log"):
-                        gui.log.append(
-                            f"📁 Sortie générée dans: {output_dir.text().strip()}\n"
+                        log_with_level(
+                            gui,
+                            "success",
+                            f"Sortie générée dans: {output_dir.text().strip()}",
                         )
                 except Exception:
                     pass
@@ -208,9 +195,6 @@ class PyInstallerEngine(CompilerEngine):
             from PySide6.QtWidgets import (
                 QCheckBox,
                 QFormLayout,
-                QHBoxLayout,
-                QLineEdit,
-                QPushButton,
                 QVBoxLayout,
                 QWidget,
             )
@@ -238,55 +222,20 @@ class PyInstallerEngine(CompilerEngine):
                 form_layout, "Console:", "Windowed", "opt_windowed_dynamic"
             )
 
-            # Noconfirm option
-            self._opt_noconfirm = QCheckBox("No confirm")
-            self._opt_noconfirm.setObjectName("opt_noconfirm_dynamic")
-            self._opt_noconfirm.setToolTip(
-                "Overwrite output without confirmation."
-            )
-            form_layout.addRow("Confirmation:", self._opt_noconfirm)
-
-            # Clean option
-            self._opt_clean = QCheckBox("Clean build")
-            self._opt_clean.setObjectName("opt_clean_dynamic")
-            self._opt_clean.setToolTip("Clean build caches before compiling.")
-            form_layout.addRow("Nettoyage:", self._opt_clean)
-
-            # No UPX option
-            self._opt_noupx = QCheckBox("No UPX")
-            self._opt_noupx.setObjectName("opt_noupx_dynamic")
-            self._opt_noupx.setToolTip("Disable UPX compression.")
-            form_layout.addRow("Compression:", self._opt_noupx)
-
-            # Main only option
-            self._opt_main_only = QCheckBox("Main only")
-            self._opt_main_only.setObjectName("opt_main_only_dynamic")
-            self._opt_main_only.setToolTip(
-                "Build only main.py or app.py if present."
-            )
-            form_layout.addRow("Fichiers:", self._opt_main_only)
-
             layout.addLayout(form_layout)
 
-            # Icon button
-            self._btn_select_icon = add_icon_selector(
+            # Icon button + path input
+            self._btn_select_icon, self._icon_path_input = add_icon_selector(
                 layout,
                 "🎨 Choisir une icône (.ico)",
                 self.select_icon,
                 "btn_select_icon_dynamic",
+                "pyinstaller_icon_path_input_dynamic",
             )
-
-            # Debug option
-            self._opt_debug = QCheckBox("Debug")
-            self._opt_debug.setObjectName("opt_debug_dynamic")
-            self._opt_debug.setToolTip("Enable debug mode in the build.")
-            layout.addWidget(self._opt_debug)
-
-            # Add data button
-            self._pyinstaller_add_data = QPushButton("add_data")
-            self._pyinstaller_add_data.setObjectName("pyinstaller_add_data_dynamic")
-            self._pyinstaller_add_data.clicked.connect(self.add_data)
-            layout.addWidget(self._pyinstaller_add_data)
+            if self._icon_path_input is not None:
+                self._icon_path_input.textChanged.connect(
+                    self._on_icon_path_changed
+                )
 
             # Output directory
             self._output_dir_input = add_output_dir(
@@ -305,7 +254,7 @@ class PyInstallerEngine(CompilerEngine):
         except Exception as e:
             try:
                 if hasattr(gui, "log"):
-                    gui.log.append(f"❌ Erreur création onglet PyInstaller: {e}\n")
+                    log_with_level(gui, "error", f"Erreur création onglet PyInstaller: {e}")
             except Exception:
                 pass
             return None
@@ -318,25 +267,22 @@ class PyInstallerEngine(CompilerEngine):
                 cfg["onefile"] = bool(self._opt_onefile.isChecked())
             if hasattr(self, "_opt_windowed") and self._opt_windowed is not None:
                 cfg["windowed"] = bool(self._opt_windowed.isChecked())
-            if hasattr(self, "_opt_noconfirm") and self._opt_noconfirm is not None:
-                cfg["noconfirm"] = bool(self._opt_noconfirm.isChecked())
-            if hasattr(self, "_opt_clean") and self._opt_clean is not None:
-                cfg["clean"] = bool(self._opt_clean.isChecked())
-            if hasattr(self, "_opt_noupx") and self._opt_noupx is not None:
-                cfg["noupx"] = bool(self._opt_noupx.isChecked())
-            if hasattr(self, "_opt_main_only") and self._opt_main_only is not None:
-                cfg["main_only"] = bool(self._opt_main_only.isChecked())
-            if hasattr(self, "_opt_debug") and self._opt_debug is not None:
-                cfg["debug"] = bool(self._opt_debug.isChecked())
             if (
                 hasattr(self, "_output_dir_input")
                 and self._output_dir_input is not None
             ):
                 cfg["output_dir"] = self._output_dir_input.text().strip()
-            if hasattr(self, "_selected_icon") and self._selected_icon:
-                cfg["selected_icon"] = self._selected_icon
-            if hasattr(self, "_data_files") and isinstance(self._data_files, list):
-                cfg["data_files"] = list(self._data_files)
+            icon_path = ""
+            if (
+                hasattr(self, "_icon_path_input")
+                and self._icon_path_input is not None
+            ):
+                icon_path = self._icon_path_input.text().strip()
+            if not icon_path and hasattr(self, "_selected_icon") and self._selected_icon:
+                icon_path = str(self._selected_icon).strip()
+            if icon_path:
+                self._selected_icon = icon_path
+                cfg["selected_icon"] = icon_path
             return cfg
         except Exception:
             return {}
@@ -359,36 +305,6 @@ class PyInstallerEngine(CompilerEngine):
             ):
                 self._opt_windowed.setChecked(bool(cfg.get("windowed")))
             if (
-                hasattr(self, "_opt_noconfirm")
-                and self._opt_noconfirm is not None
-                and "noconfirm" in cfg
-            ):
-                self._opt_noconfirm.setChecked(bool(cfg.get("noconfirm")))
-            if (
-                hasattr(self, "_opt_clean")
-                and self._opt_clean is not None
-                and "clean" in cfg
-            ):
-                self._opt_clean.setChecked(bool(cfg.get("clean")))
-            if (
-                hasattr(self, "_opt_noupx")
-                and self._opt_noupx is not None
-                and "noupx" in cfg
-            ):
-                self._opt_noupx.setChecked(bool(cfg.get("noupx")))
-            if (
-                hasattr(self, "_opt_main_only")
-                and self._opt_main_only is not None
-                and "main_only" in cfg
-            ):
-                self._opt_main_only.setChecked(bool(cfg.get("main_only")))
-            if (
-                hasattr(self, "_opt_debug")
-                and self._opt_debug is not None
-                and "debug" in cfg
-            ):
-                self._opt_debug.setChecked(bool(cfg.get("debug")))
-            if (
                 hasattr(self, "_output_dir_input")
                 and self._output_dir_input is not None
                 and "output_dir" in cfg
@@ -396,9 +312,13 @@ class PyInstallerEngine(CompilerEngine):
                 val = cfg.get("output_dir") or ""
                 self._output_dir_input.setText(str(val))
             if "selected_icon" in cfg:
-                self._selected_icon = cfg.get("selected_icon") or None
-            if "data_files" in cfg and isinstance(cfg.get("data_files"), list):
-                self._data_files = list(cfg.get("data_files"))
+                icon = cfg.get("selected_icon") or ""
+                self._selected_icon = icon or None
+                if (
+                    hasattr(self, "_icon_path_input")
+                    and self._icon_path_input is not None
+                ):
+                    self._icon_path_input.setText(str(icon))
         except Exception:
             pass
 
@@ -435,33 +355,8 @@ class PyInstallerEngine(CompilerEngine):
                 self._opt_onefile.setText(lang_data["onefile_checkbox"])
             if hasattr(self, "_opt_windowed") and "windowed_checkbox" in lang_data:
                 self._opt_windowed.setText(lang_data["windowed_checkbox"])
-            if hasattr(self, "_opt_noconfirm") and "noconfirm_checkbox" in lang_data:
-                self._opt_noconfirm.setText(lang_data["noconfirm_checkbox"])
-            if hasattr(self, "_opt_noconfirm") and "tt_noconfirm" in lang_data:
-                self._opt_noconfirm.setToolTip(lang_data["tt_noconfirm"])
-            if hasattr(self, "_opt_clean") and "clean_checkbox" in lang_data:
-                self._opt_clean.setText(lang_data["clean_checkbox"])
-            if hasattr(self, "_opt_clean") and "tt_clean" in lang_data:
-                self._opt_clean.setToolTip(lang_data["tt_clean"])
-            if hasattr(self, "_opt_noupx") and "noupx_checkbox" in lang_data:
-                self._opt_noupx.setText(lang_data["noupx_checkbox"])
-            if hasattr(self, "_opt_noupx") and "tt_noupx" in lang_data:
-                self._opt_noupx.setToolTip(lang_data["tt_noupx"])
-            if hasattr(self, "_opt_main_only") and "main_only_checkbox" in lang_data:
-                self._opt_main_only.setText(lang_data["main_only_checkbox"])
-            if hasattr(self, "_opt_main_only") and "tt_main_only" in lang_data:
-                self._opt_main_only.setToolTip(lang_data["tt_main_only"])
             if hasattr(self, "_btn_select_icon") and "icon_button" in lang_data:
                 self._btn_select_icon.setText(lang_data["icon_button"])
-            if hasattr(self, "_opt_debug") and "debug_checkbox" in lang_data:
-                self._opt_debug.setText(lang_data["debug_checkbox"])
-            if hasattr(self, "_opt_debug") and "tt_debug" in lang_data:
-                self._opt_debug.setToolTip(lang_data["tt_debug"])
-            if (
-                hasattr(self, "_pyinstaller_add_data")
-                and "add_data_button" in lang_data
-            ):
-                self._pyinstaller_add_data.setText(lang_data["add_data_button"])
             if hasattr(self, "_output_dir_input") and "output_placeholder" in lang_data:
                 self._output_dir_input.setPlaceholderText(
                     lang_data["output_placeholder"]
@@ -469,56 +364,10 @@ class PyInstallerEngine(CompilerEngine):
         except Exception:
             pass
 
-    def add_data(self) -> None:
-        """Add data files or directories to be included with PyInstaller."""
-        choix, ok = QInputDialog.getItem(
-            self._gui,
-            "Type d'inclusion",
-            "Inclure un fichier ou un dossier ?",
-            ["Fichier", "Dossier"],
-            0,
-            False,
-        )
-        if not ok:
-            return
-        if not hasattr(self, "_data_files"):
-            self._data_files = []
-        if choix == "Fichier":
-            file_path, _ = QFileDialog.getOpenFileName(
-                self._gui, "Sélectionner un fichier à inclure avec PyInstaller"
-            )
-            if file_path:
-                dest, ok = QInputDialog.getText(
-                    self._gui,
-                    "Chemin de destination",
-                    "Chemin de destination dans l'exécutable :",
-                    text=os.path.basename(file_path),
-                )
-                if ok and dest:
-                    self._data_files.append((file_path, dest))
-                    if hasattr(self._gui, "log"):
-                        self._gui.log.append(
-                            f"Fichier ajouté à PyInstaller : {file_path} => {dest}"
-                        )
-        elif choix == "Dossier":
-            dir_path = QFileDialog.getExistingDirectory(
-                self._gui,
-                "Sélectionner un dossier à inclure avec PyInstaller",
-                QDir.homePath(),
-            )
-            if dir_path:
-                dest, ok = QInputDialog.getText(
-                    self._gui,
-                    "Chemin de destination",
-                    "Chemin de destination dans l'exécutable :",
-                    text=os.path.basename(dir_path),
-                )
-                if ok and dest:
-                    self._data_files.append((dir_path, dest))
-                    if hasattr(self._gui, "log"):
-                        self._gui.log.append(
-                            f"Dossier ajouté à PyInstaller : {dir_path} => {dest}"
-                        )
+    def _on_icon_path_changed(self, text: str) -> None:
+        """Keep the selected icon path in sync with manual edits."""
+        icon = text.strip()
+        self._selected_icon = icon or None
 
     def select_icon(self) -> None:
         """Select an icon file for the executable."""
@@ -533,10 +382,12 @@ class PyInstallerEngine(CompilerEngine):
             )
             if file_path:
                 self._selected_icon = file_path
+                if hasattr(self, "_icon_path_input") and self._icon_path_input is not None:
+                    self._icon_path_input.setText(file_path)
                 if hasattr(self._gui, "log"):
                     self._gui.log.append(
                         f"Icône sélectionnée pour PyInstaller : {file_path}"
                     )
         except Exception as e:
             if hasattr(self._gui, "log"):
-                self._gui.log.append(f"❌ Erreur lors de la sélection de l'icône : {e}")
+                log_with_level(self._gui, "error", f"Erreur lors de la sélection de l'icône : {e}")

@@ -19,15 +19,13 @@ Plugins_SDK
 
 Kit de développement pour plugins ARK++ couvrant:
 - Contexte BC (Before Compilation)
-- Contexte AC (After Compilation)
-- Contexte CE (Core Extension)
 - Contexte UI (boîtes de dialogue, i18n)
 
-Ce package expose une Plugins stable pour les plugins tiers.
+Ce package expose une SDK stable pour les plugins tiers.
 """
 
 # Expose uniquement les sous-packages pour éviter les imports précoces
-# Les Context concrets (Ac/Bc) sont disponibles dans leurs sous-modules respectifs.
+# Les Context concrets (Bc/UI) sont disponibles dans leurs sous-modules respectifs.
 
 # from . import AcPluginContext as AcPluginContext  # noqa: F401  # ACASL removed
 from . import BcPluginContext as BcPluginContext  # noqa: F401

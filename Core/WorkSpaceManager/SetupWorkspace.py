@@ -14,6 +14,7 @@
 # limitations under the License.
 
 import os
+import time
 from typing import Optional
 
 from PySide6.QtWidgets import QApplication, QFileDialog, QMessageBox
@@ -37,9 +38,15 @@ class SetupWorkspace:
         Returns:
             Le chemin du workspace sélectionné ou None si annulé
         """
+        def _t(_key: str, fr: str, en: str) -> str:
+            try:
+                return gui_instance.tr(fr, en)
+            except Exception:
+                return en
+
         folder = QFileDialog.getExistingDirectory(
             gui_instance,
-            gui_instance.tr("Choisir le dossier du projet", "Select project folder"),
+            _t("action_select_workspace", "Choisir Workspace", "Select Workspace"),
         )
         if folder:
             return folder
@@ -200,6 +207,12 @@ class SetupWorkspace:
             except Exception:
                 pass
 
+            try:
+                if hasattr(gui_instance, "load_entrypoint_from_config"):
+                    gui_instance.load_entrypoint_from_config()
+            except Exception:
+                pass
+
             if hasattr(gui_instance, "update_command_preview"):
                 gui_instance.update_command_preview()
 
@@ -213,7 +226,45 @@ class SetupWorkspace:
                 if hasattr(gui_instance, "venv_manager") and gui_instance.venv_manager:
                     # Do not auto-install engine tools on workspace selection.
                     # Tools are installed only when compiling with the selected engine.
-                    gui_instance.venv_manager.setup_workspace(folder, check_tools=False)
+                    if str(source).lower() == "plugin":
+                        gui_instance.venv_manager.setup_workspace(
+                            folder, check_tools=False
+                        )
+                    else:
+                        def _t(_key: str, fr: str, en: str) -> str:
+                            try:
+                                return gui_instance.tr(fr, en)
+                            except Exception:
+                                return en
+
+                        title = _t(
+                            "msg_venv_choice_title", "Configuration du Venv", "Venv setup"
+                        )
+                        msg = _t(
+                            "msg_venv_choice_text",
+                            "Créer un venv automatiquement ou sélectionner un venv (Python système inclus).",
+                            "Create a venv automatically or select a venv (System Python included).",
+                        )
+                        box = QMessageBox(gui_instance)
+                        box.setWindowTitle(title)
+                        box.setText(msg)
+                        btn_auto = box.addButton(
+                            _t("action_create_venv", "Créer un venv", "Create venv"),
+                            QMessageBox.AcceptRole,
+                        )
+                        btn_manual = box.addButton(
+                            _t("action_select_venv", "Sélectionner un Venv", "Select Venv"),
+                            QMessageBox.ActionRole,
+                        )
+                        box.setDefaultButton(btn_auto)
+                        box.exec()
+
+                        if box.clickedButton() == btn_manual:
+                            gui_instance.venv_manager.select_venv_manually()
+                        else:
+                            gui_instance.venv_manager.setup_workspace(
+                                folder, check_tools=False
+                            )
             except Exception as e:
                 gui_instance.log_i18n(
                     f"⚠️ Erreur lors de la configuration du workspace: {e}",
@@ -273,6 +324,7 @@ class SetupWorkspace:
         ark_config = load_ark_config(workspace_dir)
         exclusion_patterns = ark_config.get("exclusion_patterns", [])
 
+        last_pump = time.monotonic()
         for root, _, files in os.walk(folder):
             for f in files:
                 if f.endswith(".py"):
@@ -304,6 +356,11 @@ class SetupWorkspace:
                             )
                             gui_instance.file_list.addItem(relative_path)
                         count += 1
+                        if count % 200 == 0:
+                            now = time.monotonic()
+                            if now - last_pump > 0.05:
+                                QApplication.processEvents()
+                                last_pump = now
 
         # Afficher un message récapitulatif si des fichiers ont été exclus
         if excluded_count > 0:

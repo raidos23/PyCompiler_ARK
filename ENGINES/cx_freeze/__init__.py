@@ -17,7 +17,7 @@
 CX_Freeze Engine for PyCompiler_ARK.
 
 This engine handles compilation of Python scripts using CX_Freeze,
-supporting onefile mode, windowed applications, and various customization options.
+supporting windowed applications and minimal essential options.
 """
 
 from __future__ import annotations
@@ -35,6 +35,7 @@ from engine_sdk import (
     compute_auto_for_engine,
     engine_register,
 )
+from engine_sdk.utils import log_with_level
 
 
 @engine_register
@@ -43,8 +44,7 @@ class CXFreezeEngine(CompilerEngine):
     CX_Freeze compilation engine.
 
     Features:
-    - Onefile and onedir modes
-    - Windowed/console mode selection
+    - Windowed/console mode selection (Windows)
     - Custom output directory
     - Automatic venv detection and use
     - Icon specification
@@ -84,24 +84,32 @@ class CXFreezeEngine(CompilerEngine):
             cmd = [python_path, "-m", "cx_Freeze"]
 
             # Add options from UI
-            # Onefile mode
-            onefile = self._get_opt("onefile")
-            if onefile and onefile.isChecked():
-                cmd.append("--onefile")
-
-            # Windowed mode
+            # Windowed mode (Windows only)
             windowed = self._get_opt("windowed")
-            if windowed and windowed.isChecked():
-                cmd.append("--no-console")
+            if windowed and windowed.isChecked() and platform.system() == "Windows":
+                cmd.extend(["--base", "Win32GUI"])
 
             # Output directory
             output_dir = self._get_input("output_dir")
             if output_dir and output_dir.text().strip():
-                cmd.extend(["--build-exe", output_dir.text().strip()])
+                cmd.extend(["--target-dir", output_dir.text().strip()])
 
             # Icon
             if hasattr(self, "_selected_icon") and self._selected_icon:
                 cmd.extend(["--icon", self._selected_icon])
+
+            # Target name
+            target_name = self._get_input("target_name")
+            if target_name and target_name.text().strip():
+                cmd.extend(["--target-name", target_name.text().strip()])
+
+            # Debug / verbose
+            debug = self._get_opt("debug")
+            if debug and debug.isChecked():
+                cmd.append("--debug")
+            verbose = self._get_opt("verbose")
+            if verbose and verbose.isChecked():
+                cmd.append("--verbose")
 
             # Auto-mapping args (mapping.json / auto builder)
             try:
@@ -111,15 +119,15 @@ class CXFreezeEngine(CompilerEngine):
             except Exception:
                 pass
 
-            # Add the target file
-            cmd.append(file)
+            # Add the target script
+            cmd.extend(["--script", file])
 
             return cmd
 
         except Exception as e:
             try:
                 if hasattr(gui, "log"):
-                    gui.log.append(f"❌ Erreur construction commande CX_Freeze: {e}\n")
+                    log_with_level(gui, "error", f"Erreur construction commande CX_Freeze: {e}")
             except Exception:
                 pass
             return []
@@ -161,8 +169,10 @@ class CXFreezeEngine(CompilerEngine):
             if output_dir and output_dir.text().strip():
                 try:
                     if hasattr(gui, "log"):
-                        gui.log.append(
-                            f"📁 Compilation CX_Freeze terminée. Sortie dans: {output_dir.text().strip()}\n"
+                        log_with_level(
+                            gui,
+                            "success",
+                            f"Compilation CX_Freeze terminée. Sortie dans: {output_dir.text().strip()}",
                         )
                 except Exception:
                     pass
@@ -197,25 +207,43 @@ class CXFreezeEngine(CompilerEngine):
             form_layout = QFormLayout()
             form_layout.setSpacing(8)
 
-            # Onefile option
-            self._cx_onefile = add_form_checkbox(
-                form_layout, "Mode:", "Onefile", "cx_onefile_dynamic"
-            )
-
             # Windowed option
             self._cx_windowed = add_form_checkbox(
-                form_layout, "Console:", "Windowed", "cx_windowed_dynamic"
+                form_layout, "Console:", "No console", "cx_windowed_dynamic"
             )
             self._cx_windowed.setToolTip("Disable the console window.")
 
             layout.addLayout(form_layout)
 
-            # Icon button
-            self._cx_btn_select_icon = add_icon_selector(
+            # Icon button + path input
+            self._cx_btn_select_icon, self._cx_icon_path_input = add_icon_selector(
                 layout,
-                "🎨 Choisir une icône (.ico)",
+                "Choisir une icône (.ico)",
                 self.select_icon,
                 "cx_btn_select_icon_dynamic",
+                "cx_icon_path_input_dynamic",
+            )
+            if self._cx_icon_path_input is not None:
+                self._cx_icon_path_input.textChanged.connect(
+                    self._on_icon_path_changed
+                )
+
+            # Debug / verbose
+            self._cx_debug = QCheckBox("Debug")
+            self._cx_debug.setObjectName("cx_debug_dynamic")
+            self._cx_debug.setToolTip("Enable debug output.")
+            layout.addWidget(self._cx_debug)
+
+            self._cx_verbose = QCheckBox("Verbose")
+            self._cx_verbose.setObjectName("cx_verbose_dynamic")
+            self._cx_verbose.setToolTip("Enable verbose output.")
+            layout.addWidget(self._cx_verbose)
+
+            # Target name
+            self._cx_target_name = add_output_dir(
+                layout,
+                "Nom de sortie (--target-name)",
+                "cx_target_name_dynamic",
             )
 
             # Output directory
@@ -233,7 +261,7 @@ class CXFreezeEngine(CompilerEngine):
         except Exception as e:
             try:
                 if hasattr(gui, "log"):
-                    gui.log.append(f"❌ Erreur création onglet CX_Freeze: {e}\n")
+                    log_with_level(gui, "error", f"Erreur création onglet CX_Freeze: {e}")
             except Exception:
                 pass
             return None
@@ -242,14 +270,30 @@ class CXFreezeEngine(CompilerEngine):
         """Return a JSON-serializable snapshot of current CX_Freeze UI options."""
         try:
             cfg = {}
-            if hasattr(self, "_cx_onefile") and self._cx_onefile is not None:
-                cfg["onefile"] = bool(self._cx_onefile.isChecked())
             if hasattr(self, "_cx_windowed") and self._cx_windowed is not None:
                 cfg["windowed"] = bool(self._cx_windowed.isChecked())
             if hasattr(self, "_cx_output_dir") and self._cx_output_dir is not None:
                 cfg["output_dir"] = self._cx_output_dir.text().strip()
-            if hasattr(self, "_selected_icon") and self._selected_icon:
-                cfg["selected_icon"] = self._selected_icon
+            if (
+                hasattr(self, "_cx_target_name")
+                and self._cx_target_name is not None
+            ):
+                cfg["target_name"] = self._cx_target_name.text().strip()
+            if hasattr(self, "_cx_debug") and self._cx_debug is not None:
+                cfg["debug"] = bool(self._cx_debug.isChecked())
+            if hasattr(self, "_cx_verbose") and self._cx_verbose is not None:
+                cfg["verbose"] = bool(self._cx_verbose.isChecked())
+            icon_path = ""
+            if (
+                hasattr(self, "_cx_icon_path_input")
+                and self._cx_icon_path_input is not None
+            ):
+                icon_path = self._cx_icon_path_input.text().strip()
+            if not icon_path and hasattr(self, "_selected_icon") and self._selected_icon:
+                icon_path = str(self._selected_icon).strip()
+            if icon_path:
+                self._selected_icon = icon_path
+                cfg["selected_icon"] = icon_path
             return cfg
         except Exception:
             return {}
@@ -259,12 +303,6 @@ class CXFreezeEngine(CompilerEngine):
         if not isinstance(cfg, dict):
             return
         try:
-            if (
-                hasattr(self, "_cx_onefile")
-                and self._cx_onefile is not None
-                and "onefile" in cfg
-            ):
-                self._cx_onefile.setChecked(bool(cfg.get("onefile")))
             if (
                 hasattr(self, "_cx_windowed")
                 and self._cx_windowed is not None
@@ -278,8 +316,33 @@ class CXFreezeEngine(CompilerEngine):
             ):
                 val = cfg.get("output_dir") or ""
                 self._cx_output_dir.setText(str(val))
+            if (
+                hasattr(self, "_cx_target_name")
+                and self._cx_target_name is not None
+                and "target_name" in cfg
+            ):
+                val = cfg.get("target_name") or ""
+                self._cx_target_name.setText(str(val))
+            if (
+                hasattr(self, "_cx_debug")
+                and self._cx_debug is not None
+                and "debug" in cfg
+            ):
+                self._cx_debug.setChecked(bool(cfg.get("debug")))
+            if (
+                hasattr(self, "_cx_verbose")
+                and self._cx_verbose is not None
+                and "verbose" in cfg
+            ):
+                self._cx_verbose.setChecked(bool(cfg.get("verbose")))
             if "selected_icon" in cfg:
-                self._selected_icon = cfg.get("selected_icon") or None
+                icon = cfg.get("selected_icon") or ""
+                self._selected_icon = icon or None
+                if (
+                    hasattr(self, "_cx_icon_path_input")
+                    and self._cx_icon_path_input is not None
+                ):
+                    self._cx_icon_path_input.setText(str(icon))
         except Exception:
             pass
 
@@ -320,18 +383,36 @@ class CXFreezeEngine(CompilerEngine):
             lang_data = load_engine_language_file(__package__, code)
 
             # Apply translations to UI elements if they exist
-            if hasattr(self, "_cx_onefile") and "onefile_checkbox" in lang_data:
-                self._cx_onefile.setText(lang_data["onefile_checkbox"])
             if hasattr(self, "_cx_windowed") and "windowed_checkbox" in lang_data:
                 self._cx_windowed.setText(lang_data["windowed_checkbox"])
             if hasattr(self, "_cx_windowed") and "tt_windowed" in lang_data:
                 self._cx_windowed.setToolTip(lang_data["tt_windowed"])
             if hasattr(self, "_cx_btn_select_icon") and "icon_button" in lang_data:
                 self._cx_btn_select_icon.setText(lang_data["icon_button"])
+            if hasattr(self, "_cx_debug") and "debug_checkbox" in lang_data:
+                self._cx_debug.setText(lang_data["debug_checkbox"])
+            if hasattr(self, "_cx_debug") and "tt_debug" in lang_data:
+                self._cx_debug.setToolTip(lang_data["tt_debug"])
+            if hasattr(self, "_cx_verbose") and "verbose_checkbox" in lang_data:
+                self._cx_verbose.setText(lang_data["verbose_checkbox"])
+            if hasattr(self, "_cx_verbose") and "tt_verbose" in lang_data:
+                self._cx_verbose.setToolTip(lang_data["tt_verbose"])
+            if (
+                hasattr(self, "_cx_target_name")
+                and "target_name_placeholder" in lang_data
+            ):
+                self._cx_target_name.setPlaceholderText(
+                    lang_data["target_name_placeholder"]
+                )
             if hasattr(self, "_cx_output_dir") and "output_placeholder" in lang_data:
                 self._cx_output_dir.setPlaceholderText(lang_data["output_placeholder"])
         except Exception:
             pass
+
+    def _on_icon_path_changed(self, text: str) -> None:
+        """Keep the selected icon path in sync with manual edits."""
+        icon = text.strip()
+        self._selected_icon = icon or None
 
     def select_icon(self) -> None:
         """Select an icon file for the executable."""
@@ -346,10 +427,15 @@ class CXFreezeEngine(CompilerEngine):
             )
             if file_path:
                 self._selected_icon = file_path
+                if (
+                    hasattr(self, "_cx_icon_path_input")
+                    and self._cx_icon_path_input is not None
+                ):
+                    self._cx_icon_path_input.setText(file_path)
                 if hasattr(self._gui, "log"):
                     self._gui.log.append(
                         f"Icône sélectionnée pour Cx_Freeze : {file_path}"
                     )
         except Exception as e:
             if hasattr(self._gui, "log"):
-                self._gui.log.append(f"❌ Erreur lors de la sélection de l'icône : {e}")
+                log_with_level(self._gui, "error", f"Erreur lors de la sélection de l'icône : {e}")

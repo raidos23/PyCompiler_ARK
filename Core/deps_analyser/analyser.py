@@ -14,14 +14,16 @@
 # limitations under the License.
 
 import functools
+import json
 import os
 import platform
 import re
 import subprocess
+import yaml
 from importlib.metadata import distribution, PackageNotFoundError
 
 from PySide6.QtCore import QProcess
-from PySide6.QtWidgets import QMessageBox
+from PySide6.QtWidgets import QApplication, QMessageBox
 
 from Core.WidgetsCreator import ProgressDialog
 
@@ -30,62 +32,89 @@ from Core.WidgetsCreator import ProgressDialog
 # faire échouer l'application. Les Plugins publiques restent stables; les chemins non
 # implémentés renvoient silencieusement.
 
-# Liste explicite de modules de la bibliothèque standard à exclure
-EXCLUDED_STDLIB = {
-    "sys",
-    "os",
-    "re",
-    "subprocess",
-    "json",
-    "math",
-    "time",
-    "pathlib",
-    "typing",
-    "itertools",
-    "functools",
-    "collections",
-    "asyncio",
-    "importlib",
-    "inspect",
-    "logging",
-    "argparse",
-    "dataclasses",
-    "unittest",
-    "threading",
-    "multiprocessing",
-    "http",
-    "urllib",
-    "email",
-    "socket",
-    "ssl",
-    "hashlib",
-    "hmac",
-    "gzip",
-    "bz2",
-    "lzma",
-    "base64",
-    "shutil",
-    "tempfile",
-    "glob",
-    "fnmatch",
-    "statistics",
-    "pprint",
-    "getpass",
-    "uuid",
-    "enum",
-    "contextlib",
-    "queue",
-    "traceback",
-    "warnings",
-    "gc",
-    "platform",
-    "sysconfig",
-    "pkgutil",
-    "site",
-    "venv",
-    "sqlite3",
-    "tkinter",
-}
+def _default_excluded_stdlib() -> set[str]:
+    return {
+        "sys",
+        "os",
+        "re",
+        "subprocess",
+        "json",
+        "math",
+        "time",
+        "pathlib",
+        "typing",
+        "itertools",
+        "functools",
+        "collections",
+        "asyncio",
+        "importlib",
+        "inspect",
+        "logging",
+        "argparse",
+        "dataclasses",
+        "unittest",
+        "threading",
+        "multiprocessing",
+        "http",
+        "urllib",
+        "email",
+        "socket",
+        "ssl",
+        "hashlib",
+        "hmac",
+        "gzip",
+        "bz2",
+        "lzma",
+        "base64",
+        "shutil",
+        "tempfile",
+        "glob",
+        "fnmatch",
+        "statistics",
+        "pprint",
+        "getpass",
+        "uuid",
+        "enum",
+        "contextlib",
+        "queue",
+        "traceback",
+        "warnings",
+        "gc",
+        "platform",
+        "sysconfig",
+        "pkgutil",
+        "site",
+        "venv",
+        "sqlite3",
+        "tkinter",
+    }
+
+
+def _load_excluded_stdlib() -> set[str]:
+    default = _default_excluded_stdlib()
+    mapping_path = os.path.join(os.path.dirname(__file__), "stblib.yml")
+    if not os.path.isfile(mapping_path):
+        return default
+    try:
+        with open(mapping_path, encoding="utf-8") as f:
+            data = yaml.safe_load(f)
+        modules = None
+        if isinstance(data, dict):
+            modules = data.get("excluded_stdlib")
+            if modules is None:
+                modules = data.get("modules")
+        elif isinstance(data, list):
+            modules = data
+        if not isinstance(modules, list):
+            return default
+        cleaned = [m.strip() for m in modules if isinstance(m, str) and m.strip()]
+        return set(cleaned) or default
+    except Exception:
+        return default
+
+
+# Liste explicite de modules de la bibliothèque standard à exclure (chargée du YAML)
+EXCLUDED_STDLIB = _load_excluded_stdlib()
 
 
 @functools.lru_cache(maxsize=256)
@@ -222,11 +251,61 @@ def suggest_missing_dependencies(self):
     Analyse les fichiers principaux à compiler, détecte les modules importés,
     vérifie leur présence dans le venv, et propose d'installer ceux qui manquent.
     """
+    def _t(_key: str, fr: str, en: str) -> str:
+        try:
+            return self.tr(fr, en)
+        except Exception:
+            return en
+
     # Vérifie que le workspace ou le venv est bien sélectionné
     if not self.workspace_dir and not self.venv_path_manuel:
         self.log.append(
-            "❌ Aucun workspace ou venv sélectionné. Veuillez d'abord sélectionner un dossier workspace ou un venv."
+            _t(
+                "msg_no_workspace_or_venv_text",
+                "❌ Workspace ou venv manquant. Sélectionnez-en un.",
+                "❌ Workspace or venv missing. Please select one.",
+            )
         )
+        try:
+            box = QMessageBox(self)
+            box.setWindowTitle(
+                _t(
+                    "msg_no_workspace_or_venv_title",
+                    "Workspace ou venv manquant",
+                    "Workspace or venv missing",
+                )
+            )
+            box.setText(
+                _t(
+                    "msg_no_workspace_or_venv_text",
+                    "Sélectionnez un Workspace ou un Venv pour analyser les dépendances.",
+                    "Select a Workspace or a Venv to analyze dependencies.",
+                )
+            )
+            btn_ws = box.addButton(
+                _t("action_select_workspace", "Choisir Workspace", "Select Workspace"),
+                QMessageBox.ActionRole,
+            )
+            btn_venv = box.addButton(
+                _t("action_select_venv", "Choisir un Venv", "Select Venv"),
+                QMessageBox.AcceptRole,
+            )
+            box.addButton(
+                _t("action_cancel", "Annuler", "Cancel"), QMessageBox.RejectRole
+            )
+            box.exec()
+            if box.clickedButton() == btn_ws:
+                try:
+                    self.select_workspace()
+                except Exception:
+                    pass
+            elif box.clickedButton() == btn_venv:
+                try:
+                    self.select_venv_manually()
+                except Exception:
+                    pass
+        except Exception:
+            pass
         return
     import ast
 
@@ -285,6 +364,7 @@ def suggest_missing_dependencies(self):
         pass
 
     # Analyse chaque fichier Python pour détecter les imports
+    last_pump = 0
     for idx, file in enumerate(filtered_files):
         try:
             # Mettre à jour la progression
@@ -296,6 +376,9 @@ def suggest_missing_dependencies(self):
                     )
                 )
                 analysis_progress.set_progress(idx, len(filtered_files))
+            if idx - last_pump >= 50:
+                QApplication.processEvents()
+                last_pump = idx
 
             with open(file, encoding="utf-8") as f:
                 source = f.read()
@@ -383,33 +466,78 @@ def suggest_missing_dependencies(self):
         return
     # Vérifie la présence des modules dans le venv (via pip show)
     # Utilise la fonction robuste de détection du pip
-    pip_program, pip_prefix = _find_pip_executable(
-        venv_path=self.venv_path_manuel, workspace_dir=self.workspace_dir
-    )
+    if getattr(self, "use_system_python", False):
+        pip_program, pip_prefix = _find_pip_executable(
+            venv_path=None, workspace_dir=None
+        )
+    else:
+        pip_program, pip_prefix = _find_pip_executable(
+            venv_path=self.venv_path_manuel, workspace_dir=self.workspace_dir
+        )
     try:
         self.log.append(f"ℹ️ Utilisation de pip: {pip_program} {' '.join(pip_prefix)}")
     except Exception:
         pass
-    # Vérification des modules avec progression
+    # Vérification des modules avec progression (préférer un seul pip list pour limiter le blocage UI)
     not_installed = []
-    for idx, module in enumerate(suggestions):
-        try:
-            if analysis_progress:
-                analysis_progress.set_message(
-                    self.tr(
-                        "Vérification de {module}...", "Checking {module}..."
-                    ).format(module=module)
-                )
-                analysis_progress.set_progress(idx, len(suggestions))
+    installed = set()
+    try:
+        cmd = [pip_program, *pip_prefix, "list", "--format=json"]
+        result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        if result.returncode == 0:
+            try:
+                data = json.loads(result.stdout.decode("utf-8", errors="replace") or "[]")
+                for item in data:
+                    name = str(item.get("name", "")).strip()
+                    if name:
+                        installed.add(name.lower().replace("_", "-"))
+            except Exception:
+                installed = set()
+        else:
+            installed = set()
+    except Exception:
+        installed = set()
 
-            cmd = [pip_program, *pip_prefix, "show", module]
-            result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            if result.returncode != 0:
-                not_installed.append(module)
-        except Exception as e:
-            self.log.append(
-                f"⚠️ Erreur lors de la vérification du module {module} : {e}"
-            )
+    if installed:
+        for idx, module in enumerate(suggestions):
+            try:
+                if analysis_progress:
+                    analysis_progress.set_message(
+                        self.tr(
+                            "Vérification de {module}...", "Checking {module}..."
+                        ).format(module=module)
+                    )
+                    analysis_progress.set_progress(idx, len(suggestions))
+                if idx % 50 == 0:
+                    QApplication.processEvents()
+                key = module.lower().replace("_", "-")
+                if key not in installed:
+                    not_installed.append(module)
+            except Exception as e:
+                self.log.append(
+                    f"⚠️ Erreur lors de la vérification du module {module} : {e}"
+                )
+    else:
+        for idx, module in enumerate(suggestions):
+            try:
+                if analysis_progress:
+                    analysis_progress.set_message(
+                        self.tr(
+                            "Vérification de {module}...", "Checking {module}..."
+                        ).format(module=module)
+                    )
+                    analysis_progress.set_progress(idx, len(suggestions))
+                if idx % 20 == 0:
+                    QApplication.processEvents()
+
+                cmd = [pip_program, *pip_prefix, "show", module]
+                result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                if result.returncode != 0:
+                    not_installed.append(module)
+            except Exception as e:
+                self.log.append(
+                    f"⚠️ Erreur lors de la vérification du module {module} : {e}"
+                )
 
     # Fermer la barre de progression d'analyse
     if analysis_progress:

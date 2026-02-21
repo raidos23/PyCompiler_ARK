@@ -1,0 +1,40 @@
+managers:
+  poetry:
+    create_venv: ["poetry", "env", "use", "python"]
+    install: ["poetry", "install"]
+    add: ["poetry", "add"]
+    show: ["poetry", "show"]
+    check: ["poetry", "check"]
+    lock: ["poetry", "lock"]
+  conda:
+    create_venv: ["conda", "create", "-y", "-n"]
+    install: ["conda", "install", "-y"]
+    activate: ["conda", "activate"]
+    list: ["conda", "list"]
+    check: ["conda", "list"]
+  pipenv:
+    create_venv: ["pipenv", "--python"]
+    install: ["pipenv", "install"]
+    add: ["pipenv", "install"]
+    show: ["pipenv", "graph"]
+    check: ["pipenv", "check"]
+    lock: ["pipenv", "lock"]
+  uv:
+    create_venv: ["uv", "venv"]
+    install: ["uv", "pip", "install", "-r"]
+    add: ["uv", "pip", "install"]
+    show: ["uv", "pip", "show"]
+    check: ["uv", "pip", "check"]
+  pdm:
+    create_venv: ["pdm", "venv", "create"]
+    install: ["pdm", "install"]
+    add: ["pdm", "add"]
+    show: ["pdm", "show"]
+    check: ["pdm", "check"]
+    lock: ["pdm", "lock"]
+  pip:
+    create_venv: ["python", "-m", "venv"]
+    install: ["pip", "install", "-r"]
+    add: ["pip", "install"]
+    show: ["pip", "show"]
+    check: ["pip", "check"]

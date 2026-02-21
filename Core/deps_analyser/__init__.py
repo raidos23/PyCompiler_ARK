@@ -14,7 +14,7 @@
 # limitations under the License.
 
 """
-Analyse des dépendances Python pour PyCompiler ARK++.
+Analyse des dépendances Python pour PyCompiler ARK.
 Inclut la détection, la suggestion et l'installation automatique des modules manquants.
 
 Optimisations appliquées:

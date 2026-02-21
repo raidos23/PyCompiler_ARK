@@ -1573,7 +1573,7 @@ def launch_bcasl_gui(
         Code de retour de l'application
     """
     app = QApplication(sys.argv)
-    app.setApplicationName("PyCompiler ARK++ BCASL")
+    app.setApplicationName("PyCompiler ARK BCASL")
     app.setOrganizationName("raidos23")
 
     window = BcaslStandaloneGui(

@@ -23,7 +23,6 @@ from .auto_build_command import (
 )
 from .ui_helpers import add_form_checkbox, add_icon_selector, add_output_dir
 
-__version__ = "1.0.0"
 # Re-export the base interface used by the host
 from .base import CompilerEngine
 from .utils import (

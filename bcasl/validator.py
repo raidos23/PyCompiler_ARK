@@ -191,8 +191,11 @@ def validate_plugins_compatibility(
                         missing_requirements=[
                             "No explicit version requirements specified"
                         ],
-                        error_message=f"Plugin '{plugin.meta.name}' ({plugin.meta.id}) does not specify version requirements. "
-                        f"Please add required_*_version fields to PluginMeta.",
+                        error_message=(
+                            "No explicit version requirements specified. "
+                            f"Plugin '{plugin.meta.name}' ({plugin.meta.id}) does not specify version requirements. "
+                            "Please add required_*_version fields to PluginMeta."
+                        ),
                     )
                     incompatible_results.append(result)
                     continue
