@@ -28,3 +28,10 @@
 ## Engines
 
 - [x] les engines sans exception presente tous un probleme de design au niveau du bouton de choix d'icon. En effet le button est un simple button donc on ne sais pas si licon est bien selectionner alors il serait pertinent dajoutetr un label a coter qui montre le chemin de licon selectionner ce qui peut aussi permetrttre un  parametrage a la foix ux/ui et manuel.
+ ## Docs
+
+ -[ ] il faut preciser dans la docs for engine a la section de monolitics ui que pas la peine de faire le scroll area cr l'ui s'en charge automatiquement dès qu-il voit que le tab est trop large.
+
+## venvmanager
+
+- [ ] il faut que sur linux si on utilise le python of system que les installation utilise le flag break system package pour s'assurer que l-instalation aura lieu coute que coute. sur windows cela nest pas necessaire  car windwos n-a pas souvent de problme niveau resolution de package.
