@@ -273,8 +273,8 @@ class Ui_PyCompilerARKGui(object):
         self.label_app_title.setObjectName(u"label_app_title")
         font = QFont()
         font.setFamilies([u"Segoe UI"])
-        font.setPointSize(10)
-        font.setBold(True)
+        font.setPointSize(9)
+        font.setWeight(QFont.DemiBold)
         self.label_app_title.setFont(font)
 
         self.headerLeftLayout.addWidget(self.label_app_title)
@@ -287,7 +287,7 @@ class Ui_PyCompilerARKGui(object):
 
         self.headerLayout.addLayout(self.headerLeftLayout)
 
-        self.headerSpacer = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+        self.headerSpacer = QSpacerItem(40, 60, QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Minimum)
 
         self.headerLayout.addItem(self.headerSpacer)
 
@@ -327,12 +327,12 @@ class Ui_PyCompilerARKGui(object):
         self.mainSplitter.setHandleWidth(6)
         self.leftPanel = QWidget(self.mainSplitter)
         self.leftPanel.setObjectName(u"leftPanel")
-        self.leftPanel.setMinimumSize(QSize(280, 0))
         sizePolicy = QSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Expanding)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.leftPanel.sizePolicy().hasHeightForWidth())
         self.leftPanel.setSizePolicy(sizePolicy)
+        self.leftPanel.setMinimumSize(QSize(280, 0))
         self.leftLayout = QVBoxLayout(self.leftPanel)
         self.leftLayout.setSpacing(8)
         self.leftLayout.setObjectName(u"leftLayout")
@@ -350,17 +350,17 @@ class Ui_PyCompilerARKGui(object):
         self.layout_workspace_grid.setContentsMargins(8, 8, 8, 8)
         self.label_workspace_section = QLabel(self.frame_workspace)
         self.label_workspace_section.setObjectName(u"label_workspace_section")
-        font1 = QFont()
-        font1.setFamilies([u"Segoe UI"])
-        font1.setPointSize(9)
-        font1.setWeight(QFont.DemiBold)
-        self.label_workspace_section.setFont(font1)
+        self.label_workspace_section.setFont(font)
 
         self.layout_workspace_grid.addWidget(self.label_workspace_section, 0, 0, 1, 2)
 
         self.label_folder = QLabel(self.frame_workspace)
         self.label_folder.setObjectName(u"label_folder")
-        self.label_folder.setFont(font)
+        font1 = QFont()
+        font1.setFamilies([u"Segoe UI"])
+        font1.setPointSize(9)
+        font1.setBold(True)
+        self.label_folder.setFont(font1)
         self.label_folder.setFrameShape(QFrame.Shape.NoFrame)
         self.label_folder.setFrameShadow(QFrame.Shadow.Plain)
         self.label_folder.setWordWrap(True)
@@ -370,7 +370,7 @@ class Ui_PyCompilerARKGui(object):
 
         self.venv_label = QLabel(self.frame_workspace)
         self.venv_label.setObjectName(u"venv_label")
-        self.venv_label.setFont(font)
+        self.venv_label.setFont(font1)
         self.venv_label.setFrameShape(QFrame.Shape.NoFrame)
         self.venv_label.setFrameShadow(QFrame.Shadow.Plain)
         self.venv_label.setWordWrap(True)
@@ -439,7 +439,7 @@ class Ui_PyCompilerARKGui(object):
 
         self.label_files_section = QLabel(self.frame_files)
         self.label_files_section.setObjectName(u"label_files_section")
-        self.label_files_section.setFont(font1)
+        self.label_files_section.setFont(font)
         self.label_files_section.setWordWrap(True)
 
         self.layout_files_grid.addWidget(self.label_files_section, 0, 0, 1, 2)
@@ -478,7 +478,7 @@ class Ui_PyCompilerARKGui(object):
 
         self.label_tools = QLabel(self.frame_tools)
         self.label_tools.setObjectName(u"label_tools")
-        self.label_tools.setFont(font1)
+        self.label_tools.setFont(font)
 
         self.layout_tools_grid.addWidget(self.label_tools, 0, 0, 1, 2)
 
@@ -511,7 +511,7 @@ class Ui_PyCompilerARKGui(object):
         self.layout_options.setContentsMargins(8, 8, 8, 8)
         self.label_options_section = QLabel(self.frame_options)
         self.label_options_section.setObjectName(u"label_options_section")
-        self.label_options_section.setFont(font1)
+        self.label_options_section.setFont(font)
 
         self.layout_options.addWidget(self.label_options_section)
 
@@ -530,7 +530,7 @@ class Ui_PyCompilerARKGui(object):
         self.layout_logs.setContentsMargins(8, 8, 8, 8)
         self.label_logs_section = QLabel(self.frame_logs)
         self.label_logs_section.setObjectName(u"label_logs_section")
-        self.label_logs_section.setFont(font1)
+        self.label_logs_section.setFont(font)
 
         self.layout_logs.addWidget(self.label_logs_section)
 
@@ -551,7 +551,7 @@ class Ui_PyCompilerARKGui(object):
         self.layout_progress.setContentsMargins(8, 8, 8, 8)
         self.label_progress = QLabel(self.frame_progress)
         self.label_progress.setObjectName(u"label_progress")
-        self.label_progress.setFont(font1)
+        self.label_progress.setFont(font)
 
         self.layout_progress.addWidget(self.label_progress)
 
