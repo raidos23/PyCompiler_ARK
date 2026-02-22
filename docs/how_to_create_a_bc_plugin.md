@@ -183,15 +183,19 @@ Plugins/MyPlugin/
     fr.json
 ```
 
-Load and use:
+Load and use (with live updates when the language changes):
 ```python
 from Plugins_SDK.GeneralContext import (
     get_language_code, load_plugin_language_file,
-    register_plugin_translations, translate,
+    register_plugin_translations, register_i18n_handler, translate,
 )
 
-data = load_plugin_language_file(__package__, get_language_code())
-register_plugin_translations("my.plugin.id", data)
+def _load_i18n():
+    data = load_plugin_language_file(__package__, get_language_code())
+    register_plugin_translations("my.plugin.id", data)
+
+_load_i18n()
+register_i18n_handler(lambda gui, tr: _load_i18n())
 
 label = translate("my.plugin.id", "ui_title", "Default title")
 ```
