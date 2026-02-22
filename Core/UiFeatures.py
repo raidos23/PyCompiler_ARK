@@ -696,19 +696,44 @@ class UiFeatures:
     def log_i18n(self, fr: str, en: str) -> None:
         """Ajoute un message localisé au journal."""
         try:
-            msg = self.tr(fr, en)
-        except Exception:
-            msg = en
-        try:
-            if hasattr(self, "log") and self.log:
-                self.log.append(msg)
-            else:
-                print(msg)
+            from .i18n import log_i18n_level
+
+            lvl = "info"
+            for emo, lv in (
+                ("❌", "error"),
+                ("⚠️", "warning"),
+                ("❗", "warning"),
+                ("✅", "success"),
+                ("ℹ️", "info"),
+                ("⏩", "state"),
+                ("📝", "state"),
+                ("📋", "state"),
+                ("🔍", "state"),
+                ("🔧", "state"),
+                ("🔨", "state"),
+                ("➡️", "state"),
+                ("📦", "state"),
+                ("🗑️", "state"),
+            ):
+                if str(fr).startswith(emo) or str(en).startswith(emo):
+                    lvl = lv
+                    break
+            log_i18n_level(self, lvl, fr, en)
         except Exception:
             try:
-                print(msg)
+                msg = self.tr(fr, en)
             except Exception:
-                pass
+                msg = en
+            try:
+                if hasattr(self, "log") and self.log:
+                    self.log.append(msg)
+                else:
+                    print(msg)
+            except Exception:
+                try:
+                    print(msg)
+                except Exception:
+                    pass
 
     def show_language_dialog(self) -> None:
         """Affiche la boîte de dialogue de sélection de langue."""

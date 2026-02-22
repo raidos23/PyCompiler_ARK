@@ -610,6 +610,39 @@ _LOG_LEVEL_LABELS = {
     "state": "STATE",
 }
 
+_LOG_EMOJI_PREFIXES = [
+    "✅",
+    "⚠️",
+    "❌",
+    "ℹ️",
+    "❗",
+    "⏩",
+    "📝",
+    "📋",
+    "🔍",
+    "🔧",
+    "🔨",
+    "➡️",
+    "📦",
+    "🗑️",
+    "🧩",
+    "🔌",
+    "⏹️",
+    "⏱️",
+]
+
+
+def _strip_emoji_prefix(text: str) -> str:
+    try:
+        s = str(text)
+    except Exception:
+        return text
+    for emo in _LOG_EMOJI_PREFIXES:
+        if s.startswith(emo):
+            s = s[len(emo) :]
+            break
+    return s.lstrip()
+
 _LOG_LEVEL_RICH = {
     "info": "cyan",
     "warning": "yellow",
@@ -761,6 +794,7 @@ def log_with_level(
         msg = redact_secrets(msg)
     if clamp:
         msg = clamp_text(msg, max_len=essential_log_max_len)
+    msg = _strip_emoji_prefix(msg)
 
     try:
         if _append_gui_log(gui, lvl, label, msg):
@@ -781,7 +815,9 @@ def log_i18n_level(
     clamp: bool = True,
 ) -> None:
     """Translate then log a level-tagged message."""
-    msg = tr(gui, fr, en)
+    fr2 = _strip_emoji_prefix(fr)
+    en2 = _strip_emoji_prefix(en)
+    msg = tr(gui, fr2, en2)
     log_with_level(gui, level, msg, redact=redact, clamp=clamp)
 
 

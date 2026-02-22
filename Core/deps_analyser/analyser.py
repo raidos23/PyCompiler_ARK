@@ -26,6 +26,28 @@ from PySide6.QtCore import QProcess
 from PySide6.QtWidgets import QApplication, QMessageBox
 
 from Core.WidgetsCreator import ProgressDialog
+from Core.i18n import log_with_level
+
+
+def _log_append(gui, msg: str) -> None:
+    try:
+        text = str(msg)
+    except Exception:
+        text = msg
+    level = "info"
+    for emo, lvl in (
+        ("❌", "error"),
+        ("⚠️", "warning"),
+        ("❗", "warning"),
+        ("✅", "success"),
+        ("ℹ️", "info"),
+        ("⏩", "state"),
+    ):
+        if text.startswith(emo):
+            level = lvl
+            text = text[len(emo) :].lstrip()
+            break
+    log_with_level(gui, level, text)
 
 # NOTE PRODUCTION-HARDENING:
 # Les fonctionnalités non finalisées sont encapsulées dans des gardes afin de ne jamais
@@ -259,7 +281,7 @@ def suggest_missing_dependencies(self):
 
     # Vérifie que le workspace ou le venv est bien sélectionné
     if not self.workspace_dir and not self.venv_path_manuel:
-        self.log.append(
+        _log_append(self, 
             _t(
                 "msg_no_workspace_or_venv_text",
                 "❌ Workspace ou venv manquant. Sélectionnez-en un.",
@@ -399,7 +421,7 @@ def suggest_missing_dependencies(self):
             )
             modules.update([mod.split(".")[0] for mod in importlib_imports])
         except Exception as e:
-            self.log.append(f"⚠️ Erreur analyse dépendances dans {file} : {e}")
+            _log_append(self, f"⚠️ Erreur analyse dépendances dans {file} : {e}")
 
     # Fermer la barre de progression d'analyse
     if analysis_progress:
@@ -450,7 +472,7 @@ def suggest_missing_dependencies(self):
                     "- macOS: brew install tcl-tk (puis réinstallez Python avec le support Tk)\n"
                     "- Windows: réinstallez Python en incluant Tcl/Tk"
                 )
-                self.log.append(f"ℹ️ {msg}")
+                _log_append(self, f"ℹ️ {msg}")
                 try:
                     QMessageBox.information(
                         self, self.tr("tkinter manquant", "Missing tkinter"), msg
@@ -460,7 +482,7 @@ def suggest_missing_dependencies(self):
     except Exception:
         pass
     if not suggestions:
-        self.log.append("✅ Aucun module externe à installer détecté.")
+        _log_append(self, "✅ Aucun module externe à installer détecté.")
         if analysis_progress:
             analysis_progress.close()
         return
@@ -475,7 +497,7 @@ def suggest_missing_dependencies(self):
             venv_path=self.venv_path_manuel, workspace_dir=self.workspace_dir
         )
     try:
-        self.log.append(f"ℹ️ Utilisation de pip: {pip_program} {' '.join(pip_prefix)}")
+        _log_append(self, f"ℹ️ Utilisation de pip: {pip_program} {' '.join(pip_prefix)}")
     except Exception:
         pass
     # Vérification des modules avec progression (préférer un seul pip list pour limiter le blocage UI)
@@ -514,7 +536,7 @@ def suggest_missing_dependencies(self):
                 if key not in installed:
                     not_installed.append(module)
             except Exception as e:
-                self.log.append(
+                _log_append(self, 
                     f"⚠️ Erreur lors de la vérification du module {module} : {e}"
                 )
     else:
@@ -535,7 +557,7 @@ def suggest_missing_dependencies(self):
                 if result.returncode != 0:
                     not_installed.append(module)
             except Exception as e:
-                self.log.append(
+                _log_append(self, 
                     f"⚠️ Erreur lors de la vérification du module {module} : {e}"
                 )
 
@@ -544,7 +566,7 @@ def suggest_missing_dependencies(self):
         analysis_progress.close()
     # Si des modules sont manquants, propose l'installation automatique
     if not_installed:
-        self.log.append(
+        _log_append(self, 
             "❗ Modules manquants dans le venv : " + ", ".join(sorted(not_installed))
         )
         # Demande à l'utilisateur s'il souhaite installer automatiquement les modules manquants
@@ -579,7 +601,7 @@ def suggest_missing_dependencies(self):
             self.dep_progress_dialog.show()
             self._install_next_dependency()
     else:
-        self.log.append(
+        _log_append(self, 
             "✅ Tous les modules nécessaires sont déjà installés dans le venv."
         )
 
@@ -595,7 +617,7 @@ def _install_next_dependency(self):
             len(self._dep_install_list), len(self._dep_install_list)
         )
         self.dep_progress_dialog.close()
-        self.log.append("✅ Tous les modules manquants ont été installés.")
+        _log_append(self, "✅ Tous les modules manquants ont été installés.")
         return
     module = self._dep_install_list[self._dep_install_index]
     msg = f"Installation de {module}... ({self._dep_install_index+1}/{len(self._dep_install_list)})"
@@ -636,16 +658,16 @@ def _on_dep_pip_output(self, process, error=False):
         lines = data.strip().splitlines()
         if lines:
             self.dep_progress_dialog.set_message(lines[-1])
-    self.log.append(data)
+    _log_append(self, data)
 
 
 # Callback après l'installation d'un module (pip)
 def _on_dep_pip_finished(self, process, code, status):
     module = self._dep_install_list[self._dep_install_index]
     if code == 0:
-        self.log.append(f"✅ {module} installé.")
+        _log_append(self, f"✅ {module} installé.")
     else:
-        self.log.append(f"❌ Erreur installation {module} (code {code})")
+        _log_append(self, f"❌ Erreur installation {module} (code {code})")
     # Met à jour la progression globale
     self._dep_install_index += 1
     self.dep_progress_dialog.progress.setRange(0, len(self._dep_install_list))
