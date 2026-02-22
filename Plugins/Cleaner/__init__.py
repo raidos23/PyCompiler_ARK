@@ -25,6 +25,7 @@ from Plugins_SDK.GeneralContext import (
     get_language_code,
     load_plugin_language_file,
     register_plugin_translations,
+    register_i18n_handler,
     translate,
 )
 
@@ -35,12 +36,20 @@ from Plugins_SDK.GeneralContext import (
 log = Dialog()
 dialog = Dialog()
 
-# Load translations from plugin package languages/
+def _load_i18n() -> None:
+    try:
+        lang_code = get_language_code()
+        data = load_plugin_language_file(__package__, lang_code)
+        if isinstance(data, dict) and data:
+            register_plugin_translations("cleaner", data)
+    except Exception:
+        pass
+
+
+# Load translations now and refresh on language changes
+_load_i18n()
 try:
-    lang_code = get_language_code()
-    data = load_plugin_language_file(__package__, lang_code)
-    if isinstance(data, dict) and data:
-        register_plugin_translations("cleaner", data)
+    register_i18n_handler(lambda _gui, _tr: _load_i18n())
 except Exception:
     pass
 
