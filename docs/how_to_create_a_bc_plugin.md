@@ -156,6 +156,46 @@ Behavior.
 - Dialogs are routed through the UI thread and inherit the theme.
 - Direct Qt dialogs (like `QProgressDialog`) are blocked in sandboxed runs.
 
+**Plugin UI Config Tabs**
+BCASL can expose per‑plugin configuration tabs in the BCASL config UI.
+
+Implement:
+```python
+def build_config_tab(self, parent, ctx, config):
+    # return QWidget or (title, widget) or (title, widget, on_save)
+    ...
+```
+
+Notes.
+- `config` is a dict to read/write.
+- `on_save(config_dict)` can return an updated dict.
+- Saved under `plugins.<id>.config` in `bcasl.yml`.
+
+**Plugin i18n (GeneralContext)**
+Plugins can use the SDK i18n system with a `languages/` folder in the plugin package.
+
+Example layout:
+```
+Plugins/MyPlugin/
+  __init__.py
+  languages/
+    en.json
+    fr.json
+```
+
+Load and use:
+```python
+from Plugins_SDK.GeneralContext import (
+    get_language_code, load_plugin_language_file,
+    register_plugin_translations, translate,
+)
+
+data = load_plugin_language_file(__package__, get_language_code())
+register_plugin_translations("my.plugin.id", data)
+
+label = translate("my.plugin.id", "ui_title", "Default title")
+```
+
 **Sandbox, Timeout, Parallelism**
 - If `options.sandbox` is `true`, plugins can run in isolated processes.
 - Timeout via `options.plugin_timeout_s` or `PYCOMPILER_BCASL_PLUGIN_TIMEOUT`.

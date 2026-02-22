@@ -1,0 +1,11 @@
+{
+  "ui_safety": "安全",
+  "ui_targets": "対象",
+  "ui_confirm": "クリーン前に確認する",
+  "ui_pyc": ".pyc ファイルを削除",
+  "ui_pycache": "__pycache__ フォルダーを削除",
+  "ui_tip": "ヒント: 削除したくない項目は無効にしてください。",
+  "dlg_confirm": "workspace をクリーンしますか (.pyc と __pycache__)?",
+  "log_cancel": "ユーザーによりクリーンがキャンセルされました",
+  "log_noop": "Cleaner: することがありません（両方のオプションが無効）"
+}

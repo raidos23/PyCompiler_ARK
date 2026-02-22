@@ -14,7 +14,34 @@
 # limitations under the License.
 
 from .Dialog import Dialog as Dialog
+from .i18n import (
+    apply_translations,
+    get_language_code,
+    get_translations,
+    load_plugin_language_file,
+    normalize_language_code,
+    register_i18n_handler,
+    register_plugin_translations,
+    resolve_language_code,
+    set_translations,
+    translate,
+    unregister_i18n_handler,
+)
 
 __version__ = "1.0.0"
 
-__all__ = ["Dialog", "__version__"]
+__all__ = [
+    "Dialog",
+    "apply_translations",
+    "get_language_code",
+    "get_translations",
+    "load_plugin_language_file",
+    "normalize_language_code",
+    "register_i18n_handler",
+    "register_plugin_translations",
+    "resolve_language_code",
+    "set_translations",
+    "translate",
+    "unregister_i18n_handler",
+    "__version__",
+]

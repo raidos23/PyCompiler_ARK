@@ -194,6 +194,10 @@ def _discover_bcasl_plugins(
     return plugins
 
 
+# apply_translations removed: i18n is now handled at the SDK level to stay
+# independent from BCASL and support future plugin systems.
+
+
 # --- Chargement config (YML uniquement) ---
 
 
