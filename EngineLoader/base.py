@@ -169,12 +169,12 @@ class CompilerEngine:
             system_tools = tools.get("system", [])
 
             # Check Python tools using venv_manager
-            if hasattr(gui, "venv_manager") and gui.venv_manager:
-                venv_path = gui.venv_manager.resolve_project_venv()
-                if venv_path and python_tools:
+            if hasattr(gui, "venv_manager") and gui.venv_manager and python_tools:
+                use_system = bool(getattr(gui, "use_system_python", False))
+                if use_system:
                     missing_python = []
                     for tool in python_tools:
-                        if not gui.venv_manager.is_tool_installed(venv_path, tool):
+                        if not gui.venv_manager.is_tool_installed_system(tool):
                             missing_python.append(tool)
                     if missing_python:
                         log_i18n_level(
@@ -183,9 +183,26 @@ class CompilerEngine:
                             f"Installation des outils Python manquants: {missing_python}",
                             f"Installing missing Python tools: {missing_python}",
                         )
-                        gui.venv_manager.ensure_tools_installed(
-                            venv_path, missing_python
+                        gui.venv_manager.ensure_tools_installed_system(
+                            missing_python
                         )
+                else:
+                    venv_path = gui.venv_manager.resolve_project_venv()
+                    if venv_path:
+                        missing_python = []
+                        for tool in python_tools:
+                            if not gui.venv_manager.is_tool_installed(venv_path, tool):
+                                missing_python.append(tool)
+                        if missing_python:
+                            log_i18n_level(
+                                gui,
+                                "info",
+                                f"Installation des outils Python manquants: {missing_python}",
+                                f"Installing missing Python tools: {missing_python}",
+                            )
+                            gui.venv_manager.ensure_tools_installed(
+                                venv_path, missing_python
+                            )
 
             # Check and install system tools using direct SysDependencyManager
             if system_tools:

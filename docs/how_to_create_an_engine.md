@@ -85,7 +85,7 @@ Tools and dependencies.
 - In `create_tab`, create widgets and store them on `self` (ex: `self._opt_onefile`).
 - Avoid heavy work in `__init__` to keep loading fast.
 - Wire signals locally and use `gui.log.append(...)` for logs.
-- If your engine tab becomes large, wrap it in a scroll area so the UI stays usable.
+- No need to wrap your tab in a scroll area: the UI handles large tabs automatically when needed.
 - Prefer shared UI helpers from the SDK for common patterns (icon selector, output dir, checkbox rows).
 
 ### **Engine Config (get_config / set_config)**
@@ -167,7 +167,8 @@ class SpecialEngine(CompilerEngine):
 ```
 
 **Monolithic Tab Example**
-The following dummy engine shows how to build a very large UI tab with a scroll area to keep it usable.
+The following dummy engine shows how to build a very large UI tab. The UI will
+handle scrolling automatically if needed.
 ```python
 from __future__ import annotations
 
@@ -175,7 +176,6 @@ import sys
 from PySide6.QtWidgets import (
     QWidget,
     QVBoxLayout,
-    QScrollArea,
     QFormLayout,
     QCheckBox,
     QLineEdit,
@@ -210,12 +210,8 @@ class MonolithicEngine(CompilerEngine):
         root = QWidget()
         root_layout = QVBoxLayout(root)
 
-        scroll = QScrollArea()
-        scroll.setWidgetResizable(True)
-        root_layout.addWidget(scroll)
-
         content = QWidget()
-        scroll.setWidget(content)
+        root_layout.addWidget(content)
         content_layout = QVBoxLayout(content)
 
         # Section 1: basic options

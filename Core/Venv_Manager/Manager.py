@@ -52,6 +52,7 @@ class VenvManager:
         self._venv_check_index = 0
         self._venv_check_pip_exe = None
         self._venv_check_path = None
+        self._venv_check_use_python = False
 
         # For fresh venv install flow (no longer used for tool installs)
 
@@ -308,6 +309,17 @@ class VenvManager:
         cand2 = os.path.join(base, "python3")
         return cand1 if os.path.isfile(cand1) else cand2
 
+    def _using_system_python(self) -> bool:
+        try:
+            return bool(getattr(self.parent, "use_system_python", False))
+        except Exception:
+            return False
+
+    def _pip_break_system_args(self) -> list[str]:
+        if self._using_system_python() and platform.system() == "Linux":
+            return ["--break-system-packages"]
+        return []
+
     def has_tool_binary(self, venv_root: str, tool: str) -> bool:
         """Non-blocking heuristic check: detect console script/binary inside the venv.
         This avoids spawning subprocesses and keeps UI fully responsive.
@@ -347,6 +359,13 @@ class VenvManager:
         """
         return self.has_tool_binary(venv_root, tool)
 
+    def is_tool_installed_system(self, tool: str) -> bool:
+        try:
+            missing = self._missing_in_system_python([tool])
+            return len(missing) == 0
+        except Exception:
+            return False
+
     def is_tool_installed_async(self, venv_root: str, tool: str, callback) -> None:
         """Asynchronous check using 'pip show <tool>' via QProcess, then callback(bool).
         Safe for UI: does not block. On any error, returns False.
@@ -382,6 +401,7 @@ class VenvManager:
             self._venv_check_index = 0
             self._venv_check_pip_exe = self.pip_path(venv_root)
             self._venv_check_path = venv_root
+            self._venv_check_use_python = False
             self.venv_check_progress = ProgressDialog(
                 "Vérification du venv", self.parent
             )
@@ -391,6 +411,26 @@ class VenvManager:
             self._check_next_venv_pkg()
         except Exception as e:
             self._safe_log(f"❌ Erreur ensure_tools_installed: {e}")
+
+    def ensure_tools_installed_system(self, tools: list[str]) -> None:
+        """Asynchronously check/install tools in system Python using pip."""
+        try:
+            self._venv_check_pkgs = list(tools)
+            self._venv_check_index = 0
+            self._venv_check_pip_exe = sys.executable
+            self._venv_check_path = (
+                getattr(self.parent, "workspace_dir", None) or os.getcwd()
+            )
+            self._venv_check_use_python = True
+            self.venv_check_progress = ProgressDialog(
+                "Vérification du Python système", self.parent
+            )
+            self.venv_check_progress.set_message(f"Vérification de {tools[0]}...")
+            self.venv_check_progress.set_progress(0, len(tools))
+            self.venv_check_progress.show()
+            self._check_next_venv_pkg()
+        except Exception as e:
+            self._safe_log(f"❌ Erreur ensure_tools_installed_system: {e}")
 
     # ---------- Utility ----------
     def _safe_decode(self, data: bytes, error_handling: str = "replace") -> str:
@@ -1119,7 +1159,10 @@ class VenvManager:
         process = QProcess(self.parent)
         self._venv_check_process = process
         process.setProgram(self._venv_check_pip_exe)
-        process.setArguments(["show", pkg])
+        if self._venv_check_use_python:
+            process.setArguments(["-m", "pip", "show", pkg])
+        else:
+            process.setArguments(["show", pkg])
         process.setWorkingDirectory(self._venv_check_path)
         process.finished.connect(
             lambda code, status: self._on_venv_pkg_checked(process, code, status, pkg)
@@ -1132,7 +1175,10 @@ class VenvManager:
         if getattr(self.parent, "_closing", False):
             return
         if code == 0:
-            self._safe_log(f"✅ {pkg} déjà installé dans le venv.")
+            if self._venv_check_use_python:
+                self._safe_log(f"✅ {pkg} déjà installé (Python système).")
+            else:
+                self._safe_log(f"✅ {pkg} déjà installé dans le venv.")
             self._venv_check_index += 1
             try:
                 next_label = (
@@ -1148,7 +1194,7 @@ class VenvManager:
                 pass
             self._check_next_venv_pkg()
         else:
-            self._safe_log(f"📦 Installation automatique de {pkg} dans le venv...")
+            self._safe_log(f"📦 Installation automatique de {pkg}...")
             try:
                 self.venv_check_progress.set_message(f"Installation de {pkg}...")
                 self.venv_check_progress.progress.setRange(0, 0)
@@ -1157,7 +1203,14 @@ class VenvManager:
             process2 = QProcess(self.parent)
             self._venv_check_install_process = process2
             process2.setProgram(self._venv_check_pip_exe)
-            process2.setArguments(["install", pkg])
+            if self._venv_check_use_python:
+                process2.setArguments(
+                    ["-m", "pip", "install"] + self._pip_break_system_args() + [pkg]
+                )
+            else:
+                process2.setArguments(
+                    ["install"] + self._pip_break_system_args() + [pkg]
+                )
             process2.setWorkingDirectory(self._venv_check_path)
             process2.readyReadStandardOutput.connect(
                 lambda: self._on_venv_check_output(process2)
@@ -2036,6 +2089,12 @@ class VenvManager:
             self._safe_log("ℹ️ Aucun fichier de dépendances trouvé ou généré.")
             return
 
+        if self._using_system_python():
+            self._start_requirements_install(
+                path, path, req_path, use_system_python=True
+            )
+            return
+
         manual = getattr(self.parent, "venv_path_manuel", None)
         if manual:
             venv_root = os.path.abspath(manual)
@@ -2067,8 +2126,14 @@ class VenvManager:
 
         self._verify_venv_binding_async(venv_root, _after_binding)
 
-    def _start_requirements_install(self, path: str, venv_root: str, req_path: str):
-        py_exe = self.python_path(venv_root)
+    def _start_requirements_install(
+        self,
+        path: str,
+        venv_root: str,
+        req_path: str,
+        use_system_python: bool = False,
+    ):
+        py_exe = sys.executable if use_system_python else self.python_path(venv_root)
         if not os.path.isfile(py_exe):
             self._safe_log(
                 "⚠️ python introuvable dans le venv; installation requirements ignorée."
@@ -2082,7 +2147,14 @@ class VenvManager:
         except Exception as e:
             self._safe_log(f"⚠️ Impossible de calculer le hash de requirements.txt: {e}")
             req_hash = None
-        marker_path = os.path.join(venv_root, ".requirements.sha256")
+        marker_base = venv_root
+        if use_system_python:
+            try:
+                marker_base = os.path.join(path, ".ark", "system_python")
+                os.makedirs(marker_base, exist_ok=True)
+            except Exception:
+                marker_base = path
+        marker_path = os.path.join(marker_base, ".requirements.sha256")
         if req_hash and os.path.isfile(marker_path):
             try:
                 with open(marker_path, encoding="utf-8") as mf:
@@ -2103,6 +2175,7 @@ class VenvManager:
             self._req_marker_hash = req_hash
             self._req_path = req_path
             self._venv_python_exe = py_exe
+            self._req_use_system_python = bool(use_system_python)
             self._pip_phase = "ensurepip"
             self.progress_dialog = ProgressDialog(
                 "Installation des dépendances", self.parent
@@ -2168,7 +2241,16 @@ class VenvManager:
             self._req_install_process = p2
             p2.setProgram(self._venv_python_exe)
             p2.setArguments(
-                ["-m", "pip", "install", "--upgrade", "pip", "setuptools", "wheel"]
+                [
+                    "-m",
+                    "pip",
+                    "install",
+                    "--upgrade",
+                    "pip",
+                    "setuptools",
+                    "wheel",
+                ]
+                + (self._pip_break_system_args() if getattr(self, "_req_use_system_python", False) else [])
             )
             p2.setWorkingDirectory(os.path.dirname(self._req_path))
             p2.readyReadStandardOutput.connect(lambda: self._on_pip_output(p2))
@@ -2196,7 +2278,14 @@ class VenvManager:
                 p2 = QProcess(self.parent)
                 self._req_install_process = p2
                 p2.setProgram(self._venv_python_exe)
-                p2.setArguments(["-m", "pip", "install", "-r", self._req_path])
+                p2.setArguments(
+                    ["-m", "pip", "install", "-r", self._req_path]
+                    + (
+                        self._pip_break_system_args()
+                        if getattr(self, "_req_use_system_python", False)
+                        else []
+                    )
+                )
                 p2.setWorkingDirectory(os.path.dirname(self._req_path))
                 p2.readyReadStandardOutput.connect(lambda: self._on_pip_output(p2))
                 p2.readyReadStandardError.connect(
