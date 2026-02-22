@@ -25,6 +25,7 @@ from PySide6.QtWidgets import (
     QProgressBar,
     QPushButton,
     QTextEdit,
+    QFrame,
 )
 try:
     from PySide6.QtSvg import QSvgRenderer
@@ -463,6 +464,19 @@ def _setup_widgets(self) -> None:
     self.btn_show_stats = _find(QPushButton, "btn_show_stats")
     self.select_lang = _find(QPushButton, "select_lang")
     self.select_theme = _find(QPushButton, "select_theme")
+
+    # Always remove borders in workspace panel labels
+    for _lbl in (self.label_folder, self.venv_label):
+        if _lbl is None:
+            continue
+        try:
+            _lbl.setFrameShape(QFrame.NoFrame)
+        except Exception:
+            pass
+        try:
+            _lbl.setStyleSheet("border: none; background: transparent;")
+        except Exception:
+            pass
 
     if self.btn_acasl_loader:
         self.btn_acasl_loader.hide()
