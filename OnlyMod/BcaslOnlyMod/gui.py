@@ -58,6 +58,7 @@ from PySide6.QtWidgets import (
     QSizePolicy,
     QFileDialog,
     QLineEdit,
+    QTabWidget,
 )
 from PySide6.QtGui import QFont, QIcon
 
@@ -305,8 +306,8 @@ class BcaslStandaloneGui(QMainWindow):
 
         # Layout principal
         main_layout = QVBoxLayout(central_widget)
-        main_layout.setSpacing(5)
-        main_layout.setContentsMargins(8, 8, 8, 8)
+        main_layout.setSpacing(3)
+        main_layout.setContentsMargins(6, 6, 6, 6)
 
         # === En-tête ===
         header_layout = QHBoxLayout()
@@ -528,12 +529,12 @@ class BcaslStandaloneGui(QMainWindow):
 
         # === Splitter principal ===
         main_splitter = QSplitter(Qt.Orientation.Vertical)
-        main_splitter.setChildrenCollapsible(False)
+        main_splitter.setChildrenCollapsible(True)
         main_layout.addWidget(main_splitter)
 
         # === Panneau supérieur ===
         top_splitter = QSplitter(Qt.Orientation.Horizontal)
-        top_splitter.setChildrenCollapsible(False)
+        top_splitter.setChildrenCollapsible(True)
         top_splitter.setSizePolicy(
             QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding
         )
@@ -541,17 +542,22 @@ class BcaslStandaloneGui(QMainWindow):
         # === Section Configuration des plugins (gauche) ===
         config_container = QWidget()
         config_container_layout = QVBoxLayout(config_container)
-        config_container_layout.setSpacing(6)
+        config_container_layout.setSpacing(4)
         config_container_layout.setContentsMargins(3, 3, 3, 3)
 
-        config_splitter = QSplitter(Qt.Orientation.Vertical)
-        config_splitter.setChildrenCollapsible(False)
-        config_container_layout.addWidget(config_splitter)
+        self.config_tabs = QTabWidget()
+        self.config_tabs.setDocumentMode(False)
+        self.config_tabs.setTabsClosable(False)
+        self.config_tabs.setMovable(False)
+        self.config_tabs.setSizePolicy(
+            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding
+        )
+        config_container_layout.addWidget(self.config_tabs)
 
         # Groupe activation globale
         global_group = QGroupBox(tr("Global Settings", "Paramètres Globaux"))
         global_layout = QVBoxLayout()
-        global_layout.setSpacing(5)
+        global_layout.setSpacing(3)
 
         self.global_enable_check = QCheckBox(tr("Enable BCASL", "Activer BCASL"))
         self.global_enable_check.setChecked(True)
@@ -571,7 +577,6 @@ class BcaslStandaloneGui(QMainWindow):
         global_layout.addWidget(self.global_info_label)
 
         global_group.setLayout(global_layout)
-        config_splitter.addWidget(global_group)
 
         # Groupe plugins
         plugins_group = QGroupBox(tr("Plugins", "Plugins"))
@@ -579,7 +584,7 @@ class BcaslStandaloneGui(QMainWindow):
             QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding
         )
         plugins_layout = QVBoxLayout()
-        plugins_layout.setSpacing(5)
+        plugins_layout.setSpacing(3)
 
         # Liste des plugins
         self.plugins_list = QListWidget()
@@ -620,14 +625,46 @@ class BcaslStandaloneGui(QMainWindow):
 
         plugins_layout.addLayout(nav_layout)
         plugins_group.setLayout(plugins_layout)
-        config_splitter.addWidget(plugins_group)
+        # Page Configuration
+        config_page = QWidget()
+        config_page_layout = QVBoxLayout(config_page)
+        config_page_layout.setSpacing(4)
+        config_page_layout.setContentsMargins(0, 0, 0, 0)
+        global_group.setSizePolicy(
+            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed
+        )
+        plugins_group.setSizePolicy(
+            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding
+        )
+        config_page_layout.addWidget(global_group, 0)
+        config_page_layout.addWidget(plugins_group, 1)
+        config_page_layout.setStretch(0, 0)
+        config_page_layout.setStretch(1, 1)
+        self.config_tabs.addTab(config_page, tr("Configuration", "Configuration"))
+
+        # Page configuration plugins (tabs)
+        plugins_cfg_page = QWidget()
+        plugins_cfg_layout = QVBoxLayout(plugins_cfg_page)
+        plugins_cfg_layout.setSpacing(4)
+        plugins_cfg_layout.setContentsMargins(0, 0, 0, 0)
+        self.plugin_tabs = QTabWidget()
+        self.plugin_tabs.setDocumentMode(False)
+        self.plugin_tabs.setTabsClosable(False)
+        self.plugin_tabs.setMovable(False)
+        self.plugin_tabs.setSizePolicy(
+            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding
+        )
+        plugins_cfg_layout.addWidget(self.plugin_tabs)
+        self.config_tabs.addTab(
+            plugins_cfg_page, tr("Plugins Config", "Config Plugins")
+        )
 
         top_splitter.addWidget(config_container)
 
         # === Section Log et rapport (droite) ===
         log_container = QWidget()
         log_container_layout = QVBoxLayout(log_container)
-        log_container_layout.setSpacing(5)
+        log_container_layout.setSpacing(4)
         log_container_layout.setContentsMargins(3, 3, 3, 3)
 
         log_splitter = QSplitter(Qt.Orientation.Vertical)
@@ -637,14 +674,14 @@ class BcaslStandaloneGui(QMainWindow):
         # Groupe exécution
         execution_group = QGroupBox(tr("Execution", "Exécution"))
         execution_layout = QVBoxLayout()
-        execution_layout.setSpacing(8)
+        execution_layout.setSpacing(6)
 
         # Boutons d'action
         actions_layout = QHBoxLayout()
-        actions_layout.setSpacing(10)
+        actions_layout.setSpacing(8)
 
         self.btn_run = QPushButton(tr("▶ Run Plugins", "▶ Exécuter les Plugins"))
-        self.btn_run.setMinimumHeight(35)
+        self.btn_run.setMinimumHeight(32)
         self.btn_run.setStyleSheet(
             """
             QPushButton {
@@ -667,7 +704,7 @@ class BcaslStandaloneGui(QMainWindow):
         actions_layout.addWidget(self.btn_run)
 
         self.btn_cancel = QPushButton(tr("Cancel", "Annuler"))
-        self.btn_cancel.setMinimumHeight(35)
+        self.btn_cancel.setMinimumHeight(32)
         self.btn_cancel.setEnabled(False)
         self.btn_cancel.setStyleSheet(
             """
@@ -694,7 +731,7 @@ class BcaslStandaloneGui(QMainWindow):
 
         # Bouton effacer log
         self.btn_clear_log = QPushButton(tr("Clear Log", "Effacer Log"))
-        self.btn_clear_log.setMinimumHeight(35)
+        self.btn_clear_log.setMinimumHeight(32)
         self.btn_clear_log.clicked.connect(self._clear_log)
         actions_layout.addWidget(self.btn_clear_log)
 
@@ -713,7 +750,7 @@ class BcaslStandaloneGui(QMainWindow):
         # Groupe log
         log_group = QGroupBox(tr("Execution Log", "Journal d'Exécution"))
         log_layout_inner = QVBoxLayout()
-        log_layout_inner.setSpacing(3)
+        log_layout_inner.setSpacing(2)
 
         self.log_text = QTextEdit()
         self.log_text.setFont(QFont("Consolas", 10))
@@ -738,10 +775,6 @@ class BcaslStandaloneGui(QMainWindow):
         log_splitter.addWidget(log_group)
 
         top_splitter.addWidget(log_container)
-
-        # Proportions internes
-        config_splitter.setSizes([160, 520])
-        log_splitter.setSizes([140, 540])
 
         # Définir les proportions (40% config, 60% log)
         top_splitter.setSizes([400, 600])
@@ -1125,6 +1158,8 @@ class BcaslStandaloneGui(QMainWindow):
             return  # Widget supprimé
 
         self.plugins_meta = {}
+        self._plugin_tabs = {}
+        self._plugin_ui_state = {}
 
         if not self.Plugins_dir or not self.Plugins_dir.exists():
             self._log(
@@ -1169,6 +1204,18 @@ class BcaslStandaloneGui(QMainWindow):
         self._log(
             tr(f"Discovered {count} plugin(s)", f"{count} plugin(s) découvert(s)")
         )
+
+        # Brancher la synchro tabs <-> activation
+        try:
+            self.plugins_list.itemChanged.connect(
+                lambda _=None: self._sync_plugin_tabs()
+            )
+        except Exception:
+            pass
+
+        # Construire les tabs de config plugin
+        self._build_plugin_tabs(order)
+        self._sync_plugin_tabs()
 
     def _add_plugin_item(self, plugin_id: str, meta: Dict[str, Any]):
         """Ajoute un plugin à la liste."""
@@ -1231,6 +1278,192 @@ class BcaslStandaloneGui(QMainWindow):
 
         self.plugins_list.addItem(item)
 
+    def _build_plugin_tabs(self, ordered_ids: List[str]):
+        try:
+            if not self.plugin_tabs:
+                return
+        except Exception:
+            return
+
+        # Nettoyer les tabs plugin existants (garder l'onglet Configuration)
+        try:
+            self.plugin_tabs.clear()
+        except Exception:
+            pass
+
+        plugin_instances = self._load_plugin_instances()
+        if not plugin_instances:
+            return
+
+        # Construire le contexte
+        ctx = None
+        try:
+            if self.workspace_dir:
+                ws = Path(self.workspace_dir).resolve()
+                workspace_meta = {
+                    "workspace_name": ws.name,
+                    "workspace_path": str(ws),
+                    "file_patterns": self.config.get("file_patterns", []),
+                    "exclude_patterns": self.config.get("exclude_patterns", []),
+                }
+                ctx = PreCompileContext(
+                    ws, config=self.config, workspace_metadata=workspace_meta
+                )
+        except Exception:
+            ctx = None
+
+        for pid in ordered_ids:
+            plugin = plugin_instances.get(pid)
+            if plugin is None:
+                continue
+            if not hasattr(plugin, "build_config_tab"):
+                continue
+            try:
+                entry = self.config.get("plugins", {}).get(pid, {})
+                base_cfg = {}
+                try:
+                    base_cfg = dict(entry.get("config", {}) or {})
+                except Exception:
+                    base_cfg = {}
+                tab_res = plugin.build_config_tab(self.plugin_tabs, ctx, base_cfg)
+                if tab_res is None:
+                    continue
+                title = None
+                widget = None
+                on_save = None
+                if isinstance(tab_res, dict):
+                    title = tab_res.get("title")
+                    widget = tab_res.get("widget")
+                    on_save = tab_res.get("on_save")
+                elif isinstance(tab_res, (list, tuple)):
+                    if len(tab_res) >= 2:
+                        title = tab_res[0]
+                        widget = tab_res[1]
+                        if len(tab_res) >= 3:
+                            on_save = tab_res[2]
+                    elif len(tab_res) == 1:
+                        widget = tab_res[0]
+                else:
+                    widget = tab_res
+                if widget is None:
+                    continue
+                if not title:
+                    try:
+                        title = getattr(plugin.meta, "name", None) or pid
+                    except Exception:
+                        title = pid
+                self._plugin_tabs[pid] = {"widget": widget, "title": title}
+                self._plugin_ui_state[pid] = {"config": base_cfg, "on_save": on_save}
+            except Exception:
+                continue
+
+    def _sync_plugin_tabs(self):
+        try:
+            if not self.plugin_tabs or not self._plugin_tabs:
+                return
+        except Exception:
+            return
+
+        def _is_enabled(pid: str) -> bool:
+            try:
+                for i in range(self.plugins_list.count()):
+                    item = self.plugins_list.item(i)
+                    if item.data(Qt.ItemDataRole.UserRole) == pid:
+                        return item.checkState() == Qt.CheckState.Checked
+            except Exception:
+                pass
+            return False
+
+        for pid, tab in self._plugin_tabs.items():
+            widget = tab.get("widget")
+            title = tab.get("title")
+            if widget is None:
+                continue
+            idx = self.plugin_tabs.indexOf(widget)
+            if _is_enabled(pid):
+                if idx < 0:
+                    self.plugin_tabs.addTab(widget, str(title))
+            else:
+                if idx >= 0:
+                    self.plugin_tabs.removeTab(idx)
+
+    def _load_plugin_instances(self) -> Dict[str, Any]:
+        try:
+            if not self.Plugins_dir:
+                return {}
+            ws = Path(self.workspace_dir).resolve() if self.workspace_dir else Path(".")
+            mgr = BCASL(ws, config=self.config, sandbox=False, plugin_timeout_s=0.0)
+            mgr.load_plugins_from_directory(self.Plugins_dir)
+            out = {}
+            for pid, rec in getattr(mgr, "_registry", {}).items():
+                try:
+                    out[str(pid)] = rec.plugin
+                except Exception:
+                    continue
+            return out
+        except Exception:
+            return {}
+
+    def _save_config(self) -> None:
+        if not self.workspace_dir:
+            return
+        try:
+            import yaml
+        except Exception:
+            return
+
+        # Collect plugin UI configs
+        plugin_configs: dict[str, dict[str, Any]] = {}
+        for pid, state in getattr(self, "_plugin_ui_state", {}).items():
+            cfg_obj = state.get("config", {}) if isinstance(state, dict) else {}
+            on_save = state.get("on_save")
+            if callable(on_save):
+                try:
+                    res = on_save(cfg_obj)
+                    if isinstance(res, dict):
+                        cfg_obj = res
+                except Exception:
+                    pass
+            if isinstance(cfg_obj, dict):
+                plugin_configs[pid] = cfg_obj
+
+        # Apply list order and enabled state
+        plugins_out: dict[str, Any] = {}
+        order_ids: list[str] = []
+        for i in range(self.plugins_list.count()):
+            item = self.plugins_list.item(i)
+            pid = item.data(Qt.ItemDataRole.UserRole)
+            if not pid:
+                continue
+            enabled = item.checkState() == Qt.CheckState.Checked
+            base_entry = dict(self.config.get("plugins", {}).get(pid, {}) or {})
+            base_entry["enabled"] = bool(enabled)
+            base_entry["priority"] = i
+            if pid in plugin_configs:
+                base_entry["config"] = plugin_configs[pid]
+            plugins_out[str(pid)] = base_entry
+            order_ids.append(str(pid))
+
+        cfg_out: dict[str, Any] = dict(self.config or {})
+        cfg_out["plugins"] = plugins_out
+        cfg_out["plugin_order"] = order_ids
+        try:
+            opts = cfg_out.get("options", {}) if isinstance(cfg_out.get("options"), dict) else {}
+            opts["enabled"] = bool(self.global_enable_check.isChecked())
+            cfg_out["options"] = opts
+        except Exception:
+            pass
+
+        target = Path(self.workspace_dir).resolve() / "bcasl.yml"
+        try:
+            target.write_text(
+                yaml.safe_dump(cfg_out, allow_unicode=True, sort_keys=False),
+                encoding="utf-8",
+            )
+            self.config = cfg_out
+        except Exception:
+            pass
+
     def _on_global_toggle(self, checked: bool):
         """Gère l'activation/désactivation globale de BCASL."""
         # Vérifier que la liste des plugins est valide
@@ -1260,6 +1493,11 @@ class BcaslStandaloneGui(QMainWindow):
             self._log(tr("BCASL enabled", "BCASL activé"))
         else:
             self._log(tr("BCASL disabled", "BCASL désactivé"))
+
+        try:
+            self._sync_plugin_tabs()
+        except Exception:
+            pass
 
     def _move_plugin_up(self):
         """Déplace le plugin sélectionné vers le haut."""
@@ -1369,6 +1607,12 @@ class BcaslStandaloneGui(QMainWindow):
                 ),
             )
             return
+
+        # Sauvegarder la configuration (incl. tabs UI)
+        try:
+            self._save_config()
+        except Exception:
+            pass
 
         # Récupérer le timeout
         try:

@@ -74,25 +74,55 @@ class Cleaner(BcPluginBase):
 
     def build_config_tab(self, parent, ctx: PreCompileContext, config: dict):
         try:
-            from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel, QCheckBox
+            from PySide6.QtWidgets import (
+                QWidget,
+                QVBoxLayout,
+                QCheckBox,
+                QGroupBox,
+                QFormLayout,
+                QHBoxLayout,
+                QLabel,
+                QSizePolicy,
+            )
         except Exception:
             return None
 
         w = QWidget(parent)
         lay = QVBoxLayout(w)
-        lay.addWidget(QLabel("Cleaner settings"))
+        lay.setSpacing(8)
+        lay.setContentsMargins(8, 8, 8, 8)
 
-        chk_confirm = QCheckBox("Ask confirmation before cleaning", w)
-        chk_pyc = QCheckBox("Remove .pyc files", w)
-        chk_pycache = QCheckBox("Remove __pycache__ folders", w)
+        # Safety
+        safety_group = QGroupBox("Safety", w)
+        safety_layout = QVBoxLayout()
+        safety_layout.setSpacing(4)
+        chk_confirm = QCheckBox("Ask confirmation before cleaning", safety_group)
+        safety_layout.addWidget(chk_confirm)
+        safety_group.setLayout(safety_layout)
+
+        # Targets
+        targets_group = QGroupBox("Targets", w)
+        targets_layout = QFormLayout()
+        targets_layout.setSpacing(6)
+        chk_pyc = QCheckBox("Remove .pyc files", targets_group)
+        chk_pycache = QCheckBox("Remove __pycache__ folders", targets_group)
+        targets_layout.addRow(chk_pyc)
+        targets_layout.addRow(chk_pycache)
+        targets_group.setLayout(targets_layout)
 
         chk_confirm.setChecked(bool(config.get("confirm", True)))
         chk_pyc.setChecked(bool(config.get("clean_pyc", True)))
         chk_pycache.setChecked(bool(config.get("clean_pycache", True)))
 
-        lay.addWidget(chk_confirm)
-        lay.addWidget(chk_pyc)
-        lay.addWidget(chk_pycache)
+        lay.addWidget(safety_group)
+        lay.addWidget(targets_group)
+
+        # Compact hint
+        hint = QLabel("Tip: disable items you don't want to delete.", w)
+        hint.setStyleSheet("color: #888; font-size: 11px;")
+        hint.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        lay.addWidget(hint)
+        lay.addStretch(1)
 
         def on_save(cfg: dict):
             cfg["confirm"] = bool(chk_confirm.isChecked())
