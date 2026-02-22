@@ -782,7 +782,7 @@ def open_bc_loader_dialog(self) -> None:  # UI minimale
         btns.addWidget(btn_cancel)
         btns.addWidget(btn_save)
         plugins_layout.addLayout(btns)
-        tabs.addTab(plugins_tab, self.tr("Plugins", "Plugins"))
+        tabs.addTab(plugins_tab, self.tr("Configuration", "Configuration"))
 
         # Plugin config tabs
         try:
@@ -792,6 +792,44 @@ def open_bc_loader_dialog(self) -> None:  # UI minimale
             )
         except Exception:
             ctx = None
+
+        item_by_pid: dict[str, Any] = {}
+        for i in range(lst.count()):
+            try:
+                it = lst.item(i)
+                pid = it.data(0x0100) or it.text()
+                item_by_pid[str(pid)] = it
+            except Exception:
+                continue
+
+        plugin_tabs: dict[str, dict[str, Any]] = {}
+
+        def _is_enabled(pid: str) -> bool:
+            it = item_by_pid.get(pid)
+            if it is None:
+                return False
+            try:
+                return (
+                    it.checkState() == Qt.CheckState.Checked
+                    if Qt is not None
+                    else False
+                )
+            except Exception:
+                return False
+
+        def _sync_plugin_tabs():
+            for pid, tab in plugin_tabs.items():
+                widget = tab.get("widget")
+                title = tab.get("title")
+                if widget is None:
+                    continue
+                idx = tabs.indexOf(widget)
+                if _is_enabled(pid):
+                    if idx < 0:
+                        tabs.addTab(widget, str(title))
+                else:
+                    if idx >= 0:
+                        tabs.removeTab(idx)
 
         for pid in ordered_ids:
             plugin = plugin_instances.get(pid)
@@ -833,10 +871,12 @@ def open_bc_loader_dialog(self) -> None:  # UI minimale
                         title = getattr(plugin.meta, "name", None) or pid
                     except Exception:
                         title = pid
-                tabs.addTab(widget, str(title))
+                plugin_tabs[pid] = {"widget": widget, "title": title}
                 plugin_ui_state[pid] = {"config": base_cfg, "on_save": on_save}
             except Exception:
                 continue
+
+        _sync_plugin_tabs()
 
         # Enable/disable list and move buttons based on global toggle
         def _apply_enabled_state():
@@ -851,6 +891,11 @@ def open_bc_loader_dialog(self) -> None:  # UI minimale
         try:
             chk_enable.toggled.connect(lambda _=None: _apply_enabled_state())
             _apply_enabled_state()
+        except Exception:
+            pass
+
+        try:
+            lst.itemChanged.connect(lambda _=None: _sync_plugin_tabs())
         except Exception:
             pass
 
