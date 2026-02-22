@@ -16,7 +16,7 @@
 QWidget {
   background: #1E1E1E;
   color: #D4D4D4;
-  font-family: "Segoe UI", "Noto Sans", "DejaVu Sans", Arial, sans-serif;
+  font-family: &quot;Segoe UI&quot;, &quot;Noto Sans&quot;, &quot;DejaVu Sans&quot;, Arial, sans-serif;
   font-size: 9pt;
 }
 
@@ -43,20 +43,20 @@ QLabel#label_workspace_status {
 }
 
 /* Section labels */
-QLabel[objectName="label_workspace_section"],
-QLabel[objectName="label_files_section"],
-QLabel[objectName="label_options_section"],
-QLabel[objectName="label_logs_section"] {
+QLabel[objectName=&quot;label_workspace_section&quot;],
+QLabel[objectName=&quot;label_files_section&quot;],
+QLabel[objectName=&quot;label_options_section&quot;],
+QLabel[objectName=&quot;label_logs_section&quot;] {
   font-weight: 600;
   font-size: 9pt;
   color: #C8C8C8;
   padding-bottom: 4px;
 }
-QLabel[objectName="label_main_actions"],
-QLabel[objectName="label_config_actions"],
-QLabel[objectName="label_tools"],
-QLabel[objectName="label_settings"],
-QLabel[objectName="label_progress"] {
+QLabel[objectName=&quot;label_main_actions&quot;],
+QLabel[objectName=&quot;label_config_actions&quot;],
+QLabel[objectName=&quot;label_tools&quot;],
+QLabel[objectName=&quot;label_settings&quot;],
+QLabel[objectName=&quot;label_progress&quot;] {
   font-weight: 600;
   font-size: 9pt;
   color: #C8C8C8;
@@ -183,7 +183,7 @@ QSpinBox::down-button, QDoubleSpinBox::down-button {
 }
 
 /* Frames &amp; Groups */
-QFrame[frameShape="4"] {
+QFrame[frameShape=&quot;4&quot;] {
   background: #252526;
   border: 1px solid #3C3C3C;
   border-radius: 0px;
@@ -298,8 +298,8 @@ QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal { width: 0; }
           <property name="font">
            <font>
             <family>Segoe UI</family>
-            <pointsize>10</pointsize>
-            <bold>true</bold>
+            <pointsize>9</pointsize>
+            <fontweight>DemiBold</fontweight>
            </font>
           </property>
           <property name="text">
@@ -321,10 +321,13 @@ QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal { width: 0; }
         <property name="orientation">
          <enum>Qt::Orientation::Horizontal</enum>
         </property>
+        <property name="sizeType">
+         <enum>QSizePolicy::Policy::Ignored</enum>
+        </property>
         <property name="sizeHint" stdset="0">
          <size>
           <width>40</width>
-          <height>20</height>
+          <height>60</height>
          </size>
         </property>
        </spacer>
@@ -392,25 +395,25 @@ QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal { width: 0; }
     </widget>
    </item>
    <item>
-   <widget class="QSplitter" name="mainSplitter">
-    <property name="orientation">
-     <enum>Qt::Orientation::Horizontal</enum>
-    </property>
-    <property name="handleWidth">
-     <number>6</number>
-    </property>
-    <widget class="QWidget" name="leftPanel">
-     <property name="minimumSize">
-      <size>
-       <width>280</width>
-       <height>0</height>
-      </size>
+    <widget class="QSplitter" name="mainSplitter">
+     <property name="orientation">
+      <enum>Qt::Orientation::Horizontal</enum>
      </property>
-     <property name="sizePolicy">
-      <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
-       <horstretch>0</horstretch>
+     <property name="handleWidth">
+      <number>6</number>
+     </property>
+     <widget class="QWidget" name="leftPanel">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+        <horstretch>0</horstretch>
         <verstretch>0</verstretch>
        </sizepolicy>
+      </property>
+      <property name="minimumSize">
+       <size>
+        <width>280</width>
+        <height>0</height>
+       </size>
       </property>
       <layout class="QVBoxLayout" name="leftLayout">
        <property name="spacing">
@@ -475,7 +478,7 @@ QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal { width: 0; }
              <property name="font">
               <font>
                <family>Segoe UI</family>
-               <pointsize>10</pointsize>
+               <pointsize>9</pointsize>
                <bold>true</bold>
               </font>
              </property>
@@ -501,7 +504,7 @@ QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal { width: 0; }
              <property name="font">
               <font>
                <family>Segoe UI</family>
-               <pointsize>10</pointsize>
+               <pointsize>9</pointsize>
                <bold>true</bold>
               </font>
              </property>
