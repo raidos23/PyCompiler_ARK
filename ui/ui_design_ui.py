@@ -276,6 +276,7 @@ class Ui_PyCompilerARKGui(object):
         font.setPointSize(9)
         font.setWeight(QFont.DemiBold)
         self.label_app_title.setFont(font)
+        self.label_app_title.setTextFormat(Qt.TextFormat.AutoText)
 
         self.headerLeftLayout.addWidget(self.label_app_title)
 
@@ -517,6 +518,11 @@ class Ui_PyCompilerARKGui(object):
 
         self.compiler_tabs = QTabWidget(self.frame_options)
         self.compiler_tabs.setObjectName(u"compiler_tabs")
+        self.compiler_tabs.setTabPosition(QTabWidget.TabPosition.North)
+        self.compiler_tabs.setTabShape(QTabWidget.TabShape.Rounded)
+        self.compiler_tabs.setDocumentMode(False)
+        self.compiler_tabs.setMovable(True)
+        self.compiler_tabs.setTabBarAutoHide(False)
 
         self.layout_options.addWidget(self.compiler_tabs)
 
@@ -538,6 +544,10 @@ class Ui_PyCompilerARKGui(object):
         self.log.setObjectName(u"log")
         sizePolicy1.setHeightForWidth(self.log.sizePolicy().hasHeightForWidth())
         self.log.setSizePolicy(sizePolicy1)
+        self.log.setFrameShape(QFrame.Shape.StyledPanel)
+        self.log.setFrameShadow(QFrame.Shadow.Sunken)
+        self.log.setTabChangesFocus(False)
+        self.log.setReadOnly(True)
 
         self.layout_logs.addWidget(self.log)
 
@@ -559,6 +569,7 @@ class Ui_PyCompilerARKGui(object):
         self.progress.setObjectName(u"progress")
         self.progress.setValue(0)
         self.progress.setTextVisible(True)
+        self.progress.setInvertedAppearance(True)
 
         self.layout_progress.addWidget(self.progress)
 
