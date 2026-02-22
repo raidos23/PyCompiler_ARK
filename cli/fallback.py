@@ -10,7 +10,8 @@ from typing import Iterable, Optional
 from EngineLoader import unload_all
 
 from .launchers import launch_bcasl_standalone, launch_engines_only_standalone, launch_main_application
-from .output import echo
+from .completion import print_command_completion
+from .output import error, info, plain, warn
 from .system_info import print_system_info
 
 
@@ -21,6 +22,8 @@ Usage:
     python -m pycompiler_ark                    # Launch main application
     python -m pycompiler_ark --help             # Show help
     python -m pycompiler_ark --version          # Show version
+    python -m pycompiler_ark --verbose          # Enable verbose logging
+    python -m pycompiler_ark --no-splash        # Disable splash screen
     python -m pycompiler_ark bcasl              # Launch BCASL standalone
     python -m pycompiler_ark bcasl /path/to/ws  # Launch BCASL with workspace
     python -m pycompiler_ark engines            # Launch Engines standalone GUI
@@ -40,13 +43,27 @@ def _maybe_workspace(args: Iterable[str]) -> Optional[str]:
 
 def run(argv: Optional[list[str]], app_version: str) -> int:
     args = list(argv or sys.argv[1:])
+    no_splash = False
+
+    if "--verbose" in args:
+        import os
+
+        os.environ["PYCOMPILER_VERBOSE"] = "1"
+        args = [a for a in args if a != "--verbose"]
+
+    if "--no-splash" in args:
+        no_splash = True
+        args = [a for a in args if a != "--no-splash"]
 
     if args:
         if args[0] in ("--help", "-h", "help"):
-            echo(USAGE)
+            plain(USAGE)
             return 0
         if args[0] in ("--version", "-v", "version"):
-            echo(f"PyCompiler ARK v{app_version}")
+            info(f"PyCompiler ARK v{app_version}")
+            return 0
+        if args[0] == "--completion" and len(args) > 1:
+            print_command_completion(args[1])
             return 0
         if args[0] == "--info":
             print_system_info(app_version)
@@ -54,13 +71,13 @@ def run(argv: Optional[list[str]], app_version: str) -> int:
         if args[0] == "--unload":
             result = unload_all()
             if result["status"] == "success":
-                echo(f"{result['message']}")
+                info(f"{result['message']}")
                 if result["unloaded"]:
-                    echo("  Unloaded engines:")
+                    plain("  Unloaded engines:")
                     for eid in result["unloaded"]:
-                        echo(f"    • {eid}")
+                        plain(f"    • {eid}")
             else:
-                echo(f"Error: {result['message']}")
+                error(f"{result['message']}")
             return 0 if result["status"] == "success" else 1
         if args[0] == "bcasl":
             workspace_dir = args[1] if len(args) > 1 else None
@@ -71,9 +88,9 @@ def run(argv: Optional[list[str]], app_version: str) -> int:
                 from EngineLoader import available_engines
 
                 engines = available_engines()
-                echo(f"Available engines ({len(engines)}):")
+                plain(f"Available engines ({len(engines)}):")
                 for eid in engines:
-                    echo(f"  - {eid}")
+                    plain(f"  - {eid}")
                 return 0
 
             workspace_dir = _maybe_workspace(sub_args)
@@ -81,17 +98,17 @@ def run(argv: Optional[list[str]], app_version: str) -> int:
         if args[0] == "unload":
             result = unload_all()
             if result["status"] == "success":
-                echo(f"{result['message']}")
+                info(f"{result['message']}")
                 if result["unloaded"]:
-                    echo("  Unloaded engines:")
+                    plain("  Unloaded engines:")
                     for eid in result["unloaded"]:
-                        echo(f"    • {eid}")
+                        plain(f"    • {eid}")
             else:
-                echo(f"Error: {result['message']}")
+                error(f"{result['message']}")
             return 0 if result["status"] == "success" else 1
 
-        echo(f"Unknown command: {args[0]}")
-        echo(USAGE)
+        error(f"Unknown command: {args[0]}")
+        plain(USAGE)
         return 1
 
-    return launch_main_application()
+    return launch_main_application(no_splash=no_splash)

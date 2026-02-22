@@ -3,49 +3,42 @@
 
 from __future__ import annotations
 
-import logging
-from pathlib import Path
-from typing import List
+from typing import Iterable, List
 
-logger = logging.getLogger(__name__)
+try:
+    from rich.console import Console
+    from rich.table import Table
+except Exception:  # pragma: no cover - optional dependency
+    Console = None
+    Table = None
 
 
-class PathCompleter:
-    """Intelligent path completion for workspaces."""
+COMMANDS: List[str] = ["bcasl", "engines", "main", "unload"]
+GLOBAL_FLAGS: List[str] = ["--help", "-h", "--version", "--info", "--completion", "--unload"]
+ENGINE_FLAGS: List[str] = ["--dry-run", "-l", "--language", "-t", "--theme"]
 
-    @staticmethod
-    def complete_paths(incomplete: str, dir_only: bool = True) -> List[str]:
-        try:
-            if not incomplete:
-                return [".", str(Path.home())]
 
-            path = Path(incomplete).expanduser()
+def command_suggestions() -> List[str]:
+    return sorted(set(COMMANDS + GLOBAL_FLAGS))
 
-            if path.is_dir():
-                base_path = path
-                prefix = ""
-            else:
-                base_path = path.parent
-                prefix = path.name
 
-            if not base_path.exists():
-                return []
+def print_command_completion(shell: str) -> None:
+    lines = [f"# {shell.upper()} completion for PyCompiler ARK", "# Commands:"]
+    lines.extend(f"  {cmd}" for cmd in COMMANDS)
+    lines.append("# Global flags:")
+    lines.extend(f"  {flag}" for flag in GLOBAL_FLAGS)
+    lines.append("# Engine flags:")
+    lines.extend(f"  {flag}" for flag in ENGINE_FLAGS)
 
-            completions = []
-            try:
-                for item in sorted(base_path.iterdir()):
-                    if dir_only and not item.is_dir():
-                        continue
+    if Console is None or Table is None:
+        print("\n".join(lines))
+        return
 
-                    if item.name.startswith(prefix):
-                        if item.is_dir():
-                            completions.append(str(item) + "/")
-                        else:
-                            completions.append(str(item))
-            except PermissionError:
-                pass
-
-            return completions[:20]
-        except Exception as exc:
-            logger.debug("Error completing paths: %s", exc)
-            return []
+    console = Console()
+    table = Table(title="PyCompiler ARK Completion")
+    table.add_column("Type", style="bold")
+    table.add_column("Values")
+    table.add_row("Commands", ", ".join(COMMANDS))
+    table.add_row("Global flags", ", ".join(GLOBAL_FLAGS))
+    table.add_row("Engine flags", ", ".join(ENGINE_FLAGS))
+    console.print(table)
