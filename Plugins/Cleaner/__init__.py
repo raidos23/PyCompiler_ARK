@@ -20,7 +20,13 @@ from typing import Optional
 
 from bcasl import bc_register
 from Plugins_SDK.BcPluginContext import BcPluginBase, PluginMeta, PreCompileContext
-from Plugins_SDK.GeneralContext import Dialog
+from Plugins_SDK.GeneralContext import (
+    Dialog,
+    get_language_code,
+    load_plugin_language_file,
+    register_plugin_translations,
+    translate,
+)
 
 
 # Create instances of Dialog for logging and user interaction
@@ -28,6 +34,15 @@ from Plugins_SDK.GeneralContext import Dialog
 # and proper UI integration with the main application
 log = Dialog()
 dialog = Dialog()
+
+# Load translations from plugin package languages/
+try:
+    lang_code = get_language_code()
+    data = load_plugin_language_file(__package__, lang_code)
+    if isinstance(data, dict) and data:
+        register_plugin_translations("cleaner", data)
+except Exception:
+    pass
 
 # Plugin metadata
 PLUGIN_META = PluginMeta(
@@ -93,19 +108,27 @@ class Cleaner(BcPluginBase):
         lay.setContentsMargins(8, 8, 8, 8)
 
         # Safety
-        safety_group = QGroupBox("Safety", w)
+        safety_group = QGroupBox(translate("cleaner", "ui_safety", "Safety"), w)
         safety_layout = QVBoxLayout()
         safety_layout.setSpacing(4)
-        chk_confirm = QCheckBox("Ask confirmation before cleaning", safety_group)
+        chk_confirm = QCheckBox(
+            translate("cleaner", "ui_confirm", "Ask confirmation before cleaning"),
+            safety_group,
+        )
         safety_layout.addWidget(chk_confirm)
         safety_group.setLayout(safety_layout)
 
         # Targets
-        targets_group = QGroupBox("Targets", w)
+        targets_group = QGroupBox(translate("cleaner", "ui_targets", "Targets"), w)
         targets_layout = QFormLayout()
         targets_layout.setSpacing(6)
-        chk_pyc = QCheckBox("Remove .pyc files", targets_group)
-        chk_pycache = QCheckBox("Remove __pycache__ folders", targets_group)
+        chk_pyc = QCheckBox(
+            translate("cleaner", "ui_pyc", "Remove .pyc files"), targets_group
+        )
+        chk_pycache = QCheckBox(
+            translate("cleaner", "ui_pycache", "Remove __pycache__ folders"),
+            targets_group,
+        )
         targets_layout.addRow(chk_pyc)
         targets_layout.addRow(chk_pycache)
         targets_group.setLayout(targets_layout)
@@ -118,7 +141,7 @@ class Cleaner(BcPluginBase):
         lay.addWidget(targets_group)
 
         # Compact hint
-        hint = QLabel("Tip: disable items you don't want to delete.", w)
+        hint = QLabel(translate("cleaner", "ui_tip", "Tip: disable items you don't want to delete."), w)
         hint.setStyleSheet("color: #888; font-size: 11px;")
         hint.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         lay.addWidget(hint)
@@ -149,19 +172,25 @@ class Cleaner(BcPluginBase):
             clean_pyc = bool(cfg.get("clean_pyc", True))
             clean_pycache = bool(cfg.get("clean_pycache", True))
             if not clean_pyc and not clean_pycache:
-                log.log_info("Cleaner: nothing to do (both options disabled)")
+                log.log_info(translate("cleaner", "log_noop", "Cleaner: nothing to do (both options disabled)"))
                 return
 
             # Demander confirmation à l'utilisateur
             if ask_confirm:
                 response = dialog.msg_question(
                     title="Cleaner",
-                    text="Do you want to clean the workspace (.pyc and __pycache__)?",
+                    text=translate(
+                        "cleaner",
+                        "dlg_confirm",
+                        "Do you want to clean the workspace (.pyc and __pycache__)?",
+                    ),
                     default_yes=True,
                 )
 
                 if not response:
-                    log.log_info("Cleaner cancelled by user")
+                    log.log_info(
+                        translate("cleaner", "log_cancel", "Cleaner cancelled by user")
+                    )
                     return
 
             # Réinitialiser les compteurs

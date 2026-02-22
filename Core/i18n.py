@@ -1195,11 +1195,11 @@ def show_language_dialog(self):
                 engines_loader.registry.apply_translations(self, tr)
             except Exception:
                 pass
-            # Propagate translations to all BCASL plugins
+            # Propagate translations to plugin SDK (independent from BCASL)
             try:
-                import bcasl.Loader as bcasl_loader
+                from Plugins_SDK.GeneralContext import apply_translations as sdk_apply_tr
 
-                bcasl_loader.apply_translations(self, tr)
+                sdk_apply_tr(self, tr)
             except Exception:
                 pass
             # Update language preference markers
