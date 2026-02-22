@@ -1,18 +1,4 @@
 # -*- coding: utf-8 -*-
-# SPDX-License-Identifier: Apache-2.0
-# Copyright 2026 Ague Samuel Amen
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
 
 ################################################################################
 ## Form generated from reading UI file 'ui_design.ui'
@@ -40,492 +26,247 @@ class Ui_PyCompilerARKGui(object):
         if not PyCompilerARKGui.objectName():
             PyCompilerARKGui.setObjectName(u"PyCompilerARKGui")
         PyCompilerARKGui.resize(1280, 720)
-        PyCompilerARKGui.setStyleSheet(u"/* PyCompiler ARK \u2014 Dark Theme (ui/themes/dark.qss)\n"
-"   Palette sombre contrast\u00e9e avec accent bleu\n"
-"*/\n"
+        PyCompilerARKGui.setStyleSheet(u"/* PyCompiler ARK \u2014 VSCode inspired */\n"
 "\n"
-"/* Base */\n"
 "QWidget {\n"
-"  background: #121417; /* presque noir, confortable */\n"
-"  color: #E6E8EB;\n"
+"  background: #1E1E1E;\n"
+"  color: #D4D4D4;\n"
 "  font-family: \"Segoe UI\", \"Noto Sans\", \"DejaVu Sans\", Arial, sans-serif;\n"
-"  font-size: 10pt;\n"
+"  font-size: 9pt;\n"
 "}\n"
 "\n"
 "QToolTip {\n"
-"  background-color: #1B1E23;\n"
-"  color: #E6E8EB;\n"
-"  border: 1px solid #2A2F37;\n"
-"  border-radius: 6px;\n"
+"  background-color: #252526;\n"
+"  color: #D4D4D4;\n"
+"  border: 1px solid #3C3C3C;\n"
+"  border-radius: 2px;\n"
 "  padding: 6px 8px;\n"
 "}\n"
 "\n"
-"/* Titres / labels */\n"
+"/* Header */\n"
+"QFrame#header {\n"
+"  background: #2D2D30;\n"
+"  border: 1px solid #3C3C3C;\n"
+"  border-radius: 0px;\n"
+"}\n"
+"QLabel#label_app_title {\n"
+"  color: #FFFFFF;\n"
+"  font-weight: 600;\n"
+"}\n"
+"QLabel#label_workspace_status {\n"
+"  color: #C8C8C8;\n"
+"}\n"
+"\n"
+"/* Section labels */\n"
 "QLabel[objectName=\"label_workspace_section\"],\n"
 "QLabel[objectName=\"label_files_section\"],\n"
 "QLabel[objectName=\"label_options_section\"],\n"
 "QLabel[objectName=\"label_logs_section\"] {\n"
 "  font-weight: 600;\n"
-"  font-size: 12pt;\n"
-"  color: #F1F3F5;\n"
+"  font-size: 9pt;\n"
+"  color: #C8C8C8;\n"
 "  padding-bottom: 4px;\n"
 "}\n"
-"\n"
-"QLabel[objectName=\"label_main_actions\"],\n"
+"QLabel[objectName=\"label"
+                        "_main_actions\"],\n"
 "QLabel[objectName=\"label_config_actions\"],\n"
 "QLabel[objectName=\"label_tools\"],\n"
-"QLabel[objectName=\"label_settings\"],"
-                        "\n"
+"QLabel[objectName=\"label_settings\"],\n"
 "QLabel[objectName=\"label_progress\"] {\n"
 "  font-weight: 600;\n"
-"  font-size: 11pt;\n"
-"  color: #F1F3F5;\n"
+"  font-size: 9pt;\n"
+"  color: #C8C8C8;\n"
 "  padding-bottom: 4px;\n"
 "}\n"
 "\n"
-"/* Boutons */\n"
+"/* Buttons */\n"
 "QPushButton {\n"
-"  background: #1B1E23;\n"
-"  color: #E6E8EB;\n"
-"  border: 1px solid #2A2F37;\n"
-"  border-radius: 10px;\n"
-"  padding: 8px 14px;\n"
-"  font-size: 10pt;\n"
+"  background: #3C3C3C;\n"
+"  color: #D4D4D4;\n"
+"  border: 1px solid #3C3C3C;\n"
+"  border-radius: 2px;\n"
+"  padding: 6px 10px;\n"
+"  font-size: 9pt;\n"
 "}\n"
-"QPushButton:hover {\n"
-"  background: #232831;\n"
-"  border-color: #3A4049;\n"
-"}\n"
-"QPushButton:pressed {\n"
-"  background: #20242C;\n"
-"}\n"
-"QPushButton:disabled {\n"
-"  color: #878B93;\n"
-"  background: #1A1D21;\n"
-"  border-color: #1F2329;\n"
-"}\n"
+"QPushButton:hover { background: #454545; border-color: #454545; }\n"
+"QPushButton:pressed { background: #2A2A2A; }\n"
+"QPushButton:disabled { color: #8A8A8A; background: #2B2B2B; border-color: #2B2B2B; }\n"
 "\n"
-"/* Boutons principaux */\n"
 "QPushButton#compile_btn {\n"
-"  background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #3685FF, stop:1 #2D7DFF);\n"
-"  color: #ffffff;\n"
-"  border-color: #2D7DFF;\n"
+"  background: #0E639C;\n"
+"  color: #FFFFFF;\n"
+"  border-color: #0E639C;\n"
 "  font-weight: 600;\n"
 "}\n"
-"QPushButton#compile_btn:hover { \n"
-"  background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #4090FF, stop:1 #3280FF);\n"
-"  border-color: #3685FF;\n"
-"}\n"
-"QPushButton#com"
-                        "pile_btn:pressed { \n"
-"  background: #226AF0; \n"
-"}\n"
+"QPushButton#compile_btn:hover { background: #1177BB; border-color: #1177BB; }\n"
+"QPushButton#compile_btn:pressed { background: #0B4F7A; }\n"
 "QPushButton#cancel_btn {\n"
-"  background: #3A2023;\n"
-"  color: #ffb3ba;\n"
-"  border: 1px solid #5A2A30;\n"
-"}\n"
-"QPushButton#cancel_btn:hover { \n"
-"  background: #44262A;\n"
-"  border-color: #6A3A40;\n"
-"}\n"
-"\n"
-"/* Cases \u00e0 cocher */\n"
-"QCheckBox { color: #E6E8EB; }\n"
-"QCheckBox::indicator {\n"
-"  width: 16px; height: 16px;\n"
-"}\n"
-"QCheckBox::indicator:unchecked {\n"
-"  border: 1px solid #3A4049; border-radius: 3px; background: #14171B;\n"
-"}\n"
-"QCheckBox::indicator:checked {\n"
-"  image: none; border: 1px solid #2D7DFF; background: #2D7DFF;\n"
-"}\n"
-"\n"
-"/* Champs de saisie */\n"
-"QLineEdit, QTextEdit, QPlainTextEdit {\n"
-"  background: #14171B;\n"
-"  color: #E6E8EB;\n"
-"  border: 1px solid #2A2F37;\n"
-"  border-radius: 6px;\n"
-"  padding: 6px 8px;\n"
-"}\n"
-"QLineEdit:focus, QTextEdit:focus, QPlainTextEdit:focus { border-color: #2D7DFF; }\n"
-"\n"
-"/* Listes */\n"
-"QListWidget, QTreeWidget, QTableWidget, QTableView {\n"
-"  background: "
-                        "#14171B;\n"
-"  color: #E6E8EB;\n"
-"  border: 1px solid #2A2F37;\n"
-"  border-radius: 8px;\n"
-"  selection-background-color: #203357;\n"
-"  selection-color: #E6E8EB;\n"
-"  padding: 4px;\n"
-"}\n"
-"QListWidget::item, QTreeWidget::item {\n"
-"  padding: 6px 8px;\n"
-"  border-radius: 4px;\n"
-"}\n"
-"QListWidget::item:hover, QTreeWidget::item:hover {\n"
-"  background: #1B1E23;\n"
-"}\n"
-"QListWidget::item:selected, QTreeWidget::item:selected {\n"
-"  background: #203357;\n"
-"  color: #E6E8EB;\n"
-"}\n"
-"QListWidget::item:alternate {\n"
-"  background: #16191D;\n"
-"}\n"
-"\n"
-"/* Onglets */\n"
-"QTabWidget::pane {\n"
-"  border: 1px solid #2A2F37; border-radius: 8px; background: #14171B;\n"
-"}\n"
-"QTabBar { background: #14171B; }\n"
-"QTabBar::tab {\n"
-"  background: #1B1E23; color: #E6E8EB; padding: 6px 12px; border: 1px solid #2A2F37; border-bottom: none; border-top-left-radius: 8px; border-top-right-radius: 8px;\n"
-"}\n"
-"QTabBar::tab:selected { background: #14171B; }\n"
-"QTabBar::tab:hover { background: #232831; }\n"
-"\n"
-""
-                        "/* Barre de progression */\n"
-"QProgressBar {\n"
-"  border: 1px solid #2A2F37; border-radius: 8px; text-align: center; background: #14171B; color: #E6E8EB; height: 14px;\n"
-"}\n"
-"QProgressBar::chunk { background-color: #2D7DFF; border-radius: 8px; }\n"
-"\n"
-"/* ComboBox */\n"
-"QComboBox, QSpinBox, QDoubleSpinBox {\n"
-"  background: #14171B; color: #E6E8EB; border: 1px solid #2A2F37; border-radius: 6px; padding: 4px 8px;\n"
-"}\n"
-"QComboBox:hover, QSpinBox:hover, QDoubleSpinBox:hover { background: #1B1E23; }\n"
-"QComboBox QAbstractItemView { background: #14171B; color: #E6E8EB; selection-background-color: #203357; selection-color: #E6E8EB; }\n"
-"\n"
-"/* Scrollbars (Qt6) */\n"
-"QScrollBar:vertical {\n"
-"  background: transparent; width: 12px; margin: 0px; border: none;\n"
-"}\n"
-"QScrollBar::handle:vertical {\n"
-"  background: #3A4049; min-height: 24px; border-radius: 6px;\n"
-"}\n"
-"QScrollBar::handle:vertical:hover { background: #4A5059; }\n"
-"QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { heigh"
-                        "t: 0; }\n"
-"\n"
-"QScrollBar:horizontal {\n"
-"  background: transparent; height: 12px; margin: 0px; border: none;\n"
-"}\n"
-"QScrollBar::handle:horizontal {\n"
-"  background: #3A4049; min-width: 24px; border-radius: 6px;\n"
-"}\n"
-"QScrollBar::handle:horizontal:hover { background: #4A5059; }\n"
-"QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal { width: 0; }\n"
-"\n"
-"/* Dialogs & Message Boxes */\n"
-"QDialog, QMessageBox {\n"
-"  background: #14171B;\n"
-"  color: #E6E8EB;\n"
-"  border-radius: 12px;\n"
-"  border: 1px solid #2A2F37;\n"
-"}\n"
-"QDialog QLabel, QMessageBox QLabel { color: #E6E8EB; }\n"
-"QDialogButtonBox QPushButton, QMessageBox QPushButton {\n"
-"  background: #1B1E23;\n"
-"  color: #E6E8EB;\n"
-"  border: 1px solid #2A2F37;\n"
-"  border-radius: 10px;\n"
-"  padding: 6px 12px;\n"
-"  min-width: 90px;\n"
-"}\n"
-"QDialogButtonBox QPushButton:hover, QMessageBox QPushButton:hover { background: #232831; }\n"
-"QDialogButtonBox QPushButton:pressed, QMessageBox QPushButton:pressed { background: #20242"
-                        "C; }\n"
-"QDialogButtonBox QPushButton:default, QMessageBox QPushButton:default {\n"
-"  background: #2D7DFF; color: #ffffff; border-color: #2D7DFF;\n"
-"}\n"
-"QDialogButtonBox QPushButton:default:hover, QMessageBox QPushButton:default:hover { background: #226AF0; }\n"
-"\n"
-"/* Text edit log (monospace) */\n"
-"QTextEdit#log {\n"
-"  font-family: \"Cascadia Code\", \"Fira Code\", \"DejaVu Sans Mono\", monospace;\n"
-"  font-size: 10pt;\n"
-"  background: #0F1113;\n"
-"}\n"
-"\n"
-"/* Modern selects and inputs */\n"
-"QComboBox {\n"
-"  background: #14171B;\n"
-"  color: #E6E8EB;\n"
-"  border: 1px solid #2A2F37;\n"
-"  border-radius: 10px;\n"
-"  padding: 6px 36px 6px 10px;\n"
-"}\n"
-"QComboBox:focus { border-color: #2D7DFF; }\n"
-"QComboBox::drop-down {\n"
-"  subcontrol-origin: padding;\n"
-"  subcontrol-position: top right;\n"
-"  width: 30px;\n"
-"  border-left: 1px solid #2A2F37;\n"
-"  background: #1B1E23;\n"
-"  border-top-right-radius: 10px;\n"
-"  border-bottom-right-radius: 10px;\n"
-"}\n"
-"QComboBox QAbstractItemView {\n"
 " "
-                        " background: #14171B;\n"
-"  color: #E6E8EB;\n"
-"  border: 1px solid #2A2F37;\n"
-"  border-radius: 10px;\n"
-"  padding: 4px;\n"
-"  selection-background-color: #203357;\n"
-"  selection-color: #E6E8EB;\n"
+                        " background: #5A1D1D;\n"
+"  color: #F2B8B8;\n"
+"  border: 1px solid #6A2A2A;\n"
+"}\n"
+"QPushButton#cancel_btn:hover { background: #6A2727; border-color: #7A3030; }\n"
+"\n"
+"/* Checkboxes & Radio */\n"
+"QCheckBox { color: #D4D4D4; }\n"
+"QCheckBox::indicator { width: 14px; height: 14px; }\n"
+"QCheckBox::indicator:unchecked { border: 1px solid #3C3C3C; background: #1E1E1E; }\n"
+"QCheckBox::indicator:checked { image: none; border: 1px solid #007ACC; background: #007ACC; }\n"
+"\n"
+"QRadioButton::indicator { width: 14px; height: 14px; border: 1px solid #3C3C3C; background: #1E1E1E; border-radius: 7px; }\n"
+"QRadioButton::indicator:checked { background: #007ACC; border-color: #007ACC; }\n"
+"\n"
+"/* Inputs */\n"
+"QLineEdit, QTextEdit, QPlainTextEdit {\n"
+"  background: #3C3C3C;\n"
+"  color: #D4D4D4;\n"
+"  border: 1px solid #3C3C3C;\n"
+"  border-radius: 2px;\n"
+"  padding: 4px 6px;\n"
+"}\n"
+"QLineEdit:focus, QTextEdit:focus, QPlainTextEdit:focus { border-color: #007ACC; }\n"
+"\n"
+"/* Lists & Tables */\n"
+"QListWidget, "
+                        "QTreeWidget, QTableWidget, QTableView {\n"
+"  background: #1E1E1E;\n"
+"  color: #D4D4D4;\n"
+"  border: 1px solid #3C3C3C;\n"
+"  border-radius: 0px;\n"
+"  selection-background-color: #094771;\n"
+"  selection-color: #D4D4D4;\n"
+"  padding: 2px;\n"
+"}\n"
+"QListWidget::item, QTreeWidget::item { padding: 4px 6px; }\n"
+"QListWidget::item:hover, QTreeWidget::item:hover { background: #2A2D2E; }\n"
+"QListWidget::item:selected, QTreeWidget::item:selected { background: #094771; color: #FFFFFF; }\n"
+"\n"
+"/* Tabs */\n"
+"QTabWidget::pane { border: 1px solid #3C3C3C; background: #1E1E1E; }\n"
+"QTabBar { background: #2D2D30; }\n"
+"QTabBar::tab {\n"
+"  background: #2D2D30;\n"
+"  color: #D4D4D4;\n"
+"  padding: 6px 12px;\n"
+"  border: 1px solid #3C3C3C;\n"
+"  border-bottom: none;\n"
+"}\n"
+"QTabBar::tab:selected { background: #1E1E1E; border-bottom-color: #1E1E1E; }\n"
+"QTabBar::tab:hover { background: #37373D; }\n"
+"\n"
+"/* Progress */\n"
+"QProgressBar {\n"
+"  border: 1px solid #3C3C3C;\n"
+"  border-radius: 0px;\n"
+"  text-alig"
+                        "n: center;\n"
+"  background: #1E1E1E;\n"
+"  color: #D4D4D4;\n"
+"  height: 12px;\n"
+"}\n"
+"QProgressBar::chunk { background-color: #0E639C; }\n"
+"\n"
+"/* Combos & Spin */\n"
+"QComboBox, QSpinBox, QDoubleSpinBox {\n"
+"  background: #3C3C3C;\n"
+"  color: #D4D4D4;\n"
+"  border: 1px solid #3C3C3C;\n"
+"  border-radius: 2px;\n"
+"  padding: 4px 6px;\n"
+"}\n"
+"QComboBox:hover, QSpinBox:hover, QDoubleSpinBox:hover { background: #454545; }\n"
+"QComboBox QAbstractItemView {\n"
+"  background: #252526;\n"
+"  color: #D4D4D4;\n"
+"  border: 1px solid #3C3C3C;\n"
+"  selection-background-color: #094771;\n"
+"  selection-color: #FFFFFF;\n"
 "  outline: 0;\n"
 "}\n"
-"QComboBox QAbstractItemView::item { min-height: 26px; }\n"
 "\n"
-"QAbstractSpinBox {\n"
-"  background: #14171B;\n"
-"  color: #E6E8EB;\n"
-"  border: 1px solid #2A2F37;\n"
-"  border-radius: 10px;\n"
-"  padding: 6px 8px;\n"
-"}\n"
-"QAbstractSpinBox:focus { border-color: #2D7DFF; }\n"
+"QAbstractSpinBox:focus { border-color: #007ACC; }\n"
 "QSpinBox::up-button, QDoubleSpinBox::up-button {\n"
 "  subcontrol-origin: border;\n"
 "  subcontrol-position: top right;\n"
-"  width: 22px;\n"
-"  border-left: 1px solid #2A2F37;\n"
-"  background: #1B1E23;\n"
-"  border-top-right-radius: 10px;\n"
+"  width: 20px;\n"
+"  border-left: 1px solid #3C3C3C;\n"
+"  background: #2D2D30;\n"
 "}\n"
 "QSpinBox::down-button, QDoubleSpinBox::down-button {\n"
 "  subcontrol-origin: border;\n"
-"  subcontrol-position: bottom right;\n"
-"  width: 22px;\n"
-"  border-left: 1px solid #2A2F37;\n"
-"  background: #1B1E23;\n"
-"  border-bottom-right-radius: 10px;\n"
+"  subcontr"
+                        "ol-position: bottom right;\n"
+"  width: 20px;\n"
+"  border-left: 1px solid #3C3C3C;\n"
+"  background: #2D2D30;\n"
 "}\n"
 "\n"
-""
-                        "QRadioButton::indicator {\n"
-"  width: 16px; height: 16px;\n"
-"  border: 1px solid #3A4049; border-radius: 8px; background: #14171B;\n"
-"}\n"
-"QRadioButton::indicator:checked {\n"
-"  background: #2D7DFF; border-color: #2D7DFF;\n"
-"}\n"
-"\n"
-"/* Frames et groupes */\n"
+"/* Frames & Groups */\n"
 "QFrame[frameShape=\"4\"] {\n"
-"  background: #16191D;\n"
-"  border: 1px solid #2A2F37;\n"
-"  border-radius: 12px;\n"
+"  background: #252526;\n"
+"  border: 1px solid #3C3C3C;\n"
+"  border-radius: 0px;\n"
 "}\n"
-"\n"
-"QGroupBox { \n"
-"  border: 1px solid #2A2F37; \n"
-"  border-radius: 10px; \n"
+"QGroupBox {\n"
+"  border: 1px solid #3C3C3C;\n"
+"  border-radius: 0px;\n"
 "  margin-top: 12px;\n"
 "  padding-top: 8px;\n"
 "}\n"
-"QGroupBox::title { \n"
-"  subcontrol-origin: margin; \n"
-"  left: 12px; \n"
-"  padding: 0 6px; \n"
-"  background: transparent; \n"
-"  color: #E6E8EB;\n"
+"QGroupBox::title {\n"
+"  subcontrol-origin: margin;\n"
+"  left: 12px;\n"
+"  padding: 0 6px;\n"
+"  background: transparent;\n"
+"  color: #D4D4D4;\n"
 "  font-weight: 600;\n"
 "}\n"
 "\n"
-"/* Sidebar styling */\n"
-"QScrollArea#sidebarScrollArea {\n"
-"  background: #0F1113;\n"
-"  border-right: 1px solid #2A2F37;\n"
-"}\n"
-"QScrollArea#sidebarScrollArea > QWidget {\n"
-"  background: #0F1113;\n"
-"}\n"
-"\n"
-"/* Main content area */\n"
-"QScrollArea#dashboardScrollArea {\n"
-"  background: #12141"
-                        "7;\n"
-"}\n"
-"\n"
-"\n"
-"/* === Coverage: hidden widgets === */\n"
-"QToolButton {\n"
-"  background: palette(button);\n"
-"  color: palette(text);\n"
-"  border: 1px solid palette(mid);\n"
-"  border-radius: 8px;\n"
-"  padding: 6px 10px;\n"
-"}\n"
-"QToolButton:hover { background: palette(light); }\n"
-"QToolButton:pressed, QToolButton:checked { background: palette(mid); }\n"
-"QToolButton::menu-button { border: none; width: 16px; }\n"
-"\n"
-"QCommandLinkButton {\n"
-"  background: palette(button);\n"
-"  color: palette(text);\n"
-"  border: 1px solid palette(mid);\n"
-"  border-radius: 10px;\n"
-"  padding: 8px 12px;\n"
-"}\n"
-"QCommandLinkButton:hover { background: palette(light); }\n"
-"QCommandLinkButton:pressed { background: palette(mid); }\n"
-"QCommandLinkButton:disabled { color: palette(mid); background: palette(window); border-color: palette(mid); }\n"
-"\n"
-"QToolBox::tab {\n"
-"  background: palette(button);\n"
-"  color: palette(text);\n"
-"  border: 1px solid palette(mid);\n"
-"  border-top-left-radius: 8px;\n"
-"  border"
-                        "-top-right-radius: 8px;\n"
-"  padding: 6px 10px;\n"
-"}\n"
-"QToolBox::tab:selected { background: palette(base); }\n"
-"QToolBox QWidget { background: palette(window); }\n"
-"\n"
-"QDockWidget {\n"
-"  background: palette(window);\n"
-"  border: 1px solid palette(mid);\n"
-"}\n"
-"QDockWidget::title {\n"
-"  text-align: left;\n"
-"  padding: 6px 10px;\n"
-"  background: palette(base);\n"
-"  color: palette(text);\n"
-"  border-bottom: 1px solid palette(mid);\n"
-"}\n"
-"QDockWidget::close-button, QDockWidget::float-button {\n"
-"  border: none;\n"
-"  background: transparent;\n"
-"  padding: 2px;\n"
-"}\n"
-"QDockWidget::close-button:hover, QDockWidget::float-button:hover {\n"
-"  background: palette(light);\n"
-"}\n"
-"\n"
-"QCalendarWidget {\n"
-"  background: palette(base);\n"
-"  border: 1px solid palette(mid);\n"
-"  border-radius: 8px;\n"
-"}\n"
-"QCalendarWidget QWidget#qt_calendar_navigationbar {\n"
-"  background: palette(button);\n"
-"  border-bottom: 1px solid palette(mid);\n"
-"}\n"
-"QCalendarWidget QToolButton {\n"
-"  background:"
-                        " palette(button);\n"
-"  color: palette(text);\n"
-"  border: 1px solid palette(mid);\n"
-"  border-radius: 6px;\n"
-"  padding: 4px 8px;\n"
-"}\n"
-"QCalendarWidget QToolButton:hover { background: palette(light); }\n"
-"QCalendarWidget QSpinBox { background: palette(base); border: 1px solid palette(mid); }\n"
-"QCalendarWidget QAbstractItemView {\n"
-"  background: palette(base);\n"
-"  selection-background-color: palette(highlight);\n"
-"  selection-color: palette(highlighted-text);\n"
-"}\n"
-"QCalendarWidget QAbstractItemView:disabled { color: palette(mid); }\n"
-"\n"
-"QDateEdit, QTimeEdit, QDateTimeEdit {\n"
-"  background: palette(base);\n"
-"  color: palette(text);\n"
-"  border: 1px solid palette(mid);\n"
-"  border-radius: 6px;\n"
-"  padding: 4px 8px;\n"
-"}\n"
-"QDateEdit:focus, QTimeEdit:focus, QDateTimeEdit:focus { border-color: palette(highlight); }\n"
-"\n"
-"QSlider::groove:horizontal { height: 6px; background: palette(midlight); border-radius: 3px; }\n"
-"QSlider::handle:horizontal { width: 16px; height: 16px; margin"
-                        ": -5px 0; border-radius: 8px; background: palette(highlight); border: 1px solid palette(mid); }\n"
-"QSlider::sub-page:horizontal { background: palette(highlight); border-radius: 3px; }\n"
-"QSlider::add-page:horizontal { background: palette(midlight); border-radius: 3px; }\n"
-"QSlider::groove:vertical { width: 6px; background: palette(midlight); border-radius: 3px; }\n"
-"QSlider::handle:vertical { width: 16px; height: 16px; margin: 0 -5px; border-radius: 8px; background: palette(highlight); border: 1px solid palette(mid); }\n"
-"QSlider::sub-page:vertical { background: palette(highlight); border-radius: 3px; }\n"
-"QSlider::add-page:vertical { background: palette(midlight); border-radius: 3px; }\n"
-"QSlider:disabled { color: palette(mid); }\n"
-"\n"
-"QLCDNumber {\n"
-"  color: palette(highlight);\n"
-"  background: palette(base);\n"
-"  border: 1px solid palette(mid);\n"
-"  border-radius: 6px;\n"
-"  padding: 4px;\n"
-"}\n"
-"\n"
-"QToolBar {\n"
-"  background: palette(window);\n"
-"  border-bottom: 1px solid palette(mid);"
-                        "\n"
-"  spacing: 6px;\n"
-"}\n"
-"QToolBar::separator { background: palette(mid); width: 1px; height: 1px; margin: 4px; }\n"
-"\n"
-"/* === Theme polish === */\n"
-"QHeaderView::section {\n"
-"  background: #1B1E23;\n"
-"  color: #E6E8EB;\n"
-"  border: 1px solid #2A2F37;\n"
-"  padding: 6px 10px;\n"
-"}\n"
-"QHeaderView::section:hover { background: #232831; }\n"
-"\n"
-"QMenuBar {\n"
-"  background: #16191D;\n"
-"  color: #E6E8EB;\n"
-"  border-bottom: 1px solid #2A2F37;\n"
-"}\n"
-"QMenuBar::item { padding: 6px 10px; background: transparent; border-radius: 8px; }\n"
-"QMenuBar::item:selected { background: #232831; }\n"
-"\n"
+"/* Menus */\n"
+"QMenuBar { background: #2D2D30; color: #D4D4D4; }\n"
+"QMenuBar::item:selected { background: #37373D; }\n"
 "QMenu {\n"
-"  background: #14171B;\n"
-"  color: #E6E8EB;\n"
-"  border: 1px solid #2A2F37;\n"
-"  border-radius: 10px;\n"
+"  background: #252526;\n"
+"  color: #D4D4D4;\n"
+"  border: 1px solid #3C3C3C;\n"
 "}\n"
 "QMenu::item { padding: 6px 12px; }\n"
-"QMenu::item:selected { background: #203357; }\n"
-"QMenu::separator { height: 1px; background: #2A2F37; margin: 6px 8px; }\n"
+"QMenu::item:selected { background: #094771; }\n"
+"QMenu::separator { height: 1px; background: #3C3C3C; margin: 6px 8px; }\n"
 "\n"
 "QStatusBar {\n"
-"  background: #16191D;\n"
-"  color: #878B93;\n"
-"  border-top: 1px solid #2A2F37;\n"
+"  background: #007ACC;\n"
+""
+                        "  color: #FFFFFF;\n"
+"  border-top: 1px solid #005F9E;\n"
 "}\n"
-"QSta"
-                        "tusBar::item { border: none; }\n"
+"QStatusBar::item { border: none; }\n"
 "\n"
-"QListWidget::item:hover, QTreeWidget::item:hover, QTableView::item:hover {\n"
-"  background: #203357;\n"
-"}\n"
+"/* Scrollbars */\n"
+"QScrollBar:vertical { background: transparent; width: 12px; margin: 0px; border: none; }\n"
+"QScrollBar::handle:vertical { background: #3F3F3F; min-height: 24px; }\n"
+"QScrollBar::handle:vertical:hover { background: #4B4B4B; }\n"
+"QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0; }\n"
+"QScrollBar:horizontal { background: transparent; height: 12px; margin: 0px; border: none; }\n"
+"QScrollBar::handle:horizontal { background: #3F3F3F; min-width: 24px; }\n"
+"QScrollBar::handle:horizontal:hover { background: #4B4B4B; }\n"
+"QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal { width: 0; }\n"
 "")
         self.rootLayout = QVBoxLayout(PyCompilerARKGui)
-        self.rootLayout.setSpacing(10)
+        self.rootLayout.setSpacing(0)
         self.rootLayout.setObjectName(u"rootLayout")
-        self.rootLayout.setContentsMargins(12, 12, 12, 12)
+        self.rootLayout.setContentsMargins(0, 0, 0, 0)
         self.header = QFrame(PyCompilerARKGui)
         self.header.setObjectName(u"header")
+        self.header.setMinimumSize(QSize(0, 44))
         self.header.setFrameShape(QFrame.Shape.StyledPanel)
         self.headerLayout = QHBoxLayout(self.header)
-        self.headerLayout.setSpacing(10)
+        self.headerLayout.setSpacing(8)
         self.headerLayout.setObjectName(u"headerLayout")
-        self.headerLayout.setContentsMargins(10, 10, 10, 10)
+        self.headerLayout.setContentsMargins(8, 6, 8, 6)
         self.headerLeftLayout = QVBoxLayout()
-        self.headerLeftLayout.setSpacing(2)
+        self.headerLeftLayout.setSpacing(0)
         self.headerLeftLayout.setObjectName(u"headerLeftLayout")
         self.headerLeftLayout.setContentsMargins(0, 0, 0, 0)
         self.label_app_title = QLabel(self.header)
@@ -551,7 +292,7 @@ class Ui_PyCompilerARKGui(object):
         self.headerLayout.addItem(self.headerSpacer)
 
         self.headerRightLayout = QHBoxLayout()
-        self.headerRightLayout.setSpacing(8)
+        self.headerRightLayout.setSpacing(6)
         self.headerRightLayout.setObjectName(u"headerRightLayout")
         self.headerRightLayout.setContentsMargins(0, 0, 0, 0)
         self.select_lang = QPushButton(self.header)
@@ -583,33 +324,35 @@ class Ui_PyCompilerARKGui(object):
         self.mainSplitter = QSplitter(PyCompilerARKGui)
         self.mainSplitter.setObjectName(u"mainSplitter")
         self.mainSplitter.setOrientation(Qt.Orientation.Horizontal)
+        self.mainSplitter.setHandleWidth(6)
         self.leftPanel = QWidget(self.mainSplitter)
         self.leftPanel.setObjectName(u"leftPanel")
+        self.leftPanel.setMinimumSize(QSize(280, 0))
         sizePolicy = QSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Expanding)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.leftPanel.sizePolicy().hasHeightForWidth())
         self.leftPanel.setSizePolicy(sizePolicy)
         self.leftLayout = QVBoxLayout(self.leftPanel)
-        self.leftLayout.setSpacing(18)
+        self.leftLayout.setSpacing(8)
         self.leftLayout.setObjectName(u"leftLayout")
-        self.leftLayout.setContentsMargins(10, 10, 10, 10)
+        self.leftLayout.setContentsMargins(6, 6, 6, 6)
         self.leftSplitter = QSplitter(self.leftPanel)
         self.leftSplitter.setObjectName(u"leftSplitter")
         self.leftSplitter.setOrientation(Qt.Orientation.Vertical)
-        self.leftSplitter.setHandleWidth(8)
+        self.leftSplitter.setHandleWidth(6)
         self.frame_workspace = QFrame(self.leftSplitter)
         self.frame_workspace.setObjectName(u"frame_workspace")
         self.frame_workspace.setFrameShape(QFrame.Shape.StyledPanel)
         self.layout_workspace_grid = QGridLayout(self.frame_workspace)
-        self.layout_workspace_grid.setSpacing(18)
+        self.layout_workspace_grid.setSpacing(8)
         self.layout_workspace_grid.setObjectName(u"layout_workspace_grid")
-        self.layout_workspace_grid.setContentsMargins(14, 14, 14, 14)
+        self.layout_workspace_grid.setContentsMargins(8, 8, 8, 8)
         self.label_workspace_section = QLabel(self.frame_workspace)
         self.label_workspace_section.setObjectName(u"label_workspace_section")
         font1 = QFont()
         font1.setFamilies([u"Segoe UI"])
-        font1.setPointSize(12)
+        font1.setPointSize(9)
         font1.setWeight(QFont.DemiBold)
         self.label_workspace_section.setFont(font1)
 
@@ -618,8 +361,8 @@ class Ui_PyCompilerARKGui(object):
         self.label_folder = QLabel(self.frame_workspace)
         self.label_folder.setObjectName(u"label_folder")
         self.label_folder.setFont(font)
-        self.label_folder.setFrameShape(QFrame.Shape.StyledPanel)
-        self.label_folder.setFrameShadow(QFrame.Shadow.Sunken)
+        self.label_folder.setFrameShape(QFrame.Shape.NoFrame)
+        self.label_folder.setFrameShadow(QFrame.Shadow.Plain)
         self.label_folder.setWordWrap(True)
         self.label_folder.setMargin(6)
 
@@ -628,8 +371,8 @@ class Ui_PyCompilerARKGui(object):
         self.venv_label = QLabel(self.frame_workspace)
         self.venv_label.setObjectName(u"venv_label")
         self.venv_label.setFont(font)
-        self.venv_label.setFrameShape(QFrame.Shape.StyledPanel)
-        self.venv_label.setFrameShadow(QFrame.Shadow.Sunken)
+        self.venv_label.setFrameShape(QFrame.Shape.NoFrame)
+        self.venv_label.setFrameShadow(QFrame.Shadow.Plain)
         self.venv_label.setWordWrap(True)
         self.venv_label.setMargin(6)
 
@@ -655,11 +398,11 @@ class Ui_PyCompilerARKGui(object):
         self.frame_files.setObjectName(u"frame_files")
         self.frame_files.setFrameShape(QFrame.Shape.StyledPanel)
         self.layout_files_grid = QGridLayout(self.frame_files)
-        self.layout_files_grid.setSpacing(18)
+        self.layout_files_grid.setSpacing(8)
         self.layout_files_grid.setObjectName(u"layout_files_grid")
-        self.layout_files_grid.setContentsMargins(14, 14, 14, 14)
+        self.layout_files_grid.setContentsMargins(8, 8, 8, 8)
         self.layout_file_actions = QVBoxLayout()
-        self.layout_file_actions.setSpacing(12)
+        self.layout_file_actions.setSpacing(8)
         self.layout_file_actions.setObjectName(u"layout_file_actions")
         self.layout_file_actions.setContentsMargins(0, 0, 0, 0)
         self.btn_select_files = QPushButton(self.frame_files)
@@ -706,9 +449,9 @@ class Ui_PyCompilerARKGui(object):
         self.frame_tools.setObjectName(u"frame_tools")
         self.frame_tools.setFrameShape(QFrame.Shape.StyledPanel)
         self.layout_tools_grid = QGridLayout(self.frame_tools)
-        self.layout_tools_grid.setSpacing(18)
+        self.layout_tools_grid.setSpacing(8)
         self.layout_tools_grid.setObjectName(u"layout_tools_grid")
-        self.layout_tools_grid.setContentsMargins(14, 14, 14, 14)
+        self.layout_tools_grid.setContentsMargins(8, 8, 8, 8)
         self.btn_show_stats = QPushButton(self.frame_tools)
         self.btn_show_stats.setObjectName(u"btn_show_stats")
 
@@ -735,11 +478,7 @@ class Ui_PyCompilerARKGui(object):
 
         self.label_tools = QLabel(self.frame_tools)
         self.label_tools.setObjectName(u"label_tools")
-        font2 = QFont()
-        font2.setFamilies([u"Segoe UI"])
-        font2.setPointSize(11)
-        font2.setWeight(QFont.DemiBold)
-        self.label_tools.setFont(font2)
+        self.label_tools.setFont(font1)
 
         self.layout_tools_grid.addWidget(self.label_tools, 0, 0, 1, 2)
 
@@ -756,20 +495,20 @@ class Ui_PyCompilerARKGui(object):
         sizePolicy2.setHeightForWidth(self.rightPanel.sizePolicy().hasHeightForWidth())
         self.rightPanel.setSizePolicy(sizePolicy2)
         self.rightLayout = QVBoxLayout(self.rightPanel)
-        self.rightLayout.setSpacing(16)
+        self.rightLayout.setSpacing(8)
         self.rightLayout.setObjectName(u"rightLayout")
         self.rightLayout.setContentsMargins(6, 6, 6, 6)
         self.rightSplitter = QSplitter(self.rightPanel)
         self.rightSplitter.setObjectName(u"rightSplitter")
         self.rightSplitter.setOrientation(Qt.Orientation.Vertical)
-        self.rightSplitter.setHandleWidth(8)
+        self.rightSplitter.setHandleWidth(6)
         self.frame_options = QFrame(self.rightSplitter)
         self.frame_options.setObjectName(u"frame_options")
         self.frame_options.setFrameShape(QFrame.Shape.StyledPanel)
         self.layout_options = QVBoxLayout(self.frame_options)
-        self.layout_options.setSpacing(12)
+        self.layout_options.setSpacing(8)
         self.layout_options.setObjectName(u"layout_options")
-        self.layout_options.setContentsMargins(10, 10, 10, 10)
+        self.layout_options.setContentsMargins(8, 8, 8, 8)
         self.label_options_section = QLabel(self.frame_options)
         self.label_options_section.setObjectName(u"label_options_section")
         self.label_options_section.setFont(font1)
@@ -786,9 +525,9 @@ class Ui_PyCompilerARKGui(object):
         self.frame_logs.setObjectName(u"frame_logs")
         self.frame_logs.setFrameShape(QFrame.Shape.StyledPanel)
         self.layout_logs = QVBoxLayout(self.frame_logs)
-        self.layout_logs.setSpacing(12)
+        self.layout_logs.setSpacing(8)
         self.layout_logs.setObjectName(u"layout_logs")
-        self.layout_logs.setContentsMargins(10, 10, 10, 10)
+        self.layout_logs.setContentsMargins(8, 8, 8, 8)
         self.label_logs_section = QLabel(self.frame_logs)
         self.label_logs_section.setObjectName(u"label_logs_section")
         self.label_logs_section.setFont(font1)
@@ -807,12 +546,12 @@ class Ui_PyCompilerARKGui(object):
         self.frame_progress.setObjectName(u"frame_progress")
         self.frame_progress.setFrameShape(QFrame.Shape.StyledPanel)
         self.layout_progress = QVBoxLayout(self.frame_progress)
-        self.layout_progress.setSpacing(8)
+        self.layout_progress.setSpacing(6)
         self.layout_progress.setObjectName(u"layout_progress")
-        self.layout_progress.setContentsMargins(10, 10, 10, 10)
+        self.layout_progress.setContentsMargins(8, 8, 8, 8)
         self.label_progress = QLabel(self.frame_progress)
         self.label_progress.setObjectName(u"label_progress")
-        self.label_progress.setFont(font2)
+        self.label_progress.setFont(font1)
 
         self.layout_progress.addWidget(self.label_progress)
 
