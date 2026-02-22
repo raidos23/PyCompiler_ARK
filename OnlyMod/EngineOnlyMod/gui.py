@@ -376,31 +376,27 @@ class EnginesStandaloneGui(QMainWindow):
 
         # === Splitter principal ===
         main_splitter = QSplitter(Qt.Vertical)
-        main_splitter.setChildrenCollapsible(False)
+        main_splitter.setChildrenCollapsible(True)
+        main_splitter.setHandleWidth(8)
+        main_splitter.setCollapsible(0, True)
+        main_splitter.setCollapsible(1, True)
         main_layout.addWidget(main_splitter)
 
         # === Panneau supérieur avec splitter horizontal ===
         top_splitter = QSplitter(Qt.Horizontal)
-        top_splitter.setChildrenCollapsible(False)
+        top_splitter.setChildrenCollapsible(True)
+        top_splitter.setHandleWidth(8)
+        top_splitter.setCollapsible(0, True)
+        top_splitter.setCollapsible(1, True)
         top_splitter.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
         # === Section Configuration (gauche) ===
-        config_container = QWidget()
-        config_container_layout = QVBoxLayout(config_container)
-        config_container_layout.setSpacing(6)
-        config_container_layout.setContentsMargins(3, 3, 3, 3)
+        left_panel = QWidget()
+        left_layout = QVBoxLayout(left_panel)
+        left_layout.setSpacing(10)
+        left_layout.setContentsMargins(6, 6, 6, 6)
 
-        config_splitter = QSplitter(Qt.Vertical)
-        config_splitter.setChildrenCollapsible(False)
-        config_container_layout.addWidget(config_splitter)
-
-        top_row_splitter = QSplitter(Qt.Horizontal)
-        top_row_splitter.setChildrenCollapsible(False)
-
-        bottom_row_splitter = QSplitter(Qt.Horizontal)
-        bottom_row_splitter.setChildrenCollapsible(False)
-
-        # Moteur (top-left)
+        # Moteur
         engine_group = QGroupBox("Engine Configuration")
         engine_group.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         engine_layout = QVBoxLayout()
@@ -423,63 +419,55 @@ class EnginesStandaloneGui(QMainWindow):
         engine_layout.addWidget(self.compat_status_label)
 
         engine_group.setLayout(engine_layout)
-        top_row_splitter.addWidget(engine_group)
 
-        # Fichier (top-right)
-        file_group = QGroupBox("File / Project Configuration")
-        file_group.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        file_layout = QVBoxLayout()
-        file_layout.setSpacing(5)
+        # Projet (Fichier + Workspace)
+        project_group = QGroupBox("Project")
+        project_group.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        project_layout = QVBoxLayout()
+        project_layout.setSpacing(8)
 
-        file_label = QLabel("File to compile:")
-        file_layout.addWidget(file_label)
+        file_row = QHBoxLayout()
+        file_label = QLabel("File:")
+        file_label.setMinimumWidth(70)
+        file_row.addWidget(file_label)
 
-        file_input_layout = QHBoxLayout()
         self.file_path_edit = QLineEdit()
         self.file_path_edit.setPlaceholderText("Select a Python file to compile...")
         self.file_path_edit.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         self.file_path_edit.setMinimumHeight(30)
-        file_input_layout.addWidget(self.file_path_edit)
+        file_row.addWidget(self.file_path_edit)
 
         browse_btn = QPushButton("Browse")
         browse_btn.setMinimumHeight(30)
         browse_btn.setMinimumWidth(80)
         browse_btn.clicked.connect(self._browse_file)
-        file_input_layout.addWidget(browse_btn)
+        file_row.addWidget(browse_btn)
+        project_layout.addLayout(file_row)
 
-        file_layout.addLayout(file_input_layout)
-        file_group.setLayout(file_layout)
-        top_row_splitter.addWidget(file_group)
-
-        # Workspace
-        workspace_group = QGroupBox("Workspace")
-        workspace_group.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
-        workspace_layout = QGridLayout()
-        workspace_layout.setSpacing(5)
-        workspace_layout.setColumnStretch(1, 1)
-
+        workspace_row = QHBoxLayout()
         workspace_label = QLabel("Workspace:")
-        workspace_layout.addWidget(workspace_label, 0, 0)
+        workspace_label.setMinimumWidth(70)
+        workspace_row.addWidget(workspace_label)
 
         self.workspace_edit = QLineEdit()
         if self.workspace_dir:
             self.workspace_edit.setText(self.workspace_dir)
         self.workspace_edit.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         self.workspace_edit.setMinimumHeight(28)
-        workspace_layout.addWidget(self.workspace_edit, 0, 1)
+        workspace_row.addWidget(self.workspace_edit)
 
         workspace_browse_btn = QPushButton("Browse")
         workspace_browse_btn.setMinimumHeight(28)
-        workspace_browse_btn.setMinimumWidth(70)
+        workspace_browse_btn.setMinimumWidth(80)
         workspace_browse_btn.clicked.connect(self._browse_workspace)
-        workspace_layout.addWidget(workspace_browse_btn, 0, 2)
+        workspace_row.addWidget(workspace_browse_btn)
+        project_layout.addLayout(workspace_row)
 
-        workspace_group.setLayout(workspace_layout)
-        bottom_row_splitter.addWidget(workspace_group)
+        project_group.setLayout(project_layout)
 
-        # Actions (bottom-right)
+        # Actions
         actions_group = QGroupBox("Actions")
-        actions_group.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        actions_group.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         actions_layout = QVBoxLayout()
         actions_layout.setSpacing(8)
 
@@ -551,16 +539,39 @@ class EnginesStandaloneGui(QMainWindow):
 
         actions_layout.addLayout(button_row)
         actions_group.setLayout(actions_layout)
-        bottom_row_splitter.addWidget(actions_group)
 
-        config_splitter.addWidget(top_row_splitter)
-        config_splitter.addWidget(bottom_row_splitter)
+        # Splitter between project/actions and engine for fresh ergonomics
+        left_splitter = QSplitter(Qt.Vertical)
+        left_splitter.setChildrenCollapsible(True)
+        left_splitter.setHandleWidth(8)
+        left_splitter.setCollapsible(0, True)
+        left_splitter.setCollapsible(1, True)
 
-        top_row_splitter.setSizes([500, 500])
-        bottom_row_splitter.setSizes([500, 500])
-        config_splitter.setSizes([520, 320])
+        engine_wrap = QWidget()
+        engine_wrap_layout = QVBoxLayout(engine_wrap)
+        engine_wrap_layout.setContentsMargins(0, 0, 0, 0)
+        engine_wrap_layout.addWidget(engine_group)
 
-        top_splitter.addWidget(config_container)
+        lower_wrap = QWidget()
+        lower_layout = QVBoxLayout(lower_wrap)
+        lower_layout.setContentsMargins(0, 0, 0, 0)
+        lower_layout.setSpacing(10)
+        lower_layout.addWidget(project_group)
+        lower_layout.addWidget(actions_group)
+        lower_layout.addStretch(1)
+
+        left_splitter.addWidget(engine_wrap)
+        left_splitter.addWidget(lower_wrap)
+        left_splitter.setSizes([620, 300])
+
+        left_layout.addWidget(left_splitter)
+
+        left_scroll = QScrollArea()
+        left_scroll.setWidgetResizable(True)
+        left_scroll.setFrameShape(QFrame.NoFrame)
+        left_scroll.setWidget(left_panel)
+
+        top_splitter.addWidget(left_scroll)
 
         # === Section Log (droite avec plus d'espace) ===
         log_container = QWidget()
@@ -601,8 +612,8 @@ class EnginesStandaloneGui(QMainWindow):
 
         top_splitter.addWidget(log_container)
 
-        # Définir les proportions (30% config, 70% log)
-        top_splitter.setSizes([400, 800])
+        # Définir les proportions (40% config, 60% log)
+        top_splitter.setSizes([520, 780])
 
         main_splitter.addWidget(top_splitter)
 
@@ -827,6 +838,30 @@ class EnginesStandaloneGui(QMainWindow):
                     background-color: #3d3d3d;
                     border-bottom: 2px solid #4da6ff;
                 }
+                QScrollArea {
+                    background: transparent;
+                    border: none;
+                }
+                QScrollBar:vertical {
+                    background: #1f1f1f;
+                    width: 10px;
+                    margin: 2px;
+                    border-radius: 5px;
+                }
+                QScrollBar::handle:vertical {
+                    background: #3d3d3d;
+                    min-height: 24px;
+                    border-radius: 5px;
+                }
+                QScrollBar::handle:vertical:hover {
+                    background: #4a4a4a;
+                }
+                QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+                    height: 0px;
+                }
+                QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
+                    background: none;
+                }
                 QStatusBar {
                     background-color: #252525;
                     color: #aaaaaa;
@@ -880,6 +915,30 @@ class EnginesStandaloneGui(QMainWindow):
                 QPushButton:hover {
                     background-color: #d0d0d0;
                 }
+                QScrollArea {
+                    background: transparent;
+                    border: none;
+                }
+                QScrollBar:vertical {
+                    background: #f0f0f0;
+                    width: 10px;
+                    margin: 2px;
+                    border-radius: 5px;
+                }
+                QScrollBar::handle:vertical {
+                    background: #c0c0c0;
+                    min-height: 24px;
+                    border-radius: 5px;
+                }
+                QScrollBar::handle:vertical:hover {
+                    background: #b0b0b0;
+                }
+                QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+                    height: 0px;
+                }
+                QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
+                    background: none;
+                }
             """
             )
 
@@ -891,7 +950,7 @@ class EnginesStandaloneGui(QMainWindow):
         translations = {
             "en": {
                 "engine_config": "Engine Configuration",
-                "file_config": "File / Project Configuration",
+                "project": "Project",
                 "workspace": "Workspace",
                 "file_to_compile": "File to compile:",
                 "workspace_label": "Workspace:",
@@ -916,7 +975,7 @@ class EnginesStandaloneGui(QMainWindow):
             },
             "fr": {
                 "engine_config": "Configuration du Moteur",
-                "file_config": "Configuration Fichier / Projet",
+                "project": "Projet",
                 "workspace": "Workspace",
                 "file_to_compile": "Fichier à compiler :",
                 "workspace_label": "Workspace :",
@@ -948,8 +1007,8 @@ class EnginesStandaloneGui(QMainWindow):
             title = child.title().lower()
             if "engine" in title or "moteur" in title:
                 child.setTitle(tr["engine_config"])
-            elif "file" in title or "fichier" in title:
-                child.setTitle(tr["file_config"])
+            elif "project" in title or "projet" in title:
+                child.setTitle(tr["project"])
             elif "workspace" in title:
                 child.setTitle(tr["workspace"])
             elif "action" in title:
