@@ -148,7 +148,17 @@ def save_preferences(self):
         except Exception:
             pass
     except Exception as e:
-        self.log.append(f"⚠️ Impossible de sauvegarder les préférences : {e}")
+        try:
+            from .i18n import log_i18n_level
+
+            log_i18n_level(
+                self,
+                "warning",
+                f"Impossible de sauvegarder les préférences : {e}",
+                f"Unable to save preferences: {e}",
+            )
+        except Exception:
+            self.log.append(f"Impossible de sauvegarder les préférences : {e}")
 
 
 def update_ui_state(self):

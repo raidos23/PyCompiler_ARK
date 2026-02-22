@@ -309,9 +309,9 @@ def _run_bcasl_sync(
     """Exécute BCASL en mode synchrone et retourne le rapport."""
     manager = BCASL(workspace_root, config=cfg, plugin_timeout_s=plugin_timeout)
     loaded, errors = manager.load_plugins_from_directory(plugins_dir)
-    _emit_log(log_cb, f"🧩 BCASL: {loaded} package(s) chargé(s) depuis Plugins/\n")
+    _emit_log(log_cb, f"BCASL: {loaded} package(s) chargé(s) depuis Plugins/\n")
     for mod, msg in errors or []:
-        _emit_log(log_cb, f"⚠️ Plugin '{mod}': {msg}\n")
+        _emit_log(log_cb, f"Plugin '{mod}': {msg}\n")
 
     _apply_plugins_config(manager, cfg, plugins_dir, log_cb=log_cb)
 
@@ -551,7 +551,7 @@ if QObject is not None and Signal is not None:  # pragma: no cover
                 self.finished.emit(report)
             except Exception as e:
                 try:
-                    self.log.emit(f"⚠️ Erreur BCASL: {e}\n")
+                    self.log.emit(f"Erreur BCASL: {e}\n")
                 except Exception:
                     pass
                 self.finished.emit(None)
@@ -967,8 +967,8 @@ def open_bc_loader_dialog(self) -> None:  # UI minimale
                 if hasattr(self, "log") and self.log is not None:
                     self.log.append(
                         self.tr(
-                            "✅ Plugins enregistrés dans bcasl.yml",
-                            "✅ Plugins saved to bcasl.yml",
+                            "Plugins enregistrés dans bcasl.yml",
+                            "Plugins saved to bcasl.yml",
                         )
                     )
                 dlg.accept()
@@ -1001,7 +1001,7 @@ def open_bc_loader_dialog(self) -> None:  # UI minimale
     except Exception as e:
         try:
             if hasattr(self, "log") and self.log is not None:
-                self.log.append(f"⚠️ Plugins Loader UI error: {e}")
+                self.log.append(f"Plugins Loader UI error: {e}")
         except Exception:
             pass
 
@@ -1034,8 +1034,8 @@ def run_pre_compile_async(self, on_done: Optional[callable] = None) -> None:
                 if hasattr(self, "log") and self.log is not None:
                     self.log.append(
                         self.tr(
-                            "⏹️ BCASL désactivé dans la configuration. Exécution ignorée\n",
-                            "⏹️ BCASL disabled in configuration. Skipping execution\n",
+                            "BCASL désactivé dans la configuration. Exécution ignorée\n",
+                            "BCASL disabled in configuration. Skipping execution\n",
                         )
                     )
             except Exception:
@@ -1087,7 +1087,7 @@ def run_pre_compile_async(self, on_done: Optional[callable] = None) -> None:
             report = None
             try:
                 if hasattr(self, "log") and self.log is not None:
-                    self.log.append(f"⚠️ Erreur BCASL: {_e}\n")
+                self.log.append(f"Erreur BCASL: {_e}\n")
             except Exception:
                 pass
         if callable(on_done):
@@ -1103,7 +1103,7 @@ def run_pre_compile_async(self, on_done: Optional[callable] = None) -> None:
             pass
         try:
             if hasattr(self, "log") and self.log is not None:
-                self.log.append(f"⚠️ Erreur BCASL (async): {e}\n")
+                self.log.append(f"Erreur BCASL (async): {e}\n")
         except Exception:
             pass
 
@@ -1125,7 +1125,7 @@ def run_pre_compile(self) -> Optional[object]:
             try:
                 if hasattr(self, "log") and self.log is not None:
                     self.log.append(
-                        "⏹️ BCASL désactivé dans la configuration. Exécution ignorée\n"
+                        "BCASL désactivé dans la configuration. Exécution ignorée\n"
                     )
             except Exception:
                 pass
@@ -1153,7 +1153,7 @@ def run_pre_compile(self) -> Optional[object]:
     except Exception as e:
         try:
             if hasattr(self, "log") and self.log is not None:
-                self.log.append(f"⚠️ Erreur BCASL: {e}\n")
+                self.log.append(f"Erreur BCASL: {e}\n")
         except Exception:
             pass
         return None

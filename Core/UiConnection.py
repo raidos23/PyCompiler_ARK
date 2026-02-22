@@ -224,6 +224,71 @@ def _setup_sidebar_logo(self) -> None:
     logo_label.setScaledContents(True)
 
 
+def _auto_resize_for_screen(self) -> None:
+    """Ajuste la taille de la fenêtre selon l'écran pour éviter les glitches."""
+    try:
+        from PySide6.QtWidgets import QApplication
+
+        screen = None
+        try:
+            screen = self.screen()
+        except Exception:
+            screen = None
+        if screen is None:
+            screen = QApplication.primaryScreen()
+        if screen is None:
+            return
+        geo = screen.availableGeometry()
+        aw, ah = geo.width(), geo.height()
+        if aw <= 0 or ah <= 0:
+            return
+
+        # Respecter les états maximisé/plein écran
+        try:
+            if self.isMaximized() or self.isFullScreen():
+                return
+        except Exception:
+            pass
+
+        # Définir des bornes raisonnables
+        min_w = max(800, int(aw * 0.55))
+        min_h = max(600, int(ah * 0.55))
+        try:
+            self.setMinimumSize(min_w, min_h)
+        except Exception:
+            pass
+        try:
+            self.setMaximumSize(aw, ah)
+        except Exception:
+            pass
+
+        # Calculer une taille cible à partir du hint
+        try:
+            hint = self.sizeHint()
+            base_w = max(self.width(), hint.width())
+            base_h = max(self.height(), hint.height())
+        except Exception:
+            base_w, base_h = self.width(), self.height()
+
+        target_w = min(max(base_w, int(aw * 0.6)), int(aw * 0.92))
+        target_h = min(max(base_h, int(ah * 0.6)), int(ah * 0.92))
+
+        try:
+            self.resize(target_w, target_h)
+        except Exception:
+            pass
+
+        # Centrer la fenêtre
+        try:
+            x = geo.x() + max(0, (aw - target_w) // 2)
+            y = geo.y() + max(0, (ah - target_h) // 2)
+            self.move(x, y)
+        except Exception:
+            pass
+    except Exception:
+        pass
+
+
 def _apply_button_icons(self) -> None:
     """Applique des icônes SVG aux boutons principaux si disponibles."""
     if not getattr(self, "ui", None):
@@ -532,6 +597,12 @@ def init_ui(self) -> None:
     _setup_compiler_tabs(self)
     _connect_signals(self)
     try:
+        from PySide6.QtCore import QTimer
+
+        QTimer.singleShot(0, lambda: _auto_resize_for_screen(self))
+    except Exception:
+        _auto_resize_for_screen(self)
+    try:
         if hasattr(self, "setup_entrypoint_selector"):
             self.setup_entrypoint_selector()
     except Exception:
@@ -756,7 +827,17 @@ def apply_theme(self, pref: str) -> None:
     except Exception as e:
         try:
             if hasattr(self, "log") and self.log:
-                self.log.append(f"⚠️ Échec d'application du thème: {e}")
+                try:
+                    from .i18n import log_i18n_level
+
+                    log_i18n_level(
+                        self,
+                        "warning",
+                        f"Échec d'application du thème: {e}",
+                        f"Failed to apply theme: {e}",
+                    )
+                except Exception:
+                    self.log.append(f"Échec d'application du thème: {e}")
         except Exception:
             pass
 

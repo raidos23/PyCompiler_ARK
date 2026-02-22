@@ -92,7 +92,19 @@ def onlymod_log(message: str, gui: Optional[object] = None) -> str:
         ts = datetime.now().strftime("%H:%M:%S")
     except Exception:
         ts = ""
-    line = f"[{ts}] {message}" if ts else str(message)
+    def _strip_emoji_prefix(s: str) -> str:
+        try:
+            val = str(s)
+        except Exception:
+            return s
+        for emo in ("✅","⚠️","❌","ℹ️","❗","⏩","📝","📋","🔍","🔧","🔨","➡️","📦","🗑️","🧩","🔌","⏹️","⏱️"):
+            if val.startswith(emo):
+                val = val[len(emo):]
+                break
+        return val.lstrip()
+
+    clean_message = _strip_emoji_prefix(message)
+    line = f"[{ts}] {clean_message}" if ts else str(clean_message)
 
     try:
         _ONLYMOD_LOG_HISTORY.append(line)
@@ -100,7 +112,7 @@ def onlymod_log(message: str, gui: Optional[object] = None) -> str:
         pass
 
     try:
-        logger.info("[OnlyMod] %s", message)
+        logger.info("[OnlyMod] %s", clean_message)
     except Exception:
         pass
 
@@ -447,20 +459,20 @@ def launch_bcasl_standalone(workspace_dir: Optional[str] = None) -> int:
     except ImportError as e:
         if click:
             click.echo(
-                f"❌ Error: Failed to import BCASL standalone module: {e}", err=True
+                f"Error: Failed to import BCASL standalone module: {e}", err=True
             )
             click.echo(
                 "Make sure OnlyMod.BcaslOnlyMod is properly installed.", err=True
             )
         else:
-            print(f"❌ Error: Failed to import BCASL standalone module: {e}")
+            print(f"Error: Failed to import BCASL standalone module: {e}")
             print("Make sure OnlyMod.BcaslOnlyMod is properly installed.")
         return 1
     except Exception as e:
         if click:
-            click.echo(f"❌ Error: Failed to launch BCASL standalone: {e}", err=True)
+            click.echo(f"Error: Failed to launch BCASL standalone: {e}", err=True)
         else:
-            print(f"❌ Error: Failed to launch BCASL standalone: {e}")
+            print(f"Error: Failed to launch BCASL standalone: {e}")
         return 1
 
 
@@ -496,21 +508,21 @@ def launch_engines_only_standalone(workspace_dir: Optional[str] = None) -> int:
     except ImportError as e:
         if click:
             click.echo(
-                f"❌ Error: Failed to import Engines standalone module: {e}", err=True
+                f"Error: Failed to import Engines standalone module: {e}", err=True
             )
             click.echo(
                 "Make sure OnlyMod.EngineOnlyMod is properly installed.",
                 err=True,
             )
         else:
-            print(f"❌ Error: Failed to import Engines standalone module: {e}")
+            print(f"Error: Failed to import Engines standalone module: {e}")
             print("Make sure OnlyMod.EngineOnlyMod is properly installed.")
         return 1
     except Exception as e:
         if click:
-            click.echo(f"❌ Error: Failed to launch Engines standalone: {e}", err=True)
+            click.echo(f"Error: Failed to launch Engines standalone: {e}", err=True)
         else:
-            print(f"❌ Error: Failed to launch Engines standalone: {e}")
+            print(f"Error: Failed to launch Engines standalone: {e}")
         return 1
 
 
@@ -662,11 +674,11 @@ def print_system_info():
     }
 
     if click:
-        click.echo("\n📊 System Information:")
+        click.echo("\nSystem Information:")
         for key, value in info.items():
             click.echo(f"  {key}: {value}")
     else:
-        print("\n📊 System Information:")
+        print("\nSystem Information:")
         for key, value in info.items():
             print(f"  {key}: {value}")
 
@@ -720,20 +732,20 @@ if click:
         if unload_engines_flag:
             result = unload_all()
             if result["status"] == "success":
-                click.echo(f"✅ {result['message']}")
+                click.echo(f"{result['message']}")
                 if result["unloaded"]:
                     click.echo("  Unloaded engines:")
                     for eid in result["unloaded"]:
                         click.echo(f"    • {eid}")
             else:
-                click.echo(f"❌ Error: {result['message']}", err=True)
+                click.echo(f"Error: {result['message']}", err=True)
 
         if help_all:
             click.echo(ctx.get_help())
-            click.echo("\n📚 Available Commands:")
+            click.echo("\nAvailable Commands:")
             click.echo("  bcasl       Launch BCASL standalone module")
             click.echo("  main        Launch main application (default)")
-            click.echo("\n💡 Examples:")
+            click.echo("\nExamples:")
             click.echo("  python -m pycompiler_ark                    # Main app")
             click.echo("  python -m pycompiler_ark bcasl              # BCASL")
             click.echo(
@@ -776,14 +788,14 @@ if click:
             ws_path = Path(workspace_dir)
             if not ws_path.exists():
                 click.echo(
-                    f"⚠️  Workspace directory does not exist: {workspace_dir}", err=True
+                    f"Warning: Workspace directory does not exist: {workspace_dir}", err=True
                 )
                 click.echo("Creating directory...", err=True)
                 try:
                     ws_path.mkdir(parents=True, exist_ok=True)
-                    click.echo(f"✅ Directory created: {workspace_dir}")
+                    click.echo(f"Directory created: {workspace_dir}")
                 except Exception as e:
-                    click.echo(f"❌ Failed to create directory: {e}", err=True)
+                    click.echo(f"Failed to create directory: {e}", err=True)
                     sys.exit(1)
 
         sys.exit(launch_bcasl_standalone(workspace_dir))
@@ -839,14 +851,14 @@ if click:
             ws_path = Path(workspace_dir)
             if not ws_path.exists():
                 click.echo(
-                    f"⚠️  Workspace directory does not exist: {workspace_dir}", err=True
+                    f"Warning: Workspace directory does not exist: {workspace_dir}", err=True
                 )
                 click.echo("Creating directory...", err=True)
                 try:
                     ws_path.mkdir(parents=True, exist_ok=True)
-                    click.echo(f"✅ Directory created: {workspace_dir}")
+                    click.echo(f"Directory created: {workspace_dir}")
                 except Exception as e:
-                    click.echo(f"❌ Failed to create directory: {e}", err=True)
+                    click.echo(f"Failed to create directory: {e}", err=True)
                     sys.exit(1)
 
         # For dry-run mode, just list engines
@@ -854,7 +866,7 @@ if click:
             from EngineLoader import available_engines
 
             engines = available_engines()
-            click.echo(f"📦 Available engines ({len(engines)}):")
+            click.echo(f"Available engines ({len(engines)}):")
             for eid in engines:
                 click.echo(f"  • {eid}")
             sys.exit(0)
@@ -873,13 +885,13 @@ if click:
         """Unload all registered engines."""
         result = unload_all()
         if result["status"] == "success":
-            click.echo(f"✅ {result['message']}")
+            click.echo(f"{result['message']}")
             if result["unloaded"]:
                 click.echo("  Unloaded engines:")
                 for eid in result["unloaded"]:
                     click.echo(f"    • {eid}")
         else:
-            click.echo(f"❌ Error: {result['message']}", err=True)
+            click.echo(f"Error: {result['message']}", err=True)
         sys.exit(0 if result["status"] == "success" else 1)
 
 
@@ -891,10 +903,10 @@ if __name__ == "__main__":
         except click.exceptions.Exit as e:
             sys.exit(e.exit_code)
         except KeyboardInterrupt:
-            click.echo("\n⚠️  Interrupted by user", err=True)
+            click.echo("\nInterrupted by user", err=True)
             sys.exit(130)
         except Exception as e:
-            click.echo(f"❌ Error: {e}", err=True)
+            click.echo(f"Error: {e}", err=True)
             sys.exit(1)
     else:
         # Fallback to simple argument parsing if Click is not available
@@ -911,13 +923,13 @@ if __name__ == "__main__":
             elif sys.argv[1] == "--unload":
                 result = unload_all()
                 if result["status"] == "success":
-                    print(f"✅ {result['message']}")
+                    print(f"{result['message']}")
                     if result["unloaded"]:
                         print("  Unloaded engines:")
                         for eid in result["unloaded"]:
                             print(f"    • {eid}")
                 else:
-                    print(f"❌ Error: {result['message']}")
+                    print(f"Error: {result['message']}")
             elif sys.argv[1] == "bcasl":
                 workspace_dir = sys.argv[2] if len(sys.argv) > 2 else None
                 sys.exit(launch_bcasl_standalone(workspace_dir))
@@ -955,13 +967,13 @@ if __name__ == "__main__":
             elif sys.argv[1] == "unload":
                 result = unload_all()
                 if result["status"] == "success":
-                    print(f"✅ {result['message']}")
+                    print(f"{result['message']}")
                     if result["unloaded"]:
                         print("  Unloaded engines:")
                         for eid in result["unloaded"]:
                             print(f"    • {eid}")
                 else:
-                    print(f"❌ Error: {result['message']}")
+                    print(f"Error: {result['message']}")
                 sys.exit(0 if result["status"] == "success" else 1)
             else:
                 print(f"Unknown command: {sys.argv[1]}")
