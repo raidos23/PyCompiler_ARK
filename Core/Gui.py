@@ -156,7 +156,7 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
         except Exception:
             pass
 
-        self.update_ui_state()
+        
 
     # =========================================================================
     # DÉLÉGATION UI À UiFeatures
@@ -303,7 +303,7 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
     # PRÉFÉRENCES
     # =========================================================================
 
-    from .PreferencesManager import load_preferences, save_preferences, update_ui_state
+    from .PreferencesManager import load_preferences, save_preferences
 
     # =========================================================================
     # DÉPENDANCES
