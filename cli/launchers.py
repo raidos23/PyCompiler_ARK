@@ -12,7 +12,7 @@ from Core import __version__ as APP_VERSION
 from Core import PyCompilerArkGui
 
 from .icons import set_app_icon, set_window_icon
-from .output import echo
+from .output import error, warn
 from .runtime import ROOT_DIR, handle_fatal
 
 
@@ -57,11 +57,11 @@ def launch_bcasl_standalone(workspace_dir: Optional[str] = None) -> int:
         window.show()
         return app.exec()
     except ImportError as exc:
-        echo(f"Error: Failed to import BCASL standalone module: {exc}", err=True)
-        echo("Make sure OnlyMod.BcaslOnlyMod is properly installed.", err=True)
+        error(f"Failed to import BCASL standalone module: {exc}")
+        warn("Make sure OnlyMod.BcaslOnlyMod is properly installed.")
         return 1
     except Exception as exc:
-        echo(f"Error: Failed to launch BCASL standalone: {exc}", err=True)
+        error(f"Failed to launch BCASL standalone: {exc}")
         return 1
 
 
@@ -86,15 +86,15 @@ def launch_engines_only_standalone(workspace_dir: Optional[str] = None) -> int:
         window.show()
         return app.exec()
     except ImportError as exc:
-        echo(f"Error: Failed to import Engines standalone module: {exc}", err=True)
-        echo("Make sure OnlyMod.EngineOnlyMod is properly installed.", err=True)
+        error(f"Failed to import Engines standalone module: {exc}")
+        warn("Make sure OnlyMod.EngineOnlyMod is properly installed.")
         return 1
     except Exception as exc:
-        echo(f"Error: Failed to launch Engines standalone: {exc}", err=True)
+        error(f"Failed to launch Engines standalone: {exc}")
         return 1
 
 
-def launch_main_application() -> int:
+def launch_main_application(no_splash: bool = False) -> int:
     try:
         from PySide6.QtCore import Qt, QTimer
         from PySide6.QtGui import QColor, QPixmap
@@ -104,82 +104,83 @@ def launch_main_application() -> int:
         set_app_icon(app)
 
         splash = None
-        try:
-            logo_dir = os.path.join(ROOT_DIR, "images")
-            safe_ver = "".join(c for c in APP_VERSION if c.isalnum() or c in (".", "-", "_"))
-            names = [
-                f"splash_v{safe_ver}.png",
-                "splash.png",
-                "splash.jpg",
-                "splash.jpeg",
-                "splash.bmp",
-            ]
-            for name in names:
-                path = os.path.join(logo_dir, name)
-                if os.path.isfile(path):
-                    pix = QPixmap(path)
-                    if not pix.isNull():
-                        try:
-                            screen = app.primaryScreen()
-                            geo = screen.availableGeometry() if screen is not None else None
-                            max_side = 720
-                            if geo is not None:
-                                max_side = int(min(geo.width(), geo.height()) * 0.5)
-                                max_side = max(240, min(max_side, 720))
-                            if pix.width() > max_side or pix.height() > max_side:
-                                pix = pix.scaled(
-                                    max_side,
-                                    max_side,
-                                    Qt.AspectRatioMode.KeepAspectRatio,
-                                    Qt.TransformationMode.SmoothTransformation,
-                                )
-                        except Exception:
-                            pass
-                        splash = QSplashScreen(pix)
-                        splash.show()
-                        try:
-                            if screen is not None:
-                                sg = splash.frameGeometry()
-                                center = geo.center() if geo is not None else screen.geometry().center()
-                                splash.move(
-                                    center.x() - sg.width() // 2,
-                                    center.y() - sg.height() // 2,
-                                )
-                        except Exception:
-                            pass
-                        app.processEvents()
-                        try:
-                            align = Qt.AlignHCenter | Qt.AlignBottom
-                            col = QColor(255, 255, 255)
-                            splash.showMessage("Initialisation… / Initializing…", align, col)
+        if not no_splash:
+            try:
+                logo_dir = os.path.join(ROOT_DIR, "images")
+                safe_ver = "".join(c for c in APP_VERSION if c.isalnum() or c in (".", "-", "_"))
+                names = [
+                    f"splash_v{safe_ver}.png",
+                    "splash.png",
+                    "splash.jpg",
+                    "splash.jpeg",
+                    "splash.bmp",
+                ]
+                for name in names:
+                    path = os.path.join(logo_dir, name)
+                    if os.path.isfile(path):
+                        pix = QPixmap(path)
+                        if not pix.isNull():
+                            try:
+                                screen = app.primaryScreen()
+                                geo = screen.availableGeometry() if screen is not None else None
+                                max_side = 720
+                                if geo is not None:
+                                    max_side = int(min(geo.width(), geo.height()) * 0.5)
+                                    max_side = max(240, min(max_side, 720))
+                                if pix.width() > max_side or pix.height() > max_side:
+                                    pix = pix.scaled(
+                                        max_side,
+                                        max_side,
+                                        Qt.AspectRatioMode.KeepAspectRatio,
+                                        Qt.TransformationMode.SmoothTransformation,
+                                    )
+                            except Exception:
+                                pass
+                            splash = QSplashScreen(pix)
+                            splash.show()
+                            try:
+                                if screen is not None:
+                                    sg = splash.frameGeometry()
+                                    center = geo.center() if geo is not None else screen.geometry().center()
+                                    splash.move(
+                                        center.x() - sg.width() // 2,
+                                        center.y() - sg.height() // 2,
+                                    )
+                            except Exception:
+                                pass
                             app.processEvents()
-                            QTimer.singleShot(
-                                700,
-                                lambda: splash.showMessage(
-                                    "Chargement du thème… / Loading theme…", align, col
-                                ),
-                            )
-                            QTimer.singleShot(
-                                1400,
-                                lambda: splash.showMessage(
-                                    "Découverte des moteurs… / Discovering engines…",
-                                    align,
-                                    col,
-                                ),
-                            )
-                            QTimer.singleShot(
-                                2300,
-                                lambda: splash.showMessage(
-                                    "Préparation de l'interface… / Preparing UI…",
-                                    align,
-                                    col,
-                                ),
-                            )
-                        except Exception:
-                            pass
-                    break
-        except Exception:
-            splash = None
+                            try:
+                                align = Qt.AlignHCenter | Qt.AlignBottom
+                                col = QColor(255, 255, 255)
+                                splash.showMessage("Initialisation… / Initializing…", align, col)
+                                app.processEvents()
+                                QTimer.singleShot(
+                                    700,
+                                    lambda: splash.showMessage(
+                                        "Chargement du thème… / Loading theme…", align, col
+                                    ),
+                                )
+                                QTimer.singleShot(
+                                    1400,
+                                    lambda: splash.showMessage(
+                                        "Découverte des moteurs… / Discovering engines…",
+                                        align,
+                                        col,
+                                    ),
+                                )
+                                QTimer.singleShot(
+                                    2300,
+                                    lambda: splash.showMessage(
+                                        "Préparation de l'interface… / Preparing UI…",
+                                        align,
+                                        col,
+                                    ),
+                                )
+                            except Exception:
+                                pass
+                        break
+            except Exception:
+                splash = None
 
         if splash is not None:
             delay_ms = 4000

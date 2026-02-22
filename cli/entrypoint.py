@@ -13,12 +13,17 @@ from .runtime import install_runtime, handle_fatal
 
 
 def main(argv: list[str] | None = None) -> int:
+    args = list(argv) if argv is not None else None
+    if args and "--verbose" in args:
+        import os
+
+        os.environ["PYCOMPILER_VERBOSE"] = "1"
     install_runtime(APP_VERSION)
 
     if has_click():
         try:
             cli = build_cli(APP_VERSION)
-            cli.main(args=argv, prog_name="pycompiler_ark", standalone_mode=False)
+            cli.main(args=args, prog_name="pycompiler_ark", standalone_mode=False)
             return 0
         except SystemExit as exc:
             return int(exc.code) if isinstance(exc.code, int) else 0
