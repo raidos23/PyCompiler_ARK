@@ -36,7 +36,7 @@ from .executor import BCASL
 
 from .Base import BcPluginBase, PreCompileContext
 from .tagging import compute_tag_order
-
+from Core.i18n import log_i18n_level
 # Qt (facultatif). Ne pas importer QtWidgets au niveau module pour compatibilité headless.
 try:  # pragma: no cover
     from PySide6.QtCore import QObject, QThread, Signal, Slot, Qt
@@ -1087,7 +1087,7 @@ def run_pre_compile_async(self, on_done: Optional[callable] = None) -> None:
             report = None
             try:
                 if hasattr(self, "log") and self.log is not None:
-                self.log.append(f"Erreur BCASL: {_e}\n")
+                    self.log.append(f"Erreur BCASL: {_e}\n")
             except Exception:
                 pass
         if callable(on_done):
