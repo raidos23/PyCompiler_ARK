@@ -2578,9 +2578,56 @@ class VenvManager:
             for prefix in ("*", "-", ">", "•"):
                 if cand.startswith(prefix):
                     cand = cand[len(prefix) :].strip()
+            if cand.startswith(("'", "\"")) and cand.endswith(("'", "\"")):
+                cand = cand[1:-1].strip()
             if cand and os.path.isdir(cand):
                 return cand
+            # Handle "Label: /path" style outputs
+            if ":" in cand:
+                try:
+                    after = cand.split(":", 1)[1].strip()
+                    if after and os.path.isdir(after):
+                        return after
+                except Exception:
+                    pass
+            # Try to extract a path-like token from the line
+            try:
+                tokens = cand.replace("'", " ").replace('"', " ").split()
+                for tok in tokens:
+                    if os.path.isdir(tok):
+                        return tok
+            except Exception:
+                pass
         return None
+
+    def _validate_conda_env(self, env_root: str) -> tuple[bool, str]:
+        try:
+            if not env_root or not os.path.isdir(env_root):
+                return False, "Chemin invalide (dossier manquant)"
+            conda_meta = os.path.join(env_root, "conda-meta")
+            if not os.path.isdir(conda_meta):
+                return False, "conda-meta introuvable"
+            bindir = "Scripts" if platform.system() == "Windows" else "bin"
+            bpath = os.path.join(env_root, bindir)
+            if not os.path.isdir(bpath):
+                return False, f"Dossier {bindir}/ introuvable"
+            if platform.system() == "Windows":
+                pyexe = os.path.join(bpath, "python.exe")
+                if not os.path.isfile(pyexe):
+                    return False, "python.exe introuvable dans Scripts/"
+            else:
+                cand1 = os.path.join(bpath, "python")
+                cand2 = os.path.join(bpath, "python3")
+                if not (os.path.isfile(cand1) or os.path.isfile(cand2)):
+                    return False, "python ou python3 introuvable dans bin/"
+            return True, ""
+        except Exception as e:
+            return False, f"Erreur validation conda: {e}"
+
+    def _validate_manager_venv(self, manager: str, venv_root: str) -> tuple[bool, str]:
+        if manager == "conda":
+            return self._validate_conda_env(venv_root)
+        return self.validate_venv_strict(venv_root)
 
     def _parse_conda_env_spec(self, workspace_dir: str) -> tuple[str | None, str | None]:
         for fname in ("environment.yml", "conda.yml", "environment.yaml"):
@@ -2670,7 +2717,7 @@ class VenvManager:
             path = None
 
         if path and os.path.isdir(path):
-            ok, reason = self.validate_venv_strict(path)
+            ok, reason = self._validate_manager_venv(manager, path)
             if ok:
                 self._manager_venv_cache[base] = path
                 self._safe_log(f"✅ Venv détecté via {manager}: {path}")
