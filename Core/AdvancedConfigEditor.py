@@ -15,11 +15,15 @@
 
 from __future__ import annotations
 
+import difflib
 import json
 import os
 from pathlib import Path
+from typing import Callable
 
 import yaml
+from PySide6.QtCore import QRegularExpression
+from PySide6.QtGui import QFont, QSyntaxHighlighter, QTextCharFormat, QColor
 from PySide6.QtWidgets import (
     QDialog,
     QTabWidget,
@@ -63,6 +67,53 @@ def _safe_parse_json(text: str) -> bool:
         return False
 
 
+class _SimpleHighlighter(QSyntaxHighlighter):
+    def __init__(self, doc, mode: str = "yaml"):
+        super().__init__(doc)
+        self.mode = mode
+        self.rules: list[tuple[QRegularExpression, QTextCharFormat]] = []
+
+        def _fmt(color: str, bold: bool = False) -> QTextCharFormat:
+            fmt = QTextCharFormat()
+            fmt.setForeground(QColor(color))
+            if bold:
+                fmt.setFontWeight(QFont.Weight.Bold)
+            return fmt
+
+        key_fmt = _fmt("#9cdcfe", bold=True)
+        str_fmt = _fmt("#ce9178")
+        num_fmt = _fmt("#b5cea8")
+        bool_fmt = _fmt("#569cd6", bold=True)
+        sym_fmt = _fmt("#d4d4d4")
+        com_fmt = _fmt("#6a9955")
+
+        # Strings
+        self.rules.append((QRegularExpression(r"'[^']*'"), str_fmt))
+        self.rules.append((QRegularExpression(r'"[^"]*"'), str_fmt))
+        # Numbers
+        self.rules.append((QRegularExpression(r"\b\d+(?:\.\d+)?\b"), num_fmt))
+        # Booleans/null
+        self.rules.append((QRegularExpression(r"\b(true|false|null|yes|no)\b", QRegularExpression.CaseInsensitiveOption), bool_fmt))
+        # Symbols
+        self.rules.append((QRegularExpression(r"[{}\[\]:,]"), sym_fmt))
+        # Comments
+        self.rules.append((QRegularExpression(r"#.*$"), com_fmt))
+
+        if mode == "yaml":
+            # YAML keys (simple: key:)
+            self.rules.append((QRegularExpression(r"^\s*[A-Za-z0-9_\-\.]+(?=\s*:)"), key_fmt))
+        else:
+            # JSON keys ("key":)
+            self.rules.append((QRegularExpression(r'"[A-Za-z0-9_\-\.]+"(?=\s*:)'), key_fmt))
+
+    def highlightBlock(self, text: str) -> None:
+        for pattern, fmt in self.rules:
+            it = pattern.globalMatch(text)
+            while it.hasNext():
+                match = it.next()
+                self.setFormat(match.capturedStart(), match.capturedLength(), fmt)
+
+
 class AdvancedConfigEditor(QDialog):
     def __init__(self, gui):
         super().__init__(gui)
@@ -91,152 +142,144 @@ class AdvancedConfigEditor(QDialog):
     def _workspace_dir(self) -> str | None:
         return getattr(self.gui, "workspace_dir", None)
 
-    def _setup_tab_ark(self) -> None:
+    def _make_editor(self, parent) -> QPlainTextEdit:
+        edit = QPlainTextEdit(parent)
+        edit.setFont(QFont("Consolas", 10))
+        edit.setLineWrapMode(QPlainTextEdit.LineWrapMode.NoWrap)
+        return edit
+
+    def _show_diff(self, title: str, before: str, after: str) -> None:
+        diff = "\n".join(
+            difflib.unified_diff(
+                before.splitlines(),
+                after.splitlines(),
+                fromfile="original",
+                tofile="modifié",
+                lineterm="",
+            )
+        )
+        if not diff.strip():
+            QMessageBox.information(self, title, self.gui.tr("Aucune différence.", "No differences."))
+            return
+        dlg = QDialog(self)
+        dlg.setWindowTitle(title)
+        dlg.resize(900, 600)
+        lay = QVBoxLayout(dlg)
+        view = QPlainTextEdit(dlg)
+        view.setReadOnly(True)
+        view.setFont(QFont("Consolas", 10))
+        view.setPlainText(diff)
+        lay.addWidget(view)
+        btn = QPushButton(self.gui.tr("Fermer", "Close"))
+        btn.clicked.connect(dlg.close)
+        lay.addWidget(btn)
+        dlg.exec()
+
+    def _build_tab(
+        self,
+        label: str,
+        path_getter: Callable[[], str | None],
+        is_yaml: bool,
+        tab_title: str,
+    ) -> tuple[QDialog, QPlainTextEdit, QLabel]:
         tab = QDialog(self)
         lay = QVBoxLayout(tab)
         lay.setSpacing(6)
-        title = QLabel(self.gui.tr("ARK_Main_Config.yml", "ARK_Main_Config.yml"))
+
+        title = QLabel(label)
         lay.addWidget(title)
 
-        self.ark_edit = QPlainTextEdit(tab)
-        self.ark_edit.setPlaceholderText(
-            self.gui.tr("Sélectionnez un workspace pour éditer ARK_Main_Config.yml", "Select a workspace to edit ARK_Main_Config.yml")
-        )
-        lay.addWidget(self.ark_edit, 1)
+        path_label = QLabel("")
+        path_label.setStyleSheet("color: #888;")
+        lay.addWidget(path_label)
+
+        editor = self._make_editor(tab)
+        lay.addWidget(editor, 1)
+
+        _SimpleHighlighter(editor.document(), "yaml" if is_yaml else "json")
 
         btns = QHBoxLayout()
         btn_reload = QPushButton(self.gui.tr("Recharger", "Reload"))
         btn_save = QPushButton(self.gui.tr("Enregistrer", "Save"))
+        btn_diff = QPushButton(self.gui.tr("Voir diff", "View diff"))
         btn_open = QPushButton(self.gui.tr("Ouvrir fichier…", "Open file…"))
         btns.addWidget(btn_reload)
         btns.addWidget(btn_save)
+        btns.addWidget(btn_diff)
         btns.addStretch(1)
         btns.addWidget(btn_open)
         lay.addLayout(btns)
 
-        btn_reload.clicked.connect(self._load_ark_config)
-        btn_save.clicked.connect(self._save_ark_config)
-        btn_open.clicked.connect(lambda: self._open_any_file(self.ark_edit))
+        def _load():
+            path = path_getter()
+            if not path:
+                editor.setPlainText("")
+                path_label.setText("")
+                return
+            path_label.setText(path)
+            editor.setPlainText(_read_text(path))
 
-        self.tabs.addTab(tab, self.gui.tr("ARK Config", "ARK Config"))
-        self._load_ark_config()
+        def _save():
+            path = path_getter()
+            if not path:
+                return
+            text = editor.toPlainText()
+            if text.strip():
+                if is_yaml and not _safe_parse_yaml(text):
+                    QMessageBox.warning(self, self.gui.tr("Erreur", "Error"), self.gui.tr("YAML invalide.", "Invalid YAML."))
+                    return
+                if not is_yaml and not _safe_parse_json(text):
+                    QMessageBox.warning(self, self.gui.tr("Erreur", "Error"), self.gui.tr("JSON invalide.", "Invalid JSON."))
+                    return
+            _write_text(path, text)
+
+        def _diff():
+            path = path_getter()
+            if not path:
+                return
+            before = _read_text(path)
+            after = editor.toPlainText()
+            self._show_diff(self.gui.tr("Diff du fichier", "File diff"), before, after)
+
+        def _open_any():
+            path, _ = QFileDialog.getOpenFileName(self, self.gui.tr("Ouvrir un fichier", "Open file"), "", "*.*")
+            if not path:
+                return
+            editor.setPlainText(_read_text(path))
+            path_label.setText(path)
+
+        btn_reload.clicked.connect(_load)
+        btn_save.clicked.connect(_save)
+        btn_diff.clicked.connect(_diff)
+        btn_open.clicked.connect(_open_any)
+
+        self.tabs.addTab(tab, tab_title)
+        _load()
+        return tab, editor, path_label
+
+    def _setup_tab_ark(self) -> None:
+        ws = self._workspace_dir()
+        self._build_tab(
+            self.gui.tr("ARK_Main_Config.yml", "ARK_Main_Config.yml"),
+            lambda: os.path.join(ws, "ARK_Main_Config.yml") if ws else None,
+            True,
+            self.gui.tr("ARK Config", "ARK Config"),
+        )
 
     def _setup_tab_bcasl(self) -> None:
-        tab = QDialog(self)
-        lay = QVBoxLayout(tab)
-        lay.setSpacing(6)
-        title = QLabel(self.gui.tr("bcasl.yml", "bcasl.yml"))
-        lay.addWidget(title)
-
-        self.bcasl_edit = QPlainTextEdit(tab)
-        self.bcasl_edit.setPlaceholderText(
-            self.gui.tr("Sélectionnez un workspace pour éditer bcasl.yml", "Select a workspace to edit bcasl.yml")
+        ws = self._workspace_dir()
+        self._build_tab(
+            self.gui.tr("bcasl.yml", "bcasl.yml"),
+            lambda: os.path.join(ws, "bcasl.yml") if ws else None,
+            True,
+            self.gui.tr("BCASL Config", "BCASL Config"),
         )
-        lay.addWidget(self.bcasl_edit, 1)
-
-        btns = QHBoxLayout()
-        btn_reload = QPushButton(self.gui.tr("Recharger", "Reload"))
-        btn_save = QPushButton(self.gui.tr("Enregistrer", "Save"))
-        btn_open = QPushButton(self.gui.tr("Ouvrir fichier…", "Open file…"))
-        btns.addWidget(btn_reload)
-        btns.addWidget(btn_save)
-        btns.addStretch(1)
-        btns.addWidget(btn_open)
-        lay.addLayout(btns)
-
-        btn_reload.clicked.connect(self._load_bcasl_config)
-        btn_save.clicked.connect(self._save_bcasl_config)
-        btn_open.clicked.connect(lambda: self._open_any_file(self.bcasl_edit))
-
-        self.tabs.addTab(tab, self.gui.tr("BCASL Config", "BCASL Config"))
-        self._load_bcasl_config()
 
     def _setup_tab_pref(self) -> None:
-        tab = QDialog(self)
-        lay = QVBoxLayout(tab)
-        lay.setSpacing(6)
-        title = QLabel(self.gui.tr("Préférences Workspace (.ark/pref.json)", "Workspace Preferences (.ark/pref.json)"))
-        lay.addWidget(title)
-
-        self.pref_edit = QPlainTextEdit(tab)
-        self.pref_edit.setPlaceholderText(
-            self.gui.tr("Sélectionnez un workspace pour éditer .ark/pref.json", "Select a workspace to edit .ark/pref.json")
+        ws = self._workspace_dir()
+        self._build_tab(
+            self.gui.tr("Préférences Workspace (.ark/pref.json)", "Workspace Preferences (.ark/pref.json)"),
+            lambda: os.path.join(ws, ".ark", "pref.json") if ws else None,
+            False,
+            self.gui.tr("Workspace Pref", "Workspace Pref"),
         )
-        lay.addWidget(self.pref_edit, 1)
-
-        btns = QHBoxLayout()
-        btn_reload = QPushButton(self.gui.tr("Recharger", "Reload"))
-        btn_save = QPushButton(self.gui.tr("Enregistrer", "Save"))
-        btn_open = QPushButton(self.gui.tr("Ouvrir fichier…", "Open file…"))
-        btns.addWidget(btn_reload)
-        btns.addWidget(btn_save)
-        btns.addStretch(1)
-        btns.addWidget(btn_open)
-        lay.addLayout(btns)
-
-        btn_reload.clicked.connect(self._load_pref)
-        btn_save.clicked.connect(self._save_pref)
-        btn_open.clicked.connect(lambda: self._open_any_file(self.pref_edit))
-
-        self.tabs.addTab(tab, self.gui.tr("Workspace Pref", "Workspace Pref"))
-        self._load_pref()
-
-    def _open_any_file(self, editor: QPlainTextEdit) -> None:
-        path, _ = QFileDialog.getOpenFileName(self, self.gui.tr("Ouvrir un fichier", "Open file"), "", "*.*")
-        if not path:
-            return
-        editor.setPlainText(_read_text(path))
-
-    def _load_ark_config(self) -> None:
-        ws = self._workspace_dir()
-        if not ws:
-            return
-        path = os.path.join(ws, "ARK_Main_Config.yml")
-        self.ark_edit.setPlainText(_read_text(path))
-
-    def _save_ark_config(self) -> None:
-        ws = self._workspace_dir()
-        if not ws:
-            return
-        text = self.ark_edit.toPlainText()
-        if text.strip() and not _safe_parse_yaml(text):
-            QMessageBox.warning(self, self.gui.tr("Erreur", "Error"), self.gui.tr("YAML invalide.", "Invalid YAML."))
-            return
-        path = os.path.join(ws, "ARK_Main_Config.yml")
-        _write_text(path, text)
-
-    def _load_bcasl_config(self) -> None:
-        ws = self._workspace_dir()
-        if not ws:
-            return
-        path = os.path.join(ws, "bcasl.yml")
-        self.bcasl_edit.setPlainText(_read_text(path))
-
-    def _save_bcasl_config(self) -> None:
-        ws = self._workspace_dir()
-        if not ws:
-            return
-        text = self.bcasl_edit.toPlainText()
-        if text.strip() and not _safe_parse_yaml(text):
-            QMessageBox.warning(self, self.gui.tr("Erreur", "Error"), self.gui.tr("YAML invalide.", "Invalid YAML."))
-            return
-        path = os.path.join(ws, "bcasl.yml")
-        _write_text(path, text)
-
-    def _load_pref(self) -> None:
-        ws = self._workspace_dir()
-        if not ws:
-            return
-        path = os.path.join(ws, ".ark", "pref.json")
-        self.pref_edit.setPlainText(_read_text(path))
-
-    def _save_pref(self) -> None:
-        ws = self._workspace_dir()
-        if not ws:
-            return
-        text = self.pref_edit.toPlainText()
-        if text.strip() and not _safe_parse_json(text):
-            QMessageBox.warning(self, self.gui.tr("Erreur", "Error"), self.gui.tr("JSON invalide.", "Invalid JSON."))
-            return
-        path = os.path.join(ws, ".ark", "pref.json")
-        _write_text(path, text)
