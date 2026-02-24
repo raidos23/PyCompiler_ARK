@@ -173,6 +173,8 @@ Notes.
 
 **Plugin i18n (GeneralContext)**
 Plugins can use the SDK i18n system with a `languages/` folder in the plugin package.
+The Core now propagates language changes to the Plugin SDK automatically, and the
+SDK loads translations for all plugins found in `Plugins/` (by folder name).
 
 Example layout:
 ```
@@ -199,6 +201,10 @@ register_i18n_handler(lambda gui, tr: _load_i18n())
 
 label = translate("my.plugin.id", "ui_title", "Default title")
 ```
+
+Notes.
+- The SDK also accepts the plugin folder name as ID (case‑insensitive).
+- If a key is missing, `translate()` falls back to the default you pass in.
 
 **Sandbox, Timeout, Parallelism**
 - If `options.sandbox` is `true`, plugins can run in isolated processes.
