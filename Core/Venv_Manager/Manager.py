@@ -80,6 +80,145 @@ class VenvManager:
         # Cache for manager-provided venv per workspace (None if not found)
         self._manager_venv_cache: dict[str, str | None] = {}
 
+    # ---------- Workspace pref (.ark/pref.json) ----------
+    def _workspace_pref_path(self, workspace_dir: str) -> str:
+        return os.path.join(os.path.abspath(workspace_dir), ".ark", "pref.json")
+
+    def _read_workspace_pref(self, workspace_dir: str) -> dict | None:
+        try:
+            path = self._workspace_pref_path(workspace_dir)
+            if not os.path.isfile(path):
+                return None
+            with open(path, encoding="utf-8") as f:
+                data = json.load(f)
+            return data if isinstance(data, dict) else None
+        except Exception:
+            return None
+
+    def _write_workspace_pref(self, workspace_dir: str, data: dict) -> None:
+        try:
+            path = self._workspace_pref_path(workspace_dir)
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+            tmp = path + ".tmp"
+            with open(tmp, "w", encoding="utf-8") as f:
+                json.dump(data, f, indent=2)
+            os.replace(tmp, path)
+        except Exception:
+            pass
+
+    def _clear_workspace_pref(self, workspace_dir: str) -> None:
+        try:
+            path = self._workspace_pref_path(workspace_dir)
+            if os.path.isfile(path):
+                os.remove(path)
+        except Exception:
+            pass
+
+    def _pref_label_system(self) -> str:
+        try:
+            return self.parent.tr(
+                "Venv sélectionné : Python système",
+                "Venv selected: System Python",
+            )
+        except Exception:
+            return "Venv selected: System Python"
+
+    def _pref_label_none(self) -> str:
+        try:
+            return self.parent.tr("Venv sélectionné : Aucun", "Venv selected: None")
+        except Exception:
+            return "Venv selected: None"
+
+    def apply_workspace_pref(self, workspace_dir: str) -> bool:
+        """Apply saved venv/system selection from .ark/pref.json if available."""
+        try:
+            data = self._read_workspace_pref(workspace_dir)
+            if not data:
+                return False
+            mode = str(data.get("venv_mode", "")).strip().lower()
+            venv_path = data.get("venv_path")
+            if mode == "system":
+                try:
+                    setattr(self.parent, "use_system_python", True)
+                except Exception:
+                    pass
+                try:
+                    self.parent.venv_path_manuel = None
+                except Exception:
+                    pass
+                try:
+                    if hasattr(self.parent, "venv_path"):
+                        setattr(self.parent, "venv_path", None)
+                except Exception:
+                    pass
+                try:
+                    if hasattr(self.parent, "venv_label") and self.parent.venv_label:
+                        self.parent.venv_label.setText(self._pref_label_system())
+                except Exception:
+                    pass
+                try:
+                    if hasattr(self.parent, "venv_path_edit") and self.parent.venv_path_edit:
+                        self.parent.venv_path_edit.setText(self._pref_label_system())
+                except Exception:
+                    pass
+                return True
+            if mode == "venv" and isinstance(venv_path, str) and venv_path:
+                venv_path = os.path.abspath(venv_path)
+                ok, _ = self.validate_venv_strict(venv_path)
+                if ok:
+                    try:
+                        setattr(self.parent, "use_system_python", False)
+                    except Exception:
+                        pass
+                    try:
+                        self.parent.venv_path_manuel = venv_path
+                    except Exception:
+                        pass
+                    try:
+                        if hasattr(self.parent, "venv_path"):
+                            setattr(self.parent, "venv_path", venv_path)
+                    except Exception:
+                        pass
+                    try:
+                        if hasattr(self.parent, "venv_label") and self.parent.venv_label:
+                            self.parent.venv_label.setText(f"Venv sélectionné : {venv_path}")
+                    except Exception:
+                        pass
+                    try:
+                        if hasattr(self.parent, "venv_path_edit") and self.parent.venv_path_edit:
+                            self.parent.venv_path_edit.setText(venv_path)
+                    except Exception:
+                        pass
+                    return True
+                self._clear_workspace_pref(workspace_dir)
+            return False
+        except Exception:
+            return False
+
+    def save_workspace_pref(self, workspace_dir: str | None) -> None:
+        """Persist current venv/system selection for a workspace."""
+        if not workspace_dir:
+            return
+        try:
+            if getattr(self.parent, "use_system_python", False):
+                self._write_workspace_pref(
+                    workspace_dir,
+                    {"venv_mode": "system", "venv_path": None},
+                )
+                return
+            venv_path = getattr(self.parent, "venv_path_manuel", None)
+            if not venv_path:
+                venv_path = getattr(self.parent, "venv_path", None)
+            if venv_path:
+                self._write_workspace_pref(
+                    workspace_dir,
+                    {"venv_mode": "venv", "venv_path": os.path.abspath(venv_path)},
+                )
+                return
+        except Exception:
+            pass
+        self._clear_workspace_pref(workspace_dir)
+
     # ---------- Manager mapping ----------
     def _default_manager_commands(self) -> dict[str, dict[str, list[str]]]:
         return {
@@ -238,6 +377,17 @@ class VenvManager:
 
             if not base:
                 return None
+
+            # Apply saved workspace preference first (.ark/pref.json)
+            try:
+                if self.apply_workspace_pref(base):
+                    if getattr(self.parent, "use_system_python", False):
+                        return None
+                    manual = getattr(self.parent, "venv_path_manuel", None)
+                    if manual:
+                        return os.path.abspath(manual)
+            except Exception:
+                pass
 
             # Prefer manager-provided venv (poetry/pipenv/pdm/...) when available
             mgr_venv = self._detect_manager_existing_venv(base)
@@ -969,6 +1119,11 @@ class VenvManager:
             self._safe_log("✅ Utilisation de Python système pour la compilation.")
         except Exception:
             pass
+        try:
+            workspace_dir = getattr(self.parent, "workspace_dir", None)
+            self.save_workspace_pref(workspace_dir)
+        except Exception:
+            pass
 
     # ---------- Manual selection ----------
     def select_venv_manually(self):
@@ -1025,6 +1180,11 @@ class VenvManager:
                 if hasattr(self.parent, "venv_label") and self.parent.venv_label:
                     self.parent.venv_label.setText(f"Venv sélectionné : {path}")
                 self._safe_log(f"✅ Venv valide sélectionné: {path}")
+                try:
+                    workspace_dir = getattr(self.parent, "workspace_dir", None)
+                    self.save_workspace_pref(workspace_dir)
+                except Exception:
+                    pass
             else:
                 self._safe_log(f"❌ Venv refusé: {reason}")
                 self.parent.venv_path_manuel = None
@@ -1034,6 +1194,11 @@ class VenvManager:
                     pass
                 if hasattr(self.parent, "venv_label") and self.parent.venv_label:
                     self.parent.venv_label.setText("Venv sélectionné : Aucun")
+                try:
+                    workspace_dir = getattr(self.parent, "workspace_dir", None)
+                    self.save_workspace_pref(workspace_dir)
+                except Exception:
+                    pass
                 # Message concis avec actions proposées
                 try:
                     def _t(_key: str, fr: str, en: str) -> str:
@@ -1093,6 +1258,11 @@ class VenvManager:
                 pass
             if hasattr(self.parent, "venv_label") and self.parent.venv_label:
                 self.parent.venv_label.setText("Venv sélectionné : Aucun")
+            try:
+                workspace_dir = getattr(self.parent, "workspace_dir", None)
+                self.save_workspace_pref(workspace_dir)
+            except Exception:
+                pass
 
     # ---------- Existing venv: check and install tools ----------
     def check_tools_in_venv(self, venv_path: str):
@@ -1685,6 +1855,15 @@ class VenvManager:
                 if self.venv_progress_dialog:
                     self.venv_progress_dialog.set_message("Venv créé.")
                     self.venv_progress_dialog.close()
+            except Exception:
+                pass
+            try:
+                if not getattr(self.parent, "use_system_python", False):
+                    if not getattr(self.parent, "venv_path_manuel", None):
+                        self.parent.venv_path_manuel = venv_path
+                        if hasattr(self.parent, "venv_label") and self.parent.venv_label:
+                            self.parent.venv_label.setText(f"Venv sélectionné : {venv_path}")
+                self.save_workspace_pref(os.path.dirname(venv_path))
             except Exception:
                 pass
             # Installer les dépendances du projet à partir de requirements.txt si présent

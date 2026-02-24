@@ -426,9 +426,10 @@ class EnginesStandaloneGui(QMainWindow):
         project_group = QGroupBox("Project")
         project_group.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         project_layout = QVBoxLayout()
-        project_layout.setSpacing(8)
+        project_layout.setSpacing(6)
 
         file_row = QHBoxLayout()
+        file_row.setSpacing(6)
         file_label = QLabel("File:")
         file_label.setMinimumWidth(70)
         file_row.addWidget(file_label)
@@ -436,17 +437,18 @@ class EnginesStandaloneGui(QMainWindow):
         self.file_path_edit = QLineEdit()
         self.file_path_edit.setPlaceholderText("Select a Python file to compile...")
         self.file_path_edit.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        self.file_path_edit.setMinimumHeight(30)
+        self.file_path_edit.setMinimumHeight(28)
         file_row.addWidget(self.file_path_edit)
 
         browse_btn = QPushButton("Browse")
-        browse_btn.setMinimumHeight(30)
+        browse_btn.setMinimumHeight(28)
         browse_btn.setMinimumWidth(80)
         browse_btn.clicked.connect(self._browse_file)
         file_row.addWidget(browse_btn)
         project_layout.addLayout(file_row)
 
         workspace_row = QHBoxLayout()
+        workspace_row.setSpacing(6)
         workspace_label = QLabel("Workspace:")
         workspace_label.setMinimumWidth(70)
         workspace_row.addWidget(workspace_label)
@@ -471,19 +473,19 @@ class EnginesStandaloneGui(QMainWindow):
         actions_group = QGroupBox("Actions")
         actions_group.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         actions_layout = QVBoxLayout()
-        actions_layout.setSpacing(8)
+        actions_layout.setSpacing(6)
 
         self.compile_btn = QPushButton("Compile")
-        self.compile_btn.setMinimumHeight(32)
+        self.compile_btn.setMinimumHeight(30)
         self.compile_btn.setStyleSheet(
             """
             QPushButton {
                 background-color: #4caf50;
                 color: white;
-                font-size: 16px;
+                font-size: 14px;
                 font-weight: bold;
                 border-radius: 6px;
-                padding: 10px 20px;
+                padding: 6px 12px;
             }
             QPushButton:hover {
                 background-color: #45a049;
@@ -498,16 +500,16 @@ class EnginesStandaloneGui(QMainWindow):
 
         # Cancel button
         self.cancel_btn = QPushButton("Cancel")
-        self.cancel_btn.setMinimumHeight(32)
+        self.cancel_btn.setMinimumHeight(30)
         self.cancel_btn.setStyleSheet(
             """
             QPushButton {
                 background-color: #f44336;
                 color: white;
-                font-size: 16px;
+                font-size: 14px;
                 font-weight: bold;
                 border-radius: 6px;
-                padding: 10px 20px;
+                padding: 6px 12px;
             }
             QPushButton:hover {
                 background-color: #d32f2f;
@@ -522,20 +524,20 @@ class EnginesStandaloneGui(QMainWindow):
         actions_layout.addWidget(self.cancel_btn)
 
         button_row = QHBoxLayout()
-        button_row.setSpacing(10)
+        button_row.setSpacing(8)
 
         dry_run_btn = QPushButton("Dry Run")
-        dry_run_btn.setMinimumHeight(32)
+        dry_run_btn.setMinimumHeight(28)
         dry_run_btn.clicked.connect(self._dry_run)
         button_row.addWidget(dry_run_btn)
 
         refresh_btn = QPushButton("Refresh Engines")
-        refresh_btn.setMinimumHeight(32)
+        refresh_btn.setMinimumHeight(28)
         refresh_btn.clicked.connect(self._refresh_engines)
         button_row.addWidget(refresh_btn)
 
         clear_log_btn = QPushButton("Clear Log")
-        clear_log_btn.setMinimumHeight(32)
+        clear_log_btn.setMinimumHeight(28)
         clear_log_btn.clicked.connect(self._clear_log)
         button_row.addWidget(clear_log_btn)
 
@@ -545,7 +547,7 @@ class EnginesStandaloneGui(QMainWindow):
         # Splitter between project/actions and engine for fresh ergonomics
         left_splitter = QSplitter(Qt.Vertical)
         left_splitter.setChildrenCollapsible(True)
-        left_splitter.setHandleWidth(8)
+        left_splitter.setHandleWidth(6)
         left_splitter.setCollapsible(0, True)
         left_splitter.setCollapsible(1, True)
 
@@ -557,7 +559,7 @@ class EnginesStandaloneGui(QMainWindow):
         lower_wrap = QWidget()
         lower_layout = QVBoxLayout(lower_wrap)
         lower_layout.setContentsMargins(0, 0, 0, 0)
-        lower_layout.setSpacing(10)
+        lower_layout.setSpacing(8)
         lower_layout.addWidget(project_group)
         lower_layout.addWidget(actions_group)
         lower_layout.addStretch(1)
@@ -578,13 +580,13 @@ class EnginesStandaloneGui(QMainWindow):
         # === Section Log (droite avec plus d'espace) ===
         log_container = QWidget()
         log_layout = QVBoxLayout(log_container)
-        log_layout.setSpacing(5)
-        log_layout.setContentsMargins(3, 3, 3, 3)
+        log_layout.setSpacing(6)
+        log_layout.setContentsMargins(4, 4, 4, 4)
 
         log_group = QGroupBox("Compilation Log")
         log_group.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         log_layout_inner = QVBoxLayout()
-        log_layout_inner.setSpacing(3)
+        log_layout_inner.setSpacing(6)
 
         self.log_text = QTextEdit()
         self.log_text.setFont(QFont("Consolas", 10))
@@ -652,21 +654,12 @@ class EnginesStandaloneGui(QMainWindow):
             return
 
         try:
-            best_venv = self.venv_manager.select_best_venv(self.workspace_dir)
-            if best_venv:
-                self.venv_path = best_venv
+            detected = self.venv_manager.resolve_existing_venv(self.workspace_dir)
+            if detected:
+                self.venv_path = detected
                 if self._is_valid(self.venv_path_edit):
-                    self.venv_path_edit.setText(best_venv)
-                self._log(f"✅ Venv auto-détecté: {best_venv}")
-            else:
-                existing, default_path = self.venv_manager._detect_venv_in(
-                    self.workspace_dir
-                )
-                if existing:
-                    self.venv_path = existing
-                    if self._is_valid(self.venv_path_edit):
-                        self.venv_path_edit.setText(existing)
-                    self._log(f"✅ Venv existant trouvé: {existing}")
+                    self.venv_path_edit.setText(detected)
+                self._log(f"✅ Venv auto-détecté: {detected}")
         except Exception as e:
             self._log(f"⚠️ Erreur détection venv: {e}")
 
@@ -695,6 +688,11 @@ class EnginesStandaloneGui(QMainWindow):
                 self.venv_path = folder
                 self.venv_path_edit.setText(folder)
                 self._log(f"✅ Virtual environment selected: {folder}")
+                try:
+                    if self.venv_manager and self.workspace_dir:
+                        self.venv_manager.save_workspace_pref(self.workspace_dir)
+                except Exception:
+                    pass
             else:
                 QMessageBox.warning(
                     self,
@@ -723,34 +721,37 @@ class EnginesStandaloneGui(QMainWindow):
 
         self._log("Auto-detecting virtual environment...")
 
-        best_venv = self.venv_manager.select_best_venv(self.workspace_dir)
+        detected = self.venv_manager.resolve_existing_venv(self.workspace_dir)
 
-        if best_venv:
-            self.venv_path = best_venv
-            self.venv_path_edit.setText(best_venv)
-            self._log(f"✅ Best venv auto-detected: {best_venv}")
+        if detected:
+            self.venv_path = detected
+            self.venv_path_edit.setText(detected)
+            self._log(f"✅ Best venv auto-detected: {detected}")
+            try:
+                if self.venv_manager and self.workspace_dir:
+                    self.venv_manager.save_workspace_pref(self.workspace_dir)
+            except Exception:
+                pass
         else:
-            existing, default_path = self.venv_manager._detect_venv_in(
-                self.workspace_dir
+            self._log("No virtual environment found in workspace.")
+            QMessageBox.information(
+                self,
+                "No Venv Found",
+                "No valid virtual environment was found in the workspace.\n"
+                "Please select one manually or create a new venv.",
             )
-            if existing:
-                self.venv_path = existing
-                self.venv_path_edit.setText(existing)
-                self._log(f"✅ Existing venv found: {existing}")
-            else:
-                self._log("No virtual environment found in workspace.")
-                QMessageBox.information(
-                    self,
-                    "No Venv Found",
-                    "No valid virtual environment was found in the workspace.\n"
-                    "Please select one manually or create a new venv.",
-                )
 
     def _clear_venv(self):
         """Efface la sélection du venv."""
         self.venv_path = None
         self.venv_path_edit.clear()
         self.venv_path_edit.setPlaceholderText("Select a virtual environment...")
+
+        try:
+            if self.venv_manager and self.workspace_dir:
+                self.venv_manager.save_workspace_pref(self.workspace_dir)
+        except Exception:
+            pass
 
         self._log("Venv selection cleared")
 
@@ -1298,11 +1299,11 @@ class EnginesStandaloneGui(QMainWindow):
 
                 # Récupérer le venv à utiliser
                 if not self.venv_path and self.venv_manager and self.workspace_dir:
-                    best_venv = self.venv_manager.select_best_venv(self.workspace_dir)
-                    if best_venv:
-                        self.venv_path = best_venv
+                    detected = self.venv_manager.resolve_existing_venv(self.workspace_dir)
+                    if detected:
+                        self.venv_path = detected
                         if self._is_valid(self.venv_path_edit):
-                            self.venv_path_edit.setText(best_venv)
+                            self.venv_path_edit.setText(detected)
 
                 if self.venv_path:
                     self._log(f"Using virtual environment: {self.venv_path}")

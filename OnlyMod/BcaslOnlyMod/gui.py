@@ -279,22 +279,12 @@ class BcaslStandaloneGui(QMainWindow):
             return
 
         try:
-            best_venv = self.venv_manager.select_best_venv(self.workspace_dir)
-            if best_venv:
-                self.venv_path = best_venv
+            detected = self.venv_manager.resolve_existing_venv(self.workspace_dir)
+            if detected:
+                self.venv_path = detected
                 if self._is_valid(self.venv_path_edit):
-                    self.venv_path_edit.setText(best_venv)
-                self._log(f"✅ Venv auto-détecté: {best_venv}")
-            else:
-                # Essayer de détecter un venv dans le workspace
-                existing, default_path = self.venv_manager._detect_venv_in(
-                    self.workspace_dir
-                )
-                if existing:
-                    self.venv_path = existing
-                    if self._is_valid(self.venv_path_edit):
-                        self.venv_path_edit.setText(existing)
-                    self._log(f"✅ Venv existant trouvé: {existing}")
+                    self.venv_path_edit.setText(detected)
+                self._log(f"✅ Venv auto-détecté: {detected}")
         except Exception as e:
             self._log(f"⚠️ Erreur détection venv: {e}")
 
@@ -882,6 +872,11 @@ class BcaslStandaloneGui(QMainWindow):
                     )
                 )
                 self.statusBar.showMessage(tr("Venv updated", "Venv mis à jour"))
+                try:
+                    if self.venv_manager and self.workspace_dir:
+                        self.venv_manager.save_workspace_pref(self.workspace_dir)
+                except Exception:
+                    pass
             else:
                 QMessageBox.warning(
                     self,
@@ -929,50 +924,40 @@ class BcaslStandaloneGui(QMainWindow):
             )
         )
 
-        # Chercher d'abord dans le workspace
-        best_venv = self.venv_manager.select_best_venv(self.workspace_dir)
+        detected = self.venv_manager.resolve_existing_venv(self.workspace_dir)
 
-        if best_venv:
-            self.venv_path = best_venv
-            self.venv_path_edit.setText(best_venv)
+        if detected:
+            self.venv_path = detected
+            self.venv_path_edit.setText(detected)
             self._log(
                 tr(
-                    f"Best venv auto-detected: {best_venv}",
-                    f"Meilleur venv auto-détecté : {best_venv}",
+                    f"Best venv auto-detected: {detected}",
+                    f"Meilleur venv auto-détecté : {detected}",
                 )
             )
             self.statusBar.showMessage(tr("Venv auto-detected", "Venv auto-détecté"))
+            try:
+                if self.venv_manager and self.workspace_dir:
+                    self.venv_manager.save_workspace_pref(self.workspace_dir)
+            except Exception:
+                pass
         else:
-            # Essayer de trouver n'importe quel venv dans le workspace
-            existing, default_path = self.venv_manager._detect_venv_in(
-                self.workspace_dir
+            self._log(
+                tr(
+                    "No virtual environment found in workspace.",
+                    "Aucun environnement virtuel trouvé dans le workspace.",
+                )
             )
-            if existing:
-                self.venv_path = existing
-                self.venv_path_edit.setText(existing)
-                self._log(
-                    tr(
-                        f"Existing venv found: {existing}",
-                        f"Venv existant trouvé : {existing}",
-                    )
-                )
-            else:
-                self._log(
-                    tr(
-                        "No virtual environment found in workspace.",
-                        "Aucun environnement virtuel trouvé dans le workspace.",
-                    )
-                )
-                QMessageBox.information(
-                    self,
-                    tr("No Venv Found", "Aucun Venv Trouvé"),
-                    tr(
-                        "No valid virtual environment was found in the workspace.\n"
-                        "Please select one manually or create a new venv.",
-                        "Aucun environnement virtuel valide n'a été trouvé dans le workspace.\n"
-                        "Veuillez en sélectionner un manuellement ou créer un nouveau venv.",
-                    ),
-                )
+            QMessageBox.information(
+                self,
+                tr("No Venv Found", "Aucun Venv Trouvé"),
+                tr(
+                    "No valid virtual environment was found in the workspace.\n"
+                    "Please select one manually or create a new venv.",
+                    "Aucun environnement virtuel valide n'a été trouvé dans le workspace.\n"
+                    "Veuillez en sélectionner un manuellement ou créer un nouveau venv.",
+                ),
+            )
 
     def _clear_venv(self):
         """Efface la sélection du venv."""
@@ -984,6 +969,12 @@ class BcaslStandaloneGui(QMainWindow):
                 "Sélectionner un environnement virtuel...",
             )
         )
+
+        try:
+            if self.venv_manager and self.workspace_dir:
+                self.venv_manager.save_workspace_pref(self.workspace_dir)
+        except Exception:
+            pass
 
         self._log(tr("Venv selection cleared", "Sélection venv effacée"))
         self.statusBar.showMessage(
@@ -1640,9 +1631,9 @@ class BcaslStandaloneGui(QMainWindow):
             venv_path = self.venv_path
         elif self.venv_manager and self.workspace_dir:
             # Auto-détecter si pas de venv sélectionné
-            best_venv = self.venv_manager.select_best_venv(self.workspace_dir)
-            if best_venv:
-                venv_path = best_venv
+            detected = self.venv_manager.resolve_existing_venv(self.workspace_dir)
+            if detected:
+                venv_path = detected
                 self.venv_path = venv_path
                 if self._is_valid(self.venv_path_edit):
                     self.venv_path_edit.setText(venv_path)
