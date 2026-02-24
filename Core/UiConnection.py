@@ -462,6 +462,7 @@ def _setup_widgets(self) -> None:
     self.btn_export_config = _find(QPushButton, "btn_export_config")
     self.btn_import_config = _find(QPushButton, "btn_import_config")
     self.btn_show_stats = _find(QPushButton, "btn_show_stats")
+    self.advanced_cfg_btn = _find(QPushButton, "advanced_cfg_btn")
     self.select_lang = _find(QPushButton, "select_lang")
     self.select_theme = _find(QPushButton, "select_theme")
 
@@ -543,6 +544,7 @@ def _connect_signals(self) -> None:
     _connect_clicked(self.btn_remove_file, self.remove_selected_file)
     _connect_clicked(self.compile_btn, self.compile_all)
     _connect_clicked(self.cancel_btn, self.cancel_all_compilations)
+    _connect_clicked(self.advanced_cfg_btn, self.open_advanced_config_editor)
 
     if self.btn_clear_workspace:
         _connect_clicked(self.btn_clear_workspace, self.clear_workspace)

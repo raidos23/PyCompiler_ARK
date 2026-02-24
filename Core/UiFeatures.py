@@ -746,3 +746,20 @@ class UiFeatures:
         from .i18n import _apply_main_app_translations as _i18n_apply_translations
 
         _i18n_apply_translations(self, tr)
+
+    def open_advanced_config_editor(self):
+        """Open the advanced config editor dialog."""
+        try:
+            from .AdvancedConfigEditor import AdvancedConfigEditor
+
+            dlg = AdvancedConfigEditor(self)
+            dlg.setModal(True)
+            dlg.exec()
+        except Exception as e:
+            try:
+                self.log_i18n(
+                    f"Erreur ouverture configurations avancées: {e}",
+                    f"Failed to open advanced configurations: {e}",
+                )
+            except Exception:
+                pass
