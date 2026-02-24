@@ -16,6 +16,8 @@
 from __future__ import annotations
 
 from typing import Any, Optional, Callable
+import os
+import json
 
 _GLOBAL_TR: dict[str, Any] = {}
 _GLOBAL_LANG: str = "en"
@@ -96,10 +98,16 @@ def register_plugin_translations(plugin_id: str, tr: dict) -> None:
 
 def translate(plugin_id: str, key: str, default: Optional[str] = None) -> str:
     try:
-        if plugin_id and plugin_id in _PLUGIN_TR:
-            val = _PLUGIN_TR[plugin_id].get(key)
-            if isinstance(val, str):
-                return val
+        if plugin_id:
+            if plugin_id in _PLUGIN_TR:
+                val = _PLUGIN_TR[plugin_id].get(key)
+                if isinstance(val, str):
+                    return val
+            low = str(plugin_id).lower()
+            if low in _PLUGIN_TR:
+                val = _PLUGIN_TR[low].get(key)
+                if isinstance(val, str):
+                    return val
     except Exception:
         pass
     try:
@@ -125,6 +133,10 @@ def unregister_i18n_handler(fn: Callable[[Any, dict], None]) -> None:
 
 def apply_translations(gui, tr: dict) -> None:
     set_translations(gui, tr)
+    try:
+        _load_all_plugin_languages(get_language_code())
+    except Exception:
+        pass
     for fn in list(_HANDLERS):
         try:
             fn(gui, tr)
@@ -136,7 +148,6 @@ def load_plugin_language_file(plugin_package: str, code: str) -> dict:
     """Load language file for a plugin from its package's languages folder."""
     try:
         import importlib.resources as ilr
-        import json
 
         lang_data = {}
         if not plugin_package:
@@ -160,3 +171,72 @@ def load_plugin_language_file(plugin_package: str, code: str) -> dict:
         return lang_data
     except Exception:
         return {}
+
+
+def _discover_plugins_dir() -> str | None:
+    try:
+        base = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), os.pardir, os.pardir)
+        )
+        cand = os.path.join(base, "Plugins")
+        if os.path.isdir(cand):
+            return cand
+    except Exception:
+        pass
+    return None
+
+
+def _load_plugin_languages_from_fs(plugins_dir: str, code: str) -> dict[str, dict]:
+    data: dict[str, dict] = {}
+    normalized = normalize_language_code(code)
+    candidates = [
+        f"{normalized}.json",
+        f"{normalized.lower()}.json",
+        "en.json",
+    ]
+    try:
+        for entry in os.listdir(plugins_dir):
+            plugin_path = os.path.join(plugins_dir, entry)
+            if not os.path.isdir(plugin_path):
+                continue
+            if not os.path.isfile(os.path.join(plugin_path, "__init__.py")):
+                continue
+            lang_dir = os.path.join(plugin_path, "languages")
+            if not os.path.isdir(lang_dir):
+                continue
+            payload: dict = {}
+            for name in candidates:
+                p = os.path.join(lang_dir, name)
+                if not os.path.isfile(p):
+                    continue
+                try:
+                    with open(p, encoding="utf-8") as f:
+                        content = json.load(f)
+                    if isinstance(content, dict):
+                        payload.update(content)
+                        break
+                except Exception:
+                    continue
+            if payload:
+                data[entry] = payload
+    except Exception:
+        pass
+    return data
+
+
+def _load_all_plugin_languages(code: str) -> None:
+    """Load translations for all plugins in Plugins/ folder."""
+    try:
+        _PLUGIN_TR.clear()
+    except Exception:
+        pass
+    plugins_dir = _discover_plugins_dir()
+    if not plugins_dir:
+        return
+    data = _load_plugin_languages_from_fs(plugins_dir, code)
+    for plugin_id, tr in data.items():
+        register_plugin_translations(plugin_id, tr)
+        try:
+            register_plugin_translations(str(plugin_id).lower(), tr)
+        except Exception:
+            pass

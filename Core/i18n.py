@@ -856,6 +856,13 @@ def apply_language(self, lang_display: str) -> None:
                 engines_loader.registry.apply_translations(self, tr)
             except Exception:
                 pass
+            # Propagate translations to plugin SDK (independent from BCASL)
+            try:
+                from Plugins_SDK.GeneralContext import apply_translations as sdk_apply_tr
+
+                sdk_apply_tr(self, tr)
+            except Exception:
+                pass
         except Exception:
             pass
         meta = tr.get("_meta", {})
