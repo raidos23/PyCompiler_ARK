@@ -58,3 +58,35 @@ GUI shortcut:
 - Keep paths relative (ex: `"src/main.py"`).
 - Entrypoint is stored in `ARK_Main_Config.yml` and can be edited manually.
 - This file is separate from `bcasl.yml` (which is only for BCASL plugins).
+
+## Advanced Config Editor (GUI)
+
+The main GUI has a **Configurations avancées** button that opens a dedicated
+editor for:
+- `ARK_Main_Config.yml`
+- `bcasl.yml`
+- `.ark/pref.json` (workspace‑specific preferences)
+
+Features (lightweight by design):
+- Monospace editor
+- Simple YAML/JSON syntax highlighting
+- Diff view before saving
+- Basic validation on save (YAML/JSON)
+
+## Workspace Prefs (.ark/pref.json)
+
+Per‑workspace preferences are stored in:
+```
+<workspace>/.ark/pref.json
+```
+
+Currently used keys:
+```json
+{
+  "venv_mode": "venv" | "system",
+  "venv_path": "/abs/path/to/venv" | null
+}
+```
+
+These values are updated when you select a venv or System Python, and are
+re‑applied automatically when the workspace is loaded.
