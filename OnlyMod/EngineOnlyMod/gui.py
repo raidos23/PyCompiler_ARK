@@ -203,9 +203,8 @@ class EnginesStandaloneGui(QMainWindow):
 
         # Configuration de la fenêtre
         self.setWindowTitle("Engines Standalone - PyCompiler ARK")
-        self.resize(1400, 850)
-        self.setMinimumSize(1100, 700)
-        self.showMaximized()
+        self.resize(1200, 780)
+        self.setMinimumSize(960, 640)
 
         # Chargement des icônes
         self._load_icons()
@@ -250,21 +249,32 @@ class EnginesStandaloneGui(QMainWindow):
 
         # Layout principal avec marge réduite
         main_layout = QVBoxLayout(central_widget)
-        main_layout.setSpacing(5)
-        main_layout.setContentsMargins(8, 8, 8, 8)
+        main_layout.setSpacing(6)
+        main_layout.setContentsMargins(6, 6, 6, 6)
 
         # === En-tête ===
-        header_layout = QHBoxLayout()
+        header_container = QVBoxLayout()
+        header_container.setSpacing(6)
+        header_top = QHBoxLayout()
+        header_top.setSpacing(8)
 
         title_label = QLabel("Engines Standalone")
-        title_label.setStyleSheet("font-size: 22px; font-weight: bold; color: #4da6ff;")
-        header_layout.addWidget(title_label)
+        title_label.setStyleSheet("font-size: 20px; font-weight: bold; color: #4da6ff;")
+        header_top.addWidget(title_label)
+        header_top.addStretch()
 
-        header_layout.addStretch()
+        # Version info (top right)
+        version_label = QLabel(
+            f"Core: {get_core_version()} | SDK: {get_engine_sdk_version()}"
+        )
+        version_label.setStyleSheet("color: #888; font-size: 11px;")
+        header_top.addWidget(version_label)
+
+        header_container.addLayout(header_top)
 
         # === Section Venv ===
         venv_layout = QHBoxLayout()
-        venv_layout.setSpacing(8)
+        venv_layout.setSpacing(6)
 
         # Label venv
         venv_label = QLabel("Venv:")
@@ -275,8 +285,8 @@ class EnginesStandaloneGui(QMainWindow):
         self.venv_path_edit = QLineEdit()
         self.venv_path_edit.setPlaceholderText("Select a virtual environment...")
         self.venv_path_edit.setReadOnly(True)
-        self.venv_path_edit.setMinimumWidth(150)
-        self.venv_path_edit.setMaximumWidth(250)
+        self.venv_path_edit.setMinimumWidth(220)
+        self.venv_path_edit.setMaximumWidth(360)
         self.venv_path_edit.setStyleSheet(
             """
             QLineEdit {
@@ -354,18 +364,10 @@ class EnginesStandaloneGui(QMainWindow):
         self.btn_clear_venv.clicked.connect(self._clear_venv)
         venv_layout.addWidget(self.btn_clear_venv)
 
-        header_layout.addLayout(venv_layout)
+        venv_layout.addStretch(1)
+        header_container.addLayout(venv_layout)
 
-        header_layout.addSpacing(15)
-
-        # Version info
-        version_label = QLabel(
-            f"Core: {get_core_version()} | SDK: {get_engine_sdk_version()}"
-        )
-        version_label.setStyleSheet("color: #888; font-size: 11px;")
-        header_layout.addWidget(version_label)
-
-        main_layout.addLayout(header_layout)
+        main_layout.addLayout(header_container)
 
         # === Séparateur fin ===
         separator = QFrame()
@@ -377,7 +379,7 @@ class EnginesStandaloneGui(QMainWindow):
         # === Splitter principal ===
         main_splitter = QSplitter(Qt.Vertical)
         main_splitter.setChildrenCollapsible(True)
-        main_splitter.setHandleWidth(8)
+        main_splitter.setHandleWidth(6)
         main_splitter.setCollapsible(0, True)
         main_splitter.setCollapsible(1, True)
         main_layout.addWidget(main_splitter)
@@ -385,7 +387,7 @@ class EnginesStandaloneGui(QMainWindow):
         # === Panneau supérieur avec splitter horizontal ===
         top_splitter = QSplitter(Qt.Horizontal)
         top_splitter.setChildrenCollapsible(True)
-        top_splitter.setHandleWidth(8)
+        top_splitter.setHandleWidth(6)
         top_splitter.setCollapsible(0, True)
         top_splitter.setCollapsible(1, True)
         top_splitter.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
@@ -393,14 +395,14 @@ class EnginesStandaloneGui(QMainWindow):
         # === Section Configuration (gauche) ===
         left_panel = QWidget()
         left_layout = QVBoxLayout(left_panel)
-        left_layout.setSpacing(10)
-        left_layout.setContentsMargins(6, 6, 6, 6)
+        left_layout.setSpacing(8)
+        left_layout.setContentsMargins(4, 4, 4, 4)
 
         # Moteur
         engine_group = QGroupBox("Engine Configuration")
         engine_group.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         engine_layout = QVBoxLayout()
-        engine_layout.setSpacing(3)
+        engine_layout.setSpacing(6)
 
         self.compiler_tabs = QTabWidget()
         self.compiler_tabs.setDocumentMode(False)
@@ -410,7 +412,7 @@ class EnginesStandaloneGui(QMainWindow):
         engine_layout.addWidget(self.compiler_tabs)
 
         compat_btn = QPushButton("Check Compatibility")
-        compat_btn.setMinimumHeight(28)
+        compat_btn.setMinimumHeight(30)
         compat_btn.clicked.connect(self._check_compatibility)
         engine_layout.addWidget(compat_btn)
 
