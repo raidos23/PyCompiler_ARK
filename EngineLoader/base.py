@@ -183,9 +183,7 @@ class CompilerEngine:
                             f"Installation des outils Python manquants: {missing_python}",
                             f"Installing missing Python tools: {missing_python}",
                         )
-                        gui.venv_manager.ensure_tools_installed_system(
-                            missing_python
-                        )
+                        gui.venv_manager.ensure_tools_installed_system(missing_python)
                 else:
                     venv_path = gui.venv_manager.resolve_project_venv()
                     if venv_path:

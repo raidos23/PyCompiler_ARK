@@ -49,10 +49,12 @@ def _log_append(gui, msg: str) -> None:
             break
     log_with_level(gui, level, text)
 
+
 # NOTE PRODUCTION-HARDENING:
 # Les fonctionnalités non finalisées sont encapsulées dans des gardes afin de ne jamais
 # faire échouer l'application. Les Plugins publiques restent stables; les chemins non
 # implémentés renvoient silencieusement.
+
 
 def _default_excluded_stdlib() -> set[str]:
     return {
@@ -273,6 +275,7 @@ def suggest_missing_dependencies(self):
     Analyse les fichiers principaux à compiler, détecte les modules importés,
     vérifie leur présence dans le venv, et propose d'installer ceux qui manquent.
     """
+
     def _t(_key: str, fr: str, en: str) -> str:
         try:
             return self.tr(fr, en)
@@ -281,12 +284,13 @@ def suggest_missing_dependencies(self):
 
     # Vérifie que le workspace ou le venv est bien sélectionné
     if not self.workspace_dir and not self.venv_path_manuel:
-        _log_append(self, 
+        _log_append(
+            self,
             _t(
                 "msg_no_workspace_or_venv_text",
                 "❌ Workspace ou venv manquant. Sélectionnez-en un.",
                 "❌ Workspace or venv missing. Please select one.",
-            )
+            ),
         )
         try:
             box = QMessageBox(self)
@@ -497,7 +501,9 @@ def suggest_missing_dependencies(self):
             venv_path=self.venv_path_manuel, workspace_dir=self.workspace_dir
         )
     try:
-        _log_append(self, f"ℹ️ Utilisation de pip: {pip_program} {' '.join(pip_prefix)}")
+        _log_append(
+            self, f"ℹ️ Utilisation de pip: {pip_program} {' '.join(pip_prefix)}"
+        )
     except Exception:
         pass
     # Vérification des modules avec progression (préférer un seul pip list pour limiter le blocage UI)
@@ -508,7 +514,9 @@ def suggest_missing_dependencies(self):
         result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         if result.returncode == 0:
             try:
-                data = json.loads(result.stdout.decode("utf-8", errors="replace") or "[]")
+                data = json.loads(
+                    result.stdout.decode("utf-8", errors="replace") or "[]"
+                )
                 for item in data:
                     name = str(item.get("name", "")).strip()
                     if name:
@@ -536,8 +544,8 @@ def suggest_missing_dependencies(self):
                 if key not in installed:
                     not_installed.append(module)
             except Exception as e:
-                _log_append(self, 
-                    f"⚠️ Erreur lors de la vérification du module {module} : {e}"
+                _log_append(
+                    self, f"⚠️ Erreur lors de la vérification du module {module} : {e}"
                 )
     else:
         for idx, module in enumerate(suggestions):
@@ -553,12 +561,14 @@ def suggest_missing_dependencies(self):
                     QApplication.processEvents()
 
                 cmd = [pip_program, *pip_prefix, "show", module]
-                result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                result = subprocess.run(
+                    cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+                )
                 if result.returncode != 0:
                     not_installed.append(module)
             except Exception as e:
-                _log_append(self, 
-                    f"⚠️ Erreur lors de la vérification du module {module} : {e}"
+                _log_append(
+                    self, f"⚠️ Erreur lors de la vérification du module {module} : {e}"
                 )
 
     # Fermer la barre de progression d'analyse
@@ -566,8 +576,9 @@ def suggest_missing_dependencies(self):
         analysis_progress.close()
     # Si des modules sont manquants, propose l'installation automatique
     if not_installed:
-        _log_append(self, 
-            "❗ Modules manquants dans le venv : " + ", ".join(sorted(not_installed))
+        _log_append(
+            self,
+            "❗ Modules manquants dans le venv : " + ", ".join(sorted(not_installed)),
         )
         # Demande à l'utilisateur s'il souhaite installer automatiquement les modules manquants
         reply = QMessageBox.question(
@@ -601,8 +612,8 @@ def suggest_missing_dependencies(self):
             self.dep_progress_dialog.show()
             self._install_next_dependency()
     else:
-        _log_append(self, 
-            "✅ Tous les modules nécessaires sont déjà installés dans le venv."
+        _log_append(
+            self, "✅ Tous les modules nécessaires sont déjà installés dans le venv."
         )
 
 

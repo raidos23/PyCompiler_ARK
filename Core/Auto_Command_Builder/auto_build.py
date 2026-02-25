@@ -10,6 +10,7 @@ Règles clés:
 - Les actions sont dérivées du JSON (clé = id du moteur).
 - Rapport optionnel pouvant être écrit dans le workspace.
 """
+
 from __future__ import annotations
 
 import ast
@@ -805,7 +806,10 @@ def compute_auto_for_engine(self, engine_id: str) -> list[str]:
             f"Auto-detection of sensitive modules ({engine_id}) enabled.",
         )
         log_i18n_level(
-            self, "info", f"   Source détection: {source}", f"   Detection source: {source}"
+            self,
+            "info",
+            f"   Source détection: {source}",
+            f"   Detection source: {source}",
         )
         if detected:
             log_i18n_level(

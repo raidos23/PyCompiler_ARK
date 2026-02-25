@@ -27,6 +27,7 @@ from PySide6.QtWidgets import (
     QTextEdit,
     QFrame,
 )
+
 try:
     from PySide6.QtSvg import QSvgRenderer
 except Exception:
@@ -294,9 +295,7 @@ def _apply_button_icons(self) -> None:
     """Applique des icônes SVG aux boutons principaux si disponibles."""
     if not getattr(self, "ui", None):
         return
-    icons_dir = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)), "..", "icons"
-    )
+    icons_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "icons")
     if not os.path.isdir(icons_dir):
         return
 
@@ -305,7 +304,9 @@ def _apply_button_icons(self) -> None:
             import re
 
             def _block(selector: str) -> str | None:
-                pattern = re.compile(rf"{re.escape(selector)}\\s*\\{{([^}}]+)\\}}", re.S)
+                pattern = re.compile(
+                    rf"{re.escape(selector)}\\s*\\{{([^}}]+)\\}}", re.S
+                )
                 match = pattern.search(css_text)
                 return match.group(1) if match else None
 
@@ -371,7 +372,7 @@ def _apply_button_icons(self) -> None:
         if "currentColor" in svg:
             svg = svg.replace("currentColor", color)
         else:
-            svg = svg.replace("<svg ", f"<svg color=\"{color}\" ", 1)
+            svg = svg.replace("<svg ", f'<svg color="{color}" ', 1)
         renderer = QSvgRenderer(QByteArray(svg.encode("utf-8")))
         if not renderer.isValid():
             return None

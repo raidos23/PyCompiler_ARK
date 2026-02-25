@@ -102,7 +102,6 @@ from Core.allversion import (
 # Importations de Gui.py
 from Core.Gui import PyCompilerArkGui
 
-
 __all__ = [
     "CompilationStatus",
     "CompilationSignals",

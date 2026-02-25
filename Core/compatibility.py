@@ -325,13 +325,9 @@ def check_sdk_compatibility(
             f"{sdk_name} version is unknown; requires v{required_version} or higher."
         )
     elif is_compatible:
-        message = (
-            f"{sdk_name} v{sdk_version} is compatible with required version v{required_version}"
-        )
+        message = f"{sdk_name} v{sdk_version} is compatible with required version v{required_version}"
     else:
-        message = (
-            f"{sdk_name} v{sdk_version} does not meet minimum requirement v{required_version}"
-        )
+        message = f"{sdk_name} v{sdk_version} does not meet minimum requirement v{required_version}"
 
     return CompatibilityResult(
         is_compatible=is_compatible,

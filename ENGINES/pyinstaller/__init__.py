@@ -233,9 +233,7 @@ class PyInstallerEngine(CompilerEngine):
                 "pyinstaller_icon_path_input_dynamic",
             )
             if self._icon_path_input is not None:
-                self._icon_path_input.textChanged.connect(
-                    self._on_icon_path_changed
-                )
+                self._icon_path_input.textChanged.connect(self._on_icon_path_changed)
 
             # Output directory
             self._output_dir_input = add_output_dir(
@@ -254,7 +252,9 @@ class PyInstallerEngine(CompilerEngine):
         except Exception as e:
             try:
                 if hasattr(gui, "log"):
-                    log_with_level(gui, "error", f"Erreur création onglet PyInstaller: {e}")
+                    log_with_level(
+                        gui, "error", f"Erreur création onglet PyInstaller: {e}"
+                    )
             except Exception:
                 pass
             return None
@@ -273,12 +273,13 @@ class PyInstallerEngine(CompilerEngine):
             ):
                 cfg["output_dir"] = self._output_dir_input.text().strip()
             icon_path = ""
-            if (
-                hasattr(self, "_icon_path_input")
-                and self._icon_path_input is not None
-            ):
+            if hasattr(self, "_icon_path_input") and self._icon_path_input is not None:
                 icon_path = self._icon_path_input.text().strip()
-            if not icon_path and hasattr(self, "_selected_icon") and self._selected_icon:
+            if (
+                not icon_path
+                and hasattr(self, "_selected_icon")
+                and self._selected_icon
+            ):
                 icon_path = str(self._selected_icon).strip()
             if icon_path:
                 self._selected_icon = icon_path
@@ -382,7 +383,10 @@ class PyInstallerEngine(CompilerEngine):
             )
             if file_path:
                 self._selected_icon = file_path
-                if hasattr(self, "_icon_path_input") and self._icon_path_input is not None:
+                if (
+                    hasattr(self, "_icon_path_input")
+                    and self._icon_path_input is not None
+                ):
                     self._icon_path_input.setText(file_path)
                 if hasattr(self._gui, "log"):
                     self._gui.log.append(
@@ -390,4 +394,6 @@ class PyInstallerEngine(CompilerEngine):
                     )
         except Exception as e:
             if hasattr(self._gui, "log"):
-                log_with_level(self._gui, "error", f"Erreur lors de la sélection de l'icône : {e}")
+                log_with_level(
+                    self._gui, "error", f"Erreur lors de la sélection de l'icône : {e}"
+                )

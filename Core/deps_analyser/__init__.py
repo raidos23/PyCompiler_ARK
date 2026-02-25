@@ -40,7 +40,6 @@ from .analyser import (
     suggest_missing_dependencies,
 )
 
-
 __all__ = [
     "_install_next_dependency",
     "_check_module_installed",

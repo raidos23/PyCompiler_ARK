@@ -91,7 +91,9 @@ def test_compile_all_uses_entrypoint(test_workspace, monkeypatch) -> None:
 
     monkeypatch.setattr(compiler_module, "_start_compilation_queue", fake_start)
     monkeypatch.setattr(compiler_module, "create", lambda _eid: DummyEngine())
-    monkeypatch.setattr(compiler_module, "_get_main_process", lambda: DummyMainProcess())
+    monkeypatch.setattr(
+        compiler_module, "_get_main_process", lambda: DummyMainProcess()
+    )
     monkeypatch.setattr(
         compiler_module, "_run_bcasl_before_compile", lambda _self, cb: cb(None)
     )

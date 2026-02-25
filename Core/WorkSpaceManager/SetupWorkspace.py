@@ -38,6 +38,7 @@ class SetupWorkspace:
         Returns:
             Le chemin du workspace sélectionné ou None si annulé
         """
+
         def _t(_key: str, fr: str, en: str) -> str:
             try:
                 return gui_instance.tr(fr, en)
@@ -235,6 +236,7 @@ class SetupWorkspace:
                             # Pref applied, nothing more to do
                             pass
                         else:
+
                             def _t(_key: str, fr: str, en: str) -> str:
                                 try:
                                     return gui_instance.tr(fr, en)
@@ -255,7 +257,9 @@ class SetupWorkspace:
                             box.setWindowTitle(title)
                             box.setText(msg)
                             btn_auto = box.addButton(
-                                _t("action_create_venv", "Créer un venv", "Create venv"),
+                                _t(
+                                    "action_create_venv", "Créer un venv", "Create venv"
+                                ),
                                 QMessageBox.AcceptRole,
                             )
                             btn_manual = box.addButton(

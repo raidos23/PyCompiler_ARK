@@ -28,7 +28,6 @@ from PySide6.QtWidgets import QApplication
 
 from Core.UiConnection import apply_theme, _list_available_themes
 
-
 REQUIRED_SELECTORS = [
     "QToolButton",
     "QCommandLinkButton",
@@ -45,6 +44,7 @@ REQUIRED_SELECTORS = [
     "QSplitter",
     "QStatusBar",
 ]
+
 
 def test_apply_theme_loads_stylesheet() -> None:
     os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")

@@ -385,6 +385,7 @@ if not _USING_CORE_I18N:
         msg = tr(gui, fr, en)
         log_with_level(gui, level, msg, redact=redact, clamp=clamp)
 
+
 # -------------------------------
 # Executable resolution helper
 # -------------------------------

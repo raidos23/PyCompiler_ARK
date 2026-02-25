@@ -26,6 +26,7 @@ Point d'entrée du package: expose l'Plugins publique minimale et stable.
         resolve_bcasl_timeout,
     )
 """
+
 from __future__ import annotations
 
 from .executor import BCASL

@@ -22,7 +22,6 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Optional
 
-
 __all__ = [
     "BcPluginBase",
     "PluginMeta",
@@ -355,7 +354,9 @@ class BcPluginBase:
     def apply_i18n(self, gui, tr: dict[str, str]) -> None:
         raise NotImplementedError
 
-    def build_config_tab(self, parent, ctx: "PreCompileContext", config: dict[str, Any]):
+    def build_config_tab(
+        self, parent, ctx: "PreCompileContext", config: dict[str, Any]
+    ):
         """Optionnel: construire un onglet UI de configuration pour la boîte BCASL.
 
         Doit retourner soit:

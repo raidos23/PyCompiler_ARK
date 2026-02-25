@@ -287,8 +287,7 @@ class EnginesStandaloneGui(QMainWindow):
         self.venv_path_edit.setReadOnly(True)
         self.venv_path_edit.setMinimumWidth(220)
         self.venv_path_edit.setMaximumWidth(360)
-        self.venv_path_edit.setStyleSheet(
-            """
+        self.venv_path_edit.setStyleSheet("""
             QLineEdit {
                 background-color: #2d2d2d;
                 color: #ffffff;
@@ -297,16 +296,14 @@ class EnginesStandaloneGui(QMainWindow):
                 padding: 4px 8px;
                 font-size: 11px;
             }
-        """
-        )
+        """)
         venv_layout.addWidget(self.venv_path_edit)
 
         # Bouton sélectionner venv
         self.btn_select_venv = QPushButton("📁")
         self.btn_select_venv.setMinimumSize(32, 28)
         self.btn_select_venv.setToolTip("Select virtual environment folder")
-        self.btn_select_venv.setStyleSheet(
-            """
+        self.btn_select_venv.setStyleSheet("""
             QPushButton {
                 background-color: #404040;
                 color: white;
@@ -317,8 +314,7 @@ class EnginesStandaloneGui(QMainWindow):
             QPushButton:hover {
                 background-color: #4da6ff;
             }
-        """
-        )
+        """)
         self.btn_select_venv.clicked.connect(self._select_venv)
         venv_layout.addWidget(self.btn_select_venv)
 
@@ -326,8 +322,7 @@ class EnginesStandaloneGui(QMainWindow):
         self.btn_autodetect_venv = QPushButton("🔍")
         self.btn_autodetect_venv.setMinimumSize(32, 28)
         self.btn_autodetect_venv.setToolTip("Auto-detect best virtual environment")
-        self.btn_autodetect_venv.setStyleSheet(
-            """
+        self.btn_autodetect_venv.setStyleSheet("""
             QPushButton {
                 background-color: #404040;
                 color: white;
@@ -338,8 +333,7 @@ class EnginesStandaloneGui(QMainWindow):
             QPushButton:hover {
                 background-color: #4caf50;
             }
-        """
-        )
+        """)
         self.btn_autodetect_venv.clicked.connect(self._autodetect_venv)
         venv_layout.addWidget(self.btn_autodetect_venv)
 
@@ -347,8 +341,7 @@ class EnginesStandaloneGui(QMainWindow):
         self.btn_clear_venv = QPushButton("✕")
         self.btn_clear_venv.setMinimumSize(32, 28)
         self.btn_clear_venv.setToolTip("Clear venv selection")
-        self.btn_clear_venv.setStyleSheet(
-            """
+        self.btn_clear_venv.setStyleSheet("""
             QPushButton {
                 background-color: #404040;
                 color: white;
@@ -359,8 +352,7 @@ class EnginesStandaloneGui(QMainWindow):
             QPushButton:hover {
                 background-color: #f44336;
             }
-        """
-        )
+        """)
         self.btn_clear_venv.clicked.connect(self._clear_venv)
         venv_layout.addWidget(self.btn_clear_venv)
 
@@ -477,8 +469,7 @@ class EnginesStandaloneGui(QMainWindow):
 
         self.compile_btn = QPushButton("Compile")
         self.compile_btn.setMinimumHeight(30)
-        self.compile_btn.setStyleSheet(
-            """
+        self.compile_btn.setStyleSheet("""
             QPushButton {
                 background-color: #4caf50;
                 color: white;
@@ -493,16 +484,14 @@ class EnginesStandaloneGui(QMainWindow):
             QPushButton:disabled {
                 background-color: #666;
             }
-        """
-        )
+        """)
         self.compile_btn.clicked.connect(self._run_compilation)
         actions_layout.addWidget(self.compile_btn)
 
         # Cancel button
         self.cancel_btn = QPushButton("Cancel")
         self.cancel_btn.setMinimumHeight(30)
-        self.cancel_btn.setStyleSheet(
-            """
+        self.cancel_btn.setStyleSheet("""
             QPushButton {
                 background-color: #f44336;
                 color: white;
@@ -517,8 +506,7 @@ class EnginesStandaloneGui(QMainWindow):
             QPushButton:disabled {
                 background-color: #666;
             }
-        """
-        )
+        """)
         self.cancel_btn.clicked.connect(self._cancel_compilation)
         self.cancel_btn.setEnabled(False)  # Disabled by default
         actions_layout.addWidget(self.cancel_btn)
@@ -592,8 +580,7 @@ class EnginesStandaloneGui(QMainWindow):
         self.log_text.setFont(QFont("Consolas", 10))
         self.log_text.setReadOnly(True)
         self.log_text.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.log_text.setStyleSheet(
-            """
+        self.log_text.setStyleSheet("""
             QTextEdit {
                 background-color: #1e1e1e;
                 color: #e0e0e0;
@@ -601,8 +588,7 @@ class EnginesStandaloneGui(QMainWindow):
                 border-radius: 4px;
                 padding: 8px;
             }
-        """
-        )
+        """)
         log_layout_inner.addWidget(self.log_text)
 
         # Progress bar
@@ -780,8 +766,7 @@ class EnginesStandaloneGui(QMainWindow):
     def _apply_theme(self, theme_name: str):
         """Applique le thème visuel."""
         if theme_name == "dark":
-            self.setStyleSheet(
-                """
+            self.setStyleSheet("""
                 QMainWindow, QWidget {
                     background-color: #1e1e1e;
                     color: #ffffff;
@@ -870,11 +855,9 @@ class EnginesStandaloneGui(QMainWindow):
                     color: #aaaaaa;
                     font-size: 11px;
                 }
-            """
-            )
+            """)
         else:  # light theme
-            self.setStyleSheet(
-                """
+            self.setStyleSheet("""
                 QMainWindow, QWidget {
                     background-color: #f5f5f5;
                     color: #000000;
@@ -942,8 +925,7 @@ class EnginesStandaloneGui(QMainWindow):
                 QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
                     background: none;
                 }
-            """
-            )
+            """)
 
     def _apply_language(self, lang_code: str):
         """Applique la langue de l'interface."""
@@ -1299,7 +1281,9 @@ class EnginesStandaloneGui(QMainWindow):
 
                 # Récupérer le venv à utiliser
                 if not self.venv_path and self.venv_manager and self.workspace_dir:
-                    detected = self.venv_manager.resolve_existing_venv(self.workspace_dir)
+                    detected = self.venv_manager.resolve_existing_venv(
+                        self.workspace_dir
+                    )
                     if detected:
                         self.venv_path = detected
                         if self._is_valid(self.venv_path_edit):

@@ -93,7 +93,15 @@ class _SimpleHighlighter(QSyntaxHighlighter):
         # Numbers
         self.rules.append((QRegularExpression(r"\b\d+(?:\.\d+)?\b"), num_fmt))
         # Booleans/null
-        self.rules.append((QRegularExpression(r"\b(true|false|null|yes|no)\b", QRegularExpression.CaseInsensitiveOption), bool_fmt))
+        self.rules.append(
+            (
+                QRegularExpression(
+                    r"\b(true|false|null|yes|no)\b",
+                    QRegularExpression.CaseInsensitiveOption,
+                ),
+                bool_fmt,
+            )
+        )
         # Symbols
         self.rules.append((QRegularExpression(r"[{}\[\]:,]"), sym_fmt))
         # Comments
@@ -101,10 +109,14 @@ class _SimpleHighlighter(QSyntaxHighlighter):
 
         if mode == "yaml":
             # YAML keys (simple: key:)
-            self.rules.append((QRegularExpression(r"^\s*[A-Za-z0-9_\-\.]+(?=\s*:)"), key_fmt))
+            self.rules.append(
+                (QRegularExpression(r"^\s*[A-Za-z0-9_\-\.]+(?=\s*:)"), key_fmt)
+            )
         else:
             # JSON keys ("key":)
-            self.rules.append((QRegularExpression(r'"[A-Za-z0-9_\-\.]+"(?=\s*:)'), key_fmt))
+            self.rules.append(
+                (QRegularExpression(r'"[A-Za-z0-9_\-\.]+"(?=\s*:)'), key_fmt)
+            )
 
     def highlightBlock(self, text: str) -> None:
         for pattern, fmt in self.rules:
@@ -118,7 +130,9 @@ class AdvancedConfigEditor(QDialog):
     def __init__(self, gui):
         super().__init__(gui)
         self.gui = gui
-        self.setWindowTitle(gui.tr("Configurations avancées", "Advanced Configurations"))
+        self.setWindowTitle(
+            gui.tr("Configurations avancées", "Advanced Configurations")
+        )
         self.resize(980, 720)
 
         layout = QVBoxLayout(self)
@@ -159,7 +173,9 @@ class AdvancedConfigEditor(QDialog):
             )
         )
         if not diff.strip():
-            QMessageBox.information(self, title, self.gui.tr("Aucune différence.", "No differences."))
+            QMessageBox.information(
+                self, title, self.gui.tr("Aucune différence.", "No differences.")
+            )
             return
         dlg = QDialog(self)
         dlg.setWindowTitle(title)
@@ -226,10 +242,18 @@ class AdvancedConfigEditor(QDialog):
             text = editor.toPlainText()
             if text.strip():
                 if is_yaml and not _safe_parse_yaml(text):
-                    QMessageBox.warning(self, self.gui.tr("Erreur", "Error"), self.gui.tr("YAML invalide.", "Invalid YAML."))
+                    QMessageBox.warning(
+                        self,
+                        self.gui.tr("Erreur", "Error"),
+                        self.gui.tr("YAML invalide.", "Invalid YAML."),
+                    )
                     return
                 if not is_yaml and not _safe_parse_json(text):
-                    QMessageBox.warning(self, self.gui.tr("Erreur", "Error"), self.gui.tr("JSON invalide.", "Invalid JSON."))
+                    QMessageBox.warning(
+                        self,
+                        self.gui.tr("Erreur", "Error"),
+                        self.gui.tr("JSON invalide.", "Invalid JSON."),
+                    )
                     return
             _write_text(path, text)
 
@@ -242,7 +266,9 @@ class AdvancedConfigEditor(QDialog):
             self._show_diff(self.gui.tr("Diff du fichier", "File diff"), before, after)
 
         def _open_any():
-            path, _ = QFileDialog.getOpenFileName(self, self.gui.tr("Ouvrir un fichier", "Open file"), "", "*.*")
+            path, _ = QFileDialog.getOpenFileName(
+                self, self.gui.tr("Ouvrir un fichier", "Open file"), "", "*.*"
+            )
             if not path:
                 return
             editor.setPlainText(_read_text(path))
@@ -278,7 +304,10 @@ class AdvancedConfigEditor(QDialog):
     def _setup_tab_pref(self) -> None:
         ws = self._workspace_dir()
         self._build_tab(
-            self.gui.tr("Préférences Workspace (.ark/pref.json)", "Workspace Preferences (.ark/pref.json)"),
+            self.gui.tr(
+                "Préférences Workspace (.ark/pref.json)",
+                "Workspace Preferences (.ark/pref.json)",
+            ),
             lambda: os.path.join(ws, ".ark", "pref.json") if ws else None,
             False,
             self.gui.tr("Workspace Pref", "Workspace Pref"),

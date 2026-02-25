@@ -8,7 +8,11 @@ from pathlib import Path
 
 from EngineLoader import available_engines, unload_all
 
-from .launchers import launch_bcasl_standalone, launch_engines_only_standalone, launch_main_application
+from .launchers import (
+    launch_bcasl_standalone,
+    launch_engines_only_standalone,
+    launch_main_application,
+)
 from .output import error, info, plain, success, warn
 from .system_info import print_system_info
 
@@ -218,7 +222,9 @@ def _run_engines(args: list[str]) -> int:
     if "--dry-run" in args or "-d" in args:
         engines = available_engines()
         if _RICH_CONSOLE is not None and Table is not None:
-            table = Table(title=f"Available engines ({len(engines)})", header_style="bold magenta")
+            table = Table(
+                title=f"Available engines ({len(engines)})", header_style="bold magenta"
+            )
             table.add_column("#", style="dim")
             table.add_column("Engine ID", style="cyan")
             for idx, eid in enumerate(engines, start=1):
@@ -300,7 +306,9 @@ def _run_bcasl_headless(args: list[str]) -> int:
             return 1
         plugins = app.get_plugins_info()
         if _RICH_CONSOLE is not None and Table is not None:
-            table = Table(title=f"BCASL plugins ({len(plugins)})", header_style="bold magenta")
+            table = Table(
+                title=f"BCASL plugins ({len(plugins)})", header_style="bold magenta"
+            )
             table.add_column("ID", style="cyan")
             table.add_column("Name", style="white")
             table.add_column("Version", style="green")
@@ -474,7 +482,9 @@ def _run_engine_command(args: list[str]) -> int:
     if sub == "list":
         engines = app.load_engines()
         if _RICH_CONSOLE is not None and Table is not None:
-            table = Table(title=f"Engines ({len(engines)})", header_style="bold magenta")
+            table = Table(
+                title=f"Engines ({len(engines)})", header_style="bold magenta"
+            )
             table.add_column("Status", style="bold")
             table.add_column("ID", style="cyan")
             table.add_column("Name", style="white")
@@ -598,7 +608,12 @@ def run_dedicated_cli(app_version: str) -> int:
         Prompt = None
 
     session = None
-    if PromptSession is not None and WordCompleter is not None and InMemoryHistory is not None and Style is not None:
+    if (
+        PromptSession is not None
+        and WordCompleter is not None
+        and InMemoryHistory is not None
+        and Style is not None
+    ):
         commands = [
             "help",
             "version",
@@ -654,7 +669,9 @@ def run_dedicated_cli(app_version: str) -> int:
             if session is not None:
                 line = session.prompt([("class:prompt", "ark-cli> ")]).strip()
             elif Prompt is not None:
-                line = Prompt.ask("[bold bright_blue]ark-cli[/bold bright_blue]").strip()
+                line = Prompt.ask(
+                    "[bold bright_blue]ark-cli[/bold bright_blue]"
+                ).strip()
             else:
                 line = input("ark-cli> ").strip()
         except (EOFError, KeyboardInterrupt):

@@ -216,7 +216,9 @@ def _load_language_file_sync(code: str) -> tuple[str | None, dict[str, Any] | No
                 fpath = os.path.join(lang_dir, lower_map[target])
                 try:
                     with open(fpath, encoding="utf-8") as f:
-                        return os.path.splitext(os.path.basename(fpath))[0], json.load(f)
+                        return os.path.splitext(os.path.basename(fpath))[0], json.load(
+                            f
+                        )
                 except Exception:
                     return None, None
     except Exception:
@@ -643,6 +645,7 @@ def _strip_emoji_prefix(text: str) -> str:
             break
     return s.lstrip()
 
+
 _LOG_LEVEL_RICH = {
     "info": "cyan",
     "warning": "yellow",
@@ -858,7 +861,9 @@ def apply_language(self, lang_display: str) -> None:
                 pass
             # Propagate translations to plugin SDK (independent from BCASL)
             try:
-                from Plugins_SDK.GeneralContext import apply_translations as sdk_apply_tr
+                from Plugins_SDK.GeneralContext import (
+                    apply_translations as sdk_apply_tr,
+                )
 
                 sdk_apply_tr(self, tr)
             except Exception:
@@ -966,7 +971,9 @@ def _apply_main_app_translations(self, tr: dict[str, object]) -> None:
 
         # === LABELS ===
         _set("label_workspace_section", "label_workspace_section")
-        if getattr(self, "use_system_python", False) and getattr(self, "venv_label", None):
+        if getattr(self, "use_system_python", False) and getattr(
+            self, "venv_label", None
+        ):
             val = tr.get("venv_label_system") if isinstance(tr, dict) else None
             if not val:
                 try:
@@ -1240,7 +1247,9 @@ def show_language_dialog(self):
                 pass
             # Propagate translations to plugin SDK (independent from BCASL)
             try:
-                from Plugins_SDK.GeneralContext import apply_translations as sdk_apply_tr
+                from Plugins_SDK.GeneralContext import (
+                    apply_translations as sdk_apply_tr,
+                )
 
                 sdk_apply_tr(self, tr)
             except Exception:
