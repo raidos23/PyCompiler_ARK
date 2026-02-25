@@ -6,7 +6,17 @@ from __future__ import annotations
 from typing import List
 
 COMMANDS: List[str] = ["bcasl", "engines", "main", "unload"]
-GLOBAL_FLAGS: List[str] = ["--help", "-h", "--version", "--info", "--completion", "--unload", "--verbose", "--no-splash"]
+GLOBAL_FLAGS: List[str] = [
+    "--help",
+    "-h",
+    "--version",
+    "--info",
+    "--cli",
+    "--completion",
+    "--unload",
+    "--verbose",
+    "--no-splash",
+]
 ENGINE_FLAGS: List[str] = ["--dry-run", "-l", "--language", "-t", "--theme"]
 
 

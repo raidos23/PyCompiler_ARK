@@ -9,6 +9,7 @@ import sys
 from EngineLoader import unload_all
 
 from .completion import print_command_completion
+from .dedicated import run_dedicated_cli
 from .launchers import (
     launch_bcasl_standalone,
     launch_engines_only_standalone,
@@ -38,7 +39,8 @@ def build_cli(app_version: str):
     )
     @click.option("--version", is_flag=True, help="Show version information")
     @click.option("--help-all", is_flag=True, help="Show detailed help with examples")
-    @click.option("--info", is_flag=True, help="Show system information")
+    @click.option("--info", "show_info", is_flag=True, help="Show system information")
+    @click.option("--cli", "dedicated_cli", is_flag=True, help="Open dedicated interactive CLI")
     @click.option("--verbose", is_flag=True, help="Enable verbose logging")
     @click.option("--no-splash", is_flag=True, help="Disable splash screen")
     @click.option(
@@ -53,7 +55,17 @@ def build_cli(app_version: str):
         help="Unload all registered engines before launching the application",
     )
     @click.pass_context
-    def cli(ctx, version, help_all, info, verbose, no_splash, completion, unload_engines_flag):
+    def cli(
+        ctx,
+        version,
+        help_all,
+        show_info,
+        dedicated_cli,
+        verbose,
+        no_splash,
+        completion,
+        unload_engines_flag,
+    ):
         """PyCompiler ARK — Cross-platform Python compiler with BCASL integration.
 
         Launch the main application by default, or use subcommands for specific modes.
@@ -78,13 +90,16 @@ def build_cli(app_version: str):
             info(info_msg)
             ctx.exit(0)
 
-        if info:
+        if show_info:
             print_system_info(app_version)
             ctx.exit(0)
 
         if completion:
             print_command_completion(completion)
             ctx.exit(0)
+
+        if dedicated_cli and ctx.invoked_subcommand is None:
+            ctx.exit(run_dedicated_cli(app_version))
 
         if unload_engines_flag:
             result = unload_all()
@@ -106,6 +121,7 @@ def build_cli(app_version: str):
             plain("  python -m pycompiler_ark                    # Main app")
             plain("  python -m pycompiler_ark bcasl              # BCASL")
             plain("  python -m pycompiler_ark bcasl /path/to/ws  # BCASL with workspace")
+            plain("  python -m pycompiler_ark --cli              # Dedicated CLI")
             plain("  python -m pycompiler_ark --info             # System info")
             ctx.exit(0)
 
