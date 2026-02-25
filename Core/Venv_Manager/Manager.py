@@ -157,7 +157,10 @@ class VenvManager:
                 except Exception:
                     pass
                 try:
-                    if hasattr(self.parent, "venv_path_edit") and self.parent.venv_path_edit:
+                    if (
+                        hasattr(self.parent, "venv_path_edit")
+                        and self.parent.venv_path_edit
+                    ):
                         self.parent.venv_path_edit.setText(self._pref_label_system())
                 except Exception:
                     pass
@@ -180,12 +183,20 @@ class VenvManager:
                     except Exception:
                         pass
                     try:
-                        if hasattr(self.parent, "venv_label") and self.parent.venv_label:
-                            self.parent.venv_label.setText(f"Venv sélectionné : {venv_path}")
+                        if (
+                            hasattr(self.parent, "venv_label")
+                            and self.parent.venv_label
+                        ):
+                            self.parent.venv_label.setText(
+                                f"Venv sélectionné : {venv_path}"
+                            )
                     except Exception:
                         pass
                     try:
-                        if hasattr(self.parent, "venv_path_edit") and self.parent.venv_path_edit:
+                        if (
+                            hasattr(self.parent, "venv_path_edit")
+                            and self.parent.venv_path_edit
+                        ):
                             self.parent.venv_path_edit.setText(venv_path)
                     except Exception:
                         pass
@@ -623,7 +634,18 @@ class VenvManager:
             if s.startswith(emoji):
                 return lvl
         low = s.lower()
-        if any(tok in low for tok in ("error", "erreur", "échec", "echec", "failed", "invalid", "refus")):
+        if any(
+            tok in low
+            for tok in (
+                "error",
+                "erreur",
+                "échec",
+                "echec",
+                "failed",
+                "invalid",
+                "refus",
+            )
+        ):
             return "error"
         if any(tok in low for tok in ("warning", "avert", "warn", "attention")):
             return "warning"
@@ -633,7 +655,9 @@ class VenvManager:
             return "state"
         return "info"
 
-    def _safe_log(self, text: str, text_en: str | None = None, level: str | None = None):
+    def _safe_log(
+        self, text: str, text_en: str | None = None, level: str | None = None
+    ):
         gui = getattr(self, "parent", None) or self
         lvl = level or self._infer_log_level(text_en if text_en is not None else text)
         try:
@@ -870,7 +894,9 @@ class VenvManager:
         except Exception:
             return str(name).strip().lower()
 
-    def _parse_requirements_file(self, req_path: str, seen: set | None = None) -> list[str]:
+    def _parse_requirements_file(
+        self, req_path: str, seen: set | None = None
+    ) -> list[str]:
         seen = seen or set()
         try:
             req_path = os.path.abspath(req_path)
@@ -965,7 +991,9 @@ class VenvManager:
                 ordered.append(d)
         return ordered
 
-    def _collect_declared_dependencies(self, workspace_dir: str) -> tuple[list[str], bool]:
+    def _collect_declared_dependencies(
+        self, workspace_dir: str
+    ) -> tuple[list[str], bool]:
         try:
             workspace_dir = os.path.abspath(workspace_dir)
         except Exception:
@@ -1103,8 +1131,14 @@ class VenvManager:
             if hasattr(self.parent, "venv_label") and self.parent.venv_label:
                 label = None
                 try:
-                    tr = getattr(self.parent, "_tr", {}) if hasattr(self.parent, "_tr") else {}
-                    label = tr.get("venv_label_system") if isinstance(tr, dict) else None
+                    tr = (
+                        getattr(self.parent, "_tr", {})
+                        if hasattr(self.parent, "_tr")
+                        else {}
+                    )
+                    label = (
+                        tr.get("venv_label_system") if isinstance(tr, dict) else None
+                    )
                 except Exception:
                     label = None
                 if not label:
@@ -1201,6 +1235,7 @@ class VenvManager:
                     pass
                 # Message concis avec actions proposées
                 try:
+
                     def _t(_key: str, fr: str, en: str) -> str:
                         try:
                             return self.parent.tr(fr, en)
@@ -1733,7 +1768,12 @@ class VenvManager:
                 cmd = self._get_manager_command(manager, "create_venv")
             except Exception:
                 cmd = None
-            if manager and manager != "pip" and cmd and self._is_tool_available(manager):
+            if (
+                manager
+                and manager != "pip"
+                and cmd
+                and self._is_tool_available(manager)
+            ):
                 self._safe_log(
                     f"🔧 Aucun venv trouvé, création avec {manager} (ManagerMapping.yml)..."
                 )
@@ -1861,8 +1901,13 @@ class VenvManager:
                 if not getattr(self.parent, "use_system_python", False):
                     if not getattr(self.parent, "venv_path_manuel", None):
                         self.parent.venv_path_manuel = venv_path
-                        if hasattr(self.parent, "venv_label") and self.parent.venv_label:
-                            self.parent.venv_label.setText(f"Venv sélectionné : {venv_path}")
+                        if (
+                            hasattr(self.parent, "venv_label")
+                            and self.parent.venv_label
+                        ):
+                            self.parent.venv_label.setText(
+                                f"Venv sélectionné : {venv_path}"
+                            )
                 self.save_workspace_pref(os.path.dirname(venv_path))
             except Exception:
                 pass
@@ -2324,7 +2369,9 @@ class VenvManager:
                 data = f.read()
             req_hash = hashlib.sha256(data).hexdigest()
         except Exception as e:
-            self._safe_log(f"⚠️ Impossible de calculer le hash de requirements.txt: {e}")
+            self._safe_log(
+                f"⚠️ Impossible de calculer le hash de requirements.txt: {e}"
+            )
             req_hash = None
         marker_base = venv_root
         if use_system_python:
@@ -2429,7 +2476,11 @@ class VenvManager:
                     "setuptools",
                     "wheel",
                 ]
-                + (self._pip_break_system_args() if getattr(self, "_req_use_system_python", False) else [])
+                + (
+                    self._pip_break_system_args()
+                    if getattr(self, "_req_use_system_python", False)
+                    else []
+                )
             )
             p2.setWorkingDirectory(os.path.dirname(self._req_path))
             p2.readyReadStandardOutput.connect(lambda: self._on_pip_output(p2))
@@ -2757,7 +2808,7 @@ class VenvManager:
             for prefix in ("*", "-", ">", "•"):
                 if cand.startswith(prefix):
                     cand = cand[len(prefix) :].strip()
-            if cand.startswith(("'", "\"")) and cand.endswith(("'", "\"")):
+            if cand.startswith(("'", '"')) and cand.endswith(("'", '"')):
                 cand = cand[1:-1].strip()
             if cand and os.path.isdir(cand):
                 return cand
@@ -2808,7 +2859,9 @@ class VenvManager:
             return self._validate_conda_env(venv_root)
         return self.validate_venv_strict(venv_root)
 
-    def _parse_conda_env_spec(self, workspace_dir: str) -> tuple[str | None, str | None]:
+    def _parse_conda_env_spec(
+        self, workspace_dir: str
+    ) -> tuple[str | None, str | None]:
         for fname in ("environment.yml", "conda.yml", "environment.yaml"):
             path = os.path.join(workspace_dir, fname)
             if not os.path.isfile(path):
@@ -2901,9 +2954,7 @@ class VenvManager:
                 self._manager_venv_cache[base] = path
                 self._safe_log(f"✅ Venv détecté via {manager}: {path}")
                 return path
-            self._safe_log(
-                f"⚠️ Venv détecté via {manager} mais invalide: {reason}"
-            )
+            self._safe_log(f"⚠️ Venv détecté via {manager} mais invalide: {reason}")
 
         self._manager_venv_cache[base] = None
         return None

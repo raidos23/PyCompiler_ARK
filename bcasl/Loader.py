@@ -25,6 +25,7 @@ Objectifs de simplification:
 - Journalisation concise dans self.log si disponible
 - Activation/désactivation gérée par ARK_Main_Config.yml (plugins.bcasl_enabled)
 """
+
 from __future__ import annotations
 
 import os
@@ -37,6 +38,7 @@ from .executor import BCASL
 from .Base import BcPluginBase, PreCompileContext
 from .tagging import compute_tag_order
 from Core.i18n import log_i18n_level
+
 # Qt (facultatif). Ne pas importer QtWidgets au niveau module pour compatibilité headless.
 try:  # pragma: no cover
     from PySide6.QtCore import QObject, QThread, Signal, Slot, Qt
@@ -842,7 +844,9 @@ def open_bc_loader_dialog(self) -> None:  # UI minimale
             if not hasattr(plugin, "build_config_tab"):
                 continue
             try:
-                entry = plugins_cfg.get(pid, {}) if isinstance(plugins_cfg, dict) else {}
+                entry = (
+                    plugins_cfg.get(pid, {}) if isinstance(plugins_cfg, dict) else {}
+                )
                 base_cfg = {}
                 try:
                     base_cfg = dict(entry.get("config", {}) or {})

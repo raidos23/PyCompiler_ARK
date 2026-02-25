@@ -18,7 +18,6 @@ from .launchers import (
 from .output import error, info, plain, warn
 from .system_info import print_system_info
 
-
 try:
     import click  # type: ignore
 except Exception:  # pragma: no cover - optional dependency
@@ -40,7 +39,9 @@ def build_cli(app_version: str):
     @click.option("--version", is_flag=True, help="Show version information")
     @click.option("--help-all", is_flag=True, help="Show detailed help with examples")
     @click.option("--info", "show_info", is_flag=True, help="Show system information")
-    @click.option("--cli", "dedicated_cli", is_flag=True, help="Open dedicated interactive CLI")
+    @click.option(
+        "--cli", "dedicated_cli", is_flag=True, help="Open dedicated interactive CLI"
+    )
     @click.option("--verbose", is_flag=True, help="Enable verbose logging")
     @click.option("--no-splash", is_flag=True, help="Disable splash screen")
     @click.option(
@@ -120,7 +121,9 @@ def build_cli(app_version: str):
             plain("\nExamples:")
             plain("  python -m pycompiler_ark                    # Main app")
             plain("  python -m pycompiler_ark bcasl              # BCASL")
-            plain("  python -m pycompiler_ark bcasl /path/to/ws  # BCASL with workspace")
+            plain(
+                "  python -m pycompiler_ark bcasl /path/to/ws  # BCASL with workspace"
+            )
             plain("  python -m pycompiler_ark --cli              # Dedicated CLI")
             plain("  python -m pycompiler_ark --info             # System info")
             ctx.exit(0)
@@ -205,9 +208,13 @@ def build_cli(app_version: str):
         """Launch the main PyCompiler ARK application."""
         ctx = click.get_current_context(silent=True)
         ctx_obj = ctx.obj if ctx is not None else {}
-        sys.exit(launch_main_application(no_splash=bool(ctx_obj.get("no_splash", False))))
+        sys.exit(
+            launch_main_application(no_splash=bool(ctx_obj.get("no_splash", False)))
+        )
 
-    @cli.command(context_settings=dict(help_option_names=["-h", "--help"]), name="unload")
+    @cli.command(
+        context_settings=dict(help_option_names=["-h", "--help"]), name="unload"
+    )
     def unload_engines_cmd():
         """Unload all registered engines."""
         result = unload_all()

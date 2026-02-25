@@ -9,12 +9,15 @@ from typing import Iterable, Optional
 
 from EngineLoader import unload_all
 
-from .launchers import launch_bcasl_standalone, launch_engines_only_standalone, launch_main_application
+from .launchers import (
+    launch_bcasl_standalone,
+    launch_engines_only_standalone,
+    launch_main_application,
+)
 from .completion import print_command_completion
 from .dedicated import run_dedicated_cli
 from .output import error, info, plain, warn
 from .system_info import print_system_info
-
 
 USAGE = """
 PyCompiler ARK — Cross-platform hardened bootstrap with Intelligent CLI Entry Point
@@ -91,7 +94,12 @@ def run(argv: Optional[list[str]], app_version: str) -> int:
             return launch_bcasl_standalone(workspace_dir)
         if args[0] == "engines":
             sub_args = args[1:]
-            if "--list-engines" in sub_args or "-l" in sub_args or "--dry-run" in sub_args or "-d" in sub_args:
+            if (
+                "--list-engines" in sub_args
+                or "-l" in sub_args
+                or "--dry-run" in sub_args
+                or "-d" in sub_args
+            ):
                 from EngineLoader import available_engines
 
                 engines = available_engines()

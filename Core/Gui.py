@@ -156,8 +156,6 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
         except Exception:
             pass
 
-        
-
     # =========================================================================
     # DÉLÉGATION UI À UiFeatures
     # =========================================================================
@@ -357,7 +355,15 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
         low = s.lower()
         if any(
             tok in low
-            for tok in ("error", "erreur", "échec", "echec", "failed", "invalid", "refus")
+            for tok in (
+                "error",
+                "erreur",
+                "échec",
+                "echec",
+                "failed",
+                "invalid",
+                "refus",
+            )
         ):
             return "error"
         if any(tok in low for tok in ("warning", "avert", "warn", "attention")):

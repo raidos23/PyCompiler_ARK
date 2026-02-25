@@ -4,13 +4,13 @@
 # Matrix:
 # - Python >= 3.13 => PySide6/shiboken6 >= 6.8 (adds 3.13 support)
 # - Python <= 3.12 => prefer < 6.8 (keeps Qt6.7 ABI, avoids early 6.8 issues)
-PySide6>=6.8.0; python_version >= "3.13"
-shiboken6>=6.8.0; python_version >= "3.13"
-PySide6<6.8; python_version < "3.13"
-shiboken6<6.8; python_version < "3.13"
+PySide6
+shiboken6
+PySide6
+shiboken6
 
 # System utilities
-psutil>=5.9.0,<6.0.0
+psutil
 
 # Configuration and data formats
 PyYAML>=5.4.1,<7.0.0

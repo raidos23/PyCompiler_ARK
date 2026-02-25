@@ -29,12 +29,12 @@ from Plugins_SDK.GeneralContext import (
     translate,
 )
 
-
 # Create instances of Dialog for logging and user interaction
 # These now automatically execute in the main Qt thread, ensuring theme inheritance
 # and proper UI integration with the main application
 log = Dialog()
 dialog = Dialog()
+
 
 def _load_i18n() -> None:
     try:
@@ -88,7 +88,11 @@ class Cleaner(BcPluginBase):
         try:
             cfg = ctx.get_workspace_config() or {}
             plugins_cfg = cfg.get("plugins", {}) if isinstance(cfg, dict) else {}
-            entry = plugins_cfg.get(self.meta.id, {}) if isinstance(plugins_cfg, dict) else {}
+            entry = (
+                plugins_cfg.get(self.meta.id, {})
+                if isinstance(plugins_cfg, dict)
+                else {}
+            )
             plugin_cfg = entry.get("config", {}) if isinstance(entry, dict) else {}
             if isinstance(plugin_cfg, dict):
                 return dict(plugin_cfg)
@@ -150,7 +154,12 @@ class Cleaner(BcPluginBase):
         lay.addWidget(targets_group)
 
         # Compact hint
-        hint = QLabel(translate("cleaner", "ui_tip", "Tip: disable items you don't want to delete."), w)
+        hint = QLabel(
+            translate(
+                "cleaner", "ui_tip", "Tip: disable items you don't want to delete."
+            ),
+            w,
+        )
         hint.setStyleSheet("color: #888; font-size: 11px;")
         hint.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         lay.addWidget(hint)
@@ -181,7 +190,13 @@ class Cleaner(BcPluginBase):
             clean_pyc = bool(cfg.get("clean_pyc", True))
             clean_pycache = bool(cfg.get("clean_pycache", True))
             if not clean_pyc and not clean_pycache:
-                log.log_info(translate("cleaner", "log_noop", "Cleaner: nothing to do (both options disabled)"))
+                log.log_info(
+                    translate(
+                        "cleaner",
+                        "log_noop",
+                        "Cleaner: nothing to do (both options disabled)",
+                    )
+                )
                 return
 
             # Demander confirmation à l'utilisateur

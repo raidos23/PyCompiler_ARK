@@ -75,7 +75,9 @@ def test_create_venv_prefers_manager_mapping(test_workspace: Path, monkeypatch) 
     assert called.get("venv_path", "").endswith(os.path.join("", ".venv"))
 
 
-def test_resolve_existing_venv_prefers_manager(monkeypatch, test_workspace: Path) -> None:
+def test_resolve_existing_venv_prefers_manager(
+    monkeypatch, test_workspace: Path
+) -> None:
     parent = DummyParent()
     parent.workspace_dir = str(test_workspace)
     mgr = VenvManager(parent)
@@ -97,7 +99,9 @@ def test_resolve_existing_venv_prefers_manager(monkeypatch, test_workspace: Path
     assert called["select"] is False
 
 
-def test_install_requirements_prefers_manager(monkeypatch, test_workspace: Path) -> None:
+def test_install_requirements_prefers_manager(
+    monkeypatch, test_workspace: Path
+) -> None:
     parent = DummyParent()
     mgr = VenvManager(parent)
 

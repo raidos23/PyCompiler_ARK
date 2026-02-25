@@ -38,7 +38,6 @@ from pathlib import Path
 from typing import Optional, List, Dict, Any
 from datetime import datetime
 
-
 # Platform detection
 _IS_WINDOWS = sys.platform == "win32"
 _IS_LINUX = sys.platform.startswith("linux")

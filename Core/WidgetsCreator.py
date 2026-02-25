@@ -344,9 +344,11 @@ def sys_msgbox_for_installing(
             pwd, ok = QInputDialog.getText(
                 parent,
                 title,
-                "Entrez votre mot de passe (sudo):"
-                if is_fr
-                else "Enter your password (sudo):",
+                (
+                    "Entrez votre mot de passe (sudo):"
+                    if is_fr
+                    else "Enter your password (sudo):"
+                ),
                 QLineEdit.Password,
             )
             if not ok:
@@ -359,7 +361,9 @@ def sys_msgbox_for_installing(
     # Fallback console
     try:
         print(f"[INSTALL] {title}: {msg}")
-        ans = input("Continuer ? [y/N] " if is_fr else "Continue? [y/N] ").strip().lower()
+        ans = (
+            input("Continuer ? [y/N] " if is_fr else "Continue? [y/N] ").strip().lower()
+        )
         if ans not in ("y", "yes", "o", "oui"):
             return None
     except Exception:
@@ -368,9 +372,7 @@ def sys_msgbox_for_installing(
     if is_windows:
         return InstallAuth("uac", None)
     try:
-        pwd = getpass.getpass(
-            "Mot de passe (sudo): " if is_fr else "Password (sudo): "
-        )
+        pwd = getpass.getpass("Mot de passe (sudo): " if is_fr else "Password (sudo): ")
         return InstallAuth("sudo", pwd) if pwd else None
     except Exception:
         return None

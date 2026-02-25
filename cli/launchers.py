@@ -107,7 +107,9 @@ def launch_main_application(no_splash: bool = False) -> int:
         if not no_splash:
             try:
                 logo_dir = os.path.join(ROOT_DIR, "images")
-                safe_ver = "".join(c for c in APP_VERSION if c.isalnum() or c in (".", "-", "_"))
+                safe_ver = "".join(
+                    c for c in APP_VERSION if c.isalnum() or c in (".", "-", "_")
+                )
                 names = [
                     f"splash_v{safe_ver}.png",
                     "splash.png",
@@ -122,7 +124,11 @@ def launch_main_application(no_splash: bool = False) -> int:
                         if not pix.isNull():
                             try:
                                 screen = app.primaryScreen()
-                                geo = screen.availableGeometry() if screen is not None else None
+                                geo = (
+                                    screen.availableGeometry()
+                                    if screen is not None
+                                    else None
+                                )
                                 max_side = 720
                                 if geo is not None:
                                     max_side = int(min(geo.width(), geo.height()) * 0.5)
@@ -141,7 +147,11 @@ def launch_main_application(no_splash: bool = False) -> int:
                             try:
                                 if screen is not None:
                                     sg = splash.frameGeometry()
-                                    center = geo.center() if geo is not None else screen.geometry().center()
+                                    center = (
+                                        geo.center()
+                                        if geo is not None
+                                        else screen.geometry().center()
+                                    )
                                     splash.move(
                                         center.x() - sg.width() // 2,
                                         center.y() - sg.height() // 2,
@@ -152,12 +162,16 @@ def launch_main_application(no_splash: bool = False) -> int:
                             try:
                                 align = Qt.AlignHCenter | Qt.AlignBottom
                                 col = QColor(255, 255, 255)
-                                splash.showMessage("Initialisation… / Initializing…", align, col)
+                                splash.showMessage(
+                                    "Initialisation… / Initializing…", align, col
+                                )
                                 app.processEvents()
                                 QTimer.singleShot(
                                     700,
                                     lambda: splash.showMessage(
-                                        "Chargement du thème… / Loading theme…", align, col
+                                        "Chargement du thème… / Loading theme…",
+                                        align,
+                                        col,
                                     ),
                                 )
                                 QTimer.singleShot(

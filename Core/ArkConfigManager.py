@@ -36,7 +36,6 @@ from pathlib import Path, PurePosixPath
 from typing import Any, Optional
 import yaml
 
-
 # =============================================================================
 # PATTERNS D'EXCLUSION PAR DÉFAUT
 # =============================================================================

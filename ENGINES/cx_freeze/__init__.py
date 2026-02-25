@@ -127,7 +127,9 @@ class CXFreezeEngine(CompilerEngine):
         except Exception as e:
             try:
                 if hasattr(gui, "log"):
-                    log_with_level(gui, "error", f"Erreur construction commande CX_Freeze: {e}")
+                    log_with_level(
+                        gui, "error", f"Erreur construction commande CX_Freeze: {e}"
+                    )
             except Exception:
                 pass
             return []
@@ -224,9 +226,7 @@ class CXFreezeEngine(CompilerEngine):
                 "cx_icon_path_input_dynamic",
             )
             if self._cx_icon_path_input is not None:
-                self._cx_icon_path_input.textChanged.connect(
-                    self._on_icon_path_changed
-                )
+                self._cx_icon_path_input.textChanged.connect(self._on_icon_path_changed)
 
             # Debug / verbose
             self._cx_debug = QCheckBox("Debug")
@@ -261,7 +261,9 @@ class CXFreezeEngine(CompilerEngine):
         except Exception as e:
             try:
                 if hasattr(gui, "log"):
-                    log_with_level(gui, "error", f"Erreur création onglet CX_Freeze: {e}")
+                    log_with_level(
+                        gui, "error", f"Erreur création onglet CX_Freeze: {e}"
+                    )
             except Exception:
                 pass
             return None
@@ -274,10 +276,7 @@ class CXFreezeEngine(CompilerEngine):
                 cfg["windowed"] = bool(self._cx_windowed.isChecked())
             if hasattr(self, "_cx_output_dir") and self._cx_output_dir is not None:
                 cfg["output_dir"] = self._cx_output_dir.text().strip()
-            if (
-                hasattr(self, "_cx_target_name")
-                and self._cx_target_name is not None
-            ):
+            if hasattr(self, "_cx_target_name") and self._cx_target_name is not None:
                 cfg["target_name"] = self._cx_target_name.text().strip()
             if hasattr(self, "_cx_debug") and self._cx_debug is not None:
                 cfg["debug"] = bool(self._cx_debug.isChecked())
@@ -289,7 +288,11 @@ class CXFreezeEngine(CompilerEngine):
                 and self._cx_icon_path_input is not None
             ):
                 icon_path = self._cx_icon_path_input.text().strip()
-            if not icon_path and hasattr(self, "_selected_icon") and self._selected_icon:
+            if (
+                not icon_path
+                and hasattr(self, "_selected_icon")
+                and self._selected_icon
+            ):
                 icon_path = str(self._selected_icon).strip()
             if icon_path:
                 self._selected_icon = icon_path
@@ -438,4 +441,6 @@ class CXFreezeEngine(CompilerEngine):
                     )
         except Exception as e:
             if hasattr(self._gui, "log"):
-                log_with_level(self._gui, "error", f"Erreur lors de la sélection de l'icône : {e}")
+                log_with_level(
+                    self._gui, "error", f"Erreur lors de la sélection de l'icône : {e}"
+                )

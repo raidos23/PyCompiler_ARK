@@ -136,7 +136,9 @@ class NuitkaEngine(CompilerEngine):
         except Exception as e:
             try:
                 if hasattr(gui, "log"):
-                    log_with_level(gui, "error", f"Erreur construction commande Nuitka: {e}")
+                    log_with_level(
+                        gui, "error", f"Erreur construction commande Nuitka: {e}"
+                    )
             except Exception:
                 pass
             return []
@@ -297,7 +299,11 @@ class NuitkaEngine(CompilerEngine):
                 and self._nuitka_selected_icon
             ):
                 icon_path = str(self._nuitka_selected_icon).strip()
-            if not icon_path and hasattr(self, "_selected_icon") and self._selected_icon:
+            if (
+                not icon_path
+                and hasattr(self, "_selected_icon")
+                and self._selected_icon
+            ):
                 icon_path = str(self._selected_icon).strip()
             if icon_path:
                 self._nuitka_selected_icon = icon_path
@@ -434,4 +440,6 @@ class NuitkaEngine(CompilerEngine):
                     )
         except Exception as e:
             if hasattr(self._gui, "log"):
-                log_with_level(self._gui, "error", f"Erreur lors de la sélection de l'icône : {e}")
+                log_with_level(
+                    self._gui, "error", f"Erreur lors de la sélection de l'icône : {e}"
+                )

@@ -613,7 +613,9 @@ class UiFeatures:
             slowest_file = None
             slowest_time = max_time
             if total_files:
-                slowest_file = max(self._compilation_times, key=self._compilation_times.get)
+                slowest_file = max(
+                    self._compilation_times, key=self._compilation_times.get
+                )
             slowest_files = [
                 (path, float(duration))
                 for path, duration in self._compilation_times.items()
@@ -633,9 +635,7 @@ class UiFeatures:
         msg += f"Temps total : {total_time:.3f} secondes<br>"
         msg += f"Temps moyen : {avg_time:.3f} secondes<br>"
         if min_time is not None and max_time is not None:
-            msg += (
-                f"Temps min/max : {float(min_time):.3f} / {float(max_time):.3f} secondes<br>"
-            )
+            msg += f"Temps min/max : {float(min_time):.3f} / {float(max_time):.3f} secondes<br>"
         if slowest_file and slowest_time is not None:
             msg += (
                 f"Fichier le plus lent : {os.path.basename(str(slowest_file))}"
@@ -645,9 +645,7 @@ class UiFeatures:
             top_n = slowest_files[:5]
             msg += "Top 5 fichiers les plus lents :<br>"
             for path, duration in top_n:
-                msg += (
-                    f"- {os.path.basename(str(path))} ({float(duration):.3f} secondes)<br>"
-                )
+                msg += f"- {os.path.basename(str(path))} ({float(duration):.3f} secondes)<br>"
         if isinstance(engines, dict) and engines:
             msg += "Par moteur :<br>"
             for engine_id, estats in engines.items():

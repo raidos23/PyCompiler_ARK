@@ -64,7 +64,6 @@ from bcasl.tagging import compute_tag_order
 # Importations GUI
 from .gui import BcaslStandaloneGui
 
-
 # Variable globale pour la langue
 _CURRENT_LANGUAGE = "en"
 

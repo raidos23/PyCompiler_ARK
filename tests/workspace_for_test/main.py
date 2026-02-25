@@ -18,10 +18,8 @@ x = 1
 y = 34
 s = True
 
-if x < 3 and s == False :
+if x < 3 and s == False:
     print("test is not ok !")
-    
-elif x < 3 and s == True :
+
+elif x < 3 and s == True:
     print("test is ok !")
-     
-    

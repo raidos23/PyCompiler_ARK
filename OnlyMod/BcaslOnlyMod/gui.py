@@ -325,8 +325,7 @@ class BcaslStandaloneGui(QMainWindow):
         self.workspace_path_edit.setReadOnly(True)
         self.workspace_path_edit.setMinimumWidth(250)
         self.workspace_path_edit.setMaximumWidth(400)
-        self.workspace_path_edit.setStyleSheet(
-            """
+        self.workspace_path_edit.setStyleSheet("""
             QLineEdit {
                 background-color: #2d2d2d;
                 color: #ffffff;
@@ -335,8 +334,7 @@ class BcaslStandaloneGui(QMainWindow):
                 padding: 4px 8px;
                 font-size: 11px;
             }
-        """
-        )
+        """)
         # Afficher le workspace actuel si défini
         if self.workspace_dir:
             self.workspace_path_edit.setText(str(Path(self.workspace_dir).resolve()))
@@ -348,8 +346,7 @@ class BcaslStandaloneGui(QMainWindow):
         self.btn_select_workspace.setToolTip(
             tr("Select workspace folder", "Sélectionner le dossier workspace")
         )
-        self.btn_select_workspace.setStyleSheet(
-            """
+        self.btn_select_workspace.setStyleSheet("""
             QPushButton {
                 background-color: #404040;
                 color: white;
@@ -360,8 +357,7 @@ class BcaslStandaloneGui(QMainWindow):
             QPushButton:hover {
                 background-color: #4da6ff;
             }
-        """
-        )
+        """)
         self.btn_select_workspace.clicked.connect(self._select_workspace)
         workspace_layout.addWidget(self.btn_select_workspace)
 
@@ -371,8 +367,7 @@ class BcaslStandaloneGui(QMainWindow):
         self.btn_clear_workspace.setToolTip(
             tr("Clear workspace", "Effacer le workspace")
         )
-        self.btn_clear_workspace.setStyleSheet(
-            """
+        self.btn_clear_workspace.setStyleSheet("""
             QPushButton {
                 background-color: #404040;
                 color: white;
@@ -383,8 +378,7 @@ class BcaslStandaloneGui(QMainWindow):
             QPushButton:hover {
                 background-color: #f44336;
             }
-        """
-        )
+        """)
         self.btn_clear_workspace.clicked.connect(self._clear_workspace)
         workspace_layout.addWidget(self.btn_clear_workspace)
 
@@ -412,8 +406,7 @@ class BcaslStandaloneGui(QMainWindow):
         self.venv_path_edit.setReadOnly(True)
         self.venv_path_edit.setMinimumWidth(200)
         self.venv_path_edit.setMaximumWidth(300)
-        self.venv_path_edit.setStyleSheet(
-            """
+        self.venv_path_edit.setStyleSheet("""
             QLineEdit {
                 background-color: #2d2d2d;
                 color: #ffffff;
@@ -422,8 +415,7 @@ class BcaslStandaloneGui(QMainWindow):
                 padding: 4px 8px;
                 font-size: 11px;
             }
-        """
-        )
+        """)
         venv_layout.addWidget(self.venv_path_edit)
 
         # Bouton sélectionner venv
@@ -432,8 +424,7 @@ class BcaslStandaloneGui(QMainWindow):
         self.btn_select_venv.setToolTip(
             tr("Select virtual environment folder", "Sélectionner le dossier venv")
         )
-        self.btn_select_venv.setStyleSheet(
-            """
+        self.btn_select_venv.setStyleSheet("""
             QPushButton {
                 background-color: #404040;
                 color: white;
@@ -444,8 +435,7 @@ class BcaslStandaloneGui(QMainWindow):
             QPushButton:hover {
                 background-color: #4da6ff;
             }
-        """
-        )
+        """)
         self.btn_select_venv.clicked.connect(self._select_venv)
         venv_layout.addWidget(self.btn_select_venv)
 
@@ -455,8 +445,7 @@ class BcaslStandaloneGui(QMainWindow):
         self.btn_autodetect_venv.setToolTip(
             tr("Auto-detect best virtual environment", "Auto-détecter le meilleur venv")
         )
-        self.btn_autodetect_venv.setStyleSheet(
-            """
+        self.btn_autodetect_venv.setStyleSheet("""
             QPushButton {
                 background-color: #404040;
                 color: white;
@@ -467,8 +456,7 @@ class BcaslStandaloneGui(QMainWindow):
             QPushButton:hover {
                 background-color: #4caf50;
             }
-        """
-        )
+        """)
         self.btn_autodetect_venv.clicked.connect(self._autodetect_venv)
         venv_layout.addWidget(self.btn_autodetect_venv)
 
@@ -478,8 +466,7 @@ class BcaslStandaloneGui(QMainWindow):
         self.btn_clear_venv.setToolTip(
             tr("Clear venv selection", "Effacer la sélection venv")
         )
-        self.btn_clear_venv.setStyleSheet(
-            """
+        self.btn_clear_venv.setStyleSheet("""
             QPushButton {
                 background-color: #404040;
                 color: white;
@@ -490,8 +477,7 @@ class BcaslStandaloneGui(QMainWindow):
             QPushButton:hover {
                 background-color: #f44336;
             }
-        """
-        )
+        """)
         self.btn_clear_venv.clicked.connect(self._clear_venv)
         venv_layout.addWidget(self.btn_clear_venv)
 
@@ -672,8 +658,7 @@ class BcaslStandaloneGui(QMainWindow):
 
         self.btn_run = QPushButton(tr("▶ Run Plugins", "▶ Exécuter les Plugins"))
         self.btn_run.setMinimumHeight(32)
-        self.btn_run.setStyleSheet(
-            """
+        self.btn_run.setStyleSheet("""
             QPushButton {
                 background-color: #4caf50;
                 color: white;
@@ -688,16 +673,14 @@ class BcaslStandaloneGui(QMainWindow):
             QPushButton:disabled {
                 background-color: #666;
             }
-        """
-        )
+        """)
         self.btn_run.clicked.connect(self._run_plugins)
         actions_layout.addWidget(self.btn_run)
 
         self.btn_cancel = QPushButton(tr("Cancel", "Annuler"))
         self.btn_cancel.setMinimumHeight(32)
         self.btn_cancel.setEnabled(False)
-        self.btn_cancel.setStyleSheet(
-            """
+        self.btn_cancel.setStyleSheet("""
             QPushButton {
                 background-color: #f44336;
                 color: white;
@@ -712,8 +695,7 @@ class BcaslStandaloneGui(QMainWindow):
             QPushButton:disabled {
                 background-color: #666;
             }
-        """
-        )
+        """)
         self.btn_cancel.clicked.connect(self._cancel_execution)
         actions_layout.addWidget(self.btn_cancel)
 
@@ -748,8 +730,7 @@ class BcaslStandaloneGui(QMainWindow):
         self.log_text.setSizePolicy(
             QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding
         )
-        self.log_text.setStyleSheet(
-            """
+        self.log_text.setStyleSheet("""
             QTextEdit {
                 background-color: #1e1e1e;
                 color: #e0e0e0;
@@ -757,8 +738,7 @@ class BcaslStandaloneGui(QMainWindow):
                 border-radius: 4px;
                 padding: 8px;
             }
-        """
-        )
+        """)
         log_layout_inner.addWidget(self.log_text)
 
         log_group.setLayout(log_layout_inner)
@@ -1006,8 +986,7 @@ class BcaslStandaloneGui(QMainWindow):
     def _apply_theme(self, theme_name: str):
         """Applique le thème visuel."""
         if theme_name == "dark":
-            self.setStyleSheet(
-                """
+            self.setStyleSheet("""
                 QWidget {
                     background-color: #1e1e1e;
                     color: #ffffff;
@@ -1056,11 +1035,9 @@ class BcaslStandaloneGui(QMainWindow):
                     color: #aaaaaa;
                     font-size: 11px;
                 }
-            """
-            )
+            """)
         else:  # light theme
-            self.setStyleSheet(
-                """
+            self.setStyleSheet("""
                 QWidget {
                     background-color: #f5f5f5;
                     color: #000000;
@@ -1120,8 +1097,7 @@ class BcaslStandaloneGui(QMainWindow):
                     color: #666666;
                     font-size: 11px;
                 }
-            """
-            )
+            """)
 
     def _apply_language(self, lang_code: str):
         """Applique la langue de l'interface."""
@@ -1439,7 +1415,11 @@ class BcaslStandaloneGui(QMainWindow):
         cfg_out["plugins"] = plugins_out
         cfg_out["plugin_order"] = order_ids
         try:
-            opts = cfg_out.get("options", {}) if isinstance(cfg_out.get("options"), dict) else {}
+            opts = (
+                cfg_out.get("options", {})
+                if isinstance(cfg_out.get("options"), dict)
+                else {}
+            )
             opts["enabled"] = bool(self.global_enable_check.isChecked())
             cfg_out["options"] = opts
         except Exception:

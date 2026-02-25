@@ -190,6 +190,7 @@ def compile_all(self) -> None:
     Slot connected to the compile button.
     Starts compilation for all selected Python files.
     """
+
     def _t(_key: str, fr: str, en: str) -> str:
         try:
             return self.tr(fr, en)
@@ -226,12 +227,19 @@ def compile_all(self) -> None:
 
     if not files_to_compile:
         log_i18n_level(
-            self, "warning", "Aucun fichier Python sélectionné.", "No Python files selected."
+            self,
+            "warning",
+            "Aucun fichier Python sélectionné.",
+            "No Python files selected.",
         )
         try:
             box = QMessageBox(self)
             box.setWindowTitle(
-                _t("msg_no_files_title", "Aucun fichier à compiler", "No files to compile")
+                _t(
+                    "msg_no_files_title",
+                    "Aucun fichier à compiler",
+                    "No files to compile",
+                )
             )
             box.setText(
                 _t(
@@ -268,7 +276,9 @@ def compile_all(self) -> None:
 
     # Vérifier le workspace
     if not self.workspace_dir:
-        log_i18n_level(self, "warning", "Aucun workspace sélectionné.", "No workspace selected.")
+        log_i18n_level(
+            self, "warning", "Aucun workspace sélectionné.", "No workspace selected."
+        )
         try:
             box = QMessageBox(self)
             box.setWindowTitle(
@@ -310,7 +320,10 @@ def compile_all(self) -> None:
             engine_id = engines_loader.registry.get_engine_for_tab(idx)
     except Exception as e:
         log_i18n_level(
-            self, "warning", f"Erreur détection moteur: {e}", f"Engine detection error: {e}"
+            self,
+            "warning",
+            f"Erreur détection moteur: {e}",
+            f"Engine detection error: {e}",
         )
 
     if not engine_id:
@@ -721,7 +734,9 @@ def try_start_processes(self) -> bool:
     Returns True if at least one process started.
     """
     if not self.python_files:
-        log_i18n_level(self, "warning", "Aucun fichier à compiler.", "No files to compile.")
+        log_i18n_level(
+            self, "warning", "Aucun fichier à compiler.", "No files to compile."
+        )
         return False
 
     # Obtenir le moteur actif

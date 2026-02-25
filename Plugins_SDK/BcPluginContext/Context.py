@@ -47,7 +47,6 @@ from typing import (
     Pattern,
 )
 
-
 # -----------------------------
 # Plugin base (BCASL) and decorator
 # -----------------------------
@@ -827,7 +826,7 @@ def parse_pyproject_toml(path: Pathish) -> Dict[str, Any]:
     try:
         # Try tomli first (Python < 3.11)
         try:
-            import tomli as tomllib  # type:ignore
+            import tomli as tomllib  # type: ignore
         except ImportError:
             import tomllib  # Python 3.11+
 

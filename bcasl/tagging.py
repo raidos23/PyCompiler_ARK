@@ -15,7 +15,6 @@
 
 from typing import Any
 
-
 # Hiérarchie de priorité basée sur les tags (ordre d'exécution)
 TAG_PRIORITY_MAP = {
     # Phase 0: Nettoyage et hygiène du workspace
