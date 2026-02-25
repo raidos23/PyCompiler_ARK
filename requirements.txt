@@ -45,4 +45,6 @@ pip-audit
 safety
 click
 rich
+pyfiglet
 colorama
+prompt_toolkit
