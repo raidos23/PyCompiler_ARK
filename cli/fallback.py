@@ -11,6 +11,7 @@ from EngineLoader import unload_all
 
 from .launchers import launch_bcasl_standalone, launch_engines_only_standalone, launch_main_application
 from .completion import print_command_completion
+from .dedicated import run_dedicated_cli
 from .output import error, info, plain, warn
 from .system_info import print_system_info
 
@@ -22,6 +23,7 @@ Usage:
     python -m pycompiler_ark                    # Launch main application
     python -m pycompiler_ark --help             # Show help
     python -m pycompiler_ark --version          # Show version
+    python -m pycompiler_ark --cli              # Open dedicated interactive CLI
     python -m pycompiler_ark --verbose          # Enable verbose logging
     python -m pycompiler_ark --no-splash        # Disable splash screen
     python -m pycompiler_ark bcasl              # Launch BCASL standalone
@@ -54,6 +56,11 @@ def run(argv: Optional[list[str]], app_version: str) -> int:
     if "--no-splash" in args:
         no_splash = True
         args = [a for a in args if a != "--no-splash"]
+
+    if "--cli" in args:
+        args = [a for a in args if a != "--cli"]
+        if not args:
+            return run_dedicated_cli(app_version)
 
     if args:
         if args[0] in ("--help", "-h", "help"):
