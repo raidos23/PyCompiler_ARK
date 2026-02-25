@@ -80,6 +80,7 @@ Compilation (PyInstaller / Nuitka / cx_Freeze)
 python pycompiler_ark.py --help
 python pycompiler_ark.py --version
 python pycompiler_ark.py --info
+python pycompiler_ark.py --cli
 ```
 
 ### BCASL standalone (GUI)
@@ -115,6 +116,7 @@ python -m OnlyMod.EngineOnlyMod --engine nuitka -f script.py --dry-run
 
 - [How to create an engine](docs/how_to_create_an_engine.md)
 - [How to create a BC plugin](docs/how_to_create_a_bc_plugin.md)
+- [Dedicated interactive CLI (`--cli`)](docs/dedicated_cli.md)
 
 ---
 
