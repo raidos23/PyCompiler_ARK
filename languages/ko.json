@@ -22,7 +22,7 @@
   "venv_label": "선택된 Venv: 없음",
   "label_folder": "선택된 폴더 없음",
   "label_files_section": "컴파일할 파일",
-  "btn_remove_file": "선택한 파일 제거",
+  "btn_remove_file": "삭제",
   "label_logs_section": "컴파일 로그",
   "choose_language_title": "언어 선택",
   "choose_language_label": "언어:",

@@ -22,7 +22,7 @@
   "venv_label": "已选择 Venv：无",
   "label_folder": "未选择文件夹",
   "label_files_section": "待编译文件",
-  "btn_remove_file": "移除选中文件",
+  "btn_remove_file": "删除",
   "label_logs_section": "编译日志",
   "choose_language_title": "",
   "choose_language_label": "",

@@ -22,7 +22,7 @@
   "venv_label": "Venv выбран: Нет",
   "label_folder": "Папка не выбрана",
   "label_files_section": "Файлы для компиляции",
-  "btn_remove_file": "Удалить выбранный файл",
+  "btn_remove_file": "Удалить",
   "label_logs_section": "Журнал компиляции",
   "choose_language_title": "Выбрать язык",
   "choose_language_label": "Язык:",
