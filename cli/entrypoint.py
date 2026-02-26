@@ -4,25 +4,39 @@
 from __future__ import annotations
 
 import sys
-
-from Core import __version__ as APP_VERSION
+from pathlib import Path
 
 from .click_app import build_cli, has_click
 from .fallback import run as run_fallback
 from .runtime import install_runtime, handle_fatal
 
 
+def _resolve_app_version() -> str:
+    try:
+        root = Path(__file__).resolve().parents[1]
+        core_init = root / "Core" / "__init__.py"
+        for line in core_init.read_text(encoding="utf-8").splitlines():
+            stripped = line.strip()
+            if stripped.startswith("__version__"):
+                _, value = stripped.split("=", 1)
+                return value.strip().strip("\"'")
+    except Exception:
+        pass
+    return "unknown"
+
+
 def main(argv: list[str] | None = None) -> int:
+    app_version = _resolve_app_version()
     args = list(argv) if argv is not None else None
     if args and "--verbose" in args:
         import os
 
         os.environ["PYCOMPILER_VERBOSE"] = "1"
-    install_runtime(APP_VERSION)
+    install_runtime(app_version)
 
     if has_click():
         try:
-            cli = build_cli(APP_VERSION)
+            cli = build_cli(app_version)
             cli.main(args=args, prog_name="pycompiler_ark", standalone_mode=False)
             return 0
         except SystemExit as exc:
@@ -31,4 +45,4 @@ def main(argv: list[str] | None = None) -> int:
             handle_fatal(sys.exc_info())
             return 1
 
-    return run_fallback(argv, APP_VERSION)
+    return run_fallback(argv, app_version)
