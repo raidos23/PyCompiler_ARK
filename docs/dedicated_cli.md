@@ -29,7 +29,8 @@ This mode is designed as a lightweight control shell for common launcher actions
 - `help`: show command list.
 - `version`: print the current app version.
 - `info`: print system and runtime information.
-- `main`: launch the main GUI.
+- `main`: launch the main GUI (classic layout).
+- `main --ide-gui`: launch the main GUI in IDE-like layout.
 - `bcasl [workspace]`: launch BCASL standalone GUI (optional workspace path).
 - `bcasl list`: list available BCASL plugins (headless).
 - `bcasl run <workspace> [--timeout S]`: execute BCASL on a workspace without GUI.
@@ -50,6 +51,7 @@ This mode is designed as a lightweight control shell for common launcher actions
 ```text
 ark-cli> version
 ark-cli> info
+ark-cli> main --ide-gui
 ark-cli> engines --dry-run
 ark-cli> engine list
 ark-cli> engine compat nuitka
@@ -65,6 +67,7 @@ ark-cli> exit
 ## Notes
 
 - `--cli` is intended to be used alone, without a subcommand.
+- `main` supports `--ide-gui` (also aliases: `main ide`, `main ide-like`).
 - When a GUI command is executed (`main`, `bcasl`, `engines`), control returns to the prompt after the GUI is closed.
 - If Rich is installed, output is colorized. If not, the CLI still works in plain mode.
 - `engine compile` validates the target file path before running the engine command.

@@ -84,6 +84,15 @@ python pycompiler_ark.py --cli
 python pycompiler_ark.py --ide-gui
 ```
 
+### Dedicated CLI quick commands
+
+```text
+ark-cli> main
+ark-cli> main --ide-gui
+ark-cli> bcasl run ~/my_workspace --timeout 30
+ark-cli> engine dry-run pyinstaller src/main.py
+```
+
 ### BCASL standalone (GUI)
 
 ```bash

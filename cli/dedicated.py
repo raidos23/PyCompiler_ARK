@@ -167,6 +167,7 @@ def _print_help() -> None:
         plain("  info                  Affiche les infos système")
         plain("  version               Affiche la version")
         plain("  main                  Lance l'application principale (GUI)")
+        plain("  main --ide-gui        Lance l'application principale (IDE GUI)")
         plain("  bcasl [workspace]     Lance BCASL standalone (GUI)")
         plain("  bcasl help            Aide des commandes BCASL")
         plain("  bcasl list            Liste les plugins BCASL (headless)")
@@ -191,6 +192,7 @@ def _print_help() -> None:
     table.add_row("info", "Show system information")
     table.add_row("version", "Show app version")
     table.add_row("main", "Launch main GUI")
+    table.add_row("main --ide-gui", "Launch IDE-like main GUI")
     table.add_row("bcasl [workspace]", "Launch BCASL GUI")
     table.add_row("bcasl list", "List BCASL plugins (headless)")
     table.add_row("bcasl run <workspace>", "Run BCASL without GUI")
@@ -619,6 +621,8 @@ def run_dedicated_cli(app_version: str) -> int:
             "version",
             "info",
             "main",
+            "main --ide-gui",
+            "main ide",
             "bcasl",
             "bcasl list",
             "bcasl run",
@@ -636,6 +640,7 @@ def run_dedicated_cli(app_version: str) -> int:
             "exit",
             "quit",
             "--help",
+            "--ide-gui",
             "--timeout",
             "--workspace",
             "-w",
@@ -705,7 +710,17 @@ def run_dedicated_cli(app_version: str) -> int:
                 print_system_info(app_version)
                 continue
             if cmd == "main":
-                launch_main_application(no_splash=False)
+                ide_gui = False
+                for tok in args:
+                    low = tok.lower()
+                    if low in ("--ide-gui", "ide", "idelike", "ide-like"):
+                        ide_gui = True
+                    else:
+                        warn(f"Option inconnue pour main: {tok}")
+                        plain("Usage: main [--ide-gui]")
+                        ide_gui = False
+                        break
+                launch_main_application(no_splash=False, ide_gui=ide_gui)
                 continue
             if cmd == "bcasl":
                 if args and args[0].lower() in ("help", "list", "run"):
