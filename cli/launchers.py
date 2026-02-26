@@ -111,7 +111,7 @@ def launch_engines_only_standalone(workspace_dir: Optional[str] = None) -> int:
         return 1
 
 
-def launch_main_application(no_splash: bool = False) -> int:
+def launch_main_application(no_splash: bool = False, ide_gui: bool = False) -> int:
     try:
         from Core import PyCompilerArkGui
         from PySide6.QtCore import Qt, QTimer
@@ -224,6 +224,10 @@ def launch_main_application(no_splash: bool = False) -> int:
 
             def _launch_main():
                 try:
+                    if ide_gui:
+                        os.environ["PYCOMPILER_UI_VARIANT"] = "ide2"
+                    else:
+                        os.environ.pop("PYCOMPILER_UI_VARIANT", None)
                     window = PyCompilerArkGui()
                     set_window_icon(window)
                     window.show()
@@ -238,6 +242,10 @@ def launch_main_application(no_splash: bool = False) -> int:
 
             QTimer.singleShot(max(0, delay_ms), _launch_main)
         else:
+            if ide_gui:
+                os.environ["PYCOMPILER_UI_VARIANT"] = "ide2"
+            else:
+                os.environ.pop("PYCOMPILER_UI_VARIANT", None)
             window = PyCompilerArkGui()
             set_window_icon(window)
             window.show()

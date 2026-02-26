@@ -45,6 +45,12 @@ def build_cli(app_version: str):
     @click.option("--verbose", is_flag=True, help="Enable verbose logging")
     @click.option("--no-splash", is_flag=True, help="Disable splash screen")
     @click.option(
+        "--ide-gui",
+        "ide_gui",
+        is_flag=True,
+        help="Launch the new IDE-like main GUI layout",
+    )
+    @click.option(
         "--completion",
         type=click.Choice(["bash", "zsh", "fish"]),
         help="Generate shell completion",
@@ -64,6 +70,7 @@ def build_cli(app_version: str):
         dedicated_cli,
         verbose,
         no_splash,
+        ide_gui,
         completion,
         unload_engines_flag,
     ):
@@ -80,6 +87,7 @@ def build_cli(app_version: str):
         ctx.obj = ctx.obj or {}
         ctx.obj["no_splash"] = bool(no_splash)
         ctx.obj["verbose"] = bool(verbose)
+        ctx.obj["ide_gui"] = bool(ide_gui)
 
         if verbose:
             import os
@@ -125,11 +133,17 @@ def build_cli(app_version: str):
                 "  python -m pycompiler_ark bcasl /path/to/ws  # BCASL with workspace"
             )
             plain("  python -m pycompiler_ark --cli              # Dedicated CLI")
+            plain("  python -m pycompiler_ark --ide-gui          # New IDE-like GUI")
             plain("  python -m pycompiler_ark --info             # System info")
             ctx.exit(0)
 
         if ctx.invoked_subcommand is None:
-            ctx.exit(launch_main_application(no_splash=ctx.obj.get("no_splash", False)))
+            ctx.exit(
+                launch_main_application(
+                    no_splash=ctx.obj.get("no_splash", False),
+                    ide_gui=ctx.obj.get("ide_gui", False),
+                )
+            )
 
     @cli.command(context_settings=dict(help_option_names=["-h", "--help"]))
     @click.argument("workspace", required=False, type=click.Path(exists=False))
@@ -209,7 +223,10 @@ def build_cli(app_version: str):
         ctx = click.get_current_context(silent=True)
         ctx_obj = ctx.obj if ctx is not None else {}
         sys.exit(
-            launch_main_application(no_splash=bool(ctx_obj.get("no_splash", False)))
+            launch_main_application(
+                no_splash=bool(ctx_obj.get("no_splash", False)),
+                ide_gui=bool(ctx_obj.get("ide_gui", False)),
+            )
         )
 
     @cli.command(

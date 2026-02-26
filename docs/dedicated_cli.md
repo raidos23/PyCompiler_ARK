@@ -8,6 +8,12 @@ python pycompiler_ark.py --cli
 python -m pycompiler_ark --cli
 ```
 
+Alternative main GUI launch (outside dedicated CLI):
+
+```bash
+python pycompiler_ark.py --ide-gui
+```
+
 This mode is designed as a lightweight control shell for common launcher actions.
 
 ## What It Does
