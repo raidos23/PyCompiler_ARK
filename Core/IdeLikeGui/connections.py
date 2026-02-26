@@ -53,6 +53,7 @@ def _prime_expected_attrs(self) -> None:
         "cancel_btn",
         "btn_help",
         "btn_suggest_deps",
+        "activity_btn_deps",
         "btn_bc_loader",
         "btn_acasl_loader",
         "progress",
@@ -162,6 +163,7 @@ def _map_ide_like_widgets(self) -> None:
     self.cancel_btn = _find(QPushButton, "cancel_btn")
     self.btn_help = _find(QPushButton, "btn_help")
     self.btn_suggest_deps = _find(QPushButton, "btn_suggest_deps")
+    self.activity_btn_deps = _find(QToolButton, "activity_btn_deps")
     self.btn_bc_loader = _find(QPushButton, "btn_bc_loader")
     self.btn_acasl_loader = _find(QPushButton, "btn_acasl_loader")
     self.btn_show_stats = _find(QPushButton, "btn_show_stats")
@@ -228,6 +230,20 @@ def _apply_classic_policies(self) -> None:
         except Exception:
             pass
 
+    # Mirror dependencies action as an activity-bar icon button.
+    try:
+        if getattr(self, "activity_btn_deps", None):
+            self.activity_btn_deps.setToolTip(
+                self.tr("Analyser dépendances", "Analyze dependencies")
+            )
+            src = getattr(self, "btn_suggest_deps", None)
+            if src is not None:
+                self.activity_btn_deps.setIcon(src.icon())
+                self.activity_btn_deps.setIconSize(src.iconSize())
+    except Exception:
+        pass
+    _apply_activity_buttons_theme(self)
+
 
 def _setup_more_tools_menu(self) -> None:
     """Attach a compact actions menu to the three-dots tool button."""
@@ -270,6 +286,7 @@ def _setup_more_tools_menu(self) -> None:
         more_btn.setPopupMode(QToolButton.InstantPopup)
     except Exception:
         pass
+    _apply_activity_buttons_theme(self)
 
     # Avoid duplicated controls in the side panel.
     for attr in (
@@ -279,6 +296,7 @@ def _setup_more_tools_menu(self) -> None:
         "btn_export_config",
         "btn_import_config",
         "btn_help",
+        "btn_suggest_deps",
     ):
         widget = getattr(self, attr, None)
         if widget is None:
@@ -297,6 +315,54 @@ def _open_theme_dialog(self) -> None:
         show_theme_dialog(self)
     except Exception:
         pass
+    _apply_activity_buttons_theme(self)
+
+
+def _apply_activity_buttons_theme(self) -> None:
+    """Ensure activity-bar tool buttons follow current app theme."""
+    try:
+        from ..UiConnection import _is_qss_dark
+
+        app = QApplication.instance()
+        css = app.styleSheet() if app else ""
+        dark = _is_qss_dark(css or "")
+    except Exception:
+        dark = True
+
+    if dark:
+        base = "#1B1E23"
+        hover = "#232831"
+        pressed = "#20242C"
+        border = "#2A2F37"
+        fg = "#E6E8EB"
+    else:
+        base = "#FFFFFF"
+        hover = "#F1F3F6"
+        pressed = "#E7EAF0"
+        border = "#D6D9DF"
+        fg = "#1C1F26"
+
+    style = (
+        "QToolButton {"
+        f"background: {base};"
+        f"color: {fg};"
+        f"border: 1px solid {border};"
+        "border-radius: 8px;"
+        "padding: 4px;"
+        "}"
+        f"QToolButton:hover {{ background: {hover}; }}"
+        f"QToolButton:pressed, QToolButton:checked {{ background: {pressed}; }}"
+        "QToolButton::menu-indicator { image: none; width: 0px; }"
+    )
+
+    for attr in ("toolButton_more", "activity_btn_deps"):
+        btn = getattr(self, attr, None)
+        if btn is None:
+            continue
+        try:
+            btn.setStyleSheet(style)
+        except Exception:
+            pass
 
 
 def _connect_ide_like_signals(self) -> None:
@@ -331,6 +397,10 @@ def _connect_ide_like_signals(self) -> None:
     _connect_clicked(getattr(self, "advanced_cfg_btn", None), getattr(self, "open_advanced_config_editor", None))
     _connect_clicked(getattr(self, "btn_help", None), getattr(self, "show_help_dialog", None))
     _connect_clicked(getattr(self, "btn_suggest_deps", None), getattr(self, "suggest_missing_dependencies", None))
+    _connect_clicked(
+        getattr(self, "activity_btn_deps", None),
+        getattr(self, "suggest_missing_dependencies", None),
+    )
     _connect_clicked(getattr(self, "btn_show_stats", None), getattr(self, "show_statistics", None))
     _connect_clicked(getattr(self, "btn_export_config", None), getattr(self, "export_config", None))
     _connect_clicked(getattr(self, "btn_import_config", None), getattr(self, "import_config", None))
