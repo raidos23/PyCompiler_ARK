@@ -180,6 +180,12 @@ def _map_ide_like_widgets(self) -> None:
     self.toolButton_more = _find(QToolButton, "toolButton_more")
     self.log = _find(QTextEdit, "log")
     self.progress = _find(QProgressBar, "progress")
+    try:
+        if self.log is not None:
+            self.log.setReadOnly(True)
+            self.log.setAcceptRichText(False)
+    except Exception:
+        pass
 
 
 def _setup_ide_like_compiler_tabs(self) -> None:
