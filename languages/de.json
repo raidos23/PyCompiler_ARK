@@ -22,7 +22,7 @@
   "venv_label": "Venv ausgewählt: Keiner",
   "label_folder": "Kein Ordner ausgewählt",
   "label_files_section": "Zu kompilierende Dateien",
-  "btn_remove_file": "Ausgewählte Datei entfernen",
+  "btn_remove_file": "Entfernen",
   "label_logs_section": "Kompilierungsprotokoll",
   "choose_language_title": "Sprache wählen",
   "choose_language_label": "Sprache:",

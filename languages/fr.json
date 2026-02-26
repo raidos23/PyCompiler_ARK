@@ -22,7 +22,7 @@
   "venv_label": "Venv sélectionné : Aucun",
   "label_folder": "Aucun dossier sélectionné",
   "label_files_section": "Fichiers à compiler",
-  "btn_remove_file": "Supprimer le fichier sélectionné",
+  "btn_remove_file": "Supprimer",
   "label_logs_section": "Journal de compilation",
   "choose_language_title": "Choisir la langue",
   "choose_language_label": "Langue :",

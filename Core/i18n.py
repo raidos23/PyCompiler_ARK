@@ -45,7 +45,7 @@ FALLBACK_EN: dict[str, Any] = {
     "venv_label_system": "Venv selected: System Python",
     "label_folder": "No folder selected",
     "label_files_section": "Files to compile",
-    "btn_remove_file": "Remove selected file",
+    "btn_remove_file": "Remove",
     "label_logs_section": "Compilation log",
     "msg_venv_choice_title": "Venv setup",
     "msg_venv_choice_text": "Create a venv automatically or select a venv (System Python included).",
