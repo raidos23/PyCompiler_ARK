@@ -8,12 +8,31 @@ import sys
 from pathlib import Path
 from typing import Optional
 
-from Core import __version__ as APP_VERSION
-from Core import PyCompilerArkGui
-
 from .icons import set_app_icon, set_window_icon
 from .output import error, warn
 from .runtime import ROOT_DIR, handle_fatal
+
+
+def _get_or_create_qapp():
+    from PySide6.QtWidgets import QApplication
+
+    app = QApplication.instance()
+    if app is None:
+        app = QApplication(sys.argv)
+    return app
+
+
+def _get_app_version() -> str:
+    try:
+        core_init = Path(ROOT_DIR) / "Core" / "__init__.py"
+        for line in core_init.read_text(encoding="utf-8").splitlines():
+            stripped = line.strip()
+            if stripped.startswith("__version__"):
+                _, value = stripped.split("=", 1)
+                return value.strip().strip("\"'")
+    except Exception:
+        pass
+    return "unknown"
 
 
 def _apply_small_screen_compaction(app, window) -> None:
@@ -40,7 +59,6 @@ def _apply_small_screen_compaction(app, window) -> None:
 def launch_bcasl_standalone(workspace_dir: Optional[str] = None) -> int:
     try:
         from OnlyMod.BcaslOnlyMod import BcaslStandaloneGui
-        from PySide6.QtWidgets import QApplication
 
         if workspace_dir:
             try:
@@ -48,7 +66,7 @@ def launch_bcasl_standalone(workspace_dir: Optional[str] = None) -> int:
             except Exception:
                 pass
 
-        app = QApplication(sys.argv)
+        app = _get_or_create_qapp()
         app.setApplicationName("PyCompiler ARK BCASL")
         app.setOrganizationName("raidos23")
         set_app_icon(app)
@@ -68,7 +86,6 @@ def launch_bcasl_standalone(workspace_dir: Optional[str] = None) -> int:
 def launch_engines_only_standalone(workspace_dir: Optional[str] = None) -> int:
     try:
         from OnlyMod.EngineOnlyMod.gui import EnginesStandaloneGui
-        from PySide6.QtWidgets import QApplication
 
         if workspace_dir:
             try:
@@ -76,7 +93,7 @@ def launch_engines_only_standalone(workspace_dir: Optional[str] = None) -> int:
             except Exception:
                 pass
 
-        app = QApplication(sys.argv)
+        app = _get_or_create_qapp()
         app.setApplicationName("PyCompiler ARK Engines")
         app.setOrganizationName("raidos23")
         set_app_icon(app)
@@ -96,19 +113,21 @@ def launch_engines_only_standalone(workspace_dir: Optional[str] = None) -> int:
 
 def launch_main_application(no_splash: bool = False) -> int:
     try:
+        from Core import PyCompilerArkGui
         from PySide6.QtCore import Qt, QTimer
         from PySide6.QtGui import QColor, QPixmap
-        from PySide6.QtWidgets import QApplication, QSplashScreen
+        from PySide6.QtWidgets import QSplashScreen
 
-        app = QApplication(sys.argv)
+        app = _get_or_create_qapp()
         set_app_icon(app)
+        app_version = _get_app_version()
 
         splash = None
         if not no_splash:
             try:
                 logo_dir = os.path.join(ROOT_DIR, "images")
                 safe_ver = "".join(
-                    c for c in APP_VERSION if c.isalnum() or c in (".", "-", "_")
+                    c for c in app_version if c.isalnum() or c in (".", "-", "_")
                 )
                 names = [
                     f"splash_v{safe_ver}.png",
