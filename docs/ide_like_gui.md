@@ -10,6 +10,12 @@ python pycompiler_ark.py --ide-gui
 python -m pycompiler_ark --ide-gui
 ```
 
+From the dedicated CLI:
+
+```text
+ark-cli> main --ide-gui
+```
+
 ## What It Changes
 
 - Loads `ui/ui_ide_design2.ui` as the main window layout.
