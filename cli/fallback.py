@@ -27,6 +27,7 @@ Usage:
     python -m pycompiler_ark --help             # Show help
     python -m pycompiler_ark --version          # Show version
     python -m pycompiler_ark --cli              # Open dedicated interactive CLI
+    python -m pycompiler_ark --ide-gui          # Launch IDE-like main GUI
     python -m pycompiler_ark --verbose          # Enable verbose logging
     python -m pycompiler_ark --no-splash        # Disable splash screen
     python -m pycompiler_ark bcasl              # Launch BCASL standalone
@@ -49,6 +50,7 @@ def _maybe_workspace(args: Iterable[str]) -> Optional[str]:
 def run(argv: Optional[list[str]], app_version: str) -> int:
     args = list(argv or sys.argv[1:])
     no_splash = False
+    ide_gui = False
 
     if "--verbose" in args:
         import os
@@ -59,6 +61,10 @@ def run(argv: Optional[list[str]], app_version: str) -> int:
     if "--no-splash" in args:
         no_splash = True
         args = [a for a in args if a != "--no-splash"]
+
+    if "--ide-gui" in args:
+        ide_gui = True
+        args = [a for a in args if a != "--ide-gui"]
 
     if "--cli" in args:
         args = [a for a in args if a != "--cli"]
@@ -126,4 +132,4 @@ def run(argv: Optional[list[str]], app_version: str) -> int:
         plain(USAGE)
         return 1
 
-    return launch_main_application(no_splash=no_splash)
+    return launch_main_application(no_splash=no_splash, ide_gui=ide_gui)

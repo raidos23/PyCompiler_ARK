@@ -12,6 +12,7 @@ GLOBAL_FLAGS: List[str] = [
     "--version",
     "--info",
     "--cli",
+    "--ide-gui",
     "--completion",
     "--unload",
     "--verbose",

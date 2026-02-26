@@ -81,6 +81,7 @@ python pycompiler_ark.py --help
 python pycompiler_ark.py --version
 python pycompiler_ark.py --info
 python pycompiler_ark.py --cli
+python pycompiler_ark.py --ide-gui
 ```
 
 ### BCASL standalone (GUI)
@@ -117,6 +118,7 @@ python -m OnlyMod.EngineOnlyMod --engine nuitka -f script.py --dry-run
 - [How to create an engine](docs/how_to_create_an_engine.md)
 - [How to create a BC plugin](docs/how_to_create_a_bc_plugin.md)
 - [Dedicated interactive CLI (`--cli`)](docs/dedicated_cli.md)
+- [IDE-like main GUI (`--ide-gui`)](docs/ide_like_gui.md)
 
 ---
 
@@ -130,6 +132,7 @@ python -m OnlyMod.EngineOnlyMod --engine nuitka -f script.py --dry-run
 ## Project layout
 
 - `Core/` — main UI logic.
+- `Core/IdeLikeGui/` — wiring layer for the IDE-like main GUI.
 - `ENGINES/` — built-in engines.
 - `EngineLoader/` — discovery and registry.
 - `Plugins/` — BCASL plugins.
@@ -137,6 +140,8 @@ python -m OnlyMod.EngineOnlyMod --engine nuitka -f script.py --dry-run
 - `bcasl/` — BCASL core.
 - `OnlyMod/` — standalone tools (BCASL and Engines).
 - `ui/` — Qt Designer UI.
+  - `ui/ui_design.ui` — default main layout
+  - `ui/ui_ide_design2.ui` — IDE-like layout
 - `languages/` — translations.
 - `themes/` — QSS themes.
 

@@ -106,7 +106,21 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
 
         # Charger les préférences et initialiser l'UI
         self.load_preferences()
-        self.init_ui()
+        ui_variant = str(os.environ.get("PYCOMPILER_UI_VARIANT", "")).strip().lower()
+        if ui_variant in {"ide2", "design2", "ide-like", "idelike", "vscode"}:
+            try:
+                self.init_ide_like_ui()
+                self._ui_variant_active = "ide2"
+            except Exception:
+                self._ui_variant_active = "classic"
+                try:
+                    print("[PyCompiler ARK] IDE-like UI fallback to classic UI.")
+                except Exception:
+                    pass
+                self.init_ui()
+        else:
+            self._ui_variant_active = "classic"
+            self.init_ui()
 
         # Détection et application de la langue système
         import locale
@@ -181,6 +195,7 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
     # =========================================================================
 
     from .UiConnection import init_ui
+    from .IdeLikeGui import init_ide_like_ui
 
     # =========================================================================
     # GESTION DU WORKSPACE (délégation à SetupWorkspace)
