@@ -14,8 +14,7 @@ psutil
 
 # Configuration and data formats
 PyYAML>=5.4.1,<7.0.0
-# tomli only needed on Python < 3.11 (tomllib builtin on 3.11+)
-tomli>=2.0.1,<3.0.0; python_version < "3.11" 
+tomli
 jsonschema
 
 # Image processing
