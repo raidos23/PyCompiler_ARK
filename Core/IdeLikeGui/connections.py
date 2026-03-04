@@ -260,6 +260,38 @@ def _setup_more_tools_menu(self) -> None:
     try:
         menu = QMenu(more_btn)
 
+        act_workspace = QAction("Select workspace", menu)
+        act_workspace.triggered.connect(
+            lambda: getattr(self, "select_workspace", lambda: None)()
+        )
+        menu.addAction(act_workspace)
+
+        act_venv = QAction("Select venv", menu)
+        act_venv.triggered.connect(
+            lambda: getattr(self, "select_venv_manually", lambda: None)()
+        )
+        menu.addAction(act_venv)
+
+        act_add_files = QAction("Add files", menu)
+        act_add_files.triggered.connect(
+            lambda: getattr(self, "select_files_manually", lambda: None)()
+        )
+        menu.addAction(act_add_files)
+
+        act_clear_workspace = QAction("Clear workspace", menu)
+        act_clear_workspace.triggered.connect(
+            lambda: getattr(self, "clear_workspace", lambda: None)()
+        )
+        menu.addAction(act_clear_workspace)
+
+        act_stats = QAction("Statistics", menu)
+        act_stats.triggered.connect(
+            lambda: getattr(self, "show_statistics", lambda: None)()
+        )
+        menu.addAction(act_stats)
+
+        menu.addSeparator()
+
         act_language = QAction("Language", menu)
         act_language.triggered.connect(lambda: getattr(self, "show_language_dialog", lambda: None)())
         menu.addAction(act_language)
@@ -296,6 +328,11 @@ def _setup_more_tools_menu(self) -> None:
 
     # Avoid duplicated controls in the side panel.
     for attr in (
+        "btn_select_folder",
+        "venv_button",
+        "btn_select_files",
+        "btn_clear_workspace",
+        "btn_show_stats",
         "select_lang",
         "select_theme",
         "advanced_cfg_btn",
