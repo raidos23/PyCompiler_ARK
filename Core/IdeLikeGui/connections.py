@@ -26,6 +26,7 @@ from PySide6.QtWidgets import (
     QTabWidget,
     QTextEdit,
     QToolButton,
+    QStatusBar,
     QWidget,
 )
 
@@ -180,12 +181,19 @@ def _map_ide_like_widgets(self) -> None:
     self.toolButton_more = _find(QToolButton, "toolButton_more")
     self.log = _find(QTextEdit, "log")
     self.progress = _find(QProgressBar, "progress")
+    self.statusbar = self.findChild(QStatusBar, "statusbar")
+    self.status_hint = None
+    try:
+        self.status_hint = self.statusbar.findChild(QLabel, "status_hint") if self.statusbar else None
+    except Exception:
+        self.status_hint = None
     try:
         if self.log is not None:
             self.log.setReadOnly(True)
             self.log.setAcceptRichText(False)
     except Exception:
         pass
+    _setup_status_bar(self)
 
 
 def _setup_ide_like_compiler_tabs(self) -> None:
@@ -207,6 +215,7 @@ def _apply_classic_policies(self) -> None:
         from ..UiConnection import (
             _apply_button_icons,
             _apply_initial_theme,
+            _auto_resize_for_screen,
             _connect_dialogs_to_app,
             _refresh_log_palette,
         )
@@ -215,6 +224,10 @@ def _apply_classic_policies(self) -> None:
         _apply_initial_theme(self)
         _refresh_log_palette(self)
         _apply_button_icons(self)
+        try:
+            QTimer.singleShot(0, lambda: _auto_resize_for_screen(self))
+        except Exception:
+            _auto_resize_for_screen(self)
     except Exception:
         pass
 
@@ -406,6 +419,7 @@ def _apply_activity_buttons_theme(self) -> None:
             btn.setStyleSheet(style)
         except Exception:
             pass
+    _apply_status_bar_theme(self, dark, fg, border)
 
 
 def _connect_ide_like_signals(self) -> None:
@@ -458,6 +472,7 @@ def _connect_ide_like_signals(self) -> None:
             self.btn_bc_loader.clicked.connect(lambda: open_bc_loader_dialog(self))
         except Exception:
             pass
+    _bind_status_updates(self)
 
 def init_ide_like_ui(self) -> None:
     """Initialize the ide-like UI and wire it to existing Core methods."""
@@ -467,6 +482,166 @@ def init_ide_like_ui(self) -> None:
     _setup_more_tools_menu(self)
     _connect_ide_like_signals(self)
     _schedule_ide_like_async_init(self)
+
+
+def _setup_status_bar(self) -> None:
+    if self.statusbar is None:
+        try:
+            self.statusbar = QStatusBar(self)
+            self.statusbar.setObjectName("statusbar")
+            self.setStatusBar(self.statusbar)
+        except Exception:
+            return
+    try:
+        self.status_hint = QLabel("Ready")
+        self.status_hint.setObjectName("status_hint")
+        self.statusbar.addPermanentWidget(self.status_hint, 1)
+    except Exception:
+        pass
+
+
+def _apply_status_bar_theme(self, dark: bool, fg: str, border: str) -> None:
+    if not getattr(self, "statusbar", None):
+        return
+    if dark:
+        bg = "#151A20"
+    else:
+        bg = "#F7F7F9"
+    style = (
+        "QStatusBar {"
+        f"background: {bg};"
+        f"color: {fg};"
+        f"border-top: 1px solid {border};"
+        "}"
+        "QStatusBar::item { border: none; }"
+        "QLabel#status_hint { padding: 2px 8px; }"
+    )
+    try:
+        self.statusbar.setStyleSheet(style)
+    except Exception:
+        pass
+
+
+def _bind_status_updates(self) -> None:
+    """Keep a lightweight status line without touching core logic."""
+    statusbar = getattr(self, "statusbar", None)
+    if statusbar is None:
+        return
+
+    def _queue_update() -> None:
+        try:
+            QTimer.singleShot(0, lambda: _update_status_line(self))
+        except Exception:
+            _update_status_line(self)
+
+    _queue_update()
+
+    for attr in (
+        "btn_select_folder",
+        "btn_select_files",
+        "btn_remove_file",
+        "btn_clear_workspace",
+        "venv_button",
+        "compile_btn",
+        "cancel_btn",
+    ):
+        btn = getattr(self, attr, None)
+        if btn is None:
+            continue
+        try:
+            btn.clicked.connect(_queue_update)
+        except Exception:
+            pass
+
+    file_list = getattr(self, "file_list", None)
+    if file_list is not None:
+        try:
+            file_list.itemSelectionChanged.connect(_queue_update)
+        except Exception:
+            pass
+        try:
+            model = file_list.model()
+            if model is not None:
+                model.rowsInserted.connect(lambda *_: _queue_update())
+                model.rowsRemoved.connect(lambda *_: _queue_update())
+                model.modelReset.connect(lambda *_: _queue_update())
+        except Exception:
+            pass
+
+    compiler_tabs = getattr(self, "compiler_tabs", None)
+    if compiler_tabs is not None:
+        try:
+            compiler_tabs.currentChanged.connect(lambda *_: _queue_update())
+        except Exception:
+            pass
+
+    progress = getattr(self, "progress", None)
+    if progress is not None:
+        try:
+            progress.valueChanged.connect(lambda *_: _queue_update())
+        except Exception:
+            pass
+
+
+def _update_status_line(self) -> None:
+    statusbar = getattr(self, "statusbar", None)
+    if statusbar is None:
+        return
+
+    def _short_path(path: str | None, max_len: int = 28) -> str:
+        if not path:
+            return "None"
+        try:
+            p = os.path.normpath(path)
+        except Exception:
+            p = path
+        if len(p) <= max_len:
+            return p
+        return f"...{p[-max_len:]}"
+
+    ws = _short_path(getattr(self, "workspace_dir", None))
+    files_total = 0
+    files_sel = 0
+    try:
+        fl = getattr(self, "file_list", None)
+        if fl is not None:
+            files_total = fl.count()
+            files_sel = len(fl.selectedItems())
+    except Exception:
+        pass
+
+    engine_name = "None"
+    try:
+        tabs = getattr(self, "compiler_tabs", None)
+        if tabs is not None and tabs.currentIndex() >= 0:
+            engine_name = tabs.tabText(tabs.currentIndex())
+    except Exception:
+        pass
+
+    prog = ""
+    try:
+        pb = getattr(self, "progress", None)
+        if pb is not None:
+            prog = f"{pb.value()}%"
+    except Exception:
+        pass
+
+    parts = [
+        f"Workspace: {ws}",
+        f"Files: {files_total}",
+        f"Selected: {files_sel}",
+        f"Engine: {engine_name}",
+    ]
+    if prog:
+        parts.append(f"Progress: {prog}")
+
+    msg = " | ".join(parts)
+    try:
+        if getattr(self, "status_hint", None):
+            self.status_hint.setText(msg)
+        statusbar.showMessage(msg)
+    except Exception:
+        pass
 
 
 def _schedule_ide_like_async_init(self) -> None:
