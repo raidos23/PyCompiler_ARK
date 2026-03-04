@@ -8,7 +8,6 @@ import sys
 
 from EngineLoader import unload_all
 
-from .completion import print_command_completion
 from .dedicated import run_dedicated_cli
 from .launchers import (
     launch_bcasl_standalone,
@@ -51,9 +50,10 @@ def build_cli(app_version: str):
         help="Launch the new IDE-like main GUI layout",
     )
     @click.option(
-        "--completion",
-        type=click.Choice(["bash", "zsh", "fish"]),
-        help="Generate shell completion",
+        "--classic-gui",
+        "classic_gui",
+        is_flag=True,
+        help="Launch the classic main GUI layout",
     )
     @click.option(
         "--unload",
@@ -71,7 +71,7 @@ def build_cli(app_version: str):
         verbose,
         no_splash,
         ide_gui,
-        completion,
+        classic_gui,
         unload_engines_flag,
     ):
         """PyCompiler ARK — Cross-platform Python compiler with BCASL integration.
@@ -88,6 +88,7 @@ def build_cli(app_version: str):
         ctx.obj["no_splash"] = bool(no_splash)
         ctx.obj["verbose"] = bool(verbose)
         ctx.obj["ide_gui"] = bool(ide_gui)
+        ctx.obj["classic_gui"] = bool(classic_gui)
 
         if verbose:
             import os
@@ -103,9 +104,6 @@ def build_cli(app_version: str):
             print_system_info(app_version)
             ctx.exit(0)
 
-        if completion:
-            print_command_completion(completion)
-            ctx.exit(0)
 
         if dedicated_cli and ctx.invoked_subcommand is None:
             ctx.exit(run_dedicated_cli(app_version))
@@ -142,6 +140,7 @@ def build_cli(app_version: str):
                 launch_main_application(
                     no_splash=ctx.obj.get("no_splash", False),
                     ide_gui=ctx.obj.get("ide_gui", False),
+                    classic_gui=ctx.obj.get("classic_gui", False),
                 )
             )
 

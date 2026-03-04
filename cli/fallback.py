@@ -14,7 +14,6 @@ from .launchers import (
     launch_engines_only_standalone,
     launch_main_application,
 )
-from .completion import print_command_completion
 from .dedicated import run_dedicated_cli
 from .output import error, info, plain, warn
 from .system_info import print_system_info
@@ -23,11 +22,12 @@ USAGE = """
 PyCompiler ARK — Cross-platform hardened bootstrap with Intelligent CLI Entry Point
 
 Usage:
-    python -m pycompiler_ark                    # Launch main application
+    python -m pycompiler_ark                    # Launch main application (IDE by default)
     python -m pycompiler_ark --help             # Show help
     python -m pycompiler_ark --version          # Show version
     python -m pycompiler_ark --cli              # Open dedicated interactive CLI
     python -m pycompiler_ark --ide-gui          # Launch IDE-like main GUI
+    python -m pycompiler_ark --classic-gui      # Launch classic main GUI
     python -m pycompiler_ark --verbose          # Enable verbose logging
     python -m pycompiler_ark --no-splash        # Disable splash screen
     python -m pycompiler_ark bcasl              # Launch BCASL standalone
@@ -35,7 +35,6 @@ Usage:
     python -m pycompiler_ark engines            # Launch Engines standalone GUI
     python -m pycompiler_ark engines /path/to/ws  # Launch Engines with workspace
     python -m pycompiler_ark engines --dry-run  # List available engines
-    python -m pycompiler_ark --completion bash  # Generate bash completion
     python -m pycompiler_ark unload             # Unload all engines
 """
 
@@ -51,6 +50,7 @@ def run(argv: Optional[list[str]], app_version: str) -> int:
     args = list(argv or sys.argv[1:])
     no_splash = False
     ide_gui = False
+    classic_gui = False
 
     if "--verbose" in args:
         import os
@@ -65,6 +65,9 @@ def run(argv: Optional[list[str]], app_version: str) -> int:
     if "--ide-gui" in args:
         ide_gui = True
         args = [a for a in args if a != "--ide-gui"]
+    if "--classic-gui" in args:
+        classic_gui = True
+        args = [a for a in args if a != "--classic-gui"]
 
     if "--cli" in args:
         args = [a for a in args if a != "--cli"]
@@ -77,9 +80,6 @@ def run(argv: Optional[list[str]], app_version: str) -> int:
             return 0
         if args[0] in ("--version", "-v", "version"):
             info(f"PyCompiler ARK v{app_version}")
-            return 0
-        if args[0] == "--completion" and len(args) > 1:
-            print_command_completion(args[1])
             return 0
         if args[0] == "--info":
             print_system_info(app_version)
@@ -132,4 +132,6 @@ def run(argv: Optional[list[str]], app_version: str) -> int:
         plain(USAGE)
         return 1
 
-    return launch_main_application(no_splash=no_splash, ide_gui=ide_gui)
+    return launch_main_application(
+        no_splash=no_splash, ide_gui=ide_gui, classic_gui=classic_gui
+    )

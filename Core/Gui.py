@@ -107,6 +107,10 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
         # Charger les préférences et initialiser l'UI
         self.load_preferences()
         ui_variant = str(os.environ.get("PYCOMPILER_UI_VARIANT", "")).strip().lower()
+        if not ui_variant:
+            ui_variant = "ide2"
+        if ui_variant in {"classic", "classic-gui", "legacy"}:
+            ui_variant = "classic"
         if ui_variant in {"ide2", "design2", "ide-like", "idelike", "vscode"}:
             try:
                 self.init_ide_like_ui()
