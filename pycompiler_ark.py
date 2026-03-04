@@ -30,7 +30,6 @@ Usage:
     python -m pycompiler_ark engines            # Launch Engines standalone GUI
     python -m pycompiler_ark engines /path/to/ws  # Launch Engines with workspace
     python -m pycompiler_ark engines --dry-run  # List available engines
-    python -m pycompiler_ark --completion bash  # Generate bash completion
     python -m pycompiler_ark unload             # Unload all engines
 """
 
