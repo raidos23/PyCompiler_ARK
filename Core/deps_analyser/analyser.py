@@ -181,6 +181,110 @@ def _is_stdlib_module(module_name: str) -> bool:
         return False
 
 
+def _normalize_realpath(path: str | None) -> str:
+    if not path:
+        return ""
+    try:
+        return os.path.realpath(path)
+    except Exception:
+        return path
+
+
+def _is_path_under(path: str, root: str) -> bool:
+    if not path or not root:
+        return False
+    try:
+        return os.path.commonpath([path, root]) == root
+    except Exception:
+        return False
+
+
+def _collect_workspace_module_roots(
+    filtered_files: list[str], workspace_dir: str | None
+) -> set[str]:
+    """
+    Build a conservative set of internal module roots from workspace files.
+    Handles common src-layout aliases (src/, lib/, python/).
+    """
+    roots: set[str] = set()
+    ws = _normalize_realpath(workspace_dir)
+    src_aliases = {"src", "lib", "python"}
+    for f in filtered_files:
+        try:
+            abs_f = _normalize_realpath(f)
+            base = os.path.splitext(os.path.basename(abs_f))[0]
+            if base and base != "__init__":
+                roots.add(base)
+            if not ws or not _is_path_under(abs_f, ws):
+                continue
+            rel = os.path.relpath(abs_f, ws)
+            parts = rel.split(os.sep)
+            if not parts:
+                continue
+            first = parts[0]
+            if first and first not in {"", ".", "__pycache__"}:
+                roots.add(first)
+            if first in src_aliases and len(parts) > 1:
+                second = parts[1]
+                if second and second not in {"", ".", "__pycache__"}:
+                    roots.add(second)
+        except Exception:
+            pass
+    return roots
+
+
+@functools.lru_cache(maxsize=1024)
+def _classify_module_origin(module_name: str, workspace_dir: str) -> str:
+    """
+    Classify module origin:
+    - stdlib: Python standard library / builtins
+    - internal: module resolved under workspace_dir
+    - third_party: resolved in site-packages/purelib/platlib/dist-packages
+    - unknown: cannot resolve safely
+    """
+    if not module_name:
+        return "unknown"
+    if _is_stdlib_module(module_name):
+        return "stdlib"
+    try:
+        import importlib.util
+        import sysconfig
+
+        ws = _normalize_realpath(workspace_dir)
+        spec = importlib.util.find_spec(module_name)
+        if spec is None:
+            return "unknown"
+        origin = getattr(spec, "origin", None)
+        if origin in ("built-in", "frozen"):
+            return "stdlib"
+
+        candidates: list[str] = []
+        if origin:
+            candidates.append(_normalize_realpath(origin))
+        for loc in spec.submodule_search_locations or []:
+            candidates.append(_normalize_realpath(loc))
+
+        stdlib_path = _normalize_realpath(sysconfig.get_path("stdlib") or "")
+        purelib_path = _normalize_realpath(sysconfig.get_path("purelib") or "")
+        platlib_path = _normalize_realpath(sysconfig.get_path("platlib") or "")
+
+        for c in candidates:
+            if ws and _is_path_under(c, ws):
+                return "internal"
+            if stdlib_path and _is_path_under(c, stdlib_path):
+                return "stdlib"
+            if purelib_path and _is_path_under(c, purelib_path):
+                return "third_party"
+            if platlib_path and _is_path_under(c, platlib_path):
+                return "third_party"
+            if "site-packages" in c or "dist-packages" in c:
+                return "third_party"
+
+        return "unknown"
+    except Exception:
+        return "unknown"
+
+
 def _check_module_installed(module: str) -> bool:
     """
     Vérifie si un module est installé via importlib.metadata (plus rPluginsde que subprocess pip show).
@@ -431,35 +535,39 @@ def suggest_missing_dependencies(self):
     if analysis_progress:
         analysis_progress.set_message(self.tr("Analyse terminée", "Analysis completed"))
         analysis_progress.set_progress(len(filtered_files), len(filtered_files))
-    # Exclure les modules standards Python (stdlib)
-    import sys
-    import sysconfig
-
-    stdlib = set(sys.builtin_module_names)
-    # Ajoute les modules de la vraie stdlib (trouvés dans le dossier stdlib)
-    stdlib_paths = [sysconfig.get_path("stdlib")]
-    try:
-        import pkgutil
-
-        for finder, name, ispkg in pkgutil.iter_modules(stdlib_paths):
-            stdlib.add(name)
-    except Exception:
-        pass
-    # Exclure les modules internes du projet (présents dans le workspace)
-    internal_modules = set()
-    for f in filtered_files:
-        base = os.path.splitext(os.path.basename(f))[0]
-        internal_modules.add(base)
+    # Classify imports as stdlib/internal/third-party/unknown.
+    ws_root = _normalize_realpath(getattr(self, "workspace_dir", None) or "")
+    internal_modules = _collect_workspace_module_roots(filtered_files, ws_root)
     # Mise à jour du message de progression
     if analysis_progress:
         analysis_progress.set_message(
             self.tr("Vérification des modules...", "Checking modules...")
         )
 
-    # Liste des modules à vérifier (hors standard et hors modules internes)
-    suggestions = [
-        m for m in modules if not _is_stdlib_module(m) and m not in internal_modules
-    ]
+    suggestions = []
+    category_stats = {"stdlib": 0, "internal": 0, "third_party": 0, "unknown": 0}
+    for m in sorted(modules):
+        if m in internal_modules:
+            category = "internal"
+        else:
+            category = _classify_module_origin(m, ws_root)
+            if category == "unknown" and m in internal_modules:
+                category = "internal"
+        category_stats[category] = category_stats.get(category, 0) + 1
+        if category in ("third_party", "unknown"):
+            suggestions.append(m)
+
+    try:
+        _log_append(
+            self,
+            "ℹ️ Imports classes: "
+            f"stdlib={category_stats.get('stdlib', 0)}, "
+            f"internal={category_stats.get('internal', 0)}, "
+            f"third_party={category_stats.get('third_party', 0)}, "
+            f"unknown={category_stats.get('unknown', 0)}",
+        )
+    except Exception:
+        pass
     # Alerte spéciale pour tkinter (std lib optionnelle non installable via pip)
     try:
         import importlib.util as _il_util
