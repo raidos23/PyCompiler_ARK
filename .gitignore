@@ -123,6 +123,7 @@ dmypy.json
 cython_debug/
 
 # IDEs / Editors
+.directory
 .idea/
 .vscode/
 .spyderproject
