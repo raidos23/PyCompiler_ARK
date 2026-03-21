@@ -167,42 +167,9 @@ class CompilerEngine:
             tools = self.required_tools
             python_tools = tools.get("python", [])
             system_tools = tools.get("system", [])
+            system_install_ok = True
 
-            # Check Python tools using venv_manager
-            if hasattr(gui, "venv_manager") and gui.venv_manager and python_tools:
-                use_system = bool(getattr(gui, "use_system_python", False))
-                if use_system:
-                    missing_python = []
-                    for tool in python_tools:
-                        if not gui.venv_manager.is_tool_installed_system(tool):
-                            missing_python.append(tool)
-                    if missing_python:
-                        log_i18n_level(
-                            gui,
-                            "info",
-                            f"Installation des outils Python manquants: {missing_python}",
-                            f"Installing missing Python tools: {missing_python}",
-                        )
-                        gui.venv_manager.ensure_tools_installed_system(missing_python)
-                else:
-                    venv_path = gui.venv_manager.resolve_project_venv()
-                    if venv_path:
-                        missing_python = []
-                        for tool in python_tools:
-                            if not gui.venv_manager.is_tool_installed(venv_path, tool):
-                                missing_python.append(tool)
-                        if missing_python:
-                            log_i18n_level(
-                                gui,
-                                "info",
-                                f"Installation des outils Python manquants: {missing_python}",
-                                f"Installing missing Python tools: {missing_python}",
-                            )
-                            gui.venv_manager.ensure_tools_installed(
-                                venv_path, missing_python
-                            )
-
-            # Check and install system tools using direct SysDependencyManager
+            # Check and install system tools first to avoid overlapping system/Python installs.
             if system_tools:
                 try:
                     # Import and use SysDependencyManager directly for full GUI support
@@ -256,7 +223,7 @@ class CompilerEngine:
                                             f"Échec installation outils système: {missing_system} (code: {process.exitCode()})",
                                             f"System tools installation failed: {missing_system} (code: {process.exitCode()})",
                                         )
-                                        return False
+                                        system_install_ok = False
                                 else:
                                     log_i18n_level(
                                         gui,
@@ -264,7 +231,7 @@ class CompilerEngine:
                                         "Timeout lors de l'installation des outils système",
                                         "Timeout during system tools installation",
                                     )
-                                    return False
+                                    system_install_ok = False
                             else:
                                 log_i18n_level(
                                     gui,
@@ -272,7 +239,7 @@ class CompilerEngine:
                                     "Impossible de démarrer l'installation des outils système",
                                     "Unable to start system tools installation",
                                 )
-                                return False
+                                system_install_ok = False
 
                         elif system == "windows":
                             # Convert package names to winget format for Windows
@@ -319,7 +286,7 @@ class CompilerEngine:
                                                 f"Échec installation Windows: {missing_system}",
                                                 f"Windows installation failed: {missing_system}",
                                             )
-                                            return False
+                                            system_install_ok = False
                                     else:
                                         log_i18n_level(
                                             gui,
@@ -327,7 +294,7 @@ class CompilerEngine:
                                             "Timeout lors de l'installation Windows",
                                             "Timeout during Windows installation",
                                         )
-                                        return False
+                                        system_install_ok = False
                                 else:
                                     log_i18n_level(
                                         gui,
@@ -341,7 +308,7 @@ class CompilerEngine:
                                             "https://learn.microsoft.com/en-us/windows/package-manager/winget/"
                                         ]
                                     )
-                                    return False
+                                    system_install_ok = False
                             else:
                                 log_i18n_level(
                                     gui,
@@ -356,7 +323,7 @@ class CompilerEngine:
                                 "Plateforme non supportée pour l'installation automatique",
                                 "Platform not supported for automatic installation",
                             )
-                            return False
+                            system_install_ok = False
                     else:
                         log_i18n_level(
                             gui,
@@ -372,9 +339,43 @@ class CompilerEngine:
                         f"Erreur lors de la vérification/installation des outils système: {e}",
                         f"Error checking/installing system tools: {e}",
                     )
-                    return False
+                    system_install_ok = False
 
-            return True
+            # Check Python tools after the system phase, even if the system phase failed.
+            if hasattr(gui, "venv_manager") and gui.venv_manager and python_tools:
+                use_system = bool(getattr(gui, "use_system_python", False))
+                if use_system:
+                    missing_python = []
+                    for tool in python_tools:
+                        if not gui.venv_manager.is_tool_installed_system(tool):
+                            missing_python.append(tool)
+                    if missing_python:
+                        log_i18n_level(
+                            gui,
+                            "info",
+                            f"Installation des outils Python manquants: {missing_python}",
+                            f"Installing missing Python tools: {missing_python}",
+                        )
+                        gui.venv_manager.ensure_tools_installed_system(missing_python)
+                else:
+                    venv_path = gui.venv_manager.resolve_project_venv()
+                    if venv_path:
+                        missing_python = []
+                        for tool in python_tools:
+                            if not gui.venv_manager.is_tool_installed(venv_path, tool):
+                                missing_python.append(tool)
+                        if missing_python:
+                            log_i18n_level(
+                                gui,
+                                "info",
+                                f"Installation des outils Python manquants: {missing_python}",
+                                f"Installing missing Python tools: {missing_python}",
+                            )
+                            gui.venv_manager.ensure_tools_installed(
+                                venv_path, missing_python
+                            )
+
+            return system_install_ok
         except Exception as e:
             log_i18n_level(
                 gui,
