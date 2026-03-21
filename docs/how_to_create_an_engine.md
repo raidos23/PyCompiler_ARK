@@ -70,6 +70,7 @@ Core methods.
 
 UI and i18n.
 - `create_tab(self, gui) -> (QWidget, label) | None`: adds a tab.
+- `engine_translate(self_or_id, key, default=None)`: simple engine-local translation lookup.
 - `apply_i18n(self, gui, tr)`: update text on language change.
 
 Tools and dependencies.
@@ -286,7 +287,10 @@ self._output_dir_input = add_output_dir(
 ```
 **I18n**
 - Add `languages/en.json`, `languages/fr.json`, etc. in your engine package.
-- Use `resolve_language_code` and `load_engine_language_file` (SDK) to load translations.
+- Two supported approaches:
+  - simple mode with `engine_translate(...)` for direct key lookup
+  - advanced mode with `apply_i18n(...)` for explicit widget refresh on language changes
+- The host keeps engine translations synchronized automatically when the language changes.
 - See `ENGINES/pyinstaller`, `ENGINES/nuitka`, `ENGINES/cx_freeze` for patterns.
 Concrete example (files + code).
 
@@ -312,9 +316,9 @@ Concrete example (files + code).
 }
 ```
 
-`ENGINES/my_engine/__init__.py` (extract).
+`ENGINES/my_engine/__init__.py` (simple mode + live refresh).
 ```python
-from engine_sdk import CompilerEngine, engine_register, load_engine_language_file
+from engine_sdk import CompilerEngine, engine_register, engine_translate
 
 
 @engine_register
@@ -336,21 +340,23 @@ class MyEngine(CompilerEngine):
         form.addRow("", self._output_dir)
         layout.addLayout(form)
 
-        # Apply translations on creation
-        tr = load_engine_language_file(self.id, getattr(gui, "current_language", "en"))
-        self.apply_i18n(gui, tr)
+        self.apply_i18n(gui, getattr(gui, "_tr", {}))
 
-        return tab, self.name
+        return tab, engine_translate(self, "tab_title", self.name)
 
     def apply_i18n(self, gui, tr):
-        self._opt_onefile.setText(tr.get("opt_onefile", "Onefile"))
-        self._opt_clean.setText(tr.get("opt_clean", "Clean build"))
-        self._btn_icon.setText(tr.get("btn_icon", "Choose icon"))
-        self._output_dir.setPlaceholderText(tr.get("label_output", "Output directory"))
+        self._opt_onefile.setText(self.engine_translate("opt_onefile", "Onefile"))
+        self._opt_clean.setText(self.engine_translate("opt_clean", "Clean build"))
+        self._btn_icon.setText(self.engine_translate("btn_icon", "Choose icon"))
+        self._output_dir.setPlaceholderText(
+            self.engine_translate("label_output", "Output directory")
+        )
 ```
 
 Notes.
-- `load_engine_language_file(engine_id, lang)` loads `languages/<lang>.json` from the engine package.
+- `engine_translate(...)` reads the active engine translation cache and falls back safely.
+- `apply_i18n(...)` remains the right place to refresh existing widgets after a language switch.
+- `load_engine_language_file(engine_package, lang)` is still available if you need custom/manual loading.
 - If a key is missing, always provide a safe fallback string.
 
 **Auto Command Builder (Optional)**
@@ -625,22 +631,29 @@ self._opt_onefile.setText(gui.tr("Un seul fichier", "Onefile"))
 Notes.
 - Works even if no language file exists.
 
-29. I18n: apply_i18n hook.
+29. I18n: simple lookup with engine_translate.
 ```python
-def apply_i18n(self, gui, tr):
-    self._opt_onefile.setText(tr.get("onefile", "Onefile"))
+self._opt_onefile.setText(self.engine_translate("onefile_checkbox", "Onefile"))
 ```
 Notes.
-- Use engine language files.
+- Best default for engine-local labels and placeholders.
 
-30. Logging with GUI.
+30. I18n: apply_i18n hook.
+```python
+def apply_i18n(self, gui, tr):
+    self._opt_onefile.setText(self.engine_translate("onefile", "Onefile"))
+```
+Notes.
+- Keep this hook for live widget refresh; host synchronization stays automatic.
+
+31. Logging with GUI.
 ```python
 gui.log.append("Building...")
 ```
 Notes.
 - Avoid noisy logs in loops.
 
-31. Safe fallback when widgets are missing.
+32. Safe fallback when widgets are missing.
 ```python
 opt = getattr(self, "_opt_onefile", None)
 if opt and opt.isChecked():
@@ -649,7 +662,7 @@ if opt and opt.isChecked():
 Notes.
 - Robust if tab not created.
 
-32. Use gui.workspace_dir.
+33. Use gui.workspace_dir.
 ```python
 work = getattr(gui, "workspace_dir", None)
 if work:

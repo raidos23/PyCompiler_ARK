@@ -197,6 +197,9 @@ class NuitkaEngine(CompilerEngine):
             from PySide6.QtWidgets import (
                 QCheckBox,
                 QFormLayout,
+                QLabel,
+                QGroupBox,
+                QSizePolicy,
                 QVBoxLayout,
                 QWidget,
             )
@@ -207,21 +210,22 @@ class NuitkaEngine(CompilerEngine):
 
             # Create main layout
             layout = QVBoxLayout(tab)
-            layout.setSpacing(10)
+            layout.setSpacing(8)
+            layout.setContentsMargins(8, 8, 8, 8)
 
-            # Create form layout for options
-            form_layout = QFormLayout()
-            form_layout.setSpacing(8)
+            build_group = QGroupBox("Build", tab)
+            build_layout = QFormLayout()
+            build_layout.setSpacing(6)
 
             # Onefile option
             self._nuitka_onefile = QCheckBox("Onefile (--onefile)")
             self._nuitka_onefile.setObjectName("nuitka_onefile_dynamic")
-            form_layout.addRow("Mode:", self._nuitka_onefile)
+            build_layout.addRow("Mode:", self._nuitka_onefile)
 
             # Standalone option
             self._nuitka_standalone = QCheckBox("Standalone (--standalone)")
             self._nuitka_standalone.setObjectName("nuitka_standalone_dynamic")
-            form_layout.addRow("Type:", self._nuitka_standalone)
+            build_layout.addRow("Type:", self._nuitka_standalone)
 
             # Disable console option
             self._nuitka_disable_console = QCheckBox("Disable console")
@@ -229,18 +233,28 @@ class NuitkaEngine(CompilerEngine):
             self._nuitka_disable_console.setToolTip(
                 "Disable console window for Windows builds."
             )
-            form_layout.addRow("Console:", self._nuitka_disable_console)
+            build_layout.addRow("Console:", self._nuitka_disable_console)
+            build_group.setLayout(build_layout)
 
-            layout.addLayout(form_layout)
+            output_group = QGroupBox("Output", tab)
+            output_layout = QVBoxLayout()
+            output_layout.setSpacing(6)
 
             # Output directory
             self._nuitka_output_dir = add_output_dir(
-                layout, "Dossier de sortie (--output-dir)", "nuitka_output_dir_dynamic"
+                output_layout,
+                "Dossier de sortie (--output-dir)",
+                "nuitka_output_dir_dynamic",
             )
+            output_group.setLayout(output_layout)
+
+            assets_group = QGroupBox("Assets", tab)
+            assets_layout = QVBoxLayout()
+            assets_layout.setSpacing(6)
 
             # Icon button + path input
             self._btn_nuitka_icon, self._nuitka_icon_path_input = add_icon_selector(
-                layout,
+                assets_layout,
                 "🎨 Choisir une icône (.ico) Nuitka",
                 self.select_icon,
                 "btn_nuitka_icon_dynamic",
@@ -250,7 +264,19 @@ class NuitkaEngine(CompilerEngine):
                 self._nuitka_icon_path_input.textChanged.connect(
                     self._on_icon_path_changed
                 )
+            assets_group.setLayout(assets_layout)
 
+            hint = QLabel(
+                "Tip: combine standalone or onefile modes carefully, then tune console visibility for desktop apps.",
+                tab,
+            )
+            hint.setStyleSheet("color: #888; font-size: 11px;")
+            hint.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+
+            layout.addWidget(build_group)
+            layout.addWidget(output_group)
+            layout.addWidget(assets_group)
+            layout.addWidget(hint)
             layout.addStretch()
 
             # Store references in the engine instance for build_command access
@@ -369,43 +395,33 @@ class NuitkaEngine(CompilerEngine):
     def apply_i18n(self, gui, tr: dict) -> None:
         """Apply internationalization translations to the engine UI."""
         try:
-            from engine_sdk import resolve_language_code, load_engine_language_file
-
-            # Resolve language code
-            code = resolve_language_code(gui, tr)
-
-            # Load engine-local translations
-            lang_data = load_engine_language_file(__package__, code)
-
             # Apply translations to UI elements if they exist
-            if hasattr(self, "_nuitka_onefile") and "onefile_checkbox" in lang_data:
-                self._nuitka_onefile.setText(lang_data["onefile_checkbox"])
-            if (
-                hasattr(self, "_nuitka_standalone")
-                and "standalone_checkbox" in lang_data
-            ):
-                self._nuitka_standalone.setText(lang_data["standalone_checkbox"])
-            if (
-                hasattr(self, "_nuitka_disable_console")
-                and "disable_console_checkbox" in lang_data
-            ):
+            if hasattr(self, "_nuitka_onefile"):
+                self._nuitka_onefile.setText(
+                    self.engine_translate("onefile_checkbox", "Onefile")
+                )
+            if hasattr(self, "_nuitka_standalone"):
+                self._nuitka_standalone.setText(
+                    self.engine_translate("standalone_checkbox", "Standalone")
+                )
+            if hasattr(self, "_nuitka_disable_console"):
                 self._nuitka_disable_console.setText(
-                    lang_data["disable_console_checkbox"]
+                    self.engine_translate(
+                        "disable_console_checkbox", "Disable console"
+                    )
                 )
-            if (
-                hasattr(self, "_nuitka_disable_console")
-                and "tt_disable_console" in lang_data
-            ):
-                self._nuitka_disable_console.setToolTip(lang_data["tt_disable_console"])
-            if (
-                hasattr(self, "_nuitka_output_dir")
-                and "output_placeholder" in lang_data
-            ):
+            if hasattr(self, "_nuitka_disable_console"):
+                self._nuitka_disable_console.setToolTip(
+                    self.engine_translate("tt_disable_console", "")
+                )
+            if hasattr(self, "_nuitka_output_dir"):
                 self._nuitka_output_dir.setPlaceholderText(
-                    lang_data["output_placeholder"]
+                    self.engine_translate("output_placeholder", "Output directory")
                 )
-            if hasattr(self, "_btn_nuitka_icon") and "icon_button" in lang_data:
-                self._btn_nuitka_icon.setText(lang_data["icon_button"])
+            if hasattr(self, "_btn_nuitka_icon"):
+                self._btn_nuitka_icon.setText(
+                    self.engine_translate("icon_button", "Select icon")
+                )
         except Exception:
             pass
 

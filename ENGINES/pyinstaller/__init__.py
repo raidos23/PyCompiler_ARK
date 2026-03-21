@@ -195,10 +195,12 @@ class PyInstallerEngine(CompilerEngine):
             from PySide6.QtWidgets import (
                 QCheckBox,
                 QFormLayout,
+                QLabel,
+                QGroupBox,
+                QSizePolicy,
                 QVBoxLayout,
                 QWidget,
             )
-            from PySide6.QtCore import Qt
 
             # Create the tab widget
             tab = QWidget()
@@ -206,27 +208,31 @@ class PyInstallerEngine(CompilerEngine):
 
             # Create main layout
             layout = QVBoxLayout(tab)
-            layout.setSpacing(10)
+            layout.setSpacing(8)
+            layout.setContentsMargins(8, 8, 8, 8)
 
-            # Create form layout for options
-            form_layout = QFormLayout()
-            form_layout.setSpacing(8)
+            build_group = QGroupBox("Build", tab)
+            build_layout = QFormLayout()
+            build_layout.setSpacing(6)
 
             # Onefile option
             self._opt_onefile = add_form_checkbox(
-                form_layout, "Mode:", "Onefile", "opt_onefile_dynamic"
+                build_layout, "Mode:", "Onefile", "opt_onefile_dynamic"
             )
 
             # Windowed option
             self._opt_windowed = add_form_checkbox(
-                form_layout, "Console:", "Windowed", "opt_windowed_dynamic"
+                build_layout, "Console:", "Windowed", "opt_windowed_dynamic"
             )
+            build_group.setLayout(build_layout)
 
-            layout.addLayout(form_layout)
+            assets_group = QGroupBox("Assets", tab)
+            assets_layout = QVBoxLayout()
+            assets_layout.setSpacing(6)
 
             # Icon button + path input
             self._btn_select_icon, self._icon_path_input = add_icon_selector(
-                layout,
+                assets_layout,
                 "🎨 Choisir une icône (.ico)",
                 self.select_icon,
                 "btn_select_icon_dynamic",
@@ -234,14 +240,31 @@ class PyInstallerEngine(CompilerEngine):
             )
             if self._icon_path_input is not None:
                 self._icon_path_input.textChanged.connect(self._on_icon_path_changed)
+            assets_group.setLayout(assets_layout)
+
+            output_group = QGroupBox("Output", tab)
+            output_layout = QVBoxLayout()
+            output_layout.setSpacing(6)
 
             # Output directory
             self._output_dir_input = add_output_dir(
-                layout,
+                output_layout,
                 "Dossier de sortie (--distpath). Laisser vide pour ./dist",
                 "output_dir_input_dynamic",
             )
+            output_group.setLayout(output_layout)
 
+            hint = QLabel(
+                "Tip: choose one packaging mode, then optionally add an icon and custom dist path.",
+                tab,
+            )
+            hint.setStyleSheet("color: #888; font-size: 11px;")
+            hint.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+
+            layout.addWidget(build_group)
+            layout.addWidget(assets_group)
+            layout.addWidget(output_group)
+            layout.addWidget(hint)
             layout.addStretch()
 
             # Store references in the engine instance for build_command access
@@ -343,24 +366,22 @@ class PyInstallerEngine(CompilerEngine):
     def apply_i18n(self, gui, tr: dict) -> None:
         """Apply internationalization translations to the engine UI."""
         try:
-            from engine_sdk import resolve_language_code, load_engine_language_file
-
-            # Resolve language code
-            code = resolve_language_code(gui, tr)
-
-            # Load engine-local translations
-            lang_data = load_engine_language_file(__package__, code)
-
             # Apply translations to UI elements if they exist
-            if hasattr(self, "_opt_onefile") and "onefile_checkbox" in lang_data:
-                self._opt_onefile.setText(lang_data["onefile_checkbox"])
-            if hasattr(self, "_opt_windowed") and "windowed_checkbox" in lang_data:
-                self._opt_windowed.setText(lang_data["windowed_checkbox"])
-            if hasattr(self, "_btn_select_icon") and "icon_button" in lang_data:
-                self._btn_select_icon.setText(lang_data["icon_button"])
-            if hasattr(self, "_output_dir_input") and "output_placeholder" in lang_data:
+            if hasattr(self, "_opt_onefile"):
+                self._opt_onefile.setText(
+                    self.engine_translate("onefile_checkbox", "Onefile")
+                )
+            if hasattr(self, "_opt_windowed"):
+                self._opt_windowed.setText(
+                    self.engine_translate("windowed_checkbox", "Windowed")
+                )
+            if hasattr(self, "_btn_select_icon"):
+                self._btn_select_icon.setText(
+                    self.engine_translate("icon_button", "Select icon")
+                )
+            if hasattr(self, "_output_dir_input"):
                 self._output_dir_input.setPlaceholderText(
-                    lang_data["output_placeholder"]
+                    self.engine_translate("output_placeholder", "Output directory")
                 )
         except Exception:
             pass
