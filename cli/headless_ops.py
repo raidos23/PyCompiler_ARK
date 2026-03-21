@@ -16,6 +16,14 @@ def emit_json(payload: Any) -> str:
     return json.dumps(payload, indent=2, ensure_ascii=False, sort_keys=True)
 
 
+def _project_root() -> Path:
+    return Path(__file__).resolve().parents[1]
+
+
+def _plugins_root() -> Path:
+    return _project_root() / "Plugins"
+
+
 def _new_engines_app(workspace_dir: str | None = None):
     from OnlyMod.EngineOnlyMod.app import EnginesStandaloneApp
 
@@ -184,6 +192,74 @@ def engine_doctor_payload(
     return {"engine_id": engine_id, "checks": checks, "engine": engine}
 
 
+def engine_config_path_payload(engine_id: str, workspace: str | None) -> dict[str, Any]:
+    ws = _normalize_workspace(workspace)
+    if not ws:
+        return {
+            "engine_id": engine_id,
+            "workspace": None,
+            "exists": False,
+            "error": "workspace is required",
+        }
+
+    try:
+        from Core.EngineConfigManager import _engine_config_path
+
+        config_path = Path(_engine_config_path(ws, engine_id))
+    except Exception as exc:
+        return {
+            "engine_id": engine_id,
+            "workspace": ws,
+            "exists": False,
+            "error": f"unable to resolve config path: {exc}",
+        }
+
+    return {
+        "engine_id": engine_id,
+        "workspace": ws,
+        "path": str(config_path),
+        "exists": config_path.exists(),
+    }
+
+
+def engine_config_show_payload(engine_id: str, workspace: str | None) -> dict[str, Any]:
+    ws = _normalize_workspace(workspace)
+    if not ws:
+        return {
+            "engine_id": engine_id,
+            "workspace": None,
+            "exists": False,
+            "error": "workspace is required",
+        }
+
+    info = engine_info_payload(engine_id, workspace=ws)
+    if not info.get("found"):
+        return {"found": False, "engine_id": engine_id, "workspace": ws}
+
+    try:
+        from Core.EngineConfigManager import load_engine_config
+
+        config = load_engine_config(ws, engine_id)
+    except Exception as exc:
+        return {
+            "found": True,
+            "engine_id": engine_id,
+            "workspace": ws,
+            "exists": False,
+            "error": f"unable to load engine config: {exc}",
+        }
+
+    path_payload = engine_config_path_payload(engine_id, ws)
+    return {
+        "found": True,
+        "engine_id": engine_id,
+        "workspace": ws,
+        "path": path_payload.get("path"),
+        "exists": bool(path_payload.get("exists")),
+        "config": config,
+    }
+
+
 def workspace_inspect_payload(workspace: str | None) -> dict[str, Any]:
     ws = _normalize_workspace(workspace)
     if not ws:
@@ -268,6 +344,148 @@ def doctor_payload(workspace: str | None = None) -> dict[str, Any]:
     if workspace:
         payload["workspace"] = workspace_inspect_payload(workspace)
     return payload
+
+
+def bcasl_list_payload(workspace: str | None = None) -> dict[str, Any]:
+    ws = _normalize_workspace(workspace) or str(Path.cwd())
+    plugins_dir = _plugins_root()
+    try:
+        from bcasl import BCASL
+
+        manager = BCASL(Path(ws), config={}, sandbox=False)
+        loaded, errors = manager.load_plugins_from_directory(plugins_dir)
+        plugins = []
+        for plugin_id, meta, active, priority in manager.list_plugins():
+            plugins.append(
+                {
+                    "id": plugin_id,
+                    "name": getattr(meta, "name", plugin_id),
+                    "version": getattr(meta, "version", "unknown"),
+                    "description": getattr(meta, "description", ""),
+                    "author": getattr(meta, "author", ""),
+                    "tags": list(getattr(meta, "tags", []) or []),
+                    "active": bool(active),
+                    "priority": int(priority),
+                }
+            )
+        return {
+            "workspace": ws,
+            "plugins_dir": str(plugins_dir),
+            "count": len(plugins),
+            "loaded_count": int(loaded),
+            "plugins": plugins,
+            "errors": [{"plugin": name, "error": message} for name, message in errors],
+        }
+    except Exception as exc:
+        return {
+            "workspace": ws,
+            "plugins_dir": str(plugins_dir),
+            "count": 0,
+            "loaded_count": 0,
+            "plugins": [],
+            "errors": [{"plugin": "loader", "error": str(exc)}],
+        }
+
+
+def bcasl_doctor_payload(workspace: str | None = None) -> dict[str, Any]:
+    ws = _normalize_workspace(workspace)
+    plugins = bcasl_list_payload(workspace=ws)
+    checks = [
+        {
+            "name": "plugins_dir",
+            "ok": Path(plugins["plugins_dir"]).exists(),
+            "message": plugins["plugins_dir"],
+        },
+        {
+            "name": "plugin_discovery",
+            "ok": not plugins.get("errors"),
+            "message": (
+                f"{plugins['count']} plugin(s) available"
+                if not plugins.get("errors")
+                else "; ".join(item["error"] for item in plugins.get("errors", []))
+            ),
+        },
+    ]
+
+    if ws:
+        ws_path = Path(ws)
+        checks.append(
+            {
+                "name": "workspace",
+                "ok": ws_path.exists() and ws_path.is_dir(),
+                "message": ws,
+            }
+        )
+
+    return {
+        "workspace": ws,
+        "plugins": plugins,
+        "checks": checks,
+    }
+
+
+def ci_smoke_payload(
+    workspace: str | None = None,
+    *,
+    require_entrypoint: bool = False,
+) -> dict[str, Any]:
+    ws = _normalize_workspace(workspace)
+    doctor = doctor_payload(workspace=ws if ws else None)
+    bcasl = bcasl_doctor_payload(workspace=ws if ws else None)
+    workspace_data = workspace_inspect_payload(ws) if ws else None
+
+    checks: list[dict[str, Any]] = [
+        {
+            "name": "engine_inventory",
+            "ok": doctor["engines"]["count"] > 0,
+            "message": f"{doctor['engines']['count']} engine(s) detected",
+        },
+        {
+            "name": "compatible_engines",
+            "ok": doctor["engines"]["compatible_count"] > 0,
+            "message": (
+                f"{doctor['engines']['compatible_count']}/{doctor['engines']['count']} compatible"
+            ),
+        },
+    ]
+
+    for check in bcasl.get("checks", []):
+        checks.append(
+            {
+                "name": f"bcasl_{check['name']}",
+                "ok": bool(check.get("ok")),
+                "message": check.get("message"),
+            }
+        )
+
+    if workspace_data is not None:
+        checks.append(
+            {
+                "name": "workspace_exists",
+                "ok": bool(workspace_data.get("exists")),
+                "message": workspace_data.get("workspace") or "workspace is required",
+            }
+        )
+        entrypoint = workspace_data.get("entrypoint")
+        checks.append(
+            {
+                "name": "workspace_entrypoint",
+                "ok": bool(entrypoint) or not require_entrypoint,
+                "message": entrypoint or "no entrypoint configured",
+            }
+        )
+
+    failed = [check for check in checks if not check.get("ok")]
+    return {
+        "workspace": ws,
+        "require_entrypoint": bool(require_entrypoint),
+        "checks": checks,
+        "failed_count": len(failed),
+        "ok": not failed,
+        "doctor": doctor,
+        "bcasl": bcasl,
+        "workspace_inspect": workspace_data,
+    }
 
 
 def scaffold_engine(target_name: str, root_dir: str | None = None) -> dict[str, Any]:

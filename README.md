@@ -90,6 +90,7 @@ python pycompiler_ark.py engine list --json
 python pycompiler_ark.py engine doctor nuitka src/main.py --json
 python pycompiler_ark.py workspace inspect . --json
 python pycompiler_ark.py doctor --json
+python pycompiler_ark.py ci smoke . --json --strict --require-entrypoint
 python pycompiler_ark.py scaffold engine demo_engine --json
 python pycompiler_ark.py unload --json
 ```
@@ -102,6 +103,7 @@ python pycompiler_ark.py unload --json
 - `workspace`: inspect the current workspace and resolved entrypoint
 - `doctor`: global diagnostics snapshot
 - `scaffold`: generate starter templates for engines and plugins
+- `ci`: run stable smoke checks and preflight gates for automation
 
 ### Headless note
 
@@ -118,6 +120,15 @@ The CLI bootstrap no longer forces Qt for purely headless commands such as:
 - `scaffold ...`
 
 This makes scripting and CI friendlier on machines where the GUI stack is unavailable or intentionally not used.
+
+### CI-friendly exit codes
+
+- `0`: success
+- `3`: precheck or smoke failure (`--strict`)
+- `4`: invalid or missing workspace
+- `5`: engine not found
+
+These are the stable codes to key on in CI for the structured headless commands.
 
 ### Dedicated CLI quick commands
 
@@ -203,6 +214,7 @@ python -m py_compile pycompiler_ark.py
 python -m pycompiler_ark --help
 python -m pycompiler_ark workspace inspect . --json
 python -m pycompiler_ark engine list --json
+python -m pycompiler_ark ci smoke . --json --strict --require-entrypoint
 ```
 
 Quality status:

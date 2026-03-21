@@ -23,6 +23,7 @@ python -m pycompiler_ark --info
 python -m pycompiler_ark engine list --json
 python -m pycompiler_ark workspace inspect . --json
 python -m pycompiler_ark doctor --json
+python -m pycompiler_ark ci smoke . --json --strict --require-entrypoint
 python -m py_compile pycompiler_ark.py
 ```
 
@@ -34,6 +35,7 @@ Expected outcome:
 - `engine list --json` returns a valid engine inventory without opening the GUI.
 - `workspace inspect . --json` returns workspace data without loading the GUI stack.
 - `doctor --json` returns a diagnostic snapshot successfully.
+- `ci smoke . --json --strict --require-entrypoint` returns a valid smoke payload and fails the job when a preflight breaks.
 - Source compilation check succeeds.
 
 ## GUI Parity

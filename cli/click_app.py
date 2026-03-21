@@ -8,8 +8,13 @@ import sys
 
 from .dedicated import _run_bcasl_headless, run_dedicated_cli
 from .headless_ops import (
+    bcasl_doctor_payload,
+    bcasl_list_payload,
+    ci_smoke_payload,
     doctor_payload,
     emit_json,
+    engine_config_path_payload,
+    engine_config_show_payload,
     engine_doctor_payload,
     engine_info_payload,
     engine_list_payload,
@@ -33,18 +38,35 @@ except Exception:  # pragma: no cover - optional dependency
     click = None
 
 
+EXIT_OK = 0
+EXIT_RUNTIME_ERROR = 1
+EXIT_USAGE_ERROR = 2
+EXIT_PRECHECK_FAILED = 3
+EXIT_WORKSPACE_INVALID = 4
+EXIT_ENGINE_NOT_FOUND = 5
+
+
 def has_click() -> bool:
     return click is not None
 
 
 def _echo_payload(payload, as_json: bool = False) -> None:
     if as_json:
-        plain(emit_json(payload))
+        text = emit_json(payload)
+        sys.stdout.write(text)
+        if not text.endswith("\n"):
+            sys.stdout.write("\n")
+        sys.stdout.flush()
         return
     if isinstance(payload, str):
         plain(payload)
     else:
         plain(str(payload))
+
+
+def _emit_and_exit(payload, code: int, as_json: bool = False) -> None:
+    _echo_payload(payload, as_json=as_json)
+    raise click.exceptions.Exit(code)
 
 
 def _resolve_workspace_path(workspace: str | None) -> str | None:
@@ -158,6 +180,7 @@ def build_cli(app_version: str):
             plain("  workspace   Inspect workspace state")
             plain("  doctor      Global diagnostics")
             plain("  scaffold    Generate starter templates")
+            plain("  ci          Run CI-friendly smoke checks")
             ctx.exit(0)
 
         if ctx.invoked_subcommand is None:
@@ -220,6 +243,8 @@ def build_cli(app_version: str):
     def engine_info(engine_id, workspace, as_json):
         payload = engine_info_payload(engine_id, workspace=_resolve_workspace_path(workspace))
         if as_json:
+            if not payload.get("found"):
+                _emit_and_exit(payload, EXIT_ENGINE_NOT_FOUND, as_json=True)
             _echo_payload(payload, as_json=True)
             return
         if not payload.get("found"):
@@ -238,9 +263,14 @@ def build_cli(app_version: str):
     @click.argument("engine_id")
     @click.option("-w", "--workspace", type=click.Path(exists=False))
     @click.option("--json", "as_json", is_flag=True)
-    def engine_compat(engine_id, workspace, as_json):
+    @click.option("--strict", is_flag=True, help="Exit non-zero when compatibility checks fail")
+    def engine_compat(engine_id, workspace, as_json, strict):
         payload = engine_info_payload(engine_id, workspace=_resolve_workspace_path(workspace))
         if as_json:
+            if not payload.get("found"):
+                _emit_and_exit(payload, EXIT_ENGINE_NOT_FOUND, as_json=True)
+            if strict and not payload["engine"]["compatible"]:
+                _emit_and_exit(payload, EXIT_PRECHECK_FAILED, as_json=True)
             _echo_payload(payload, as_json=True)
             return
         if not payload.get("found"):
@@ -252,19 +282,26 @@ def build_cli(app_version: str):
             error(f"Engine not compatible: {engine_id}")
             if eng.get("message"):
                 warn(f"Reason: {eng['message']}")
+            if strict:
+                raise click.exceptions.Exit(EXIT_PRECHECK_FAILED)
 
     @engine.command("doctor")
     @click.argument("engine_id")
     @click.argument("file_path", required=False, type=click.Path(exists=False))
     @click.option("-w", "--workspace", type=click.Path(exists=False))
     @click.option("--json", "as_json", is_flag=True)
-    def engine_doctor(engine_id, file_path, workspace, as_json):
+    @click.option("--strict", is_flag=True, help="Exit non-zero when doctor checks fail")
+    def engine_doctor(engine_id, file_path, workspace, as_json, strict):
         payload = engine_doctor_payload(
             engine_id,
             workspace=_resolve_workspace_path(workspace),
             file_path=_resolve_workspace_path(file_path),
         )
         if as_json:
+            if "checks" not in payload:
+                _emit_and_exit(payload, EXIT_ENGINE_NOT_FOUND, as_json=True)
+            if strict and any(not check["ok"] for check in payload["checks"]):
+                _emit_and_exit(payload, EXIT_PRECHECK_FAILED, as_json=True)
             _echo_payload(payload, as_json=True)
             return
         if "checks" not in payload:
@@ -273,6 +310,54 @@ def build_cli(app_version: str):
         for check in payload["checks"]:
             status = "OK" if check["ok"] else "FAIL"
             plain(f"  [{status}] {check['name']}: {check.get('message') or ''}")
+        if strict and any(not check["ok"] for check in payload["checks"]):
+            raise click.exceptions.Exit(EXIT_PRECHECK_FAILED)
+
+    @engine.group("config")
+    def engine_config():
+        """Inspect persisted per-workspace engine configuration."""
+
+    @engine_config.command("show")
+    @click.argument("engine_id")
+    @click.option("-w", "--workspace", required=True, type=click.Path(exists=False))
+    @click.option("--json", "as_json", is_flag=True)
+    def engine_config_show(engine_id, workspace, as_json):
+        payload = engine_config_show_payload(
+            engine_id, workspace=_resolve_workspace_path(workspace)
+        )
+        if as_json:
+            if not payload.get("found", True):
+                _emit_and_exit(payload, EXIT_ENGINE_NOT_FOUND, as_json=True)
+            if payload.get("error") == "workspace is required":
+                _emit_and_exit(payload, EXIT_WORKSPACE_INVALID, as_json=True)
+            _echo_payload(payload, as_json=True)
+            return
+        if payload.get("error") == "workspace is required":
+            raise click.ClickException("Workspace is required")
+        if not payload.get("found", True):
+            raise click.ClickException(f"Engine not found: {engine_id}")
+        plain(f"Engine config: {engine_id}")
+        plain(f"  Workspace: {payload.get('workspace')}")
+        plain(f"  Path: {payload.get('path')}")
+        plain(f"  Exists: {'yes' if payload.get('exists') else 'no'}")
+        plain(emit_json(payload.get("config", {})))
+
+    @engine_config.command("path")
+    @click.argument("engine_id")
+    @click.option("-w", "--workspace", required=True, type=click.Path(exists=False))
+    @click.option("--json", "as_json", is_flag=True)
+    def engine_config_path(engine_id, workspace, as_json):
+        payload = engine_config_path_payload(
+            engine_id, workspace=_resolve_workspace_path(workspace)
+        )
+        if as_json:
+            if payload.get("error") == "workspace is required":
+                _emit_and_exit(payload, EXIT_WORKSPACE_INVALID, as_json=True)
+            _echo_payload(payload, as_json=True)
+            return
+        if payload.get("error") == "workspace is required":
+            raise click.ClickException("Workspace is required")
+        plain(payload.get("path", ""))
 
     @engine.command("dry-run")
     @click.argument("engine_id")
@@ -331,9 +416,12 @@ def build_cli(app_version: str):
     @workspace.command("inspect")
     @click.argument("path", required=False, type=click.Path(exists=False))
     @click.option("--json", "as_json", is_flag=True)
-    def workspace_inspect(path, as_json):
+    @click.option("--strict", is_flag=True, help="Exit non-zero when the workspace is invalid")
+    def workspace_inspect(path, as_json, strict):
         payload = workspace_inspect_payload(_resolve_workspace_path(path or "."))
         if as_json:
+            if strict and not payload.get("exists"):
+                _emit_and_exit(payload, EXIT_WORKSPACE_INVALID, as_json=True)
             _echo_payload(payload, as_json=True)
             return
         if not payload.get("exists"):
@@ -349,13 +437,18 @@ def build_cli(app_version: str):
     @workspace.command("entrypoint")
     @click.argument("path", required=False, type=click.Path(exists=False))
     @click.option("--json", "as_json", is_flag=True)
-    def workspace_entrypoint(path, as_json):
+    @click.option("--strict", is_flag=True, help="Exit non-zero when no entrypoint is resolved")
+    def workspace_entrypoint(path, as_json, strict):
         payload = workspace_inspect_payload(_resolve_workspace_path(path or "."))
         result = {"workspace": payload.get("workspace"), "entrypoint": payload.get("entrypoint")}
         if as_json:
+            if strict and not result.get("entrypoint"):
+                _emit_and_exit(result, EXIT_PRECHECK_FAILED, as_json=True)
             _echo_payload(result, as_json=True)
             return
         plain(result["entrypoint"] or "")
+        if strict and not result.get("entrypoint"):
+            raise click.exceptions.Exit(EXIT_PRECHECK_FAILED)
 
     @workspace.command("files")
     @click.argument("path", required=False, type=click.Path(exists=False))
@@ -377,9 +470,20 @@ def build_cli(app_version: str):
     @cli.command("doctor")
     @click.argument("workspace", required=False, type=click.Path(exists=False))
     @click.option("--json", "as_json", is_flag=True)
-    def doctor(workspace, as_json):
+    @click.option("--strict", is_flag=True, help="Exit non-zero when diagnostics detect issues")
+    def doctor(workspace, as_json, strict):
         payload = doctor_payload(workspace=_resolve_workspace_path(workspace))
+        if strict:
+            workspace_payload = payload.get("workspace")
+            has_workspace_issue = isinstance(workspace_payload, dict) and not workspace_payload.get("exists", True)
+            has_engine_issue = payload["engines"]["compatible_count"] != payload["engines"]["count"]
+            has_qt_issue = not payload.get("qt_available", False)
+            strict_failed = bool(has_workspace_issue or has_engine_issue or has_qt_issue)
+        else:
+            strict_failed = False
         if as_json:
+            if strict_failed:
+                _emit_and_exit(payload, EXIT_PRECHECK_FAILED, as_json=True)
             _echo_payload(payload, as_json=True)
             return
         plain("PyCompiler ARK Doctor")
@@ -389,6 +493,38 @@ def build_cli(app_version: str):
         plain(
             f"  Engines: {payload['engines']['compatible_count']}/{payload['engines']['count']} compatible"
         )
+        if strict_failed:
+            raise click.exceptions.Exit(EXIT_PRECHECK_FAILED)
+
+    @cli.group()
+    def ci():
+        """Run CI-friendly smoke checks."""
+
+    @ci.command("smoke")
+    @click.argument("workspace", required=False, type=click.Path(exists=False))
+    @click.option("--json", "as_json", is_flag=True)
+    @click.option("--strict", is_flag=True, help="Exit non-zero when smoke checks fail")
+    @click.option(
+        "--require-entrypoint",
+        is_flag=True,
+        help="Fail when the workspace has no configured entrypoint",
+    )
+    def ci_smoke(workspace, as_json, strict, require_entrypoint):
+        payload = ci_smoke_payload(
+            workspace=_resolve_workspace_path(workspace),
+            require_entrypoint=require_entrypoint,
+        )
+        if as_json:
+            if strict and not payload.get("ok"):
+                _emit_and_exit(payload, EXIT_PRECHECK_FAILED, as_json=True)
+            _echo_payload(payload, as_json=True)
+            return
+        plain("PyCompiler ARK CI Smoke")
+        for check in payload.get("checks", []):
+            status = "OK" if check["ok"] else "FAIL"
+            plain(f"  [{status}] {check['name']}: {check.get('message') or ''}")
+        if strict and not payload.get("ok"):
+            raise click.exceptions.Exit(EXIT_PRECHECK_FAILED)
 
     @cli.group()
     def scaffold():
@@ -437,12 +573,10 @@ def build_cli(app_version: str):
     @bcasl.command("list")
     @click.option("--json", "as_json", is_flag=True)
     def bcasl_list(as_json):
-        code = _run_bcasl_headless(["list"])
         if as_json:
-            # Fallback minimal JSON until BCASL headless metadata is fully exposed.
-            _echo_payload({"status": "delegated", "command": "bcasl list", "exit_code": code}, as_json=True)
+            _echo_payload(bcasl_list_payload(), as_json=True)
             return
-        sys.exit(code)
+        sys.exit(_run_bcasl_headless(["list"]))
 
     @bcasl.command("run")
     @click.argument("workspace", type=click.Path(exists=False))
@@ -456,16 +590,20 @@ def build_cli(app_version: str):
     @bcasl.command("doctor")
     @click.argument("workspace", required=False, type=click.Path(exists=False))
     @click.option("--json", "as_json", is_flag=True)
-    def bcasl_doctor(workspace, as_json):
-        payload = {
-            "workspace": _resolve_workspace_path(workspace),
-            "available": True,
-            "note": "BCASL doctor is currently delegated to the headless BCASL runner.",
-        }
+    @click.option("--strict", is_flag=True, help="Exit non-zero when BCASL checks fail")
+    def bcasl_doctor(workspace, as_json, strict):
+        payload = bcasl_doctor_payload(workspace=_resolve_workspace_path(workspace))
         if as_json:
+            if strict and any(not check["ok"] for check in payload.get("checks", [])):
+                _emit_and_exit(payload, EXIT_PRECHECK_FAILED, as_json=True)
             _echo_payload(payload, as_json=True)
             return
-        plain(payload["note"])
+        plain("BCASL Doctor")
+        for check in payload.get("checks", []):
+            status = "OK" if check["ok"] else "FAIL"
+            plain(f"  [{status}] {check['name']}: {check.get('message') or ''}")
+        if strict and any(not check["ok"] for check in payload.get("checks", [])):
+            raise click.exceptions.Exit(EXIT_PRECHECK_FAILED)
 
     @cli.command("info")
     @click.option("--json", "as_json", is_flag=True)
