@@ -238,6 +238,8 @@ def should_enable_qt(argv: list[str] | None) -> bool:
 
     if cmd is None:
         return True
+    if cmd == "gui":
+        return True
     if cmd in ("main",):
         return True
     if cmd in ("unload", "version", "help", "info", "engine"):

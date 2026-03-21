@@ -40,6 +40,7 @@ def test_should_enable_qt_for_headless_commands() -> None:
 def test_should_enable_qt_for_gui_commands() -> None:
     assert should_enable_qt([]) is True
     assert should_enable_qt(["main"]) is True
+    assert should_enable_qt(["gui", "main", "--ide"]) is True
     assert should_enable_qt(["--ide-gui"]) is True
     assert should_enable_qt(["engines"]) is True
 

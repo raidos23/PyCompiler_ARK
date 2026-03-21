@@ -47,6 +47,7 @@ python -m pycompiler_ark --info
 python -m pycompiler_ark engine list --json
 python -m pycompiler_ark workspace inspect . --json
 python -m pycompiler_ark doctor --json
+python -m pycompiler_ark ci smoke . --json --strict --require-entrypoint
 python -m pycompiler_ark --cli
 ```
 
@@ -71,7 +72,8 @@ Release-oriented checks are documented in [Release smoke checklist](./release_sm
 - Keep engine-specific behavior inside engines.
 - Add or update tests when changing heuristics, parsing, or orchestration behavior.
 - If you change CLI flags, commands, or docs-linked behavior, update the README.
-- If you change the command hierarchy (`gui`, `engine`, `workspace`, `doctor`, `scaffold`) or JSON outputs, update the CLI docs and smoke checklist.
+- If you change the command hierarchy (`gui`, `engine`, `workspace`, `doctor`, `scaffold`, `ci`) or JSON outputs, update the CLI docs and smoke checklist.
+- Keep CI-facing exit codes stable, or document the change explicitly in the README and release smoke checklist.
 - If you change IDE/classic behavior, update the parity matrix when appropriate.
 
 ## Documentation expectations

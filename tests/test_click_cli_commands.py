@@ -76,3 +76,81 @@ def test_scaffold_engine_json(tmp_path) -> None:
     payload = json.loads(result.output)
     assert payload["created"] is True
     assert (tmp_path / "ENGINES" / "demo_engine" / "__init__.py").exists()
+
+
+def test_workspace_entrypoint_strict_exits_non_zero(tmp_path) -> None:
+    runner = CliRunner()
+    cli = build_cli("test")
+    (tmp_path / "main.py").write_text("print('ok')\n", encoding="utf-8")
+
+    result = runner.invoke(
+        cli,
+        ["workspace", "entrypoint", str(tmp_path), "--json", "--strict"],
+    )
+
+    assert result.exit_code == 3
+    payload = json.loads(result.output)
+    assert payload["entrypoint"] is None
+
+
+def test_engine_config_path_json(tmp_path) -> None:
+    runner = CliRunner()
+    cli = build_cli("test")
+
+    result = runner.invoke(
+        cli,
+        ["engine", "config", "path", "nuitka", "--workspace", str(tmp_path), "--json"],
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    assert payload["engine_id"] == "nuitka"
+    assert payload["workspace"] == str(tmp_path.resolve())
+    assert payload["path"].endswith(".ark/nuitka/config.json")
+
+
+def test_bcasl_doctor_strict_json(monkeypatch) -> None:
+    runner = CliRunner()
+    cli = build_cli("test")
+
+    monkeypatch.setattr(
+        "cli.click_app.bcasl_doctor_payload",
+        lambda workspace=None: {
+            "workspace": workspace,
+            "checks": [{"name": "plugin_discovery", "ok": False, "message": "boom"}],
+        },
+    )
+
+    result = runner.invoke(cli, ["bcasl", "doctor", "--json", "--strict"])
+
+    assert result.exit_code == 3
+    payload = json.loads(result.output)
+    assert payload["checks"][0]["ok"] is False
+
+
+def test_ci_smoke_strict_json(monkeypatch, tmp_path) -> None:
+    runner = CliRunner()
+    cli = build_cli("test")
+
+    monkeypatch.setattr(
+        "cli.click_app.ci_smoke_payload",
+        lambda workspace=None, require_entrypoint=False: {
+            "workspace": workspace,
+            "require_entrypoint": require_entrypoint,
+            "ok": False,
+            "failed_count": 1,
+            "checks": [
+                {"name": "workspace_entrypoint", "ok": False, "message": "missing"}
+            ],
+        },
+    )
+
+    result = runner.invoke(
+        cli,
+        ["ci", "smoke", str(tmp_path), "--json", "--strict", "--require-entrypoint"],
+    )
+
+    assert result.exit_code == 3
+    payload = json.loads(result.output)
+    assert payload["require_entrypoint"] is True
+    assert payload["checks"][0]["name"] == "workspace_entrypoint"
