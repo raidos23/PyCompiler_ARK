@@ -422,8 +422,8 @@ def _apply_activity_buttons_theme(self) -> None:
     _apply_status_bar_theme(self, dark, fg, border)
 
 
-def _connect_ide_like_signals(self) -> None:
-    """Connect UI signals to existing methods implemented in Core."""
+def _connect_ide_like_specific_signals(self) -> None:
+    """Connect only IDE-specific signals on top of the classic shared wiring."""
 
     def _connect_clicked(widget, handler) -> None:
         if widget is None or handler is None:
@@ -441,37 +441,15 @@ def _connect_ide_like_signals(self) -> None:
         except Exception:
             pass
 
-    _connect_clicked(getattr(self, "btn_select_folder", None), getattr(self, "select_workspace", None))
-    _connect_clicked(getattr(self, "venv_button", None), getattr(self, "select_venv_manually", None))
-    _connect_clicked(getattr(self, "btn_select_files", None), getattr(self, "select_files_manually", None))
-    _connect_clicked(getattr(self, "btn_remove_file", None), getattr(self, "remove_selected_file", None))
-    _connect_clicked(getattr(self, "btn_clear_workspace", None), getattr(self, "clear_workspace", None))
-    _connect_clicked(getattr(self, "compile_btn", None), getattr(self, "compile_all", None))
-    _connect_clicked(
-        getattr(self, "cancel_btn", None),
-        getattr(self, "cancel_all_compilations", None),
-    )
-    _connect_clicked(getattr(self, "advanced_cfg_btn", None), getattr(self, "open_advanced_config_editor", None))
-    _connect_clicked(getattr(self, "btn_help", None), getattr(self, "show_help_dialog", None))
-    _connect_clicked(getattr(self, "btn_suggest_deps", None), getattr(self, "suggest_missing_dependencies", None))
     _connect_clicked(
         getattr(self, "activity_btn_deps", None),
         getattr(self, "suggest_missing_dependencies", None),
     )
-    _connect_clicked(getattr(self, "btn_show_stats", None), getattr(self, "show_statistics", None))
-    _connect_clicked(getattr(self, "btn_export_config", None), getattr(self, "export_config", None))
-    _connect_clicked(getattr(self, "btn_import_config", None), getattr(self, "import_config", None))
-    _connect_clicked(getattr(self, "select_lang", None), getattr(self, "show_language_dialog", None))
-    _connect_clicked(getattr(self, "select_theme", None), lambda: _open_theme_dialog(self))
-    _connect_text(getattr(self, "file_filter_input", None), getattr(self, "apply_file_filter", None))
-
-    if getattr(self, "btn_bc_loader", None):
-        try:
-            from bcasl import open_bc_loader_dialog
-
-            self.btn_bc_loader.clicked.connect(lambda: open_bc_loader_dialog(self))
-        except Exception:
-            pass
+    _connect_clicked(getattr(self, "btn_select_icon", None), getattr(self, "select_icon", None))
+    _connect_clicked(
+        getattr(self, "btn_nuitka_icon", None),
+        getattr(self, "select_nuitka_icon", None),
+    )
     _bind_status_updates(self)
 
 def init_ide_like_ui(self) -> None:
@@ -480,7 +458,18 @@ def init_ide_like_ui(self) -> None:
     _map_ide_like_widgets(self)
     _apply_classic_policies(self)
     _setup_more_tools_menu(self)
-    _connect_ide_like_signals(self)
+    try:
+        from ..UiConnection import _connect_signals as _connect_classic_signals
+
+        _connect_classic_signals(self)
+    except Exception:
+        pass
+    _connect_ide_like_specific_signals(self)
+    try:
+        if hasattr(self, "setup_entrypoint_selector"):
+            self.setup_entrypoint_selector()
+    except Exception:
+        pass
     _schedule_ide_like_async_init(self)
 
 
