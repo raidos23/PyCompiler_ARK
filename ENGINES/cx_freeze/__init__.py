@@ -190,9 +190,9 @@ class CXFreezeEngine(CompilerEngine):
             from PySide6.QtWidgets import (
                 QCheckBox,
                 QFormLayout,
-                QHBoxLayout,
-                QLineEdit,
-                QPushButton,
+                QLabel,
+                QGroupBox,
+                QSizePolicy,
                 QVBoxLayout,
                 QWidget,
             )
@@ -203,23 +203,59 @@ class CXFreezeEngine(CompilerEngine):
 
             # Create main layout
             layout = QVBoxLayout(tab)
-            layout.setSpacing(10)
+            layout.setSpacing(8)
+            layout.setContentsMargins(8, 8, 8, 8)
 
-            # Create form layout for options
-            form_layout = QFormLayout()
-            form_layout.setSpacing(8)
+            build_group = QGroupBox("Build", tab)
+            build_layout = QFormLayout()
+            build_layout.setSpacing(6)
 
             # Windowed option
             self._cx_windowed = add_form_checkbox(
-                form_layout, "Console:", "No console", "cx_windowed_dynamic"
+                build_layout, "Console:", "No console", "cx_windowed_dynamic"
             )
             self._cx_windowed.setToolTip("Disable the console window.")
+            build_group.setLayout(build_layout)
 
-            layout.addLayout(form_layout)
+            diagnostics_group = QGroupBox("Diagnostics", tab)
+            diagnostics_layout = QVBoxLayout()
+            diagnostics_layout.setSpacing(4)
+
+            self._cx_debug = QCheckBox("Debug")
+            self._cx_debug.setObjectName("cx_debug_dynamic")
+            self._cx_debug.setToolTip("Enable debug output.")
+            diagnostics_layout.addWidget(self._cx_debug)
+
+            self._cx_verbose = QCheckBox("Verbose")
+            self._cx_verbose.setObjectName("cx_verbose_dynamic")
+            self._cx_verbose.setToolTip("Enable verbose output.")
+            diagnostics_layout.addWidget(self._cx_verbose)
+            diagnostics_group.setLayout(diagnostics_layout)
+
+            output_group = QGroupBox("Output", tab)
+            output_layout = QVBoxLayout()
+            output_layout.setSpacing(6)
+
+            # Target name
+            self._cx_target_name = add_output_dir(
+                output_layout,
+                "Nom de sortie (--target-name)",
+                "cx_target_name_dynamic",
+            )
+
+            # Output directory
+            self._cx_output_dir = add_output_dir(
+                output_layout, "Dossier de sortie", "cx_output_dir_dynamic"
+            )
+            output_group.setLayout(output_layout)
+
+            assets_group = QGroupBox("Assets", tab)
+            assets_layout = QVBoxLayout()
+            assets_layout.setSpacing(6)
 
             # Icon button + path input
             self._cx_btn_select_icon, self._cx_icon_path_input = add_icon_selector(
-                layout,
+                assets_layout,
                 "Choisir une icône (.ico)",
                 self.select_icon,
                 "cx_btn_select_icon_dynamic",
@@ -227,30 +263,20 @@ class CXFreezeEngine(CompilerEngine):
             )
             if self._cx_icon_path_input is not None:
                 self._cx_icon_path_input.textChanged.connect(self._on_icon_path_changed)
+            assets_group.setLayout(assets_layout)
 
-            # Debug / verbose
-            self._cx_debug = QCheckBox("Debug")
-            self._cx_debug.setObjectName("cx_debug_dynamic")
-            self._cx_debug.setToolTip("Enable debug output.")
-            layout.addWidget(self._cx_debug)
-
-            self._cx_verbose = QCheckBox("Verbose")
-            self._cx_verbose.setObjectName("cx_verbose_dynamic")
-            self._cx_verbose.setToolTip("Enable verbose output.")
-            layout.addWidget(self._cx_verbose)
-
-            # Target name
-            self._cx_target_name = add_output_dir(
-                layout,
-                "Nom de sortie (--target-name)",
-                "cx_target_name_dynamic",
+            hint = QLabel(
+                "Tip: use target name for the executable label, and keep debug or verbose only when diagnosing builds.",
+                tab,
             )
+            hint.setStyleSheet("color: #888; font-size: 11px;")
+            hint.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
 
-            # Output directory
-            self._cx_output_dir = add_output_dir(
-                layout, "Dossier de sortie", "cx_output_dir_dynamic"
-            )
-
+            layout.addWidget(build_group)
+            layout.addWidget(diagnostics_group)
+            layout.addWidget(output_group)
+            layout.addWidget(assets_group)
+            layout.addWidget(hint)
             layout.addStretch()
 
             # Store references in the engine instance for build_command access
@@ -377,38 +403,39 @@ class CXFreezeEngine(CompilerEngine):
     def apply_i18n(self, gui, tr: dict) -> None:
         """Apply internationalization translations to the engine UI."""
         try:
-            from engine_sdk import resolve_language_code, load_engine_language_file
-
-            # Resolve language code
-            code = resolve_language_code(gui, tr)
-
-            # Load engine-local translations
-            lang_data = load_engine_language_file(__package__, code)
-
             # Apply translations to UI elements if they exist
-            if hasattr(self, "_cx_windowed") and "windowed_checkbox" in lang_data:
-                self._cx_windowed.setText(lang_data["windowed_checkbox"])
-            if hasattr(self, "_cx_windowed") and "tt_windowed" in lang_data:
-                self._cx_windowed.setToolTip(lang_data["tt_windowed"])
-            if hasattr(self, "_cx_btn_select_icon") and "icon_button" in lang_data:
-                self._cx_btn_select_icon.setText(lang_data["icon_button"])
-            if hasattr(self, "_cx_debug") and "debug_checkbox" in lang_data:
-                self._cx_debug.setText(lang_data["debug_checkbox"])
-            if hasattr(self, "_cx_debug") and "tt_debug" in lang_data:
-                self._cx_debug.setToolTip(lang_data["tt_debug"])
-            if hasattr(self, "_cx_verbose") and "verbose_checkbox" in lang_data:
-                self._cx_verbose.setText(lang_data["verbose_checkbox"])
-            if hasattr(self, "_cx_verbose") and "tt_verbose" in lang_data:
-                self._cx_verbose.setToolTip(lang_data["tt_verbose"])
-            if (
-                hasattr(self, "_cx_target_name")
-                and "target_name_placeholder" in lang_data
-            ):
-                self._cx_target_name.setPlaceholderText(
-                    lang_data["target_name_placeholder"]
+            if hasattr(self, "_cx_windowed"):
+                self._cx_windowed.setText(
+                    self.engine_translate("windowed_checkbox", "Windowed")
                 )
-            if hasattr(self, "_cx_output_dir") and "output_placeholder" in lang_data:
-                self._cx_output_dir.setPlaceholderText(lang_data["output_placeholder"])
+            if hasattr(self, "_cx_windowed"):
+                self._cx_windowed.setToolTip(self.engine_translate("tt_windowed", ""))
+            if hasattr(self, "_cx_btn_select_icon"):
+                self._cx_btn_select_icon.setText(
+                    self.engine_translate("icon_button", "Select icon")
+                )
+            if hasattr(self, "_cx_debug"):
+                self._cx_debug.setText(
+                    self.engine_translate("debug_checkbox", "Debug mode")
+                )
+            if hasattr(self, "_cx_debug"):
+                self._cx_debug.setToolTip(self.engine_translate("tt_debug", ""))
+            if hasattr(self, "_cx_verbose"):
+                self._cx_verbose.setText(
+                    self.engine_translate("verbose_checkbox", "Verbose output")
+                )
+            if hasattr(self, "_cx_verbose"):
+                self._cx_verbose.setToolTip(self.engine_translate("tt_verbose", ""))
+            if hasattr(self, "_cx_target_name"):
+                self._cx_target_name.setPlaceholderText(
+                    self.engine_translate(
+                        "target_name_placeholder", "Target executable name"
+                    )
+                )
+            if hasattr(self, "_cx_output_dir"):
+                self._cx_output_dir.setPlaceholderText(
+                    self.engine_translate("output_placeholder", "Output directory")
+                )
         except Exception:
             pass
 
