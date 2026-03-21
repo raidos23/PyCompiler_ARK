@@ -82,6 +82,11 @@ python pycompiler_ark.py --version
 python pycompiler_ark.py --info
 python pycompiler_ark.py --cli
 python pycompiler_ark.py --ide-gui
+python pycompiler_ark.py --classic-gui
+python pycompiler_ark.py --no-splash
+python pycompiler_ark.py --unload
+python pycompiler_ark.py bcasl
+python pycompiler_ark.py engines --dry-run
 ```
 
 ### Dedicated CLI quick commands
@@ -124,10 +129,15 @@ python -m OnlyMod.EngineOnlyMod --engine nuitka -f script.py --dry-run
 
 ## Documentation
 
+- [Architecture overview](docs/architecture.md)
+- [Contributing guide](docs/contributing.md)
+- [Dependency analyzer](docs/dependency_analyzer.md)
 - [How to create an engine](docs/how_to_create_an_engine.md)
 - [How to create a BC plugin](docs/how_to_create_a_bc_plugin.md)
 - [Dedicated interactive CLI (`--cli`)](docs/dedicated_cli.md)
 - [IDE-like main GUI (`--ide-gui`)](docs/ide_like_gui.md)
+- [IDE/classic parity matrix](docs/ide_classic_parity.md)
+- [Release smoke checklist](docs/release_smoke_checklist.md)
 
 ---
 
@@ -161,8 +171,8 @@ python -m OnlyMod.EngineOnlyMod --engine nuitka -f script.py --dry-run
 ```bash
 ruff check .
 black --check .
-mypy .
-pytest
+pytest -q tests
+python -m py_compile pycompiler_ark.py
 ```
 
 ---
