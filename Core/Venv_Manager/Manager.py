@@ -481,6 +481,9 @@ class VenvManager:
             return ["--break-system-packages"]
         return []
 
+    def _tools_stage_prefix(self) -> str:
+        return "[tools:python] "
+
     def has_tool_binary(self, venv_root: str, tool: str) -> bool:
         """Non-blocking heuristic check: detect console script/binary inside the venv.
         This avoids spawning subprocesses and keeps UI fully responsive.
@@ -571,7 +574,9 @@ class VenvManager:
             self.venv_check_progress.show()
             self._check_next_venv_pkg()
         except Exception as e:
-            self._safe_log(f"❌ Erreur ensure_tools_installed: {e}")
+            self._safe_log(
+                f"❌ {self._tools_stage_prefix()}Erreur ensure_tools_installed: {e}"
+            )
 
     def ensure_tools_installed_system(self, tools: list[str]) -> None:
         """Asynchronously check/install tools in system Python using pip."""
@@ -591,7 +596,9 @@ class VenvManager:
             self.venv_check_progress.show()
             self._check_next_venv_pkg()
         except Exception as e:
-            self._safe_log(f"❌ Erreur ensure_tools_installed_system: {e}")
+            self._safe_log(
+                f"❌ {self._tools_stage_prefix()}Erreur ensure_tools_installed_system: {e}"
+            )
 
     # ---------- Utility ----------
     def _safe_decode(self, data: bytes, error_handling: str = "replace") -> str:
@@ -1381,9 +1388,13 @@ class VenvManager:
             return
         if code == 0:
             if self._venv_check_use_python:
-                self._safe_log(f"✅ {pkg} déjà installé (Python système).")
+                self._safe_log(
+                    f"✅ {self._tools_stage_prefix()}{pkg} déjà installé (Python système)."
+                )
             else:
-                self._safe_log(f"✅ {pkg} déjà installé dans le venv.")
+                self._safe_log(
+                    f"✅ {self._tools_stage_prefix()}{pkg} déjà installé dans le venv."
+                )
             self._venv_check_index += 1
             try:
                 next_label = (
@@ -1399,7 +1410,9 @@ class VenvManager:
                 pass
             self._check_next_venv_pkg()
         else:
-            self._safe_log(f"📦 Installation automatique de {pkg}...")
+            self._safe_log(
+                f"📦 {self._tools_stage_prefix()}Installation automatique de {pkg}..."
+            )
             try:
                 self.venv_check_progress.set_message(f"Installation de {pkg}...")
                 self.venv_check_progress.progress.setRange(0, 0)

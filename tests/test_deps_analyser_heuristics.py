@@ -15,6 +15,9 @@
 
 from __future__ import annotations
 
+import importlib
+import sys
+
 import pytest
 
 pytest.importorskip("PySide6")
@@ -28,6 +31,21 @@ from Core.deps_analyser.analyser import (
     _resolve_relative_import_root,
     _should_skip_analysis_path,
 )
+
+_STUB_PREFIX = "deps_stub_"
+
+
+@pytest.fixture(autouse=True)
+def _isolate_deps_analyser_test_state():
+    before = {name for name in sys.modules if name.startswith(_STUB_PREFIX)}
+    _discover_workspace_hints.cache_clear()
+    _classify_module_origin.cache_clear()
+    yield
+    for name in list(sys.modules):
+        if name.startswith(_STUB_PREFIX) and name not in before:
+            sys.modules.pop(name, None)
+    _discover_workspace_hints.cache_clear()
+    _classify_module_origin.cache_clear()
 
 
 def test_discover_workspace_hints_reads_pyproject_and_setup_cfg(tmp_path) -> None:
@@ -193,3 +211,16 @@ plugin = importlib.import_module("pluggy")
 
     assert "mypkg" in modules
     assert "pluggy" in modules
+
+
+def test_deps_analyser_stub_modules_are_isolated_from_sys_modules(
+    tmp_path, monkeypatch
+) -> None:
+    pkg = tmp_path / f"{_STUB_PREFIX}pkg"
+    pkg.mkdir(parents=True)
+    (pkg / "__init__.py").write_text("VALUE = 1\n", encoding="utf-8")
+
+    monkeypatch.syspath_prepend(str(tmp_path))
+    importlib.import_module(f"{_STUB_PREFIX}pkg")
+
+    assert f"{_STUB_PREFIX}pkg" in sys.modules

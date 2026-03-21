@@ -168,7 +168,9 @@ class SpecialEngine(CompilerEngine):
 
 **Monolithic Tab Example**
 The following dummy engine shows how to build a very large UI tab. The UI will
-handle scrolling automatically if needed.
+handle scrolling automatically if needed. You do not need to wrap your engine
+tab in an extra scroll area for this use case, because the host UI already adds
+scrolling behavior when a tab becomes too large.
 ```python
 from __future__ import annotations
 

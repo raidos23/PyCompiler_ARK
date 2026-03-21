@@ -57,6 +57,11 @@ def log_i18n_level(gui, level: str, fr: str, en: str) -> None:
         pass
 
 
+def _tools_stage_message(stage: str, fr: str, en: str) -> tuple[str, str]:
+    prefix = f"[tools:{stage}] "
+    return prefix + fr, prefix + en
+
+
 class CompilerEngine:
     """
     Base class for a pluggable compilation engine.
@@ -194,8 +199,11 @@ class CompilerEngine:
                         log_i18n_level(
                             gui,
                             "info",
-                            f"Installation des outils système manquants: {missing_system}",
-                            f"Installing missing system tools: {missing_system}",
+                            *_tools_stage_message(
+                                "system",
+                                f"Installation des outils système manquants: {missing_system}",
+                                f"Installing missing system tools: {missing_system}",
+                            ),
                         )
 
                         # Detect platform and use appropriate installation method
@@ -213,31 +221,43 @@ class CompilerEngine:
                                         log_i18n_level(
                                             gui,
                                             "success",
-                                            f"Outils système installés avec succès: {missing_system}",
-                                            f"System tools installed successfully: {missing_system}",
+                                            *_tools_stage_message(
+                                                "system",
+                                                f"Outils système installés avec succès: {missing_system}",
+                                                f"System tools installed successfully: {missing_system}",
+                                            ),
                                         )
                                     else:
                                         log_i18n_level(
                                             gui,
                                             "error",
-                                            f"Échec installation outils système: {missing_system} (code: {process.exitCode()})",
-                                            f"System tools installation failed: {missing_system} (code: {process.exitCode()})",
+                                            *_tools_stage_message(
+                                                "system",
+                                                f"Échec installation outils système: {missing_system} (code: {process.exitCode()})",
+                                                f"System tools installation failed: {missing_system} (code: {process.exitCode()})",
+                                            ),
                                         )
                                         system_install_ok = False
                                 else:
                                     log_i18n_level(
                                         gui,
                                         "warning",
-                                        "Timeout lors de l'installation des outils système",
-                                        "Timeout during system tools installation",
+                                        *_tools_stage_message(
+                                            "system",
+                                            "Timeout lors de l'installation des outils système",
+                                            "Timeout during system tools installation",
+                                        ),
                                     )
                                     system_install_ok = False
                             else:
                                 log_i18n_level(
                                     gui,
                                     "error",
-                                    "Impossible de démarrer l'installation des outils système",
-                                    "Unable to start system tools installation",
+                                    *_tools_stage_message(
+                                        "system",
+                                        "Impossible de démarrer l'installation des outils système",
+                                        "Unable to start system tools installation",
+                                    ),
                                 )
                                 system_install_ok = False
 
@@ -276,31 +296,43 @@ class CompilerEngine:
                                             log_i18n_level(
                                                 gui,
                                                 "success",
-                                                f"Outils Windows installés: {missing_system}",
-                                                f"Windows tools installed: {missing_system}",
+                                                *_tools_stage_message(
+                                                    "system",
+                                                    f"Outils Windows installés: {missing_system}",
+                                                    f"Windows tools installed: {missing_system}",
+                                                ),
                                             )
                                         else:
                                             log_i18n_level(
                                                 gui,
                                                 "error",
-                                                f"Échec installation Windows: {missing_system}",
-                                                f"Windows installation failed: {missing_system}",
+                                                *_tools_stage_message(
+                                                    "system",
+                                                    f"Échec installation Windows: {missing_system}",
+                                                    f"Windows installation failed: {missing_system}",
+                                                ),
                                             )
                                             system_install_ok = False
                                     else:
                                         log_i18n_level(
                                             gui,
                                             "warning",
-                                            "Timeout lors de l'installation Windows",
-                                            "Timeout during Windows installation",
+                                            *_tools_stage_message(
+                                                "system",
+                                                "Timeout lors de l'installation Windows",
+                                                "Timeout during Windows installation",
+                                            ),
                                         )
                                         system_install_ok = False
                                 else:
                                     log_i18n_level(
                                         gui,
                                         "warning",
-                                        "winget non disponible, installation manuelle requise",
-                                        "winget not available, manual installation required",
+                                        *_tools_stage_message(
+                                            "system",
+                                            "winget non disponible, installation manuelle requise",
+                                            "winget not available, manual installation required",
+                                        ),
                                     )
                                     # Open documentation URL for manual installation
                                     sys_manager.open_urls(
@@ -313,31 +345,43 @@ class CompilerEngine:
                                 log_i18n_level(
                                     gui,
                                     "warning",
-                                    f"Aucun équivalent Windows pour: {missing_system}",
-                                    f"No Windows equivalent for: {missing_system}",
+                                    *_tools_stage_message(
+                                        "system",
+                                        f"Aucun équivalent Windows pour: {missing_system}",
+                                        f"No Windows equivalent for: {missing_system}",
+                                    ),
                                 )
                         else:
                             log_i18n_level(
                                 gui,
                                 "warning",
-                                "Plateforme non supportée pour l'installation automatique",
-                                "Platform not supported for automatic installation",
+                                *_tools_stage_message(
+                                    "system",
+                                    "Plateforme non supportée pour l'installation automatique",
+                                    "Platform not supported for automatic installation",
+                                ),
                             )
                             system_install_ok = False
                     else:
                         log_i18n_level(
                             gui,
                             "success",
-                            f"Tous les outils système sont déjà installés: {system_tools}",
-                            f"All system tools are already installed: {system_tools}",
+                            *_tools_stage_message(
+                                "system",
+                                f"Tous les outils système sont déjà installés: {system_tools}",
+                                f"All system tools are already installed: {system_tools}",
+                            ),
                         )
 
                 except Exception as e:
                     log_i18n_level(
                         gui,
                         "warning",
-                        f"Erreur lors de la vérification/installation des outils système: {e}",
-                        f"Error checking/installing system tools: {e}",
+                        *_tools_stage_message(
+                            "system",
+                            f"Erreur lors de la vérification/installation des outils système: {e}",
+                            f"Error checking/installing system tools: {e}",
+                        ),
                     )
                     system_install_ok = False
 
@@ -353,8 +397,11 @@ class CompilerEngine:
                         log_i18n_level(
                             gui,
                             "info",
-                            f"Installation des outils Python manquants: {missing_python}",
-                            f"Installing missing Python tools: {missing_python}",
+                            *_tools_stage_message(
+                                "python",
+                                f"Installation des outils Python manquants: {missing_python}",
+                                f"Installing missing Python tools: {missing_python}",
+                            ),
                         )
                         gui.venv_manager.ensure_tools_installed_system(missing_python)
                 else:
@@ -368,8 +415,11 @@ class CompilerEngine:
                             log_i18n_level(
                                 gui,
                                 "info",
-                                f"Installation des outils Python manquants: {missing_python}",
-                                f"Installing missing Python tools: {missing_python}",
+                                *_tools_stage_message(
+                                    "python",
+                                    f"Installation des outils Python manquants: {missing_python}",
+                                    f"Installing missing Python tools: {missing_python}",
+                                ),
                             )
                             gui.venv_manager.ensure_tools_installed(
                                 venv_path, missing_python

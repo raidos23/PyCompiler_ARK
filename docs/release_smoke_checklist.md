@@ -10,6 +10,7 @@ Use this checklist before cutting a release tag or publishing release artifacts.
   - Windows / Python 3.12
   - Windows / Python 3.13
 - Confirm `lint`, `tests`, and `smoke` jobs all passed.
+- Re-check the [Quality freeze policy](./quality_freeze.md) before tagging.
 
 ## CLI Smoke
 
@@ -51,3 +52,7 @@ Expected outcome:
 - If the release workflow is used, confirm artifacts are attached for each target OS.
 - Confirm checksum files are generated and included.
 - Confirm third-party license output is present when expected.
+
+## Blocking bug status
+
+As validated by the current smoke-check plan, no known blocking bug remains open in the quality plan.

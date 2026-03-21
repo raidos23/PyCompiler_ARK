@@ -132,6 +132,7 @@ python -m OnlyMod.EngineOnlyMod --engine nuitka -f script.py --dry-run
 - [Architecture overview](docs/architecture.md)
 - [Contributing guide](docs/contributing.md)
 - [Dependency analyzer](docs/dependency_analyzer.md)
+- [Quality freeze policy](docs/quality_freeze.md)
 - [How to create an engine](docs/how_to_create_an_engine.md)
 - [How to create a BC plugin](docs/how_to_create_a_bc_plugin.md)
 - [Dedicated interactive CLI (`--cli`)](docs/dedicated_cli.md)
@@ -174,6 +175,11 @@ black --check .
 pytest -q tests
 python -m py_compile pycompiler_ark.py
 ```
+
+Quality status:
+
+- all documented quality-plan phases are closed
+- the active backlog is considered closed under the current quality freeze
 
 ---
 
