@@ -7,12 +7,12 @@ import sys
 from pathlib import Path
 from typing import Iterable, Optional
 
-from EngineLoader import unload_all
-
-from .launchers import (
-    launch_bcasl_standalone,
-    launch_engines_only_standalone,
-    launch_main_application,
+from .lazy_ops import (
+    available_engine_ids,
+    launch_bcasl_gui,
+    launch_engines_gui,
+    launch_main_gui,
+    unload_all_engines,
 )
 from .dedicated import run_dedicated_cli
 from .output import error, info, plain, warn
@@ -85,7 +85,7 @@ def run(argv: Optional[list[str]], app_version: str) -> int:
             print_system_info(app_version)
             return 0
         if args[0] == "--unload":
-            result = unload_all()
+            result = unload_all_engines()
             if result["status"] == "success":
                 info(f"{result['message']}")
                 if result["unloaded"]:
@@ -97,7 +97,7 @@ def run(argv: Optional[list[str]], app_version: str) -> int:
             return 0 if result["status"] == "success" else 1
         if args[0] == "bcasl":
             workspace_dir = args[1] if len(args) > 1 else None
-            return launch_bcasl_standalone(workspace_dir)
+            return launch_bcasl_gui(workspace_dir)
         if args[0] == "engines":
             sub_args = args[1:]
             if (
@@ -106,18 +106,16 @@ def run(argv: Optional[list[str]], app_version: str) -> int:
                 or "--dry-run" in sub_args
                 or "-d" in sub_args
             ):
-                from EngineLoader import available_engines
-
-                engines = available_engines()
+                engines = available_engine_ids()
                 plain(f"Available engines ({len(engines)}):")
                 for eid in engines:
                     plain(f"  - {eid}")
                 return 0
 
             workspace_dir = _maybe_workspace(sub_args)
-            return launch_engines_only_standalone(workspace_dir)
+            return launch_engines_gui(workspace_dir)
         if args[0] == "unload":
-            result = unload_all()
+            result = unload_all_engines()
             if result["status"] == "success":
                 info(f"{result['message']}")
                 if result["unloaded"]:
@@ -132,6 +130,6 @@ def run(argv: Optional[list[str]], app_version: str) -> int:
         plain(USAGE)
         return 1
 
-    return launch_main_application(
+    return launch_main_gui(
         no_splash=no_splash, ide_gui=ide_gui, classic_gui=classic_gui
     )

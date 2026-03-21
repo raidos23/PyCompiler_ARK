@@ -215,11 +215,46 @@ def handle_fatal(exc_info) -> None:
     _excepthook(*exc_info)
 
 
-def install_runtime(app_version: str) -> None:
+def should_enable_qt(argv: list[str] | None) -> bool:
+    """Return True only when the requested command path really needs Qt startup."""
+    args = list(argv or [])
+    if not args:
+        return True
+
+    if any(flag in args for flag in ("--help", "-h", "--version", "-v", "--info", "--cli", "--help-all")):
+        return False
+
+    if "--classic-gui" in args or "--ide-gui" in args:
+        return True
+
+    if "--unload" in args:
+        return False
+
+    cmd = None
+    for token in args:
+        if not token.startswith("-"):
+            cmd = token
+            break
+
+    if cmd is None:
+        return True
+    if cmd in ("main",):
+        return True
+    if cmd in ("unload", "version", "help", "info", "engine"):
+        return False
+    if cmd == "engines":
+        return not any(flag in args for flag in ("--dry-run", "-d"))
+    if cmd == "bcasl":
+        return False
+    return False
+
+
+def install_runtime(app_version: str, enable_qt: bool = True) -> None:
     ensure_sys_path()
     configure_logging()
     configure_env()
     enable_faulthandler()
-    install_qt_metadata(app_version)
-    install_qt_handlers()
+    if enable_qt:
+        install_qt_metadata(app_version)
+        install_qt_handlers()
     install_signal_handlers()

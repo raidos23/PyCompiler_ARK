@@ -8,7 +8,7 @@ from pathlib import Path
 
 from .click_app import build_cli, has_click
 from .fallback import run as run_fallback
-from .runtime import install_runtime, handle_fatal
+from .runtime import install_runtime, handle_fatal, should_enable_qt
 
 
 def _resolve_app_version() -> str:
@@ -27,12 +27,12 @@ def _resolve_app_version() -> str:
 
 def main(argv: list[str] | None = None) -> int:
     app_version = _resolve_app_version()
-    args = list(argv) if argv is not None else None
+    args = list(argv) if argv is not None else list(sys.argv[1:])
     if args and "--verbose" in args:
         import os
 
         os.environ["PYCOMPILER_VERBOSE"] = "1"
-    install_runtime(app_version)
+    install_runtime(app_version, enable_qt=should_enable_qt(args))
 
     if has_click():
         try:

@@ -6,13 +6,13 @@ from __future__ import annotations
 from pathlib import Path
 import sys
 
-from EngineLoader import unload_all
-
 from .dedicated import run_dedicated_cli
-from .launchers import (
-    launch_bcasl_standalone,
-    launch_engines_only_standalone,
-    launch_main_application,
+from .lazy_ops import (
+    available_engine_ids,
+    launch_bcasl_gui,
+    launch_engines_gui,
+    launch_main_gui,
+    unload_all_engines,
 )
 from .output import error, info, plain, warn
 from .system_info import print_system_info
@@ -109,7 +109,7 @@ def build_cli(app_version: str):
             ctx.exit(run_dedicated_cli(app_version))
 
         if unload_engines_flag:
-            result = unload_all()
+            result = unload_all_engines()
             if result["status"] == "success":
                 info(f"{result['message']}")
                 if result["unloaded"]:
@@ -137,7 +137,7 @@ def build_cli(app_version: str):
 
         if ctx.invoked_subcommand is None:
             ctx.exit(
-                launch_main_application(
+                launch_main_gui(
                     no_splash=ctx.obj.get("no_splash", False),
                     ide_gui=ctx.obj.get("ide_gui", False),
                     classic_gui=ctx.obj.get("classic_gui", False),
@@ -166,7 +166,7 @@ def build_cli(app_version: str):
                     error(f"Failed to create directory: {exc}")
                     sys.exit(1)
 
-        sys.exit(launch_bcasl_standalone(workspace_dir))
+        sys.exit(launch_bcasl_gui(workspace_dir))
 
     @cli.command(context_settings=dict(help_option_names=["-h", "--help"]))
     @click.argument("workspace", required=False, type=click.Path(exists=False))
@@ -206,15 +206,13 @@ def build_cli(app_version: str):
                     sys.exit(1)
 
         if dry_run:
-            from EngineLoader import available_engines
-
-            engines = available_engines()
+            engines = available_engine_ids()
             plain(f"Available engines ({len(engines)}):")
             for eid in engines:
                 plain(f"  • {eid}")
             sys.exit(0)
 
-        sys.exit(launch_engines_only_standalone(workspace_dir))
+        sys.exit(launch_engines_gui(workspace_dir))
 
     @cli.command(context_settings=dict(help_option_names=["-h", "--help"]))
     def main_app():
@@ -222,7 +220,7 @@ def build_cli(app_version: str):
         ctx = click.get_current_context(silent=True)
         ctx_obj = ctx.obj if ctx is not None else {}
         sys.exit(
-            launch_main_application(
+            launch_main_gui(
                 no_splash=bool(ctx_obj.get("no_splash", False)),
                 ide_gui=bool(ctx_obj.get("ide_gui", False)),
             )
@@ -233,7 +231,7 @@ def build_cli(app_version: str):
     )
     def unload_engines_cmd():
         """Unload all registered engines."""
-        result = unload_all()
+        result = unload_all_engines()
         if result["status"] == "success":
             info(f"{result['message']}")
             if result["unloaded"]:

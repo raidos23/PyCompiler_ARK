@@ -6,12 +6,12 @@ from __future__ import annotations
 import shlex
 from pathlib import Path
 
-from EngineLoader import available_engines, unload_all
-
-from .launchers import (
-    launch_bcasl_standalone,
-    launch_engines_only_standalone,
-    launch_main_application,
+from .lazy_ops import (
+    available_engine_ids,
+    launch_bcasl_gui,
+    launch_engines_gui,
+    launch_main_gui,
+    unload_all_engines,
 )
 from .output import error, info, plain, success, warn
 from .system_info import print_system_info
@@ -222,7 +222,7 @@ def _resolve_workspace(raw: str | None) -> str | None:
 
 def _run_engines(args: list[str]) -> int:
     if "--dry-run" in args or "-d" in args:
-        engines = available_engines()
+        engines = available_engine_ids()
         if _RICH_CONSOLE is not None and Table is not None:
             table = Table(
                 title=f"Available engines ({len(engines)})", header_style="bold magenta"
@@ -238,12 +238,12 @@ def _run_engines(args: list[str]) -> int:
                 plain(f"  • {eid}")
         return 0
     workspace = _resolve_workspace(args[0]) if args else None
-    return launch_engines_only_standalone(workspace)
+    return launch_engines_gui(workspace)
 
 
 def _run_bcasl(args: list[str]) -> int:
     workspace = _resolve_workspace(args[0]) if args else None
-    return launch_bcasl_standalone(workspace)
+    return launch_bcasl_gui(workspace)
 
 
 def _new_bcasl_app(workspace: str | None = None):
@@ -591,7 +591,7 @@ def _run_engine_command(args: list[str]) -> int:
 
 
 def _run_unload() -> int:
-    result = unload_all()
+    result = unload_all_engines()
     if result["status"] == "success":
         success(result["message"])
         if result["unloaded"]:
@@ -720,7 +720,7 @@ def run_dedicated_cli(app_version: str) -> int:
                         plain("Usage: main [--ide-gui]")
                         ide_gui = False
                         break
-                launch_main_application(no_splash=False, ide_gui=ide_gui)
+                launch_main_gui(no_splash=False, ide_gui=ide_gui)
                 continue
             if cmd == "bcasl":
                 if args and args[0].lower() in ("help", "list", "run"):
