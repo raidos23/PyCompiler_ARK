@@ -30,11 +30,11 @@
 - [x] les engines sans exception presente tous un probleme de design au niveau du bouton de choix d'icon. En effet le button est un simple button donc on ne sais pas si licon est bien selectionner alors il serait pertinent dajoutetr un label a coter qui montre le chemin de licon selectionner ce qui peut aussi permetrttre un  parametrage a la foix ux/ui et manuel.
  ## Docs
 
- - [ ] il faut preciser dans la docs for engine a la section de monolitics ui que pas la peine de faire le scroll area cr l'ui s'en charge automatiquement dès qu-il voit que le tab est trop large.
+ - [x] il faut preciser dans la docs for engine a la section de monolitics ui que pas la peine de faire le scroll area cr l'ui s'en charge automatiquement dès qu-il voit que le tab est trop large.
 
 ## venvmanager
 
-- [ ] il faut que sur linux si on utilise le python of system que les installation utilise le flag break system package pour s'assurer que l-instalation aura lieu coute que coute. sur windows cela nest pas necessaire  car windwos n-a pas souvent de problme niveau resolution de package.
+- [x] il faut que sur linux si on utilise le python of system que les installation utilise le flag break system package pour s'assurer que l-instalation aura lieu coute que coute. sur windows cela nest pas necessaire  car windwos n-a pas souvent de problme niveau resolution de package.
 
 ## ide gui 
 - [x] donner toute les capacité gui de classic gui à ide gui.
@@ -53,3 +53,11 @@
 - [x] ajouter une documentation detaillee du dependency analyzer.
 - [x] ajouter une vue d'architecture Core/Engine/UI.
 - [x] ajouter un guide contributeur operable.
+
+## Finalisation
+
+- [x] ajouter la politique de quality freeze et le statut des bugs bloquants valides par smoke checks.
+- [x] uniformiser les logs du flux d'installation outils avec des prefixes de stage stables.
+- [x] ajouter les tests Linux system Python pour confirmer --break-system-packages.
+- [x] corriger l'isolation des stubs de tests deps_analyser pour eviter la pollution de sys.modules.
+- [x] toutes les phases et tout le backlog sont maintenant clotures.
