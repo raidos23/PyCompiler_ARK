@@ -17,8 +17,13 @@
 
 from __future__ import annotations
 
+import pytest
+
+pytest.importorskip("PySide6")
+
 from Core.ArkConfigManager import set_entrypoint
 import Core.Compiler as compiler_module
+from Core.Compiler.compiler import CompilationThread
 
 
 class DummyMainProcess:
@@ -101,3 +106,28 @@ def test_compile_all_uses_entrypoint(test_workspace, monkeypatch) -> None:
     compiler_module.compile_all(gui)
 
     assert captured.get("files") == [str(entry)]
+
+
+def test_compilation_thread_warns_when_live_streams_are_unavailable() -> None:
+    thread = CompilationThread(program="python", args=["-V"])
+    warnings: list[str] = []
+    outputs: list[str] = []
+
+    thread.error_ready.connect(warnings.append)
+    thread.output_ready.connect(outputs.append)
+
+    class DummyProcess:
+        stdout = None
+        stderr = None
+
+        def poll(self):
+            return None
+
+    thread.process = DummyProcess()
+
+    thread._read_output()
+    thread._read_remaining()
+
+    assert thread._live_output_disabled is True
+    assert any("stdout/stderr unavailable" in msg for msg in warnings)
+    assert outputs == []

@@ -103,6 +103,8 @@ class CompilationThread(QThread):
         self.cancel_requested = False
         self.process: Optional[subprocess.Popen] = None
         self.start_time: Optional[datetime] = None
+        self._live_output_disabled = False
+        self._stream_warning_emitted = False
 
     def run(self) -> None:
         """Exécute le processus de compilation."""
@@ -156,11 +158,15 @@ class CompilationThread(QThread):
             if self.process is None or self.process.poll() is not None:
                 break
 
+            streams = self._available_live_streams()
+            if not streams:
+                self._warn_missing_live_streams()
+                self._live_output_disabled = True
+                break
+
             # Utiliser select pour attendre des données
             try:
-                ready, _, _ = select.select(
-                    [self.process.stdout, self.process.stderr], [], [], 0.1
-                )
+                ready, _, _ = select.select(streams, [], [], 0.1)
 
                 for stream in ready:
                     if stream == self.process.stdout:
@@ -175,6 +181,8 @@ class CompilationThread(QThread):
                             self._update_progress(line)
 
             except Exception:
+                self._warn_missing_live_streams()
+                self._live_output_disabled = True
                 break
 
             time.sleep(0.01)
@@ -186,7 +194,10 @@ class CompilationThread(QThread):
 
         # Lire stdout restant
         try:
-            remaining_stdout = self.process.stdout.read()
+            if self.process.stdout is None:
+                remaining_stdout = None
+            else:
+                remaining_stdout = self.process.stdout.read()
             if remaining_stdout:
                 for line in remaining_stdout.strip().split("\n"):
                     if line:
@@ -196,13 +207,42 @@ class CompilationThread(QThread):
 
         # Lire stderr restant
         try:
-            remaining_stderr = self.process.stderr.read()
+            if self.process.stderr is None:
+                remaining_stderr = None
+            else:
+                remaining_stderr = self.process.stderr.read()
             if remaining_stderr:
                 for line in remaining_stderr.strip().split("\n"):
                     if line:
                         self.error_ready.emit(line.rstrip())
         except Exception:
             pass
+
+    def _available_live_streams(self) -> list:
+        """Return stdout/stderr streams that can be safely monitored in real time."""
+        if self.process is None:
+            return []
+        streams = []
+        try:
+            if getattr(self.process, "stdout", None) is not None:
+                streams.append(self.process.stdout)
+        except Exception:
+            pass
+        try:
+            if getattr(self.process, "stderr", None) is not None:
+                streams.append(self.process.stderr)
+        except Exception:
+            pass
+        return streams
+
+    def _warn_missing_live_streams(self) -> None:
+        """Emit a single warning when live stdout/stderr monitoring is unavailable."""
+        if self._stream_warning_emitted:
+            return
+        self._stream_warning_emitted = True
+        self.error_ready.emit(
+            "Warning: stdout/stderr unavailable; stopping real-time output reading."
+        )
 
     def _update_progress(self, line: str) -> None:
         """Met à jour la progression basée sur la sortie."""

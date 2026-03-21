@@ -28,6 +28,8 @@ from PySide6.QtWidgets import (
     QToolButton,
     QStatusBar,
     QWidget,
+    QFrame,
+    QSplitter,
 )
 
 
@@ -194,6 +196,78 @@ def _map_ide_like_widgets(self) -> None:
     except Exception:
         pass
     _setup_status_bar(self)
+
+
+def _tune_ide_like_layout(self) -> None:
+    """Relax tight layout constraints in the IDE-like UI for better label fit."""
+    header = self.ui.findChild(QFrame, "header")
+    if header is not None:
+        try:
+            header.setMinimumHeight(48)
+            header.setMaximumHeight(56)
+        except Exception:
+            pass
+
+    for btn_name in ("compile_btn", "cancel_btn"):
+        btn = getattr(self, btn_name, None)
+        if btn is None:
+            continue
+        try:
+            btn.setMinimumSize(124, 34)
+        except Exception:
+            pass
+
+    workspace_panel = self.ui.findChild(QFrame, "workspace_panel")
+    if workspace_panel is not None:
+        try:
+            workspace_panel.setMinimumWidth(280)
+            workspace_panel.setMaximumWidth(400)
+        except Exception:
+            pass
+
+    tools_panel = self.ui.findChild(QFrame, "tools_panel")
+    if tools_panel is not None:
+        try:
+            tools_panel.setMinimumWidth(200)
+            tools_panel.setMaximumWidth(280)
+        except Exception:
+            pass
+
+    logs_panel = self.ui.findChild(QFrame, "logs_panel")
+    if logs_panel is not None:
+        try:
+            logs_panel.setMinimumHeight(190)
+            logs_panel.setMaximumHeight(320)
+        except Exception:
+            pass
+
+    main_splitter = self.ui.findChild(QSplitter, "mainSplitter")
+    if main_splitter is not None:
+        try:
+            main_splitter.setStretchFactor(0, 0)
+            main_splitter.setStretchFactor(1, 0)
+            main_splitter.setStretchFactor(2, 1)
+            main_splitter.setSizes([52, 300, 1013])
+        except Exception:
+            pass
+
+    top_splitter = self.ui.findChild(QSplitter, "topSplitter")
+    if top_splitter is not None:
+        try:
+            top_splitter.setStretchFactor(0, 1)
+            top_splitter.setStretchFactor(1, 0)
+            top_splitter.setSizes([820, 245])
+        except Exception:
+            pass
+
+    right_splitter = self.ui.findChild(QSplitter, "rightSplitter")
+    if right_splitter is not None:
+        try:
+            right_splitter.setStretchFactor(0, 1)
+            right_splitter.setStretchFactor(1, 0)
+            right_splitter.setSizes([470, 230])
+        except Exception:
+            pass
 
 
 def _setup_ide_like_compiler_tabs(self) -> None:
@@ -517,6 +591,7 @@ def init_ide_like_ui(self) -> None:
     """Initialize the ide-like UI and wire it to existing Core methods."""
     _load_ide_like_ui(self)
     _map_ide_like_widgets(self)
+    _tune_ide_like_layout(self)
     _apply_classic_policies(self)
     _setup_more_tools_menu(self)
     try:
