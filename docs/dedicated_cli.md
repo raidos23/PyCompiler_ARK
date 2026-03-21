@@ -8,13 +8,24 @@ python pycompiler_ark.py --cli
 python -m pycompiler_ark --cli
 ```
 
-Alternative main GUI launch (outside dedicated CLI):
+Preferred main GUI launch from the top-level CLI:
+
+```bash
+python pycompiler_ark.py gui main --ide
+```
+
+Legacy compatibility alias outside dedicated CLI:
 
 ```bash
 python pycompiler_ark.py --ide-gui
 ```
 
 This mode is designed as a lightweight control shell for common launcher actions.
+
+The dedicated shell is complementary to the structured top-level CLI. Use:
+
+- top-level Click commands for scripting and CI
+- `--cli` for interactive operator workflows
 
 ## What It Does
 
@@ -42,6 +53,7 @@ This mode is designed as a lightweight control shell for common launcher actions
 - `engine info <engine_id>`: print engine metadata and compatibility.
 - `engine dry-run <engine_id> <file.py>`: build and print the compile command.
 - `engine compile <engine_id> <file.py>`: execute compilation from the dedicated CLI.
+- `engine ... --workspace <path>`: explicit workspace override when needed.
 - `engine ... -w <workspace>`: optional workspace override for engine commands.
 - `unload`: unload all registered engines.
 - `exit` or `quit`: close the dedicated CLI.
@@ -71,3 +83,4 @@ ark-cli> exit
 - When a GUI command is executed (`main`, `bcasl`, `engines`), control returns to the prompt after the GUI is closed.
 - If Rich is installed, output is colorized. If not, the CLI still works in plain mode.
 - `engine compile` validates the target file path before running the engine command.
+- For automation, prefer the top-level commands documented in the README (`engine`, `workspace`, `doctor`, `scaffold`, `gui`).

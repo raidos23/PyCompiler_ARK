@@ -88,6 +88,8 @@ Tools and dependencies.
 - Wire signals locally and use `gui.log.append(...)` for logs.
 - No need to wrap your tab in a scroll area: the UI handles large tabs automatically when needed.
 - Prefer shared UI helpers from the SDK for common patterns (icon selector, output dir, checkbox rows).
+- Prefer grouping options with `QGroupBox` sections and compact hints, following the built-in engines layout style.
+- Keep widget attribute names stable once they are used by config persistence or compilation logic.
 
 ### **Engine Config (get_config / set_config)**
 ARK can persist engine UI options per workspace in:
