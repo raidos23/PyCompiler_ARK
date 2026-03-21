@@ -44,3 +44,12 @@
 
 - [x] finaliser la parite IDE/classic et documenter la matrice de parite.
 - [x] durcir l'analyseur deps avec un parseur d'imports testable et une meilleure couverture des imports relatifs et dynamiques.
+- [x] stabiliser la CI avec une matrix Ubuntu/Windows en Python 3.12/3.13, puis des smoke checks realistes.
+- [x] ajouter une checklist de smoke release dediee.
+
+## Phase 7
+
+- [x] mettre a jour le README avec les options CLI reelles et les nouveaux liens de documentation.
+- [x] ajouter une documentation detaillee du dependency analyzer.
+- [x] ajouter une vue d'architecture Core/Engine/UI.
+- [x] ajouter un guide contributeur operable.
