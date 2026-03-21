@@ -17,11 +17,19 @@ from __future__ import annotations
 
 # Stable i18n facade for engines
 from EngineLoader.registry import (
+    engine_translate,
+    get_language_code,
+    get_translations,
+    register_engine_translations,
     resolve_language_code,
     load_engine_language_file,
 )
 
 __all__ = [
+    "engine_translate",
+    "get_language_code",
+    "get_translations",
+    "register_engine_translations",
     "resolve_language_code",
     "load_engine_language_file",
 ]

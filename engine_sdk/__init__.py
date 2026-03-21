@@ -84,15 +84,6 @@ def _do_lazy_imports():
         _lazy_imports_done = True
 
 
-# Provide access to these functions via __getattr__ for lazy loading
-def __getattr__(name: str):
-    if name in ("pip_executable", "pip_install", "pip_show", "resolve_project_venv"):
-        _do_lazy_imports()
-        if name in _lazy_mainprocess_imports:
-            return _lazy_mainprocess_imports[name]
-    raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
-
-
 try:
     # Optional alias to host-level executable resolver for advanced cases
     from .utils import resolve_executable_path as host_resolve_executable_path  # type: ignore
@@ -103,10 +94,13 @@ except Exception:  # pragma: no cover
 # Re-export system dependency helpers
 # Re-export i18n helpers
 from .i18n import (
+    engine_translate,
+    get_language_code,
+    get_translations,
+    register_engine_translations,
     resolve_language_code,
     load_engine_language_file,
 )
-from .Sys_Deps import SysDependencyManager  # type: ignore
 
 # Re-export engines registry for self-registration from engine packages
 try:
@@ -114,18 +108,36 @@ try:
 except Exception:  # pragma: no cover
     registry = None  # type: ignore
 
+
+def _sync_registry_reference():
+    """Refresh engine_sdk.registry to match the active EngineLoader registry module."""
+    global registry
+    try:
+        from EngineLoader import registry as active_registry  # type: ignore
+
+        registry = active_registry
+    except Exception:
+        pass
+    return registry
+
 __version__ = "1.0.1"
 
 
-# Lazy attribute resolver to reduce import overhead in plugin environments
 def __getattr__(name: str):
+    """Lazy attribute resolver to avoid circular imports and eager Qt loading."""
+    if name in ("pip_executable", "pip_install", "pip_show", "resolve_project_venv"):
+        _do_lazy_imports()
+        if name in _lazy_mainprocess_imports:
+            return _lazy_mainprocess_imports[name]
     if name == "SysDependencyManager":
         import importlib
 
-        mod = importlib.import_module(f"{__name__}.sysdep")
+        mod = importlib.import_module(f"{__name__}.Sys_Deps")
         attr = getattr(mod, "SysDependencyManager")
         globals()["SysDependencyManager"] = attr
         return attr
+    if name == "registry":
+        return _sync_registry_reference()
     raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
 
 
@@ -247,6 +259,10 @@ __all__ = [
     "resolve_executable_path",
     "host_resolve_executable_path",
     "SysDependencyManager",
+    "engine_translate",
+    "get_language_code",
+    "get_translations",
+    "register_engine_translations",
     "resolve_language_code",
     "load_engine_language_file",
     "ensure_min_sdk",
