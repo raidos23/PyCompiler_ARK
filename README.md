@@ -4,7 +4,7 @@
 
 # **PyCompiler ARK**
 
-A Qt-based workshop to compile Python projects with a pre-compilation plugin pipeline (BCASL) and a multi-engine system.
+A Python project build workshop with a Qt GUI, a headless-friendly CLI, a BCASL pre-compilation pipeline, and a multi-engine system.
 
 ---
 
@@ -20,6 +20,7 @@ Build Python apps with a predictable workflow, a configurable pre-compile pipeli
 - **Auto-detection for tricky dependencies**: engine-specific auto-args based on requirements or import scanning.
 - **Workspace-first UI**: filter files, manage exclusions, and follow progress and logs in one place.
 - **Venv-aware execution**: engines can use the project virtual environment automatically.
+- **Structured CLI**: explicit `gui`, `engine`, `workspace`, `doctor`, and `scaffold` commands, with JSON output on key headless paths.
 - **Standalone tools**: dedicated BCASL and Engines managers, plus CLI entry points and dry-run support.
 - **Extensible SDKs**: create new engines and BCASL plugins with the provided SDKs.
 - **Customizable**: theming and translations out of the box.
@@ -81,13 +82,42 @@ python pycompiler_ark.py --help
 python pycompiler_ark.py --version
 python pycompiler_ark.py --info
 python pycompiler_ark.py --cli
-python pycompiler_ark.py --ide-gui
-python pycompiler_ark.py --classic-gui
-python pycompiler_ark.py --no-splash
-python pycompiler_ark.py --unload
-python pycompiler_ark.py bcasl
-python pycompiler_ark.py engines --dry-run
+python pycompiler_ark.py gui main --ide
+python pycompiler_ark.py gui main --classic --no-splash
+python pycompiler_ark.py gui bcasl /path/to/workspace
+python pycompiler_ark.py gui engines /path/to/workspace
+python pycompiler_ark.py engine list --json
+python pycompiler_ark.py engine doctor nuitka src/main.py --json
+python pycompiler_ark.py workspace inspect . --json
+python pycompiler_ark.py doctor --json
+python pycompiler_ark.py scaffold engine demo_engine --json
+python pycompiler_ark.py unload --json
 ```
+
+### CLI groups
+
+- `gui`: launch graphical entrypoints explicitly
+- `engine`: inspect engines, run compatibility checks, dry-run or compile
+- `bcasl`: BCASL GUI or delegated headless actions
+- `workspace`: inspect the current workspace and resolved entrypoint
+- `doctor`: global diagnostics snapshot
+- `scaffold`: generate starter templates for engines and plugins
+
+### Headless note
+
+The CLI bootstrap no longer forces Qt for purely headless commands such as:
+
+- `--help`
+- `--version`
+- `--info`
+- `--cli`
+- `unload`
+- `engine ...`
+- `workspace ...`
+- `doctor`
+- `scaffold ...`
+
+This makes scripting and CI friendlier on machines where the GUI stack is unavailable or intentionally not used.
 
 ### Dedicated CLI quick commands
 
@@ -96,21 +126,16 @@ ark-cli> main
 ark-cli> main --ide-gui
 ark-cli> bcasl run ~/my_workspace --timeout 30
 ark-cli> engine dry-run pyinstaller src/main.py
+ark-cli> engine list
+ark-cli> unload
 ```
 
-### BCASL standalone (GUI)
+### GUI entrypoints
 
 ```bash
-python pycompiler_ark.py bcasl
-python pycompiler_ark.py bcasl /path/to/workspace
-```
-
-### Engines standalone (GUI)
-
-```bash
-python pycompiler_ark.py engines
-python pycompiler_ark.py engines /path/to/workspace
-python pycompiler_ark.py engines --dry-run
+python pycompiler_ark.py gui main --ide
+python pycompiler_ark.py gui bcasl
+python pycompiler_ark.py gui engines
 ```
 
 ### Standalone modules
@@ -136,7 +161,7 @@ python -m OnlyMod.EngineOnlyMod --engine nuitka -f script.py --dry-run
 - [How to create an engine](docs/how_to_create_an_engine.md)
 - [How to create a BC plugin](docs/how_to_create_a_bc_plugin.md)
 - [Dedicated interactive CLI (`--cli`)](docs/dedicated_cli.md)
-- [IDE-like main GUI (`--ide-gui`)](docs/ide_like_gui.md)
+- [IDE-like main GUI (`gui main --ide`)](docs/ide_like_gui.md)
 - [IDE/classic parity matrix](docs/ide_classic_parity.md)
 - [Release smoke checklist](docs/release_smoke_checklist.md)
 
@@ -151,6 +176,7 @@ python -m OnlyMod.EngineOnlyMod --engine nuitka -f script.py --dry-run
 
 ## Project layout
 
+- `cli/` — CLI entrypoints, headless operations, fallback mode, and dedicated shell.
 - `Core/` — main UI logic.
 - `Core/IdeLikeGui/` — wiring layer for the IDE-like main GUI.
 - `ENGINES/` — built-in engines.
@@ -174,6 +200,9 @@ ruff check .
 black --check .
 pytest -q tests
 python -m py_compile pycompiler_ark.py
+python -m pycompiler_ark --help
+python -m pycompiler_ark workspace inspect . --json
+python -m pycompiler_ark engine list --json
 ```
 
 Quality status:

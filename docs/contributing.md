@@ -44,7 +44,9 @@ Useful smoke commands:
 python -m pycompiler_ark --help
 python -m pycompiler_ark --version
 python -m pycompiler_ark --info
-python -m pycompiler_ark engines --dry-run
+python -m pycompiler_ark engine list --json
+python -m pycompiler_ark workspace inspect . --json
+python -m pycompiler_ark doctor --json
 python -m pycompiler_ark --cli
 ```
 
@@ -53,6 +55,7 @@ Release-oriented checks are documented in [Release smoke checklist](./release_sm
 ## Where to make changes
 
 - CLI behavior: `cli/`
+- headless CLI operations and JSON payloads: `cli/headless_ops.py`
 - classic GUI wiring: `Core/UiConnection.py`
 - IDE-like GUI wiring: `Core/IdeLikeGui/`
 - compilation logic: `Core/Compiler/`
@@ -68,6 +71,7 @@ Release-oriented checks are documented in [Release smoke checklist](./release_sm
 - Keep engine-specific behavior inside engines.
 - Add or update tests when changing heuristics, parsing, or orchestration behavior.
 - If you change CLI flags, commands, or docs-linked behavior, update the README.
+- If you change the command hierarchy (`gui`, `engine`, `workspace`, `doctor`, `scaffold`) or JSON outputs, update the CLI docs and smoke checklist.
 - If you change IDE/classic behavior, update the parity matrix when appropriate.
 
 ## Documentation expectations
