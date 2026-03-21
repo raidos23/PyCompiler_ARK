@@ -13,53 +13,127 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from __future__ import annotations
+
 import importlib
+import inspect
+import logging
 import os
 import pkgutil
 import sys
+from types import ModuleType
+
+from EngineLoader.base import CompilerEngine
+from EngineLoader import registry as engine_registry
+
+logger = logging.getLogger(__name__)
 
 
-def _discover_external_plugins(base_path: str) -> None:
-    """Import all top-level modules and packages under base_path (ENGINES/),
-    recursively importing subpackages to trigger engine registration side-effects.
-    """
+def _iter_engine_module_names(base_path: str, namespace_package: str) -> list[str]:
+    """Return top-level engine package names under the configured namespace."""
+    if not os.path.isdir(base_path):
+        return []
+    prefix = f"{namespace_package.rstrip('.') }."
+    return [
+        name
+        for _finder, name, ispkg in pkgutil.iter_modules([base_path], prefix=prefix)
+        if ispkg
+    ]
+
+
+def _register_engine_classes(module: ModuleType) -> list[str]:
+    """Register CompilerEngine subclasses declared by an imported module."""
+    registered: list[str] = []
+    for _name, obj in inspect.getmembers(module, inspect.isclass):
+        if not issubclass(obj, CompilerEngine) or obj is CompilerEngine:
+            continue
+        try:
+            if not str(getattr(obj, "__module__", "")).startswith(module.__name__):
+                continue
+            engine_registry.engine_register(obj)
+            registered.append(getattr(obj, "id", obj.__name__))
+        except Exception:
+            logger.exception(
+                "Failed to register engine class %s from module %s",
+                getattr(obj, "__name__", repr(obj)),
+                module.__name__,
+            )
+    return registered
+
+
+def _import_module_tree(module_name: str) -> list[ModuleType]:
+    """Import a package and its submodules, returning successfully loaded modules."""
+    imported: list[ModuleType] = []
+    root_module = importlib.import_module(module_name)
+    imported.append(root_module)
+
+    module_path = getattr(root_module, "__path__", None)
+    if not module_path:
+        return imported
+
+    for _finder, subname, _ispkg in pkgutil.walk_packages(module_path, prefix=f"{module_name}."):
+        try:
+            imported.append(importlib.import_module(subname))
+        except Exception:
+            logger.exception("Failed to import engine submodule %s", subname)
+    return imported
+
+
+def _sync_engine_sdk_registry() -> None:
+    """Keep engine_sdk.registry aligned with the active EngineLoader registry module."""
+    try:
+        import engine_sdk
+
+        engine_sdk.registry = engine_registry
+    except Exception:
+        logger.exception("Failed to synchronize engine_sdk.registry with EngineLoader.registry")
+
+
+def _discover_external_plugins(base_path: str, namespace_package: str = "ENGINES") -> None:
+    """Import namespaced engine packages and register CompilerEngine classes dynamically."""
     try:
         if not os.path.isdir(base_path):
             return
-        if base_path not in sys.path:
-            sys.path.insert(0, base_path)
-        # Import only top-level PACKAGES (directories with __init__.py). Skip bare modules.
-        for _finder, name, ispkg in pkgutil.iter_modules([base_path]):
-            if not ispkg:
-                # Enforce package-only engines
-                continue
+
+        parent_dir = os.path.abspath(os.path.dirname(base_path))
+        if parent_dir not in sys.path:
+            sys.path.insert(0, parent_dir)
+
+        for module_name in _iter_engine_module_names(base_path, namespace_package):
             try:
-                # Import the package so its __init__ can self-register the engine
-                importlib.import_module(name)
-                # Import submodules to trigger additional registrations if needed
-                pkg_path = os.path.join(base_path, name)
-                for __f, subname, __ispkg in pkgutil.walk_packages(
-                    [pkg_path], prefix=f"{name}."
-                ):
-                    try:
-                        importlib.import_module(subname)
-                    except Exception:
-                        # Ignore broken submodules to avoid crashing global discovery
-                        pass
+                imported_modules = _import_module_tree(module_name)
             except Exception:
-                # Ignore broken plugins; do not crash host discovery
-                pass
+                logger.exception("Failed to import engine package %s", module_name)
+                continue
+
+            registered_any = False
+            for module in imported_modules:
+                try:
+                    if _register_engine_classes(module):
+                        registered_any = True
+                except Exception:
+                    logger.exception(
+                        "Failed while introspecting engine module %s",
+                        getattr(module, "__name__", module_name),
+                    )
+            if not registered_any:
+                logger.warning(
+                    "No CompilerEngine subclasses were discovered in engine package %s",
+                    module_name,
+                )
     except Exception:
-        # Never let discovery break the host application
-        pass
+        logger.exception("Engine discovery failed for base path %s", base_path)
+    finally:
+        _sync_engine_sdk_registry()
 
 
 def _auto_discover() -> None:
-    """Discover and register external engine plugins ONLY from the 'ENGINES' folder at project root."""
+    """Discover and register external engine plugins from the project ENGINES folder."""
     base_dir = os.path.dirname(__file__)
     try:
         project_root = os.path.abspath(os.path.join(base_dir, os.pardir, os.pardir))
         external_dir = os.path.join(project_root, "ENGINES")
-        _discover_external_plugins(external_dir)
+        _discover_external_plugins(external_dir, namespace_package="ENGINES")
     except Exception:
-        pass
+        logger.exception("Automatic engine discovery failed")
+        _sync_engine_sdk_registry()

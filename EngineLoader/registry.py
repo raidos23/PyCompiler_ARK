@@ -15,10 +15,13 @@
 
 from __future__ import annotations
 
+import logging
 import os
 from typing import Optional, Any
 
-from .base import CompilerEngine
+from .base import CompilerEngine, log_i18n_level
+
+logger = logging.getLogger(__name__)
 
 _REGISTRY: dict[str, type[CompilerEngine]] = {}
 _ORDER: list[str] = []
@@ -45,6 +48,9 @@ _LANG_ALIASES: dict[str, str] = {
     "zh_cn": "zh-CN",
     "zh-cn": "zh-CN",
 }
+_GLOBAL_TR: dict[str, Any] = {}
+_GLOBAL_LANG: str = "en"
+_ENGINE_TR: dict[str, dict[str, Any]] = {}
 
 
 def normalize_language_code(code: Optional[str]) -> str:
@@ -111,6 +117,112 @@ def resolve_language_code(gui, tr: Optional[dict]) -> str:
             pass
 
     return normalize_language_code(code)
+
+
+def set_translations(gui, tr: Optional[dict]) -> None:
+    """Store host translations and the resolved active language for engine i18n."""
+    global _GLOBAL_TR, _GLOBAL_LANG
+    try:
+        _GLOBAL_TR = dict(tr) if isinstance(tr, dict) else {}
+    except Exception:
+        _GLOBAL_TR = {}
+    try:
+        _GLOBAL_LANG = resolve_language_code(gui, tr if isinstance(tr, dict) else None)
+    except Exception:
+        _GLOBAL_LANG = "en"
+
+
+def get_translations() -> dict[str, Any]:
+    return dict(_GLOBAL_TR) if isinstance(_GLOBAL_TR, dict) else {}
+
+
+def get_language_code() -> str:
+    return _GLOBAL_LANG or "en"
+
+
+def register_engine_translations(engine_id: str, tr: dict) -> None:
+    """Register or refresh translations for a specific engine id."""
+    if not engine_id:
+        return
+    try:
+        if isinstance(tr, dict):
+            payload = dict(tr)
+        else:
+            payload = {}
+        _ENGINE_TR[str(engine_id)] = payload
+        _ENGINE_TR[str(engine_id).lower()] = payload
+    except Exception:
+        pass
+
+
+def _engine_package_for_class(engine_cls: type[CompilerEngine]) -> str | None:
+    try:
+        module_name = str(getattr(engine_cls, "__module__", "") or "")
+        if not module_name:
+            return None
+        parts = module_name.split(".")
+        if len(parts) >= 2:
+            return ".".join(parts[:2])
+        return module_name
+    except Exception:
+        return None
+
+
+def _refresh_engine_translations_for_ids(engine_ids: list[str], code: str) -> None:
+    """Load and cache language files for selected engine ids."""
+    for eid in engine_ids:
+        try:
+            engine_cls = get_engine(eid)
+            if engine_cls is None:
+                continue
+            engine_package = _engine_package_for_class(engine_cls)
+            if not engine_package:
+                continue
+            data = load_engine_language_file(engine_package, code)
+            register_engine_translations(eid, data if isinstance(data, dict) else {})
+        except Exception:
+            continue
+
+
+def _refresh_all_engine_translations(code: str) -> None:
+    """Reload translations for all registered engines for the active language."""
+    try:
+        _ENGINE_TR.clear()
+    except Exception:
+        pass
+    _refresh_engine_translations_for_ids(list(_ORDER), code)
+
+
+def engine_translate(engine_or_id: Any, key: str, default: Optional[str] = None) -> str:
+    """Translate an engine-local key with fallback to host translations and defaults."""
+    engine_id = None
+    try:
+        if isinstance(engine_or_id, str):
+            engine_id = engine_or_id
+        else:
+            engine_id = getattr(engine_or_id, "id", None)
+    except Exception:
+        engine_id = None
+
+    try:
+        if engine_id:
+            for candidate in (str(engine_id), str(engine_id).lower()):
+                payload = _ENGINE_TR.get(candidate)
+                if isinstance(payload, dict):
+                    value = payload.get(key)
+                    if isinstance(value, str):
+                        return value
+    except Exception:
+        pass
+
+    try:
+        fallback = _GLOBAL_TR.get(key)
+        if isinstance(fallback, str):
+            return fallback
+    except Exception:
+        pass
+
+    return default if default is not None else str(key)
 
 
 def unregister(eid: str) -> None:
@@ -219,6 +331,19 @@ def bind_tabs(gui) -> None:
         # Track if any engine created a tab
         any_engine_tab_created = False
 
+        def _log_tab_load_issue(eid: str, fr: str, en: str, exc: Exception | None = None) -> None:
+            try:
+                log_i18n_level(gui, "warning", fr, en)
+            except Exception:
+                pass
+            try:
+                if exc is None:
+                    logger.warning("%s", en)
+                else:
+                    logger.warning("%s: %s", en, exc, exc_info=exc)
+            except Exception:
+                pass
+
         def _wrap_tab_scroll(widget):
             try:
                 from PySide6.QtCore import Qt
@@ -261,8 +386,24 @@ def bind_tabs(gui) -> None:
                 res = getattr(engine, "create_tab", None)
                 if not callable(res):
                     continue
-                pair = res(gui)
+                try:
+                    pair = res(gui)
+                except Exception as exc:
+                    _log_tab_load_issue(
+                        eid,
+                        f"Echec du chargement de l'onglet moteur '{eid}'",
+                        f"Failed to load engine tab '{eid}'",
+                        exc,
+                    )
+                    continue
                 if not pair:
+                    continue
+                if not isinstance(pair, tuple) or len(pair) != 2:
+                    _log_tab_load_issue(
+                        eid,
+                        f"Onglet invalide retourne par le moteur '{eid}'",
+                        f"Engine '{eid}' returned an invalid tab payload",
+                    )
                     continue
                 any_engine_tab_created = True
                 widget, label = pair
@@ -280,12 +421,20 @@ def bind_tabs(gui) -> None:
                 try:
                     tr = getattr(gui, "_tr", None)
                     fn = getattr(engine, "apply_i18n", None)
+                    if isinstance(tr, dict):
+                        set_translations(gui, tr)
+                        _refresh_engine_translations_for_ids([eid], get_language_code())
                     if callable(fn) and isinstance(tr, dict):
                         fn(gui, tr)
                 except Exception:
                     pass
-            except Exception:
-                # keep UI responsive even if a plugin tab fails
+            except Exception as exc:
+                _log_tab_load_issue(
+                    eid,
+                    f"Echec inattendu lors du chargement de l'onglet moteur '{eid}'",
+                    f"Unexpected failure while loading engine tab '{eid}'",
+                    exc,
+                )
                 continue
 
         # Hide the Hello tab if any engine has created a tab
@@ -321,6 +470,8 @@ def show_hello_tab(gui) -> None:
 def apply_translations(gui, tr: dict) -> None:
     """Propagate i18n translations to all engines that expose 'apply_i18n(gui, tr)'."""
     try:
+        set_translations(gui, tr)
+        _refresh_all_engine_translations(get_language_code())
         for eid, inst in list(_INSTANCES.items()):
             try:
                 fn = getattr(inst, "apply_i18n", None)

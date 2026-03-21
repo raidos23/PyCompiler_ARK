@@ -104,6 +104,15 @@ class CompilerEngine:
         """Hook called when a build is successful."""
         pass
 
+    def engine_translate(self, key: str, default: Optional[str] = None) -> str:
+        """Translate an engine-local key using the shared engine i18n registry."""
+        try:
+            from .registry import engine_translate as _engine_translate
+
+            return _engine_translate(self, key, default)
+        except Exception:
+            return default if default is not None else str(key)
+
     def create_tab(self, gui):
         """
         Optionally create and return a QWidget tab and its label for the GUI.
