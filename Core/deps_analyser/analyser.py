@@ -15,6 +15,7 @@
 
 import functools
 import configparser
+import ast
 import json
 import os
 import platform
@@ -443,6 +444,62 @@ def _resolve_relative_import_root(
     return anchor_parts[0] if anchor_parts else ""
 
 
+def _extract_imported_modules_from_source(
+    source: str, file_path: str = "", workspace_dir: str | None = None
+) -> set[str]:
+    """Parse Python source and return normalized top-level imported modules."""
+    modules: set[str] = set()
+    try:
+        tree = ast.parse(source, filename=file_path or "<memory>")
+    except Exception:
+        return modules
+
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            for alias in node.names:
+                top = _top_level_module_name(alias.name)
+                if top:
+                    modules.add(top)
+        elif isinstance(node, ast.ImportFrom):
+            if node.level and node.level > 0:
+                rel_root = _resolve_relative_import_root(file_path, node.level, workspace_dir)
+                if rel_root:
+                    modules.add(rel_root)
+            elif node.module:
+                top = _top_level_module_name(node.module)
+                if top:
+                    modules.add(top)
+
+    dynamic_imports = re.findall(r"__import__\(['\"]([\w\.]+)['\"]\)", source)
+    modules.update(
+        [top for top in (_top_level_module_name(mod) for mod in dynamic_imports) if top]
+    )
+
+    importlib_imports = re.findall(
+        r"importlib\.import_module\(['\"]([\w\.]+)['\"]\)", source
+    )
+    modules.update(
+        [top for top in (_top_level_module_name(mod) for mod in importlib_imports) if top]
+    )
+    return modules
+
+
+def _extract_imported_modules_from_file(
+    file_path: str, workspace_dir: str | None = None
+) -> set[str]:
+    """Read a Python file and return normalized imported modules."""
+    try:
+        with open(file_path, encoding="utf-8") as f:
+            source = f.read()
+    except Exception:
+        return set()
+    return _extract_imported_modules_from_source(
+        source,
+        file_path=file_path,
+        workspace_dir=workspace_dir,
+    )
+
+
 def _collect_workspace_module_roots(
     filtered_files: list[str], workspace_dir: str | None
 ) -> set[str]:
@@ -695,8 +752,6 @@ def suggest_missing_dependencies(self):
         except Exception:
             pass
         return
-    import ast
-
     modules = set()
     # Détermine la liste des fichiers à analyser (sélectionnés ou tous les fichiers du projet)
     files = self.selected_files if self.selected_files else self.python_files
@@ -747,38 +802,11 @@ def suggest_missing_dependencies(self):
             if idx - last_pump >= 50:
                 QApplication.processEvents()
                 last_pump = idx
-
-            with open(file, encoding="utf-8") as f:
-                source = f.read()
-                tree = ast.parse(source, filename=file)
-            # Imports classiques (import ... / from ... import ...)
-            for node in ast.walk(tree):
-                if isinstance(node, ast.Import):
-                    for alias in node.names:
-                        top = _top_level_module_name(alias.name)
-                        if top:
-                            modules.add(top)
-                elif isinstance(node, ast.ImportFrom):
-                    if node.level and node.level > 0:
-                        rel_root = _resolve_relative_import_root(
-                            file, node.level, getattr(self, "workspace_dir", None)
-                        )
-                        if rel_root:
-                            modules.add(rel_root)
-                    elif node.module:
-                        top = _top_level_module_name(node.module)
-                        if top:
-                            modules.add(top)
-            # Imports dynamiques via __import__ ou importlib.import_module
-            dynamic_imports = re.findall(r"__import__\(['\"]([\w\.]+)['\"]\)", source)
             modules.update(
-                [top for top in (_top_level_module_name(mod) for mod in dynamic_imports) if top]
-            )
-            importlib_imports = re.findall(
-                r"importlib\.import_module\(['\"]([\w\.]+)['\"]\)", source
-            )
-            modules.update(
-                [top for top in (_top_level_module_name(mod) for mod in importlib_imports) if top]
+                _extract_imported_modules_from_file(
+                    file,
+                    workspace_dir=getattr(self, "workspace_dir", None),
+                )
             )
         except Exception as e:
             _log_append(self, f"⚠️ Erreur analyse dépendances dans {file} : {e}")

@@ -37,5 +37,10 @@
 - [ ] il faut que sur linux si on utilise le python of system que les installation utilise le flag break system package pour s'assurer que l-instalation aura lieu coute que coute. sur windows cela nest pas necessaire  car windwos n-a pas souvent de problme niveau resolution de package.
 
 ## ide gui 
-- donner toute les capacité gui de classic gui à ide gui.
-- pour les installations d'outils des engines ou meme des plugins en generale les action d'installation systeme et de python rentre en conflit le plus souvent alors lors de linstallation on dit dabord prioriser linstaltion systme avant meme de lancer les commande pour l'installation de type python. pour les boite de dialog qui saffiche sepcialemnt pour cela il faut un time out de taping de secret (mot de passe)  de l'user genre 120s si le delai est passer on annule linstallation system proprement et selon notrer regle si un processus du genre là est tuer tout les autre non plus le droit de sexecuter il sont comme des process enfant une fois que le processus premier est tuer on anneanti le reste pour securiser le system et surtout les projet des utilisateurs. au dela de cela il faut que l'on ameliore le venvnager car il doit suporter tous les types de venv a savvir .env env venv .venv etc et tout les non bizarre posible dans l'industrie. 
+- [x] donner toute les capacité gui de classic gui à ide gui.
+- [x] pour les installations d'outils des engines ou meme des plugins en generale les action d'installation systeme et de python rentre en conflit le plus souvent alors lors de linstallation on dit dabord prioriser linstaltion systme avant meme de lancer les commande pour l'installation de type python. pour les boite de dialog qui saffiche sepcialemnt pour cela il faut un time out de taping de secret (mot de passe)  de l'user genre 120s si le delai est passer on annule linstallation system proprement et selon notrer regle si un processus du genre là est tuer tout les autre non plus le droit de sexecuter il sont comme des process enfant une fois que le processus premier est tuer on anneanti le reste pour securiser le system et surtout les projet des utilisateurs. au dela de cela il faut que l'on ameliore le venvnager car il doit suporter tous les types de venv a savvir .env env venv .venv etc et tout les non bizarre posible dans l'industrie. 
+
+## P0
+
+- [x] finaliser la parite IDE/classic et documenter la matrice de parite.
+- [x] durcir l'analyseur deps avec un parseur d'imports testable et une meilleure couverture des imports relatifs et dynamiques.

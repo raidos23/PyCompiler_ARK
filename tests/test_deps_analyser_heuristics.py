@@ -23,6 +23,8 @@ from Core.deps_analyser.analyser import (
     _classify_module_origin,
     _collect_workspace_module_roots,
     _discover_workspace_hints,
+    _extract_imported_modules_from_file,
+    _extract_imported_modules_from_source,
     _resolve_relative_import_root,
     _should_skip_analysis_path,
 )
@@ -138,3 +140,56 @@ def test_classify_module_origin_marks_workspace_package_as_internal(tmp_path) ->
 
     assert _classify_module_origin("localpkg", str(tmp_path)) == "internal"
     assert _classify_module_origin("json", str(tmp_path)) == "stdlib"
+
+
+def test_extract_imported_modules_from_source_handles_relative_and_dynamic_imports(
+    tmp_path,
+) -> None:
+    pkg = tmp_path / "src" / "demo_pkg" / "subpkg"
+    pkg.mkdir(parents=True)
+    (tmp_path / "src" / "demo_pkg" / "__init__.py").write_text("", encoding="utf-8")
+    (pkg / "__init__.py").write_text("", encoding="utf-8")
+    file_path = pkg / "module.py"
+
+    source = """
+import requests
+from rich.console import Console
+from . import local_helpers
+from ..utils import helper
+
+mod = __import__("yaml")
+other = importlib.import_module("httpx._main")
+""".strip()
+
+    _discover_workspace_hints.cache_clear()
+    modules = _extract_imported_modules_from_source(
+        source,
+        file_path=str(file_path),
+        workspace_dir=str(tmp_path),
+    )
+
+    assert {"requests", "rich", "demo_pkg", "yaml", "httpx"} <= modules
+
+
+def test_extract_imported_modules_from_file_uses_workspace_context(tmp_path) -> None:
+    pkg = tmp_path / "lib" / "python" / "mypkg" / "sub"
+    pkg.mkdir(parents=True)
+    (tmp_path / "lib" / "python" / "mypkg" / "__init__.py").write_text(
+        "", encoding="utf-8"
+    )
+    (pkg / "__init__.py").write_text("", encoding="utf-8")
+    module = pkg / "feature.py"
+    module.write_text(
+        """
+from ..core import service
+import importlib
+plugin = importlib.import_module("pluggy")
+""".strip(),
+        encoding="utf-8",
+    )
+
+    _discover_workspace_hints.cache_clear()
+    modules = _extract_imported_modules_from_file(str(module), workspace_dir=str(tmp_path))
+
+    assert "mypkg" in modules
+    assert "pluggy" in modules

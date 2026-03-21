@@ -272,32 +272,33 @@ def _setup_more_tools_menu(self) -> None:
 
     try:
         menu = QMenu(more_btn)
+        self._ide_more_tools_menu = menu
 
-        act_workspace = QAction("Select workspace", menu)
+        act_workspace = QAction(menu)
         act_workspace.triggered.connect(
             lambda: getattr(self, "select_workspace", lambda: None)()
         )
         menu.addAction(act_workspace)
 
-        act_venv = QAction("Select venv", menu)
+        act_venv = QAction(menu)
         act_venv.triggered.connect(
             lambda: getattr(self, "select_venv_manually", lambda: None)()
         )
         menu.addAction(act_venv)
 
-        act_add_files = QAction("Add files", menu)
+        act_add_files = QAction(menu)
         act_add_files.triggered.connect(
             lambda: getattr(self, "select_files_manually", lambda: None)()
         )
         menu.addAction(act_add_files)
 
-        act_clear_workspace = QAction("Clear workspace", menu)
+        act_clear_workspace = QAction(menu)
         act_clear_workspace.triggered.connect(
             lambda: getattr(self, "clear_workspace", lambda: None)()
         )
         menu.addAction(act_clear_workspace)
 
-        act_stats = QAction("Statistics", menu)
+        act_stats = QAction(menu)
         act_stats.triggered.connect(
             lambda: getattr(self, "show_statistics", lambda: None)()
         )
@@ -305,38 +306,53 @@ def _setup_more_tools_menu(self) -> None:
 
         menu.addSeparator()
 
-        act_language = QAction("Language", menu)
+        act_language = QAction(menu)
         act_language.triggered.connect(lambda: getattr(self, "show_language_dialog", lambda: None)())
         menu.addAction(act_language)
 
-        act_theme = QAction("Theme", menu)
+        act_theme = QAction(menu)
         act_theme.triggered.connect(lambda: _open_theme_dialog(self))
         menu.addAction(act_theme)
 
         menu.addSeparator()
 
-        act_advanced = QAction("Advanced config", menu)
+        act_advanced = QAction(menu)
         act_advanced.triggered.connect(
             lambda: getattr(self, "open_advanced_config_editor", lambda: None)()
         )
         menu.addAction(act_advanced)
 
-        act_export = QAction("Export config", menu)
+        act_export = QAction(menu)
         act_export.triggered.connect(lambda: getattr(self, "export_config", lambda: None)())
         menu.addAction(act_export)
 
-        act_import = QAction("Import config", menu)
+        act_import = QAction(menu)
         act_import.triggered.connect(lambda: getattr(self, "import_config", lambda: None)())
         menu.addAction(act_import)
 
-        act_help = QAction("Help", menu)
+        act_help = QAction(menu)
         act_help.triggered.connect(lambda: getattr(self, "show_help_dialog", lambda: None)())
         menu.addAction(act_help)
+
+        self._ide_more_menu_actions = {
+            "workspace": act_workspace,
+            "venv": act_venv,
+            "add_files": act_add_files,
+            "clear_workspace": act_clear_workspace,
+            "stats": act_stats,
+            "language": act_language,
+            "theme": act_theme,
+            "advanced": act_advanced,
+            "export": act_export,
+            "import": act_import,
+            "help": act_help,
+        }
 
         more_btn.setMenu(menu)
         more_btn.setPopupMode(QToolButton.InstantPopup)
     except Exception:
         pass
+    _retranslate_ide_like_actions(self)
     _apply_activity_buttons_theme(self)
 
     # Avoid duplicated controls in the side panel.
@@ -422,6 +438,59 @@ def _apply_activity_buttons_theme(self) -> None:
     _apply_status_bar_theme(self, dark, fg, border)
 
 
+def _retranslate_ide_like_actions(self) -> None:
+    """Apply translated labels/tooltips to IDE-specific actions and affordances."""
+    try:
+        trf = getattr(self, "tr", None)
+        _tr = trf if callable(trf) else (lambda fr, en: en)
+    except Exception:
+        _tr = lambda fr, en: en
+
+    actions = getattr(self, "_ide_more_menu_actions", {}) or {}
+    labels = {
+        "workspace": _tr("Choisir le Workspace", "Select workspace"),
+        "venv": _tr("Choisir le Venv", "Select venv"),
+        "add_files": _tr("Ajouter des fichiers", "Add files"),
+        "clear_workspace": _tr("Vider le Workspace", "Clear workspace"),
+        "stats": _tr("Statistiques", "Statistics"),
+        "language": _tr("Langue", "Language"),
+        "theme": _tr("Thème", "Theme"),
+        "advanced": _tr("Configuration avancée", "Advanced config"),
+        "export": _tr("Exporter la configuration", "Export config"),
+        "import": _tr("Importer la configuration", "Import config"),
+        "help": _tr("Aide", "Help"),
+    }
+    for key, action in actions.items():
+        if action is None:
+            continue
+        try:
+            action.setText(labels.get(key, action.text()))
+        except Exception:
+            pass
+
+    try:
+        more_btn = getattr(self, "toolButton_more", None)
+        if more_btn is not None:
+            more_btn.setToolTip(_tr("Plus d'actions", "More actions"))
+    except Exception:
+        pass
+    try:
+        deps_btn = getattr(self, "activity_btn_deps", None)
+        if deps_btn is not None:
+            deps_btn.setToolTip(
+                _tr("Analyser les dependances", "Analyze dependencies")
+            )
+    except Exception:
+        pass
+    try:
+        if hasattr(self, "register_language_refresh"):
+            if not getattr(self, "_ide_menu_i18n_registered", False):
+                self.register_language_refresh(lambda: _retranslate_ide_like_actions(self))
+                self._ide_menu_i18n_registered = True
+    except Exception:
+        pass
+
+
 def _connect_ide_like_specific_signals(self) -> None:
     """Connect only IDE-specific signals on top of the classic shared wiring."""
 
@@ -430,14 +499,6 @@ def _connect_ide_like_specific_signals(self) -> None:
             return
         try:
             widget.clicked.connect(handler)
-        except Exception:
-            pass
-
-    def _connect_text(widget, handler) -> None:
-        if widget is None or handler is None:
-            return
-        try:
-            widget.textChanged.connect(handler)
         except Exception:
             pass
 
