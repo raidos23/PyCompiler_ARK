@@ -14,6 +14,7 @@
 # limitations under the License.
 
 import functools
+import configparser
 import json
 import os
 import platform
@@ -185,7 +186,7 @@ def _normalize_realpath(path: str | None) -> str:
     if not path:
         return ""
     try:
-        return os.path.realpath(path)
+        return os.path.normcase(os.path.realpath(path))
     except Exception:
         return path
 
@@ -199,6 +200,249 @@ def _is_path_under(path: str, root: str) -> bool:
         return False
 
 
+def _normalize_module_name(name: str | None) -> str:
+    if not name:
+        return ""
+    try:
+        cleaned = re.sub(r"[^A-Za-z0-9_\.]+", "_", str(name).strip())
+        return cleaned.replace("-", "_").strip("._")
+    except Exception:
+        return ""
+
+
+def _top_level_module_name(name: str | None) -> str:
+    normalized = _normalize_module_name(name)
+    if not normalized:
+        return ""
+    return normalized.split(".")[0]
+
+
+def _load_toml_file(path: str) -> dict:
+    try:
+        import tomllib  # type: ignore
+    except Exception:
+        try:
+            import tomli as tomllib  # type: ignore
+        except Exception:
+            tomllib = None  # type: ignore
+    if tomllib is None:
+        return {}
+    try:
+        with open(path, "rb") as f:
+            data = tomllib.load(f)
+        return data if isinstance(data, dict) else {}
+    except Exception:
+        return {}
+
+
+@functools.lru_cache(maxsize=64)
+def _discover_workspace_hints(workspace_dir: str | None) -> tuple[tuple[str, ...], tuple[str, ...]]:
+    ws = _normalize_realpath(workspace_dir)
+    if not ws or not os.path.isdir(ws):
+        return tuple(), tuple()
+
+    source_roots: set[str] = {ws}
+    module_roots: set[str] = set()
+
+    def _add_source_root(*parts: str) -> None:
+        candidate = _normalize_realpath(os.path.join(ws, *parts))
+        if candidate and os.path.isdir(candidate):
+            source_roots.add(candidate)
+
+    for rel_parts in (
+        ("src",),
+        ("lib",),
+        ("python",),
+        ("lib", "python"),
+        ("src", "python"),
+    ):
+        _add_source_root(*rel_parts)
+
+    pyproject_path = os.path.join(ws, "pyproject.toml")
+    pyproject = _load_toml_file(pyproject_path) if os.path.isfile(pyproject_path) else {}
+    try:
+        project = pyproject.get("project", {})
+        if isinstance(project, dict):
+            top = _top_level_module_name(project.get("name"))
+            if top:
+                module_roots.add(top)
+    except Exception:
+        pass
+    try:
+        tool = pyproject.get("tool", {})
+        poetry = tool.get("poetry", {}) if isinstance(tool, dict) else {}
+        if isinstance(poetry, dict):
+            top = _top_level_module_name(poetry.get("name"))
+            if top:
+                module_roots.add(top)
+            packages = poetry.get("packages", [])
+            if isinstance(packages, list):
+                for pkg in packages:
+                    if not isinstance(pkg, dict):
+                        continue
+                    include = _top_level_module_name(pkg.get("include"))
+                    if include:
+                        module_roots.add(include)
+                    from_dir = pkg.get("from")
+                    if isinstance(from_dir, str) and from_dir.strip():
+                        _add_source_root(from_dir.strip())
+        setuptools = tool.get("setuptools", {}) if isinstance(tool, dict) else {}
+        if isinstance(setuptools, dict):
+            package_dir = setuptools.get("package-dir", {})
+            if isinstance(package_dir, dict):
+                root_dir = package_dir.get("") or package_dir.get(".")
+                if isinstance(root_dir, str) and root_dir.strip():
+                    _add_source_root(root_dir.strip())
+            packages = setuptools.get("packages", {})
+            if isinstance(packages, dict):
+                find_cfg = packages.get("find", {})
+                if isinstance(find_cfg, dict):
+                    where = find_cfg.get("where", [])
+                    if isinstance(where, str):
+                        where = [where]
+                    if isinstance(where, list):
+                        for item in where:
+                            if isinstance(item, str) and item.strip():
+                                _add_source_root(item.strip())
+    except Exception:
+        pass
+
+    setup_cfg_path = os.path.join(ws, "setup.cfg")
+    if os.path.isfile(setup_cfg_path):
+        try:
+            cfg = configparser.ConfigParser()
+            cfg.read(setup_cfg_path, encoding="utf-8")
+            if cfg.has_option("metadata", "name"):
+                top = _top_level_module_name(cfg.get("metadata", "name"))
+                if top:
+                    module_roots.add(top)
+            if cfg.has_option("options", "package_dir"):
+                package_dir_raw = cfg.get("options", "package_dir")
+                for line in package_dir_raw.splitlines():
+                    if "=" not in line:
+                        continue
+                    _, value = line.split("=", 1)
+                    value = value.strip()
+                    if value:
+                        _add_source_root(value)
+            if cfg.has_option("options.packages.find", "where"):
+                where_raw = cfg.get("options.packages.find", "where")
+                for line in where_raw.splitlines():
+                    value = line.strip().strip(",")
+                    if value:
+                        _add_source_root(value)
+        except Exception:
+            pass
+
+    return tuple(sorted(source_roots)), tuple(sorted(m for m in module_roots if m))
+
+
+def _should_skip_analysis_path(path: str, workspace_dir: str | None = None) -> bool:
+    abs_path = _normalize_realpath(path)
+    if not abs_path:
+        return True
+    if not abs_path.endswith(".py"):
+        return True
+
+    base = os.path.basename(abs_path)
+    if base.endswith((".pyc", ".pyo", ".pyd")):
+        return True
+
+    skip_dirs = {
+        "__pycache__",
+        ".git",
+        ".svn",
+        ".hg",
+        ".pytest_cache",
+        ".mypy_cache",
+        ".ruff_cache",
+        ".tox",
+        ".nox",
+        "node_modules",
+        "build",
+        "dist",
+        "site-packages",
+        "dist-packages",
+    }
+    skip_prefixes = ("venv", ".venv", "env", ".env")
+    skip_suffixes = (".egg-info", ".dist-info")
+    parts = [p for p in abs_path.split(os.sep) if p]
+    for part in parts:
+        low = part.lower()
+        if low in skip_dirs:
+            return True
+        if low.startswith(skip_prefixes):
+            return True
+        if low.endswith(skip_suffixes):
+            return True
+
+    ws = _normalize_realpath(workspace_dir)
+    if ws:
+        for source_root in _discover_workspace_hints(ws)[0]:
+            if _is_path_under(abs_path, source_root):
+                return False
+        if _is_path_under(abs_path, ws):
+            return False
+    return False
+
+
+def _relative_package_parts(file_path: str, workspace_dir: str | None) -> list[str]:
+    abs_file = _normalize_realpath(file_path)
+    ws = _normalize_realpath(workspace_dir)
+    if not abs_file or not ws:
+        return []
+
+    source_roots, _ = _discover_workspace_hints(ws)
+    chosen_root = ""
+    for root in source_roots:
+        if _is_path_under(abs_file, root):
+            if not chosen_root or len(root) > len(chosen_root):
+                chosen_root = root
+    if not chosen_root:
+        chosen_root = ws
+
+    try:
+        rel = os.path.relpath(abs_file, chosen_root)
+    except Exception:
+        return []
+
+    parts = [p for p in rel.split(os.sep) if p]
+    if not parts:
+        return []
+    if parts[-1] == "__init__.py":
+        candidate_parts = parts[:-1]
+    else:
+        candidate_parts = parts[:-1]
+
+    package_parts: list[str] = []
+    current_dir = chosen_root
+    for part in candidate_parts:
+        current_dir = os.path.join(current_dir, part)
+        if os.path.isfile(os.path.join(current_dir, "__init__.py")):
+            package_parts.append(_normalize_module_name(part))
+        else:
+            break
+    return [p for p in package_parts if p]
+
+
+def _resolve_relative_import_root(
+    file_path: str, level: int, workspace_dir: str | None
+) -> str:
+    package_parts = _relative_package_parts(file_path, workspace_dir)
+    if not package_parts:
+        return ""
+    anchor_parts = list(package_parts)
+    if os.path.basename(file_path) != "__init__.py" and anchor_parts:
+        # For a regular module file, level=1 refers to its containing package.
+        steps_up = max(level - 1, 0)
+    else:
+        # For __init__.py, level=1 refers to the package itself.
+        steps_up = max(level - 1, 0)
+    if steps_up:
+        anchor_parts = anchor_parts[: max(len(anchor_parts) - steps_up, 0)]
+    return anchor_parts[0] if anchor_parts else ""
+
+
 def _collect_workspace_module_roots(
     filtered_files: list[str], workspace_dir: str | None
 ) -> set[str]:
@@ -208,7 +452,8 @@ def _collect_workspace_module_roots(
     """
     roots: set[str] = set()
     ws = _normalize_realpath(workspace_dir)
-    src_aliases = {"src", "lib", "python"}
+    source_roots, hinted_modules = _discover_workspace_hints(ws)
+    roots.update(hinted_modules)
     for f in filtered_files:
         try:
             abs_f = _normalize_realpath(f)
@@ -217,20 +462,25 @@ def _collect_workspace_module_roots(
                 roots.add(base)
             if not ws or not _is_path_under(abs_f, ws):
                 continue
-            rel = os.path.relpath(abs_f, ws)
-            parts = rel.split(os.sep)
-            if not parts:
-                continue
-            first = parts[0]
-            if first and first not in {"", ".", "__pycache__"}:
-                roots.add(first)
-            if first in src_aliases and len(parts) > 1:
-                second = parts[1]
-                if second and second not in {"", ".", "__pycache__"}:
-                    roots.add(second)
+            package_parts = _relative_package_parts(abs_f, ws)
+            if package_parts:
+                roots.add(package_parts[0])
+
+            candidate_roots = source_roots or (ws,)
+            for root in candidate_roots:
+                if not _is_path_under(abs_f, root):
+                    continue
+                rel = os.path.relpath(abs_f, root)
+                parts = [p for p in rel.split(os.sep) if p]
+                if not parts:
+                    continue
+                first = _normalize_module_name(parts[0])
+                if first and first != "__pycache__":
+                    roots.add(first)
+                break
         except Exception:
             pass
-    return roots
+    return {r for r in roots if r}
 
 
 @functools.lru_cache(maxsize=1024)
@@ -251,6 +501,10 @@ def _classify_module_origin(module_name: str, workspace_dir: str) -> str:
         import sysconfig
 
         ws = _normalize_realpath(workspace_dir)
+        hinted_roots = set(_discover_workspace_hints(ws)[1])
+        normalized_module = _top_level_module_name(module_name)
+        if normalized_module and normalized_module in hinted_roots:
+            return "internal"
         spec = importlib.util.find_spec(module_name)
         if spec is None:
             return "unknown"
@@ -267,10 +521,14 @@ def _classify_module_origin(module_name: str, workspace_dir: str) -> str:
         stdlib_path = _normalize_realpath(sysconfig.get_path("stdlib") or "")
         purelib_path = _normalize_realpath(sysconfig.get_path("purelib") or "")
         platlib_path = _normalize_realpath(sysconfig.get_path("platlib") or "")
+        source_roots = _discover_workspace_hints(ws)[0]
 
         for c in candidates:
             if ws and _is_path_under(c, ws):
                 return "internal"
+            for root in source_roots:
+                if root and _is_path_under(c, root):
+                    return "internal"
             if stdlib_path and _is_path_under(c, stdlib_path):
                 return "stdlib"
             if purelib_path and _is_path_under(c, purelib_path):
@@ -447,37 +705,17 @@ def suggest_missing_dependencies(self):
         venv_dir = os.path.abspath(self.venv_path_manuel)
     else:
         venv_dir = os.path.abspath(os.path.join(self.workspace_dir, "venv"))
-    filtered_files = [
-        f
-        for f in files
-        if not os.path.commonpath([os.path.abspath(f), venv_dir]) == venv_dir
-        and not any(
-            part.startswith(".")
-            or part
-            == (
-                "**/__pycache__/**",
-                "**/*.pyc",
-                "**/*.pyo",
-                "**/*.pyd",
-                ".git/**",
-                ".svn/**",
-                ".hg/**",
-                "venv/**",
-                ".venv/**",
-                "env/**",
-                ".env/**",
-                "node_modules/**",
-                "build/**",
-                "dist/**",
-                "*.egg-info/**",
-                ".pytest_cache/**",
-                ".mypy_cache/**",
-                ".tox/**",
-                "site-packages/**",
-            )
-            for part in f.split(os.sep)
-        )
-    ]
+    filtered_files = []
+    for f in files:
+        abs_f = _normalize_realpath(f)
+        try:
+            if venv_dir and _is_path_under(abs_f, _normalize_realpath(venv_dir)):
+                continue
+        except Exception:
+            pass
+        if _should_skip_analysis_path(abs_f, getattr(self, "workspace_dir", None)):
+            continue
+        filtered_files.append(abs_f)
 
     # Créer une barre de progression pour l'analyse
     analysis_progress = None
@@ -517,17 +755,31 @@ def suggest_missing_dependencies(self):
             for node in ast.walk(tree):
                 if isinstance(node, ast.Import):
                     for alias in node.names:
-                        modules.add(alias.name.split(".")[0])
+                        top = _top_level_module_name(alias.name)
+                        if top:
+                            modules.add(top)
                 elif isinstance(node, ast.ImportFrom):
-                    if node.module:
-                        modules.add(node.module.split(".")[0])
+                    if node.level and node.level > 0:
+                        rel_root = _resolve_relative_import_root(
+                            file, node.level, getattr(self, "workspace_dir", None)
+                        )
+                        if rel_root:
+                            modules.add(rel_root)
+                    elif node.module:
+                        top = _top_level_module_name(node.module)
+                        if top:
+                            modules.add(top)
             # Imports dynamiques via __import__ ou importlib.import_module
             dynamic_imports = re.findall(r"__import__\(['\"]([\w\.]+)['\"]\)", source)
-            modules.update([mod.split(".")[0] for mod in dynamic_imports])
+            modules.update(
+                [top for top in (_top_level_module_name(mod) for mod in dynamic_imports) if top]
+            )
             importlib_imports = re.findall(
                 r"importlib\.import_module\(['\"]([\w\.]+)['\"]\)", source
             )
-            modules.update([mod.split(".")[0] for mod in importlib_imports])
+            modules.update(
+                [top for top in (_top_level_module_name(mod) for mod in importlib_imports) if top]
+            )
         except Exception as e:
             _log_append(self, f"⚠️ Erreur analyse dépendances dans {file} : {e}")
 
