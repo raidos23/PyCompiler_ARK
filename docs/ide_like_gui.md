@@ -34,7 +34,6 @@ python -m pycompiler_ark --ide-gui
 - Keeps IDE-specific affordances:
   - `...` activity-bar menu
   - dependencies activity button
-  - explicit icon buttons for engines
 - Tunes the loaded layout at runtime to reduce label compression in the header, center panel, and logs area.
 
 ## Runtime Switch

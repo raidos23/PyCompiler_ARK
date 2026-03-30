@@ -32,5 +32,22 @@ def test_ui_init_smoke() -> None:
     app = QApplication.instance() or QApplication([])
     gui = PyCompilerArkGui()
     assert gui is not None
+    assert gui.statusBar() is not None
+    gui.close()
+    app.quit()
+
+
+def test_select_icon_without_preview_smoke(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Selecting/cancelling icon should not require an icon_preview widget."""
+    os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+    app = QApplication.instance() or QApplication([])
+    gui = PyCompilerArkGui()
+    monkeypatch.setattr(
+        "Core.UiFeatures.QFileDialog.getOpenFileName",
+        lambda *_args, **_kwargs: ("", ""),
+    )
+    if hasattr(gui, "icon_preview"):
+        delattr(gui, "icon_preview")
+    gui.select_icon()
     gui.close()
     app.quit()

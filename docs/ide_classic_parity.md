@@ -9,8 +9,8 @@ It focuses on shared user-facing behaviors and the remaining IDE-specific deltas
 | Workspace / venv / files actions | Yes | Yes | Done | Routed through the same shared handlers. |
 | Compilation / cancel actions | Yes | Yes | Done | Uses the common signal connector. |
 | Dependencies analysis action | Yes | Yes | Done | Shared button plus IDE activity button. |
-| App icon button wiring | Yes | Yes | Done | Explicit IDE binding for `btn_select_icon`. |
-| Nuitka icon button wiring | Yes | Yes | Done | Explicit IDE binding for `btn_nuitka_icon`. |
+| App icon button wiring | Yes | No | Intentional | No dedicated icon button in `ui_ide_design2.ui`. |
+| Nuitka icon button wiring | Yes | No | Intentional | No dedicated Nuitka icon button in `ui_ide_design2.ui`. |
 | Entrypoint selector | Yes | Yes | Done | `setup_entrypoint_selector()` is called during IDE init. |
 | Theme and language dialogs | Yes | Yes | Done | IDE keeps dedicated affordances on top of shared wiring. |
 | More-actions (`...`) menu | No | Yes | Done | IDE-only affordance, now translated and refreshed with language changes. |

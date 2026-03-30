@@ -52,6 +52,7 @@ class UiFeatures:
 
     def select_icon(self):
         """Ouvre une boîte de dialogue pour sélectionner une icône."""
+        icon_preview = getattr(self, "icon_preview", None)
         file, _ = QFileDialog.getOpenFileName(
             self, "Choisir un fichier .ico", "", "Icon Files (*.ico)"
         )
@@ -68,14 +69,17 @@ class UiFeatures:
                     Qt.AspectRatioMode.KeepAspectRatio,
                     Qt.TransformationMode.SmoothTransformation,
                 )
-                self.icon_preview.setPixmap(scaled_pixmap)
-                self.icon_preview.show()
+                if icon_preview is not None:
+                    icon_preview.setPixmap(scaled_pixmap)
+                    icon_preview.show()
             else:
-                self.icon_preview.hide()
+                if icon_preview is not None:
+                    icon_preview.hide()
         else:
             # Annulation: supprimer l'icône sélectionnée et masquer l'aperçu
             self.icon_path = None
-            self.icon_preview.hide()
+            if icon_preview is not None:
+                icon_preview.hide()
         # Persistance et mise à jour en temps réel
         self.update_command_preview()
         try:
