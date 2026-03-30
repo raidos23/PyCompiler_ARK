@@ -69,8 +69,6 @@ def _prime_expected_attrs(self) -> None:
         "select_theme",
         "compiler_tabs",
         "tab_hello",
-        "btn_select_icon",
-        "btn_nuitka_icon",
         "toolButton_more",
     ]
     for name in names:
@@ -95,6 +93,14 @@ def _load_ide_like_ui(self) -> None:
     # ui_ide_design2.ui uses QMainWindow as root. Reuse its central widget.
     if isinstance(loaded, QMainWindow):
         _clear_inline_styles(loaded)
+        # Preserve status bar authored in the .ui file when available.
+        try:
+            statusbar = loaded.statusBar()
+            if statusbar is not None:
+                statusbar.setParent(self)
+                self.setStatusBar(statusbar)
+        except Exception:
+            pass
         central = loaded.takeCentralWidget()
         if central is None:
             central = loaded.findChild(QWidget, "centralwidget")
@@ -178,8 +184,8 @@ def _map_ide_like_widgets(self) -> None:
     self.btn_select_files = _find(QPushButton, "btn_select_files")
     self.btn_remove_file = _find(QPushButton, "btn_remove_file")
     self.btn_clear_workspace = _find(QPushButton, "btn_clear_workspace")
-    self.btn_select_icon = _find(QPushButton, "btn_select_icon")
-    self.btn_nuitka_icon = _find(QPushButton, "btn_nuitka_icon")
+    self.btn_select_icon = None
+    self.btn_nuitka_icon = None
     self.toolButton_more = _find(QToolButton, "toolButton_more")
     self.log = _find(QTextEdit, "log")
     self.progress = _find(QProgressBar, "progress")
@@ -579,11 +585,6 @@ def _connect_ide_like_specific_signals(self) -> None:
     _connect_clicked(
         getattr(self, "activity_btn_deps", None),
         getattr(self, "suggest_missing_dependencies", None),
-    )
-    _connect_clicked(getattr(self, "btn_select_icon", None), getattr(self, "select_icon", None))
-    _connect_clicked(
-        getattr(self, "btn_nuitka_icon", None),
-        getattr(self, "select_nuitka_icon", None),
     )
     _bind_status_updates(self)
 

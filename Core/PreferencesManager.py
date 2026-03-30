@@ -270,7 +270,7 @@ def detect_system_language() -> tuple[str, str]:
     try:
         import locale
 
-        loc = (locale.getdefaultlocale()[0] or "").lower()
+        loc = (locale.getlocale()[0] or "").lower()
         if loc.startswith(("fr", "fr_")):
             return ("fr", "Français")
         return ("en", "English")

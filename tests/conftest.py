@@ -17,8 +17,14 @@ from __future__ import annotations
 
 from pathlib import Path
 import shutil
+import sys
 
 import pytest
+
+# Ensure project root imports (e.g. `import Core`) work regardless of pytest invocation path.
+ROOT_DIR = Path(__file__).resolve().parent.parent
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
 
 
 @pytest.fixture()
