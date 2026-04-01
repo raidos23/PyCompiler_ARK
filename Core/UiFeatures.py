@@ -35,7 +35,7 @@ from typing import Optional, Callable
 
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QIcon, QPixmap
-from PySide6.QtWidgets import QFileDialog, QMessageBox, QMenu
+from PySide6.QtWidgets import QApplication, QFileDialog, QMessageBox, QMenu
 
 
 class UiFeatures:
@@ -180,15 +180,31 @@ class UiFeatures:
     def _entrypoint_icon(self) -> QIcon | None:
         """Retourne l'icône utilisée pour marquer le point d'entrée."""
         icon = getattr(self, "_entrypoint_icon_cache", None)
-        if isinstance(icon, QIcon) and not icon.isNull():
+        token = getattr(self, "_entrypoint_icon_theme_token", None)
+        try:
+            app = QApplication.instance()
+            css = app.styleSheet() if app else ""
+        except Exception:
+            css = ""
+        current_token = hash(css or "")
+        if token == current_token and isinstance(icon, QIcon) and not icon.isNull():
             return icon
         try:
             base = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
             path = os.path.join(base, "icons", "check-circle.svg")
             if os.path.isfile(path):
-                icon = QIcon(path)
+                icon = None
+                try:
+                    from .UiConnection import themed_svg_icon
+
+                    icon = themed_svg_icon(path, size=16, css=css)
+                except Exception:
+                    icon = None
+                if icon is None or icon.isNull():
+                    icon = QIcon(path)
                 if not icon.isNull():
                     self._entrypoint_icon_cache = icon
+                    self._entrypoint_icon_theme_token = current_token
                     return icon
         except Exception:
             pass

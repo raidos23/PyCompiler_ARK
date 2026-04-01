@@ -28,7 +28,6 @@ from PySide6.QtWidgets import (
     QToolButton,
     QStatusBar,
     QWidget,
-    QFrame,
     QSplitter,
 )
 
@@ -195,57 +194,11 @@ def _map_ide_like_widgets(self) -> None:
         self.status_hint = self.statusbar.findChild(QLabel, "status_hint") if self.statusbar else None
     except Exception:
         self.status_hint = None
-    try:
-        if self.log is not None:
-            self.log.setReadOnly(True)
-            self.log.setAcceptRichText(False)
-    except Exception:
-        pass
     _setup_status_bar(self)
 
 
 def _tune_ide_like_layout(self) -> None:
-    """Relax tight layout constraints in the IDE-like UI for better label fit."""
-    header = self.ui.findChild(QFrame, "header")
-    if header is not None:
-        try:
-            header.setMinimumHeight(48)
-            header.setMaximumHeight(56)
-        except Exception:
-            pass
-
-    for btn_name in ("compile_btn", "cancel_btn"):
-        btn = getattr(self, btn_name, None)
-        if btn is None:
-            continue
-        try:
-            btn.setMinimumSize(124, 34)
-        except Exception:
-            pass
-
-    workspace_panel = self.ui.findChild(QFrame, "workspace_panel")
-    if workspace_panel is not None:
-        try:
-            workspace_panel.setMinimumWidth(280)
-            workspace_panel.setMaximumWidth(400)
-        except Exception:
-            pass
-
-    tools_panel = self.ui.findChild(QFrame, "tools_panel")
-    if tools_panel is not None:
-        try:
-            tools_panel.setMinimumWidth(200)
-            tools_panel.setMaximumWidth(280)
-        except Exception:
-            pass
-
-    logs_panel = self.ui.findChild(QFrame, "logs_panel")
-    if logs_panel is not None:
-        try:
-            logs_panel.setMinimumHeight(190)
-            logs_panel.setMaximumHeight(320)
-        except Exception:
-            pass
+    """Apply runtime splitter ratios; static constraints live in the .ui file."""
 
     main_splitter = self.ui.findChild(QSplitter, "mainSplitter")
     if main_splitter is not None:
@@ -506,6 +459,36 @@ def _apply_activity_buttons_theme(self) -> None:
         f"QToolButton:pressed, QToolButton:checked {{ background: {pressed}; }}"
         "QToolButton::menu-indicator { image: none; width: 0px; }"
     )
+
+    # Keep IDE activity icons in sync with current theme-colored SVGs.
+    try:
+        from ..UiConnection import themed_svg_icon
+
+        base = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+        icons_dir = os.path.join(base, "icons")
+
+        more_btn = getattr(self, "toolButton_more", None)
+        if more_btn is not None:
+            more_icon = themed_svg_icon(
+                os.path.join(icons_dir, "more-horizontal.svg"), size=18
+            )
+            if more_icon is not None and not more_icon.isNull():
+                more_btn.setIcon(more_icon)
+                more_btn.setIconSize(more_btn.iconSize())
+                more_btn.setText("")
+
+        deps_btn = getattr(self, "activity_btn_deps", None)
+        src_btn = getattr(self, "btn_suggest_deps", None)
+        if deps_btn is not None:
+            if src_btn is not None and src_btn.icon() is not None and not src_btn.icon().isNull():
+                deps_btn.setIcon(src_btn.icon())
+                deps_btn.setIconSize(src_btn.iconSize())
+            else:
+                deps_icon = themed_svg_icon(os.path.join(icons_dir, "search.svg"), size=18)
+                if deps_icon is not None and not deps_icon.isNull():
+                    deps_btn.setIcon(deps_icon)
+    except Exception:
+        pass
 
     for attr in ("toolButton_more", "activity_btn_deps"):
         btn = getattr(self, attr, None)
