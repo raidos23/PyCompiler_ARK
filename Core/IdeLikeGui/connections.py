@@ -697,18 +697,17 @@ def _update_status_line(self) -> None:
     if statusbar is None:
         return
 
-    def _short_path(path: str | None, max_len: int = 28) -> str:
+    def _workspace_label(path: str | None) -> str:
         if not path:
-            return "None"
+            return "-"
         try:
             p = os.path.normpath(path)
+            name = os.path.basename(p)
+            return name or p
         except Exception:
-            p = path
-        if len(p) <= max_len:
-            return p
-        return f"...{p[-max_len:]}"
+            return path
 
-    ws = _short_path(getattr(self, "workspace_dir", None))
+    ws = _workspace_label(getattr(self, "workspace_dir", None))
     files_total = 0
     files_sel = 0
     try:
@@ -730,19 +729,18 @@ def _update_status_line(self) -> None:
     prog = ""
     try:
         pb = getattr(self, "progress", None)
-        if pb is not None:
+        if pb is not None and pb.value() > 0:
             prog = f"{pb.value()}%"
     except Exception:
         pass
 
     parts = [
-        f"Workspace: {ws}",
-        f"Files: {files_total}",
-        f"Selected: {files_sel}",
-        f"Engine: {engine_name}",
+        f"WS:{ws}",
+        f"F:{files_sel}/{files_total}",
+        f"E:{engine_name}",
     ]
     if prog:
-        parts.append(f"Progress: {prog}")
+        parts.append(f"P:{prog}")
 
     msg = " | ".join(parts)
     try:
