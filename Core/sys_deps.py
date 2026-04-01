@@ -53,6 +53,7 @@ except Exception:
 class SysDependencyManager:
     def __init__(self, parent_widget=None):
         self.parent_widget = parent_widget
+        self._cancelled_procs: set[int] = set()
         # Register list of system dependency tasks on the parent widget for global coordination
         try:
             if parent_widget is not None and not hasattr(
@@ -95,6 +96,81 @@ class SysDependencyManager:
             for t in list(tasks):
                 if t.get("process") is proc:
                     tasks.remove(t)
+        except Exception:
+            pass
+        try:
+            if proc is not None:
+                self._cancelled_procs.discard(id(proc))
+        except Exception:
+            pass
+
+    def _mark_process_cancelled(self, proc: Optional[QProcess]) -> None:
+        try:
+            if proc is not None:
+                self._cancelled_procs.add(id(proc))
+        except Exception:
+            pass
+
+    def _is_process_cancelled(self, proc: Optional[QProcess]) -> bool:
+        try:
+            return proc is not None and id(proc) in self._cancelled_procs
+        except Exception:
+            return False
+
+    def _log_cancel(self, fr: str, en: str) -> None:
+        text = self.tr(fr, en)
+        try:
+            if (
+                self.parent_widget is not None
+                and hasattr(self.parent_widget, "_safe_log")
+                and callable(self.parent_widget._safe_log)
+            ):
+                self.parent_widget._safe_log(text)
+        except Exception:
+            pass
+        try:
+            self._dbg(text)
+        except Exception:
+            pass
+
+    def _cancel_task(
+        self, proc: Optional[QProcess], dlg: Optional[ProgressDialog], label_fr: str, label_en: str
+    ) -> None:
+        self._mark_process_cancelled(proc)
+        self._log_cancel(
+            f"🛑 Annulation demandée: {label_fr}.",
+            f"🛑 Cancellation requested: {label_en}.",
+        )
+        try:
+            if proc is not None and proc.state() != QProcess.NotRunning:
+                proc.kill()
+        except Exception:
+            pass
+        try:
+            if dlg is not None:
+                dlg.close()
+        except Exception:
+            pass
+        try:
+            if proc is not None:
+                self._unregister_task(proc)
+        except Exception:
+            pass
+
+    def _bind_cancel_button(
+        self,
+        dlg: Optional[ProgressDialog],
+        proc: Optional[QProcess],
+        label_fr: str,
+        label_en: str,
+    ) -> None:
+        try:
+            btn = getattr(dlg, "btn_cancel", None) if dlg is not None else None
+            if btn is None:
+                return
+            btn.clicked.connect(
+                lambda: self._cancel_task(proc, dlg, label_fr, label_en)
+            )
         except Exception:
             pass
 
@@ -532,14 +608,31 @@ class SysDependencyManager:
                     "Installing Windows dependencies",
                 ),
                 self.parent_widget,
+                cancelable=True,
             )
             dlg.set_message(self.tr("Préparation…", "Preparing…"))
             dlg.progress.setRange(0, 0)
             dlg.show()
             queue = list(packages)
             proc = QProcess(self.parent_widget)
+            state = {"cancelled": False}
+
+            def _cancel_winget():
+                if state["cancelled"]:
+                    return
+                state["cancelled"] = True
+                self._cancel_task(proc, dlg, "installation winget", "winget installation")
+
+            try:
+                btn = getattr(dlg, "btn_cancel", None)
+                if btn is not None:
+                    btn.clicked.connect(_cancel_winget)
+            except Exception:
+                pass
 
             def _start_next():
+                if state["cancelled"] or self._is_process_cancelled(proc):
+                    return
                 if not queue:
                     try:
                         dlg.close()
@@ -581,6 +674,8 @@ class SysDependencyManager:
                 proc.start()
 
             def _on_output(p: QProcess, error: bool = False):
+                if state["cancelled"] or self._is_process_cancelled(proc):
+                    return
                 try:
                     data = (
                         p.readAllStandardError().data().decode()
@@ -601,6 +696,8 @@ class SysDependencyManager:
                     pass
 
             def _on_finished(_ec, _es):
+                if state["cancelled"] or self._is_process_cancelled(proc):
+                    return
                 _start_next()
 
             proc.readyReadStandardOutput.connect(lambda p=proc: _on_output(p, False))
@@ -632,11 +729,16 @@ class SysDependencyManager:
         Le dialogue se ferme automatiquement à la fin du processus.
         """
         try:
-            dlg = ProgressDialog(self.tr(title_fr, title_en), self.parent_widget)
+            dlg = ProgressDialog(
+                self.tr(title_fr, title_en), self.parent_widget, cancelable=True
+            )
             dlg.set_message(self.tr(start_msg_fr, start_msg_en))
             dlg.progress.setRange(0, 0)  # indéterminé
             dlg.show()
             proc = QProcess(self.parent_widget)
+            self._bind_cancel_button(
+                dlg, proc, "installation des dépendances", "dependencies installation"
+            )
             if cwd:
                 proc.setWorkingDirectory(cwd)
             proc.setProgram(program)
@@ -644,6 +746,8 @@ class SysDependencyManager:
 
             # Mise à jour du message avec la dernière ligne reçue
             def _on_output(p: QProcess, error: bool = False):
+                if self._is_process_cancelled(proc):
+                    return
                 try:
                     data = (
                         p.readAllStandardError().data().decode()
@@ -710,11 +814,16 @@ class SysDependencyManager:
                     "This sudo operation is supported on Linux only.",
                 )
                 return None
-            dlg = ProgressDialog(self.tr(title_fr, title_en), self.parent_widget)
+            dlg = ProgressDialog(
+                self.tr(title_fr, title_en), self.parent_widget, cancelable=True
+            )
             dlg.set_message(self.tr(start_msg_fr, start_msg_en))
             dlg.progress.setRange(0, 0)
             dlg.show()
             proc = QProcess(self.parent_widget)
+            self._bind_cancel_button(
+                dlg, proc, "installation des dépendances", "dependencies installation"
+            )
             if cwd:
                 proc.setWorkingDirectory(cwd)
             # Utiliser bash -lc pour exécuter la chaîne
@@ -723,6 +832,8 @@ class SysDependencyManager:
 
             # maj message sur sortie
             def _on_output(p: QProcess, error: bool = False):
+                if self._is_process_cancelled(proc):
+                    return
                 try:
                     data = (
                         p.readAllStandardError().data().decode()

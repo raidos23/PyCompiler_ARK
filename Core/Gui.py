@@ -431,6 +431,14 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
                 return True
         except Exception:
             pass
+        try:
+            tasks = getattr(self, "_sysdep_tasks", None) or []
+            for task in list(tasks):
+                proc = task.get("process") if isinstance(task, dict) else None
+                if proc is not None and proc.state() != proc.NotRunning:
+                    return True
+        except Exception:
+            pass
         return False
 
     def _terminate_background_tasks(self):
@@ -438,6 +446,25 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
         try:
             if hasattr(self, "venv_manager") and self.venv_manager:
                 self.venv_manager.terminate_tasks()
+        except Exception:
+            pass
+        try:
+            tasks = getattr(self, "_sysdep_tasks", None) or []
+            for task in list(tasks):
+                proc = task.get("process") if isinstance(task, dict) else None
+                dlg = task.get("dialog") if isinstance(task, dict) else None
+                try:
+                    if proc is not None and proc.state() != proc.NotRunning:
+                        proc.kill()
+                except Exception:
+                    pass
+                try:
+                    if dlg is not None:
+                        dlg.close()
+                except Exception:
+                    pass
+            if isinstance(tasks, list):
+                tasks.clear()
         except Exception:
             pass
 
@@ -461,6 +488,20 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
                     )
                 except Exception:
                     pass
+            try:
+                tasks = getattr(self, "_sysdep_tasks", None) or []
+                for task in list(tasks):
+                    if not isinstance(task, dict):
+                        continue
+                    proc = task.get("process")
+                    if proc is None or proc.state() == proc.NotRunning:
+                        continue
+                    if is_french:
+                        details.append(task.get("label_fr") or "dépendances système")
+                    else:
+                        details.append(task.get("label_en") or "system dependencies")
+            except Exception:
+                pass
 
             if not is_french:
                 mapping = {"compilation": "build"}
