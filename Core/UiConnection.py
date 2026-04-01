@@ -734,6 +734,78 @@ def _is_qss_dark(css: str) -> bool:
         return False
 
 
+def _extract_accent_color_for_icons(css_text: str) -> str | None:
+    try:
+        import re
+
+        def _block(selector: str) -> str | None:
+            pattern = re.compile(rf"{re.escape(selector)}\\s*\\{{([^}}]+)\\}}", re.S)
+            match = pattern.search(css_text)
+            return match.group(1) if match else None
+
+        def _colors(text: str) -> list[str]:
+            return re.findall(r"#[0-9a-fA-F]{3,6}", text)
+
+        for selector in ("QPushButton#compile_btn", "#compile_btn"):
+            block = _block(selector)
+            if block:
+                colors = _colors(block)
+                if colors:
+                    return colors[0]
+
+        match = re.search(r"--accent[^:]*:\\s*(#[0-9a-fA-F]{3,6})", css_text)
+        if match:
+            return match.group(1)
+    except Exception:
+        return None
+    return None
+
+
+def _resolve_theme_icon_color(css: str | None = None) -> str:
+    if not css:
+        try:
+            from PySide6.QtWidgets import QApplication
+
+            app = QApplication.instance()
+            css = app.styleSheet() if app else ""
+        except Exception:
+            css = ""
+    if css:
+        accent = _extract_accent_color_for_icons(css)
+        if accent:
+            return accent
+        return "#FFFFFF" if _is_qss_dark(css) else "#111111"
+    return "#FFFFFF" if _detect_system_color_scheme() == "sombre" else "#111111"
+
+
+def themed_svg_icon(path: str, size: int = 18, css: str | None = None) -> QIcon | None:
+    """Render an SVG icon tinted according to current app theme."""
+    if not os.path.isfile(path):
+        return None
+    if QSvgRenderer is None:
+        return QIcon(path)
+    try:
+        with open(path, encoding="utf-8") as f:
+            svg = f.read()
+    except Exception:
+        return None
+
+    color = _resolve_theme_icon_color(css)
+    if "currentColor" in svg:
+        svg = svg.replace("currentColor", color)
+    else:
+        svg = svg.replace("<svg ", f'<svg color="{color}" ', 1)
+    renderer = QSvgRenderer(QByteArray(svg.encode("utf-8")))
+    if not renderer.isValid():
+        return None
+    pixmap = QPixmap(size, size)
+    pixmap.fill(Qt.transparent)
+    painter = QPainter(pixmap)
+    renderer.render(painter, QRectF(0, 0, size, size))
+    painter.end()
+    return QIcon(pixmap)
+
+
 def _refresh_log_palette(self, css: str | None = None) -> None:
     """Assure une couleur de texte lisible pour le journal, selon le thème."""
     if not getattr(self, "log", None):
@@ -811,6 +883,18 @@ def apply_theme(self, pref: str) -> None:
         _refresh_log_palette(self, css)
         try:
             _apply_button_icons(self)
+        except Exception:
+            pass
+        try:
+            # IDE-like activity-bar buttons are themed separately.
+            from .IdeLikeGui.connections import _apply_activity_buttons_theme
+
+            _apply_activity_buttons_theme(self)
+        except Exception:
+            pass
+        try:
+            if hasattr(self, "_refresh_entrypoint_marker"):
+                self._refresh_entrypoint_marker()
         except Exception:
             pass
         self.theme = pref or "System"

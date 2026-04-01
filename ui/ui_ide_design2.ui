@@ -91,13 +91,13 @@ QProgressBar::chunk { background: #0e639c; }</string>
       <property name="minimumSize">
        <size>
         <width>0</width>
-        <height>36</height>
+        <height>48</height>
        </size>
       </property>
       <property name="maximumSize">
        <size>
         <width>16777215</width>
-        <height>36</height>
+        <height>56</height>
        </size>
       </property>
       <property name="frameShape">
@@ -146,8 +146,8 @@ QProgressBar::chunk { background: #0e639c; }</string>
         <widget class="QPushButton" name="compile_btn">
          <property name="minimumSize">
           <size>
-           <width>90</width>
-           <height>28</height>
+           <width>124</width>
+           <height>34</height>
           </size>
          </property>
          <property name="text">
@@ -159,8 +159,8 @@ QProgressBar::chunk { background: #0e639c; }</string>
         <widget class="QPushButton" name="cancel_btn">
          <property name="minimumSize">
           <size>
-           <width>90</width>
-           <height>28</height>
+           <width>124</width>
+           <height>34</height>
           </size>
          </property>
          <property name="text">
@@ -264,13 +264,13 @@ QProgressBar::chunk { background: #0e639c; }</string>
       <widget class="QFrame" name="workspace_panel">
        <property name="minimumSize">
         <size>
-         <width>260</width>
+         <width>280</width>
          <height>0</height>
         </size>
        </property>
        <property name="maximumSize">
         <size>
-         <width>420</width>
+         <width>400</width>
          <height>16777215</height>
         </size>
        </property>
@@ -408,13 +408,13 @@ QProgressBar::chunk { background: #0e639c; }</string>
         <widget class="QFrame" name="tools_panel">
          <property name="minimumSize">
           <size>
-           <width>180</width>
+           <width>200</width>
            <height>0</height>
           </size>
          </property>
          <property name="maximumSize">
           <size>
-           <width>300</width>
+           <width>280</width>
            <height>16777215</height>
           </size>
          </property>
@@ -537,13 +537,13 @@ QProgressBar::chunk { background: #0e639c; }</string>
         <property name="minimumSize">
          <size>
           <width>0</width>
-          <height>160</height>
+          <height>190</height>
          </size>
         </property>
         <property name="maximumSize">
          <size>
           <width>16777215</width>
-          <height>240</height>
+          <height>320</height>
          </size>
         </property>
         <property name="frameShape">
@@ -576,7 +576,14 @@ QProgressBar::chunk { background: #0e639c; }</string>
           </widget>
          </item>
          <item>
-          <widget class="QTextEdit" name="log"/>
+          <widget class="QTextEdit" name="log">
+           <property name="acceptRichText">
+            <bool>false</bool>
+           </property>
+           <property name="readOnly">
+            <bool>true</bool>
+           </property>
+          </widget>
          </item>
          <item>
           <layout class="QHBoxLayout" name="progressRowLayout">
