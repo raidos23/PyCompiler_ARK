@@ -79,6 +79,8 @@ class VenvManager:
         self._auto_venv_cache: dict[str, str] = {}
         # Cache for manager-provided venv per workspace (None if not found)
         self._manager_venv_cache: dict[str, str | None] = {}
+        # User-driven cancellation flag for long-running async flows
+        self._cancel_requested = False
 
     # ---------- Workspace pref (.ark/pref.json) ----------
     def _workspace_pref_path(self, workspace_dir: str) -> str:
@@ -561,13 +563,17 @@ class VenvManager:
     def ensure_tools_installed(self, venv_root: str, tools: list[str]) -> None:
         """Asynchronously check/install the provided tools list with progress dialog."""
         try:
+            self._reset_cancel_state()
             self._venv_check_pkgs = list(tools)
             self._venv_check_index = 0
             self._venv_check_pip_exe = self.pip_path(venv_root)
             self._venv_check_path = venv_root
             self._venv_check_use_python = False
             self.venv_check_progress = ProgressDialog(
-                "Vérification du venv", self.parent
+                "Vérification du venv", self.parent, cancelable=True
+            )
+            self._bind_cancel_for_dialog(
+                self.venv_check_progress, "vérification des outils du venv"
             )
             self.venv_check_progress.set_message(f"Vérification de {tools[0]}...")
             self.venv_check_progress.set_progress(0, len(tools))
@@ -581,6 +587,7 @@ class VenvManager:
     def ensure_tools_installed_system(self, tools: list[str]) -> None:
         """Asynchronously check/install tools in system Python using pip."""
         try:
+            self._reset_cancel_state()
             self._venv_check_pkgs = list(tools)
             self._venv_check_index = 0
             self._venv_check_pip_exe = sys.executable
@@ -589,7 +596,10 @@ class VenvManager:
             )
             self._venv_check_use_python = True
             self.venv_check_progress = ProgressDialog(
-                "Vérification du Python système", self.parent
+                "Vérification du Python système", self.parent, cancelable=True
+            )
+            self._bind_cancel_for_dialog(
+                self.venv_check_progress, "vérification des outils système"
             )
             self.venv_check_progress.set_message(f"Vérification de {tools[0]}...")
             self.venv_check_progress.set_progress(0, len(tools))
@@ -697,6 +707,41 @@ class VenvManager:
                 print(text)
             except Exception:
                 pass
+
+    def _reset_cancel_state(self) -> None:
+        try:
+            self._cancel_requested = False
+        except Exception:
+            pass
+
+    def _is_cancel_requested(self) -> bool:
+        try:
+            return bool(getattr(self, "_cancel_requested", False))
+        except Exception:
+            return False
+
+    def _request_cancel(self, action_label: str | None = None) -> None:
+        if self._is_cancel_requested():
+            return
+        self._cancel_requested = True
+        suffix = f" ({action_label})" if action_label else ""
+        self._safe_log(
+            f"🛑 Annulation demandée par l'utilisateur{suffix}.",
+            f"🛑 Cancellation requested by user{suffix}.",
+            level="warning",
+        )
+        self.terminate_tasks()
+
+    def _bind_cancel_for_dialog(self, dialog, action_label: str) -> None:
+        if dialog is None:
+            return
+        btn = getattr(dialog, "btn_cancel", None)
+        if btn is None:
+            return
+        try:
+            btn.clicked.connect(lambda: self._request_cancel(action_label))
+        except Exception:
+            pass
 
     def _is_stdlib_module(self, module_name: str) -> bool:
         """Check if a module is part of Python's standard library."""
@@ -1309,6 +1354,7 @@ class VenvManager:
     # ---------- Existing venv: check and install tools ----------
     def check_tools_in_venv(self, venv_path: str):
         try:
+            self._reset_cancel_state()
             ok, reason = self.validate_venv_strict(venv_path)
             if not ok:
                 self._safe_log(f"❌ Invalid venv: {reason}")
@@ -1336,7 +1382,10 @@ class VenvManager:
                 self._venv_check_pip_exe = pip_exe
                 self._venv_check_path = venv_path
                 self.venv_check_progress = ProgressDialog(
-                    "Vérification du venv", self.parent
+                    "Vérification du venv", self.parent, cancelable=True
+                )
+                self._bind_cancel_for_dialog(
+                    self.venv_check_progress, "vérification des outils du venv"
                 )
                 self.venv_check_progress.set_message("Vérification de PyInstaller...")
                 self.venv_check_progress.set_progress(0, len(self._venv_check_pkgs))
@@ -1348,6 +1397,13 @@ class VenvManager:
             self._safe_log(f"❌ Erreur lors de la vérification du venv: {e}")
 
     def _check_next_venv_pkg(self):
+        if self._is_cancel_requested():
+            try:
+                if self.venv_check_progress:
+                    self.venv_check_progress.close()
+            except Exception:
+                pass
+            return
         if self._venv_check_index >= len(self._venv_check_pkgs):
             try:
                 self.venv_check_progress.set_message("Vérification terminée.")
@@ -1385,6 +1441,8 @@ class VenvManager:
 
     def _on_venv_pkg_checked(self, process, code, status, pkg):
         if getattr(self.parent, "_closing", False):
+            return
+        if self._is_cancel_requested():
             return
         if code == 0:
             if self._venv_check_use_python:
@@ -1447,6 +1505,8 @@ class VenvManager:
 
     def _on_venv_check_output(self, process, error=False):
         if getattr(self.parent, "_closing", False):
+            return
+        if self._is_cancel_requested():
             return
         data = (
             process.readAllStandardError().data().decode()
@@ -1743,6 +1803,8 @@ class VenvManager:
     def _on_venv_pkg_installed(self, process, code, status, pkg):
         if getattr(self.parent, "_closing", False):
             return
+        if self._is_cancel_requested():
+            return
         if code == 0:
             self._safe_log(f"✅ {pkg} installé dans le venv.")
         else:
@@ -1795,6 +1857,7 @@ class VenvManager:
 
         self._safe_log("🔧 Aucun venv trouvé, création automatique...")
         try:
+            self._reset_cancel_state()
             # Recherche d'un python embarqué à côté de l'exécutable
             python_candidate = None
             exe_dir = os.path.dirname(sys.executable)
@@ -1846,7 +1909,10 @@ class VenvManager:
                 self._safe_log(f"➡️ Utilisation de sys.executable : {python_candidate}")
 
             self.venv_progress_dialog = ProgressDialog(
-                "Création de l'environnement virtuel", self.parent
+                "Création de l'environnement virtuel", self.parent, cancelable=True
+            )
+            self._bind_cancel_for_dialog(
+                self.venv_progress_dialog, "création de l'environnement virtuel"
             )
             self.venv_progress_dialog.set_message("Création du venv...")
 
@@ -1883,6 +1949,8 @@ class VenvManager:
     def _on_venv_output(self, process, error=False):
         if getattr(self.parent, "_closing", False):
             return
+        if self._is_cancel_requested():
+            return
         data = (
             process.readAllStandardError().data().decode()
             if error
@@ -1901,6 +1969,9 @@ class VenvManager:
 
     def _on_venv_created(self, process, code, status, venv_path):
         if getattr(self.parent, "_closing", False):
+            return
+        if self._is_cancel_requested():
+            self._safe_log("ℹ️ Création du venv annulée.")
             return
         if code == 0:
             self._safe_log("✅ Environnement virtuel créé avec succès.")
@@ -2370,6 +2441,7 @@ class VenvManager:
         req_path: str,
         use_system_python: bool = False,
     ):
+        self._reset_cancel_state()
         py_exe = sys.executable if use_system_python else self.python_path(venv_root)
         if not os.path.isfile(py_exe):
             self._safe_log(
@@ -2417,7 +2489,10 @@ class VenvManager:
             self._req_use_system_python = bool(use_system_python)
             self._pip_phase = "ensurepip"
             self.progress_dialog = ProgressDialog(
-                "Installation des dépendances", self.parent
+                "Installation des dépendances", self.parent, cancelable=True
+            )
+            self._bind_cancel_for_dialog(
+                self.progress_dialog, "installation des dépendances"
             )
             self.progress_dialog.set_message("Activation de pip (ensurepip)...")
             process = QProcess(self.parent)
@@ -2445,6 +2520,8 @@ class VenvManager:
     def _on_pip_output(self, process, error=False):
         if getattr(self.parent, "_closing", False):
             return
+        if self._is_cancel_requested():
+            return
         data = (
             process.readAllStandardError().data().decode()
             if error
@@ -2465,6 +2542,9 @@ class VenvManager:
 
     def _on_pip_finished(self, process, code, status):
         if getattr(self.parent, "_closing", False):
+            return
+        if self._is_cancel_requested():
+            self._safe_log("ℹ️ Installation des dépendances annulée.")
             return
         phase = self._pip_phase
         if phase == "ensurepip":
@@ -2611,6 +2691,9 @@ class VenvManager:
         return False
 
     def terminate_tasks(self):
+        had_active = self.has_active_tasks()
+        if had_active:
+            self._cancel_requested = True
         # Kill processes
         for attr in [
             "_venv_create_process",
@@ -2624,6 +2707,13 @@ class VenvManager:
                     proc.kill()
             except Exception:
                 pass
+
+        if had_active:
+            self._safe_log(
+                "🛑 Opérations venv interrompues.",
+                "🛑 Venv operations interrupted.",
+                level="warning",
+            )
             setattr(self, attr, None)
         # Close dialogs
         for dlg_attr in [
@@ -2977,6 +3067,7 @@ class VenvManager:
     ):
         """Create venv using the detected environment manager."""
         try:
+            self._reset_cancel_state()
             manager = self._detect_environment_manager(workspace_dir)
 
             if not venv_path:
@@ -3019,7 +3110,12 @@ class VenvManager:
 
             # Execute command
             self.venv_progress_dialog = ProgressDialog(
-                f"Création du venv avec {manager}", self.parent
+                f"Création du venv avec {manager}",
+                self.parent,
+                cancelable=True,
+            )
+            self._bind_cancel_for_dialog(
+                self.venv_progress_dialog, f"création venv via {manager}"
             )
             self.venv_progress_dialog.set_message(f"Création du venv avec {manager}...")
 
@@ -3053,6 +3149,7 @@ class VenvManager:
     ):
         """Install dependencies using the detected environment manager."""
         try:
+            self._reset_cancel_state()
             manager = self._detect_environment_manager(workspace_dir)
 
             if not venv_path:
@@ -3107,7 +3204,10 @@ class VenvManager:
 
             # Execute command
             self.progress_dialog = ProgressDialog(
-                f"Installation avec {manager}", self.parent
+                f"Installation avec {manager}", self.parent, cancelable=True
+            )
+            self._bind_cancel_for_dialog(
+                self.progress_dialog, f"installation via {manager}"
             )
             self.progress_dialog.set_message(
                 f"Installation des dépendances avec {manager}..."
@@ -3141,6 +3241,9 @@ class VenvManager:
     def _on_manager_install_finished(self, process, code, status, manager):
         """Callback after manager-based installation."""
         if getattr(self.parent, "_closing", False):
+            return
+        if self._is_cancel_requested():
+            self._safe_log(f"ℹ️ Installation via {manager} annulée.")
             return
 
         if code == 0:
