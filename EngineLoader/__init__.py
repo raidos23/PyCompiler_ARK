@@ -21,24 +21,58 @@ from EngineLoader.Loader.EngineLoader import _auto_discover
 
 from . import registry as registry  # re-export registry module
 from .base import CompilerEngine  # re-export base type
-from .registry import unload_all  # re-export unload_all function
-from .registry import get_engine  # re-export get_engine function
-from .registry import available_engines  # re-export available_engines function
-from .registry import create  # re-export create function
+from .registry import unload_all as _registry_unload_all
+from .registry import get_engine as _registry_get_engine
+from .registry import available_engines as _registry_available_engines
+from .registry import create as _registry_create
 
 __version__ = "1.0.0"
 
+_DISCOVERY_DONE = False
 
-# Perform discovery at import-time so engines are ready for UI/compile usage (packages under ENGINES/ only)
-try:
-    if str(os.environ.get("ARK_ENGINES_AUTO_DISCOVER", "1")).lower() not in (
-        "0",
-        "false",
-        "no",
-    ):
-        _auto_discover()
-except Exception:
-    pass
+
+def _ensure_discovered() -> None:
+    """Load project engines on first real registry access.
+
+    Keeping discovery lazy avoids importing every engine package during harmless
+    module imports such as CLI headless bootstrap or SDK helper loading.
+    """
+    global _DISCOVERY_DONE
+    if _DISCOVERY_DONE:
+        return
+    try:
+        if str(os.environ.get("ARK_ENGINES_AUTO_DISCOVER", "1")).lower() not in (
+            "0",
+            "false",
+            "no",
+        ):
+            _auto_discover()
+    except Exception:
+        pass
+    finally:
+        _DISCOVERY_DONE = True
+
+
+def get_engine(eid: str):
+    _ensure_discovered()
+    return _registry_get_engine(eid)
+
+
+def available_engines() -> list[str]:
+    _ensure_discovered()
+    return _registry_available_engines()
+
+
+def create(eid: str):
+    _ensure_discovered()
+    return _registry_create(eid)
+
+
+def unload_all():
+    global _DISCOVERY_DONE
+    result = _registry_unload_all()
+    _DISCOVERY_DONE = False
+    return result
 
 __all__ = [
     "CompilerEngine",

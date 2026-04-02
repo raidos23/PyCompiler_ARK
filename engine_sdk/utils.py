@@ -54,11 +54,6 @@ from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Any, Optional, Union
 
-try:
-    from PySide6.QtCore import QProcess  # type: ignore
-except Exception:  # pragma: no cover - optional at import time
-    QProcess = None  # type: ignore
-
 Pathish = Union[str, Path]
 
 # -------------------------------
@@ -131,17 +126,10 @@ def clamp_text(text: str, *, max_len: int = 10000) -> str:
 # i18n & logging helpers
 # -------------------------------
 
-try:
-    from Core import i18n as _core_i18n  # type: ignore
-
-    tr = _core_i18n.tr
-    safe_log = _core_i18n.safe_log
-    log_with_level = _core_i18n.log_with_level
-    log_i18n_level = _core_i18n.log_i18n_level
-    essential_log_max_len = getattr(_core_i18n, "essential_log_max_len", 10000)
-    _USING_CORE_I18N = True
-except Exception:
-    _USING_CORE_I18N = False
+# Intentionally avoid importing `Core` at module import time.
+# The `Core` package pulls in GUI modules through its `__init__`, which makes
+# harmless headless imports crash on systems where Qt cannot be loaded.
+_USING_CORE_I18N = False
 
 
 if not _USING_CORE_I18N:

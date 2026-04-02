@@ -48,12 +48,16 @@ PYCOMPILER_UI_VARIANT=ide2
 
 ## Current Scope
 
-The IDE-like wiring currently connects these existing actions:
+The IDE-like wiring reuses the classic shared signal connector, then adds its
+own IDE-specific actions on top.
 
-- Build (`compile_all`)
-- Cancel (`cancel_all_compilations`)
-- Select workspace (`select_workspace`)
+In practice, the IDE-like GUI inherits the classic main workflow instead of
+exposing only a small subset of actions.
 
-Additional controls can be mapped incrementally to existing Core methods.
+Notable points:
+
+- classic shared signal wiring is reused
+- IDE-specific actions are connected afterward
+- the entrypoint selector is initialized in IDE mode as well
 
 For parity details and remaining checks, see [IDE/classic parity matrix](./ide_classic_parity.md).

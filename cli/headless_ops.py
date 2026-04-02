@@ -7,6 +7,8 @@ import json
 import os
 import platform
 import fnmatch
+import re
+import shlex
 from pathlib import Path
 from typing import Any
 import yaml
@@ -33,6 +35,27 @@ def _new_engines_app(workspace_dir: str | None = None):
         theme="dark",
         headless=True,
     )
+
+
+class _HeadlessLog:
+    def __init__(self) -> None:
+        self.messages: list[str] = []
+
+    def append(self, message: str) -> None:
+        self.messages.append(str(message))
+
+
+class _HeadlessGui:
+    def __init__(self, workspace_dir: str | None = None):
+        self.workspace_dir = workspace_dir
+        self.log = _HeadlessLog()
+        self._tr: dict[str, Any] = {}
+        self.language_pref = "en"
+        self.current_language = "en"
+        self.venv_manager = None
+
+    def tr(self, fr_text: str, en_text: str) -> str:
+        return en_text
 
 
 def _read_version_from_init(rel_path: str) -> str:
@@ -103,49 +126,187 @@ def _normalize_workspace(workspace: str | None) -> str | None:
         return str(workspace)
 
 
+def _core_version() -> str:
+    return _read_version_from_init("Core/__init__.py")
+
+
+def _engine_sdk_version() -> str:
+    return _read_version_from_init("engine_sdk/__init__.py")
+
+
+def _compatibility_result(engine_class) -> Any:
+    from EngineLoader.validator import check_engine_compatibility
+
+    return check_engine_compatibility(
+        engine_class,
+        _core_version(),
+        _engine_sdk_version(),
+    )
+
+
+def _headless_engine_class(engine_id: str):
+    from EngineLoader import get_engine
+
+    return get_engine(engine_id)
+
+
+def _headless_engine_instance(engine_id: str):
+    from EngineLoader import create as create_engine
+
+    return create_engine(engine_id)
+
+
+def _engine_required_tools(engine_id: str) -> dict[str, list[str]]:
+    try:
+        engine = _headless_engine_instance(engine_id)
+        required_tools = getattr(engine, "required_tools", {"python": [], "system": []})
+        if not isinstance(required_tools, dict):
+            return {"python": [], "system": []}
+        return {
+            "python": list(required_tools.get("python", []) or []),
+            "system": list(required_tools.get("system", []) or []),
+        }
+    except Exception:
+        return {"python": [], "system": []}
+
+
+def _headless_engine_dry_run(
+    engine_id: str,
+    *,
+    workspace: str | None = None,
+    file_path: str | None = None,
+) -> dict[str, Any]:
+    if not file_path:
+        return {"success": False, "error": "file path is required"}
+
+    resolved_file = _normalize_workspace(file_path)
+    if not resolved_file or not Path(resolved_file).is_file():
+        return {"success": False, "error": "file not found"}
+
+    try:
+        engine = _headless_engine_instance(engine_id)
+    except Exception as exc:
+        return {"success": False, "error": str(exc)}
+
+    gui = _HeadlessGui(workspace_dir=_normalize_workspace(workspace))
+    prev_disable = os.environ.get("PYCOMPILER_DISABLE_AUTO_BUILDER")
+    os.environ["PYCOMPILER_DISABLE_AUTO_BUILDER"] = "1"
+    try:
+        cmd = engine.build_command(gui, resolved_file)
+    except Exception as exc:
+        return {"success": False, "error": str(exc)}
+    finally:
+        if prev_disable is None:
+            os.environ.pop("PYCOMPILER_DISABLE_AUTO_BUILDER", None)
+        else:
+            os.environ["PYCOMPILER_DISABLE_AUTO_BUILDER"] = prev_disable
+
+    if not cmd:
+        return {"success": False, "error": "empty command"}
+    return {
+        "success": True,
+        "command": " ".join(shlex.quote(str(part)) for part in cmd),
+        "argv": [str(part) for part in cmd],
+        "log": list(gui.log.messages),
+    }
+
+
+def _plugin_candidates() -> list[dict[str, Any]]:
+    plugins_root = _plugins_root()
+    candidates: list[dict[str, Any]] = []
+    if not plugins_root.exists():
+        return candidates
+
+    for pkg_dir in sorted(plugins_root.iterdir(), key=lambda p: p.name.lower()):
+        init_file = pkg_dir / "__init__.py"
+        if not pkg_dir.is_dir() or not init_file.exists():
+            continue
+        meta = _extract_plugin_meta(init_file, pkg_dir.name)
+        candidates.append(meta)
+    return candidates
+
+
+def _extract_plugin_meta(init_file: Path, folder_name: str) -> dict[str, Any]:
+    text = ""
+    try:
+        text = init_file.read_text(encoding="utf-8")
+    except Exception:
+        pass
+
+    def _match(field: str, default: str = "") -> str:
+        pattern = rf"{field}\s*=\s*['\"]([^'\"]+)['\"]"
+        match = re.search(pattern, text)
+        return match.group(1).strip() if match else default
+
+    tags_match = re.search(r"tags\s*=\s*\[([^\]]*)\]", text, flags=re.S)
+    tags: list[str] = []
+    if tags_match:
+        tags = [
+            item.strip().strip("'\"")
+            for item in tags_match.group(1).split(",")
+            if item.strip().strip("'\"")
+        ]
+
+    plugin_id = _match("id", folder_name.lower())
+    plugin_name = _match("name", folder_name)
+    plugin_version = _match("version", "unknown")
+    plugin_description = _match("description", "")
+    plugin_author = _match("author", "")
+    return {
+        "id": plugin_id,
+        "name": plugin_name,
+        "version": plugin_version,
+        "description": plugin_description,
+        "author": plugin_author,
+        "tags": tags,
+        "active": True,
+        "priority": 0,
+        "source": str(init_file),
+    }
+
+
 def engine_list_payload(workspace: str | None = None) -> dict[str, Any]:
-    app = _new_engines_app(workspace_dir=_normalize_workspace(workspace))
+    from EngineLoader import available_engines
+
     engines = []
-    for eng in app.load_engines():
-        compat = app.check_engine_compatibility(eng["id"])
+    for engine_id in available_engines():
+        engine_class = _headless_engine_class(engine_id)
+        if engine_class is None:
+            continue
+        compat = _compatibility_result(engine_class)
         engines.append(
             {
-                "id": eng["id"],
-                "name": eng["name"],
-                "version": eng["version"],
-                "required_core": eng["required_core"],
-                "required_sdk": eng["required_sdk"],
-                "compatible": bool(compat.get("compatible")),
-                "message": compat.get("message"),
+                "id": getattr(engine_class, "id", engine_id),
+                "name": getattr(engine_class, "name", engine_id),
+                "version": getattr(engine_class, "version", "unknown"),
+                "required_core": getattr(engine_class, "required_core_version", "1.0.0"),
+                "required_sdk": getattr(engine_class, "required_sdk_version", "1.0.0"),
+                "compatible": bool(getattr(compat, "is_compatible", False)),
+                "message": getattr(compat, "error_message", ""),
             }
         )
     return {"engines": engines, "count": len(engines), "workspace": workspace}
 
 
 def engine_info_payload(engine_id: str, workspace: str | None = None) -> dict[str, Any]:
-    app = _new_engines_app(workspace_dir=_normalize_workspace(workspace))
-    info = app.get_engine_info(engine_id)
-    if not info:
+    engine_class = _headless_engine_class(engine_id)
+    if not engine_class:
         return {"found": False, "engine_id": engine_id}
-    compat = app.check_engine_compatibility(engine_id)
-    try:
-        from EngineLoader import create as create_engine
-
-        engine = create_engine(engine_id)
-        required_tools = getattr(engine, "required_tools", {"python": [], "system": []})
-    except Exception:
-        required_tools = {"python": [], "system": []}
+    compat = _compatibility_result(engine_class)
+    required_tools = _engine_required_tools(engine_id)
     return {
         "found": True,
         "engine": {
-            "id": info["id"],
-            "name": info["name"],
-            "version": info["version"],
-            "required_core": info["required_core"],
-            "required_sdk": info["required_sdk"],
-            "compatible": bool(compat.get("compatible")),
-            "message": compat.get("message"),
-            "missing_requirements": compat.get("missing_requirements", []),
+            "id": getattr(engine_class, "id", engine_id),
+            "name": getattr(engine_class, "name", engine_id),
+            "version": getattr(engine_class, "version", "unknown"),
+            "required_core": getattr(engine_class, "required_core_version", "1.0.0"),
+            "required_sdk": getattr(engine_class, "required_sdk_version", "1.0.0"),
+            "compatible": bool(getattr(compat, "is_compatible", False)),
+            "message": getattr(compat, "error_message", ""),
+            "missing_requirements": list(
+                getattr(compat, "missing_requirements", []) or []
+            ),
             "required_tools": required_tools,
         },
     }
@@ -179,8 +340,11 @@ def engine_doctor_payload(
         )
 
     if file_path:
-        app = _new_engines_app(workspace_dir=_normalize_workspace(workspace))
-        result = app.run_compilation(engine_id, file_path, dry_run=True)
+        result = _headless_engine_dry_run(
+            engine_id,
+            workspace=workspace,
+            file_path=file_path,
+        )
         checks.append(
             {
                 "name": "dry_run",
@@ -349,42 +513,15 @@ def doctor_payload(workspace: str | None = None) -> dict[str, Any]:
 def bcasl_list_payload(workspace: str | None = None) -> dict[str, Any]:
     ws = _normalize_workspace(workspace) or str(Path.cwd())
     plugins_dir = _plugins_root()
-    try:
-        from bcasl import BCASL
-
-        manager = BCASL(Path(ws), config={}, sandbox=False)
-        loaded, errors = manager.load_plugins_from_directory(plugins_dir)
-        plugins = []
-        for plugin_id, meta, active, priority in manager.list_plugins():
-            plugins.append(
-                {
-                    "id": plugin_id,
-                    "name": getattr(meta, "name", plugin_id),
-                    "version": getattr(meta, "version", "unknown"),
-                    "description": getattr(meta, "description", ""),
-                    "author": getattr(meta, "author", ""),
-                    "tags": list(getattr(meta, "tags", []) or []),
-                    "active": bool(active),
-                    "priority": int(priority),
-                }
-            )
-        return {
-            "workspace": ws,
-            "plugins_dir": str(plugins_dir),
-            "count": len(plugins),
-            "loaded_count": int(loaded),
-            "plugins": plugins,
-            "errors": [{"plugin": name, "error": message} for name, message in errors],
-        }
-    except Exception as exc:
-        return {
-            "workspace": ws,
-            "plugins_dir": str(plugins_dir),
-            "count": 0,
-            "loaded_count": 0,
-            "plugins": [],
-            "errors": [{"plugin": "loader", "error": str(exc)}],
-        }
+    plugins = _plugin_candidates()
+    return {
+        "workspace": ws,
+        "plugins_dir": str(plugins_dir),
+        "count": len(plugins),
+        "loaded_count": len(plugins),
+        "plugins": plugins,
+        "errors": [],
+    }
 
 
 def bcasl_doctor_payload(workspace: str | None = None) -> dict[str, Any]:

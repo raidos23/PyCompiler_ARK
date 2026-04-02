@@ -23,6 +23,8 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from cli import click_app, dedicated, fallback
+from cli.headless_ops import bcasl_doctor_payload, engine_list_payload
+from cli.entrypoint import main as entrypoint_main
 from cli.runtime import should_enable_qt
 
 
@@ -49,3 +51,26 @@ def test_cli_modules_import_without_qt_bootstrap_side_effects() -> None:
     assert callable(click_app.build_cli)
     assert callable(fallback.run)
     assert callable(dedicated.run_dedicated_cli)
+
+
+def test_engine_list_payload_is_available_headlessly() -> None:
+    payload = engine_list_payload()
+
+    assert payload["count"] >= 1
+    assert any(item["id"] == "pyinstaller" for item in payload["engines"])
+
+
+def test_bcasl_doctor_payload_discovers_plugin_candidates_headlessly() -> None:
+    payload = bcasl_doctor_payload()
+
+    assert payload["checks"]
+    assert payload["plugins"]["count"] >= 1
+    assert any(item["id"] == "cleaner" for item in payload["plugins"]["plugins"])
+
+
+def test_entrypoint_preserves_click_return_codes() -> None:
+    code = entrypoint_main(
+        ["ci", "smoke", ".", "--json", "--strict", "--require-entrypoint"]
+    )
+
+    assert code == 3

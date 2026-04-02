@@ -89,7 +89,9 @@ Validation.
 - If a dependency cycle is found, BCASL falls back to a safe ordering.
 
 **Configuration (bcasl.yml)**
-BCASL reads `bcasl.yml` or `.bcasl.yml` in the workspace root. Only the `.yml` extension is supported.
+For plugin authors, `bcasl.yml` is the canonical workspace config file.
+`PreCompileContext` helpers and validity checks rely on it directly, so it is
+the format you should target in examples and real plugin code.
 
 Example.
 ```yaml
@@ -121,6 +123,7 @@ Important notes.
 - Keys in `plugins` are the `PluginMeta.id` values.
 - `plugin_order` forces ordering and adjusts priority.
 - If `bcasl.yml` is missing, a default file is generated.
+- In plugin code, assume `bcasl.yml` lives at the workspace root.
 
 **Execution Context (PreCompileContext)**
 Key methods.

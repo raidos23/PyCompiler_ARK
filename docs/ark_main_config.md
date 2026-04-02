@@ -34,6 +34,10 @@ environment_manager:
   auto_detect: true
   fallback_to_pip: true
 
+plugins:
+  bcasl_enabled: true
+  plugin_timeout: 0
+
 build:
   entrypoint: "app.py"
 ```
@@ -57,7 +61,10 @@ GUI shortcut:
 
 - Keep paths relative (ex: `"src/main.py"`).
 - Entrypoint is stored in `ARK_Main_Config.yml` and can be edited manually.
-- This file is separate from `bcasl.yml` (which is only for BCASL plugins).
+- This file is separate from `bcasl.yml` (which remains the canonical BCASL plugin config file).
+- A small compatibility bridge also exists under `plugins.*` for workspace-level BCASL defaults such as:
+  - `plugins.bcasl_enabled`
+  - `plugins.plugin_timeout`
 
 ## Advanced Config Editor (GUI)
 
@@ -67,7 +74,7 @@ editor for:
 - `bcasl.yml`
 - `.ark/pref.json` (workspace‑specific preferences)
 
-Features (lightweight by design):
+Features:
 - Monospace editor
 - Simple YAML/JSON syntax highlighting
 - Diff view before saving

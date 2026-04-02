@@ -47,9 +47,12 @@ python -m pycompiler_ark --info
 python -m pycompiler_ark engine list --json
 python -m pycompiler_ark workspace inspect . --json
 python -m pycompiler_ark doctor --json
-python -m pycompiler_ark ci smoke . --json --strict --require-entrypoint
+python -m pycompiler_ark ci smoke /path/to/workspace --json --strict --require-entrypoint
 python -m pycompiler_ark --cli
 ```
+
+When using `--require-entrypoint`, point the smoke command at a workspace that
+already defines an entrypoint in `ARK_Main_Config.yml`.
 
 Release-oriented checks are documented in [Release smoke checklist](./release_smoke_checklist.md).
 
