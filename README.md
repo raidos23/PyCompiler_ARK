@@ -8,7 +8,7 @@ A Python project build workshop with a Qt GUI, a headless-friendly CLI, a BCASL 
 
 ---
 
-## Why this app ?
+## Why this app?
 
 Build Python apps with a predictable workflow, a configurable pre-compile pipeline, and the freedom to choose your build engine.
 
@@ -90,7 +90,7 @@ python pycompiler_ark.py engine list --json
 python pycompiler_ark.py engine doctor nuitka src/main.py --json
 python pycompiler_ark.py workspace inspect . --json
 python pycompiler_ark.py doctor --json
-python pycompiler_ark.py ci smoke . --json --strict --require-entrypoint
+python pycompiler_ark.py ci smoke /path/to/workspace --json --strict --require-entrypoint
 python pycompiler_ark.py scaffold engine demo_engine --json
 python pycompiler_ark.py unload --json
 ```
@@ -107,19 +107,20 @@ python pycompiler_ark.py unload --json
 
 ### Headless note
 
-The CLI bootstrap no longer forces Qt for purely headless commands such as:
+The CLI router no longer bootstraps the main Qt application for headless paths such as:
 
 - `--help`
 - `--version`
 - `--info`
 - `--cli`
 - `unload`
-- `engine ...`
 - `workspace ...`
-- `doctor`
-- `scaffold ...`
 
-This makes scripting and CI friendlier on machines where the GUI stack is unavailable or intentionally not used.
+Structured command groups such as `engine`, `bcasl`, `doctor`, `ci`, and `scaffold`
+also avoid launching the main GUI entrypoint.
+
+This keeps scripting and CI workflows friendly on machines where no GUI window
+should be opened.
 
 ### CI-friendly exit codes
 
@@ -180,7 +181,7 @@ python -m OnlyMod.EngineOnlyMod --engine nuitka -f script.py --dry-run
 
 ## Configuration
 
-- **`ARK_Main_Config.yml`**: inclusion and exclusion patterns, BCASL options.
+- **`ARK_Main_Config.yml`**: inclusion/exclusion patterns, build entrypoint, and a few workspace-level defaults consumed by BCASL bootstrap.
 - **`bcasl.yml`**: plugin enable/disable, order, and timeouts.
 
 ---
@@ -214,7 +215,7 @@ python -m py_compile pycompiler_ark.py
 python -m pycompiler_ark --help
 python -m pycompiler_ark workspace inspect . --json
 python -m pycompiler_ark engine list --json
-python -m pycompiler_ark ci smoke . --json --strict --require-entrypoint
+python -m pycompiler_ark ci smoke /path/to/workspace --json --strict --require-entrypoint
 ```
 
 Quality status:

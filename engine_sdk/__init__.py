@@ -15,14 +15,6 @@
 
 from __future__ import annotations
 
-# Re-export auto_plugins helpers for convenience
-from .auto_build_command import (
-    compute_auto_for_engine,
-    compute_for_all,
-    register_auto_builder,
-)
-from .ui_helpers import add_form_checkbox, add_icon_selector, add_output_dir
-
 # Re-export the base interface used by the host
 from .base import CompilerEngine
 from .utils import (
@@ -38,6 +30,50 @@ from .utils import (
     safe_log,
     tr,
 )
+
+
+def compute_auto_for_engine(*args, **kwargs):
+    import os
+
+    if str(os.environ.get("PYCOMPILER_DISABLE_AUTO_BUILDER", "0")).lower() in (
+        "1",
+        "true",
+        "yes",
+    ):
+        return []
+    from .auto_build_command import compute_auto_for_engine as _impl
+
+    return _impl(*args, **kwargs)
+
+
+def compute_for_all(*args, **kwargs):
+    from .auto_build_command import compute_for_all as _impl
+
+    return _impl(*args, **kwargs)
+
+
+def register_auto_builder(*args, **kwargs):
+    from .auto_build_command import register_auto_builder as _impl
+
+    return _impl(*args, **kwargs)
+
+
+def add_form_checkbox(*args, **kwargs):
+    from .ui_helpers import add_form_checkbox as _impl
+
+    return _impl(*args, **kwargs)
+
+
+def add_icon_selector(*args, **kwargs):
+    from .ui_helpers import add_icon_selector as _impl
+
+    return _impl(*args, **kwargs)
+
+
+def add_output_dir(*args, **kwargs):
+    from .ui_helpers import add_output_dir as _impl
+
+    return _impl(*args, **kwargs)
 
 # Re-export venv/pip helpers from mainprocess.py (moved from utils.py)
 # These are maintained here for backward compatibility

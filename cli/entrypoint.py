@@ -37,8 +37,8 @@ def main(argv: list[str] | None = None) -> int:
     if has_click():
         try:
             cli = build_cli(app_version)
-            cli.main(args=args, prog_name="pycompiler_ark", standalone_mode=False)
-            return 0
+            result = cli.main(args=args, prog_name="pycompiler_ark", standalone_mode=False)
+            return int(result) if isinstance(result, int) else 0
         except SystemExit as exc:
             return int(exc.code) if isinstance(exc.code, int) else 0
         except Exception:
