@@ -513,7 +513,7 @@ def _setup_compiler_tabs(self) -> None:
         try:
             import EngineLoader as engines_loader
 
-            engines_loader.registry.bind_tabs(self)
+            engines_loader.bind_tabs(self)
         except Exception:
             pass
 

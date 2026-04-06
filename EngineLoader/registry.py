@@ -315,6 +315,15 @@ def bind_tabs(gui) -> None:
     Also handles hiding the Hello tab when engines are available.
     """
     try:
+        # Ensure lazy discovery happened even when callers use `EngineLoader.registry.bind_tabs`
+        # directly instead of the top-level `EngineLoader.bind_tabs` wrapper.
+        try:
+            import EngineLoader as engines_loader
+
+            engines_loader.available_engines()
+        except Exception:
+            pass
+
         tabs = getattr(gui, "compiler_tabs", None)
         if not tabs:
             return
