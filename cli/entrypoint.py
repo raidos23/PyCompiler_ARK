@@ -6,7 +6,7 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-from .click_app import build_cli, has_click
+from .click_app import build_cli, has_click, click as click_module
 from .fallback import run as run_fallback
 from .runtime import install_runtime, handle_fatal, should_enable_qt
 
@@ -41,7 +41,15 @@ def main(argv: list[str] | None = None) -> int:
             return int(result) if isinstance(result, int) else 0
         except SystemExit as exc:
             return int(exc.code) if isinstance(exc.code, int) else 0
-        except Exception:
+        except Exception as exc:
+            if click_module is not None and isinstance(
+                exc, click_module.exceptions.ClickException
+            ):
+                try:
+                    exc.show()
+                except Exception:
+                    pass
+                return int(getattr(exc, "exit_code", 2))
             handle_fatal(sys.exc_info())
             return 1
 

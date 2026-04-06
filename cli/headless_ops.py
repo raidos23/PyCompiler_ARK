@@ -9,6 +9,8 @@ import platform
 import fnmatch
 import re
 import shlex
+import subprocess
+import sys
 from pathlib import Path
 from typing import Any
 import yaml
@@ -124,6 +126,468 @@ def _normalize_workspace(workspace: str | None) -> str | None:
         return str(Path(workspace).expanduser().resolve())
     except Exception:
         return str(workspace)
+
+
+def _workspace_config_candidates(workspace_dir: str) -> list[Path]:
+    ws = Path(workspace_dir)
+    return [
+        ws / "ARK_Main_Config.yaml",
+        ws / "ARK_Main_Config.yml",
+        ws / ".ARK_Main_Config.yaml",
+        ws / ".ARK_Main_Config.yml",
+    ]
+
+
+def _is_probable_entrypoint(py_file: Path) -> bool:
+    name = py_file.name.lower()
+    if name in {"main.py", "app.py", "__main__.py", "run.py"}:
+        return True
+    try:
+        text = py_file.read_text(encoding="utf-8", errors="ignore")
+    except Exception:
+        return False
+    return "__name__" in text and "__main__" in text
+
+
+def _detect_entrypoint(workspace_dir: str, candidates: list[str]) -> str | None:
+    ws = Path(workspace_dir)
+    if not candidates:
+        return None
+
+    preferred = ["main.py", "app.py", "__main__.py", "run.py", "src/main.py", "src/app.py"]
+    candidate_set = set(candidates)
+    for rel in preferred:
+        if rel in candidate_set:
+            return rel
+
+    probable = []
+    for rel in candidates:
+        path = ws / rel
+        if _is_probable_entrypoint(path):
+            probable.append(rel)
+    if probable:
+        probable.sort()
+        return probable[0]
+
+    return candidates[0]
+
+
+def _notify_progress(
+    callback,
+    step: str,
+    status: str,
+    message: str,
+    steps: list[dict[str, str]],
+) -> None:
+    entry = {"step": step, "status": status, "message": message}
+    steps.append(entry)
+    if callable(callback):
+        try:
+            callback(step, status, message)
+        except Exception:
+            pass
+
+
+def _ensure_workspace_pref(workspace_dir: Path) -> tuple[bool, str]:
+    pref_path = workspace_dir / ".ark" / "pref.json"
+    if pref_path.exists():
+        return False, str(pref_path)
+    pref_path.parent.mkdir(parents=True, exist_ok=True)
+    pref_payload = {"venv_mode": "system", "venv_path": None}
+    pref_path.write_text(
+        json.dumps(pref_payload, indent=2, ensure_ascii=False) + "\n",
+        encoding="utf-8",
+    )
+    return True, str(pref_path)
+
+
+def _set_workspace_pref(workspace_dir: Path, venv_mode: str, venv_path: str | None) -> bool:
+    pref_path = workspace_dir / ".ark" / "pref.json"
+    pref_path.parent.mkdir(parents=True, exist_ok=True)
+    payload = {"venv_mode": str(venv_mode), "venv_path": venv_path}
+    pref_path.write_text(
+        json.dumps(payload, indent=2, ensure_ascii=False) + "\n",
+        encoding="utf-8",
+    )
+    return True
+
+
+def _ensure_bcasl_config(workspace_dir: Path) -> tuple[bool, str | None]:
+    target = workspace_dir / "bcasl.yml"
+    if target.exists():
+        return False, str(target)
+    try:
+        from bcasl.Loader import _load_workspace_config  # type: ignore
+
+        _load_workspace_config(workspace_dir)
+    except Exception:
+        return False, None
+    return bool(target.exists()), str(target) if target.exists() else None
+
+
+def _venv_python_path(venv_dir: Path) -> Path:
+    if os.name == "nt":
+        return venv_dir / "Scripts" / "python.exe"
+    return venv_dir / "bin" / "python"
+
+
+def _detect_existing_workspace_venv(workspace_dir: Path) -> Path | None:
+    for name in (".venv", "venv"):
+        candidate = workspace_dir / name
+        if candidate.is_dir() and _venv_python_path(candidate).exists():
+            return candidate
+    return None
+
+
+def _ensure_workspace_venv(workspace_dir: Path) -> tuple[bool, bool, str | None, str | None]:
+    """
+    Returns (ok, created, venv_path, error_message)
+    """
+    existing = _detect_existing_workspace_venv(workspace_dir)
+    if existing is not None:
+        return True, False, str(existing), None
+
+    target = workspace_dir / ".venv"
+    try:
+        proc = subprocess.run(
+            [sys.executable, "-m", "venv", str(target)],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            timeout=1800,
+            check=False,
+        )
+    except Exception as exc:
+        return False, False, None, str(exc)
+
+    if proc.returncode != 0:
+        msg = (proc.stderr or proc.stdout or "").strip()
+        return False, False, None, msg or f"venv creation failed with code {proc.returncode}"
+
+    py_path = _venv_python_path(target)
+    if not py_path.exists():
+        return False, False, None, "venv created but python executable not found"
+    return True, True, str(target), None
+
+
+def workspace_init_payload(
+    workspace: str | None,
+    progress_cb=None,
+    *,
+    with_venv: bool = False,
+) -> dict[str, Any]:
+    ws = _normalize_workspace(workspace)
+    if not ws:
+        return {"ok": False, "error": "workspace is required", "workspace": None}
+
+    ws_path = Path(ws)
+    steps: list[dict[str, str]] = []
+    created_workspace = False
+    created_bcasl_config = False
+    created_pref = False
+    created_venv = False
+    venv_path: str | None = None
+
+    _notify_progress(
+        progress_cb,
+        "workspace_dir",
+        "running",
+        f"Preparing workspace directory: {ws_path}",
+        steps,
+    )
+    if ws_path.exists() and not ws_path.is_dir():
+        _notify_progress(
+            progress_cb,
+            "workspace_dir",
+            "failed",
+            "workspace path is not a directory",
+            steps,
+        )
+        return {
+            "ok": False,
+            "error": "workspace path is not a directory",
+            "workspace": str(ws_path),
+            "steps": steps,
+        }
+    if not ws_path.exists():
+        try:
+            ws_path.mkdir(parents=True, exist_ok=True)
+            created_workspace = True
+        except Exception as exc:
+            return {
+                "ok": False,
+                "error": f"unable to create workspace directory: {exc}",
+                "workspace": str(ws_path),
+                "steps": steps,
+            }
+    _notify_progress(
+        progress_cb,
+        "workspace_dir",
+        "done",
+        "Workspace directory ready",
+        steps,
+    )
+
+    _notify_progress(
+        progress_cb,
+        "ark_config",
+        "running",
+        "Ensuring ARK_Main_Config.yml exists",
+        steps,
+    )
+    config_candidates = _workspace_config_candidates(str(ws_path))
+    existing = [p for p in config_candidates if p.exists()]
+    created_config = False
+    config_path = existing[0] if existing else ws_path / "ARK_Main_Config.yml"
+    if not existing:
+        try:
+            from Core.ArkConfigManager import create_default_ark_config
+
+            created_config = bool(create_default_ark_config(str(ws_path)))
+        except Exception as exc:
+            return {
+                "ok": False,
+                "error": f"unable to create workspace config: {exc}",
+                "workspace": str(ws_path),
+                "steps": steps,
+            }
+    _notify_progress(
+        progress_cb,
+        "ark_config",
+        "done",
+        f"ARK config ready: {config_path}",
+        steps,
+    )
+
+    _notify_progress(
+        progress_cb,
+        "bcasl_config",
+        "running",
+        "Ensuring bcasl.yml exists",
+        steps,
+    )
+    created_bcasl_config, bcasl_path = _ensure_bcasl_config(ws_path)
+    if bcasl_path:
+        _notify_progress(
+            progress_cb,
+            "bcasl_config",
+            "done",
+            f"BCASL config ready: {bcasl_path}",
+            steps,
+        )
+    else:
+        _notify_progress(
+            progress_cb,
+            "bcasl_config",
+            "warning",
+            "Unable to create bcasl.yml automatically",
+            steps,
+        )
+
+    _notify_progress(
+        progress_cb,
+        "workspace_pref",
+        "running",
+        "Ensuring .ark/pref.json exists",
+        steps,
+    )
+    try:
+        created_pref, pref_path = _ensure_workspace_pref(ws_path)
+        _notify_progress(
+            progress_cb,
+            "workspace_pref",
+            "done",
+            f"Workspace pref ready: {pref_path}",
+            steps,
+        )
+    except Exception as exc:
+        _notify_progress(
+            progress_cb,
+            "workspace_pref",
+            "warning",
+            f"Unable to create workspace pref: {exc}",
+            steps,
+        )
+        pref_path = str(ws_path / ".ark" / "pref.json")
+
+    if with_venv:
+        _notify_progress(
+            progress_cb,
+            "venv",
+            "running",
+            "Ensuring workspace virtual environment exists",
+            steps,
+        )
+        ok_venv, created_venv, venv_path, venv_err = _ensure_workspace_venv(ws_path)
+        if not ok_venv:
+            _notify_progress(
+                progress_cb,
+                "venv",
+                "failed",
+                f"Unable to prepare venv: {venv_err}",
+                steps,
+            )
+            return {
+                "ok": False,
+                "error": f"unable to prepare workspace venv: {venv_err}",
+                "workspace": str(ws_path),
+                "config_path": str(config_path),
+                "bcasl_path": bcasl_path,
+                "workspace_pref_path": pref_path,
+                "steps": steps,
+            }
+        try:
+            _set_workspace_pref(ws_path, "venv", venv_path)
+            _notify_progress(
+                progress_cb,
+                "venv",
+                "done",
+                f"Workspace venv ready: {venv_path}",
+                steps,
+            )
+        except Exception as exc:
+            _notify_progress(
+                progress_cb,
+                "venv",
+                "warning",
+                f"Venv ready but pref update failed: {exc}",
+                steps,
+            )
+
+    return {
+        "ok": True,
+        "workspace": str(ws_path),
+        "created_workspace": created_workspace,
+        "created_config": created_config,
+        "created_bcasl_config": created_bcasl_config,
+        "created_workspace_pref": created_pref,
+        "with_venv": bool(with_venv),
+        "created_venv": bool(created_venv),
+        "venv_path": venv_path,
+        "config_path": str(config_path),
+        "bcasl_path": bcasl_path,
+        "workspace_pref_path": pref_path,
+        "steps": steps,
+    }
+
+
+def workspace_config_auto_payload(
+    workspace: str | None,
+    *,
+    entrypoint: str | None = None,
+) -> dict[str, Any]:
+    ws = _normalize_workspace(workspace)
+    if not ws:
+        return {"ok": False, "error": "workspace is required", "workspace": None}
+
+    ws_path = Path(ws)
+    if not ws_path.exists() or not ws_path.is_dir():
+        return {"ok": False, "error": "workspace not found", "workspace": str(ws_path)}
+
+    init_payload = workspace_init_payload(str(ws_path))
+    if not init_payload.get("ok"):
+        return init_payload
+
+    try:
+        from Core.ArkConfigManager import load_ark_config, save_ark_config
+    except Exception as exc:
+        return {
+            "ok": False,
+            "error": f"unable to load ark config helpers: {exc}",
+            "workspace": str(ws_path),
+        }
+
+    cfg = load_ark_config(str(ws_path))
+    exclusion_patterns = cfg.get("exclusion_patterns", []) if isinstance(cfg, dict) else []
+
+    python_files: list[str] = []
+    for path in ws_path.rglob("*.py"):
+        try:
+            rel = str(path.relative_to(ws_path)).replace(os.sep, "/")
+            if _should_exclude(rel, exclusion_patterns):
+                continue
+            python_files.append(rel)
+        except Exception:
+            continue
+    python_files.sort()
+
+    deps = cfg.get("dependencies", {}) if isinstance(cfg, dict) else {}
+    if not isinstance(deps, dict):
+        deps = {}
+    req_candidates = deps.get("requirements_files", [])
+    if not isinstance(req_candidates, list):
+        req_candidates = []
+    req_candidates = [str(item) for item in req_candidates if str(item).strip()]
+    if not req_candidates:
+        req_candidates = ["requirements.txt", "pyproject.toml", "setup.py", "Pipfile"]
+
+    found_req_files = []
+    for rel in req_candidates:
+        if (ws_path / rel).exists():
+            found_req_files.append(rel)
+
+    merged_requirements_files = found_req_files + [
+        item for item in req_candidates if item not in found_req_files
+    ]
+
+    resolved_entrypoint = None
+    if entrypoint:
+        raw = str(entrypoint).strip()
+        try:
+            ep_path = Path(raw)
+            if ep_path.is_absolute():
+                ep_path = ep_path.resolve()
+                try:
+                    rel = ep_path.relative_to(ws_path.resolve())
+                except Exception:
+                    return {
+                        "ok": False,
+                        "error": "entrypoint must be inside workspace",
+                        "workspace": str(ws_path),
+                    }
+                resolved_entrypoint = str(rel).replace(os.sep, "/")
+            else:
+                resolved_entrypoint = raw.replace("\\", "/")
+        except Exception:
+            resolved_entrypoint = raw.replace("\\", "/")
+    else:
+        resolved_entrypoint = _detect_entrypoint(str(ws_path), python_files)
+
+    build = cfg.get("build", {}) if isinstance(cfg, dict) else {}
+    if not isinstance(build, dict):
+        build = {}
+    if resolved_entrypoint and resolved_entrypoint not in python_files:
+        return {
+            "ok": False,
+            "error": "entrypoint is not a Python file in workspace",
+            "workspace": str(ws_path),
+            "entrypoint": resolved_entrypoint,
+        }
+    build["entrypoint"] = resolved_entrypoint
+    cfg["build"] = build
+
+    deps["requirements_files"] = merged_requirements_files
+    deps["auto_generate_from_imports"] = True
+    cfg["dependencies"] = deps
+
+    if not save_ark_config(str(ws_path), cfg):
+        return {
+            "ok": False,
+            "error": "unable to save workspace configuration",
+            "workspace": str(ws_path),
+        }
+
+    return {
+        "ok": True,
+        "workspace": str(ws_path),
+        "entrypoint": resolved_entrypoint,
+        "python_file_count": len(python_files),
+        "requirements_files_found": found_req_files,
+        "requirements_files": merged_requirements_files,
+        "config_path": str(ws_path / "ARK_Main_Config.yml"),
+        "created_workspace": bool(init_payload.get("created_workspace")),
+        "created_config": bool(init_payload.get("created_config")),
+    }
 
 
 def _core_version() -> str:

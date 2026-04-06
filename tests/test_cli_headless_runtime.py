@@ -37,6 +37,9 @@ def test_should_enable_qt_for_headless_commands() -> None:
     assert should_enable_qt(["engines", "--dry-run"]) is False
     assert should_enable_qt(["engine", "list"]) is False
     assert should_enable_qt(["bcasl", "list"]) is False
+    assert should_enable_qt(["check", "."]) is False
+    assert should_enable_qt(["init", "."]) is False
+    assert should_enable_qt(["config-auto", "."]) is False
 
 
 def test_should_enable_qt_for_gui_commands() -> None:
@@ -69,8 +72,12 @@ def test_bcasl_doctor_payload_discovers_plugin_candidates_headlessly() -> None:
 
 
 def test_entrypoint_preserves_click_return_codes() -> None:
-    code = entrypoint_main(
-        ["ci", "smoke", ".", "--json", "--strict", "--require-entrypoint"]
-    )
+    code = entrypoint_main(["check", ".", "--json", "--strict", "--require-entrypoint"])
 
     assert code == 3
+
+
+def test_entrypoint_returns_usage_error_for_unknown_command() -> None:
+    code = entrypoint_main(["ci", "smoke"])
+
+    assert code == 2

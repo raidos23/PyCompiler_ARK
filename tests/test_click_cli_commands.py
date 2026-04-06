@@ -128,7 +128,7 @@ def test_bcasl_doctor_strict_json(monkeypatch) -> None:
     assert payload["checks"][0]["ok"] is False
 
 
-def test_ci_smoke_strict_json(monkeypatch, tmp_path) -> None:
+def test_check_strict_json(monkeypatch, tmp_path) -> None:
     runner = CliRunner()
     cli = build_cli("test")
 
@@ -145,12 +145,161 @@ def test_ci_smoke_strict_json(monkeypatch, tmp_path) -> None:
         },
     )
 
-    result = runner.invoke(
-        cli,
-        ["ci", "smoke", str(tmp_path), "--json", "--strict", "--require-entrypoint"],
-    )
+    result = runner.invoke(cli, ["check", str(tmp_path), "--json", "--strict", "--require-entrypoint"])
 
     assert result.exit_code == 3
     payload = json.loads(result.output)
     assert payload["require_entrypoint"] is True
     assert payload["checks"][0]["name"] == "workspace_entrypoint"
+
+
+def test_check_command_is_strict_by_default(monkeypatch, tmp_path) -> None:
+    runner = CliRunner()
+    cli = build_cli("test")
+    calls: list[dict[str, object]] = []
+
+    def _fake_payload(workspace=None, require_entrypoint=False):
+        calls.append(
+            {
+                "workspace": workspace,
+                "require_entrypoint": require_entrypoint,
+            }
+        )
+        return {
+            "workspace": workspace,
+            "require_entrypoint": require_entrypoint,
+            "ok": False,
+            "failed_count": 1,
+            "checks": [{"name": "workspace_entrypoint", "ok": False, "message": "missing"}],
+        }
+
+    monkeypatch.setattr("cli.click_app.ci_smoke_payload", _fake_payload)
+
+    result = runner.invoke(cli, ["check", str(tmp_path), "--json"])
+
+    assert result.exit_code == 3
+    payload = json.loads(result.output)
+    assert payload["ok"] is False
+    assert payload["require_entrypoint"] is True
+    assert calls and calls[0]["require_entrypoint"] is True
+
+
+def test_check_fail_only_filters_ok_checks(monkeypatch) -> None:
+    runner = CliRunner()
+    cli = build_cli("test")
+
+    monkeypatch.setattr(
+        "cli.click_app.ci_smoke_payload",
+        lambda workspace=None, require_entrypoint=False: {
+            "workspace": workspace,
+            "require_entrypoint": require_entrypoint,
+            "ok": False,
+            "failed_count": 1,
+            "checks": [
+                {"name": "engine_inventory", "ok": True, "message": "2 engine(s) detected"},
+                {"name": "workspace_entrypoint", "ok": False, "message": "missing"},
+            ],
+        },
+    )
+
+    result = runner.invoke(cli, ["check", "--fail-only", "--no-strict"])
+
+    assert result.exit_code == 0
+    assert "workspace_entrypoint" in result.output
+    assert "engine_inventory" not in result.output
+
+
+def test_init_command_creates_workspace_and_config(tmp_path) -> None:
+    runner = CliRunner()
+    cli = build_cli("test")
+    workspace = tmp_path / "new_ws"
+
+    result = runner.invoke(cli, ["init", str(workspace), "--json"])
+
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    assert payload["ok"] is True
+    assert payload["created_workspace"] is True
+    assert payload["created_config"] is True
+    assert payload["created_bcasl_config"] is True
+    assert payload["created_workspace_pref"] is True
+    assert (workspace / "ARK_Main_Config.yml").exists()
+    assert (workspace / "bcasl.yml").exists()
+    assert (workspace / ".ark" / "pref.json").exists()
+
+
+def test_config_auto_detects_entrypoint_and_updates_config(tmp_path) -> None:
+    runner = CliRunner()
+    cli = build_cli("test")
+    (tmp_path / "main.py").write_text("if __name__ == '__main__':\n    print('ok')\n", encoding="utf-8")
+    (tmp_path / "requirements.txt").write_text("click\n", encoding="utf-8")
+
+    result = runner.invoke(cli, ["config-auto", str(tmp_path), "--json"])
+
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    assert payload["ok"] is True
+    assert payload["entrypoint"] == "main.py"
+    assert "requirements.txt" in payload["requirements_files_found"]
+
+
+def test_cfg_auto_alias_behaves_like_config_auto(tmp_path) -> None:
+    runner = CliRunner()
+    cli = build_cli("test")
+    (tmp_path / "main.py").write_text("print('ok')\n", encoding="utf-8")
+
+    result = runner.invoke(cli, ["cfg-auto", str(tmp_path), "--json"])
+
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    assert payload["ok"] is True
+    assert payload["entrypoint"] == "main.py"
+
+
+def test_ws_init_alias_creates_workspace(tmp_path) -> None:
+    runner = CliRunner()
+    cli = build_cli("test")
+    workspace = tmp_path / "via_ws_alias"
+
+    result = runner.invoke(cli, ["ws", "init", str(workspace), "--json"])
+
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    assert payload["ok"] is True
+    assert (workspace / "ARK_Main_Config.yml").exists()
+    assert (workspace / "bcasl.yml").exists()
+    assert (workspace / ".ark" / "pref.json").exists()
+
+
+def test_init_with_venv_option_is_forwarded(monkeypatch, tmp_path) -> None:
+    runner = CliRunner()
+    cli = build_cli("test")
+    calls: list[dict[str, object]] = []
+
+    def _fake_init(workspace=None, progress_cb=None, with_venv=False):
+        calls.append({"workspace": workspace, "with_venv": with_venv})
+        return {
+            "ok": True,
+            "workspace": workspace,
+            "config_path": str(tmp_path / "ARK_Main_Config.yml"),
+            "bcasl_path": str(tmp_path / "bcasl.yml"),
+            "workspace_pref_path": str(tmp_path / ".ark" / "pref.json"),
+            "created_workspace": False,
+            "created_config": False,
+            "created_bcasl_config": False,
+            "created_workspace_pref": False,
+            "with_venv": bool(with_venv),
+            "created_venv": bool(with_venv),
+            "venv_path": str(tmp_path / ".venv") if with_venv else None,
+            "steps": [],
+        }
+
+    monkeypatch.setattr("cli.click_app.workspace_init_payload", _fake_init)
+
+    result = runner.invoke(cli, ["init", str(tmp_path), "--with-venv", "--json"])
+
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    assert payload["ok"] is True
+    assert payload["with_venv"] is True
+    assert calls and calls[0]["with_venv"] is True

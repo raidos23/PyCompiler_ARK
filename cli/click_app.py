@@ -20,6 +20,8 @@ from .headless_ops import (
     engine_list_payload,
     scaffold_engine,
     scaffold_plugin,
+    workspace_config_auto_payload,
+    workspace_init_payload,
     workspace_inspect_payload,
 )
 from .lazy_ops import (
@@ -67,6 +69,89 @@ def _echo_payload(payload, as_json: bool = False) -> None:
 def _emit_and_exit(payload, code: int, as_json: bool = False) -> None:
     _echo_payload(payload, as_json=as_json)
     raise click.exceptions.Exit(code)
+
+
+def _render_checks_text(
+    title: str,
+    checks: list[dict[str, object]],
+    *,
+    fail_only: bool = False,
+) -> None:
+    plain(title)
+    shown = 0
+    for check in checks:
+        ok = bool(check.get("ok"))
+        if fail_only and ok:
+            continue
+        status = "OK" if ok else "FAIL"
+        plain(f"  [{status}] {check.get('name')}: {check.get('message') or ''}")
+        shown += 1
+    if fail_only and shown == 0:
+        plain("  [OK] no failing checks")
+
+
+def _render_workspace_init_result(payload) -> None:
+    plain(f"Workspace: {payload.get('workspace')}")
+    plain(f"  Config: {payload.get('config_path')}")
+    plain(f"  BCASL: {payload.get('bcasl_path') or '(not created)'}")
+    plain(f"  Pref: {payload.get('workspace_pref_path') or '(not created)'}")
+    plain(
+        "  Created workspace: "
+        + ("yes" if payload.get("created_workspace") else "no")
+    )
+    plain("  Created config: " + ("yes" if payload.get("created_config") else "no"))
+    plain(
+        "  Created bcasl.yml: "
+        + ("yes" if payload.get("created_bcasl_config") else "no")
+    )
+    plain(
+        "  Created workspace pref: "
+        + ("yes" if payload.get("created_workspace_pref") else "no")
+    )
+    if payload.get("with_venv"):
+        plain(f"  Venv: {payload.get('venv_path') or '(not created)'}")
+        plain("  Created venv: " + ("yes" if payload.get("created_venv") else "no"))
+
+
+def _run_workspace_init_with_progress(workspace_dir: str, with_venv: bool = False):
+    try:
+        from rich.console import Console  # type: ignore
+        from rich.status import Status  # type: ignore
+    except Exception:
+        Console = None
+        Status = None
+
+    if Console is None or Status is None:
+        payload = workspace_init_payload(workspace_dir, with_venv=with_venv)
+        for item in payload.get("steps", []):
+            status = str(item.get("status", "")).upper() or "INFO"
+            plain(f"[{status}] {item.get('message')}")
+        return payload
+
+    console = Console()
+    current = {"text": "Initializing workspace..."}
+
+    def _cb(_step: str, _status: str, message: str) -> None:
+        current["text"] = message
+
+    with console.status("[bold cyan]Initializing workspace...", spinner="dots") as status:
+        payload = workspace_init_payload(workspace_dir, progress_cb=_cb, with_venv=with_venv)
+        try:
+            status.update(f"[bold cyan]{current['text']}")
+        except Exception:
+            pass
+    for item in payload.get("steps", []):
+        status_txt = str(item.get("status", "")).lower()
+        if status_txt == "done":
+            prefix = "[OK]"
+        elif status_txt == "warning":
+            prefix = "[WARN]"
+        elif status_txt == "failed":
+            prefix = "[FAIL]"
+        else:
+            prefix = "[INFO]"
+        plain(f"{prefix} {item.get('message')}")
+    return payload
 
 
 def _resolve_workspace_path(workspace: str | None) -> str | None:
@@ -180,7 +265,6 @@ def build_cli(app_version: str):
             plain("  workspace   Inspect workspace state")
             plain("  doctor      Global diagnostics")
             plain("  scaffold    Generate starter templates")
-            plain("  ci          Run CI-friendly smoke checks")
             ctx.exit(0)
 
         if ctx.invoked_subcommand is None:
@@ -467,6 +551,116 @@ def build_cli(app_version: str):
         for item in result["python_files_preview"]:
             plain(f"  - {item}")
 
+    @cli.command("init")
+    @click.argument("workspace", required=False, type=click.Path(exists=False))
+    @click.option("--json", "as_json", is_flag=True)
+    @click.option("--with-venv", is_flag=True, help="Create or reuse a local workspace venv")
+    def init_cmd(workspace, as_json, with_venv):
+        workspace_dir = _resolve_workspace_path(workspace or ".")
+        if as_json:
+            payload = workspace_init_payload(workspace_dir, with_venv=with_venv)
+            if not payload.get("ok"):
+                _emit_and_exit(payload, EXIT_WORKSPACE_INVALID, as_json=True)
+            _echo_payload(payload, as_json=True)
+            return
+        payload = _run_workspace_init_with_progress(workspace_dir, with_venv=with_venv)
+        if not payload.get("ok"):
+            raise click.ClickException(payload.get("error", "Workspace init failed"))
+        _render_workspace_init_result(payload)
+
+    @cli.command("config-auto")
+    @click.argument("workspace", required=False, type=click.Path(exists=False))
+    @click.option("--entrypoint", type=str, help="Override detected entrypoint")
+    @click.option("--json", "as_json", is_flag=True)
+    def config_auto_cmd(workspace, entrypoint, as_json):
+        payload = workspace_config_auto_payload(
+            _resolve_workspace_path(workspace or "."),
+            entrypoint=entrypoint,
+        )
+        if as_json:
+            if not payload.get("ok"):
+                _emit_and_exit(payload, EXIT_WORKSPACE_INVALID, as_json=True)
+            _echo_payload(payload, as_json=True)
+            return
+        if not payload.get("ok"):
+            raise click.ClickException(payload.get("error", "Workspace auto-config failed"))
+        plain(f"Workspace: {payload.get('workspace')}")
+        plain(f"  Entrypoint: {payload.get('entrypoint') or '(none)'}")
+        plain(
+            "  Requirements found: "
+            + (", ".join(payload.get("requirements_files_found", [])) or "none")
+        )
+        plain(f"  Config updated: {payload.get('config_path')}")
+
+    @cli.command("cfg-auto")
+    @click.argument("workspace", required=False, type=click.Path(exists=False))
+    @click.option("--entrypoint", type=str, help="Override detected entrypoint")
+    @click.option("--json", "as_json", is_flag=True)
+    def cfg_auto_cmd(workspace, entrypoint, as_json):
+        payload = workspace_config_auto_payload(
+            _resolve_workspace_path(workspace or "."),
+            entrypoint=entrypoint,
+        )
+        if as_json:
+            if not payload.get("ok"):
+                _emit_and_exit(payload, EXIT_WORKSPACE_INVALID, as_json=True)
+            _echo_payload(payload, as_json=True)
+            return
+        if not payload.get("ok"):
+            raise click.ClickException(payload.get("error", "Workspace auto-config failed"))
+        plain(f"Workspace: {payload.get('workspace')}")
+        plain(f"  Entrypoint: {payload.get('entrypoint') or '(none)'}")
+        plain(
+            "  Requirements found: "
+            + (", ".join(payload.get("requirements_files_found", [])) or "none")
+        )
+        plain(f"  Config updated: {payload.get('config_path')}")
+
+    @cli.group("ws")
+    def ws():
+        """Alias for workspace bootstrap commands."""
+
+    @ws.command("init")
+    @click.argument("workspace", required=False, type=click.Path(exists=False))
+    @click.option("--json", "as_json", is_flag=True)
+    @click.option("--with-venv", is_flag=True, help="Create or reuse a local workspace venv")
+    def ws_init_cmd(workspace, as_json, with_venv):
+        workspace_dir = _resolve_workspace_path(workspace or ".")
+        if as_json:
+            payload = workspace_init_payload(workspace_dir, with_venv=with_venv)
+            if not payload.get("ok"):
+                _emit_and_exit(payload, EXIT_WORKSPACE_INVALID, as_json=True)
+            _echo_payload(payload, as_json=True)
+            return
+        payload = _run_workspace_init_with_progress(workspace_dir, with_venv=with_venv)
+        if not payload.get("ok"):
+            raise click.ClickException(payload.get("error", "Workspace init failed"))
+        _render_workspace_init_result(payload)
+
+    @ws.command("config-auto")
+    @click.argument("workspace", required=False, type=click.Path(exists=False))
+    @click.option("--entrypoint", type=str, help="Override detected entrypoint")
+    @click.option("--json", "as_json", is_flag=True)
+    def ws_config_auto_cmd(workspace, entrypoint, as_json):
+        payload = workspace_config_auto_payload(
+            _resolve_workspace_path(workspace or "."),
+            entrypoint=entrypoint,
+        )
+        if as_json:
+            if not payload.get("ok"):
+                _emit_and_exit(payload, EXIT_WORKSPACE_INVALID, as_json=True)
+            _echo_payload(payload, as_json=True)
+            return
+        if not payload.get("ok"):
+            raise click.ClickException(payload.get("error", "Workspace auto-config failed"))
+        plain(f"Workspace: {payload.get('workspace')}")
+        plain(f"  Entrypoint: {payload.get('entrypoint') or '(none)'}")
+        plain(
+            "  Requirements found: "
+            + (", ".join(payload.get("requirements_files_found", [])) or "none")
+        )
+        plain(f"  Config updated: {payload.get('config_path')}")
+
     @cli.command("doctor")
     @click.argument("workspace", required=False, type=click.Path(exists=False))
     @click.option("--json", "as_json", is_flag=True)
@@ -496,20 +690,29 @@ def build_cli(app_version: str):
         if strict_failed:
             raise click.exceptions.Exit(EXIT_PRECHECK_FAILED)
 
-    @cli.group()
-    def ci():
-        """Run CI-friendly smoke checks."""
-
-    @ci.command("smoke")
+    @cli.command("check")
     @click.argument("workspace", required=False, type=click.Path(exists=False))
     @click.option("--json", "as_json", is_flag=True)
-    @click.option("--strict", is_flag=True, help="Exit non-zero when smoke checks fail")
     @click.option(
-        "--require-entrypoint",
-        is_flag=True,
-        help="Fail when the workspace has no configured entrypoint",
+        "--strict/--no-strict",
+        default=True,
+        show_default=True,
+        help="Exit non-zero when checks fail",
     )
-    def ci_smoke(workspace, as_json, strict, require_entrypoint):
+    @click.option(
+        "--require-entrypoint/--no-require-entrypoint",
+        default=True,
+        show_default=True,
+        help="Require workspace entrypoint in checks",
+    )
+    @click.option(
+        "--fail-only/--all-checks",
+        default=True,
+        show_default=True,
+        help="Display only failing checks in text output",
+    )
+    def check_cmd(workspace, as_json, strict, require_entrypoint, fail_only):
+        """Single-command CI/CD gate with strict defaults."""
         payload = ci_smoke_payload(
             workspace=_resolve_workspace_path(workspace),
             require_entrypoint=require_entrypoint,
@@ -519,10 +722,11 @@ def build_cli(app_version: str):
                 _emit_and_exit(payload, EXIT_PRECHECK_FAILED, as_json=True)
             _echo_payload(payload, as_json=True)
             return
-        plain("PyCompiler ARK CI Smoke")
-        for check in payload.get("checks", []):
-            status = "OK" if check["ok"] else "FAIL"
-            plain(f"  [{status}] {check['name']}: {check.get('message') or ''}")
+        _render_checks_text(
+            "PyCompiler ARK Check",
+            list(payload.get("checks", [])),
+            fail_only=fail_only,
+        )
         if strict and not payload.get("ok"):
             raise click.exceptions.Exit(EXIT_PRECHECK_FAILED)
 

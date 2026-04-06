@@ -13,6 +13,11 @@ from .lazy_ops import (
     launch_main_gui,
     unload_all_engines,
 )
+from .headless_ops import (
+    ci_smoke_payload,
+    workspace_config_auto_payload,
+    workspace_init_payload,
+)
 from .output import error, info, plain, success, warn
 from .system_info import print_system_info
 
@@ -179,6 +184,12 @@ def _print_help() -> None:
         plain("  engine info <id>      Affiche les infos d'un engine")
         plain("  engine dry-run <id> <file>  Affiche la commande de compilation")
         plain("  engine compile <id> <file>  Execute la compilation")
+        plain("  check [workspace]     Execute un check CI/CD strict")
+        plain("  init [workspace] [--with-venv]  Initialise le workspace")
+        plain("  config-auto [workspace]  Auto-configure le workspace")
+        plain("  cfg-auto [workspace]     Alias de config-auto")
+        plain("  ws init [workspace]      Alias de init")
+        plain("  ws config-auto [workspace] Alias de config-auto")
         plain("  engines --dry-run     Liste les moteurs disponibles")
         plain("  unload                Decharge tous les moteurs enregistres")
         plain("  exit | quit           Quitte la CLI dédiée")
@@ -202,6 +213,12 @@ def _print_help() -> None:
     table.add_row("engine info <id>", "Show engine metadata")
     table.add_row("engine dry-run <id> <file>", "Preview compile command")
     table.add_row("engine compile <id> <file>", "Run compilation")
+    table.add_row("check [workspace]", "Run strict CI/CD checks")
+    table.add_row("init [workspace] [--with-venv]", "Initialize workspace config")
+    table.add_row("config-auto [workspace]", "Auto-configure workspace")
+    table.add_row("cfg-auto [workspace]", "Alias for config-auto")
+    table.add_row("ws init [workspace]", "Alias for init")
+    table.add_row("ws config-auto [workspace]", "Alias for config-auto")
     table.add_row("unload", "Unload all registered engines")
     table.add_row("exit | quit", "Close dedicated CLI")
     _RICH_CONSOLE.print(table)
@@ -603,6 +620,69 @@ def _run_unload() -> int:
     return 0 if result["status"] == "success" else 1
 
 
+def _run_check(args: list[str]) -> int:
+    workspace = _resolve_workspace(args[0]) if args else None
+    payload = ci_smoke_payload(workspace=workspace, require_entrypoint=True)
+    checks = list(payload.get("checks", []))
+    plain("PyCompiler ARK Check")
+    shown = 0
+    for check in checks:
+        if check.get("ok"):
+            continue
+        plain(f"  [FAIL] {check.get('name')}: {check.get('message') or ''}")
+        shown += 1
+    if shown == 0:
+        plain("  [OK] no failing checks")
+    return 0 if payload.get("ok") else 3
+
+
+def _run_init(args: list[str]) -> int:
+    with_venv = "--with-venv" in args
+    clean = [a for a in args if a != "--with-venv"]
+    workspace = _resolve_workspace(clean[0]) if clean else "."
+    payload = workspace_init_payload(workspace, with_venv=with_venv)
+    for item in payload.get("steps", []):
+        status = str(item.get("status", "")).upper() or "INFO"
+        plain(f"[{status}] {item.get('message')}")
+    if not payload.get("ok"):
+        error(str(payload.get("error", "Workspace init failed")))
+        return 4
+    plain(f"Workspace: {payload.get('workspace')}")
+    plain(f"  Config: {payload.get('config_path')}")
+    plain(f"  BCASL: {payload.get('bcasl_path') or '(not created)'}")
+    plain(f"  Pref: {payload.get('workspace_pref_path') or '(not created)'}")
+    plain("  Created workspace: " + ("yes" if payload.get("created_workspace") else "no"))
+    plain("  Created config: " + ("yes" if payload.get("created_config") else "no"))
+    plain(
+        "  Created bcasl.yml: "
+        + ("yes" if payload.get("created_bcasl_config") else "no")
+    )
+    plain(
+        "  Created workspace pref: "
+        + ("yes" if payload.get("created_workspace_pref") else "no")
+    )
+    if payload.get("with_venv"):
+        plain(f"  Venv: {payload.get('venv_path') or '(not created)'}")
+        plain("  Created venv: " + ("yes" if payload.get("created_venv") else "no"))
+    return 0
+
+
+def _run_config_auto(args: list[str]) -> int:
+    workspace = _resolve_workspace(args[0]) if args else "."
+    payload = workspace_config_auto_payload(workspace)
+    if not payload.get("ok"):
+        error(str(payload.get("error", "Workspace auto-config failed")))
+        return 4
+    plain(f"Workspace: {payload.get('workspace')}")
+    plain(f"  Entrypoint: {payload.get('entrypoint') or '(none)'}")
+    plain(
+        "  Requirements found: "
+        + (", ".join(payload.get("requirements_files_found", [])) or "none")
+    )
+    plain(f"  Config updated: {payload.get('config_path')}")
+    return 0
+
+
 def run_dedicated_cli(app_version: str) -> int:
     try:
         from rich.prompt import Prompt  # type: ignore
@@ -636,6 +716,13 @@ def run_dedicated_cli(app_version: str) -> int:
             "engine info",
             "engine dry-run",
             "engine compile",
+            "check",
+            "init",
+            "config-auto",
+            "cfg-auto",
+            "ws",
+            "ws init",
+            "ws config-auto",
             "unload",
             "exit",
             "quit",
@@ -743,6 +830,32 @@ def run_dedicated_cli(app_version: str) -> int:
                     _run_engine_command(args)
                     continue
                 _run_engines(args)
+                continue
+            if cmd == "check":
+                _run_check(args)
+                continue
+            if cmd == "init":
+                _run_init(args)
+                continue
+            if cmd == "config-auto":
+                _run_config_auto(args)
+                continue
+            if cmd == "cfg-auto":
+                _run_config_auto(args)
+                continue
+            if cmd == "ws":
+                if not args:
+                    warn("Usage: ws <init|config-auto|cfg-auto> [workspace]")
+                    continue
+                sub = args[0].lower()
+                ws_args = args[1:]
+                if sub == "init":
+                    _run_init(ws_args)
+                    continue
+                if sub in ("config-auto", "cfg-auto"):
+                    _run_config_auto(ws_args)
+                    continue
+                warn(f"Sous-commande ws inconnue: {sub}")
                 continue
             if cmd == "unload":
                 _run_unload()
