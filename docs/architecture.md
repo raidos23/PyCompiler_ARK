@@ -24,7 +24,7 @@ Responsibilities:
 - avoid bootstrapping Qt on purely headless command paths
 - launch the main GUI, BCASL standalone, or Engines standalone
 - expose the dedicated interactive CLI
-- provide scriptable headless commands such as `engine`, `workspace`, `doctor`, and `scaffold`
+- provide scriptable headless commands such as `engine`, `workspace`, `init`, `config-auto`, `check`, `doctor`, and `scaffold`
 
 ### 2. Main GUI and UI wiring
 
@@ -112,7 +112,7 @@ There are two main UI variants:
 - classic GUI
 - IDE-like GUI
 
-Shared behavior should stay in reusable helpers when possible. The IDE-like UI should extend the classic behavior rather than fork it. See [IDE/classic parity matrix](./ide_classic_parity.md).
+Shared behavior should stay in reusable helpers when possible. The IDE-like UI should extend the classic behavior rather than fork it.
 
 The IDE-like layout now reuses the classic signal wiring, keeps explicit IDE-only affordances (`...` menu, dependencies activity button, engine icon actions), and applies its own layout tuning for header/panels/log space without forking the core workflow.
 

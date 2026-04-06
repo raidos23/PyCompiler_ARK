@@ -60,4 +60,4 @@ Notable points:
 - IDE-specific actions are connected afterward
 - the entrypoint selector is initialized in IDE mode as well
 
-For parity details and remaining checks, see [IDE/classic parity matrix](./ide_classic_parity.md).
+For parity details and remaining checks, review the IDE/classic behavior in the current GUI implementation and tests.

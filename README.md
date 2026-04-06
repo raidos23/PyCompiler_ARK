@@ -90,7 +90,12 @@ python pycompiler_ark.py engine list --json
 python pycompiler_ark.py engine doctor nuitka src/main.py --json
 python pycompiler_ark.py workspace inspect . --json
 python pycompiler_ark.py doctor --json
-python pycompiler_ark.py ci smoke /path/to/workspace --json --strict --require-entrypoint
+python pycompiler_ark.py init /path/to/workspace --json
+python pycompiler_ark.py init /path/to/workspace --with-venv --json
+python pycompiler_ark.py config-auto /path/to/workspace --json
+python pycompiler_ark.py cfg-auto /path/to/workspace --json
+python pycompiler_ark.py ws init /path/to/workspace --json
+python pycompiler_ark.py check /path/to/workspace --json
 python pycompiler_ark.py scaffold engine demo_engine --json
 python pycompiler_ark.py unload --json
 ```
@@ -101,9 +106,14 @@ python pycompiler_ark.py unload --json
 - `engine`: inspect engines, run compatibility checks, dry-run or compile
 - `bcasl`: BCASL GUI or delegated headless actions
 - `workspace`: inspect the current workspace and resolved entrypoint
+- `init`: initialize a workspace directory and base configs (`ARK_Main_Config.yml`, `bcasl.yml`, `.ark/pref.json`)
+  - `--with-venv`: also create/reuse a local workspace venv and set it in `.ark/pref.json`
+- `config-auto`: auto-detect entrypoint and update workspace config
+- `cfg-auto`: short alias for `config-auto`
+- `ws`: short group alias for workspace bootstrap (`ws init`, `ws config-auto`)
+- `check`: strict CI/CD preflight shortcut
 - `doctor`: global diagnostics snapshot
 - `scaffold`: generate starter templates for engines and plugins
-- `ci`: run stable smoke checks and preflight gates for automation
 
 ### Headless note
 
@@ -116,7 +126,7 @@ The CLI router no longer bootstraps the main Qt application for headless paths s
 - `unload`
 - `workspace ...`
 
-Structured command groups such as `engine`, `bcasl`, `doctor`, `ci`, and `scaffold`
+Structured command groups such as `engine`, `bcasl`, `doctor`, and `scaffold`
 also avoid launching the main GUI entrypoint.
 
 This keeps scripting and CI workflows friendly on machines where no GUI window
@@ -125,7 +135,7 @@ should be opened.
 ### CI-friendly exit codes
 
 - `0`: success
-- `3`: precheck or smoke failure (`--strict`)
+- `3`: precheck failure (`check --strict`)
 - `4`: invalid or missing workspace
 - `5`: engine not found
 
@@ -169,13 +179,10 @@ python -m OnlyMod.EngineOnlyMod --engine nuitka -f script.py --dry-run
 - [Architecture overview](docs/architecture.md)
 - [Contributing guide](docs/contributing.md)
 - [Dependency analyzer](docs/dependency_analyzer.md)
-- [Quality freeze policy](docs/quality_freeze.md)
 - [How to create an engine](docs/how_to_create_an_engine.md)
 - [How to create a BC plugin](docs/how_to_create_a_bc_plugin.md)
 - [Dedicated interactive CLI (`--cli`)](docs/dedicated_cli.md)
 - [IDE-like main GUI (`gui main --ide`)](docs/ide_like_gui.md)
-- [IDE/classic parity matrix](docs/ide_classic_parity.md)
-- [Release smoke checklist](docs/release_smoke_checklist.md)
 
 ---
 
@@ -215,7 +222,9 @@ python -m py_compile pycompiler_ark.py
 python -m pycompiler_ark --help
 python -m pycompiler_ark workspace inspect . --json
 python -m pycompiler_ark engine list --json
-python -m pycompiler_ark ci smoke /path/to/workspace --json --strict --require-entrypoint
+python -m pycompiler_ark init /path/to/workspace --json
+python -m pycompiler_ark cfg-auto /path/to/workspace --json
+python -m pycompiler_ark check /path/to/workspace --json
 ```
 
 Quality status:

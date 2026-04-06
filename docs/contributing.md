@@ -47,14 +47,14 @@ python -m pycompiler_ark --info
 python -m pycompiler_ark engine list --json
 python -m pycompiler_ark workspace inspect . --json
 python -m pycompiler_ark doctor --json
-python -m pycompiler_ark ci smoke /path/to/workspace --json --strict --require-entrypoint
+python -m pycompiler_ark check /path/to/workspace --json
 python -m pycompiler_ark --cli
 ```
 
 When using `--require-entrypoint`, point the smoke command at a workspace that
 already defines an entrypoint in `ARK_Main_Config.yml`.
 
-Release-oriented checks are documented in [Release smoke checklist](./release_smoke_checklist.md).
+Release-oriented checks should follow the CLI examples in this guide and the README.
 
 ## Where to make changes
 
@@ -75,9 +75,9 @@ Release-oriented checks are documented in [Release smoke checklist](./release_sm
 - Keep engine-specific behavior inside engines.
 - Add or update tests when changing heuristics, parsing, or orchestration behavior.
 - If you change CLI flags, commands, or docs-linked behavior, update the README.
-- If you change the command hierarchy (`gui`, `engine`, `workspace`, `doctor`, `scaffold`, `ci`) or JSON outputs, update the CLI docs and smoke checklist.
-- Keep CI-facing exit codes stable, or document the change explicitly in the README and release smoke checklist.
-- If you change IDE/classic behavior, update the parity matrix when appropriate.
+- If you change the command hierarchy (`gui`, `engine`, `workspace`, `init`, `config-auto`, `check`, `scaffold`) or JSON outputs, update the CLI docs.
+- Keep CI-facing exit codes stable, or document the change explicitly in the README.
+- If you change IDE/classic behavior, update the IDE docs when appropriate.
 
 ## Documentation expectations
 
@@ -93,6 +93,4 @@ Contributors should update documentation when they modify:
 
 - [Architecture overview](./architecture.md)
 - [Dependency analyzer](./dependency_analyzer.md)
-- [IDE/classic parity matrix](./ide_classic_parity.md)
 - [Dedicated CLI](./dedicated_cli.md)
-- [Release smoke checklist](./release_smoke_checklist.md)

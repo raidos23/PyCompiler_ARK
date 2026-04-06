@@ -55,6 +55,12 @@ The dedicated shell is complementary to the structured top-level CLI. Use:
 - `engine compile <engine_id> <file.py>`: execute compilation from the dedicated CLI.
 - `engine ... --workspace <path>`: explicit workspace override when needed.
 - `engine ... -w <workspace>`: optional workspace override for engine commands.
+- `check [workspace]`: run strict CI/CD preflight checks (fail-only text mode).
+- `init [workspace] [--with-venv]`: create workspace directory/config when missing, optionally prepare `.venv`.
+- `config-auto [workspace]`: auto-configure entrypoint and dependency file order.
+- `cfg-auto [workspace]`: alias of `config-auto`.
+- `ws init [workspace]`: alias of `init`.
+- `ws config-auto [workspace]`: alias of `config-auto`.
 - `unload`: unload all registered engines.
 - `exit` or `quit`: close the dedicated CLI.
 
@@ -72,6 +78,9 @@ ark-cli> engine compile nuitka src/main.py
 ark-cli> bcasl list
 ark-cli> bcasl run ~/my_workspace --timeout 30
 ark-cli> bcasl ~/my_workspace
+ark-cli> init ~/my_workspace
+ark-cli> cfg-auto ~/my_workspace
+ark-cli> check ~/my_workspace
 ark-cli> unload
 ark-cli> exit
 ```
