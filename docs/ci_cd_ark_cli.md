@@ -99,6 +99,18 @@ A concrete validated example can be run with:
 
 This script chains `init`, `cfg-auto`, `check`, and `engine compile`, and writes JSON reports.
 
+## GitHub Actions Dogfooding Workflow
+
+This repository includes a workflow where ARK compiles itself using ARK CLI:
+
+- Workflow file: `.github/workflows/ark-self-build.yml`
+- Engine used: `pyinstaller`
+- Flow: `init` -> `cfg-auto` -> `check --strict` -> `engine compile`
+- Uploaded artifacts:
+  - build output (`dist/`, `build/` when available)
+  - ARK workspace reports (`.ark_ci_artifacts/*.json`)
+  - workspace `.ark/` snapshot for debugging
+
 ## Practical Tips
 
 - ARK consumes workspace configuration files during CI runs. For reproducible and correct builds, commit these files:
