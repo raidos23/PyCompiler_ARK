@@ -25,6 +25,7 @@ from .registry import unload_all as _registry_unload_all
 from .registry import get_engine as _registry_get_engine
 from .registry import available_engines as _registry_available_engines
 from .registry import create as _registry_create
+from .registry import bind_tabs as _registry_bind_tabs
 
 __version__ = "1.0.0"
 
@@ -68,6 +69,11 @@ def create(eid: str):
     return _registry_create(eid)
 
 
+def bind_tabs(gui) -> None:
+    _ensure_discovered()
+    return _registry_bind_tabs(gui)
+
+
 def unload_all():
     global _DISCOVERY_DONE
     result = _registry_unload_all()
@@ -81,4 +87,5 @@ __all__ = [
     "get_engine",
     "available_engines",
     "create",
+    "bind_tabs",
 ]

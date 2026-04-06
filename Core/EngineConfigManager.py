@@ -148,7 +148,7 @@ def apply_engine_configs_for_workspace(gui, workspace_dir: str) -> None:
     try:
         import EngineLoader as engines_loader
 
-        for eid in engines_loader.registry.available_engines():
+        for eid in engines_loader.available_engines():
             try:
                 engine = engines_loader.registry.get_instance(eid)
                 if not engine:
