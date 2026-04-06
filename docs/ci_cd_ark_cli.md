@@ -101,7 +101,11 @@ This script chains `init`, `cfg-auto`, `check`, and `engine compile`, and writes
 
 ## Practical Tips
 
-- Version `ARK_Main_Config.yml` if you want deterministic CI behavior.
+- ARK consumes workspace configuration files during CI runs. For reproducible and correct builds, commit these files:
+  - `ARK_Main_Config.yml`
+  - `bcasl.yml`
+  - `.ark/` (especially `.ark/pref.json` and `.ark/<engine_id>/config.json`)
+- `.ark/` stores engine command options used by ARK at build time; commit it to keep builds reproducible across local and CI environments.
 - Keep `.ark_*.json` files as CI artifacts for debugging.
 - Start with `pyinstaller`, then evaluate `nuitka` if you want runtime performance optimization.
 
@@ -119,7 +123,7 @@ Recommended workflow:
 
 1. Open the GUI and set engine options for the workspace.
 2. Save/apply those options in the engine UI.
-3. Commit engine config files (`.ark/<engine_id>/config.json`) if your team expects identical builds in CI.
+3. Commit engine config files (`.ark/<engine_id>/config.json`) and workspace preference (`.ark/pref.json`) so CI consumes the same configuration.
 4. In CI, run the same workspace path and engine id so ARK reuses the persisted config.
 
 Useful inspection commands:
