@@ -104,7 +104,7 @@ This script chains `init`, `cfg-auto`, `check`, and `engine compile`, and writes
 This repository includes a workflow where ARK compiles itself using ARK CLI:
 
 - Workflow file: `.github/workflows/ark-self-build.yml`
-- Engine used: `pyinstaller`
+- Engine used: `nuitka`
 - Flow: `init` -> `cfg-auto` -> `check --strict` -> `engine compile`
 - Uploaded artifacts:
   - build output (`dist/`, `build/` when available)
