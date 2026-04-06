@@ -732,8 +732,20 @@ def _extract_plugin_meta(init_file: Path, folder_name: str) -> dict[str, Any]:
 def engine_list_payload(workspace: str | None = None) -> dict[str, Any]:
     from EngineLoader import available_engines
 
+    engine_ids = list(available_engines())
+    if not engine_ids:
+        # In some test/automation paths, lazy discovery can be disabled globally.
+        # For headless diagnostics we try one best-effort discovery pass.
+        try:
+            from EngineLoader.Loader.EngineLoader import _auto_discover
+
+            _auto_discover()
+            engine_ids = list(available_engines())
+        except Exception:
+            engine_ids = list(available_engines())
+
     engines = []
-    for engine_id in available_engines():
+    for engine_id in engine_ids:
         engine_class = _headless_engine_class(engine_id)
         if engine_class is None:
             continue
