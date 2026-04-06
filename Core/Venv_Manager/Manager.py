@@ -2959,7 +2959,12 @@ class VenvManager:
 
     def _validate_manager_venv(self, manager: str, venv_root: str) -> tuple[bool, str]:
         if manager == "conda":
-            return self._validate_conda_env(venv_root)
+            ok, reason = self._validate_conda_env(venv_root)
+            if ok:
+                return ok, reason
+            # Some conda environments expose a standard venv-like layout in tests
+            # or mixed setups; accept those as a compatibility fallback.
+            return self.validate_venv_strict(venv_root)
         return self.validate_venv_strict(venv_root)
 
     def _parse_conda_env_spec(

@@ -562,6 +562,18 @@ def _classify_module_origin(module_name: str, workspace_dir: str) -> str:
         normalized_module = _top_level_module_name(module_name)
         if normalized_module and normalized_module in hinted_roots:
             return "internal"
+        # Fast filesystem-based detection for local workspace modules that are not
+        # importable from sys.path yet (common in src/ and lib/python layouts).
+        source_roots = _discover_workspace_hints(ws)[0]
+        if normalized_module:
+            for root in source_roots:
+                try:
+                    pkg_init = os.path.join(root, normalized_module, "__init__.py")
+                    mod_file = os.path.join(root, f"{normalized_module}.py")
+                    if os.path.isfile(pkg_init) or os.path.isfile(mod_file):
+                        return "internal"
+                except Exception:
+                    continue
         spec = importlib.util.find_spec(module_name)
         if spec is None:
             return "unknown"
@@ -578,8 +590,6 @@ def _classify_module_origin(module_name: str, workspace_dir: str) -> str:
         stdlib_path = _normalize_realpath(sysconfig.get_path("stdlib") or "")
         purelib_path = _normalize_realpath(sysconfig.get_path("purelib") or "")
         platlib_path = _normalize_realpath(sysconfig.get_path("platlib") or "")
-        source_roots = _discover_workspace_hints(ws)[0]
-
         for c in candidates:
             if ws and _is_path_under(c, ws):
                 return "internal"

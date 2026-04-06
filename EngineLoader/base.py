@@ -46,9 +46,11 @@ def log_i18n_level(gui, level: str, fr: str, en: str) -> None:
     label = labels.get(lvl, str(level).upper())
     line = f"[{label}] {msg}"
     try:
-        if hasattr(gui, "log") and gui.log:
-            gui.log.append(line)
-            return
+        if hasattr(gui, "log"):
+            log_obj = getattr(gui, "log")
+            if hasattr(log_obj, "append"):
+                log_obj.append(line)
+                return
     except Exception:
         pass
     try:
