@@ -51,8 +51,8 @@ python -m pycompiler_ark check /path/to/workspace --json
 python -m pycompiler_ark --cli
 ```
 
-When using `--require-entrypoint`, point the smoke command at a workspace that
-already defines an entrypoint in `ARK_Main_Config.yml`.
+For reliable prechecks, point `check --strict` at a workspace that already
+defines an entrypoint in `ARK_Main_Config.yml`.
 
 Release-oriented checks should follow the CLI examples in this guide and the README.
 
