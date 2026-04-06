@@ -178,6 +178,7 @@ python -m OnlyMod.EngineOnlyMod --engine nuitka -f script.py --dry-run
 
 - [Architecture overview](docs/architecture.md)
 - [Contributing guide](docs/contributing.md)
+- [CI/CD with ARK CLI](docs/ci_cd_ark_cli.md)
 - [Dependency analyzer](docs/dependency_analyzer.md)
 - [How to create an engine](docs/how_to_create_an_engine.md)
 - [How to create a BC plugin](docs/how_to_create_a_bc_plugin.md)
