@@ -7,10 +7,17 @@
     - Fait: le headless charge les configs engines persistées (`.ark/<engine_id>/config.json`).
     - Fait: les engines consomment les options persistées même sans widgets UI (mode headless).
 
-[] de la meme manière que la gui puisse appliquer des langues rapidement avec fluidité... il faut que les msg box concu par les plugins ou autres puissent aussi recevoir leur i18n meme si celui des plugins est deja en vigueur le i18n ne sapplique pas au msg box cela est fort bizarre.
+[x] de la meme manière que la gui puisse appliquer des langues rapidement avec fluidité... il faut que les msg box concu par les plugins ou autres puissent aussi recevoir leur i18n meme si celui des plugins est deja en vigueur le i18n ne sapplique pas au msg box cela est fort bizarre.
+    - Fait: `Plugins_SDK/GeneralContext/Dialog.py` traduit automatiquement `title/text` des msgbox via i18n plugin/global.
+    - Fait: détection automatique du plugin appelant (stack `Plugins/<plugin_id>/...`) pour appliquer la bonne table de traduction.
 
-[] L'application de languege dans les boutons de (...) dansle ide gui doit etre revue car les language dans le (...) ne sapplique qu'apres redemarrage de l'application.
+[x] L'application de languege dans les boutons de (...) dansle ide gui doit etre revue car les language dans le (...) ne sapplique qu'apres redemarrage de l'application.
+    - Fait: re-traduction forcée du menu `(...)` immédiatement après `apply_language` (sans redémarrage).
 
-[] les fichier json de ./languages du projet en global ne doit pas avoir a faire a la traduction lié a des engines car ceux ci gere dejà la leur via ENGINES/engine_id/languages/**.json alors il faut revoir et corriger.
+[x] les fichier json de ./languages du projet en global ne doit pas avoir a faire a la traduction lié a des engines car ceux ci gere dejà la leur via ENGINES/engine_id/languages/**.json alors il faut revoir et corriger.
+    - Fait: suppression des clés de traduction liées aux engines dans `languages/*.json`.
+    - Principe appliqué: l'i18n des engines vit dans `ENGINES/<engine_id>/languages/*.json`.
 
-[] Améliorer le ADVANCEDCONFIGEDITOR...au niveau du system de diff ( il faut quil soit le plus proche possible e la technologie de git au niveau de perfectionnement ).
+[x] Améliorer le ADVANCEDCONFIGEDITOR...au niveau du system de diff ( il faut quil soit le plus proche possible e la technologie de git au niveau de perfectionnement ).
+    - Fait: le diff utilise `git diff --no-index --minimal --patience` quand git est disponible.
+    - Fallback: `difflib.unified_diff` si git n'est pas disponible.

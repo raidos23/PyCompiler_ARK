@@ -18,6 +18,9 @@ from __future__ import annotations
 import difflib
 import json
 import os
+import shutil
+import subprocess
+import tempfile
 from pathlib import Path
 from typing import Any, Callable
 
@@ -234,15 +237,7 @@ class AdvancedConfigEditor(QDialog):
             return False, text, str(exc)
 
     def _show_diff(self, title: str, before: str, after: str) -> None:
-        diff = "\n".join(
-            difflib.unified_diff(
-                before.splitlines(),
-                after.splitlines(),
-                fromfile="original",
-                tofile="modifié",
-                lineterm="",
-            )
-        )
+        diff = self._compute_diff(before, after)
         if not diff.strip():
             QMessageBox.information(
                 self, title, self.gui.tr("Aucune différence.", "No differences.")
@@ -261,6 +256,52 @@ class AdvancedConfigEditor(QDialog):
         btn.clicked.connect(dlg.close)
         lay.addWidget(btn)
         dlg.exec()
+
+    def _compute_diff(self, before: str, after: str) -> str:
+        """Compute a git-like diff first, then fallback to Python unified diff."""
+        git = shutil.which("git")
+        if git:
+            try:
+                with tempfile.TemporaryDirectory(prefix="ark_diff_") as tmp:
+                    old_path = os.path.join(tmp, "before.txt")
+                    new_path = os.path.join(tmp, "after.txt")
+                    with open(old_path, "w", encoding="utf-8") as f_old:
+                        f_old.write(before)
+                    with open(new_path, "w", encoding="utf-8") as f_new:
+                        f_new.write(after)
+                    proc = subprocess.run(
+                        [
+                            git,
+                            "--no-pager",
+                            "diff",
+                            "--no-index",
+                            "--minimal",
+                            "--patience",
+                            "--",
+                            old_path,
+                            new_path,
+                        ],
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE,
+                        text=True,
+                        encoding="utf-8",
+                        errors="replace",
+                    )
+                    out = proc.stdout or ""
+                    # git diff returns 1 when changes are found; this is expected.
+                    if out.strip():
+                        return out
+            except Exception:
+                pass
+        return "\n".join(
+            difflib.unified_diff(
+                before.splitlines(),
+                after.splitlines(),
+                fromfile="original",
+                tofile="modified",
+                lineterm="",
+            )
+        )
 
     def _flatten_keys(self, data: Any, prefix: str = "") -> list[str]:
         lines: list[str] = []
