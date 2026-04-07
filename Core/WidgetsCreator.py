@@ -237,7 +237,13 @@ def show_msgbox(
     """
     if QApplication.instance() is None or _is_noninteractive():
         # Console fallback
-        print(f"[MSGBOX:{kind}] {title}: {text}")
+        try:
+            from Core.i18n import log_with_level
+
+            lvl = "warning" if kind in ("warning", "error") else "info"
+            log_with_level(None, lvl, f"[MSGBOX:{kind}] {title}: {text}")
+        except Exception:
+            pass
         if kind == "question":
             return (
                 True
@@ -278,7 +284,13 @@ def show_msgbox(
                 _ = mb.exec_() if hasattr(mb, "exec_") else mb.exec()
                 return None
         except Exception:
-            print(f"[MSGBOX:{kind}] {title}: {text}")
+            try:
+                from Core.i18n import log_with_level
+
+                lvl = "warning" if kind in ("warning", "error") else "info"
+                log_with_level(None, lvl, f"[MSGBOX:{kind}] {title}: {text}")
+            except Exception:
+                pass
             if kind == "question":
                 return (
                     True
@@ -360,7 +372,12 @@ def sys_msgbox_for_installing(
             pass
     # Fallback console
     try:
-        print(f"[INSTALL] {title}: {msg}")
+        try:
+            from Core.i18n import log_with_level
+
+            log_with_level(None, "info", f"[INSTALL] {title}: {msg}")
+        except Exception:
+            pass
         ans = (
             input("Continuer ? [y/N] " if is_fr else "Continue? [y/N] ").strip().lower()
         )

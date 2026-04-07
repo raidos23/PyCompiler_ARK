@@ -698,13 +698,10 @@ class VenvManager:
         except Exception:
             pass
         try:
-            if hasattr(self.parent, "log") and self.parent.log:
-                self.parent.log.append(text)
-            else:
-                print(text)
+            log_with_level(self.parent, lvl, text)
         except Exception:
             try:
-                print(text)
+                log_with_level(self.parent, lvl, text)
             except Exception:
                 pass
 

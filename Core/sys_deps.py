@@ -200,11 +200,26 @@ class SysDependencyManager:
                     elif hasattr(pw, "logger") and hasattr(pw.logger, "debug"):
                         pw.logger.debug(line)
                     else:
-                        print(line)
+                        try:
+                            from Core.i18n import log_with_level
+
+                            log_with_level(pw, "state", line)
+                        except Exception:
+                            pass
                 except Exception:
-                    print(line)
+                    try:
+                        from Core.i18n import log_with_level
+
+                        log_with_level(pw, "state", line)
+                    except Exception:
+                        pass
             else:
-                print(line)
+                try:
+                    from Core.i18n import log_with_level
+
+                    log_with_level(None, "state", line)
+                except Exception:
+                    pass
         except Exception:
             pass
 

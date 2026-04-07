@@ -42,6 +42,7 @@ from .i18n import (
     tr_fr_en,
     is_french_language,
     log_with_level,
+    log_i18n_level,
 )
 
 # Import des fonctionnalités UI depuis UiFeatures
@@ -117,10 +118,12 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
                 self._ui_variant_active = "ide2"
             except Exception:
                 self._ui_variant_active = "classic"
-                try:
-                    print("[PyCompiler ARK] IDE-like UI fallback to classic UI.")
-                except Exception:
-                    pass
+                log_i18n_level(
+                    self,
+                    "warning",
+                    "UI IDE-like indisponible, bascule vers l'interface classique.",
+                    "IDE-like UI unavailable, falling back to classic UI.",
+                )
                 self.init_ui()
         else:
             self._ui_variant_active = "classic"
@@ -400,16 +403,7 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
             log_with_level(self, level, text)
             return
         except Exception:
-            try:
-                if hasattr(self, "log") and self.log:
-                    self.log.append(text)
-                else:
-                    print(text)
-            except Exception:
-                try:
-                    print(text)
-                except Exception:
-                    pass
+            pass
 
     # =========================================================================
     # TÂCHES EN ARRIÈRE-PLAN

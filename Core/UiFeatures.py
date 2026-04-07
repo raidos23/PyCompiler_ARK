@@ -791,15 +791,11 @@ class UiFeatures:
             except Exception:
                 msg = en
             try:
-                if hasattr(self, "log") and self.log:
-                    self.log.append(msg)
-                else:
-                    print(msg)
+                from .i18n import log_with_level
+
+                log_with_level(self, "info", msg)
             except Exception:
-                try:
-                    print(msg)
-                except Exception:
-                    pass
+                pass
 
     def show_language_dialog(self) -> None:
         """Affiche la boîte de dialogue de sélection de langue."""

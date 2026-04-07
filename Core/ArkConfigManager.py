@@ -268,9 +268,16 @@ def load_ark_config(workspace_dir: str) -> dict[str, Any]:
         return config
 
     except Exception as e:
-        print(
-            f"Attention: Échec du chargement de la config ARK depuis {config_file}: {e}"
-        )
+        try:
+            from Core.i18n import log_with_level
+
+            log_with_level(
+                None,
+                "warning",
+                f"Échec du chargement de la config ARK depuis {config_file}: {e}",
+            )
+        except Exception:
+            pass
         return config
 
 
@@ -572,5 +579,14 @@ build:
         return True
 
     except Exception as e:
-        print(f"Attention: Échec de la création de ARK_Main_Config.yml: {e}")
+        try:
+            from Core.i18n import log_with_level
+
+            log_with_level(
+                None,
+                "warning",
+                f"Échec de la création de ARK_Main_Config.yml: {e}",
+            )
+        except Exception:
+            pass
         return False
