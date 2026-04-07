@@ -33,12 +33,15 @@ import sys
 import subprocess
 import select
 import time
+import signal
+import threading
 from pathlib import Path
 from typing import Optional, Dict, Any, List, Callable
 from datetime import datetime
 from enum import Enum
 
 from PySide6.QtCore import QThread, Signal, QObject
+from Core.process_security import secure_command, hardened_popen_kwargs
 
 
 class CompilationStatus(Enum):
@@ -105,6 +108,7 @@ class CompilationThread(QThread):
         self.start_time: Optional[datetime] = None
         self._live_output_disabled = False
         self._stream_warning_emitted = False
+        self._proc_lock = threading.Lock()
 
     def run(self) -> None:
         """Exécute le processus de compilation."""
@@ -112,21 +116,22 @@ class CompilationThread(QThread):
         self.cancel_requested = False
 
         try:
-            # Préparer l'environnement
-            env = os.environ.copy()
-            if self.env:
-                env.update(self.env)
+            # Préparer/valider la commande et l'environnement
+            program, args, env = secure_command(self.program, self.args, self.env)
+            wd = self._validate_working_dir(self.working_dir)
 
             # Créer le processus
-            self.process = subprocess.Popen(
-                [self.program] + self.args,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True,
-                env=env,
-                cwd=self.working_dir,
-                bufsize=1,
-            )
+            with self._proc_lock:
+                self.process = subprocess.Popen(
+                    [program] + args,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    text=True,
+                    env=env,
+                    cwd=wd,
+                    bufsize=1,
+                    **hardened_popen_kwargs(),
+                )
 
             self.progress_update.emit(0, "Process started")
 
@@ -137,13 +142,17 @@ class CompilationThread(QThread):
             self._read_remaining()
 
             # Signaler la fin
-            return_code = self.process.returncode
+            return_code = self._current_return_code()
+            if self.cancel_requested:
+                return_code = -1
             self.finished.emit(return_code)
 
         except Exception as e:
             error_msg = f"Error: {str(e)}"
             self.error_ready.emit(error_msg)
             self.finished.emit(1)
+        finally:
+            self._close_streams()
 
     def _read_output(self) -> None:
         """Lit stdout et stderr en temps réel."""
@@ -151,7 +160,6 @@ class CompilationThread(QThread):
             # Vérifier l'annulation
             if self.cancel_requested:
                 self._terminate_process()
-                self.finished.emit(-1)  # Code spécial pour annulation
                 return
 
             # Vérifier si le processus est terminé
@@ -269,23 +277,82 @@ class CompilationThread(QThread):
                 break
 
     def _terminate_process(self) -> None:
-        """Tue le processus de compilation."""
-        if self.process is None:
+        """Arrête proprement le processus puis force si nécessaire."""
+        with self._proc_lock:
+            proc = self.process
+        if proc is None:
             return
 
+        # Terminaison gracieuse (groupe de process sur POSIX)
         try:
-            self.process.terminate()
-            try:
-                self.process.wait(timeout=5)
-            except subprocess.TimeoutExpired:
-                self.process.kill()
+            if os.name != "nt":
+                try:
+                    os.killpg(proc.pid, signal.SIGTERM)
+                except Exception:
+                    proc.terminate()
+            else:
+                proc.terminate()
         except Exception:
             pass
+        if self._wait_process(proc, timeout=5.0):
+            return
+
+        # Terminaison forcée si nécessaire
+        try:
+            if os.name != "nt":
+                try:
+                    os.killpg(proc.pid, signal.SIGKILL)
+                except Exception:
+                    proc.kill()
+            else:
+                proc.kill()
+        except Exception:
+            pass
+        self._wait_process(proc, timeout=2.0)
+        self._close_streams()
 
     def cancel(self) -> None:
         """Demande l'annulation de la compilation."""
         self.cancel_requested = True
         self._terminate_process()
+
+    def _validate_working_dir(self, working_dir: Optional[str]) -> Optional[str]:
+        if not working_dir:
+            return None
+        wd = os.path.abspath(str(working_dir))
+        if not os.path.isdir(wd):
+            raise FileNotFoundError(f"Working directory not found: {wd}")
+        return wd
+
+    def _current_return_code(self) -> int:
+        with self._proc_lock:
+            proc = self.process
+        if proc is None:
+            return 1
+        rc = proc.returncode
+        if rc is None:
+            return 1
+        return int(rc)
+
+    def _wait_process(self, proc: subprocess.Popen, timeout: float) -> bool:
+        try:
+            proc.wait(timeout=timeout)
+            return True
+        except Exception:
+            return False
+
+    def _close_streams(self) -> None:
+        with self._proc_lock:
+            proc = self.process
+        if proc is None:
+            return
+        for stream_name in ("stdout", "stderr", "stdin"):
+            try:
+                stream = getattr(proc, stream_name, None)
+                if stream is not None:
+                    stream.close()
+            except Exception:
+                pass
 
     @property
     def duration(self) -> Optional[float]:
@@ -390,8 +457,17 @@ class CompilerCore(QObject):
         self._workspace_dir = workspace_dir
 
         # Créer le thread
+        try:
+            safe_program, safe_args, safe_env = secure_command(program, args, env)
+        except Exception as e:
+            self.log_message.emit("error", f"Unsafe compile command blocked: {e}")
+            return False
+
         self._thread = CompilationThread(
-            program=program, args=args, env=env, working_dir=working_dir
+            program=safe_program,
+            args=safe_args,
+            env=safe_env,
+            working_dir=working_dir,
         )
 
         # Connecter les signaux
@@ -424,6 +500,11 @@ class CompilerCore(QObject):
         if self._thread:
             self._thread.cancel()
             self.log_message.emit("info", "Cancellation requested")
+            try:
+                if self._thread.isRunning():
+                    self._thread.wait(1500)
+            except Exception:
+                pass
         return True
 
     def _set_status(self, status: CompilationStatus) -> None:

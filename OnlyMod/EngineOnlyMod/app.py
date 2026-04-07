@@ -41,6 +41,7 @@ import subprocess
 from pathlib import Path
 from typing import Optional, Dict, Any, List
 from datetime import datetime
+from Core.process_security import secure_command, hardened_popen_kwargs
 
 # Importations des modules engines_loader (réutilisation du code existant)
 from EngineLoader import (
@@ -671,7 +672,7 @@ class EnginesStandaloneApp:
             }
 
         # Préparer l'environnement
-        execution_env = os.environ.copy()
+        execution_env = {}
         if env:
             execution_env.update(env)
         if self.workspace_dir:
@@ -686,13 +687,17 @@ class EnginesStandaloneApp:
 
         # Exécuter la commande
         try:
+            safe_program, safe_args, safe_env = secure_command(
+                cmd[0], list(cmd[1:]), execution_env
+            )
             proc = subprocess.Popen(
-                cmd,
+                [safe_program] + safe_args,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 text=True,
-                env=execution_env,
+                env=safe_env,
                 cwd=os.path.dirname(file_path) if file_path else None,
+                **hardened_popen_kwargs(),
             )
 
             stdout, stderr = proc.communicate()
