@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: Apache-2.0
 # Copyright 2026 Ague Samuel Amen
 
+"""Expose headless payload builders used by CLI commands and CI workflows."""
+
 from __future__ import annotations
 
 import json
@@ -16,18 +18,22 @@ import yaml
 
 
 def emit_json(payload: Any) -> str:
+    """Serialize a payload as stable pretty JSON."""
     return json.dumps(payload, indent=2, ensure_ascii=False, sort_keys=True)
 
 
 def _project_root() -> Path:
+    """Return repository root path."""
     return Path(__file__).resolve().parents[1]
 
 
 def _plugins_root() -> Path:
+    """Return plugins directory path."""
     return _project_root() / "Plugins"
 
 
 def _new_engines_app(workspace_dir: str | None = None):
+    """Instantiate the headless engines standalone app."""
     from OnlyMod.EngineOnlyMod.app import EnginesStandaloneApp
 
     return EnginesStandaloneApp(
@@ -39,15 +45,22 @@ def _new_engines_app(workspace_dir: str | None = None):
 
 
 class _HeadlessLog:
+    """Minimal log collector for headless compatibility calls."""
+
     def __init__(self) -> None:
+        """Initialize in-memory message buffer."""
         self.messages: list[str] = []
 
     def append(self, message: str) -> None:
+        """Append a message to the headless log buffer."""
         self.messages.append(str(message))
 
 
 class _HeadlessGui:
+    """Minimal GUI-like adapter used by Core and engines in headless mode."""
+
     def __init__(self, workspace_dir: str | None = None):
+        """Create a headless GUI context for a workspace."""
         self.workspace_dir = workspace_dir
         self.log = _HeadlessLog()
         self._tr: dict[str, Any] = {}
@@ -60,9 +73,11 @@ class _HeadlessGui:
         self._init_venv_context()
 
     def tr(self, fr_text: str, en_text: str) -> str:
+        """Return the English message for deterministic CLI output."""
         return en_text
 
     def _init_venv_context(self) -> None:
+        """Best-effort initialization of venv manager context."""
         try:
             from Core.Venv_Manager.Manager import VenvManager
 
@@ -73,7 +88,9 @@ class _HeadlessGui:
                 except Exception:
                     pass
                 try:
-                    detected = self.venv_manager.resolve_existing_venv(self.workspace_dir)
+                    detected = self.venv_manager.resolve_existing_venv(
+                        self.workspace_dir
+                    )
                     if detected:
                         self.venv_path = detected
                 except Exception:
@@ -83,6 +100,7 @@ class _HeadlessGui:
 
 
 def _read_version_from_init(rel_path: str) -> str:
+    """Read __version__ from a module __init__.py file."""
     try:
         root = Path(__file__).resolve().parents[1]
         init_file = root / rel_path
@@ -97,6 +115,7 @@ def _read_version_from_init(rel_path: str) -> str:
 
 
 def _load_workspace_config(workspace_dir: str) -> dict[str, Any]:
+    """Load workspace ARK config file with tolerant candidate fallback."""
     config_files = [
         Path(workspace_dir) / "ARK_Main_Config.yaml",
         Path(workspace_dir) / "ARK_Main_Config.yml",
@@ -115,6 +134,7 @@ def _load_workspace_config(workspace_dir: str) -> dict[str, Any]:
 
 
 def _get_entrypoint(cfg: dict[str, Any]) -> str | None:
+    """Extract build.entrypoint from a parsed ARK config payload."""
     try:
         build = cfg.get("build", {})
         if isinstance(build, dict):
@@ -127,6 +147,7 @@ def _get_entrypoint(cfg: dict[str, Any]) -> str | None:
 
 
 def _should_exclude(rel_path: str, patterns: list[str]) -> bool:
+    """Check exclusion patterns against a relative file path."""
     import fnmatch
 
     rel_posix = rel_path.replace(os.sep, "/")
@@ -144,6 +165,7 @@ def _should_exclude(rel_path: str, patterns: list[str]) -> bool:
 
 
 def _normalize_workspace(workspace: str | None) -> str | None:
+    """Normalize an optional workspace path to an absolute string."""
     if not workspace:
         return None
     try:
@@ -210,6 +232,7 @@ def _resolve_entrypoint_for_workspace(
 
 
 def _workspace_config_candidates(workspace_dir: str) -> list[Path]:
+    """Return candidate ARK config file paths for a workspace."""
     ws = Path(workspace_dir)
     return [
         ws / "ARK_Main_Config.yaml",
@@ -220,6 +243,7 @@ def _workspace_config_candidates(workspace_dir: str) -> list[Path]:
 
 
 def _is_probable_entrypoint(py_file: Path) -> bool:
+    """Heuristically detect whether a Python file looks like an entrypoint."""
     name = py_file.name.lower()
     if name in {"main.py", "app.py", "__main__.py", "run.py"}:
         return True
@@ -231,11 +255,19 @@ def _is_probable_entrypoint(py_file: Path) -> bool:
 
 
 def _detect_entrypoint(workspace_dir: str, candidates: list[str]) -> str | None:
+    """Auto-detect an entrypoint from discovered Python files."""
     ws = Path(workspace_dir)
     if not candidates:
         return None
 
-    preferred = ["main.py", "app.py", "__main__.py", "run.py", "src/main.py", "src/app.py"]
+    preferred = [
+        "main.py",
+        "app.py",
+        "__main__.py",
+        "run.py",
+        "src/main.py",
+        "src/app.py",
+    ]
     candidate_set = set(candidates)
     for rel in preferred:
         if rel in candidate_set:
@@ -260,6 +292,7 @@ def _notify_progress(
     message: str,
     steps: list[dict[str, str]],
 ) -> None:
+    """Append and forward a normalized progress event."""
     entry = {"step": step, "status": status, "message": message}
     steps.append(entry)
     if callable(callback):
@@ -270,6 +303,7 @@ def _notify_progress(
 
 
 def _ensure_workspace_pref(workspace_dir: Path) -> tuple[bool, str]:
+    """Ensure .ark/pref.json exists and return creation state with path."""
     pref_path = workspace_dir / ".ark" / "pref.json"
     if pref_path.exists():
         return False, str(pref_path)
@@ -282,7 +316,10 @@ def _ensure_workspace_pref(workspace_dir: Path) -> tuple[bool, str]:
     return True, str(pref_path)
 
 
-def _set_workspace_pref(workspace_dir: Path, venv_mode: str, venv_path: str | None) -> bool:
+def _set_workspace_pref(
+    workspace_dir: Path, venv_mode: str, venv_path: str | None
+) -> bool:
+    """Persist workspace Python mode preference in .ark/pref.json."""
     pref_path = workspace_dir / ".ark" / "pref.json"
     pref_path.parent.mkdir(parents=True, exist_ok=True)
     payload = {"venv_mode": str(venv_mode), "venv_path": venv_path}
@@ -294,6 +331,7 @@ def _set_workspace_pref(workspace_dir: Path, venv_mode: str, venv_path: str | No
 
 
 def _ensure_bcasl_config(workspace_dir: Path) -> tuple[bool, str | None]:
+    """Ensure bcasl.yml exists and return creation state with path."""
     target = workspace_dir / "bcasl.yml"
     if target.exists():
         return False, str(target)
@@ -307,12 +345,14 @@ def _ensure_bcasl_config(workspace_dir: Path) -> tuple[bool, str | None]:
 
 
 def _venv_python_path(venv_dir: Path) -> Path:
+    """Return python executable path for a venv root."""
     if os.name == "nt":
         return venv_dir / "Scripts" / "python.exe"
     return venv_dir / "bin" / "python"
 
 
 def _detect_existing_workspace_venv(workspace_dir: Path) -> Path | None:
+    """Detect an existing local workspace venv."""
     for name in (".venv", "venv"):
         candidate = workspace_dir / name
         if candidate.is_dir() and _venv_python_path(candidate).exists():
@@ -320,7 +360,9 @@ def _detect_existing_workspace_venv(workspace_dir: Path) -> Path | None:
     return None
 
 
-def _ensure_workspace_venv(workspace_dir: Path) -> tuple[bool, bool, str | None, str | None]:
+def _ensure_workspace_venv(
+    workspace_dir: Path,
+) -> tuple[bool, bool, str | None, str | None]:
     """
     Returns (ok, created, venv_path, error_message)
     """
@@ -343,7 +385,12 @@ def _ensure_workspace_venv(workspace_dir: Path) -> tuple[bool, bool, str | None,
 
     if proc.returncode != 0:
         msg = (proc.stderr or proc.stdout or "").strip()
-        return False, False, None, msg or f"venv creation failed with code {proc.returncode}"
+        return (
+            False,
+            False,
+            None,
+            msg or f"venv creation failed with code {proc.returncode}",
+        )
 
     py_path = _venv_python_path(target)
     if not py_path.exists():
@@ -357,6 +404,7 @@ def workspace_init_payload(
     *,
     with_venv: bool = False,
 ) -> dict[str, Any]:
+    """Initialize workspace files and optionally venv, returning a structured payload."""
     ws = _normalize_workspace(workspace)
     if not ws:
         return {"ok": False, "error": "workspace is required", "workspace": None}
@@ -557,6 +605,7 @@ def workspace_config_auto_payload(
     *,
     entrypoint: str | None = None,
 ) -> dict[str, Any]:
+    """Auto-configure workspace entrypoint and dependency options."""
     ws = _normalize_workspace(workspace)
     if not ws:
         return {"ok": False, "error": "workspace is required", "workspace": None}
@@ -584,7 +633,9 @@ def workspace_config_auto_payload(
         }
 
     cfg = load_ark_config(str(ws_path))
-    exclusion_patterns = cfg.get("exclusion_patterns", []) if isinstance(cfg, dict) else []
+    exclusion_patterns = (
+        cfg.get("exclusion_patterns", []) if isinstance(cfg, dict) else []
+    )
 
     python_files = _scan_workspace_python_files(
         ws_path,
@@ -657,14 +708,17 @@ def workspace_config_auto_payload(
 
 
 def _core_version() -> str:
+    """Return Core package version."""
     return _read_version_from_init("Core/__init__.py")
 
 
 def _engine_sdk_version() -> str:
+    """Return engine SDK package version."""
     return _read_version_from_init("engine_sdk/__init__.py")
 
 
 def _compatibility_result(engine_class) -> Any:
+    """Compute compatibility status for an engine class."""
     from EngineLoader.validator import check_engine_compatibility
 
     return check_engine_compatibility(
@@ -675,18 +729,21 @@ def _compatibility_result(engine_class) -> Any:
 
 
 def _headless_engine_class(engine_id: str):
+    """Resolve an engine class by identifier."""
     from EngineLoader import get_engine
 
     return get_engine(engine_id)
 
 
 def _headless_engine_instance(engine_id: str):
+    """Instantiate an engine from its identifier."""
     from EngineLoader import create as create_engine
 
     return create_engine(engine_id)
 
 
 def _engine_required_tools(engine_id: str) -> dict[str, list[str]]:
+    """Return normalized required tools declared by an engine."""
     try:
         engine = _headless_engine_instance(engine_id)
         required_tools = getattr(engine, "required_tools", {"python": [], "system": []})
@@ -706,6 +763,7 @@ def _headless_engine_dry_run(
     workspace: str | None = None,
     file_path: str | None = None,
 ) -> dict[str, Any]:
+    """Build an engine command without executing it."""
     if not file_path:
         return {"success": False, "error": "file path is required"}
 
@@ -742,6 +800,7 @@ def _headless_engine_dry_run(
 
 
 def _plugin_candidates() -> list[dict[str, Any]]:
+    """Discover plugin metadata from plugin packages."""
     plugins_root = _plugins_root()
     candidates: list[dict[str, Any]] = []
     if not plugins_root.exists():
@@ -757,6 +816,7 @@ def _plugin_candidates() -> list[dict[str, Any]]:
 
 
 def _extract_plugin_meta(init_file: Path, folder_name: str) -> dict[str, Any]:
+    """Extract simple plugin metadata from source text."""
     text = ""
     try:
         text = init_file.read_text(encoding="utf-8")
@@ -764,6 +824,7 @@ def _extract_plugin_meta(init_file: Path, folder_name: str) -> dict[str, Any]:
         pass
 
     def _match(field: str, default: str = "") -> str:
+        """Extract a string field from plugin source text."""
         pattern = rf"{field}\s*=\s*['\"]([^'\"]+)['\"]"
         match = re.search(pattern, text)
         return match.group(1).strip() if match else default
@@ -796,6 +857,7 @@ def _extract_plugin_meta(init_file: Path, folder_name: str) -> dict[str, Any]:
 
 
 def engine_list_payload(workspace: str | None = None) -> dict[str, Any]:
+    """Return list and compatibility status for available engines."""
     from EngineLoader import available_engines
 
     engine_ids = list(available_engines())
@@ -821,7 +883,9 @@ def engine_list_payload(workspace: str | None = None) -> dict[str, Any]:
                 "id": getattr(engine_class, "id", engine_id),
                 "name": getattr(engine_class, "name", engine_id),
                 "version": getattr(engine_class, "version", "unknown"),
-                "required_core": getattr(engine_class, "required_core_version", "1.0.0"),
+                "required_core": getattr(
+                    engine_class, "required_core_version", "1.0.0"
+                ),
                 "required_sdk": getattr(engine_class, "required_sdk_version", "1.0.0"),
                 "compatible": bool(getattr(compat, "is_compatible", False)),
                 "message": getattr(compat, "error_message", ""),
@@ -831,6 +895,7 @@ def engine_list_payload(workspace: str | None = None) -> dict[str, Any]:
 
 
 def engine_info_payload(engine_id: str, workspace: str | None = None) -> dict[str, Any]:
+    """Return detailed metadata for a single engine."""
     engine_class = _headless_engine_class(engine_id)
     if not engine_class:
         return {"found": False, "engine_id": engine_id}
@@ -859,6 +924,7 @@ def engine_doctor_payload(
     workspace: str | None = None,
     file_path: str | None = None,
 ) -> dict[str, Any]:
+    """Return diagnostic checks for one engine."""
     payload = engine_info_payload(engine_id, workspace=workspace)
     if not payload.get("found"):
         return payload
@@ -899,6 +965,7 @@ def engine_doctor_payload(
 
 
 def engine_config_path_payload(engine_id: str, workspace: str | None) -> dict[str, Any]:
+    """Return workspace engine config path details."""
     ws = _normalize_workspace(workspace)
     if not ws:
         return {
@@ -929,6 +996,7 @@ def engine_config_path_payload(engine_id: str, workspace: str | None) -> dict[st
 
 
 def engine_config_show_payload(engine_id: str, workspace: str | None) -> dict[str, Any]:
+    """Load and return persisted workspace engine config."""
     ws = _normalize_workspace(workspace)
     if not ws:
         return {
@@ -973,6 +1041,7 @@ def engine_config_set_payload(
     *,
     merge: bool = True,
 ) -> dict[str, Any]:
+    """Persist workspace engine options in merge or replace mode."""
     ws = _normalize_workspace(workspace)
     if not ws:
         return {
@@ -1031,7 +1100,10 @@ def engine_config_set_payload(
     }
 
 
-def engine_config_reset_payload(engine_id: str, workspace: str | None) -> dict[str, Any]:
+def engine_config_reset_payload(
+    engine_id: str, workspace: str | None
+) -> dict[str, Any]:
+    """Delete persisted workspace engine configuration."""
     ws = _normalize_workspace(workspace)
     if not ws:
         return {
@@ -1068,6 +1140,7 @@ def engine_config_reset_payload(engine_id: str, workspace: str | None) -> dict[s
 
 
 def workspace_inspect_payload(workspace: str | None) -> dict[str, Any]:
+    """Inspect workspace config, entrypoint and discovered Python files."""
     ws = _normalize_workspace(workspace)
     if not ws:
         return {"workspace": None, "exists": False, "error": "workspace is required"}
@@ -1078,7 +1151,11 @@ def workspace_inspect_payload(workspace: str | None) -> dict[str, Any]:
 
     should_exclude_file = None
     try:
-        from Core.ArkConfigManager import get_entrypoint, load_ark_config, should_exclude_file
+        from Core.ArkConfigManager import (
+            get_entrypoint,
+            load_ark_config,
+            should_exclude_file,
+        )
 
         cfg = load_ark_config(str(ws_path))
         entrypoint = get_entrypoint(cfg)
@@ -1088,8 +1165,12 @@ def workspace_inspect_payload(workspace: str | None) -> dict[str, Any]:
         should_exclude_file = None  # type: ignore[assignment]
 
     dep_opts = cfg.get("dependencies", {}) if isinstance(cfg, dict) else {}
-    req_candidates = dep_opts.get("requirements_files", []) if isinstance(dep_opts, dict) else []
-    exclusion_patterns = cfg.get("exclusion_patterns", []) if isinstance(cfg, dict) else []
+    req_candidates = (
+        dep_opts.get("requirements_files", []) if isinstance(dep_opts, dict) else []
+    )
+    exclusion_patterns = (
+        cfg.get("exclusion_patterns", []) if isinstance(cfg, dict) else []
+    )
 
     python_files = _scan_workspace_python_files(
         ws_path,
@@ -1121,6 +1202,7 @@ def workspace_entrypoint_set_payload(
     workspace: str | None,
     entrypoint: str | None,
 ) -> dict[str, Any]:
+    """Set explicit workspace entrypoint and return updated inspection."""
     ws = _normalize_workspace(workspace)
     if not ws:
         return {"ok": False, "workspace": None, "error": "workspace is required"}
@@ -1138,10 +1220,14 @@ def workspace_entrypoint_set_payload(
         from Core.ArkConfigManager import load_ark_config, should_exclude_file
 
         cfg = load_ark_config(str(ws_path))
-        exclusion_patterns = cfg.get("exclusion_patterns", []) if isinstance(cfg, dict) else []
+        exclusion_patterns = (
+            cfg.get("exclusion_patterns", []) if isinstance(cfg, dict) else []
+        )
     except Exception:
         cfg = _load_workspace_config(str(ws_path))
-        exclusion_patterns = cfg.get("exclusion_patterns", []) if isinstance(cfg, dict) else []
+        exclusion_patterns = (
+            cfg.get("exclusion_patterns", []) if isinstance(cfg, dict) else []
+        )
         should_exclude_file = None  # type: ignore[assignment]
 
     python_files = _scan_workspace_python_files(
@@ -1173,6 +1259,7 @@ def workspace_entrypoint_set_payload(
 
 
 def workspace_entrypoint_clear_payload(workspace: str | None) -> dict[str, Any]:
+    """Clear explicit workspace entrypoint and return updated inspection."""
     ws = _normalize_workspace(workspace)
     if not ws:
         return {"ok": False, "workspace": None, "error": "workspace is required"}
@@ -1184,7 +1271,11 @@ def workspace_entrypoint_clear_payload(workspace: str | None) -> dict[str, Any]:
 
         ok = bool(set_entrypoint(ws, None))
     except Exception as exc:
-        return {"ok": False, "workspace": ws, "error": f"unable to clear entrypoint: {exc}"}
+        return {
+            "ok": False,
+            "workspace": ws,
+            "error": f"unable to clear entrypoint: {exc}",
+        }
     inspect = workspace_inspect_payload(ws)
     return {
         "ok": ok,
@@ -1195,6 +1286,7 @@ def workspace_entrypoint_clear_payload(workspace: str | None) -> dict[str, Any]:
 
 
 def venv_status_payload(workspace: str | None) -> dict[str, Any]:
+    """Return workspace Python mode and persisted venv preference."""
     ws = _normalize_workspace(workspace)
     if not ws:
         return {"ok": False, "workspace": None, "error": "workspace is required"}
@@ -1234,6 +1326,7 @@ def venv_status_payload(workspace: str | None) -> dict[str, Any]:
 
 
 def venv_use_system_payload(workspace: str | None) -> dict[str, Any]:
+    """Persist system Python mode for workspace execution."""
     ws = _normalize_workspace(workspace)
     if not ws:
         return {"ok": False, "workspace": None, "error": "workspace is required"}
@@ -1257,6 +1350,7 @@ def venv_use_venv_payload(
     venv_path: str | None = None,
     create_if_missing: bool = False,
 ) -> dict[str, Any]:
+    """Persist venv mode with optional local venv creation."""
     ws = _normalize_workspace(workspace)
     if not ws:
         return {"ok": False, "workspace": None, "error": "workspace is required"}
@@ -1294,7 +1388,11 @@ def venv_use_venv_payload(
         return {"ok": False, "workspace": ws, "error": "venv path not found"}
     py = _venv_python_path(target)
     if not py.exists():
-        return {"ok": False, "workspace": ws, "error": "venv python executable not found"}
+        return {
+            "ok": False,
+            "workspace": ws,
+            "error": "venv python executable not found",
+        }
     try:
         _set_workspace_pref(ws_path, "venv", str(target))
     except Exception as exc:
@@ -1311,6 +1409,7 @@ def venv_install_requirements_payload(
     *,
     force_pip: bool = False,
 ) -> dict[str, Any]:
+    """Install workspace requirements in current Python mode."""
     ws = _normalize_workspace(workspace)
     if not ws:
         return {"ok": False, "workspace": None, "error": "workspace is required"}
@@ -1353,7 +1452,15 @@ def venv_install_requirements_payload(
 
     cmd = [python_bin, "-m", "pip", "install", "-r", str(req_file)]
     if use_system and platform.system() == "Linux":
-        cmd = [python_bin, "-m", "pip", "install", "--break-system-packages", "-r", str(req_file)]
+        cmd = [
+            python_bin,
+            "-m",
+            "pip",
+            "install",
+            "--break-system-packages",
+            "-r",
+            str(req_file),
+        ]
 
     try:
         proc = subprocess.run(
@@ -1366,7 +1473,11 @@ def venv_install_requirements_payload(
             check=False,
         )
     except Exception as exc:
-        return {"ok": False, "workspace": ws, "error": f"requirements installation failed: {exc}"}
+        return {
+            "ok": False,
+            "workspace": ws,
+            "error": f"requirements installation failed: {exc}",
+        }
 
     return {
         "ok": proc.returncode == 0,
@@ -1395,6 +1506,7 @@ def workspace_apply_payload(
     apply_engine_configs: bool = True,
     require_entrypoint: bool = False,
 ) -> dict[str, Any]:
+    """Apply full workspace setup flow and return aggregated status payload."""
     ws = _normalize_workspace(workspace)
     if not ws:
         return {"ok": False, "error": "workspace is required", "workspace": None}
@@ -1421,22 +1533,36 @@ def workspace_apply_payload(
             }
 
     inspect_payload: dict[str, Any] = (
-        workspace_inspect_payload(ws) if inspect_files else {"workspace": ws, "exists": True}
+        workspace_inspect_payload(ws)
+        if inspect_files
+        else {"workspace": ws, "exists": True}
     )
 
-    venv_state: dict[str, Any] = {"applied": False, "mode": "skipped", "venv_path": None}
+    venv_state: dict[str, Any] = {
+        "applied": False,
+        "mode": "skipped",
+        "venv_path": None,
+    }
     if apply_venv_pref:
         try:
             gui = _HeadlessGui(workspace_dir=ws)
             manager = getattr(gui, "venv_manager", None)
             if manager is None:
-                venv_state = {"applied": False, "mode": "unavailable", "venv_path": None}
+                venv_state = {
+                    "applied": False,
+                    "mode": "unavailable",
+                    "venv_path": None,
+                }
             else:
                 applied = bool(manager.apply_workspace_pref(ws))
                 mode = (
                     "system"
                     if bool(getattr(gui, "use_system_python", False))
-                    else ("venv" if bool(getattr(gui, "venv_path_manuel", None)) else "none")
+                    else (
+                        "venv"
+                        if bool(getattr(gui, "venv_path_manuel", None))
+                        else "none"
+                    )
                 )
                 try:
                     resolved = manager.resolve_existing_venv(ws)
@@ -1464,7 +1590,10 @@ def workspace_apply_payload(
     if apply_engine_configs:
         try:
             import EngineLoader as engines_loader
-            from Core.EngineConfigManager import apply_engine_configs_for_workspace, load_engine_config
+            from Core.EngineConfigManager import (
+                apply_engine_configs_for_workspace,
+                load_engine_config,
+            )
 
             gui = _HeadlessGui(workspace_dir=ws)
             engine_ids = list(engines_loader.available_engines())
@@ -1507,6 +1636,7 @@ def workspace_apply_payload(
 
 
 def doctor_payload(workspace: str | None = None) -> dict[str, Any]:
+    """Return global environment and engine diagnostics."""
     versions = {
         "core": _read_version_from_init("Core/__init__.py"),
         "engine_sdk": _read_version_from_init("engine_sdk/__init__.py"),
@@ -1522,7 +1652,9 @@ def doctor_payload(workspace: str | None = None) -> dict[str, Any]:
         qt_available = False
 
     engine_summary = engine_list_payload(workspace=workspace)
-    compatible_count = sum(1 for item in engine_summary["engines"] if item.get("compatible"))
+    compatible_count = sum(
+        1 for item in engine_summary["engines"] if item.get("compatible")
+    )
     payload = {
         "application": "PyCompiler ARK",
         "platform": {
@@ -1545,6 +1677,7 @@ def doctor_payload(workspace: str | None = None) -> dict[str, Any]:
 
 
 def bcasl_list_payload(workspace: str | None = None) -> dict[str, Any]:
+    """Return discovered BCASL plugins payload."""
     ws = _normalize_workspace(workspace) or str(Path.cwd())
     plugins_dir = _plugins_root()
     plugins = _plugin_candidates()
@@ -1559,6 +1692,7 @@ def bcasl_list_payload(workspace: str | None = None) -> dict[str, Any]:
 
 
 def bcasl_doctor_payload(workspace: str | None = None) -> dict[str, Any]:
+    """Return BCASL diagnostics checks."""
     ws = _normalize_workspace(workspace)
     plugins = bcasl_list_payload(workspace=ws)
     checks = [
@@ -1600,6 +1734,7 @@ def ci_smoke_payload(
     *,
     require_entrypoint: bool = False,
 ) -> dict[str, Any]:
+    """Build CI smoke checks payload with optional strict entrypoint requirement."""
     ws = _normalize_workspace(workspace)
     doctor = doctor_payload(workspace=ws if ws else None)
     bcasl = bcasl_doctor_payload(workspace=ws if ws else None)
@@ -1660,6 +1795,7 @@ def ci_smoke_payload(
 
 
 def scaffold_engine(target_name: str, root_dir: str | None = None) -> dict[str, Any]:
+    """Create a starter engine package tree."""
     safe = str(target_name).strip().replace("-", "_").replace(" ", "_").lower()
     base_root = Path(root_dir or Path.cwd())
     engine_dir = base_root / "ENGINES" / safe
@@ -1681,11 +1817,11 @@ def scaffold_engine(target_name: str, root_dir: str | None = None) -> dict[str, 
                 "",
                 "@engine_register",
                 f"class {safe.title().replace('_', '')}Engine(CompilerEngine):",
-                f"    id = \"{safe}\"",
+                f'    id = "{safe}"',
                 f"    name = \"{safe.title().replace('_', ' ')}\"",
-                "    version = \"0.1.0\"",
-                "    required_core_version = \"1.0.0\"",
-                "    required_sdk_version = \"1.0.0\"",
+                '    version = "0.1.0"',
+                '    required_core_version = "1.0.0"',
+                '    required_sdk_version = "1.0.0"',
                 "",
                 "    def build_command(self, gui, file):",
                 "        return [sys.executable, file]",
@@ -1698,11 +1834,14 @@ def scaffold_engine(target_name: str, root_dir: str | None = None) -> dict[str, 
         json.dumps({"tab_title": safe.title().replace("_", " ")}, indent=2) + "\n",
         encoding="utf-8",
     )
-    (engine_dir / "mapping.json").write_text("{\n  \"imports\": {}\n}\n", encoding="utf-8")
+    (engine_dir / "mapping.json").write_text(
+        '{\n  "imports": {}\n}\n', encoding="utf-8"
+    )
     return {"created": True, "path": str(engine_dir)}
 
 
 def scaffold_plugin(target_name: str, root_dir: str | None = None) -> dict[str, Any]:
+    """Create a starter BCASL plugin package tree."""
     safe = str(target_name).strip().replace("-", "_").replace(" ", "_")
     base_root = Path(root_dir or Path.cwd())
     plugin_dir = base_root / "Plugins" / safe
@@ -1720,12 +1859,12 @@ def scaffold_plugin(target_name: str, root_dir: str | None = None) -> dict[str, 
                 "from Plugins_SDK.BcPluginContext import BcPluginBase, PluginMeta",
                 "",
                 "PLUGIN_META = PluginMeta(",
-                f"    id=\"{safe.lower()}\",",
-                f"    name=\"{safe}\",",
-                "    version=\"0.1.0\",",
-                "    description=\"BCASL plugin\",",
-                "    author=\"PyCompiler ARK\",",
-                "    tags=[\"prepare\"],",
+                f'    id="{safe.lower()}",',
+                f'    name="{safe}",',
+                '    version="0.1.0",',
+                '    description="BCASL plugin",',
+                '    author="PyCompiler ARK",',
+                '    tags=["prepare"],',
                 ")",
                 "",
                 "",

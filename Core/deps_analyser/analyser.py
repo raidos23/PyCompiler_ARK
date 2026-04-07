@@ -237,7 +237,9 @@ def _load_toml_file(path: str) -> dict:
 
 
 @functools.lru_cache(maxsize=64)
-def _discover_workspace_hints(workspace_dir: str | None) -> tuple[tuple[str, ...], tuple[str, ...]]:
+def _discover_workspace_hints(
+    workspace_dir: str | None,
+) -> tuple[tuple[str, ...], tuple[str, ...]]:
     ws = _normalize_realpath(workspace_dir)
     if not ws or not os.path.isdir(ws):
         return tuple(), tuple()
@@ -260,7 +262,9 @@ def _discover_workspace_hints(workspace_dir: str | None) -> tuple[tuple[str, ...
         _add_source_root(*rel_parts)
 
     pyproject_path = os.path.join(ws, "pyproject.toml")
-    pyproject = _load_toml_file(pyproject_path) if os.path.isfile(pyproject_path) else {}
+    pyproject = (
+        _load_toml_file(pyproject_path) if os.path.isfile(pyproject_path) else {}
+    )
     try:
         project = pyproject.get("project", {})
         if isinstance(project, dict):
@@ -462,7 +466,9 @@ def _extract_imported_modules_from_source(
                     modules.add(top)
         elif isinstance(node, ast.ImportFrom):
             if node.level and node.level > 0:
-                rel_root = _resolve_relative_import_root(file_path, node.level, workspace_dir)
+                rel_root = _resolve_relative_import_root(
+                    file_path, node.level, workspace_dir
+                )
                 if rel_root:
                     modules.add(rel_root)
             elif node.module:
@@ -479,7 +485,11 @@ def _extract_imported_modules_from_source(
         r"importlib\.import_module\(['\"]([\w\.]+)['\"]\)", source
     )
     modules.update(
-        [top for top in (_top_level_module_name(mod) for mod in importlib_imports) if top]
+        [
+            top
+            for top in (_top_level_module_name(mod) for mod in importlib_imports)
+            if top
+        ]
     )
     return modules
 

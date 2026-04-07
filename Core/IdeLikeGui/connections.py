@@ -79,7 +79,11 @@ def _load_ide_like_ui(self) -> None:
     """Load the new ide-like UI file and set it as central widget."""
     loader = QUiLoader()
     ui_path = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)), "..", "..", "ui", "ui_ide_design2.ui"
+        os.path.dirname(os.path.abspath(__file__)),
+        "..",
+        "..",
+        "ui",
+        "ui_ide_design2.ui",
     )
     ui_file = QFile(os.path.abspath(ui_path))
     if not ui_file.open(QFile.ReadOnly):
@@ -104,7 +108,9 @@ def _load_ide_like_ui(self) -> None:
         if central is None:
             central = loaded.findChild(QWidget, "centralwidget")
         if central is None:
-            raise RuntimeError("Le fichier UI IDE-like ne contient pas de centralwidget.")
+            raise RuntimeError(
+                "Le fichier UI IDE-like ne contient pas de centralwidget."
+            )
         self.ui = central
     else:
         self.ui = loaded
@@ -191,7 +197,9 @@ def _map_ide_like_widgets(self) -> None:
     self.statusbar = self.findChild(QStatusBar, "statusbar")
     self.status_hint = None
     try:
-        self.status_hint = self.statusbar.findChild(QLabel, "status_hint") if self.statusbar else None
+        self.status_hint = (
+            self.statusbar.findChild(QLabel, "status_hint") if self.statusbar else None
+        )
     except Exception:
         self.status_hint = None
     _setup_status_bar(self)
@@ -340,7 +348,9 @@ def _setup_more_tools_menu(self) -> None:
         menu.addSeparator()
 
         act_language = QAction(menu)
-        act_language.triggered.connect(lambda: getattr(self, "show_language_dialog", lambda: None)())
+        act_language.triggered.connect(
+            lambda: getattr(self, "show_language_dialog", lambda: None)()
+        )
         menu.addAction(act_language)
 
         act_theme = QAction(menu)
@@ -356,11 +366,15 @@ def _setup_more_tools_menu(self) -> None:
         menu.addAction(act_advanced)
 
         act_export = QAction(menu)
-        act_export.triggered.connect(lambda: getattr(self, "export_config", lambda: None)())
+        act_export.triggered.connect(
+            lambda: getattr(self, "export_config", lambda: None)()
+        )
         menu.addAction(act_export)
 
         act_import = QAction(menu)
-        act_import.triggered.connect(lambda: getattr(self, "import_config", lambda: None)())
+        act_import.triggered.connect(
+            lambda: getattr(self, "import_config", lambda: None)()
+        )
         menu.addAction(act_import)
 
         act_save_engines = QAction(menu)
@@ -370,7 +384,9 @@ def _setup_more_tools_menu(self) -> None:
         menu.addAction(act_save_engines)
 
         act_help = QAction(menu)
-        act_help.triggered.connect(lambda: getattr(self, "show_help_dialog", lambda: None)())
+        act_help.triggered.connect(
+            lambda: getattr(self, "show_help_dialog", lambda: None)()
+        )
         menu.addAction(act_help)
 
         self._ide_more_menu_actions = {
@@ -487,11 +503,17 @@ def _apply_activity_buttons_theme(self) -> None:
         deps_btn = getattr(self, "activity_btn_deps", None)
         src_btn = getattr(self, "btn_suggest_deps", None)
         if deps_btn is not None:
-            if src_btn is not None and src_btn.icon() is not None and not src_btn.icon().isNull():
+            if (
+                src_btn is not None
+                and src_btn.icon() is not None
+                and not src_btn.icon().isNull()
+            ):
                 deps_btn.setIcon(src_btn.icon())
                 deps_btn.setIconSize(src_btn.iconSize())
             else:
-                deps_icon = themed_svg_icon(os.path.join(icons_dir, "search.svg"), size=18)
+                deps_icon = themed_svg_icon(
+                    os.path.join(icons_dir, "search.svg"), size=18
+                )
                 if deps_icon is not None and not deps_icon.isNull():
                     deps_btn.setIcon(deps_icon)
     except Exception:
@@ -548,15 +570,15 @@ def _retranslate_ide_like_actions(self) -> None:
     try:
         deps_btn = getattr(self, "activity_btn_deps", None)
         if deps_btn is not None:
-            deps_btn.setToolTip(
-                _tr("Analyser les dependances", "Analyze dependencies")
-            )
+            deps_btn.setToolTip(_tr("Analyser les dependances", "Analyze dependencies"))
     except Exception:
         pass
     try:
         if hasattr(self, "register_language_refresh"):
             if not getattr(self, "_ide_menu_i18n_registered", False):
-                self.register_language_refresh(lambda: _retranslate_ide_like_actions(self))
+                self.register_language_refresh(
+                    lambda: _retranslate_ide_like_actions(self)
+                )
                 self._ide_menu_i18n_registered = True
     except Exception:
         pass
@@ -578,6 +600,7 @@ def _connect_ide_like_specific_signals(self) -> None:
         getattr(self, "suggest_missing_dependencies", None),
     )
     _bind_status_updates(self)
+
 
 def init_ide_like_ui(self) -> None:
     """Initialize the ide-like UI and wire it to existing Core methods."""

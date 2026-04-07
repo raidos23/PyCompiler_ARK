@@ -1,3 +1,5 @@
+"""Provide core utilities and workflows for this module."""
+
 # SPDX-License-Identifier: Apache-2.0
 # Copyright 2026 Ague Samuel Amen
 #
@@ -51,6 +53,7 @@ from PySide6.QtWidgets import (
 
 
 def _read_text(path: str) -> str:
+    """Execute _read_text logic for this component."""
     try:
         with open(path, encoding="utf-8") as f:
             return f.read()
@@ -59,12 +62,14 @@ def _read_text(path: str) -> str:
 
 
 def _write_text(path: str, content: str) -> None:
+    """Execute _write_text logic for this component."""
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "w", encoding="utf-8") as f:
         f.write(content)
 
 
 def _safe_parse_yaml(text: str) -> bool:
+    """Execute _safe_parse_yaml logic for this component."""
     try:
         yaml.safe_load(text)
         return True
@@ -73,6 +78,7 @@ def _safe_parse_yaml(text: str) -> bool:
 
 
 def _safe_parse_json(text: str) -> bool:
+    """Execute _safe_parse_json logic for this component."""
     try:
         json.loads(text)
         return True
@@ -81,12 +87,16 @@ def _safe_parse_json(text: str) -> bool:
 
 
 class _SimpleHighlighter(QSyntaxHighlighter):
+    """Implement the _SimpleHighlighter component behavior."""
+
     def __init__(self, doc, mode: str = "yaml"):
+        """Initialize instance state and runtime dependencies."""
         super().__init__(doc)
         self.mode = mode
         self.rules: list[tuple[QRegularExpression, QTextCharFormat]] = []
 
         def _fmt(color: str, bold: bool = False) -> QTextCharFormat:
+            """Execute _fmt logic for this component."""
             fmt = QTextCharFormat()
             fmt.setForeground(QColor(color))
             if bold:
@@ -132,6 +142,7 @@ class _SimpleHighlighter(QSyntaxHighlighter):
             )
 
     def highlightBlock(self, text: str) -> None:
+        """Execute highlightBlock logic for this component."""
         for pattern, fmt in self.rules:
             it = pattern.globalMatch(text)
             while it.hasNext():
@@ -140,7 +151,10 @@ class _SimpleHighlighter(QSyntaxHighlighter):
 
 
 class AdvancedConfigEditor(QDialog):
+    """Implement the AdvancedConfigEditor component behavior."""
+
     def __init__(self, gui):
+        """Initialize instance state and runtime dependencies."""
         super().__init__(gui)
         self.gui = gui
         self._tab_states: list[dict[str, Any]] = []
@@ -203,15 +217,18 @@ class AdvancedConfigEditor(QDialog):
         self._refresh_global_status()
 
     def _workspace_dir(self) -> str | None:
+        """Return the resolved workspace path information."""
         return getattr(self.gui, "workspace_dir", None)
 
     def _make_editor(self, parent) -> QPlainTextEdit:
+        """Execute _make_editor logic for this component."""
         edit = QPlainTextEdit(parent)
         edit.setFont(QFont("Consolas", 10))
         edit.setLineWrapMode(QPlainTextEdit.LineWrapMode.NoWrap)
         return edit
 
     def _parse_text(self, text: str, is_yaml: bool) -> tuple[bool, Any, str]:
+        """Parse the provided input into a structured value."""
         try:
             if is_yaml:
                 data = yaml.safe_load(text) if text.strip() else {}
@@ -222,6 +239,7 @@ class AdvancedConfigEditor(QDialog):
             return False, None, str(exc)
 
     def _format_text(self, text: str, is_yaml: bool) -> tuple[bool, str, str]:
+        """Format the related content for display or storage."""
         ok, data, err = self._parse_text(text, is_yaml)
         if not ok:
             return False, text, err
@@ -237,6 +255,7 @@ class AdvancedConfigEditor(QDialog):
             return False, text, str(exc)
 
     def _show_diff(self, title: str, before: str, after: str) -> None:
+        """Execute _show_diff logic for this component."""
         diff = self._compute_diff(before, after)
         if not diff.strip():
             QMessageBox.information(
@@ -304,6 +323,7 @@ class AdvancedConfigEditor(QDialog):
         )
 
     def _flatten_keys(self, data: Any, prefix: str = "") -> list[str]:
+        """Execute _flatten_keys logic for this component."""
         lines: list[str] = []
         if isinstance(data, dict):
             for key, value in data.items():
@@ -319,6 +339,7 @@ class AdvancedConfigEditor(QDialog):
         return lines
 
     def _validate_payload(self, file_id: str, data: Any) -> tuple[list[str], list[str]]:
+        """Validate the related data and constraints."""
         errs: list[str] = []
         warns: list[str] = []
 
@@ -366,10 +387,14 @@ class AdvancedConfigEditor(QDialog):
                     not isinstance(req_files, list)
                     or not all(isinstance(item, str) for item in req_files)
                 ):
-                    errs.append("dependencies.requirements_files must be a list of strings.")
+                    errs.append(
+                        "dependencies.requirements_files must be a list of strings."
+                    )
                 autogen = deps.get("auto_generate_from_imports")
                 if autogen is not None and not isinstance(autogen, bool):
-                    errs.append("dependencies.auto_generate_from_imports must be a boolean.")
+                    errs.append(
+                        "dependencies.auto_generate_from_imports must be a boolean."
+                    )
 
             env = data.get("environment_manager")
             if env is not None and not isinstance(env, dict):
@@ -380,7 +405,9 @@ class AdvancedConfigEditor(QDialog):
                     not isinstance(priority, list)
                     or not all(isinstance(item, str) for item in priority)
                 ):
-                    errs.append("environment_manager.priority must be a list of strings.")
+                    errs.append(
+                        "environment_manager.priority must be a list of strings."
+                    )
                 for flag in ("auto_detect", "fallback_to_pip"):
                     if flag in env and not isinstance(env.get(flag), bool):
                         errs.append(f"environment_manager.{flag} must be a boolean.")
@@ -404,7 +431,9 @@ class AdvancedConfigEditor(QDialog):
             if options is not None and not isinstance(options, dict):
                 errs.append("options must be an object.")
             if isinstance(options, dict):
-                if "enabled" in options and not isinstance(options.get("enabled"), bool):
+                if "enabled" in options and not isinstance(
+                    options.get("enabled"), bool
+                ):
                     errs.append("options.enabled must be a boolean.")
                 if "plugin_timeout_s" in options and not isinstance(
                     options.get("plugin_timeout_s"), (int, float)
@@ -448,6 +477,7 @@ class AdvancedConfigEditor(QDialog):
         return errs, warns
 
     def _mk_default_content(self, file_id: str, is_yaml: bool) -> str:
+        """Build and return the default content structure."""
         if file_id == "ark":
             try:
                 from Core.ArkConfigManager import DEFAULT_CONFIG
@@ -488,6 +518,7 @@ class AdvancedConfigEditor(QDialog):
         return "" if is_yaml else "{}\n"
 
     def _set_tab_dirty(self, state: dict[str, Any], dirty: bool) -> None:
+        """Execute _set_tab_dirty logic for this component."""
         if state.get("dirty") == dirty:
             return
         state["dirty"] = dirty
@@ -498,6 +529,7 @@ class AdvancedConfigEditor(QDialog):
         self._refresh_global_status()
 
     def _refresh_global_status(self) -> None:
+        """Refresh the related state and UI feedback."""
         if not hasattr(self, "status_label") or self.status_label is None:
             return
         dirty_count = sum(1 for s in self._tab_states if s.get("dirty"))
@@ -512,6 +544,7 @@ class AdvancedConfigEditor(QDialog):
             self.status_label.setText(self.gui.tr("Tout est sauvegardé.", "All saved."))
 
     def _update_outline(self, state: dict[str, Any]) -> None:
+        """Update the related state based on current data."""
         text = state["editor"].toPlainText()
         is_yaml = bool(state["is_yaml"])
         ok, data, err = self._parse_text(text, is_yaml)
@@ -555,6 +588,7 @@ class AdvancedConfigEditor(QDialog):
             diagnostics.setStyleSheet("color: #5cb85c;")
 
     def _validate_one_tab(self, state: dict[str, Any], popup: bool = False) -> bool:
+        """Validate the related data and constraints."""
         text = state["editor"].toPlainText()
         ok, data, err = self._parse_text(text, bool(state["is_yaml"]))
         if not ok:
@@ -589,11 +623,16 @@ class AdvancedConfigEditor(QDialog):
         return not errs
 
     def _jump_to_search(self, state: dict[str, Any], backward: bool = False) -> None:
+        """Execute _jump_to_search logic for this component."""
         needle = state["search"].text().strip()
         if not needle:
             return
         editor = state["editor"]
-        flags = QTextDocument.FindFlag.FindBackward if backward else QTextDocument.FindFlag(0)
+        flags = (
+            QTextDocument.FindFlag.FindBackward
+            if backward
+            else QTextDocument.FindFlag(0)
+        )
         if editor.find(needle, flags):
             return
 
@@ -605,19 +644,23 @@ class AdvancedConfigEditor(QDialog):
         editor.find(needle, flags)
 
     def _on_current_tab_changed(self, _index: int) -> None:
+        """Handle the related event callback."""
         self._refresh_global_status()
 
     def _reload_all_tabs(self) -> None:
+        """Execute _reload_all_tabs logic for this component."""
         for state in self._tab_states:
             state["reload"]()
         self._refresh_global_status()
 
     def _save_all_tabs(self) -> None:
+        """Persist data to the related destination."""
         for state in self._tab_states:
             state["save"]()
         self._refresh_global_status()
 
     def _validate_all_tabs(self) -> None:
+        """Validate the related data and constraints."""
         all_ok = True
         for state in self._tab_states:
             if not self._validate_one_tab(state, popup=False):
@@ -626,7 +669,10 @@ class AdvancedConfigEditor(QDialog):
             QMessageBox.information(
                 self,
                 self.gui.tr("Validation", "Validation"),
-                self.gui.tr("Toutes les configurations sont valides.", "All configurations are valid."),
+                self.gui.tr(
+                    "Toutes les configurations sont valides.",
+                    "All configurations are valid.",
+                ),
             )
             return
         QMessageBox.warning(
@@ -639,6 +685,7 @@ class AdvancedConfigEditor(QDialog):
         )
 
     def _format_current_tab(self) -> None:
+        """Format the related content for display or storage."""
         idx = self.tabs.currentIndex()
         if idx < 0:
             return
@@ -671,6 +718,7 @@ class AdvancedConfigEditor(QDialog):
         is_yaml: bool,
         tab_title: str,
     ) -> tuple[QDialog, QPlainTextEdit, QLabel]:
+        """Execute _build_tab logic for this component."""
         tab = QDialog(self)
         lay = QVBoxLayout(tab)
         lay.setSpacing(6)
@@ -732,6 +780,7 @@ class AdvancedConfigEditor(QDialog):
         lay.addLayout(btns)
 
         def _load():
+            """Load data from the related source."""
             path = path_getter()
             if not path:
                 editor.setPlainText("")
@@ -748,6 +797,7 @@ class AdvancedConfigEditor(QDialog):
             self._update_outline(state)
 
         def _save():
+            """Persist data to the related destination."""
             path = path_getter()
             if not path:
                 return
@@ -760,6 +810,7 @@ class AdvancedConfigEditor(QDialog):
             self._update_outline(state)
 
         def _diff():
+            """Execute _diff logic for this component."""
             path = path_getter()
             if not path:
                 return
@@ -768,6 +819,7 @@ class AdvancedConfigEditor(QDialog):
             self._show_diff(self.gui.tr("Diff du fichier", "File diff"), before, after)
 
         def _open_any():
+            """Execute _open_any logic for this component."""
             path, _ = QFileDialog.getOpenFileName(
                 self, self.gui.tr("Ouvrir un fichier", "Open file"), "", "*.*"
             )
@@ -778,6 +830,7 @@ class AdvancedConfigEditor(QDialog):
             self._update_outline(state)
 
         def _load_defaults():
+            """Load data from the related source."""
             default_text = self._mk_default_content(file_id, is_yaml)
             if not default_text.strip():
                 return
@@ -800,22 +853,28 @@ class AdvancedConfigEditor(QDialog):
         btn_validate.clicked.connect(lambda: self._validate_one_tab(state, popup=True))
         btn_format.clicked.connect(
             lambda: (
-                (lambda ok, content, err: (
-                    editor.setPlainText(content) if ok else QMessageBox.warning(
-                        self,
-                        self.gui.tr("Erreur", "Error"),
-                        self.gui.tr(
-                            f"Format invalide, impossible de formater:\n{err}",
-                            f"Invalid format, cannot format:\n{err}",
-                        ),
+                (
+                    lambda ok, content, err: (
+                        editor.setPlainText(content)
+                        if ok
+                        else QMessageBox.warning(
+                            self,
+                            self.gui.tr("Erreur", "Error"),
+                            self.gui.tr(
+                                f"Format invalide, impossible de formater:\n{err}",
+                                f"Invalid format, cannot format:\n{err}",
+                            ),
+                        )
                     )
-                ))(*self._format_text(editor.toPlainText(), is_yaml))
+                )(*self._format_text(editor.toPlainText(), is_yaml))
             )
         )
         btn_defaults.clicked.connect(_load_defaults)
         btn_prev.clicked.connect(lambda: self._jump_to_search(state, backward=True))
         btn_next.clicked.connect(lambda: self._jump_to_search(state, backward=False))
-        search.returnPressed.connect(lambda: self._jump_to_search(state, backward=False))
+        search.returnPressed.connect(
+            lambda: self._jump_to_search(state, backward=False)
+        )
 
         self.tabs.addTab(tab, tab_title)
         state = {
@@ -836,7 +895,10 @@ class AdvancedConfigEditor(QDialog):
         self._tab_states.append(state)
 
         def _on_changed():
-            self._set_tab_dirty(state, editor.toPlainText() != state.get("last_saved", ""))
+            """Handle the related event callback."""
+            self._set_tab_dirty(
+                state, editor.toPlainText() != state.get("last_saved", "")
+            )
             self._update_outline(state)
 
         editor.textChanged.connect(_on_changed)
@@ -849,6 +911,7 @@ class AdvancedConfigEditor(QDialog):
         return tab, editor, path_label
 
     def _setup_tab_ark(self) -> None:
+        """Set up the related UI or runtime section."""
         ws = self._workspace_dir()
         self._build_tab(
             "ark",
@@ -859,6 +922,7 @@ class AdvancedConfigEditor(QDialog):
         )
 
     def _setup_tab_bcasl(self) -> None:
+        """Set up the related UI or runtime section."""
         ws = self._workspace_dir()
         self._build_tab(
             "bcasl",
@@ -869,6 +933,7 @@ class AdvancedConfigEditor(QDialog):
         )
 
     def _setup_tab_pref(self) -> None:
+        """Set up the related UI or runtime section."""
         ws = self._workspace_dir()
         self._build_tab(
             "pref",
@@ -882,6 +947,7 @@ class AdvancedConfigEditor(QDialog):
         )
 
     def _setup_engine_tabs(self) -> None:
+        """Set up the related UI or runtime section."""
         ws = self._workspace_dir()
         if not ws:
             return
@@ -923,6 +989,7 @@ class AdvancedConfigEditor(QDialog):
             )
 
     def closeEvent(self, event) -> None:  # noqa: N802
+        """Handle window close behavior and cleanup."""
         dirty = [s for s in self._tab_states if s.get("dirty")]
         if not dirty:
             event.accept()

@@ -810,7 +810,9 @@ def run_dedicated_cli(app_version: str) -> int:
                 continue
             if cmd == "ws":
                 if not args:
-                    warn("Usage: ws <init|config-auto|cfg-auto|apply|select> [workspace]")
+                    warn(
+                        "Usage: ws <init|config-auto|cfg-auto|apply|select> [workspace]"
+                    )
                     continue
                 sub = args[0].lower()
                 ws_args = args[1:]

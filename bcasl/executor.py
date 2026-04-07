@@ -37,7 +37,6 @@ import time
 from pathlib import Path
 from typing import Any, Optional
 
-
 _ACTIVE_WORKER_PIDS: set[int] = set()
 _ACTIVE_WORKER_LOCK = threading.Lock()
 
@@ -504,9 +503,11 @@ def _run_parallel_sandbox(
                         _add_report_item(
                             report,
                             plugin_id=str(_pid),
-                            name=active_items.get(_pid).plugin.meta.name
-                            if active_items.get(_pid)
-                            else str(_pid),
+                            name=(
+                                active_items.get(_pid).plugin.meta.name
+                                if active_items.get(_pid)
+                                else str(_pid)
+                            ),
                             success=False,
                             duration_ms=0.0,
                             error="annulé par l'utilisateur",
@@ -1196,7 +1197,9 @@ class BCASL:
             for pid in order:
                 rec = active_items[pid]
                 if skip_dependents_on_failure:
-                    failed_dep = next((d for d in rec.requires if d in failed_seq), None)
+                    failed_dep = next(
+                        (d for d in rec.requires if d in failed_seq), None
+                    )
                     if failed_dep is not None:
                         _record_dependency_blocked(
                             report,

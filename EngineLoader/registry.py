@@ -340,7 +340,9 @@ def bind_tabs(gui) -> None:
         # Track if any engine created a tab
         any_engine_tab_created = False
 
-        def _log_tab_load_issue(eid: str, fr: str, en: str, exc: Exception | None = None) -> None:
+        def _log_tab_load_issue(
+            eid: str, fr: str, en: str, exc: Exception | None = None
+        ) -> None:
             try:
                 log_i18n_level(gui, "warning", fr, en)
             except Exception:

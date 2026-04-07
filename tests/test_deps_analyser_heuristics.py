@@ -140,7 +140,9 @@ def test_resolve_relative_import_root_handles_nested_package_chain(tmp_path) -> 
     (tmp_path / "src" / "demo_pkg" / "__init__.py").write_text("", encoding="utf-8")
     (pkg / "__init__.py").write_text("", encoding="utf-8")
     module = pkg / "module.py"
-    module.write_text("from ..utils import helper\nfrom . import local\n", encoding="utf-8")
+    module.write_text(
+        "from ..utils import helper\nfrom . import local\n", encoding="utf-8"
+    )
 
     _discover_workspace_hints.cache_clear()
     assert _resolve_relative_import_root(str(module), 1, str(tmp_path)) == "demo_pkg"
@@ -207,7 +209,9 @@ plugin = importlib.import_module("pluggy")
     )
 
     _discover_workspace_hints.cache_clear()
-    modules = _extract_imported_modules_from_file(str(module), workspace_dir=str(tmp_path))
+    modules = _extract_imported_modules_from_file(
+        str(module), workspace_dir=str(tmp_path)
+    )
 
     assert "mypkg" in modules
     assert "pluggy" in modules

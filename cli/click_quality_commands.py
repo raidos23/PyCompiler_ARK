@@ -23,21 +23,30 @@ def register_quality_commands(
     render_checks_text: Callable[..., None],
 ) -> None:
     """Register quality-focused commands on a Click root command group."""
+
     # On sépare ces commandes pour garder click_app concentré sur l'orchestration.
     @cli.command("doctor")
     @click.argument("workspace", required=False, type=click.Path(exists=False))
     @click.option("--json", "as_json", is_flag=True)
-    @click.option("--strict", is_flag=True, help="Exit non-zero when diagnostics detect issues")
+    @click.option(
+        "--strict", is_flag=True, help="Exit non-zero when diagnostics detect issues"
+    )
     def doctor(workspace, as_json, strict):
         # `doctor` agrège un état global plateforme + Qt + inventory engines.
         payload = doctor_payload(workspace=resolve_workspace_path(workspace))
         if strict:
             # En mode strict, la commande devient un garde-fou CI et non plus seulement informatif.
             workspace_payload = payload.get("workspace")
-            has_workspace_issue = isinstance(workspace_payload, dict) and not workspace_payload.get("exists", True)
-            has_engine_issue = payload["engines"]["compatible_count"] != payload["engines"]["count"]
+            has_workspace_issue = isinstance(
+                workspace_payload, dict
+            ) and not workspace_payload.get("exists", True)
+            has_engine_issue = (
+                payload["engines"]["compatible_count"] != payload["engines"]["count"]
+            )
             has_qt_issue = not payload.get("qt_available", False)
-            strict_failed = bool(has_workspace_issue or has_engine_issue or has_qt_issue)
+            strict_failed = bool(
+                has_workspace_issue or has_engine_issue or has_qt_issue
+            )
         else:
             strict_failed = False
         if as_json:
@@ -47,7 +56,9 @@ def register_quality_commands(
             return
         plain("PyCompiler ARK Doctor")
         plain(f"  Python: {payload['platform']['python']}")
-        plain(f"  Platform: {payload['platform']['system']} {payload['platform']['release']}")
+        plain(
+            f"  Platform: {payload['platform']['system']} {payload['platform']['release']}"
+        )
         plain(f"  Qt available: {'yes' if payload['qt_available'] else 'no'}")
         plain(
             f"  Engines: {payload['engines']['compatible_count']}/{payload['engines']['count']} compatible"

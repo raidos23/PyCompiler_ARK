@@ -91,9 +91,12 @@ def run_init(args: list[str]) -> int:
     # Le rendu texte suit le format partagé pour limiter les divergences d'UX.
     as_json = "--json" in args
     with_venv = "--with-venv" in args
-    workspace = normalize_path(
-        first_positional([token for token in args if not token.startswith("-")])
-    ) or "."
+    workspace = (
+        normalize_path(
+            first_positional([token for token in args if not token.startswith("-")])
+        )
+        or "."
+    )
     # L'initialisation unifie création dossier/config/bcasl/pref (et venv optionnel).
     payload = workspace_init_payload(workspace, with_venv=with_venv)
     if as_json:
@@ -118,9 +121,14 @@ def run_config_auto(args: list[str]) -> int:
     except ValueError as exc:
         error(str(exc))
         return EXIT_USAGE_ERROR
-    workspace = normalize_path(
-        first_positional([token for token in clean_args if not token.startswith("-")])
-    ) or "."
+    workspace = (
+        normalize_path(
+            first_positional(
+                [token for token in clean_args if not token.startswith("-")]
+            )
+        )
+        or "."
+    )
     # Détection auto de l'entrypoint + mise à jour config workspace.
     payload = workspace_config_auto_payload(workspace, entrypoint=entrypoint)
     if as_json:
@@ -157,9 +165,14 @@ def run_workspace_apply(args: list[str]) -> int:
         error(str(exc))
         return EXIT_USAGE_ERROR
 
-    workspace = normalize_path(
-        first_positional([token for token in clean_args if not token.startswith("-")])
-    ) or "."
+    workspace = (
+        normalize_path(
+            first_positional(
+                [token for token in clean_args if not token.startswith("-")]
+            )
+        )
+        or "."
+    )
 
     payload = workspace_apply_payload(
         workspace,
@@ -172,9 +185,13 @@ def run_workspace_apply(args: list[str]) -> int:
         require_entrypoint=require_entrypoint,
     )
     inspect_payload = payload.get("inspect", {}) if isinstance(payload, dict) else {}
-    entrypoint_value = inspect_payload.get("entrypoint") if isinstance(inspect_payload, dict) else None
+    entrypoint_value = (
+        inspect_payload.get("entrypoint") if isinstance(inspect_payload, dict) else None
+    )
     venv_state = payload.get("venv", {}) if isinstance(payload, dict) else {}
-    engine_config_state = payload.get("engine_configs", {}) if isinstance(payload, dict) else {}
+    engine_config_state = (
+        payload.get("engine_configs", {}) if isinstance(payload, dict) else {}
+    )
     precheck_failed = bool(payload.get("require_entrypoint") and not entrypoint_value)
     has_workspace_error = bool(payload.get("error")) and not precheck_failed
 
@@ -196,7 +213,13 @@ def run_workspace_apply(args: list[str]) -> int:
         if with_venv:
             plain(
                 "  Venv: "
-                + str(((payload.get("init", {}) if isinstance(payload, dict) else {}) or {}).get("venv_path") or "(not created)")
+                + str(
+                    (
+                        (payload.get("init", {}) if isinstance(payload, dict) else {})
+                        or {}
+                    ).get("venv_path")
+                    or "(not created)"
+                )
             )
         if precheck_failed:
             error("Workspace entrypoint is required but missing.")

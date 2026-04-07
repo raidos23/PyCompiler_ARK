@@ -950,7 +950,9 @@ def apply_theme(self, pref: str) -> None:
                 except Exception:
                     from .i18n import log_with_level
 
-                    log_with_level(self, "warning", f"Échec d'application du thème: {e}")
+                    log_with_level(
+                        self, "warning", f"Échec d'application du thème: {e}"
+                    )
         except Exception:
             pass
 

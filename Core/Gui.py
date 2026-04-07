@@ -134,7 +134,7 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
 
         sys_lang = None
         try:
-            loc = (locale.getlocale()[0] or "")
+            loc = locale.getlocale()[0] or ""
             sys_lang = (
                 "Français" if loc.lower().startswith(("fr", "fr_")) else "English"
             )
