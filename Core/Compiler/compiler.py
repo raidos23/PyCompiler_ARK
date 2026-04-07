@@ -277,13 +277,13 @@ class CompilationThread(QThread):
                 break
 
     def _terminate_process(self) -> None:
-        """Arrête proprement le processus puis force si nécessaire."""
+        """Arrête le processus et son groupe le plus vite possible."""
         with self._proc_lock:
             proc = self.process
         if proc is None:
             return
 
-        # Terminaison gracieuse (groupe de process sur POSIX)
+        # 1) Fast graceful stop.
         try:
             if os.name != "nt":
                 try:
@@ -294,21 +294,30 @@ class CompilationThread(QThread):
                 proc.terminate()
         except Exception:
             pass
-        if self._wait_process(proc, timeout=5.0):
+        if self._wait_process(proc, timeout=0.2):
             return
 
-        # Terminaison forcée si nécessaire
+        # 2) Hard kill (process tree on Windows, process group on POSIX).
         try:
-            if os.name != "nt":
+            if os.name == "nt":
+                try:
+                    subprocess.run(
+                        ["taskkill", "/F", "/T", "/PID", str(proc.pid)],
+                        stdout=subprocess.DEVNULL,
+                        stderr=subprocess.DEVNULL,
+                        check=False,
+                        timeout=1,
+                    )
+                except Exception:
+                    proc.kill()
+            else:
                 try:
                     os.killpg(proc.pid, signal.SIGKILL)
                 except Exception:
                     proc.kill()
-            else:
-                proc.kill()
         except Exception:
             pass
-        self._wait_process(proc, timeout=2.0)
+        self._wait_process(proc, timeout=0.6)
         self._close_streams()
 
     def cancel(self) -> None:
@@ -502,7 +511,10 @@ class CompilerCore(QObject):
             self.log_message.emit("info", "Cancellation requested")
             try:
                 if self._thread.isRunning():
-                    self._thread.wait(1500)
+                    self._thread.wait(150)
+                if self._thread.isRunning():
+                    self._thread.terminate()
+                    self._thread.wait(200)
             except Exception:
                 pass
         return True
