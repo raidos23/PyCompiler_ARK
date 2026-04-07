@@ -509,7 +509,7 @@ def _apply_activity_buttons_theme(self) -> None:
 
 
 def _retranslate_ide_like_actions(self) -> None:
-    """Apply translated labels/tooltips to IDE-specific actions and affordances."""
+    """Keep the IDE '(...)' menu in English at all times."""
     try:
         trf = getattr(self, "tr", None)
         _tr = trf if callable(trf) else (lambda fr, en: en)
@@ -518,21 +518,18 @@ def _retranslate_ide_like_actions(self) -> None:
 
     actions = getattr(self, "_ide_more_menu_actions", {}) or {}
     labels = {
-        "workspace": _tr("Choisir le Workspace", "Select workspace"),
-        "venv": _tr("Choisir le Venv", "Select venv"),
-        "add_files": _tr("Ajouter des fichiers", "Add files"),
-        "clear_workspace": _tr("Vider le Workspace", "Clear workspace"),
-        "stats": _tr("Statistiques", "Statistics"),
-        "language": _tr("Langue", "Language"),
-        "theme": _tr("Thème", "Theme"),
-        "advanced": _tr("Configuration avancée", "Advanced config"),
-        "export": _tr("Exporter la configuration", "Export config"),
-        "import": _tr("Importer la configuration", "Import config"),
-        "save_engines": _tr(
-            "Sauvegarder configs engines",
-            "Save engine configs",
-        ),
-        "help": _tr("Aide", "Help"),
+        "workspace": "Select workspace",
+        "venv": "Select venv",
+        "add_files": "Add files",
+        "clear_workspace": "Clear workspace",
+        "stats": "Statistics",
+        "language": "Language",
+        "theme": "Theme",
+        "advanced": "Advanced config",
+        "export": "Export config",
+        "import": "Import config",
+        "save_engines": "Save engine configs",
+        "help": "Help",
     }
     for key, action in actions.items():
         if action is None:
@@ -545,7 +542,7 @@ def _retranslate_ide_like_actions(self) -> None:
     try:
         more_btn = getattr(self, "toolButton_more", None)
         if more_btn is not None:
-            more_btn.setToolTip(_tr("Plus d'actions", "More actions"))
+            more_btn.setToolTip("More actions")
     except Exception:
         pass
     try:

@@ -29,10 +29,81 @@ import importlib.util
 import multiprocessing as mp
 import math
 import os
+import signal
+import subprocess
 import sys
+import threading
 import time
 from pathlib import Path
 from typing import Any, Optional
+
+
+_ACTIVE_WORKER_PIDS: set[int] = set()
+_ACTIVE_WORKER_LOCK = threading.Lock()
+
+
+def _register_worker_pid(pid: int) -> None:
+    try:
+        with _ACTIVE_WORKER_LOCK:
+            _ACTIVE_WORKER_PIDS.add(int(pid))
+    except Exception:
+        pass
+
+
+def _unregister_worker_pid(pid: int) -> None:
+    try:
+        with _ACTIVE_WORKER_LOCK:
+            _ACTIVE_WORKER_PIDS.discard(int(pid))
+    except Exception:
+        pass
+
+
+def _kill_pid_tree(pid: int) -> None:
+    try:
+        if os.name == "nt":
+            subprocess.run(
+                ["taskkill", "/PID", str(int(pid)), "/T", "/F"],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                check=False,
+            )
+            return
+    except Exception:
+        pass
+    try:
+        import psutil  # type: ignore
+
+        p = psutil.Process(int(pid))
+        children = p.children(recursive=True)
+        for ch in reversed(children):
+            try:
+                ch.kill()
+            except Exception:
+                pass
+        try:
+            p.kill()
+        except Exception:
+            pass
+        return
+    except Exception:
+        pass
+    try:
+        os.kill(int(pid), signal.SIGKILL)
+    except Exception:
+        pass
+
+
+def kill_active_workers() -> int:
+    """Kill all currently tracked BCASL sandbox worker processes."""
+    try:
+        with _ACTIVE_WORKER_LOCK:
+            pids = list(_ACTIVE_WORKER_PIDS)
+            _ACTIVE_WORKER_PIDS.clear()
+    except Exception:
+        pids = []
+    for pid in pids:
+        _kill_pid_tree(pid)
+    return len(pids)
 
 
 def _normalize_tags(tags: Any) -> list[str]:
@@ -310,6 +381,7 @@ def _run_plugin_sequential(
     project_root: Path,
     timeout_s: float,
     eff_sandbox: bool,
+    stop_requested=None,
 ) -> bool:
     plg = rec.plugin
     start = time.perf_counter()
@@ -327,22 +399,48 @@ def _run_plugin_sequential(
             ),
         )
         p.start()
-        if timeout_s and timeout_s > 0:
-            p.join(timeout_s)
-        else:
-            p.join()
-        if p.is_alive():
-            _stop_process(p, join_s=1.0)
-            _record_timeout(
-                report,
-                plugin_id=plg.meta.id,
-                name=plg.meta.name,
-                start_t=start,
-                timeout_s=timeout_s,
-            )
-            _cleanup_queue(q)
-            return False
-        else:
+        _register_worker_pid(p.pid)
+        cancelled = False
+        timed_out = False
+        try:
+            while p.is_alive():
+                if callable(stop_requested):
+                    try:
+                        if bool(stop_requested()):
+                            cancelled = True
+                            _stop_process(p, join_s=0.5)
+                            break
+                    except Exception:
+                        pass
+                if timeout_s and timeout_s > 0:
+                    if (time.perf_counter() - start) >= timeout_s:
+                        timed_out = True
+                        _stop_process(p, join_s=1.0)
+                        break
+                try:
+                    p.join(0.05)
+                except Exception:
+                    break
+
+            if cancelled:
+                _add_report_item(
+                    report,
+                    plugin_id=plg.meta.id,
+                    name=plg.meta.name,
+                    success=False,
+                    duration_ms=(time.perf_counter() - start) * 1000.0,
+                    error="annulé par l'utilisateur",
+                )
+                return False
+            if timed_out or p.is_alive():
+                _record_timeout(
+                    report,
+                    plugin_id=plg.meta.id,
+                    name=plg.meta.name,
+                    start_t=start,
+                    timeout_s=timeout_s,
+                )
+                return False
             ok = _record_worker_result(
                 report,
                 plugin_id=plg.meta.id,
@@ -350,8 +448,10 @@ def _run_plugin_sequential(
                 start_t=start,
                 q=q,
             )
-            _cleanup_queue(q)
             return ok
+        finally:
+            _unregister_worker_pid(p.pid)
+            _cleanup_queue(q)
     else:
         try:
             plg.on_pre_compile(ctx)
@@ -389,11 +489,34 @@ def _run_parallel_sandbox(
     parallelism: int,
     skip_dependents_on_failure: bool,
     fail_fast: bool,
+    stop_requested=None,
 ) -> None:
     _ctx = mp.get_context("spawn")
     running: dict[str, tuple[mp.Process, mp.Queue, float]] = {}
     failed: set[str] = set()
     while ready or running:
+        if callable(stop_requested):
+            try:
+                if bool(stop_requested()):
+                    for _pid, (proc, q, _st) in list(running.items()):
+                        _stop_process(proc, join_s=0.5)
+                        _cleanup_queue(q)
+                        _add_report_item(
+                            report,
+                            plugin_id=str(_pid),
+                            name=active_items.get(_pid).plugin.meta.name
+                            if active_items.get(_pid)
+                            else str(_pid),
+                            success=False,
+                            duration_ms=0.0,
+                            error="annulé par l'utilisateur",
+                        )
+                        _unregister_worker_pid(proc.pid)
+                    running.clear()
+                    kill_active_workers()
+                    return
+            except Exception:
+                pass
         if fail_fast and failed:
             # Stop scheduling new plugins and terminate running workers quickly.
             for _pid, (proc, q, _st) in list(running.items()):
@@ -433,6 +556,7 @@ def _run_parallel_sandbox(
                 ),
             )
             p.start()
+            _register_worker_pid(p.pid)
             running[pid] = (p, q, time.perf_counter())
 
         to_remove: list[str] = []
@@ -472,6 +596,7 @@ def _run_parallel_sandbox(
                         heapq.heappush(ready, (rch.priority, rch.insert_idx, ch))
                 to_remove.append(pid)
                 _cleanup_queue(q)
+                _unregister_worker_pid(proc.pid)
 
         for pid in to_remove:
             try:
@@ -481,6 +606,7 @@ def _run_parallel_sandbox(
                         proc.join(0.1)
                     except Exception:
                         pass
+                _unregister_worker_pid(proc.pid)
             except Exception:
                 pass
 
@@ -1029,7 +1155,7 @@ class BCASL:
         return order
 
     def run_pre_compile(
-        self, ctx: Optional[PreCompileContext] = None
+        self, ctx: Optional[PreCompileContext] = None, stop_requested=None
     ) -> ExecutionReport:
         """Exécute le hook 'on_pre_compile' de tous les plugins actifs.
 
@@ -1089,6 +1215,7 @@ class BCASL:
                     self.project_root,
                     self.plugin_timeout_s,
                     eff_sandbox,
+                    stop_requested=stop_requested,
                 )
                 if not ok:
                     failed_seq.add(pid)
@@ -1111,6 +1238,7 @@ class BCASL:
             parallelism,
             skip_dependents_on_failure,
             fail_fast,
+            stop_requested,
         )
         _logger.info(report.summary())
         return report
