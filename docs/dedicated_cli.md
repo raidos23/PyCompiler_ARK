@@ -55,12 +55,21 @@ The dedicated shell is complementary to the structured top-level CLI. Use:
 - `engine compile <engine_id> <file.py>`: execute compilation from the dedicated CLI.
 - `engine ... --workspace <path>`: explicit workspace override when needed.
 - `engine ... -w <workspace>`: optional workspace override for engine commands.
+- `engine config show/path <engine_id> --workspace <path>`: inspect persisted engine config.
+- `engine config set <engine_id> --workspace <path> --options-json '{...}'`: update engine options.
+- `engine config reset <engine_id> --workspace <path>`: reset persisted engine config.
 - `check [workspace]`: run strict CI/CD preflight checks (fail-only text mode).
 - `init [workspace] [--with-venv]`: create workspace directory/config when missing, optionally prepare `.venv`.
 - `config-auto [workspace]`: auto-configure entrypoint and dependency file order.
 - `cfg-auto [workspace]`: alias of `config-auto`.
 - `ws init [workspace]`: alias of `init`.
 - `ws config-auto [workspace]`: alias of `config-auto`.
+- `workspace entrypoint-set [workspace] <path>`: persist explicit workspace entrypoint.
+- `workspace entrypoint-clear [workspace]`: clear persisted workspace entrypoint.
+- `venv status [workspace]`: inspect workspace venv mode and preference file.
+- `venv use-system [workspace]`: set workspace Python mode to system.
+- `venv use-venv [workspace] [venv_path] [--create]`: set workspace Python mode to venv.
+- `venv install-req [workspace]`: install requirements for current workspace Python mode.
 - `unload`: unload all registered engines.
 - `exit` or `quit`: close the dedicated CLI.
 
@@ -72,9 +81,12 @@ ark-cli> info
 ark-cli> main --ide-gui
 ark-cli> engines --dry-run
 ark-cli> engine list
-ark-cli> engine compat nuitka
-ark-cli> engine dry-run pyinstaller src/main.py
-ark-cli> engine compile nuitka src/main.py
+ark-cli> engine compat <engine_id>
+ark-cli> engine dry-run <engine_id> src/main.py
+ark-cli> engine compile <engine_id> src/main.py
+ark-cli> engine config show <engine_id> --workspace ~/my_workspace
+ark-cli> workspace entrypoint-set ~/my_workspace src/main.py
+ark-cli> venv status ~/my_workspace
 ark-cli> bcasl list
 ark-cli> bcasl run ~/my_workspace --timeout 30
 ark-cli> bcasl ~/my_workspace

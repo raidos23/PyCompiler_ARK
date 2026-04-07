@@ -27,7 +27,7 @@ python3 /path/to/PyCompiler_ARK/pycompiler_ark.py
 ```bash
 ARK_BIN="python3 /path/to/PyCompiler_ARK/pycompiler_ark.py"
 WORKSPACE_DIR="/path/to/workspace"
-ENGINE_ID="pyinstaller"
+ENGINE_ID="<engine_id>"
 
 # Single-step workspace flow (init + auto-config + inspect)
 $ARK_BIN workspace apply "$WORKSPACE_DIR" --with-venv --strict --json > "$WORKSPACE_DIR/.ark_workspace_apply.json"
@@ -51,6 +51,13 @@ $ARK_BIN engine info "$ENGINE_ID" --workspace "$WORKSPACE_DIR" --json > "$WORKSP
 $ARK_BIN engine compile "$ENGINE_ID" "$ENTRYPOINT_FILE" --workspace "$WORKSPACE_DIR" --json > "$WORKSPACE_DIR/.ark_build_result.json"
 ```
 
+You can explicitly set or clear entrypoint in CI when needed:
+
+```bash
+$ARK_BIN workspace entrypoint-set "$WORKSPACE_DIR" src/main.py --json
+$ARK_BIN workspace entrypoint-clear "$WORKSPACE_DIR" --json
+```
+
 ## Command Breakdown
 
 - `workspace apply --with-venv --strict`
@@ -65,6 +72,10 @@ $ARK_BIN engine compile "$ENGINE_ID" "$ENTRYPOINT_FILE" --workspace "$WORKSPACE_
 
 - `engine compile`
   - compiles the resolved entrypoint with the selected engine
+- `engine config set/reset`
+  - lets CI apply or reset workspace engine options without opening GUI
+- `venv status/use-system/use-venv/install-req`
+  - lets CI enforce workspace Python mode and requirements installation policy
 
 ## Workspace Apply Options (CI-focused)
 
@@ -111,11 +122,65 @@ List available engines:
 python3 /path/to/PyCompiler_ARK/pycompiler_ark.py engine list --json
 ```
 
-Common choices:
+Then pick one engine id from your environment.
 
-- `pyinstaller`
-- `nuitka`
-- `cx_freeze`
+## Engine Config in CI (No GUI Required)
+
+Read config:
+
+```bash
+python3 /path/to/PyCompiler_ARK/pycompiler_ark.py engine config show <engine_id> --workspace /path/to/workspace --json
+```
+
+Set config from inline JSON:
+
+```bash
+python3 /path/to/PyCompiler_ARK/pycompiler_ark.py engine config set <engine_id> --workspace /path/to/workspace --options-json '{"onefile": true}' --json
+```
+
+Set config from file:
+
+```bash
+python3 /path/to/PyCompiler_ARK/pycompiler_ark.py engine config set <engine_id> --workspace /path/to/workspace --options-file /path/to/options.json --json
+```
+
+Replace (instead of merge):
+
+```bash
+python3 /path/to/PyCompiler_ARK/pycompiler_ark.py engine config set <engine_id> --workspace /path/to/workspace --replace --options-file /path/to/options.json --json
+```
+
+Reset config:
+
+```bash
+python3 /path/to/PyCompiler_ARK/pycompiler_ark.py engine config reset <engine_id> --workspace /path/to/workspace --json
+```
+
+## Venv Control in CI
+
+Inspect current mode:
+
+```bash
+python3 /path/to/PyCompiler_ARK/pycompiler_ark.py venv status /path/to/workspace --json
+```
+
+Force system Python:
+
+```bash
+python3 /path/to/PyCompiler_ARK/pycompiler_ark.py venv use-system /path/to/workspace --json
+```
+
+Force workspace venv:
+
+```bash
+python3 /path/to/PyCompiler_ARK/pycompiler_ark.py venv use-venv /path/to/workspace --create --json
+```
+
+Install requirements explicitly:
+
+```bash
+python3 /path/to/PyCompiler_ARK/pycompiler_ark.py venv install-req /path/to/workspace --json
+```
 
 ## Useful Exit Codes
 
@@ -155,7 +220,7 @@ This repository includes a workflow where ARK compiles itself using ARK CLI:
   - `.ark/` (especially `.ark/pref.json` and `.ark/<engine_id>/config.json`)
 - `.ark/` stores engine command options used by ARK at build time; commit it to keep builds reproducible across local and CI environments.
 - Keep `.ark_*.json` files as CI artifacts for debugging.
-- Start with `pyinstaller`, then evaluate `nuitka` if you want runtime performance optimization.
+- Use `engine list --json` to select the target engine id dynamically per environment.
 
 ## GUI Selection Equivalent in CLI
 
@@ -187,6 +252,6 @@ Recommended workflow:
 Useful inspection commands:
 
 ```bash
-python3 /path/to/PyCompiler_ARK/pycompiler_ark.py engine config path pyinstaller --workspace /path/to/workspace
-python3 /path/to/PyCompiler_ARK/pycompiler_ark.py engine config show pyinstaller --workspace /path/to/workspace --json
+python3 /path/to/PyCompiler_ARK/pycompiler_ark.py engine config path <engine_id> --workspace /path/to/workspace
+python3 /path/to/PyCompiler_ARK/pycompiler_ark.py engine config show <engine_id> --workspace /path/to/workspace --json
 ```
