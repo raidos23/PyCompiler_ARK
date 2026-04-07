@@ -363,10 +363,29 @@ def compile_all(self) -> None:
         except Exception:
             pass
 
+    # Réinitialiser l'annulation anticipée (avant démarrage du process moteur)
+    try:
+        self._cancel_requested_during_precompile = False
+    except Exception:
+        pass
+
     # Désactiver les contrôles pendant la pré-compilation + compilation
     self.set_controls_enabled(False)
 
     def _after_bcasl(_report=None) -> None:
+        if getattr(self, "_cancel_requested_during_precompile", False):
+            try:
+                self._cancel_requested_during_precompile = False
+            except Exception:
+                pass
+            self.set_controls_enabled(True)
+            log_i18n_level(
+                self,
+                "info",
+                "Compilation annulée avant le démarrage (phase BCASL).",
+                "Compilation cancelled before start (BCASL phase).",
+            )
+            return
         try:
             log_i18n_level(
                 self,
@@ -508,6 +527,7 @@ def cancel_all_compilations(self) -> bool:
     """
     main_process = _get_main_process()
 
+    # Cas 1: compilation moteur en cours
     if main_process.is_compiling:
         success = main_process.cancel()
         if success:
@@ -525,11 +545,45 @@ def cancel_all_compilations(self) -> bool:
                 "Unable to cancel compilation.",
             )
         return success
-    else:
-        log_i18n_level(
-            self, "info", "Aucune compilation en cours.", "No compilation in progress."
+
+    # Cas 2: pré-compilation BCASL en cours (avant process moteur)
+    try:
+        bcasl_thread = getattr(self, "_bcasl_thread", None)
+        bcasl_running = bool(
+            bcasl_thread is not None
+            and hasattr(bcasl_thread, "isRunning")
+            and bcasl_thread.isRunning()
         )
-        return False
+    except Exception:
+        bcasl_running = False
+
+    if bcasl_running:
+        try:
+            from bcasl.Loader import ensure_bcasl_thread_stopped
+
+            ensure_bcasl_thread_stopped(self, timeout_ms=2000)
+        except Exception:
+            pass
+        try:
+            self._cancel_requested_during_precompile = True
+        except Exception:
+            pass
+        try:
+            self.set_controls_enabled(True)
+        except Exception:
+            pass
+        log_i18n_level(
+            self,
+            "info",
+            "Annulation demandée pendant la pré-compilation (BCASL).",
+            "Cancellation requested during pre-compilation (BCASL).",
+        )
+        return True
+
+    log_i18n_level(
+        self, "info", "Aucune compilation en cours.", "No compilation in progress."
+    )
+    return False
 
 
 def handle_stdout(self, proc: QProcess) -> None:
@@ -540,7 +594,7 @@ def handle_stdout(self, proc: QProcess) -> None:
     try:
         text = bytes(data).decode("utf-8", errors="replace").strip()
         if text:
-            self.log.append(text)
+            log_with_level(self, "info", text)
     except Exception:
         pass
 
@@ -701,6 +755,12 @@ def start_compilation_process(self, engine_id: str, file_path: str) -> bool:
 
         return success
 
+    # Réinitialiser l'annulation anticipée (avant démarrage du process moteur)
+    try:
+        self._cancel_requested_during_precompile = False
+    except Exception:
+        pass
+
     # Désactiver les contrôles pendant la pré-compilation + compilation
     self.set_controls_enabled(False)
     _set_progress_indeterminate(self)
@@ -708,6 +768,20 @@ def start_compilation_process(self, engine_id: str, file_path: str) -> bool:
     result = {"value": None}
 
     def _after_bcasl(_report=None) -> None:
+        if getattr(self, "_cancel_requested_during_precompile", False):
+            try:
+                self._cancel_requested_during_precompile = False
+            except Exception:
+                pass
+            self.set_controls_enabled(True)
+            log_i18n_level(
+                self,
+                "info",
+                "Compilation annulée avant le démarrage (phase BCASL).",
+                "Compilation cancelled before start (BCASL phase).",
+            )
+            result["value"] = False
+            return
         ok = False
         try:
             ok = _do_start()
@@ -770,7 +844,7 @@ def _continue_compile_all(self) -> None:
 def _handle_output(self, message: str) -> None:
     """Handle output from MainProcess."""
     if message:
-        self.log.append(message)
+        log_with_level(self, "info", message)
 
 
 def _set_progress_indeterminate(self) -> None:

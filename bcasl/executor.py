@@ -27,6 +27,7 @@ from .Base import (
 import heapq
 import importlib.util
 import multiprocessing as mp
+import math
 import os
 import sys
 import time
@@ -96,7 +97,7 @@ def _record_worker_result(
     name: str,
     start_t: float,
     q,
-) -> None:
+) -> bool:
     try:
         res = q.get_nowait()
     except Exception:
@@ -108,7 +109,8 @@ def _record_worker_result(
     duration_ms = float(
         res.get("duration_ms", (time.perf_counter() - start_t) * 1000.0)
     )
-    if res.get("ok"):
+    ok = bool(res.get("ok"))
+    if ok:
         _add_report_item(
             report,
             plugin_id=plugin_id,
@@ -125,6 +127,7 @@ def _record_worker_result(
             duration_ms=duration_ms,
             error=str(res.get("error", "")),
         )
+    return ok
 
 
 def _record_timeout(
@@ -134,7 +137,7 @@ def _record_timeout(
     name: str,
     start_t: float,
     timeout_s: float,
-) -> None:
+) -> bool:
     duration_ms = (time.perf_counter() - start_t) * 1000.0
     _add_report_item(
         report,
@@ -145,6 +148,79 @@ def _record_timeout(
         error=f"timeout après {timeout_s:.1f}s",
     )
     _logger.error("Plugin %s timeout après %.1fs", plugin_id, timeout_s)
+    return False
+
+
+def _record_dependency_blocked(
+    report: ExecutionReport,
+    *,
+    plugin_id: str,
+    name: str,
+    failed_dep: str,
+) -> None:
+    _add_report_item(
+        report,
+        plugin_id=plugin_id,
+        name=name,
+        success=False,
+        duration_ms=0.0,
+        error=f"dépendance échouée: {failed_dep}",
+    )
+
+
+def _cleanup_queue(q) -> None:
+    try:
+        if q is not None:
+            try:
+                q.close()
+            except Exception:
+                pass
+            try:
+                q.cancel_join_thread()
+            except Exception:
+                pass
+    except Exception:
+        pass
+
+
+def _stop_process(proc, join_s: float = 1.0) -> None:
+    if proc is None:
+        return
+    try:
+        if not proc.is_alive():
+            return
+    except Exception:
+        return
+    try:
+        proc.terminate()
+    except Exception:
+        pass
+    try:
+        proc.join(join_s)
+    except Exception:
+        pass
+    try:
+        if proc.is_alive():
+            try:
+                proc.kill()
+            except Exception:
+                pass
+            try:
+                proc.join(max(0.2, join_s))
+            except Exception:
+                pass
+    except Exception:
+        pass
+
+
+def _resolve_reliability_options(config: dict[str, Any]) -> tuple[bool, bool]:
+    try:
+        opts = dict(config or {}).get("options", {}) if isinstance(config, dict) else {}
+    except Exception:
+        opts = {}
+    skip_dependents = bool(opts.get("skip_dependents_on_failure", True))
+    fail_fast = bool(opts.get("fail_fast", False))
+    return skip_dependents, fail_fast
 
 
 def _resolve_exec_options(
@@ -170,6 +246,13 @@ def _resolve_exec_options(
     parallelism = par_env or par_opt or cpu_def
     if parallelism < 1:
         parallelism = 1
+    try:
+        # Hard ceiling to avoid unstable oversubscription on large machines/configs.
+        cap = max(1, int((mp.cpu_count() or 2) * 2))
+    except Exception:
+        cap = 8
+    if parallelism > cap:
+        parallelism = cap
     return eff_sandbox, parallelism
 
 
@@ -227,7 +310,7 @@ def _run_plugin_sequential(
     project_root: Path,
     timeout_s: float,
     eff_sandbox: bool,
-) -> None:
+) -> bool:
     plg = rec.plugin
     start = time.perf_counter()
     if eff_sandbox and getattr(rec, "module_path", None):
@@ -249,14 +332,7 @@ def _run_plugin_sequential(
         else:
             p.join()
         if p.is_alive():
-            try:
-                p.terminate()
-            except Exception:
-                pass
-            try:
-                p.join(1.0)
-            except Exception:
-                pass
+            _stop_process(p, join_s=1.0)
             _record_timeout(
                 report,
                 plugin_id=plg.meta.id,
@@ -264,14 +340,18 @@ def _run_plugin_sequential(
                 start_t=start,
                 timeout_s=timeout_s,
             )
+            _cleanup_queue(q)
+            return False
         else:
-            _record_worker_result(
+            ok = _record_worker_result(
                 report,
                 plugin_id=plg.meta.id,
                 name=plg.meta.name,
                 start_t=start,
                 q=q,
             )
+            _cleanup_queue(q)
+            return ok
     else:
         try:
             plg.on_pre_compile(ctx)
@@ -283,6 +363,7 @@ def _run_plugin_sequential(
                 success=True,
                 duration_ms=duration_ms,
             )
+            return True
         except Exception as exc:
             duration_ms = (time.perf_counter() - start) * 1000.0
             _add_report_item(
@@ -293,6 +374,7 @@ def _run_plugin_sequential(
                 duration_ms=duration_ms,
                 error=str(exc),
             )
+            return False
 
 
 def _run_parallel_sandbox(
@@ -305,13 +387,40 @@ def _run_parallel_sandbox(
     project_root: Path,
     timeout_s: float,
     parallelism: int,
+    skip_dependents_on_failure: bool,
+    fail_fast: bool,
 ) -> None:
     _ctx = mp.get_context("spawn")
     running: dict[str, tuple[mp.Process, mp.Queue, float]] = {}
+    failed: set[str] = set()
     while ready or running:
+        if fail_fast and failed:
+            # Stop scheduling new plugins and terminate running workers quickly.
+            for _pid, (proc, q, _st) in list(running.items()):
+                _stop_process(proc, join_s=0.5)
+                _cleanup_queue(q)
+            running.clear()
+            break
+
         while ready and len(running) < parallelism:
             _, _, pid = heapq.heappop(ready)
             rec = active_items[pid]
+            if skip_dependents_on_failure:
+                failed_dep = next((d for d in rec.requires if d in failed), None)
+                if failed_dep is not None:
+                    _record_dependency_blocked(
+                        report,
+                        plugin_id=pid,
+                        name=rec.plugin.meta.name,
+                        failed_dep=str(failed_dep),
+                    )
+                    failed.add(pid)
+                    for ch in children[pid]:
+                        indeg[ch] -= 1
+                        if indeg[ch] == 0:
+                            rch = active_items[ch]
+                            heapq.heappush(ready, (rch.priority, rch.insert_idx, ch))
+                    continue
             q = _ctx.Queue()
             p = _ctx.Process(
                 target=_plugin_worker,
@@ -333,19 +442,13 @@ def _run_parallel_sandbox(
             if timeout_s and timeout_s > 0 and alive:
                 if (time.perf_counter() - start_t) >= timeout_s:
                     timed_out = True
-                    try:
-                        proc.terminate()
-                    except Exception:
-                        pass
-                    try:
-                        proc.join(1.0)
-                    except Exception:
-                        pass
+                    _stop_process(proc, join_s=1.0)
             if not alive or timed_out:
                 rec = active_items[pid]
                 plg = rec.plugin
+                ok = False
                 if not timed_out:
-                    _record_worker_result(
+                    ok = _record_worker_result(
                         report,
                         plugin_id=pid,
                         name=plg.meta.name,
@@ -360,12 +463,15 @@ def _run_parallel_sandbox(
                         start_t=start_t,
                         timeout_s=timeout_s,
                     )
+                if not ok:
+                    failed.add(pid)
                 for ch in children[pid]:
                     indeg[ch] -= 1
                     if indeg[ch] == 0:
                         rch = active_items[ch]
                         heapq.heappush(ready, (rch.priority, rch.insert_idx, ch))
                 to_remove.append(pid)
+                _cleanup_queue(q)
 
         for pid in to_remove:
             try:
@@ -597,7 +703,13 @@ class BCASL:
         # Sandbox settings
         self.sandbox = bool(sandbox)
         # Timeout settings
-        self.plugin_timeout_s = float(plugin_timeout_s)
+        try:
+            timeout = float(plugin_timeout_s)
+            if not math.isfinite(timeout) or timeout < 0:
+                timeout = 0.0
+        except Exception:
+            timeout = 0.0
+        self.plugin_timeout_s = timeout
 
     # Plugins publique
     def add_plugin(self, plugin: BcPluginBase) -> None:
@@ -934,6 +1046,9 @@ class BCASL:
 
         report = ExecutionReport()
         eff_sandbox, parallelism = _resolve_exec_options(self.config, self.sandbox)
+        skip_dependents_on_failure, fail_fast = _resolve_reliability_options(
+            self.config
+        )
 
         # Construire graphe des dépendances des plugins actifs
         active_items = {pid: rec for pid, rec in self._registry.items() if rec.active}
@@ -950,10 +1065,24 @@ class BCASL:
         if not eff_sandbox or parallelism <= 1:
             indeg_seq = dict(indeg)
             order = _compute_sequential_order(ready, children, indeg_seq, active_items)
+            failed_seq: set[str] = set()
             # Séquentiel sandbox/non-sandbox
             for pid in order:
                 rec = active_items[pid]
-                _run_plugin_sequential(
+                if skip_dependents_on_failure:
+                    failed_dep = next((d for d in rec.requires if d in failed_seq), None)
+                    if failed_dep is not None:
+                        _record_dependency_blocked(
+                            report,
+                            plugin_id=pid,
+                            name=rec.plugin.meta.name,
+                            failed_dep=str(failed_dep),
+                        )
+                        failed_seq.add(pid)
+                        if fail_fast:
+                            break
+                        continue
+                ok = _run_plugin_sequential(
                     report,
                     rec,
                     ctx,
@@ -961,6 +1090,10 @@ class BCASL:
                     self.plugin_timeout_s,
                     eff_sandbox,
                 )
+                if not ok:
+                    failed_seq.add(pid)
+                    if fail_fast:
+                        break
             _logger.info(report.summary())
             return report
 
@@ -976,6 +1109,8 @@ class BCASL:
             self.project_root,
             self.plugin_timeout_s,
             parallelism,
+            skip_dependents_on_failure,
+            fail_fast,
         )
         _logger.info(report.summary())
         return report
