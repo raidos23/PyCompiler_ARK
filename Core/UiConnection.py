@@ -916,15 +916,25 @@ def apply_theme(self, pref: str) -> None:
             except Exception:
                 pass
         # Journalisation
-        if hasattr(self, "log") and self.log:
+        try:
+            from .i18n import log_i18n_level
+
             if chosen_path:
-                self.log.append(
-                    f"🎨 Thème appliqué : {chosen_name} ({os.path.basename(chosen_path)})"
+                log_i18n_level(
+                    self,
+                    "info",
+                    f"Thème appliqué : {chosen_name} ({os.path.basename(chosen_path)})",
+                    f"Theme applied: {chosen_name} ({os.path.basename(chosen_path)})",
                 )
             else:
-                self.log.append(
-                    "🎨 Aucun thème appliqué (aucun fichier .qss trouvé dans themes)"
+                log_i18n_level(
+                    self,
+                    "warning",
+                    "Aucun thème appliqué (aucun fichier .qss trouvé dans themes)",
+                    "No theme applied (no .qss file found in themes)",
                 )
+        except Exception:
+            pass
     except Exception as e:
         try:
             if hasattr(self, "log") and self.log:
@@ -938,7 +948,9 @@ def apply_theme(self, pref: str) -> None:
                         f"Failed to apply theme: {e}",
                     )
                 except Exception:
-                    self.log.append(f"Échec d'application du thème: {e}")
+                    from .i18n import log_with_level
+
+                    log_with_level(self, "warning", f"Échec d'application du thème: {e}")
         except Exception:
             pass
 
@@ -968,5 +980,14 @@ def show_theme_dialog(self) -> None:
         except Exception:
             pass
     else:
-        if hasattr(self, "log") and self.log:
-            self.log.append("Sélection du thème annulée.")
+        try:
+            from .i18n import log_i18n_level
+
+            log_i18n_level(
+                self,
+                "info",
+                "Sélection du thème annulée.",
+                "Theme selection cancelled.",
+            )
+        except Exception:
+            pass

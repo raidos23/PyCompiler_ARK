@@ -158,7 +158,12 @@ def save_preferences(self):
                 f"Unable to save preferences: {e}",
             )
         except Exception:
-            self.log.append(f"Impossible de sauvegarder les préférences : {e}")
+            try:
+                from .i18n import log_with_level
+
+                log_with_level(self, "warning", f"Impossible de sauvegarder les préférences : {e}")
+            except Exception:
+                pass
 
 
 # --- System preference detection helpers ---
