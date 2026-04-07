@@ -30,10 +30,10 @@ Exemples:
     python -m OnlyMod.EngineOnlyMod --list-engines
 
     # Vérifier la compatibilité d'un moteur
-    python -m OnlyMod.EngineOnlyMod --check-compat nuitka
+    python -m OnlyMod.EngineOnlyMod --check-compat <engine_id>
 
     # Compiler un fichier (mode dry-run)
-    python -m OnlyMod.EngineOnlyMod --engine nuitka -f script.py --dry-run
+    python -m OnlyMod.EngineOnlyMod --engine <engine_id> -f script.py --dry-run
 """
 
 import argparse
@@ -109,10 +109,10 @@ Exemples:
     python -m OnlyMod.EngineOnlyMod --list-engines
     
     # Vérifier la compatibilité d'un moteur
-    python -m OnlyMod.EngineOnlyMod --check-compat nuitka
-    
+    python -m OnlyMod.EngineOnlyMod --check-compat <engine_id>
+
     # Compiler un fichier (dry-run)
-    python -m OnlyMod.EngineOnlyMod --engine nuitka -f script.py --dry-run
+    python -m OnlyMod.EngineOnlyMod --engine <engine_id> -f script.py --dry-run
         """,
     )
 

@@ -229,8 +229,8 @@ def _print_help() -> None:
     table.add_row("exit | quit", "Close dedicated CLI")
     _RICH_CONSOLE.print(table)
     _RICH_CONSOLE.print("[bold]Quick examples[/bold]")
-    _print_cmdline("engine dry-run nuitka src/main.py")
-    _print_cmdline("engine compile pyinstaller app.py")
+    _print_cmdline("engine dry-run <engine_id> src/main.py")
+    _print_cmdline("engine compile <engine_id> app.py")
     _print_cmdline("bcasl run -w ~/workspace --timeout 30")
 
 
@@ -471,10 +471,10 @@ def _print_engine_help() -> None:
         plain("")
         plain("Examples:")
         plain("  engine list")
-        plain("  engine compat nuitka")
-        plain("  engine info pyinstaller")
-        plain("  engine dry-run nuitka src/main.py")
-        plain("  engine compile pyinstaller app.py")
+        plain("  engine compat <engine_id>")
+        plain("  engine info <engine_id>")
+        plain("  engine dry-run <engine_id> src/main.py")
+        plain("  engine compile <engine_id> app.py")
         plain("")
         return
 
@@ -489,8 +489,8 @@ def _print_engine_help() -> None:
     _RICH_CONSOLE.print(table)
     _RICH_CONSOLE.print("[bold]Examples[/bold]")
     _print_cmdline("engine list")
-    _print_cmdline("engine compat nuitka")
-    _print_cmdline("engine dry-run pyinstaller src/main.py")
+    _print_cmdline("engine compat <engine_id>")
+    _print_cmdline("engine dry-run <engine_id> src/main.py")
 
 
 def _run_engine_command(args: list[str]) -> int:
@@ -542,7 +542,7 @@ def _run_engine_command(args: list[str]) -> int:
     if sub == "compat":
         if len(clean_args) < 2:
             error("Usage: engine compat <engine_id>")
-            _print_cmdline("engine compat nuitka")
+            _print_cmdline("engine compat <engine_id>")
             return 2
         engine_id = clean_args[1]
         result = app.check_engine_compatibility(engine_id)
@@ -560,7 +560,7 @@ def _run_engine_command(args: list[str]) -> int:
     if sub == "info":
         if len(clean_args) < 2:
             error("Usage: engine info <engine_id>")
-            _print_cmdline("engine info pyinstaller")
+            _print_cmdline("engine info <engine_id>")
             return 2
         engine_id = clean_args[1]
         eng = app.get_engine_info(engine_id)
@@ -580,7 +580,7 @@ def _run_engine_command(args: list[str]) -> int:
     if sub in ("dry-run", "compile"):
         if len(clean_args) < 3:
             error(f"Usage: engine {sub} <engine_id> <file.py>")
-            _print_cmdline(f"engine {sub} nuitka src/main.py")
+            _print_cmdline(f"engine {sub} <engine_id> src/main.py")
             return 2
         engine_id = clean_args[1]
         file_path = _resolve_workspace(clean_args[2])

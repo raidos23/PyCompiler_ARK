@@ -22,7 +22,7 @@ sans lancer l'application principale.
 Fonctionnalités:
     - Interface graphique complète pour gérer les moteurs de compilation
     - Mode CLI pour lister les moteurs et vérifier la compatibilité
-    - Support de plusieurs moteurs : PyInstaller, Nuitka, cx_Freeze
+    - Support de plusieurs moteurs via le registre EngineLoader
     - Thèmes clair/sombre et langues anglais/français
 
 Utilisation:
@@ -33,7 +33,7 @@ Utilisation:
     python -m OnlyMod.EngineOnlyMod --list-engines
 
     # Mode CLI - vérifier compatibilité
-    python -m OnlyMod.EngineOnlyMod --check-compat nuitka
+    python -m OnlyMod.EngineOnlyMod --check-compat <engine_id>
 
 Documentation complète : voir README.md
 """
