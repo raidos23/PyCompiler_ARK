@@ -853,6 +853,13 @@ def apply_language(self, lang_display: str) -> None:
                     cb()
                 except Exception:
                     pass
+            # Ensure IDE-like overflow menu labels update immediately (no restart required).
+            try:
+                from Core.IdeLikeGui.connections import _retranslate_ide_like_actions
+
+                _retranslate_ide_like_actions(self)
+            except Exception:
+                pass
             try:
                 import EngineLoader as engines_loader
 
