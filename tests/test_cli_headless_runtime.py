@@ -86,7 +86,7 @@ def test_entrypoint_returns_usage_error_for_unknown_command() -> None:
 
 def test_fallback_check_is_strict_by_default(monkeypatch) -> None:
     monkeypatch.setattr(
-        "cli.fallback.ci_smoke_payload",
+        "cli.headless_commands.ci_smoke_payload",
         lambda workspace=None, require_entrypoint=False: {
             "workspace": workspace,
             "require_entrypoint": require_entrypoint,
