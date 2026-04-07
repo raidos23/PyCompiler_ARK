@@ -116,7 +116,10 @@ class NuitkaEngine(CompilerEngine):
 
             # Output directory
             output_dir_value = str(cfg.get("output_dir") or "").strip()
-            if hasattr(self, "_nuitka_output_dir") and self._nuitka_output_dir.text().strip():
+            if (
+                hasattr(self, "_nuitka_output_dir")
+                and self._nuitka_output_dir.text().strip()
+            ):
                 output_dir_value = self._nuitka_output_dir.text().strip()
             if output_dir_value:
                 cmd.append(f"--output-dir={output_dir_value}")
@@ -418,9 +421,7 @@ class NuitkaEngine(CompilerEngine):
                 )
             if hasattr(self, "_nuitka_disable_console"):
                 self._nuitka_disable_console.setText(
-                    self.engine_translate(
-                        "disable_console_checkbox", "Disable console"
-                    )
+                    self.engine_translate("disable_console_checkbox", "Disable console")
                 )
             if hasattr(self, "_nuitka_disable_console"):
                 self._nuitka_disable_console.setToolTip(

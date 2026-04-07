@@ -83,7 +83,9 @@ def test_discovery_registers_namespaced_engine_classes(tmp_path, monkeypatch) ->
 
     try:
         engine_registry.unload_all()
-        engine_loader._discover_external_plugins(str(engines_dir), namespace_package="ENGINES")
+        engine_loader._discover_external_plugins(
+            str(engines_dir), namespace_package="ENGINES"
+        )
 
         assert engine_registry.get_engine("demo_dynamic") is not None
         assert engine_registry.get_engine("demo_extra") is not None

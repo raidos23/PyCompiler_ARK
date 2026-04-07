@@ -134,7 +134,11 @@ class SysDependencyManager:
             pass
 
     def _cancel_task(
-        self, proc: Optional[QProcess], dlg: Optional[ProgressDialog], label_fr: str, label_en: str
+        self,
+        proc: Optional[QProcess],
+        dlg: Optional[ProgressDialog],
+        label_fr: str,
+        label_en: str,
     ) -> None:
         self._mark_process_cancelled(proc)
         self._log_cancel(
@@ -636,7 +640,9 @@ class SysDependencyManager:
                 if state["cancelled"]:
                     return
                 state["cancelled"] = True
-                self._cancel_task(proc, dlg, "installation winget", "winget installation")
+                self._cancel_task(
+                    proc, dlg, "installation winget", "winget installation"
+                )
 
             try:
                 btn = getattr(dlg, "btn_cancel", None)

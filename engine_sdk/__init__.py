@@ -75,6 +75,7 @@ def add_output_dir(*args, **kwargs):
 
     return _impl(*args, **kwargs)
 
+
 # Re-export venv/pip helpers from mainprocess.py (moved from utils.py)
 # These are maintained here for backward compatibility
 # NOTE: Using lazy imports to avoid circular import issues during engine discovery
@@ -155,6 +156,7 @@ def _sync_registry_reference():
     except Exception:
         pass
     return registry
+
 
 __version__ = "1.0.1"
 

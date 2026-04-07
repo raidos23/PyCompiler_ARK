@@ -174,7 +174,9 @@ def test_check_strict_json(monkeypatch, tmp_path) -> None:
         },
     )
 
-    result = runner.invoke(cli, ["check", str(tmp_path), "--json", "--strict", "--require-entrypoint"])
+    result = runner.invoke(
+        cli, ["check", str(tmp_path), "--json", "--strict", "--require-entrypoint"]
+    )
 
     assert result.exit_code == 3
     payload = json.loads(result.output)
@@ -199,7 +201,9 @@ def test_check_command_is_strict_by_default(monkeypatch, tmp_path) -> None:
             "require_entrypoint": require_entrypoint,
             "ok": False,
             "failed_count": 1,
-            "checks": [{"name": "workspace_entrypoint", "ok": False, "message": "missing"}],
+            "checks": [
+                {"name": "workspace_entrypoint", "ok": False, "message": "missing"}
+            ],
         }
 
     monkeypatch.setattr("cli.click_app.ci_smoke_payload", _fake_payload)
@@ -225,7 +229,11 @@ def test_check_fail_only_filters_ok_checks(monkeypatch) -> None:
             "ok": False,
             "failed_count": 1,
             "checks": [
-                {"name": "engine_inventory", "ok": True, "message": "2 engine(s) detected"},
+                {
+                    "name": "engine_inventory",
+                    "ok": True,
+                    "message": "2 engine(s) detected",
+                },
                 {"name": "workspace_entrypoint", "ok": False, "message": "missing"},
             ],
         },
@@ -260,7 +268,9 @@ def test_init_command_creates_workspace_and_config(tmp_path) -> None:
 def test_config_auto_detects_entrypoint_and_updates_config(tmp_path) -> None:
     runner = CliRunner()
     cli = build_cli("test")
-    (tmp_path / "main.py").write_text("if __name__ == '__main__':\n    print('ok')\n", encoding="utf-8")
+    (tmp_path / "main.py").write_text(
+        "if __name__ == '__main__':\n    print('ok')\n", encoding="utf-8"
+    )
     (tmp_path / "requirements.txt").write_text("click\n", encoding="utf-8")
 
     result = runner.invoke(cli, ["config-auto", str(tmp_path), "--json"])
@@ -338,7 +348,9 @@ def test_workspace_entrypoint_set_and_clear_json(tmp_path) -> None:
     runner = CliRunner()
     cli = build_cli("test")
     (tmp_path / "main.py").write_text("print('ok')\n", encoding="utf-8")
-    (tmp_path / "ARK_Main_Config.yml").write_text("build:\n  entrypoint: null\n", encoding="utf-8")
+    (tmp_path / "ARK_Main_Config.yml").write_text(
+        "build:\n  entrypoint: null\n", encoding="utf-8"
+    )
 
     set_result = runner.invoke(
         cli,

@@ -60,12 +60,20 @@ def test_run_compilation_headless_returns_preflight_error(monkeypatch) -> None:
     monkeypatch.setattr(
         app,
         "check_engine_compatibility",
-        lambda engine_id: {"compatible": True, "message": None, "missing_requirements": []},
+        lambda engine_id: {
+            "compatible": True,
+            "message": None,
+            "missing_requirements": [],
+        },
     )
     monkeypatch.setattr(app, "_create_engine_for_run", lambda engine_id: _DummyEngine())
-    monkeypatch.setattr(app, "_ensure_engine_tools_headless", lambda engine: (False, "preflight failed"))
+    monkeypatch.setattr(
+        app, "_ensure_engine_tools_headless", lambda engine: (False, "preflight failed")
+    )
 
-    result = app.run_compilation("pyinstaller", str(Path.cwd() / "main.py"), dry_run=False)
+    result = app.run_compilation(
+        "pyinstaller", str(Path.cwd() / "main.py"), dry_run=False
+    )
 
     assert result["success"] is False
     assert result["return_code"] == -1

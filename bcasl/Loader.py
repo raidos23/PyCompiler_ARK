@@ -320,7 +320,9 @@ def _run_bcasl_sync(
 
     workspace_meta = _build_workspace_meta(workspace_root, cfg)
     return manager.run_pre_compile(
-        PreCompileContext(workspace_root, config=cfg, workspace_metadata=workspace_meta),
+        PreCompileContext(
+            workspace_root, config=cfg, workspace_metadata=workspace_meta
+        ),
         stop_requested=stop_requested,
     )
 

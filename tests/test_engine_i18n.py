@@ -78,9 +78,7 @@ def test_engine_translate_uses_engine_cache_and_global_fallback(monkeypatch) -> 
         monkeypatch.setattr(
             engine_registry,
             "load_engine_language_file",
-            lambda engine_package, code: {
-                "tab_title": f"{engine_package}:{code}"
-            },
+            lambda engine_package, code: {"tab_title": f"{engine_package}:{code}"},
         )
 
         engine_registry.apply_translations(

@@ -71,7 +71,9 @@ def _import_module_tree(module_name: str) -> list[ModuleType]:
     if not module_path:
         return imported
 
-    for _finder, subname, _ispkg in pkgutil.walk_packages(module_path, prefix=f"{module_name}."):
+    for _finder, subname, _ispkg in pkgutil.walk_packages(
+        module_path, prefix=f"{module_name}."
+    ):
         try:
             imported.append(importlib.import_module(subname))
         except Exception:
@@ -86,10 +88,14 @@ def _sync_engine_sdk_registry() -> None:
 
         engine_sdk.registry = engine_registry
     except Exception:
-        logger.exception("Failed to synchronize engine_sdk.registry with EngineLoader.registry")
+        logger.exception(
+            "Failed to synchronize engine_sdk.registry with EngineLoader.registry"
+        )
 
 
-def _discover_external_plugins(base_path: str, namespace_package: str = "ENGINES") -> None:
+def _discover_external_plugins(
+    base_path: str, namespace_package: str = "ENGINES"
+) -> None:
     """Import namespaced engine packages and register CompilerEngine classes dynamically."""
     try:
         if not os.path.isdir(base_path):

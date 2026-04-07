@@ -81,9 +81,14 @@ def render_workspace_init_result(payload: dict[str, object]) -> None:
     plain(f"  Config: {payload.get('config_path')}")
     plain(f"  BCASL: {payload.get('bcasl_path') or '(not created)'}")
     plain(f"  Pref: {payload.get('workspace_pref_path') or '(not created)'}")
-    plain("  Created workspace: " + ("yes" if payload.get("created_workspace") else "no"))
+    plain(
+        "  Created workspace: " + ("yes" if payload.get("created_workspace") else "no")
+    )
     plain("  Created config: " + ("yes" if payload.get("created_config") else "no"))
-    plain("  Created bcasl.yml: " + ("yes" if payload.get("created_bcasl_config") else "no"))
+    plain(
+        "  Created bcasl.yml: "
+        + ("yes" if payload.get("created_bcasl_config") else "no")
+    )
     plain(
         "  Created workspace pref: "
         + ("yes" if payload.get("created_workspace_pref") else "no")

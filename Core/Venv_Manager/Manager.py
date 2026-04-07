@@ -1,3 +1,5 @@
+"""Provide core utilities and workflows for this module."""
+
 import hashlib
 import json
 import os
@@ -29,6 +31,7 @@ class VenvManager:
     """
 
     def __init__(self, parent_widget):
+        """Initialize instance state and runtime dependencies."""
         self.parent = parent_widget
         # QProcess references for graceful termination
         self._venv_create_process = None
@@ -84,9 +87,11 @@ class VenvManager:
 
     # ---------- Workspace pref (.ark/pref.json) ----------
     def _workspace_pref_path(self, workspace_dir: str) -> str:
+        """Return the resolved workspace path information."""
         return os.path.join(os.path.abspath(workspace_dir), ".ark", "pref.json")
 
     def _read_workspace_pref(self, workspace_dir: str) -> dict | None:
+        """Execute _read_workspace_pref logic for this component."""
         try:
             path = self._workspace_pref_path(workspace_dir)
             if not os.path.isfile(path):
@@ -98,6 +103,7 @@ class VenvManager:
             return None
 
     def _write_workspace_pref(self, workspace_dir: str, data: dict) -> None:
+        """Execute _write_workspace_pref logic for this component."""
         try:
             path = self._workspace_pref_path(workspace_dir)
             os.makedirs(os.path.dirname(path), exist_ok=True)
@@ -109,6 +115,7 @@ class VenvManager:
             pass
 
     def _clear_workspace_pref(self, workspace_dir: str) -> None:
+        """Clear the related cached state or UI values."""
         try:
             path = self._workspace_pref_path(workspace_dir)
             if os.path.isfile(path):
@@ -117,6 +124,7 @@ class VenvManager:
             pass
 
     def _pref_label_system(self) -> str:
+        """Execute _pref_label_system logic for this component."""
         try:
             return self.parent.tr(
                 "Venv sélectionné : Python système",
@@ -126,6 +134,7 @@ class VenvManager:
             return "Venv selected: System Python"
 
     def _pref_label_none(self) -> str:
+        """Execute _pref_label_none logic for this component."""
         try:
             return self.parent.tr("Venv sélectionné : Aucun", "Venv selected: None")
         except Exception:
@@ -234,6 +243,7 @@ class VenvManager:
 
     # ---------- Manager mapping ----------
     def _default_manager_commands(self) -> dict[str, dict[str, list[str]]]:
+        """Execute _default_manager_commands logic for this component."""
         return {
             "poetry": {
                 "create_venv": ["poetry", "env", "use", "python"],
@@ -287,6 +297,7 @@ class VenvManager:
         data: object,
         allowed_actions: dict[str, set[str]] | None = None,
     ) -> tuple[dict[str, dict[str, list[str]]], list[str]]:
+        """Validate the related data and constraints."""
         errors: list[str] = []
         if not isinstance(data, dict):
             errors.append("Le fichier YAML doit contenir un objet racine (mapping).")
@@ -341,6 +352,7 @@ class VenvManager:
         return cleaned, errors
 
     def _load_manager_mapping(self) -> dict[str, dict[str, list[str]]]:
+        """Load data from the related source."""
         default = self._default_manager_commands()
         mapping_path = os.path.join(os.path.dirname(__file__), "ManagerMapping.yml")
         if not os.path.isfile(mapping_path):
@@ -456,11 +468,13 @@ class VenvManager:
         return None
 
     def pip_path(self, venv_root: str) -> str:
+        """Execute pip_path logic for this component."""
         return os.path.join(
             venv_root, "Scripts" if platform.system() == "Windows" else "bin", "pip"
         )
 
     def python_path(self, venv_root: str) -> str:
+        """Execute python_path logic for this component."""
         base = os.path.join(
             venv_root, "Scripts" if platform.system() == "Windows" else "bin"
         )
@@ -473,17 +487,20 @@ class VenvManager:
         return cand1 if os.path.isfile(cand1) else cand2
 
     def _using_system_python(self) -> bool:
+        """Execute _using_system_python logic for this component."""
         try:
             return bool(getattr(self.parent, "use_system_python", False))
         except Exception:
             return False
 
     def _pip_break_system_args(self) -> list[str]:
+        """Execute _pip_break_system_args logic for this component."""
         if self._using_system_python() and platform.system() == "Linux":
             return ["--break-system-packages"]
         return []
 
     def _tools_stage_prefix(self) -> str:
+        """Execute _tools_stage_prefix logic for this component."""
         return "[tools:python] "
 
     def has_tool_binary(self, venv_root: str, tool: str) -> bool:
@@ -564,6 +581,7 @@ class VenvManager:
         return self.has_tool_binary(venv_root, tool)
 
     def is_tool_installed_system(self, tool: str) -> bool:
+        """Return whether the related condition is satisfied."""
         try:
             missing = self._missing_in_system_python([tool])
             return len(missing) == 0
@@ -582,6 +600,7 @@ class VenvManager:
             proc = QProcess(self.parent)
 
             def _done(code, _status):
+                """Execute _done logic for this component."""
                 try:
                     callback(code == 0)
                 except Exception:
@@ -665,6 +684,7 @@ class VenvManager:
             return "[Decode Error]"
 
     def _infer_log_level(self, text: str | None) -> str:
+        """Execute _infer_log_level logic for this component."""
         try:
             s = str(text or "").strip()
         except Exception:
@@ -713,6 +733,7 @@ class VenvManager:
     def _safe_log(
         self, text: str, text_en: str | None = None, level: str | None = None
     ):
+        """Execute _safe_log logic for this component."""
         gui = getattr(self, "parent", None) or self
         lvl = level or self._infer_log_level(text_en if text_en is not None else text)
         try:
@@ -744,18 +765,21 @@ class VenvManager:
                 pass
 
     def _reset_cancel_state(self) -> None:
+        """Execute _reset_cancel_state logic for this component."""
         try:
             self._cancel_requested = False
         except Exception:
             pass
 
     def _is_cancel_requested(self) -> bool:
+        """Return whether the related condition is satisfied."""
         try:
             return bool(getattr(self, "_cancel_requested", False))
         except Exception:
             return False
 
     def _request_cancel(self, action_label: str | None = None) -> None:
+        """Request the related operation or state transition."""
         if self._is_cancel_requested():
             return
         self._cancel_requested = True
@@ -768,6 +792,7 @@ class VenvManager:
         self.terminate_tasks()
 
     def _bind_cancel_for_dialog(self, dialog, action_label: str) -> None:
+        """Bind the related callback to the UI element."""
         if dialog is None:
             return
         btn = getattr(dialog, "btn_cancel", None)
@@ -908,6 +933,7 @@ class VenvManager:
 
     # ---------- Venv validation ----------
     def _is_within(self, path: str, root: str) -> bool:
+        """Return whether the related condition is satisfied."""
         try:
             rp = os.path.realpath(path)
             rr = os.path.realpath(root)
@@ -971,11 +997,13 @@ class VenvManager:
             return False, f"Erreur validation venv: {e}"
 
     def is_valid_venv(self, venv_root: str) -> bool:
+        """Return whether the related condition is satisfied."""
         ok, _ = self.validate_venv_strict(venv_root)
         return ok
 
     # ---------- System Python suggestion ----------
     def _normalize_dist_name(self, name: str) -> str:
+        """Execute _normalize_dist_name logic for this component."""
         try:
             return name.strip().lower().replace("_", "-")
         except Exception:
@@ -984,6 +1012,7 @@ class VenvManager:
     def _parse_requirements_file(
         self, req_path: str, seen: set | None = None
     ) -> list[str]:
+        """Parse the provided input into a structured value."""
         seen = seen or set()
         try:
             req_path = os.path.abspath(req_path)
@@ -1081,6 +1110,7 @@ class VenvManager:
     def _collect_declared_dependencies(
         self, workspace_dir: str
     ) -> tuple[list[str], bool]:
+        """Collect and return related items from configured sources."""
         try:
             workspace_dir = os.path.abspath(workspace_dir)
         except Exception:
@@ -1134,6 +1164,7 @@ class VenvManager:
         pattern_index = {p: i for i, p in enumerate(patterns)}
 
         def _prio(path: str) -> int:
+            """Execute _prio logic for this component."""
             base = os.path.basename(path)
             if base in pattern_index:
                 return pattern_index[base]
@@ -1161,6 +1192,7 @@ class VenvManager:
         return deps, True
 
     def _missing_in_system_python(self, packages: list[str]) -> list[str]:
+        """Execute _missing_in_system_python logic for this component."""
         try:
             from importlib.metadata import PackageNotFoundError, distribution
 
@@ -1193,6 +1225,7 @@ class VenvManager:
             return packages
 
     def _can_use_system_python(self) -> tuple[bool, list[str], bool]:
+        """Return whether this operation can run safely."""
         workspace_dir = getattr(self.parent, "workspace_dir", None)
         if not workspace_dir:
             return False, [], False
@@ -1206,6 +1239,7 @@ class VenvManager:
         return (len(missing) == 0), missing, has_source
 
     def _apply_system_python(self) -> None:
+        """Execute _apply_system_python logic for this component."""
         try:
             setattr(self.parent, "use_system_python", True)
         except Exception:
@@ -1248,6 +1282,7 @@ class VenvManager:
 
     # ---------- Manual selection ----------
     def select_venv_manually(self):
+        """Execute select_venv_manually logic for this component."""
         try:
             ok_sys, missing, has_source = self._can_use_system_python()
             if ok_sys:
@@ -1324,6 +1359,7 @@ class VenvManager:
                 try:
 
                     def _t(_key: str, fr: str, en: str) -> str:
+                        """Execute _t logic for this component."""
                         try:
                             return self.parent.tr(fr, en)
                         except Exception:
@@ -1388,6 +1424,7 @@ class VenvManager:
 
     # ---------- Existing venv: check and install tools ----------
     def check_tools_in_venv(self, venv_path: str):
+        """Execute check_tools_in_venv logic for this component."""
         try:
             self._reset_cancel_state()
             ok, reason = self.validate_venv_strict(venv_path)
@@ -1399,6 +1436,7 @@ class VenvManager:
 
             # Vérification asynchrone de la liaison python/pip → venv
             def _after_binding(ok_bind: bool):
+                """Execute _after_binding logic for this component."""
                 if not ok_bind:
                     self._safe_log(
                         "❌ Invalid venv binding: python/pip do not point to the selected venv."
@@ -1440,6 +1478,7 @@ class VenvManager:
             self._safe_log(f"❌ Erreur lors de la vérification du venv: {e}")
 
     def _check_next_venv_pkg(self):
+        """Execute _check_next_venv_pkg logic for this component."""
         if self._is_cancel_requested():
             try:
                 if self.venv_check_progress:
@@ -1483,6 +1522,7 @@ class VenvManager:
         self._arm_process_timeout(process, 30_000, f"pip show {pkg}")
 
     def _on_venv_pkg_checked(self, process, code, status, pkg):
+        """Handle the related event callback."""
         if getattr(self.parent, "_closing", False):
             return
         if self._is_cancel_requested():
@@ -1547,6 +1587,7 @@ class VenvManager:
             self._arm_process_timeout(process2, 600_000, f"pip install {pkg}")
 
     def _on_venv_check_output(self, process, error=False):
+        """Handle the related event callback."""
         if getattr(self.parent, "_closing", False):
             return
         if self._is_cancel_requested():
@@ -1612,6 +1653,7 @@ class VenvManager:
             p1 = QProcess(self.parent)
 
             def _p1_finished(code, _status):
+                """Execute _p1_finished logic for this component."""
                 try:
                     if code != 0:
                         callback(False)
@@ -1629,6 +1671,7 @@ class VenvManager:
                     p2 = QProcess(self.parent)
 
                     def _p2_finished(code2, _status2):
+                        """Execute _p2_finished logic for this component."""
                         try:
                             if code2 != 0:
                                 callback(False)
@@ -1671,6 +1714,7 @@ class VenvManager:
                 t.setSingleShot(True)
 
                 def _on_timeout():
+                    """Handle the related event callback."""
                     try:
                         if process.state() != QProcess.NotRunning:
                             self._safe_log(
@@ -1687,6 +1731,7 @@ class VenvManager:
 
                 # also attach to process so timer can be cleared if process finishes earlier
                 def _clear_timer(*_args):
+                    """Clear the related cached state or UI values."""
                     try:
                         if t.isActive():
                             t.stop()
@@ -1839,6 +1884,7 @@ class VenvManager:
             return None
 
     def _on_venv_pkg_installed(self, process, code, status, pkg):
+        """Handle the related event callback."""
         if getattr(self.parent, "_closing", False):
             return
         if self._is_cancel_requested():
@@ -1859,6 +1905,7 @@ class VenvManager:
 
     # ---------- Create venv if needed ----------
     def create_venv_if_needed(self, path: str, prefer_manager: bool = True):
+        """Execute create_venv_if_needed logic for this component."""
         existing, default_path = self._detect_venv_in(path)
         venv_path = existing or default_path
         if existing:
@@ -1985,6 +2032,7 @@ class VenvManager:
             )
 
     def _on_venv_output(self, process, error=False):
+        """Handle the related event callback."""
         if getattr(self.parent, "_closing", False):
             return
         if self._is_cancel_requested():
@@ -2006,6 +2054,7 @@ class VenvManager:
         self._safe_log(data)
 
     def _on_venv_created(self, process, code, status, venv_path):
+        """Handle the related event callback."""
         if getattr(self.parent, "_closing", False):
             return
         if self._is_cancel_requested():
@@ -2419,6 +2468,7 @@ class VenvManager:
     # ---------- Install requirements.txt ----------
     def install_requirements_if_needed(self, path: str, force_pip: bool = False):
         # Prefer manager-based installation when a manager is detected and no manual venv is set.
+        """Execute install_requirements_if_needed logic for this component."""
         if not force_pip:
             try:
                 manual = getattr(self.parent, "venv_path_manuel", None)
@@ -2463,6 +2513,7 @@ class VenvManager:
 
         # Vérifier la liaison de manière asynchrone, puis démarrer l'installation
         def _after_binding(ok_bind: bool):
+            """Execute _after_binding logic for this component."""
             if not ok_bind:
                 self._safe_log(
                     "⚠️ Liaison venv invalide (python/pip ne pointent pas vers le venv); installation ignorée."
@@ -2479,6 +2530,7 @@ class VenvManager:
         req_path: str,
         use_system_python: bool = False,
     ):
+        """Start the related asynchronous operation."""
         self._reset_cancel_state()
         py_exe = sys.executable if use_system_python else self.python_path(venv_root)
         if not os.path.isfile(py_exe):
@@ -2556,6 +2608,7 @@ class VenvManager:
             self._safe_log(f"❌ Échec installation requirements.txt : {e}")
 
     def _on_pip_output(self, process, error=False):
+        """Handle the related event callback."""
         if getattr(self.parent, "_closing", False):
             return
         if self._is_cancel_requested():
@@ -2579,6 +2632,7 @@ class VenvManager:
         self._safe_log(data)
 
     def _on_pip_finished(self, process, code, status):
+        """Handle the related event callback."""
         if getattr(self.parent, "_closing", False):
             return
         if self._is_cancel_requested():
@@ -2711,6 +2765,7 @@ class VenvManager:
 
     # ---------- Background tasks status/control ----------
     def has_active_tasks(self) -> bool:
+        """Return whether the related condition is satisfied."""
         try:
             if self.venv_progress_dialog and self.venv_progress_dialog.isVisible():
                 return True
@@ -2729,6 +2784,7 @@ class VenvManager:
         return False
 
     def terminate_tasks(self):
+        """Execute terminate_tasks logic for this component."""
         had_active = self.has_active_tasks()
         if had_active:
             self._cancel_requested = True
@@ -2920,6 +2976,7 @@ class VenvManager:
     def _run_cmd_capture(
         self, cmd: list[str], cwd: str, timeout: int = 5
     ) -> str | None:
+        """Execute _run_cmd_capture logic for this component."""
         try:
             result = subprocess.run(
                 cmd,
@@ -2940,6 +2997,7 @@ class VenvManager:
         return None
 
     def _extract_existing_dir(self, output: str | None) -> str | None:
+        """Extract and return the requested data fragment."""
         if not output:
             return None
         for line in output.splitlines():
@@ -2972,6 +3030,7 @@ class VenvManager:
         return None
 
     def _validate_conda_env(self, env_root: str) -> tuple[bool, str]:
+        """Validate the related data and constraints."""
         try:
             if not env_root or not os.path.isdir(env_root):
                 return False, "Chemin invalide (dossier manquant)"
@@ -2996,6 +3055,7 @@ class VenvManager:
             return False, f"Erreur validation conda: {e}"
 
     def _validate_manager_venv(self, manager: str, venv_root: str) -> tuple[bool, str]:
+        """Validate the related data and constraints."""
         if manager == "conda":
             ok, reason = self._validate_conda_env(venv_root)
             if ok:
@@ -3008,6 +3068,7 @@ class VenvManager:
     def _parse_conda_env_spec(
         self, workspace_dir: str
     ) -> tuple[str | None, str | None]:
+        """Parse the provided input into a structured value."""
         for fname in ("environment.yml", "conda.yml", "environment.yaml"):
             path = os.path.join(workspace_dir, fname)
             if not os.path.isfile(path):
@@ -3031,6 +3092,7 @@ class VenvManager:
         return None, None
 
     def _find_conda_env_path(self, env_name: str, cwd: str) -> str | None:
+        """Find and return the related value."""
         try:
             result = subprocess.run(
                 ["conda", "env", "list", "--json"],
@@ -3055,6 +3117,7 @@ class VenvManager:
         return None
 
     def _detect_manager_existing_venv(self, workspace_dir: str) -> str | None:
+        """Detect and return related runtime information."""
         try:
             base = os.path.abspath(workspace_dir)
         except Exception:
@@ -3338,6 +3401,7 @@ class VenvManager:
                     if ok:
                         # Verify binding and then check tools
                         def _after_binding(ok_bind: bool):
+                            """Execute _after_binding logic for this component."""
                             if ok_bind:
                                 self._safe_log(
                                     "🔍 Vérification des outils de compilation..."

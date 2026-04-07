@@ -92,7 +92,9 @@ def test_fallback_check_is_strict_by_default(monkeypatch) -> None:
             "require_entrypoint": require_entrypoint,
             "ok": False,
             "failed_count": 1,
-            "checks": [{"name": "workspace_entrypoint", "ok": False, "message": "missing"}],
+            "checks": [
+                {"name": "workspace_entrypoint", "ok": False, "message": "missing"}
+            ],
         },
     )
 

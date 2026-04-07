@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # Copyright 2026 Ague Samuel Amen
 
-from __future__ import annotations
+"""Provide the main Click command tree for ARK."""
 
-"""Click-based CLI frontend for PyCompiler ARK."""
+from __future__ import annotations
 
 import json
 from pathlib import Path
@@ -109,10 +109,15 @@ def _run_workspace_init_with_progress(workspace_dir: str, with_venv: bool = Fals
     current = {"text": "Initializing workspace..."}
 
     def _cb(_step: str, _status: str, message: str) -> None:
+        """Track latest progress message for Rich status updates."""
         current["text"] = message
 
-    with console.status("[bold cyan]Initializing workspace...", spinner="dots") as status:
-        payload = workspace_init_payload(workspace_dir, progress_cb=_cb, with_venv=with_venv)
+    with console.status(
+        "[bold cyan]Initializing workspace...", spinner="dots"
+    ) as status:
+        payload = workspace_init_payload(
+            workspace_dir, progress_cb=_cb, with_venv=with_venv
+        )
         try:
             status.update(f"[bold cyan]{current['text']}")
         except Exception:
@@ -300,6 +305,7 @@ def build_cli(app_version: str):
     @click.option("--classic", "classic_gui", is_flag=True, help="Use classic layout")
     @click.option("--no-splash", is_flag=True, help="Disable splash screen")
     def gui_main(ide_gui, classic_gui, no_splash):
+        """Launch the main GUI from the explicit gui namespace."""
         sys.exit(
             launch_main_gui(
                 no_splash=no_splash,
@@ -311,12 +317,22 @@ def build_cli(app_version: str):
     @gui.command("bcasl")
     @click.argument("workspace", required=False, type=click.Path(exists=False))
     def gui_bcasl(workspace):
-        sys.exit(launch_bcasl_gui(_ensure_workspace_exists(_resolve_workspace_path(workspace))))
+        """Launch BCASL GUI with an optional workspace."""
+        sys.exit(
+            launch_bcasl_gui(
+                _ensure_workspace_exists(_resolve_workspace_path(workspace))
+            )
+        )
 
     @gui.command("engines")
     @click.argument("workspace", required=False, type=click.Path(exists=False))
     def gui_engines(workspace):
-        sys.exit(launch_engines_gui(_ensure_workspace_exists(_resolve_workspace_path(workspace))))
+        """Launch engines GUI with an optional workspace."""
+        sys.exit(
+            launch_engines_gui(
+                _ensure_workspace_exists(_resolve_workspace_path(workspace))
+            )
+        )
 
     # Commandes moteur headless et d'inspection.
     @cli.group()
@@ -327,6 +343,7 @@ def build_cli(app_version: str):
     @click.option("-w", "--workspace", type=click.Path(exists=False))
     @click.option("--json", "as_json", is_flag=True, help="Emit machine-readable JSON")
     def engine_list(workspace, as_json):
+        """List available engines with compatibility state."""
         payload = engine_list_payload(workspace=_resolve_workspace_path(workspace))
         if as_json:
             _echo_payload(payload, as_json=True)
@@ -341,7 +358,10 @@ def build_cli(app_version: str):
     @click.option("-w", "--workspace", type=click.Path(exists=False))
     @click.option("--json", "as_json", is_flag=True)
     def engine_info(engine_id, workspace, as_json):
-        payload = engine_info_payload(engine_id, workspace=_resolve_workspace_path(workspace))
+        """Show detailed metadata for a specific engine."""
+        payload = engine_info_payload(
+            engine_id, workspace=_resolve_workspace_path(workspace)
+        )
         if as_json:
             if not payload.get("found"):
                 _emit_and_exit(payload, EXIT_ENGINE_NOT_FOUND, as_json=True)
@@ -356,16 +376,25 @@ def build_cli(app_version: str):
         plain(f"  Required core: {eng['required_core']}")
         plain(f"  Required SDK: {eng['required_sdk']}")
         plain(f"  Compatible: {'yes' if eng['compatible'] else 'no'}")
-        plain(f"  Python tools: {', '.join(eng['required_tools'].get('python', [])) or 'none'}")
-        plain(f"  System tools: {', '.join(eng['required_tools'].get('system', [])) or 'none'}")
+        plain(
+            f"  Python tools: {', '.join(eng['required_tools'].get('python', [])) or 'none'}"
+        )
+        plain(
+            f"  System tools: {', '.join(eng['required_tools'].get('system', [])) or 'none'}"
+        )
 
     @engine.command("compat")
     @click.argument("engine_id")
     @click.option("-w", "--workspace", type=click.Path(exists=False))
     @click.option("--json", "as_json", is_flag=True)
-    @click.option("--strict", is_flag=True, help="Exit non-zero when compatibility checks fail")
+    @click.option(
+        "--strict", is_flag=True, help="Exit non-zero when compatibility checks fail"
+    )
     def engine_compat(engine_id, workspace, as_json, strict):
-        payload = engine_info_payload(engine_id, workspace=_resolve_workspace_path(workspace))
+        """Run compatibility checks for one engine."""
+        payload = engine_info_payload(
+            engine_id, workspace=_resolve_workspace_path(workspace)
+        )
         if as_json:
             if not payload.get("found"):
                 _emit_and_exit(payload, EXIT_ENGINE_NOT_FOUND, as_json=True)
@@ -390,8 +419,11 @@ def build_cli(app_version: str):
     @click.argument("file_path", required=False, type=click.Path(exists=False))
     @click.option("-w", "--workspace", type=click.Path(exists=False))
     @click.option("--json", "as_json", is_flag=True)
-    @click.option("--strict", is_flag=True, help="Exit non-zero when doctor checks fail")
+    @click.option(
+        "--strict", is_flag=True, help="Exit non-zero when doctor checks fail"
+    )
     def engine_doctor(engine_id, file_path, workspace, as_json, strict):
+        """Run diagnostic checks for one engine."""
         payload = engine_doctor_payload(
             engine_id,
             workspace=_resolve_workspace_path(workspace),
@@ -422,6 +454,7 @@ def build_cli(app_version: str):
     @click.option("-w", "--workspace", required=True, type=click.Path(exists=False))
     @click.option("--json", "as_json", is_flag=True)
     def engine_config_show(engine_id, workspace, as_json):
+        """Display persisted workspace engine configuration."""
         payload = engine_config_show_payload(
             engine_id, workspace=_resolve_workspace_path(workspace)
         )
@@ -447,6 +480,7 @@ def build_cli(app_version: str):
     @click.option("-w", "--workspace", required=True, type=click.Path(exists=False))
     @click.option("--json", "as_json", is_flag=True)
     def engine_config_path(engine_id, workspace, as_json):
+        """Print the persisted engine config file path."""
         payload = engine_config_path_payload(
             engine_id, workspace=_resolve_workspace_path(workspace)
         )
@@ -462,13 +496,24 @@ def build_cli(app_version: str):
     @engine_config.command("set")
     @click.argument("engine_id")
     @click.option("-w", "--workspace", required=True, type=click.Path(exists=False))
-    @click.option("--options-json", type=str, help="Inline JSON object with engine options")
-    @click.option("--options-file", type=click.Path(exists=True), help="Path to JSON file with engine options")
+    @click.option(
+        "--options-json", type=str, help="Inline JSON object with engine options"
+    )
+    @click.option(
+        "--options-file",
+        type=click.Path(exists=True),
+        help="Path to JSON file with engine options",
+    )
     @click.option("--replace", is_flag=True, help="Replace options instead of merge")
     @click.option("--json", "as_json", is_flag=True)
-    def engine_config_set(engine_id, workspace, options_json, options_file, replace, as_json):
+    def engine_config_set(
+        engine_id, workspace, options_json, options_file, replace, as_json
+    ):
+        """Persist engine options in workspace engine config."""
         if bool(options_json) == bool(options_file):
-            raise click.ClickException("Provide exactly one of --options-json or --options-file")
+            raise click.ClickException(
+                "Provide exactly one of --options-json or --options-file"
+            )
         try:
             if options_file:
                 options = json.loads(Path(options_file).read_text(encoding="utf-8"))
@@ -496,7 +541,9 @@ def build_cli(app_version: str):
         if payload.get("found") is False:
             raise click.ClickException(f"Engine not found: {engine_id}")
         if not payload.get("saved"):
-            raise click.ClickException(payload.get("error", "Unable to save engine config"))
+            raise click.ClickException(
+                payload.get("error", "Unable to save engine config")
+            )
         success(f"Engine config saved: {engine_id}")
         plain(f"  Path: {payload.get('path')}")
 
@@ -505,6 +552,7 @@ def build_cli(app_version: str):
     @click.option("-w", "--workspace", required=True, type=click.Path(exists=False))
     @click.option("--json", "as_json", is_flag=True)
     def engine_config_reset(engine_id, workspace, as_json):
+        """Reset persisted workspace engine configuration."""
         payload = engine_config_reset_payload(
             engine_id,
             workspace=_resolve_workspace_path(workspace),
@@ -521,7 +569,9 @@ def build_cli(app_version: str):
         if payload.get("found") is False:
             raise click.ClickException(f"Engine not found: {engine_id}")
         if not payload.get("reset"):
-            raise click.ClickException(payload.get("error", "Unable to reset engine config"))
+            raise click.ClickException(
+                payload.get("error", "Unable to reset engine config")
+            )
         success(f"Engine config reset: {engine_id}")
         plain(f"  Path: {payload.get('path')}")
 
@@ -531,6 +581,7 @@ def build_cli(app_version: str):
     @click.option("-w", "--workspace", type=click.Path(exists=False))
     @click.option("--json", "as_json", is_flag=True)
     def engine_dry_run(engine_id, file_path, workspace, as_json):
+        """Build and print the compilation command without running it."""
         from OnlyMod.EngineOnlyMod.app import EnginesStandaloneApp
 
         app = EnginesStandaloneApp(
@@ -556,6 +607,7 @@ def build_cli(app_version: str):
     @click.option("-w", "--workspace", type=click.Path(exists=False))
     @click.option("--json", "as_json", is_flag=True)
     def engine_compile(engine_id, file_path, workspace, as_json):
+        """Run headless compilation for a file with a selected engine."""
         from OnlyMod.EngineOnlyMod.app import EnginesStandaloneApp
 
         app = EnginesStandaloneApp(
@@ -583,6 +635,7 @@ def build_cli(app_version: str):
     @click.argument("workspace", required=False, type=click.Path(exists=False))
     @click.option("--json", "as_json", is_flag=True)
     def venv_status(workspace, as_json):
+        """Show current workspace Python mode and venv preference."""
         payload = venv_status_payload(_resolve_workspace_path(workspace or "."))
         if as_json:
             if not payload.get("ok"):
@@ -590,7 +643,9 @@ def build_cli(app_version: str):
             _echo_payload(payload, as_json=True)
             return
         if not payload.get("ok"):
-            raise click.ClickException(payload.get("error", "Unable to inspect venv status"))
+            raise click.ClickException(
+                payload.get("error", "Unable to inspect venv status")
+            )
         plain(f"Workspace: {payload.get('workspace')}")
         plain(f"  Mode: {payload.get('mode')}")
         plain(f"  Venv: {payload.get('venv_path') or '(none)'}")
@@ -600,6 +655,7 @@ def build_cli(app_version: str):
     @click.argument("workspace", required=False, type=click.Path(exists=False))
     @click.option("--json", "as_json", is_flag=True)
     def venv_use_system(workspace, as_json):
+        """Switch workspace Python mode to system interpreter."""
         payload = venv_use_system_payload(_resolve_workspace_path(workspace or "."))
         if as_json:
             if not payload.get("ok"):
@@ -607,15 +663,20 @@ def build_cli(app_version: str):
             _echo_payload(payload, as_json=True)
             return
         if not payload.get("ok"):
-            raise click.ClickException(payload.get("error", "Unable to set system python mode"))
+            raise click.ClickException(
+                payload.get("error", "Unable to set system python mode")
+            )
         success("Workspace venv mode set to system")
 
     @venv.command("use-venv")
     @click.argument("workspace", required=False, type=click.Path(exists=False))
     @click.argument("venv_path", required=False, type=click.Path(exists=False))
-    @click.option("--create", is_flag=True, help="Create .venv when no venv path is provided")
+    @click.option(
+        "--create", is_flag=True, help="Create .venv when no venv path is provided"
+    )
     @click.option("--json", "as_json", is_flag=True)
     def venv_use_venv(workspace, venv_path, create, as_json):
+        """Switch workspace Python mode to venv and persist preference."""
         payload = venv_use_venv_payload(
             _resolve_workspace_path(workspace or "."),
             venv_path=venv_path,
@@ -636,6 +697,7 @@ def build_cli(app_version: str):
     @click.option("--force-pip", is_flag=True, help="Force pip-based install mode")
     @click.option("--json", "as_json", is_flag=True)
     def venv_install_req(workspace, force_pip, as_json):
+        """Install workspace requirements using current Python mode."""
         payload = venv_install_requirements_payload(
             _resolve_workspace_path(workspace or "."),
             force_pip=bool(force_pip),
@@ -646,7 +708,9 @@ def build_cli(app_version: str):
             _echo_payload(payload, as_json=True)
             return
         if not payload.get("ok"):
-            raise click.ClickException(payload.get("error", "Requirements installation failed"))
+            raise click.ClickException(
+                payload.get("error", "Requirements installation failed")
+            )
         if payload.get("installed") is False:
             info(payload.get("reason", "No requirements installation needed"))
             return
@@ -690,6 +754,7 @@ def build_cli(app_version: str):
     @click.option("--root", type=click.Path(exists=True, file_okay=False))
     @click.option("--json", "as_json", is_flag=True)
     def scaffold_engine_cmd(name, root, as_json):
+        """Generate a starter engine skeleton."""
         payload = scaffold_engine(name, root_dir=root)
         if as_json:
             _echo_payload(payload, as_json=True)
@@ -697,13 +762,16 @@ def build_cli(app_version: str):
         if payload.get("created"):
             success(f"Engine scaffold created in {payload['path']}")
         else:
-            raise click.ClickException(payload.get("reason", "Unable to create scaffold"))
+            raise click.ClickException(
+                payload.get("reason", "Unable to create scaffold")
+            )
 
     @scaffold.command("plugin")
     @click.argument("name")
     @click.option("--root", type=click.Path(exists=True, file_okay=False))
     @click.option("--json", "as_json", is_flag=True)
     def scaffold_plugin_cmd(name, root, as_json):
+        """Generate a starter plugin skeleton."""
         payload = scaffold_plugin(name, root_dir=root)
         if as_json:
             _echo_payload(payload, as_json=True)
@@ -711,7 +779,9 @@ def build_cli(app_version: str):
         if payload.get("created"):
             success(f"Plugin scaffold created in {payload['path']}")
         else:
-            raise click.ClickException(payload.get("reason", "Unable to create scaffold"))
+            raise click.ClickException(
+                payload.get("reason", "Unable to create scaffold")
+            )
 
     # Espace BCASL (GUI + actions headless spécifiques).
     @cli.group(invoke_without_command=True)
@@ -724,11 +794,17 @@ def build_cli(app_version: str):
     @bcasl.command("gui")
     @click.argument("workspace", required=False, type=click.Path(exists=False))
     def bcasl_gui_cmd(workspace):
-        sys.exit(launch_bcasl_gui(_ensure_workspace_exists(_resolve_workspace_path(workspace))))
+        """Launch BCASL GUI explicitly."""
+        sys.exit(
+            launch_bcasl_gui(
+                _ensure_workspace_exists(_resolve_workspace_path(workspace))
+            )
+        )
 
     @bcasl.command("list")
     @click.option("--json", "as_json", is_flag=True)
     def bcasl_list(as_json):
+        """List BCASL plugins in headless mode."""
         if as_json:
             _echo_payload(bcasl_list_payload(), as_json=True)
             return
@@ -738,6 +814,7 @@ def build_cli(app_version: str):
     @click.argument("workspace", type=click.Path(exists=False))
     @click.option("--timeout", type=float, default=0.0)
     def bcasl_run(workspace, timeout):
+        """Run BCASL pipeline headlessly for one workspace."""
         args = ["run", _resolve_workspace_path(workspace) or workspace]
         if timeout:
             args.extend(["--timeout", str(timeout)])
@@ -748,6 +825,7 @@ def build_cli(app_version: str):
     @click.option("--json", "as_json", is_flag=True)
     @click.option("--strict", is_flag=True, help="Exit non-zero when BCASL checks fail")
     def bcasl_doctor(workspace, as_json, strict):
+        """Run BCASL diagnostics and optionally enforce strict mode."""
         payload = bcasl_doctor_payload(workspace=_resolve_workspace_path(workspace))
         if as_json:
             if strict and any(not check["ok"] for check in payload.get("checks", [])):
@@ -764,6 +842,7 @@ def build_cli(app_version: str):
     @cli.command("info")
     @click.option("--json", "as_json", is_flag=True)
     def info_cmd(as_json):
+        """Show global diagnostic information."""
         payload = doctor_payload()
         if as_json:
             _echo_payload(payload, as_json=True)
@@ -773,6 +852,7 @@ def build_cli(app_version: str):
     @cli.command(name="unload")
     @click.option("--json", "as_json", is_flag=True)
     def unload_cmd(as_json):
+        """Unload all registered engines."""
         result = unload_all_engines()
         if as_json:
             _echo_payload(result, as_json=True)
@@ -787,7 +867,11 @@ def build_cli(app_version: str):
     @click.argument("workspace", required=False, type=click.Path(exists=False))
     def engines(workspace):
         """Backward-compatible alias for `gui engines`."""
-        sys.exit(launch_engines_gui(_ensure_workspace_exists(_resolve_workspace_path(workspace))))
+        sys.exit(
+            launch_engines_gui(
+                _ensure_workspace_exists(_resolve_workspace_path(workspace))
+            )
+        )
 
     @cli.command(context_settings=dict(help_option_names=["-h", "--help"]))
     def main_app():

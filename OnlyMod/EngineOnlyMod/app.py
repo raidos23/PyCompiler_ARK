@@ -106,7 +106,9 @@ class MockGUI:
                 except Exception:
                     pass
                 try:
-                    detected = self.venv_manager.resolve_existing_venv(self.workspace_dir)
+                    detected = self.venv_manager.resolve_existing_venv(
+                        self.workspace_dir
+                    )
                     if detected:
                         self.venv_path = detected
                 except Exception:
@@ -430,7 +432,10 @@ class EnginesStandaloneApp:
 
         try:
             if self.workspace_dir:
-                from Core.EngineConfigManager import apply_engine_config, load_engine_config
+                from Core.EngineConfigManager import (
+                    apply_engine_config,
+                    load_engine_config,
+                )
 
                 cfg = load_engine_config(self.workspace_dir, engine_id)
                 if cfg:
@@ -751,15 +756,18 @@ class EnginesStandaloneApp:
             tools = getattr(engine, "required_tools", {"python": [], "system": []})
             if not isinstance(tools, dict):
                 tools = {"python": [], "system": []}
-            python_tools = [str(t).strip() for t in tools.get("python", []) if str(t).strip()]
-            system_tools = [str(t).strip() for t in tools.get("system", []) if str(t).strip()]
+            python_tools = [
+                str(t).strip() for t in tools.get("python", []) if str(t).strip()
+            ]
+            system_tools = [
+                str(t).strip() for t in tools.get("system", []) if str(t).strip()
+            ]
 
             missing_system = self._missing_system_tools(system_tools)
             if missing_system:
-                auto_install = (
-                    str(os.environ.get("ARK_AUTO_INSTALL_SYSTEM_TOOLS", "0")).strip().lower()
-                    in {"1", "true", "yes", "on"}
-                )
+                auto_install = str(
+                    os.environ.get("ARK_AUTO_INSTALL_SYSTEM_TOOLS", "0")
+                ).strip().lower() in {"1", "true", "yes", "on"}
                 if auto_install:
                     try:
                         from Core.sys_deps import install_system_packages
@@ -795,7 +803,10 @@ class EnginesStandaloneApp:
                 except Exception:
                     venv_path = None
                 if not venv_path:
-                    return False, "No resolved project venv for Python tool installation"
+                    return (
+                        False,
+                        "No resolved project venv for Python tool installation",
+                    )
 
             missing_python = self._missing_python_tools(
                 python_tools,

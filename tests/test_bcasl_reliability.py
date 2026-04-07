@@ -14,7 +14,9 @@ class _FailPlugin(BcPluginBase):
             priority=1,
         )
 
-    def on_pre_compile(self, ctx) -> None:  # pragma: no cover - behavior tested by side effects
+    def on_pre_compile(
+        self, ctx
+    ) -> None:  # pragma: no cover - behavior tested by side effects
         raise RuntimeError("boom")
 
 
@@ -27,7 +29,9 @@ class _DependentPlugin(BcPluginBase):
             priority=2,
         )
 
-    def on_pre_compile(self, ctx) -> None:  # pragma: no cover - behavior tested by marker
+    def on_pre_compile(
+        self, ctx
+    ) -> None:  # pragma: no cover - behavior tested by marker
         self._marker["ran"] = True
 
 
@@ -40,7 +44,9 @@ class _OkPlugin(BcPluginBase):
             priority=2,
         )
 
-    def on_pre_compile(self, ctx) -> None:  # pragma: no cover - behavior tested by marker
+    def on_pre_compile(
+        self, ctx
+    ) -> None:  # pragma: no cover - behavior tested by marker
         self._marker["ran"] = True
 
 
