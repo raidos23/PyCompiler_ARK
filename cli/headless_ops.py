@@ -966,6 +966,107 @@ def engine_config_show_payload(engine_id: str, workspace: str | None) -> dict[st
     }
 
 
+def engine_config_set_payload(
+    engine_id: str,
+    workspace: str | None,
+    options: dict[str, Any],
+    *,
+    merge: bool = True,
+) -> dict[str, Any]:
+    ws = _normalize_workspace(workspace)
+    if not ws:
+        return {
+            "saved": False,
+            "engine_id": engine_id,
+            "workspace": None,
+            "error": "workspace is required",
+        }
+    if not isinstance(options, dict):
+        return {
+            "saved": False,
+            "engine_id": engine_id,
+            "workspace": ws,
+            "error": "options must be an object",
+        }
+    info = engine_info_payload(engine_id, workspace=ws)
+    if not info.get("found"):
+        return {"saved": False, "found": False, "engine_id": engine_id, "workspace": ws}
+
+    try:
+        from Core.EngineConfigManager import load_engine_config, save_engine_config
+
+        payload_options = dict(options)
+        if merge:
+            current = load_engine_config(ws, engine_id)
+            base = current.get("options", current) if isinstance(current, dict) else {}
+            if not isinstance(base, dict):
+                base = {}
+            merged = dict(base)
+            merged.update(payload_options)
+            payload_options = merged
+        ok = bool(
+            save_engine_config(
+                ws,
+                engine_id,
+                payload_options,
+                info.get("engine", {}).get("version"),
+            )
+        )
+    except Exception as exc:
+        return {
+            "saved": False,
+            "engine_id": engine_id,
+            "workspace": ws,
+            "error": f"unable to save engine config: {exc}",
+        }
+
+    show = engine_config_show_payload(engine_id, ws)
+    return {
+        "saved": ok,
+        "engine_id": engine_id,
+        "workspace": ws,
+        "path": show.get("path"),
+        "exists": bool(show.get("exists")),
+        "config": show.get("config", {}),
+    }
+
+
+def engine_config_reset_payload(engine_id: str, workspace: str | None) -> dict[str, Any]:
+    ws = _normalize_workspace(workspace)
+    if not ws:
+        return {
+            "reset": False,
+            "engine_id": engine_id,
+            "workspace": None,
+            "error": "workspace is required",
+        }
+    info = engine_info_payload(engine_id, workspace=ws)
+    if not info.get("found"):
+        return {"reset": False, "found": False, "engine_id": engine_id, "workspace": ws}
+    try:
+        from Core.EngineConfigManager import _engine_config_path
+
+        path = Path(_engine_config_path(ws, engine_id))
+        existed = path.exists()
+        if existed:
+            path.unlink()
+    except Exception as exc:
+        return {
+            "reset": False,
+            "engine_id": engine_id,
+            "workspace": ws,
+            "error": f"unable to reset engine config: {exc}",
+        }
+    return {
+        "reset": True,
+        "engine_id": engine_id,
+        "workspace": ws,
+        "path": str(path),
+        "existed": bool(existed),
+        "exists": bool(path.exists()),
+    }
+
+
 def workspace_inspect_payload(workspace: str | None) -> dict[str, Any]:
     ws = _normalize_workspace(workspace)
     if not ws:
@@ -1013,6 +1114,273 @@ def workspace_inspect_payload(workspace: str | None) -> dict[str, Any]:
         "python_files_preview": python_files[:25],
         "requirements_files_found": detected_req_files,
         "config": cfg,
+    }
+
+
+def workspace_entrypoint_set_payload(
+    workspace: str | None,
+    entrypoint: str | None,
+) -> dict[str, Any]:
+    ws = _normalize_workspace(workspace)
+    if not ws:
+        return {"ok": False, "workspace": None, "error": "workspace is required"}
+    ws_path = Path(ws)
+    if not ws_path.exists() or not ws_path.is_dir():
+        return {"ok": False, "workspace": ws, "error": "workspace not found"}
+
+    raw = str(entrypoint or "").strip()
+    if not raw:
+        return {"ok": False, "workspace": ws, "error": "entrypoint is required"}
+
+    should_exclude_file = None
+    exclusion_patterns: list[str] = []
+    try:
+        from Core.ArkConfigManager import load_ark_config, should_exclude_file
+
+        cfg = load_ark_config(str(ws_path))
+        exclusion_patterns = cfg.get("exclusion_patterns", []) if isinstance(cfg, dict) else []
+    except Exception:
+        cfg = _load_workspace_config(str(ws_path))
+        exclusion_patterns = cfg.get("exclusion_patterns", []) if isinstance(cfg, dict) else []
+        should_exclude_file = None  # type: ignore[assignment]
+
+    python_files = _scan_workspace_python_files(
+        ws_path,
+        list(exclusion_patterns) if isinstance(exclusion_patterns, list) else [],
+        should_exclude_file_fn=should_exclude_file,
+    )
+    resolved, err = _resolve_entrypoint_for_workspace(ws_path, python_files, raw)
+    if err:
+        return {"ok": False, "workspace": ws, "entrypoint": resolved, "error": err}
+    try:
+        from Core.ArkConfigManager import set_entrypoint
+
+        ok = bool(set_entrypoint(ws, resolved))
+    except Exception as exc:
+        return {
+            "ok": False,
+            "workspace": ws,
+            "entrypoint": resolved,
+            "error": f"unable to persist workspace entrypoint: {exc}",
+        }
+    inspect = workspace_inspect_payload(ws)
+    return {
+        "ok": ok,
+        "workspace": ws,
+        "entrypoint": inspect.get("entrypoint"),
+        "inspect": inspect,
+    }
+
+
+def workspace_entrypoint_clear_payload(workspace: str | None) -> dict[str, Any]:
+    ws = _normalize_workspace(workspace)
+    if not ws:
+        return {"ok": False, "workspace": None, "error": "workspace is required"}
+    ws_path = Path(ws)
+    if not ws_path.exists() or not ws_path.is_dir():
+        return {"ok": False, "workspace": ws, "error": "workspace not found"}
+    try:
+        from Core.ArkConfigManager import set_entrypoint
+
+        ok = bool(set_entrypoint(ws, None))
+    except Exception as exc:
+        return {"ok": False, "workspace": ws, "error": f"unable to clear entrypoint: {exc}"}
+    inspect = workspace_inspect_payload(ws)
+    return {
+        "ok": ok,
+        "workspace": ws,
+        "entrypoint": inspect.get("entrypoint"),
+        "inspect": inspect,
+    }
+
+
+def venv_status_payload(workspace: str | None) -> dict[str, Any]:
+    ws = _normalize_workspace(workspace)
+    if not ws:
+        return {"ok": False, "workspace": None, "error": "workspace is required"}
+    ws_path = Path(ws)
+    if not ws_path.exists() or not ws_path.is_dir():
+        return {"ok": False, "workspace": ws, "error": "workspace not found"}
+    gui = _HeadlessGui(workspace_dir=ws)
+    manager = getattr(gui, "venv_manager", None)
+    if manager is None:
+        return {"ok": False, "workspace": ws, "error": "venv manager unavailable"}
+
+    mode = "system" if bool(getattr(gui, "use_system_python", False)) else "none"
+    venv_path = None
+    try:
+        venv_path = manager.resolve_existing_venv(ws)
+    except Exception:
+        venv_path = getattr(gui, "venv_path_manuel", None)
+    if mode != "system" and venv_path:
+        mode = "venv"
+
+    pref_path = Path(ws) / ".ark" / "pref.json"
+    pref = None
+    try:
+        if pref_path.exists():
+            pref = json.loads(pref_path.read_text(encoding="utf-8"))
+    except Exception:
+        pref = None
+    return {
+        "ok": True,
+        "workspace": ws,
+        "mode": mode,
+        "venv_path": venv_path,
+        "pref_path": str(pref_path),
+        "pref_exists": pref_path.exists(),
+        "pref": pref,
+    }
+
+
+def venv_use_system_payload(workspace: str | None) -> dict[str, Any]:
+    ws = _normalize_workspace(workspace)
+    if not ws:
+        return {"ok": False, "workspace": None, "error": "workspace is required"}
+    ws_path = Path(ws)
+    if not ws_path.exists() or not ws_path.is_dir():
+        return {"ok": False, "workspace": ws, "error": "workspace not found"}
+    try:
+        _set_workspace_pref(ws_path, "system", None)
+    except Exception as exc:
+        return {
+            "ok": False,
+            "workspace": ws,
+            "error": f"unable to save workspace venv preference: {exc}",
+        }
+    return venv_status_payload(ws)
+
+
+def venv_use_venv_payload(
+    workspace: str | None,
+    *,
+    venv_path: str | None = None,
+    create_if_missing: bool = False,
+) -> dict[str, Any]:
+    ws = _normalize_workspace(workspace)
+    if not ws:
+        return {"ok": False, "workspace": None, "error": "workspace is required"}
+    ws_path = Path(ws)
+    if not ws_path.exists() or not ws_path.is_dir():
+        return {"ok": False, "workspace": ws, "error": "workspace not found"}
+
+    target = None
+    if venv_path:
+        raw = str(venv_path).strip()
+        p = Path(raw)
+        if not p.is_absolute():
+            p = (ws_path / raw).resolve()
+        target = p
+    else:
+        detected = _detect_existing_workspace_venv(ws_path)
+        if detected is not None:
+            target = detected
+        elif create_if_missing:
+            ok, _created, path, err = _ensure_workspace_venv(ws_path)
+            if not ok or not path:
+                return {
+                    "ok": False,
+                    "workspace": ws,
+                    "error": f"unable to create workspace venv: {err}",
+                }
+            target = Path(path)
+        else:
+            return {
+                "ok": False,
+                "workspace": ws,
+                "error": "venv path is required (or use --create)",
+            }
+    if not target or not target.is_dir():
+        return {"ok": False, "workspace": ws, "error": "venv path not found"}
+    py = _venv_python_path(target)
+    if not py.exists():
+        return {"ok": False, "workspace": ws, "error": "venv python executable not found"}
+    try:
+        _set_workspace_pref(ws_path, "venv", str(target))
+    except Exception as exc:
+        return {
+            "ok": False,
+            "workspace": ws,
+            "error": f"unable to save workspace venv preference: {exc}",
+        }
+    return venv_status_payload(ws)
+
+
+def venv_install_requirements_payload(
+    workspace: str | None,
+    *,
+    force_pip: bool = False,
+) -> dict[str, Any]:
+    ws = _normalize_workspace(workspace)
+    if not ws:
+        return {"ok": False, "workspace": None, "error": "workspace is required"}
+    ws_path = Path(ws)
+    if not ws_path.exists() or not ws_path.is_dir():
+        return {"ok": False, "workspace": ws, "error": "workspace not found"}
+
+    gui = _HeadlessGui(workspace_dir=ws)
+    manager = getattr(gui, "venv_manager", None)
+    if manager is None:
+        return {"ok": False, "workspace": ws, "error": "venv manager unavailable"}
+
+    req_file = None
+    try:
+        req_file = manager._get_requirements_file(ws)  # noqa: SLF001
+    except Exception:
+        pass
+    if not req_file:
+        return {
+            "ok": True,
+            "workspace": ws,
+            "installed": False,
+            "reason": "no requirements file found",
+        }
+
+    use_system = bool(getattr(gui, "use_system_python", False))
+    python_bin = sys.executable
+    venv_path = None
+    if not use_system:
+        try:
+            venv_path = manager.resolve_project_venv()
+        except Exception:
+            venv_path = None
+        if not venv_path:
+            return {"ok": False, "workspace": ws, "error": "no resolved project venv"}
+        try:
+            python_bin = manager.python_path(venv_path)
+        except Exception:
+            python_bin = sys.executable
+
+    cmd = [python_bin, "-m", "pip", "install", "-r", str(req_file)]
+    if use_system and platform.system() == "Linux":
+        cmd = [python_bin, "-m", "pip", "install", "--break-system-packages", "-r", str(req_file)]
+
+    try:
+        proc = subprocess.run(
+            cmd,
+            cwd=ws,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            timeout=1800,
+            check=False,
+        )
+    except Exception as exc:
+        return {"ok": False, "workspace": ws, "error": f"requirements installation failed: {exc}"}
+
+    return {
+        "ok": proc.returncode == 0,
+        "installed": proc.returncode == 0,
+        "workspace": ws,
+        "requirements_file": str(req_file),
+        "mode": "system" if use_system else "venv",
+        "venv_path": venv_path,
+        "python": python_bin,
+        "command": " ".join(shlex.quote(str(x)) for x in cmd),
+        "return_code": proc.returncode,
+        "stdout": proc.stdout,
+        "stderr": proc.stderr,
+        "force_pip": bool(force_pip),
     }
 
 

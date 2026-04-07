@@ -5,6 +5,7 @@ from __future__ import annotations
 
 """Click-based CLI frontend for PyCompiler ARK."""
 
+import json
 from pathlib import Path
 import sys
 
@@ -26,13 +27,21 @@ from .headless_ops import (
     doctor_payload,
     emit_json,
     engine_config_path_payload,
+    engine_config_reset_payload,
+    engine_config_set_payload,
     engine_config_show_payload,
     engine_doctor_payload,
     engine_info_payload,
     engine_list_payload,
     scaffold_engine,
     scaffold_plugin,
+    venv_install_requirements_payload,
+    venv_status_payload,
+    venv_use_system_payload,
+    venv_use_venv_payload,
     workspace_config_auto_payload,
+    workspace_entrypoint_clear_payload,
+    workspace_entrypoint_set_payload,
     workspace_init_payload,
     workspace_inspect_payload,
 )
@@ -450,6 +459,72 @@ def build_cli(app_version: str):
             raise click.ClickException("Workspace is required")
         plain(payload.get("path", ""))
 
+    @engine_config.command("set")
+    @click.argument("engine_id")
+    @click.option("-w", "--workspace", required=True, type=click.Path(exists=False))
+    @click.option("--options-json", type=str, help="Inline JSON object with engine options")
+    @click.option("--options-file", type=click.Path(exists=True), help="Path to JSON file with engine options")
+    @click.option("--replace", is_flag=True, help="Replace options instead of merge")
+    @click.option("--json", "as_json", is_flag=True)
+    def engine_config_set(engine_id, workspace, options_json, options_file, replace, as_json):
+        if bool(options_json) == bool(options_file):
+            raise click.ClickException("Provide exactly one of --options-json or --options-file")
+        try:
+            if options_file:
+                options = json.loads(Path(options_file).read_text(encoding="utf-8"))
+            else:
+                options = json.loads(options_json)
+        except Exception as exc:
+            raise click.ClickException(f"Invalid JSON options: {exc}")
+        if not isinstance(options, dict):
+            raise click.ClickException("Engine options must be a JSON object")
+        payload = engine_config_set_payload(
+            engine_id,
+            workspace=_resolve_workspace_path(workspace),
+            options=options,
+            merge=not bool(replace),
+        )
+        if as_json:
+            if payload.get("error") == "workspace is required":
+                _emit_and_exit(payload, EXIT_WORKSPACE_INVALID, as_json=True)
+            if payload.get("found") is False:
+                _emit_and_exit(payload, EXIT_ENGINE_NOT_FOUND, as_json=True)
+            if not payload.get("saved"):
+                _emit_and_exit(payload, EXIT_PRECHECK_FAILED, as_json=True)
+            _echo_payload(payload, as_json=True)
+            return
+        if payload.get("found") is False:
+            raise click.ClickException(f"Engine not found: {engine_id}")
+        if not payload.get("saved"):
+            raise click.ClickException(payload.get("error", "Unable to save engine config"))
+        success(f"Engine config saved: {engine_id}")
+        plain(f"  Path: {payload.get('path')}")
+
+    @engine_config.command("reset")
+    @click.argument("engine_id")
+    @click.option("-w", "--workspace", required=True, type=click.Path(exists=False))
+    @click.option("--json", "as_json", is_flag=True)
+    def engine_config_reset(engine_id, workspace, as_json):
+        payload = engine_config_reset_payload(
+            engine_id,
+            workspace=_resolve_workspace_path(workspace),
+        )
+        if as_json:
+            if payload.get("error") == "workspace is required":
+                _emit_and_exit(payload, EXIT_WORKSPACE_INVALID, as_json=True)
+            if payload.get("found") is False:
+                _emit_and_exit(payload, EXIT_ENGINE_NOT_FOUND, as_json=True)
+            if not payload.get("reset"):
+                _emit_and_exit(payload, EXIT_PRECHECK_FAILED, as_json=True)
+            _echo_payload(payload, as_json=True)
+            return
+        if payload.get("found") is False:
+            raise click.ClickException(f"Engine not found: {engine_id}")
+        if not payload.get("reset"):
+            raise click.ClickException(payload.get("error", "Unable to reset engine config"))
+        success(f"Engine config reset: {engine_id}")
+        plain(f"  Path: {payload.get('path')}")
+
     @engine.command("dry-run")
     @click.argument("engine_id")
     @click.argument("file_path", type=click.Path(exists=True))
@@ -500,6 +575,83 @@ def build_cli(app_version: str):
         else:
             raise click.ClickException(result.get("error", "Compilation failed"))
 
+    @cli.group()
+    def venv():
+        """Manage workspace virtual environment preferences."""
+
+    @venv.command("status")
+    @click.argument("workspace", required=False, type=click.Path(exists=False))
+    @click.option("--json", "as_json", is_flag=True)
+    def venv_status(workspace, as_json):
+        payload = venv_status_payload(_resolve_workspace_path(workspace or "."))
+        if as_json:
+            if not payload.get("ok"):
+                _emit_and_exit(payload, EXIT_WORKSPACE_INVALID, as_json=True)
+            _echo_payload(payload, as_json=True)
+            return
+        if not payload.get("ok"):
+            raise click.ClickException(payload.get("error", "Unable to inspect venv status"))
+        plain(f"Workspace: {payload.get('workspace')}")
+        plain(f"  Mode: {payload.get('mode')}")
+        plain(f"  Venv: {payload.get('venv_path') or '(none)'}")
+        plain(f"  Pref file: {payload.get('pref_path')}")
+
+    @venv.command("use-system")
+    @click.argument("workspace", required=False, type=click.Path(exists=False))
+    @click.option("--json", "as_json", is_flag=True)
+    def venv_use_system(workspace, as_json):
+        payload = venv_use_system_payload(_resolve_workspace_path(workspace or "."))
+        if as_json:
+            if not payload.get("ok"):
+                _emit_and_exit(payload, EXIT_WORKSPACE_INVALID, as_json=True)
+            _echo_payload(payload, as_json=True)
+            return
+        if not payload.get("ok"):
+            raise click.ClickException(payload.get("error", "Unable to set system python mode"))
+        success("Workspace venv mode set to system")
+
+    @venv.command("use-venv")
+    @click.argument("workspace", required=False, type=click.Path(exists=False))
+    @click.argument("venv_path", required=False, type=click.Path(exists=False))
+    @click.option("--create", is_flag=True, help="Create .venv when no venv path is provided")
+    @click.option("--json", "as_json", is_flag=True)
+    def venv_use_venv(workspace, venv_path, create, as_json):
+        payload = venv_use_venv_payload(
+            _resolve_workspace_path(workspace or "."),
+            venv_path=venv_path,
+            create_if_missing=bool(create),
+        )
+        if as_json:
+            if not payload.get("ok"):
+                _emit_and_exit(payload, EXIT_PRECHECK_FAILED, as_json=True)
+            _echo_payload(payload, as_json=True)
+            return
+        if not payload.get("ok"):
+            raise click.ClickException(payload.get("error", "Unable to set venv mode"))
+        success("Workspace venv mode set to venv")
+        plain(f"  Venv: {payload.get('venv_path')}")
+
+    @venv.command("install-req")
+    @click.argument("workspace", required=False, type=click.Path(exists=False))
+    @click.option("--force-pip", is_flag=True, help="Force pip-based install mode")
+    @click.option("--json", "as_json", is_flag=True)
+    def venv_install_req(workspace, force_pip, as_json):
+        payload = venv_install_requirements_payload(
+            _resolve_workspace_path(workspace or "."),
+            force_pip=bool(force_pip),
+        )
+        if as_json:
+            if not payload.get("ok"):
+                _emit_and_exit(payload, EXIT_PRECHECK_FAILED, as_json=True)
+            _echo_payload(payload, as_json=True)
+            return
+        if not payload.get("ok"):
+            raise click.ClickException(payload.get("error", "Requirements installation failed"))
+        if payload.get("installed") is False:
+            info(payload.get("reason", "No requirements installation needed"))
+            return
+        success("Requirements installed")
+
     # Enregistrement modulaire des commandes workspace.
     register_workspace_commands(
         cli=cli,
@@ -510,6 +662,8 @@ def build_cli(app_version: str):
         workspace_init_emit=_workspace_init_emit,
         workspace_config_auto_emit=_workspace_config_auto_emit,
         workspace_inspect_payload=workspace_inspect_payload,
+        workspace_entrypoint_set_payload=workspace_entrypoint_set_payload,
+        workspace_entrypoint_clear_payload=workspace_entrypoint_clear_payload,
     )
 
     # Enregistrement modulaire des commandes qualité (doctor/check).
