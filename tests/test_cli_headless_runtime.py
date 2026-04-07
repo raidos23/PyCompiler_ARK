@@ -48,6 +48,7 @@ def test_should_enable_qt_for_gui_commands() -> None:
     assert should_enable_qt(["gui", "main", "--ide"]) is True
     assert should_enable_qt(["--ide-gui"]) is True
     assert should_enable_qt(["engines"]) is True
+    assert should_enable_qt(["bcasl"]) is True
 
 
 def test_cli_modules_import_without_qt_bootstrap_side_effects() -> None:
@@ -81,3 +82,20 @@ def test_entrypoint_returns_usage_error_for_unknown_command() -> None:
     code = entrypoint_main(["ci", "smoke"])
 
     assert code == 2
+
+
+def test_fallback_check_is_strict_by_default(monkeypatch) -> None:
+    monkeypatch.setattr(
+        "cli.fallback.ci_smoke_payload",
+        lambda workspace=None, require_entrypoint=False: {
+            "workspace": workspace,
+            "require_entrypoint": require_entrypoint,
+            "ok": False,
+            "failed_count": 1,
+            "checks": [{"name": "workspace_entrypoint", "ok": False, "message": "missing"}],
+        },
+    )
+
+    code = fallback.run(["check", "."], "test")
+
+    assert code == 3

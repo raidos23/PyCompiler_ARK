@@ -133,9 +133,9 @@ def _print_cmdline(command: str) -> None:
 
 def _print_banner(app_version: str) -> None:
     if _RICH_CONSOLE is None:
-        plain("PyCompiler ARK - CLI dediee")
+        plain("PyCompiler ARK - dedicated CLI")
         plain(f"Version {app_version}")
-        plain("Tape `help` pour la liste des commandes, `exit` pour quitter.")
+        plain("Type `help` for commands and `exit` to quit.")
         return
 
     ascii_title = None
@@ -167,32 +167,32 @@ def _print_banner(app_version: str) -> None:
 def _print_help() -> None:
     if _RICH_CONSOLE is None or Table is None:
         plain("")
-        plain("Commandes disponibles")
-        plain("  help                  Affiche cette aide")
-        plain("  info                  Affiche les infos système")
-        plain("  version               Affiche la version")
-        plain("  main                  Lance l'application principale (GUI)")
-        plain("  main --ide-gui        Lance l'application principale (IDE GUI)")
-        plain("  bcasl [workspace]     Lance BCASL standalone (GUI)")
-        plain("  bcasl help            Aide des commandes BCASL")
-        plain("  bcasl list            Liste les plugins BCASL (headless)")
-        plain("  bcasl run <workspace> Execute BCASL sans GUI")
-        plain("  engines [workspace]   Lance Engines standalone (GUI)")
-        plain("  engine help           Aide des commandes engine")
-        plain("  engine list           Liste detaillee des engines")
-        plain("  engine compat <id>    Verifie la compatibilite d'un engine")
-        plain("  engine info <id>      Affiche les infos d'un engine")
-        plain("  engine dry-run <id> <file>  Affiche la commande de compilation")
-        plain("  engine compile <id> <file>  Execute la compilation")
-        plain("  check [workspace]     Execute un check CI/CD strict")
-        plain("  init [workspace] [--with-venv]  Initialise le workspace")
-        plain("  config-auto [workspace]  Auto-configure le workspace")
-        plain("  cfg-auto [workspace]     Alias de config-auto")
-        plain("  ws init [workspace]      Alias de init")
-        plain("  ws config-auto [workspace] Alias de config-auto")
-        plain("  engines --dry-run     Liste les moteurs disponibles")
-        plain("  unload                Decharge tous les moteurs enregistres")
-        plain("  exit | quit           Quitte la CLI dédiée")
+        plain("Available commands")
+        plain("  help                  Show this help")
+        plain("  info                  Show system information")
+        plain("  version               Show app version")
+        plain("  main                  Launch main app (GUI)")
+        plain("  main --ide-gui        Launch main app (IDE GUI)")
+        plain("  bcasl [workspace]     Launch BCASL standalone (GUI)")
+        plain("  bcasl help            BCASL command help")
+        plain("  bcasl list            List BCASL plugins (headless)")
+        plain("  bcasl run <workspace> Run BCASL without GUI")
+        plain("  engines [workspace]   Launch Engines standalone (GUI)")
+        plain("  engine help           Engine command help")
+        plain("  engine list           List engines with compatibility")
+        plain("  engine compat <id>    Check engine compatibility")
+        plain("  engine info <id>      Show engine metadata")
+        plain("  engine dry-run <id> <file>  Preview compile command")
+        plain("  engine compile <id> <file>  Run compilation")
+        plain("  check [workspace]     Run strict CI/CD check")
+        plain("  init [workspace] [--with-venv]  Initialize workspace")
+        plain("  config-auto [workspace]  Auto-configure workspace")
+        plain("  cfg-auto [workspace]     Alias for config-auto")
+        plain("  ws init [workspace]      Alias for init")
+        plain("  ws config-auto [workspace] Alias for config-auto")
+        plain("  engines --dry-run     List available engines")
+        plain("  unload                Unload all registered engines")
+        plain("  exit | quit           Close dedicated CLI")
         plain("")
         return
 
@@ -250,9 +250,9 @@ def _run_engines(args: list[str]) -> int:
                 table.add_row(str(idx), eid)
             _RICH_CONSOLE.print(table)
         else:
-            plain(f"Moteurs disponibles ({len(engines)})")
+            plain(f"Available engines ({len(engines)})")
             for eid in engines:
-                plain(f"  • {eid}")
+                plain(f"  - {eid}")
         return 0
     workspace = _resolve_workspace(args[0]) if args else None
     return launch_engines_gui(workspace)
@@ -267,7 +267,7 @@ def _new_bcasl_app(workspace: str | None = None):
     try:
         from OnlyMod.BcaslOnlyMod.app import BcaslOnlyModApp
     except Exception as exc:
-        error(f"Impossible de charger le module BCASL: {exc}")
+        error(f"Unable to load BCASL module: {exc}")
         return None
 
     try:
@@ -278,20 +278,20 @@ def _new_bcasl_app(workspace: str | None = None):
             headless=True,
         )
     except Exception as exc:
-        error(f"Echec d'initialisation du mode BCASL: {exc}")
+        error(f"Failed to initialize BCASL mode: {exc}")
         return None
 
 
 def _print_bcasl_help() -> None:
     if _RICH_CONSOLE is None or Table is None:
         plain("")
-        plain("Commandes bcasl")
+        plain("BCASL commands")
         plain("  bcasl [workspace]")
         plain("  bcasl list")
         plain("  bcasl run <workspace> [--timeout SECONDS]")
         plain("  bcasl run -w <workspace> [--timeout SECONDS]")
         plain("")
-        plain("Exemples:")
+        plain("Examples:")
         plain("  bcasl")
         plain("  bcasl /path/to/workspace")
         plain("  bcasl list")
@@ -428,7 +428,7 @@ def _new_engines_app(workspace: str | None = None):
     try:
         from OnlyMod.EngineOnlyMod.app import EnginesStandaloneApp
     except Exception as exc:
-        error(f"Impossible de charger le module engines: {exc}")
+        error(f"Unable to load engines module: {exc}")
         return None
 
     try:
@@ -440,21 +440,21 @@ def _new_engines_app(workspace: str | None = None):
             headless=True,
         )
     except Exception as exc:
-        error(f"Echec d'initialisation du mode engines: {exc}")
+        error(f"Failed to initialize engines mode: {exc}")
         return None
 
 
 def _print_engine_help() -> None:
     if _RICH_CONSOLE is None or Table is None:
         plain("")
-        plain("Commandes engine")
+        plain("Engine commands")
         plain("  engine list [-w|--workspace PATH]")
         plain("  engine compat <engine_id> [-w|--workspace PATH]")
         plain("  engine info <engine_id> [-w|--workspace PATH]")
         plain("  engine dry-run <engine_id> <file.py> [-w|--workspace PATH]")
         plain("  engine compile <engine_id> <file.py> [-w|--workspace PATH]")
         plain("")
-        plain("Exemples:")
+        plain("Examples:")
         plain("  engine list")
         plain("  engine compat nuitka")
         plain("  engine info pyinstaller")
@@ -612,9 +612,9 @@ def _run_unload() -> int:
     if result["status"] == "success":
         success(result["message"])
         if result["unloaded"]:
-            plain("  Moteurs déchargés:")
+            plain("  Unloaded engines:")
             for eid in result["unloaded"]:
-                plain(f"    • {eid}")
+                plain(f"    - {eid}")
     else:
         error(result["message"])
     return 0 if result["status"] == "success" else 1
@@ -768,7 +768,7 @@ def run_dedicated_cli(app_version: str) -> int:
                 line = input("ark-cli> ").strip()
         except (EOFError, KeyboardInterrupt):
             plain("")
-            info("Fermeture de la CLI dédiée.")
+            info("Closing dedicated CLI.")
             return 0
 
         if not line:
@@ -777,7 +777,7 @@ def run_dedicated_cli(app_version: str) -> int:
         try:
             parts = shlex.split(line)
         except Exception as exc:
-            error(f"Commande invalide: {exc}")
+            error(f"Invalid command: {exc}")
             continue
 
         cmd = parts[0].lower()
@@ -785,7 +785,7 @@ def run_dedicated_cli(app_version: str) -> int:
 
         try:
             if cmd in ("exit", "quit"):
-                info("CLI dédiée fermée.")
+                info("Dedicated CLI closed.")
                 return 0
             if cmd in ("help", "h", "?"):
                 _print_help()
@@ -803,7 +803,7 @@ def run_dedicated_cli(app_version: str) -> int:
                     if low in ("--ide-gui", "ide", "idelike", "ide-like"):
                         ide_gui = True
                     else:
-                        warn(f"Option inconnue pour main: {tok}")
+                        warn(f"Unknown option for main: {tok}")
                         plain("Usage: main [--ide-gui]")
                         ide_gui = False
                         break
@@ -855,12 +855,12 @@ def run_dedicated_cli(app_version: str) -> int:
                 if sub in ("config-auto", "cfg-auto"):
                     _run_config_auto(ws_args)
                     continue
-                warn(f"Sous-commande ws inconnue: {sub}")
+                warn(f"Unknown ws subcommand: {sub}")
                 continue
             if cmd == "unload":
                 _run_unload()
                 continue
-            warn(f"Commande inconnue: {cmd}")
-            plain("Tape `help` pour voir les commandes.")
+            warn(f"Unknown command: {cmd}")
+            plain("Type `help` to list commands.")
         except Exception as exc:
-            error(f"Erreur interne: {exc}")
+            error(f"Internal error: {exc}")
