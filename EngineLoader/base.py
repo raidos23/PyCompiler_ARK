@@ -169,7 +169,7 @@ class CompilerEngine:
         Return dict of required tools with installation modes.
         Keys: 'python' for pip-installable tools, 'system' for system packages.
         Used by VenvManager for Python tools and system installer for system tools.
-        Example: {'python': ['pyinstaller'], 'system': ['build-essential']}
+        Example: {'python': ['<tool_name>'], 'system': ['<system_package>']}
         """
         return {"python": [], "system": []}
 

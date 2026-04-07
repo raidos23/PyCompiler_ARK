@@ -131,6 +131,19 @@ __all__ = [
     "_continue_compile_all",
 ]
 
+
+def _resolve_default_engine_id() -> str:
+    """Resolve a default engine dynamically from the registered engines."""
+    try:
+        import EngineLoader as engines_loader
+
+        engine_ids = list(engines_loader.available_engines())
+        if engine_ids:
+            return str(engine_ids[0])
+    except Exception:
+        pass
+    return "engine"
+
 __version__ = "1.0.0"
 __author__ = "Ague Samuel Amen"
 
@@ -327,7 +340,7 @@ def compile_all(self) -> None:
         )
 
     if not engine_id:
-        engine_id = "pyinstaller"  # Moteur par défaut
+        engine_id = _resolve_default_engine_id()
 
     # Sauvegarder la configuration UI de l'engine actif dans le workspace
     try:
@@ -829,7 +842,7 @@ def try_start_processes(self) -> bool:
         pass
 
     if not engine_id:
-        engine_id = "pyinstaller"
+        engine_id = _resolve_default_engine_id()
 
     # Compiler le premier fichier
     return start_compilation_process(self, engine_id, self.python_files[0])
