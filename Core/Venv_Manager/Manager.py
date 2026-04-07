@@ -496,17 +496,22 @@ class VenvManager:
             )
             if not os.path.isdir(bindir):
                 return False
+            raw = str(tool or "").strip()
+            if not raw:
+                return False
+            lower = raw.lower()
+            variants = {lower}
+            if "_" in lower:
+                variants.add(lower.replace("_", "-"))
+                variants.add(lower.replace("_", ""))
+            if "-" in lower:
+                variants.add(lower.replace("-", "_"))
+                variants.add(lower.replace("-", ""))
+            variants.add(f"{lower}3")
+
             names: list[str] = []
-            t = tool.strip().lower()
-            if t == "pyinstaller":
-                names = ["pyinstaller", "pyinstaller.exe", "pyinstaller-script.py"]
-            elif t == "nuitka":
-                names = ["nuitka", "nuitka3", "nuitka.exe", "nuitka-script.py"]
-            elif t == "cx_freeze":
-                names = ["cxfreeze", "cxfreeze.exe", "cxfreeze-script.py"]
-            else:
-                # generic: try tool, tool.exe, and tool-script.py
-                names = [t, f"{t}.exe", f"{t}-script.py"]
+            for name in sorted(variants):
+                names.extend([name, f"{name}.exe", f"{name}-script.py"])
             for n in names:
                 p = os.path.join(bindir, n)
                 if os.path.isfile(p):
@@ -517,6 +522,39 @@ class VenvManager:
             return False
         except Exception:
             return False
+
+    def _discover_engine_required_python_tools(self) -> list[str]:
+        """Discover python tools required by available engines dynamically."""
+        tools: list[str] = []
+        try:
+            import EngineLoader as engines_loader
+
+            for engine_id in list(engines_loader.available_engines()):
+                try:
+                    engine = engines_loader.create(engine_id)
+                except Exception:
+                    engine = None
+                if engine is None:
+                    continue
+                req = getattr(engine, "required_tools", {"python": [], "system": []})
+                if not isinstance(req, dict):
+                    continue
+                for item in req.get("python", []) or []:
+                    name = str(item or "").strip()
+                    if name:
+                        tools.append(name)
+        except Exception:
+            pass
+
+        unique: list[str] = []
+        seen: set[str] = set()
+        for tool in tools:
+            key = tool.lower()
+            if key in seen:
+                continue
+            seen.add(key)
+            unique.append(tool)
+        return unique
 
     def is_tool_installed(self, venv_root: str, tool: str) -> bool:
         """Non-blocking check for tool presence in venv.
@@ -1374,7 +1412,13 @@ class VenvManager:
                     "Scripts" if platform.system() == "Windows" else "bin",
                     "pip",
                 )
-                self._venv_check_pkgs = ["pyinstaller", "nuitka", "cx_freeze"]
+                self._venv_check_pkgs = self._discover_engine_required_python_tools()
+                if not self._venv_check_pkgs:
+                    self._safe_log(
+                        "ℹ️ Aucun outil Python requis détecté depuis les engines.",
+                        "ℹ️ No required Python tools detected from engines.",
+                    )
+                    return
                 self._venv_check_index = 0
                 self._venv_check_pip_exe = pip_exe
                 self._venv_check_path = venv_path
@@ -1384,7 +1428,9 @@ class VenvManager:
                 self._bind_cancel_for_dialog(
                     self.venv_check_progress, "vérification des outils du venv"
                 )
-                self.venv_check_progress.set_message("Vérification de PyInstaller...")
+                self.venv_check_progress.set_message(
+                    f"Vérification de {self._venv_check_pkgs[0]}..."
+                )
                 self.venv_check_progress.set_progress(0, len(self._venv_check_pkgs))
                 self.venv_check_progress.show()
                 self._check_next_venv_pkg()
@@ -1692,8 +1738,7 @@ class VenvManager:
 
         Scoring criteria:
         - Has requirements.txt satisfied: +100
-        - Has pyinstaller: +50
-        - Has nuitka: +50
+        - Has required engine python tools: +50 each
         - Has pip/setuptools/wheel: +30
         - Is valid venv: +10
         - Has binding verified: +20
@@ -1727,14 +1772,10 @@ class VenvManager:
                     reasons.append("requirements_unknown")
 
             # Check for key tools
-            tools_to_check = [
-                ("pyinstaller", 50),
-                ("nuitka", 50),
-                ("cx_freeze", 50),
-            ]
-            for tool, tool_score in tools_to_check:
+            tools_to_check = self._discover_engine_required_python_tools()
+            for tool in tools_to_check:
                 if self.has_tool_binary(venv_path, tool):
-                    score += tool_score
+                    score += 50
                     reasons.append(f"has_{tool}")
 
             # Check for pip/setuptools/wheel
@@ -1940,7 +1981,7 @@ class VenvManager:
             self._arm_process_timeout(process, 600_000, "venv creation")
         except Exception as e:
             self._safe_log(
-                f"❌ Échec de création du venv ou installation de PyInstaller : {e}"
+                f"❌ Échec de création du venv ou installation des outils : {e}"
             )
 
     def _on_venv_output(self, process, error=False):
@@ -3270,7 +3311,7 @@ class VenvManager:
 
         Args:
             workspace_dir: Path to the workspace directory
-            check_tools: Whether to check and install tools (pyinstaller, nuitka, cx_freeze)
+            check_tools: Whether to check and install tools required by discovered engines
                         after venv creation. Defaults to True.
 
         Returns:
