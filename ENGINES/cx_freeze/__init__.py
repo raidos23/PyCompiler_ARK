@@ -68,6 +68,9 @@ class CXFreezeEngine(CompilerEngine):
     def build_command(self, gui, file: str) -> list[str]:
         """Build the CX_Freeze command line."""
         try:
+            cfg = getattr(self, "_config_overrides", {})
+            if not isinstance(cfg, dict):
+                cfg = {}
             venv_manager = getattr(gui, "venv_manager", None)
 
             # Resolve venv python
@@ -86,29 +89,49 @@ class CXFreezeEngine(CompilerEngine):
             # Add options from UI
             # Windowed mode (Windows only)
             windowed = self._get_opt("windowed")
-            if windowed and windowed.isChecked() and platform.system() == "Windows":
+            windowed_enabled = bool(cfg.get("windowed", False))
+            if windowed is not None:
+                windowed_enabled = bool(windowed.isChecked())
+            if windowed_enabled and platform.system() == "Windows":
                 cmd.extend(["--base", "Win32GUI"])
 
             # Output directory
             output_dir = self._get_input("output_dir")
+            output_dir_value = str(cfg.get("output_dir") or "").strip()
             if output_dir and output_dir.text().strip():
-                cmd.extend(["--target-dir", output_dir.text().strip()])
+                output_dir_value = output_dir.text().strip()
+            if output_dir_value:
+                cmd.extend(["--target-dir", output_dir_value])
 
             # Icon
+            selected_icon = ""
             if hasattr(self, "_selected_icon") and self._selected_icon:
-                cmd.extend(["--icon", self._selected_icon])
+                selected_icon = str(self._selected_icon).strip()
+            if not selected_icon:
+                selected_icon = str(cfg.get("selected_icon") or "").strip()
+            if selected_icon:
+                cmd.extend(["--icon", selected_icon])
 
             # Target name
             target_name = self._get_input("target_name")
+            target_name_value = str(cfg.get("target_name") or "").strip()
             if target_name and target_name.text().strip():
-                cmd.extend(["--target-name", target_name.text().strip()])
+                target_name_value = target_name.text().strip()
+            if target_name_value:
+                cmd.extend(["--target-name", target_name_value])
 
             # Debug / verbose
             debug = self._get_opt("debug")
-            if debug and debug.isChecked():
+            debug_enabled = bool(cfg.get("debug", False))
+            if debug is not None:
+                debug_enabled = bool(debug.isChecked())
+            if debug_enabled:
                 cmd.append("--debug")
             verbose = self._get_opt("verbose")
-            if verbose and verbose.isChecked():
+            verbose_enabled = bool(cfg.get("verbose", False))
+            if verbose is not None:
+                verbose_enabled = bool(verbose.isChecked())
+            if verbose_enabled:
                 cmd.append("--verbose")
 
             # Auto-mapping args (mapping.json / auto builder)
@@ -331,6 +354,10 @@ class CXFreezeEngine(CompilerEngine):
         """Apply a config dict to CX_Freeze UI widgets."""
         if not isinstance(cfg, dict):
             return
+        try:
+            self._config_overrides = dict(cfg)
+        except Exception:
+            self._config_overrides = {}
         try:
             if (
                 hasattr(self, "_cx_windowed")
