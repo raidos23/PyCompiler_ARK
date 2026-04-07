@@ -38,6 +38,7 @@ import sys
 import json
 import logging
 import subprocess
+import platform
 from pathlib import Path
 from typing import Optional, Dict, Any, List
 from datetime import datetime
@@ -629,21 +630,35 @@ class EnginesStandaloneApp:
                 "duration_ms": 0,
             }
 
-        # Keep GUI behavior for tool checks when an interactive UI is available.
-        # In headless mode, some tool-install flows rely on Qt dialogs.
-        if not self.headless:
+        # Ensure required tools are available before real compilation.
+        # In headless mode we use a synchronous preflight suited for CI/CD.
+        if not (dry_run or self.dry_run):
             try:
-                if not engine.ensure_tools_installed(self.gui):
+                if self.headless:
+                    tools_ok, tools_error = self._ensure_engine_tools_headless(engine)
+                else:
+                    tools_ok = bool(engine.ensure_tools_installed(self.gui))
+                    tools_error = (
+                        "Engine required tools are missing or installation failed"
+                    )
+                if not tools_ok:
                     return {
                         "success": False,
-                        "error": "Engine required tools are missing or installation failed",
+                        "error": tools_error,
                         "return_code": -1,
                         "stdout": "",
                         "stderr": "",
                         "duration_ms": 0,
                     }
-            except Exception:
-                pass
+            except Exception as exc:
+                return {
+                    "success": False,
+                    "error": f"Engine required tools preflight failed: {exc}",
+                    "return_code": -1,
+                    "stdout": "",
+                    "stderr": "",
+                    "duration_ms": 0,
+                }
 
         # Construire la commande
         cmd = self.build_command(engine_id, file_path, engine=engine)
@@ -729,6 +744,207 @@ class EnginesStandaloneApp:
                 "stderr": "",
                 "duration_ms": duration_ms,
             }
+
+    def _ensure_engine_tools_headless(self, engine) -> tuple[bool, str]:
+        """Ensure engine required tools in headless mode with blocking checks/install."""
+        try:
+            tools = getattr(engine, "required_tools", {"python": [], "system": []})
+            if not isinstance(tools, dict):
+                tools = {"python": [], "system": []}
+            python_tools = [str(t).strip() for t in tools.get("python", []) if str(t).strip()]
+            system_tools = [str(t).strip() for t in tools.get("system", []) if str(t).strip()]
+
+            missing_system = self._missing_system_tools(system_tools)
+            if missing_system:
+                auto_install = (
+                    str(os.environ.get("ARK_AUTO_INSTALL_SYSTEM_TOOLS", "0")).strip().lower()
+                    in {"1", "true", "yes", "on"}
+                )
+                if auto_install:
+                    try:
+                        from Core.sys_deps import install_system_packages
+
+                        if not install_system_packages(missing_system, gui=None):
+                            return (
+                                False,
+                                "Missing system tools and automatic installation failed: "
+                                + ", ".join(missing_system),
+                            )
+                    except Exception as exc:
+                        return (
+                            False,
+                            f"Missing system tools ({', '.join(missing_system)}) and install failed: {exc}",
+                        )
+                else:
+                    return (
+                        False,
+                        "Missing system tools: "
+                        + ", ".join(missing_system)
+                        + ". Set ARK_AUTO_INSTALL_SYSTEM_TOOLS=1 to allow auto-install.",
+                    )
+
+            if not python_tools:
+                return True, ""
+
+            manager = getattr(self.gui, "venv_manager", None)
+            use_system = bool(getattr(self.gui, "use_system_python", False))
+            venv_path = None
+            if manager is not None and not use_system:
+                try:
+                    venv_path = manager.resolve_project_venv()
+                except Exception:
+                    venv_path = None
+                if not venv_path:
+                    return False, "No resolved project venv for Python tool installation"
+
+            missing_python = self._missing_python_tools(
+                python_tools,
+                manager=manager,
+                use_system=use_system,
+                venv_path=venv_path,
+            )
+            if not missing_python:
+                return True, ""
+
+            ok_install, install_error = self._install_python_tools_headless(
+                missing_python,
+                manager=manager,
+                use_system=use_system,
+                venv_path=venv_path,
+            )
+            if not ok_install:
+                return False, install_error
+
+            still_missing = self._missing_python_tools(
+                python_tools,
+                manager=manager,
+                use_system=use_system,
+                venv_path=venv_path,
+            )
+            if still_missing:
+                return (
+                    False,
+                    "Python tools still missing after installation: "
+                    + ", ".join(still_missing),
+                )
+            return True, ""
+        except Exception as exc:
+            return False, f"Headless tools preflight failed: {exc}"
+
+    def _missing_system_tools(self, tools: list[str]) -> list[str]:
+        """Return missing system tools by checking PATH availability."""
+        if not tools:
+            return []
+        try:
+            from Core.sys_deps import check_system_packages
+
+            return [tool for tool in tools if not check_system_packages([tool])]
+        except Exception:
+            return tools
+
+    def _missing_python_tools(
+        self,
+        tools: list[str],
+        *,
+        manager,
+        use_system: bool,
+        venv_path: str | None,
+    ) -> list[str]:
+        """Return missing python tools according to current interpreter mode."""
+        missing: list[str] = []
+        for tool in tools:
+            installed = False
+            try:
+                if manager is not None:
+                    if use_system:
+                        installed = bool(manager.is_tool_installed_system(tool))
+                    elif venv_path:
+                        installed = bool(manager.is_tool_installed(venv_path, tool))
+            except Exception:
+                installed = False
+            if not installed:
+                missing.append(tool)
+        return missing
+
+    def _tool_install_candidates(self, tool: str) -> list[str]:
+        """Build pip install candidates from a generic tool identifier."""
+        t = str(tool or "").strip()
+        if not t:
+            return []
+        low = t.lower()
+        variants = [low]
+        if "_" in low:
+            variants.append(low.replace("_", "-"))
+            variants.append(low.replace("_", ""))
+        if "-" in low:
+            variants.append(low.replace("-", "_"))
+            variants.append(low.replace("-", ""))
+
+        unique: list[str] = []
+        seen: set[str] = set()
+        for item in variants:
+            key = item.lower()
+            if not item or key in seen:
+                continue
+            seen.add(key)
+            unique.append(item)
+        return unique
+
+    def _install_python_tools_headless(
+        self,
+        tools: list[str],
+        *,
+        manager,
+        use_system: bool,
+        venv_path: str | None,
+    ) -> tuple[bool, str]:
+        """Install python tools synchronously for CI/CD headless runs."""
+        if not tools:
+            return True, ""
+
+        python_bin = sys.executable
+        if manager is not None and not use_system:
+            if not venv_path:
+                return False, "No venv path available for Python tool installation"
+            try:
+                python_bin = manager.python_path(venv_path)
+            except Exception:
+                python_bin = sys.executable
+
+        extra_args: list[str] = []
+        if use_system and platform.system() == "Linux":
+            extra_args.append("--break-system-packages")
+
+        for tool in tools:
+            installed = False
+            last_error = ""
+            for candidate in self._tool_install_candidates(tool):
+                cmd = [python_bin, "-m", "pip", "install"] + extra_args + [candidate]
+                try:
+                    proc = subprocess.run(
+                        cmd,
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE,
+                        text=True,
+                        timeout=1800,
+                        check=False,
+                    )
+                except Exception as exc:
+                    last_error = str(exc)
+                    continue
+
+                if proc.returncode != 0:
+                    err = (proc.stderr or proc.stdout or "").strip()
+                    last_error = err or f"pip install failed for {candidate}"
+                    continue
+
+                installed = True
+                break
+
+            if not installed:
+                return False, f"Unable to install Python tool '{tool}': {last_error}"
+
+        return True, ""
 
     def execute(self) -> Dict[str, Any]:
         """
@@ -873,13 +1089,13 @@ Examples:
     python -m Core.engines_loader.engines_only_mod --list-engines
     
     # Check engine compatibility
-    python -m Core.engines_loader.engines_only_mod --check-compat nuitka
+    python -m Core.engines_loader.engines_only_mod --check-compat <engine_id>
     
     # Compile a file with a specific engine (dry-run)
-    python -m Core.engines_loader.engines_only_mod --engine nuitka --dry-run script.py
+    python -m Core.engines_loader.engines_only_mod --engine <engine_id> --dry-run script.py
     
     # Compile a file with a specific engine
-    python -m Core.engines_loader.engines_only_mod --engine pyinstaller --file script.py
+    python -m Core.engines_loader.engines_only_mod --engine <engine_id> --file script.py
         """,
     )
 
