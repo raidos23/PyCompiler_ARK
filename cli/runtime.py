@@ -221,7 +221,10 @@ def should_enable_qt(argv: list[str] | None) -> bool:
     if not args:
         return True
 
-    if any(flag in args for flag in ("--help", "-h", "--version", "-v", "--info", "--cli", "--help-all")):
+    if any(
+        flag in args
+        for flag in ("--help", "-h", "--version", "-v", "--info", "--cli", "--help-all")
+    ):
         return False
 
     if "--classic-gui" in args or "--ide-gui" in args:
@@ -238,16 +241,37 @@ def should_enable_qt(argv: list[str] | None) -> bool:
 
     if cmd is None:
         return True
-    if cmd == "gui":
+
+    headless_commands = {
+        "unload",
+        "version",
+        "help",
+        "info",
+        "engine",
+        "check",
+        "doctor",
+        "init",
+        "config-auto",
+        "cfg-auto",
+        "workspace",
+        "ws",
+        "scaffold",
+    }
+    gui_commands = {"gui", "main"}
+    if cmd in gui_commands:
         return True
-    if cmd in ("main",):
-        return True
-    if cmd in ("unload", "version", "help", "info", "engine"):
+    if cmd in headless_commands:
         return False
+
     if cmd == "engines":
         return not any(flag in args for flag in ("--dry-run", "-d"))
     if cmd == "bcasl":
-        return False
+        for token in args[1:]:
+            if token.startswith("-"):
+                continue
+            # bcasl list/run/doctor are headless; otherwise GUI.
+            return token not in {"list", "run", "doctor"}
+        return True
     return False
 
 
