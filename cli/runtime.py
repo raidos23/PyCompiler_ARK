@@ -3,6 +3,8 @@
 
 from __future__ import annotations
 
+"""Runtime bootstrap utilities for CLI and GUI execution paths."""
+
 import faulthandler
 import logging
 import os

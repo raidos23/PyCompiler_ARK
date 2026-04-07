@@ -3,6 +3,8 @@
 
 from __future__ import annotations
 
+"""Dedicated interactive CLI frontend for PyCompiler ARK."""
+
 import shlex
 from pathlib import Path
 
@@ -13,11 +15,7 @@ from .lazy_ops import (
     launch_main_gui,
     unload_all_engines,
 )
-from .headless_ops import (
-    ci_smoke_payload,
-    workspace_config_auto_payload,
-    workspace_init_payload,
-)
+from .headless_commands import run_check, run_config_auto, run_init
 from .output import error, info, plain, success, warn
 from .system_info import print_system_info
 
@@ -54,6 +52,7 @@ _RICH_CONSOLE = Console() if Console is not None else None
 
 
 def _rprint(message: str, style: str | None = None) -> None:
+    """Print with Rich when available, fallback to plain output otherwise."""
     if _RICH_CONSOLE is not None:
         _RICH_CONSOLE.print(message, style=style)
         return
@@ -61,6 +60,7 @@ def _rprint(message: str, style: str | None = None) -> None:
 
 
 def _styled_parts(command: str) -> list[tuple[str, str]]:
+    """Tokenize and style a command line for prompt-toolkit rendering."""
     try:
         parts = shlex.split(command)
     except Exception:
@@ -97,6 +97,7 @@ class ArkCommandLexer(Lexer):
 
 
 def _command_text(command: str):
+    """Build a Rich ``Text`` object for command preview output."""
     if Text is None:
         return command
     try:
@@ -123,6 +124,7 @@ def _command_text(command: str):
 
 
 def _print_cmdline(command: str) -> None:
+    """Render a shell-like command preview line."""
     if _RICH_CONSOLE is None:
         plain(command)
         return
@@ -132,6 +134,7 @@ def _print_cmdline(command: str) -> None:
 
 
 def _print_banner(app_version: str) -> None:
+    """Render the dedicated CLI startup banner."""
     if _RICH_CONSOLE is None:
         plain("PyCompiler ARK - dedicated CLI")
         plain(f"Version {app_version}")
@@ -165,6 +168,7 @@ def _print_banner(app_version: str) -> None:
 
 
 def _print_help() -> None:
+    """Render help for the dedicated interactive command set."""
     if _RICH_CONSOLE is None or Table is None:
         plain("")
         plain("Available commands")
@@ -229,6 +233,7 @@ def _print_help() -> None:
 
 
 def _resolve_workspace(raw: str | None) -> str | None:
+    """Normalize an optional workspace path."""
     if not raw:
         return None
     try:
@@ -238,6 +243,7 @@ def _resolve_workspace(raw: str | None) -> str | None:
 
 
 def _run_engines(args: list[str]) -> int:
+    """Handle legacy `engines` command behavior in dedicated mode."""
     if "--dry-run" in args or "-d" in args:
         engines = available_engine_ids()
         if _RICH_CONSOLE is not None and Table is not None:
@@ -259,11 +265,13 @@ def _run_engines(args: list[str]) -> int:
 
 
 def _run_bcasl(args: list[str]) -> int:
+    """Launch BCASL GUI mode from the dedicated shell."""
     workspace = _resolve_workspace(args[0]) if args else None
     return launch_bcasl_gui(workspace)
 
 
 def _new_bcasl_app(workspace: str | None = None):
+    """Create a headless BCASL app instance."""
     try:
         from OnlyMod.BcaslOnlyMod.app import BcaslOnlyModApp
     except Exception as exc:
@@ -283,6 +291,7 @@ def _new_bcasl_app(workspace: str | None = None):
 
 
 def _print_bcasl_help() -> None:
+    """Render BCASL subcommand help."""
     if _RICH_CONSOLE is None or Table is None:
         plain("")
         plain("BCASL commands")
@@ -314,6 +323,7 @@ def _print_bcasl_help() -> None:
 
 
 def _run_bcasl_headless(args: list[str]) -> int:
+    """Run BCASL subcommands in headless mode from the dedicated shell."""
     if not args or args[0] in ("help", "-h", "--help"):
         _print_bcasl_help()
         return 0
@@ -408,6 +418,7 @@ def _run_bcasl_headless(args: list[str]) -> int:
 
 
 def _parse_workspace_option(args: list[str]) -> tuple[str | None, list[str]]:
+    """Extract ``-w/--workspace`` from arguments."""
     ws = None
     kept: list[str] = []
     i = 0
@@ -425,6 +436,7 @@ def _parse_workspace_option(args: list[str]) -> tuple[str | None, list[str]]:
 
 
 def _new_engines_app(workspace: str | None = None):
+    """Create a headless Engines app instance."""
     try:
         from OnlyMod.EngineOnlyMod.app import EnginesStandaloneApp
     except Exception as exc:
@@ -445,6 +457,7 @@ def _new_engines_app(workspace: str | None = None):
 
 
 def _print_engine_help() -> None:
+    """Render engine subcommand help."""
     if _RICH_CONSOLE is None or Table is None:
         plain("")
         plain("Engine commands")
@@ -479,6 +492,8 @@ def _print_engine_help() -> None:
 
 
 def _run_engine_command(args: list[str]) -> int:
+    """Execute an `engine ...` command from the dedicated shell."""
+    # Cette fonction garde la compatibilité des usages interactifs historiques.
     if not args or args[0] in ("help", "-h", "--help"):
         _print_engine_help()
         return 0
@@ -608,6 +623,7 @@ def _run_engine_command(args: list[str]) -> int:
 
 
 def _run_unload() -> int:
+    """Unload all engines from the dedicated shell."""
     result = unload_all_engines()
     if result["status"] == "success":
         success(result["message"])
@@ -620,75 +636,14 @@ def _run_unload() -> int:
     return 0 if result["status"] == "success" else 1
 
 
-def _run_check(args: list[str]) -> int:
-    workspace = _resolve_workspace(args[0]) if args else None
-    payload = ci_smoke_payload(workspace=workspace, require_entrypoint=True)
-    checks = list(payload.get("checks", []))
-    plain("PyCompiler ARK Check")
-    shown = 0
-    for check in checks:
-        if check.get("ok"):
-            continue
-        plain(f"  [FAIL] {check.get('name')}: {check.get('message') or ''}")
-        shown += 1
-    if shown == 0:
-        plain("  [OK] no failing checks")
-    return 0 if payload.get("ok") else 3
-
-
-def _run_init(args: list[str]) -> int:
-    with_venv = "--with-venv" in args
-    clean = [a for a in args if a != "--with-venv"]
-    workspace = _resolve_workspace(clean[0]) if clean else "."
-    payload = workspace_init_payload(workspace, with_venv=with_venv)
-    for item in payload.get("steps", []):
-        status = str(item.get("status", "")).upper() or "INFO"
-        plain(f"[{status}] {item.get('message')}")
-    if not payload.get("ok"):
-        error(str(payload.get("error", "Workspace init failed")))
-        return 4
-    plain(f"Workspace: {payload.get('workspace')}")
-    plain(f"  Config: {payload.get('config_path')}")
-    plain(f"  BCASL: {payload.get('bcasl_path') or '(not created)'}")
-    plain(f"  Pref: {payload.get('workspace_pref_path') or '(not created)'}")
-    plain("  Created workspace: " + ("yes" if payload.get("created_workspace") else "no"))
-    plain("  Created config: " + ("yes" if payload.get("created_config") else "no"))
-    plain(
-        "  Created bcasl.yml: "
-        + ("yes" if payload.get("created_bcasl_config") else "no")
-    )
-    plain(
-        "  Created workspace pref: "
-        + ("yes" if payload.get("created_workspace_pref") else "no")
-    )
-    if payload.get("with_venv"):
-        plain(f"  Venv: {payload.get('venv_path') or '(not created)'}")
-        plain("  Created venv: " + ("yes" if payload.get("created_venv") else "no"))
-    return 0
-
-
-def _run_config_auto(args: list[str]) -> int:
-    workspace = _resolve_workspace(args[0]) if args else "."
-    payload = workspace_config_auto_payload(workspace)
-    if not payload.get("ok"):
-        error(str(payload.get("error", "Workspace auto-config failed")))
-        return 4
-    plain(f"Workspace: {payload.get('workspace')}")
-    plain(f"  Entrypoint: {payload.get('entrypoint') or '(none)'}")
-    plain(
-        "  Requirements found: "
-        + (", ".join(payload.get("requirements_files_found", [])) or "none")
-    )
-    plain(f"  Config updated: {payload.get('config_path')}")
-    return 0
-
-
 def run_dedicated_cli(app_version: str) -> int:
+    """Run the interactive dedicated CLI loop."""
     try:
         from rich.prompt import Prompt  # type: ignore
     except Exception:
         Prompt = None
 
+    # Session interactive avancée (completion, style) si prompt_toolkit est dispo.
     session = None
     if (
         PromptSession is not None
@@ -753,11 +708,13 @@ def run_dedicated_cli(app_version: str) -> int:
             history=InMemoryHistory(),
         )
 
+    # Affichage initial.
     _print_banner(app_version)
     _print_help()
 
     while True:
         try:
+            # Lecture de ligne compatible avec plusieurs backends (prompt_toolkit/rich/input).
             if session is not None:
                 line = session.prompt([("class:prompt", "ark-cli> ")]).strip()
             elif Prompt is not None:
@@ -784,6 +741,7 @@ def run_dedicated_cli(app_version: str) -> int:
         args = parts[1:]
 
         try:
+            # Dispatch impératif simple: lisible et facile à maintenir pour un shell interactif.
             if cmd in ("exit", "quit"):
                 info("Dedicated CLI closed.")
                 return 0
@@ -810,6 +768,7 @@ def run_dedicated_cli(app_version: str) -> int:
                 launch_main_gui(no_splash=False, ide_gui=ide_gui)
                 continue
             if cmd == "bcasl":
+                # Les sous-commandes `list/run` passent en mode headless.
                 if args and args[0].lower() in ("help", "list", "run"):
                     _run_bcasl_headless(args)
                     continue
@@ -819,6 +778,7 @@ def run_dedicated_cli(app_version: str) -> int:
                 _run_engine_command(args)
                 continue
             if cmd == "engines":
+                # Compat: `engines <subcommand>` redirige vers le parser `engine`.
                 if args and args[0].lower() in (
                     "help",
                     "list",
@@ -832,16 +792,16 @@ def run_dedicated_cli(app_version: str) -> int:
                 _run_engines(args)
                 continue
             if cmd == "check":
-                _run_check(args)
+                run_check(args)
                 continue
             if cmd == "init":
-                _run_init(args)
+                run_init(args)
                 continue
             if cmd == "config-auto":
-                _run_config_auto(args)
+                run_config_auto(args)
                 continue
             if cmd == "cfg-auto":
-                _run_config_auto(args)
+                run_config_auto(args)
                 continue
             if cmd == "ws":
                 if not args:
@@ -850,10 +810,10 @@ def run_dedicated_cli(app_version: str) -> int:
                 sub = args[0].lower()
                 ws_args = args[1:]
                 if sub == "init":
-                    _run_init(ws_args)
+                    run_init(ws_args)
                     continue
                 if sub in ("config-auto", "cfg-auto"):
-                    _run_config_auto(ws_args)
+                    run_config_auto(ws_args)
                     continue
                 warn(f"Unknown ws subcommand: {sub}")
                 continue

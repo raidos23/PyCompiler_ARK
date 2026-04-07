@@ -3,6 +3,8 @@
 
 from __future__ import annotations
 
+"""Click-based CLI frontend for PyCompiler ARK."""
+
 from pathlib import Path
 import sys
 
@@ -14,6 +16,8 @@ from .contracts import (
     render_checks_text,
     render_workspace_init_result,
 )
+from .click_workspace_commands import register_workspace_commands
+from .click_quality_commands import register_quality_commands
 from .dedicated import _run_bcasl_headless, run_dedicated_cli
 from .headless_ops import (
     bcasl_doctor_payload,
@@ -49,10 +53,12 @@ except Exception:  # pragma: no cover - optional dependency
 
 
 def has_click() -> bool:
+    """Return ``True`` when the optional Click dependency is available."""
     return click is not None
 
 
 def _echo_payload(payload, as_json: bool = False) -> None:
+    """Print payload as JSON or plain text depending on ``as_json``."""
     if as_json:
         text = emit_json(payload)
         sys.stdout.write(text)
@@ -60,6 +66,7 @@ def _echo_payload(payload, as_json: bool = False) -> None:
             sys.stdout.write("\n")
         sys.stdout.flush()
         return
+    # Sortie texte standardisée: aucune logique métier ici, uniquement rendu.
     if isinstance(payload, str):
         plain(payload)
     else:
@@ -67,11 +74,13 @@ def _echo_payload(payload, as_json: bool = False) -> None:
 
 
 def _emit_and_exit(payload, code: int, as_json: bool = False) -> None:
+    """Emit payload and exit immediately with the provided code."""
     _echo_payload(payload, as_json=as_json)
     raise click.exceptions.Exit(code)
 
 
 def _run_workspace_init_with_progress(workspace_dir: str, with_venv: bool = False):
+    """Run workspace init and render progress with Rich when available."""
     try:
         from rich.console import Console  # type: ignore
         from rich.status import Status  # type: ignore
@@ -79,6 +88,7 @@ def _run_workspace_init_with_progress(workspace_dir: str, with_venv: bool = Fals
         Console = None
         Status = None
 
+    # Fallback propre si Rich n'est pas disponible.
     if Console is None or Status is None:
         payload = workspace_init_payload(workspace_dir, with_venv=with_venv)
         for item in payload.get("steps", []):
@@ -113,10 +123,13 @@ def _run_workspace_init_with_progress(workspace_dir: str, with_venv: bool = Fals
 
 
 def _resolve_workspace_path(workspace: str | None) -> str | None:
+    """Normalize optional workspace path input."""
     return normalize_path(workspace)
 
 
 def _workspace_init_emit(workspace_dir: str, as_json: bool, with_venv: bool) -> None:
+    """Run init workflow and emit output according to CLI output mode."""
+    # Mode JSON destiné à l'automatisation (CI, scripts, wrappers).
     if as_json:
         payload = workspace_init_payload(workspace_dir, with_venv=with_venv)
         if not payload.get("ok"):
@@ -132,7 +145,9 @@ def _workspace_init_emit(workspace_dir: str, as_json: bool, with_venv: bool) -> 
 def _workspace_config_auto_emit(
     workspace_dir: str, entrypoint: str | None, as_json: bool
 ) -> None:
+    """Run auto-config workflow and emit output according to CLI output mode."""
     payload = workspace_config_auto_payload(workspace_dir, entrypoint=entrypoint)
+    # Même contrat de sortie que pour `init`: JSON machine-friendly ou texte humain.
     if as_json:
         if not payload.get("ok"):
             _emit_and_exit(payload, EXIT_WORKSPACE_INVALID, as_json=True)
@@ -150,6 +165,8 @@ def _workspace_config_auto_emit(
 
 
 def _ensure_workspace_exists(workspace_dir: str | None) -> str | None:
+    """Ensure workspace directory exists before opening GUI sub-apps."""
+    # Création opportuniste pour éviter un échec GUI si le dossier est attendu mais absent.
     if not workspace_dir:
         return None
     ws_path = Path(workspace_dir)
@@ -166,9 +183,11 @@ def _ensure_workspace_exists(workspace_dir: str | None) -> str | None:
 
 
 def build_cli(app_version: str):
+    """Build and return the root Click command group."""
     if click is None:
         raise RuntimeError("Click is not available")
 
+    # Groupe racine: options globales + dispatch vers sous-commandes.
     @click.group(
         invoke_without_command=True,
         context_settings=dict(help_option_names=["-h", "--help"]),
@@ -262,6 +281,7 @@ def build_cli(app_version: str):
                 )
             )
 
+    # Commandes GUI explicites.
     @cli.group()
     def gui():
         """Launch graphical interfaces."""
@@ -289,6 +309,7 @@ def build_cli(app_version: str):
     def gui_engines(workspace):
         sys.exit(launch_engines_gui(_ensure_workspace_exists(_resolve_workspace_path(workspace))))
 
+    # Commandes moteur headless et d'inspection.
     @cli.group()
     def engine():
         """Inspect and run compilation engines."""
@@ -479,186 +500,33 @@ def build_cli(app_version: str):
         else:
             raise click.ClickException(result.get("error", "Compilation failed"))
 
-    @cli.group()
-    def workspace():
-        """Inspect workspace state and configuration."""
-
-    @workspace.command("inspect")
-    @click.argument("path", required=False, type=click.Path(exists=False))
-    @click.option("--json", "as_json", is_flag=True)
-    @click.option("--strict", is_flag=True, help="Exit non-zero when the workspace is invalid")
-    def workspace_inspect(path, as_json, strict):
-        payload = workspace_inspect_payload(_resolve_workspace_path(path or "."))
-        if as_json:
-            if strict and not payload.get("exists"):
-                _emit_and_exit(payload, EXIT_WORKSPACE_INVALID, as_json=True)
-            _echo_payload(payload, as_json=True)
-            return
-        if not payload.get("exists"):
-            raise click.ClickException(payload.get("error", "Workspace not found"))
-        plain(f"Workspace: {payload['workspace']}")
-        plain(f"  Entrypoint: {payload.get('entrypoint') or '(none)'}")
-        plain(f"  Python files: {payload['python_file_count']}")
-        plain(
-            "  Requirements files: "
-            + (", ".join(payload["requirements_files_found"]) or "none")
-        )
-
-    @workspace.command("entrypoint")
-    @click.argument("path", required=False, type=click.Path(exists=False))
-    @click.option("--json", "as_json", is_flag=True)
-    @click.option("--strict", is_flag=True, help="Exit non-zero when no entrypoint is resolved")
-    def workspace_entrypoint(path, as_json, strict):
-        payload = workspace_inspect_payload(_resolve_workspace_path(path or "."))
-        result = {"workspace": payload.get("workspace"), "entrypoint": payload.get("entrypoint")}
-        if as_json:
-            if strict and not result.get("entrypoint"):
-                _emit_and_exit(result, EXIT_PRECHECK_FAILED, as_json=True)
-            _echo_payload(result, as_json=True)
-            return
-        plain(result["entrypoint"] or "")
-        if strict and not result.get("entrypoint"):
-            raise click.exceptions.Exit(EXIT_PRECHECK_FAILED)
-
-    @workspace.command("files")
-    @click.argument("path", required=False, type=click.Path(exists=False))
-    @click.option("--json", "as_json", is_flag=True)
-    def workspace_files(path, as_json):
-        payload = workspace_inspect_payload(_resolve_workspace_path(path or "."))
-        result = {
-            "workspace": payload.get("workspace"),
-            "python_file_count": payload.get("python_file_count", 0),
-            "python_files_preview": payload.get("python_files_preview", []),
-        }
-        if as_json:
-            _echo_payload(result, as_json=True)
-            return
-        plain(f"Python files: {result['python_file_count']}")
-        for item in result["python_files_preview"]:
-            plain(f"  - {item}")
-
-    @cli.command("init")
-    @click.argument("workspace", required=False, type=click.Path(exists=False))
-    @click.option("--json", "as_json", is_flag=True)
-    @click.option("--with-venv", is_flag=True, help="Create or reuse a local workspace venv")
-    def init_cmd(workspace, as_json, with_venv):
-        workspace_dir = _resolve_workspace_path(workspace or ".")
-        _workspace_init_emit(workspace_dir, as_json=as_json, with_venv=with_venv)
-
-    @cli.command("config-auto")
-    @click.argument("workspace", required=False, type=click.Path(exists=False))
-    @click.option("--entrypoint", type=str, help="Override detected entrypoint")
-    @click.option("--json", "as_json", is_flag=True)
-    def config_auto_cmd(workspace, entrypoint, as_json):
-        _workspace_config_auto_emit(
-            _resolve_workspace_path(workspace or "."),
-            entrypoint=entrypoint,
-            as_json=as_json,
-        )
-
-    @cli.command("cfg-auto")
-    @click.argument("workspace", required=False, type=click.Path(exists=False))
-    @click.option("--entrypoint", type=str, help="Override detected entrypoint")
-    @click.option("--json", "as_json", is_flag=True)
-    def cfg_auto_cmd(workspace, entrypoint, as_json):
-        _workspace_config_auto_emit(
-            _resolve_workspace_path(workspace or "."),
-            entrypoint=entrypoint,
-            as_json=as_json,
-        )
-
-    @cli.group("ws")
-    def ws():
-        """Alias for workspace bootstrap commands."""
-
-    @ws.command("init")
-    @click.argument("workspace", required=False, type=click.Path(exists=False))
-    @click.option("--json", "as_json", is_flag=True)
-    @click.option("--with-venv", is_flag=True, help="Create or reuse a local workspace venv")
-    def ws_init_cmd(workspace, as_json, with_venv):
-        workspace_dir = _resolve_workspace_path(workspace or ".")
-        _workspace_init_emit(workspace_dir, as_json=as_json, with_venv=with_venv)
-
-    @ws.command("config-auto")
-    @click.argument("workspace", required=False, type=click.Path(exists=False))
-    @click.option("--entrypoint", type=str, help="Override detected entrypoint")
-    @click.option("--json", "as_json", is_flag=True)
-    def ws_config_auto_cmd(workspace, entrypoint, as_json):
-        _workspace_config_auto_emit(
-            _resolve_workspace_path(workspace or "."),
-            entrypoint=entrypoint,
-            as_json=as_json,
-        )
-
-    @cli.command("doctor")
-    @click.argument("workspace", required=False, type=click.Path(exists=False))
-    @click.option("--json", "as_json", is_flag=True)
-    @click.option("--strict", is_flag=True, help="Exit non-zero when diagnostics detect issues")
-    def doctor(workspace, as_json, strict):
-        payload = doctor_payload(workspace=_resolve_workspace_path(workspace))
-        if strict:
-            workspace_payload = payload.get("workspace")
-            has_workspace_issue = isinstance(workspace_payload, dict) and not workspace_payload.get("exists", True)
-            has_engine_issue = payload["engines"]["compatible_count"] != payload["engines"]["count"]
-            has_qt_issue = not payload.get("qt_available", False)
-            strict_failed = bool(has_workspace_issue or has_engine_issue or has_qt_issue)
-        else:
-            strict_failed = False
-        if as_json:
-            if strict_failed:
-                _emit_and_exit(payload, EXIT_PRECHECK_FAILED, as_json=True)
-            _echo_payload(payload, as_json=True)
-            return
-        plain("PyCompiler ARK Doctor")
-        plain(f"  Python: {payload['platform']['python']}")
-        plain(f"  Platform: {payload['platform']['system']} {payload['platform']['release']}")
-        plain(f"  Qt available: {'yes' if payload['qt_available'] else 'no'}")
-        plain(
-            f"  Engines: {payload['engines']['compatible_count']}/{payload['engines']['count']} compatible"
-        )
-        if strict_failed:
-            raise click.exceptions.Exit(EXIT_PRECHECK_FAILED)
-
-    @cli.command("check")
-    @click.argument("workspace", required=False, type=click.Path(exists=False))
-    @click.option("--json", "as_json", is_flag=True)
-    @click.option(
-        "--strict/--no-strict",
-        default=True,
-        show_default=True,
-        help="Exit non-zero when checks fail",
+    # Enregistrement modulaire des commandes workspace.
+    register_workspace_commands(
+        cli=cli,
+        click=click,
+        resolve_workspace_path=_resolve_workspace_path,
+        emit_and_exit=_emit_and_exit,
+        echo_payload=_echo_payload,
+        workspace_init_emit=_workspace_init_emit,
+        workspace_config_auto_emit=_workspace_config_auto_emit,
+        workspace_inspect_payload=workspace_inspect_payload,
     )
-    @click.option(
-        "--require-entrypoint/--no-require-entrypoint",
-        default=True,
-        show_default=True,
-        help="Require workspace entrypoint in checks",
-    )
-    @click.option(
-        "--fail-only/--all-checks",
-        default=True,
-        show_default=True,
-        help="Display only failing checks in text output",
-    )
-    def check_cmd(workspace, as_json, strict, require_entrypoint, fail_only):
-        """Single-command CI/CD gate with strict defaults."""
-        payload = ci_smoke_payload(
-            workspace=_resolve_workspace_path(workspace),
-            require_entrypoint=require_entrypoint,
-        )
-        if as_json:
-            if strict and not payload.get("ok"):
-                _emit_and_exit(payload, EXIT_PRECHECK_FAILED, as_json=True)
-            _echo_payload(payload, as_json=True)
-            return
-        render_checks_text(
-            "PyCompiler ARK Check",
-            list(payload.get("checks", [])),
-            fail_only=fail_only,
-        )
-        if strict and not payload.get("ok"):
-            raise click.exceptions.Exit(EXIT_PRECHECK_FAILED)
 
+    # Enregistrement modulaire des commandes qualité (doctor/check).
+    register_quality_commands(
+        cli=cli,
+        click=click,
+        resolve_workspace_path=_resolve_workspace_path,
+        emit_and_exit=_emit_and_exit,
+        echo_payload=_echo_payload,
+        doctor_payload=doctor_payload,
+        ci_smoke_payload=lambda workspace=None, require_entrypoint=False: ci_smoke_payload(
+            workspace=workspace, require_entrypoint=require_entrypoint
+        ),
+        render_checks_text=render_checks_text,
+    )
+
+    # Génération de templates de départ.
     @cli.group()
     def scaffold():
         """Generate starter templates."""
@@ -691,6 +559,7 @@ def build_cli(app_version: str):
         else:
             raise click.ClickException(payload.get("reason", "Unable to create scaffold"))
 
+    # Espace BCASL (GUI + actions headless spécifiques).
     @cli.group(invoke_without_command=True)
     @click.pass_context
     def bcasl(ctx):
@@ -759,7 +628,7 @@ def build_cli(app_version: str):
         else:
             raise click.ClickException(result["message"])
 
-    # Backward-compatible aliases
+    # Alias rétro-compatibles pour ne pas casser les usages historiques.
     @cli.command(context_settings=dict(help_option_names=["-h", "--help"]))
     @click.argument("workspace", required=False, type=click.Path(exists=False))
     def engines(workspace):
