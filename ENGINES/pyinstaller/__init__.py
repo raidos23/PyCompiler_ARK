@@ -69,6 +69,9 @@ class PyInstallerEngine(CompilerEngine):
     def build_command(self, gui, file: str) -> list[str]:
         """Build the PyInstaller command line."""
         try:
+            cfg = getattr(self, "_config_overrides", {})
+            if not isinstance(cfg, dict):
+                cfg = {}
             venv_manager = getattr(gui, "venv_manager", None)
 
             # Resolve venv python
@@ -87,14 +90,24 @@ class PyInstallerEngine(CompilerEngine):
             # Get options from GUI - use dynamic widgets or fallback to UI widgets
             # Onefile vs Onedir
             onefile = self._get_opt("onefile")
+            onefile_enabled = bool(cfg.get("onefile", False))
             if onefile and onefile.isChecked():
+                onefile_enabled = True
+            elif onefile is not None:
+                onefile_enabled = False
+            if onefile_enabled:
                 cmd.append("--onefile")
             else:
                 cmd.append("--onedir")
 
             # Windowed (no console) - only on Windows/macOS
             windowed = self._get_opt("windowed")
+            windowed_enabled = bool(cfg.get("windowed", False))
             if windowed and windowed.isChecked():
+                windowed_enabled = True
+            elif windowed is not None:
+                windowed_enabled = False
+            if windowed_enabled:
                 if platform.system() == "Windows":
                     cmd.append("--windowed")
                 elif platform.system() == "Darwin":
@@ -102,12 +115,20 @@ class PyInstallerEngine(CompilerEngine):
 
             # Output directory
             output_dir = self._get_input("output_dir_input")
+            output_dir_value = str(cfg.get("output_dir") or "").strip()
             if output_dir and output_dir.text().strip():
-                cmd.extend(["--distpath", output_dir.text().strip()])
+                output_dir_value = output_dir.text().strip()
+            if output_dir_value:
+                cmd.extend(["--distpath", output_dir_value])
 
             # Icon
+            selected_icon = ""
             if hasattr(self, "_selected_icon") and self._selected_icon:
-                cmd.extend(["--icon", self._selected_icon])
+                selected_icon = str(self._selected_icon).strip()
+            if not selected_icon:
+                selected_icon = str(cfg.get("selected_icon") or "").strip()
+            if selected_icon:
+                cmd.extend(["--icon", selected_icon])
 
             # Name
             name_input = self._get_input("output_name_input")
@@ -315,6 +336,10 @@ class PyInstallerEngine(CompilerEngine):
         """Apply a config dict to PyInstaller UI widgets."""
         if not isinstance(cfg, dict):
             return
+        try:
+            self._config_overrides = dict(cfg)
+        except Exception:
+            self._config_overrides = {}
         try:
             if (
                 hasattr(self, "_opt_onefile")

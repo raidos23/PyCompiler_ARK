@@ -74,6 +74,9 @@ class NuitkaEngine(CompilerEngine):
     def build_command(self, gui, file: str) -> list[str]:
         """Build the Nuitka command line."""
         try:
+            cfg = getattr(self, "_config_overrides", {})
+            if not isinstance(cfg, dict):
+                cfg = {}
 
             venv_manager = getattr(gui, "venv_manager", None)
 
@@ -91,32 +94,37 @@ class NuitkaEngine(CompilerEngine):
             cmd = [python_path, "-m", "nuitka"]
 
             # Standalone mode
-            if (
-                hasattr(self, "_nuitka_standalone")
-                and self._nuitka_standalone.isChecked()
-            ):
+            standalone_enabled = bool(cfg.get("standalone", False))
+            if hasattr(self, "_nuitka_standalone"):
+                standalone_enabled = bool(self._nuitka_standalone.isChecked())
+            if standalone_enabled:
                 cmd.append("--standalone")
 
             # Onefile mode
-            if hasattr(self, "_nuitka_onefile") and self._nuitka_onefile.isChecked():
+            onefile_enabled = bool(cfg.get("onefile", False))
+            if hasattr(self, "_nuitka_onefile"):
+                onefile_enabled = bool(self._nuitka_onefile.isChecked())
+            if onefile_enabled:
                 cmd.append("--onefile")
 
             # Windowed (no console)
-            if (
-                hasattr(self, "_nuitka_disable_console")
-                and self._nuitka_disable_console.isChecked()
-            ):
+            disable_console = bool(cfg.get("disable_console", False))
+            if hasattr(self, "_nuitka_disable_console"):
+                disable_console = bool(self._nuitka_disable_console.isChecked())
+            if disable_console:
                 cmd.append("--windows-disable-console")
 
             # Output directory
-            if (
-                hasattr(self, "_nuitka_output_dir")
-                and self._nuitka_output_dir.text().strip()
-            ):
-                cmd.append(f"--output-dir={self._nuitka_output_dir.text().strip()}")
+            output_dir_value = str(cfg.get("output_dir") or "").strip()
+            if hasattr(self, "_nuitka_output_dir") and self._nuitka_output_dir.text().strip():
+                output_dir_value = self._nuitka_output_dir.text().strip()
+            if output_dir_value:
+                cmd.append(f"--output-dir={output_dir_value}")
 
             # Icon
             selected_icon = getattr(self, "_nuitka_selected_icon", None)
+            if not selected_icon:
+                selected_icon = cfg.get("selected_icon")
             if selected_icon:
                 cmd.extend(["--windows-icon", selected_icon])
 
@@ -343,6 +351,10 @@ class NuitkaEngine(CompilerEngine):
         """Apply a config dict to Nuitka UI widgets."""
         if not isinstance(cfg, dict):
             return
+        try:
+            self._config_overrides = dict(cfg)
+        except Exception:
+            self._config_overrides = {}
         try:
             if (
                 hasattr(self, "_nuitka_onefile")

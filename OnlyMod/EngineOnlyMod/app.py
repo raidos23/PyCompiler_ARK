@@ -71,9 +71,16 @@ class MockGUI:
     """
 
     def __init__(self, workspace_dir: Optional[str] = None):
-        self.workspace_dir = workspace_dir
+        self.workspace_dir = (
+            os.path.abspath(str(workspace_dir)) if workspace_dir else workspace_dir
+        )
         self.log = MockLog()
         self._tr = {}
+        self.venv_path_manuel = None
+        self.venv_path = None
+        self.use_system_python = False
+        self.venv_manager = None
+        self._init_venv_context()
 
     def tr(self, fr_text: str, en_text: str) -> str:
         """Traduit le texte selon la langue préférée (défaut: anglais)."""
@@ -84,6 +91,26 @@ class MockGUI:
             return en_text
         except Exception:
             return en_text
+
+    def _init_venv_context(self) -> None:
+        """Mirror GUI behavior for venv resolution in headless mode."""
+        try:
+            from Core.Venv_Manager.Manager import VenvManager
+
+            self.venv_manager = VenvManager(self)
+            if self.workspace_dir:
+                try:
+                    self.venv_manager.apply_workspace_pref(self.workspace_dir)
+                except Exception:
+                    pass
+                try:
+                    detected = self.venv_manager.resolve_existing_venv(self.workspace_dir)
+                    if detected:
+                        self.venv_path = detected
+                except Exception:
+                    pass
+        except Exception:
+            self.venv_manager = None
 
 
 class MockLog:
@@ -386,6 +413,31 @@ class EnginesStandaloneApp:
         self.language_manager.set_language(language)
         self.theme_manager.set_theme(theme)
 
+    def _create_engine_for_run(self, engine_id: str):
+        """Create an engine instance and apply workspace config when available."""
+        try:
+            engine = create_engine(engine_id)
+        except Exception:
+            return None
+
+        try:
+            if not getattr(engine, "_gui", None):
+                engine._gui = self.gui
+        except Exception:
+            pass
+
+        try:
+            if self.workspace_dir:
+                from Core.EngineConfigManager import apply_engine_config, load_engine_config
+
+                cfg = load_engine_config(self.workspace_dir, engine_id)
+                if cfg:
+                    apply_engine_config(self.gui, engine, cfg)
+        except Exception:
+            pass
+
+        return engine
+
     def load_engines(self) -> List[Dict[str, Any]]:
         """
         Charge et retourne la liste des moteurs disponibles.
@@ -476,7 +528,12 @@ class EnginesStandaloneApp:
                 "missing_requirements": [],
             }
 
-    def build_command(self, engine_id: str, file_path: str) -> Optional[List[str]]:
+    def build_command(
+        self,
+        engine_id: str,
+        file_path: str,
+        engine: Optional[CompilerEngine] = None,
+    ) -> Optional[List[str]]:
         """
         Construit la commande de compilation pour un moteur et fichier donnés.
 
@@ -492,7 +549,9 @@ class EnginesStandaloneApp:
             return None
 
         try:
-            engine = create_engine(engine_id)
+            engine = engine or self._create_engine_for_run(engine_id)
+            if engine is None:
+                return None
             result = engine.program_and_args(self.gui, file_path)
 
             if result:
@@ -557,8 +616,36 @@ class EnginesStandaloneApp:
                 "duration_ms": 0,
             }
 
+        # Créer le moteur avec config workspace appliquée
+        engine = self._create_engine_for_run(engine_id)
+        if engine is None:
+            return {
+                "success": False,
+                "error": f"Engine creation failed: {engine_id}",
+                "return_code": -1,
+                "stdout": "",
+                "stderr": "",
+                "duration_ms": 0,
+            }
+
+        # Keep GUI behavior for tool checks when an interactive UI is available.
+        # In headless mode, some tool-install flows rely on Qt dialogs.
+        if not self.headless:
+            try:
+                if not engine.ensure_tools_installed(self.gui):
+                    return {
+                        "success": False,
+                        "error": "Engine required tools are missing or installation failed",
+                        "return_code": -1,
+                        "stdout": "",
+                        "stderr": "",
+                        "duration_ms": 0,
+                    }
+            except Exception:
+                pass
+
         # Construire la commande
-        cmd = self.build_command(engine_id, file_path)
+        cmd = self.build_command(engine_id, file_path, engine=engine)
         if not cmd:
             return {
                 "success": False,
@@ -587,6 +674,15 @@ class EnginesStandaloneApp:
         execution_env = os.environ.copy()
         if env:
             execution_env.update(env)
+        if self.workspace_dir:
+            execution_env["ARK_WORKSPACE"] = self.workspace_dir
+        try:
+            if self.gui.venv_manager:
+                venv_path = self.gui.venv_manager.resolve_project_venv()
+                if venv_path:
+                    execution_env["ARK_VENV_PATH"] = str(venv_path)
+        except Exception:
+            pass
 
         # Exécuter la commande
         try:

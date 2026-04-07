@@ -55,9 +55,32 @@ class _HeadlessGui:
         self.language_pref = "en"
         self.current_language = "en"
         self.venv_manager = None
+        self.venv_path_manuel = None
+        self.venv_path = None
+        self.use_system_python = False
+        self._init_venv_context()
 
     def tr(self, fr_text: str, en_text: str) -> str:
         return en_text
+
+    def _init_venv_context(self) -> None:
+        try:
+            from Core.Venv_Manager.Manager import VenvManager
+
+            self.venv_manager = VenvManager(self)
+            if self.workspace_dir:
+                try:
+                    self.venv_manager.apply_workspace_pref(self.workspace_dir)
+                except Exception:
+                    pass
+                try:
+                    detected = self.venv_manager.resolve_existing_venv(self.workspace_dir)
+                    if detected:
+                        self.venv_path = detected
+                except Exception:
+                    pass
+        except Exception:
+            self.venv_manager = None
 
 
 def _read_version_from_init(rel_path: str) -> str:
