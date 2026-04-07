@@ -23,6 +23,8 @@ def register_workspace_commands(
     workspace_init_emit: Callable[[str, bool, bool], None],
     workspace_config_auto_emit: Callable[[str, str | None, bool], None],
     workspace_inspect_payload: Callable[[str], dict[str, object]],
+    workspace_entrypoint_set_payload: Callable[[str, str | None], dict[str, object]],
+    workspace_entrypoint_clear_payload: Callable[[str], dict[str, object]],
 ) -> None:
     """Register workspace and workspace-bootstrap command groups on a Click root."""
     # Cette fonction isole un bloc volumineux de click_app pour améliorer la maintenabilité.
@@ -68,6 +70,48 @@ def register_workspace_commands(
         plain(result["entrypoint"] or "")
         if strict and not result.get("entrypoint"):
             raise click.exceptions.Exit(EXIT_PRECHECK_FAILED)
+
+    @workspace.command("entrypoint-set")
+    @click.argument("path", required=False, type=click.Path(exists=False))
+    @click.argument("entrypoint", required=True, type=str)
+    @click.option("--json", "as_json", is_flag=True)
+    def workspace_entrypoint_set(path, entrypoint, as_json):
+        payload = workspace_entrypoint_set_payload(
+            resolve_workspace_path(path or "."),
+            entrypoint,
+        )
+        if as_json:
+            if not payload.get("ok"):
+                code = (
+                    EXIT_WORKSPACE_INVALID
+                    if payload.get("error") in {"workspace is required", "workspace not found"}
+                    else EXIT_PRECHECK_FAILED
+                )
+                emit_and_exit(payload, code, True)
+            echo_payload(payload, True)
+            return
+        if not payload.get("ok"):
+            raise click.ClickException(payload.get("error", "Unable to set entrypoint"))
+        plain(payload.get("entrypoint") or "")
+
+    @workspace.command("entrypoint-clear")
+    @click.argument("path", required=False, type=click.Path(exists=False))
+    @click.option("--json", "as_json", is_flag=True)
+    def workspace_entrypoint_clear(path, as_json):
+        payload = workspace_entrypoint_clear_payload(resolve_workspace_path(path or "."))
+        if as_json:
+            if not payload.get("ok"):
+                code = (
+                    EXIT_WORKSPACE_INVALID
+                    if payload.get("error") in {"workspace is required", "workspace not found"}
+                    else EXIT_PRECHECK_FAILED
+                )
+                emit_and_exit(payload, code, True)
+            echo_payload(payload, True)
+            return
+        if not payload.get("ok"):
+            raise click.ClickException(payload.get("error", "Unable to clear entrypoint"))
+        plain("")
 
     @workspace.command("files")
     @click.argument("path", required=False, type=click.Path(exists=False))
@@ -220,6 +264,48 @@ def register_workspace_commands(
             entrypoint=entrypoint,
             as_json=as_json,
         )
+
+    @ws.command("entrypoint-set")
+    @click.argument("workspace", required=False, type=click.Path(exists=False))
+    @click.argument("entrypoint", required=True, type=str)
+    @click.option("--json", "as_json", is_flag=True)
+    def ws_entrypoint_set_cmd(workspace, entrypoint, as_json):
+        payload = workspace_entrypoint_set_payload(
+            resolve_workspace_path(workspace or "."),
+            entrypoint,
+        )
+        if as_json:
+            if not payload.get("ok"):
+                code = (
+                    EXIT_WORKSPACE_INVALID
+                    if payload.get("error") in {"workspace is required", "workspace not found"}
+                    else EXIT_PRECHECK_FAILED
+                )
+                emit_and_exit(payload, code, True)
+            echo_payload(payload, True)
+            return
+        if not payload.get("ok"):
+            raise click.ClickException(payload.get("error", "Unable to set entrypoint"))
+        plain(payload.get("entrypoint") or "")
+
+    @ws.command("entrypoint-clear")
+    @click.argument("workspace", required=False, type=click.Path(exists=False))
+    @click.option("--json", "as_json", is_flag=True)
+    def ws_entrypoint_clear_cmd(workspace, as_json):
+        payload = workspace_entrypoint_clear_payload(resolve_workspace_path(workspace or "."))
+        if as_json:
+            if not payload.get("ok"):
+                code = (
+                    EXIT_WORKSPACE_INVALID
+                    if payload.get("error") in {"workspace is required", "workspace not found"}
+                    else EXIT_PRECHECK_FAILED
+                )
+                emit_and_exit(payload, code, True)
+            echo_payload(payload, True)
+            return
+        if not payload.get("ok"):
+            raise click.ClickException(payload.get("error", "Unable to clear entrypoint"))
+        plain("")
 
     @ws.command("apply")
     @click.argument("workspace", required=False, type=click.Path(exists=False))

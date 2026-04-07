@@ -332,3 +332,120 @@ def test_init_with_venv_option_is_forwarded(monkeypatch, tmp_path) -> None:
     assert payload["ok"] is True
     assert payload["with_venv"] is True
     assert calls and calls[0]["with_venv"] is True
+
+
+def test_workspace_entrypoint_set_and_clear_json(tmp_path) -> None:
+    runner = CliRunner()
+    cli = build_cli("test")
+    (tmp_path / "main.py").write_text("print('ok')\n", encoding="utf-8")
+    (tmp_path / "ARK_Main_Config.yml").write_text("build:\n  entrypoint: null\n", encoding="utf-8")
+
+    set_result = runner.invoke(
+        cli,
+        ["workspace", "entrypoint-set", str(tmp_path), "main.py", "--json"],
+    )
+    assert set_result.exit_code == 0
+    set_payload = json.loads(set_result.output)
+    assert set_payload["ok"] is True
+    assert set_payload["entrypoint"] == "main.py"
+
+    clear_result = runner.invoke(
+        cli,
+        ["workspace", "entrypoint-clear", str(tmp_path), "--json"],
+    )
+    assert clear_result.exit_code == 0
+    clear_payload = json.loads(clear_result.output)
+    assert clear_payload["ok"] is True
+    assert clear_payload["entrypoint"] is None
+
+
+def test_engine_config_set_and_reset_json(monkeypatch, tmp_path) -> None:
+    runner = CliRunner()
+    cli = build_cli("test")
+
+    monkeypatch.setattr(
+        "cli.click_app.engine_config_set_payload",
+        lambda engine_id, workspace, options, merge=True: {
+            "saved": True,
+            "engine_id": engine_id,
+            "workspace": workspace,
+            "config": {"options": options, "merge": merge},
+            "path": str(tmp_path / ".ark" / engine_id / "config.json"),
+        },
+    )
+    monkeypatch.setattr(
+        "cli.click_app.engine_config_reset_payload",
+        lambda engine_id, workspace: {
+            "reset": True,
+            "engine_id": engine_id,
+            "workspace": workspace,
+            "path": str(tmp_path / ".ark" / engine_id / "config.json"),
+            "exists": False,
+        },
+    )
+
+    set_result = runner.invoke(
+        cli,
+        [
+            "engine",
+            "config",
+            "set",
+            "demo",
+            "--workspace",
+            str(tmp_path),
+            "--options-json",
+            '{"onefile": true}',
+            "--json",
+        ],
+    )
+    assert set_result.exit_code == 0
+    set_payload = json.loads(set_result.output)
+    assert set_payload["saved"] is True
+    assert set_payload["config"]["options"]["onefile"] is True
+
+    reset_result = runner.invoke(
+        cli,
+        ["engine", "config", "reset", "demo", "--workspace", str(tmp_path), "--json"],
+    )
+    assert reset_result.exit_code == 0
+    reset_payload = json.loads(reset_result.output)
+    assert reset_payload["reset"] is True
+    assert reset_payload["exists"] is False
+
+
+def test_venv_status_and_use_system_json(monkeypatch, tmp_path) -> None:
+    runner = CliRunner()
+    cli = build_cli("test")
+
+    monkeypatch.setattr(
+        "cli.click_app.venv_status_payload",
+        lambda workspace: {
+            "ok": True,
+            "workspace": workspace,
+            "mode": "venv",
+            "venv_path": str(tmp_path / ".venv"),
+            "pref_path": str(tmp_path / ".ark" / "pref.json"),
+        },
+    )
+    monkeypatch.setattr(
+        "cli.click_app.venv_use_system_payload",
+        lambda workspace: {
+            "ok": True,
+            "workspace": workspace,
+            "mode": "system",
+            "venv_path": None,
+            "pref_path": str(tmp_path / ".ark" / "pref.json"),
+        },
+    )
+
+    status_result = runner.invoke(cli, ["venv", "status", str(tmp_path), "--json"])
+    assert status_result.exit_code == 0
+    status_payload = json.loads(status_result.output)
+    assert status_payload["mode"] == "venv"
+
+    use_system_result = runner.invoke(
+        cli, ["venv", "use-system", str(tmp_path), "--json"]
+    )
+    assert use_system_result.exit_code == 0
+    use_system_payload = json.loads(use_system_result.output)
+    assert use_system_payload["mode"] == "system"
