@@ -24,7 +24,7 @@ Responsibilities:
 - avoid bootstrapping Qt on purely headless command paths
 - launch the main GUI, BCASL standalone, or Engines standalone
 - expose the dedicated interactive CLI
-- provide scriptable headless commands such as `engine`, `workspace`, `init`, `config-auto`, `check`, `doctor`, and `scaffold`
+- provide scriptable headless commands such as `engine`, `workspace`, `venv`, `init`, `config-auto`, `check`, `doctor`, and `scaffold`
 
 ### 2. Main GUI and UI wiring
 
