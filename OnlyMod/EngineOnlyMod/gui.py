@@ -69,6 +69,7 @@ from EngineLoader import (
 from EngineLoader.validator import check_engine_compatibility
 from Core.allversion import get_core_version, get_engine_sdk_version
 import EngineLoader as engines_loader
+from Core.process_security import secure_command, hardened_popen_kwargs
 
 
 class CompilationThread(QThread):
@@ -90,14 +91,18 @@ class CompilationThread(QThread):
     def run(self):
         """Exécute le processus de compilation."""
         try:
+            safe_program, safe_args, safe_env = secure_command(
+                self.program, self.args, self.env
+            )
             proc = subprocess.Popen(
-                [self.program] + self.args,
+                [safe_program] + safe_args,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 text=True,
-                env=self.env,
+                env=safe_env,
                 cwd=self.working_dir,
                 bufsize=1,
+                **hardened_popen_kwargs(),
             )
 
             import select
