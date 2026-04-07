@@ -8,7 +8,9 @@ from __future__ import annotations
 from typing import Any, Callable
 
 from .contracts import EXIT_PRECHECK_FAILED, EXIT_WORKSPACE_INVALID
+from .headless_commands import run_workspace_apply
 from .output import plain
+from .workspace_apply_args import build_workspace_apply_args
 
 
 def register_workspace_commands(
@@ -85,6 +87,84 @@ def register_workspace_commands(
         for item in result["python_files_preview"]:
             plain(f"  - {item}")
 
+    @workspace.command("apply")
+    @click.argument("path", required=False, type=click.Path(exists=False))
+    @click.option("--json", "as_json", is_flag=True)
+    @click.option("--with-venv", is_flag=True, help="Create or reuse a local workspace venv")
+    @click.option("--entrypoint", type=str, help="Override detected entrypoint")
+    @click.option("--no-auto-config", is_flag=True, help="Skip auto configuration pass")
+    @click.option("--no-inspect-files", is_flag=True, help="Skip recursive python file scan")
+    @click.option("--no-apply-venv-pref", is_flag=True, help="Skip workspace venv preference application")
+    @click.option("--no-apply-engine-configs", is_flag=True, help="Skip loading workspace engine configs")
+    @click.option("--strict", is_flag=True, help="Fail when required checks are missing")
+    @click.option("--require-entrypoint", is_flag=True, help="Require a resolved entrypoint")
+    def workspace_apply(
+        path,
+        as_json,
+        with_venv,
+        entrypoint,
+        no_auto_config,
+        no_inspect_files,
+        no_apply_venv_pref,
+        no_apply_engine_configs,
+        strict,
+        require_entrypoint,
+    ):
+        args = build_workspace_apply_args(
+            path=path,
+            as_json=bool(as_json),
+            with_venv=bool(with_venv),
+            entrypoint=entrypoint,
+            no_auto_config=bool(no_auto_config),
+            no_inspect_files=bool(no_inspect_files),
+            no_apply_venv_pref=bool(no_apply_venv_pref),
+            no_apply_engine_configs=bool(no_apply_engine_configs),
+            strict=bool(strict),
+            require_entrypoint=bool(require_entrypoint),
+        )
+        code = run_workspace_apply(args)
+        if code:
+            raise click.exceptions.Exit(code)
+
+    @workspace.command("select")
+    @click.argument("path", required=False, type=click.Path(exists=False))
+    @click.option("--json", "as_json", is_flag=True)
+    @click.option("--with-venv", is_flag=True, help="Create or reuse a local workspace venv")
+    @click.option("--entrypoint", type=str, help="Override detected entrypoint")
+    @click.option("--no-auto-config", is_flag=True, help="Skip auto configuration pass")
+    @click.option("--no-inspect-files", is_flag=True, help="Skip recursive python file scan")
+    @click.option("--no-apply-venv-pref", is_flag=True, help="Skip workspace venv preference application")
+    @click.option("--no-apply-engine-configs", is_flag=True, help="Skip loading workspace engine configs")
+    @click.option("--strict", is_flag=True, help="Fail when required checks are missing")
+    @click.option("--require-entrypoint", is_flag=True, help="Require a resolved entrypoint")
+    def workspace_select(
+        path,
+        as_json,
+        with_venv,
+        entrypoint,
+        no_auto_config,
+        no_inspect_files,
+        no_apply_venv_pref,
+        no_apply_engine_configs,
+        strict,
+        require_entrypoint,
+    ):
+        args = build_workspace_apply_args(
+            path=path,
+            as_json=bool(as_json),
+            with_venv=bool(with_venv),
+            entrypoint=entrypoint,
+            no_auto_config=bool(no_auto_config),
+            no_inspect_files=bool(no_inspect_files),
+            no_apply_venv_pref=bool(no_apply_venv_pref),
+            no_apply_engine_configs=bool(no_apply_engine_configs),
+            strict=bool(strict),
+            require_entrypoint=bool(require_entrypoint),
+        )
+        code = run_workspace_apply(args)
+        if code:
+            raise click.exceptions.Exit(code)
+
     @cli.command("init")
     @click.argument("workspace", required=False, type=click.Path(exists=False))
     @click.option("--json", "as_json", is_flag=True)
@@ -140,3 +220,81 @@ def register_workspace_commands(
             entrypoint=entrypoint,
             as_json=as_json,
         )
+
+    @ws.command("apply")
+    @click.argument("workspace", required=False, type=click.Path(exists=False))
+    @click.option("--json", "as_json", is_flag=True)
+    @click.option("--with-venv", is_flag=True, help="Create or reuse a local workspace venv")
+    @click.option("--entrypoint", type=str, help="Override detected entrypoint")
+    @click.option("--no-auto-config", is_flag=True, help="Skip auto configuration pass")
+    @click.option("--no-inspect-files", is_flag=True, help="Skip recursive python file scan")
+    @click.option("--no-apply-venv-pref", is_flag=True, help="Skip workspace venv preference application")
+    @click.option("--no-apply-engine-configs", is_flag=True, help="Skip loading workspace engine configs")
+    @click.option("--strict", is_flag=True, help="Fail when required checks are missing")
+    @click.option("--require-entrypoint", is_flag=True, help="Require a resolved entrypoint")
+    def ws_apply_cmd(
+        workspace,
+        as_json,
+        with_venv,
+        entrypoint,
+        no_auto_config,
+        no_inspect_files,
+        no_apply_venv_pref,
+        no_apply_engine_configs,
+        strict,
+        require_entrypoint,
+    ):
+        args = build_workspace_apply_args(
+            path=workspace,
+            as_json=bool(as_json),
+            with_venv=bool(with_venv),
+            entrypoint=entrypoint,
+            no_auto_config=bool(no_auto_config),
+            no_inspect_files=bool(no_inspect_files),
+            no_apply_venv_pref=bool(no_apply_venv_pref),
+            no_apply_engine_configs=bool(no_apply_engine_configs),
+            strict=bool(strict),
+            require_entrypoint=bool(require_entrypoint),
+        )
+        code = run_workspace_apply(args)
+        if code:
+            raise click.exceptions.Exit(code)
+
+    @ws.command("select")
+    @click.argument("workspace", required=False, type=click.Path(exists=False))
+    @click.option("--json", "as_json", is_flag=True)
+    @click.option("--with-venv", is_flag=True, help="Create or reuse a local workspace venv")
+    @click.option("--entrypoint", type=str, help="Override detected entrypoint")
+    @click.option("--no-auto-config", is_flag=True, help="Skip auto configuration pass")
+    @click.option("--no-inspect-files", is_flag=True, help="Skip recursive python file scan")
+    @click.option("--no-apply-venv-pref", is_flag=True, help="Skip workspace venv preference application")
+    @click.option("--no-apply-engine-configs", is_flag=True, help="Skip loading workspace engine configs")
+    @click.option("--strict", is_flag=True, help="Fail when required checks are missing")
+    @click.option("--require-entrypoint", is_flag=True, help="Require a resolved entrypoint")
+    def ws_select_cmd(
+        workspace,
+        as_json,
+        with_venv,
+        entrypoint,
+        no_auto_config,
+        no_inspect_files,
+        no_apply_venv_pref,
+        no_apply_engine_configs,
+        strict,
+        require_entrypoint,
+    ):
+        args = build_workspace_apply_args(
+            path=workspace,
+            as_json=bool(as_json),
+            with_venv=bool(with_venv),
+            entrypoint=entrypoint,
+            no_auto_config=bool(no_auto_config),
+            no_inspect_files=bool(no_inspect_files),
+            no_apply_venv_pref=bool(no_apply_venv_pref),
+            no_apply_engine_configs=bool(no_apply_engine_configs),
+            strict=bool(strict),
+            require_entrypoint=bool(require_entrypoint),
+        )
+        code = run_workspace_apply(args)
+        if code:
+            raise click.exceptions.Exit(code)

@@ -16,7 +16,12 @@ from .contracts import (
     normalize_path,
 )
 from .dedicated import run_dedicated_cli
-from .headless_commands import run_check, run_config_auto, run_init
+from .headless_commands import (
+    run_check,
+    run_config_auto,
+    run_init,
+    run_workspace_apply,
+)
 from .lazy_ops import (
     available_engine_ids,
     launch_bcasl_gui,
@@ -47,6 +52,7 @@ Usage:
     python -m pycompiler_ark check [workspace]  # CI/CD strict checks
     python -m pycompiler_ark init [workspace]   # Init workspace config
     python -m pycompiler_ark config-auto [workspace]  # Auto configure workspace
+    python -m pycompiler_ark ws apply [workspace]     # Full workspace apply workflow
 """
 
 
@@ -137,10 +143,19 @@ def run(argv: list[str] | None, app_version: str) -> int:
         return run_init(rest)
     if cmd in ("config-auto", "cfg-auto"):
         return run_config_auto(rest)
+    if cmd == "workspace":
+        if not rest:
+            error("Usage: workspace <apply|select> [workspace]")
+            return EXIT_USAGE_ERROR
+        sub = rest[0]
+        if sub in ("apply", "select"):
+            return run_workspace_apply(rest[1:])
+        error(f"Unknown workspace subcommand: {sub}")
+        return EXIT_USAGE_ERROR
     # Alias workspace: garde les habitudes courtes (`ws ...`) en fallback.
     if cmd == "ws":
         if not rest:
-            error("Usage: ws <init|config-auto|cfg-auto> [workspace]")
+            error("Usage: ws <init|config-auto|cfg-auto|apply|select> [workspace]")
             return EXIT_USAGE_ERROR
         ws_cmd = rest[0]
         ws_args = rest[1:]
@@ -148,6 +163,8 @@ def run(argv: list[str] | None, app_version: str) -> int:
             return run_init(ws_args)
         if ws_cmd in ("config-auto", "cfg-auto"):
             return run_config_auto(ws_args)
+        if ws_cmd in ("apply", "select"):
+            return run_workspace_apply(ws_args)
         error(f"Unknown ws subcommand: {ws_cmd}")
         return EXIT_USAGE_ERROR
 

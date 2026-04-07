@@ -15,7 +15,7 @@ from .lazy_ops import (
     launch_main_gui,
     unload_all_engines,
 )
-from .headless_commands import run_check, run_config_auto, run_init
+from .headless_commands import run_check, run_config_auto, run_init, run_workspace_apply
 from .output import error, info, plain, success, warn
 from .system_info import print_system_info
 
@@ -194,6 +194,7 @@ def _print_help() -> None:
         plain("  cfg-auto [workspace]     Alias for config-auto")
         plain("  ws init [workspace]      Alias for init")
         plain("  ws config-auto [workspace] Alias for config-auto")
+        plain("  ws apply [workspace]     Full workspace apply workflow")
         plain("  engines --dry-run     List available engines")
         plain("  unload                Unload all registered engines")
         plain("  exit | quit           Close dedicated CLI")
@@ -223,6 +224,7 @@ def _print_help() -> None:
     table.add_row("cfg-auto [workspace]", "Alias for config-auto")
     table.add_row("ws init [workspace]", "Alias for init")
     table.add_row("ws config-auto [workspace]", "Alias for config-auto")
+    table.add_row("ws apply [workspace]", "Apply full workspace workflow")
     table.add_row("unload", "Unload all registered engines")
     table.add_row("exit | quit", "Close dedicated CLI")
     _RICH_CONSOLE.print(table)
@@ -678,6 +680,9 @@ def run_dedicated_cli(app_version: str) -> int:
             "ws",
             "ws init",
             "ws config-auto",
+            "ws apply",
+            "workspace apply",
+            "workspace select",
             "unload",
             "exit",
             "quit",
@@ -805,7 +810,7 @@ def run_dedicated_cli(app_version: str) -> int:
                 continue
             if cmd == "ws":
                 if not args:
-                    warn("Usage: ws <init|config-auto|cfg-auto> [workspace]")
+                    warn("Usage: ws <init|config-auto|cfg-auto|apply|select> [workspace]")
                     continue
                 sub = args[0].lower()
                 ws_args = args[1:]
@@ -815,7 +820,20 @@ def run_dedicated_cli(app_version: str) -> int:
                 if sub in ("config-auto", "cfg-auto"):
                     run_config_auto(ws_args)
                     continue
+                if sub in ("apply", "select"):
+                    run_workspace_apply(ws_args)
+                    continue
                 warn(f"Unknown ws subcommand: {sub}")
+                continue
+            if cmd == "workspace":
+                if not args:
+                    warn("Usage: workspace <apply|select> [workspace]")
+                    continue
+                sub = args[0].lower()
+                if sub in ("apply", "select"):
+                    run_workspace_apply(args[1:])
+                    continue
+                warn(f"Unknown workspace subcommand: {sub}")
                 continue
             if cmd == "unload":
                 _run_unload()
