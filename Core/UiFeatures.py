@@ -441,6 +441,54 @@ class UiFeatures:
                     f"❌ Error importing configuration: {e}",
                 )
 
+    def save_all_engine_configs(self) -> None:
+        """Save configuration for all registered engines in one click."""
+        workspace_dir = getattr(self, "workspace_dir", None)
+        if not workspace_dir:
+            self.log_i18n(
+                "❌ Aucun workspace sélectionné.",
+                "❌ No workspace selected.",
+            )
+            return
+        try:
+            import EngineLoader as engines_loader
+            from Core.EngineConfigManager import save_engine_config_for_gui
+
+            engine_ids = list(engines_loader.available_engines())
+            if not engine_ids:
+                self.log_i18n(
+                    "⚠️ Aucun moteur chargé.",
+                    "⚠️ No engine loaded.",
+                )
+                return
+
+            saved = 0
+            failed: list[str] = []
+            for engine_id in engine_ids:
+                try:
+                    if save_engine_config_for_gui(self, engine_id):
+                        saved += 1
+                    else:
+                        failed.append(str(engine_id))
+                except Exception:
+                    failed.append(str(engine_id))
+
+            if failed:
+                self.log_i18n(
+                    f"⚠️ Configs engines sauvegardées: {saved}/{len(engine_ids)}. Échecs: {', '.join(failed)}",
+                    f"⚠️ Engine configs saved: {saved}/{len(engine_ids)}. Failed: {', '.join(failed)}",
+                )
+            else:
+                self.log_i18n(
+                    f"✅ Configs engines sauvegardées: {saved}/{len(engine_ids)}",
+                    f"✅ Engine configs saved: {saved}/{len(engine_ids)}",
+                )
+        except Exception as e:
+            self.log_i18n(
+                f"❌ Erreur sauvegarde configs engines: {e}",
+                f"❌ Error saving engine configs: {e}",
+            )
+
     def update_command_preview(self):
         """Met à jour l'aperçu de commande (placeholder)."""
         # Cette méthode est maintenant vide car les options sont gérées dynamiquement par les moteurs

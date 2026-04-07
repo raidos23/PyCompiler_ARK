@@ -363,6 +363,12 @@ def _setup_more_tools_menu(self) -> None:
         act_import.triggered.connect(lambda: getattr(self, "import_config", lambda: None)())
         menu.addAction(act_import)
 
+        act_save_engines = QAction(menu)
+        act_save_engines.triggered.connect(
+            lambda: getattr(self, "save_all_engine_configs", lambda: None)()
+        )
+        menu.addAction(act_save_engines)
+
         act_help = QAction(menu)
         act_help.triggered.connect(lambda: getattr(self, "show_help_dialog", lambda: None)())
         menu.addAction(act_help)
@@ -378,6 +384,7 @@ def _setup_more_tools_menu(self) -> None:
             "advanced": act_advanced,
             "export": act_export,
             "import": act_import,
+            "save_engines": act_save_engines,
             "help": act_help,
         }
 
@@ -521,6 +528,10 @@ def _retranslate_ide_like_actions(self) -> None:
         "advanced": _tr("Configuration avancée", "Advanced config"),
         "export": _tr("Exporter la configuration", "Export config"),
         "import": _tr("Importer la configuration", "Import config"),
+        "save_engines": _tr(
+            "Sauvegarder configs engines",
+            "Save engine configs",
+        ),
         "help": _tr("Aide", "Help"),
     }
     for key, action in actions.items():
