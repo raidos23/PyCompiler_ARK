@@ -53,4 +53,4 @@ def main(argv: list[str] | None = None) -> int:
             handle_fatal(sys.exc_info())
             return 1
 
-    return run_fallback(argv, app_version)
+    return run_fallback(args, app_version)
