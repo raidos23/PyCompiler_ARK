@@ -527,56 +527,60 @@ def cancel_all_compilations(self) -> bool:
     """
     main_process = _get_main_process()
 
-    # Cas 1: compilation moteur en cours
-    if main_process.is_compiling:
-        success = main_process.cancel()
-        if success:
-            log_i18n_level(
-                self,
-                "info",
-                "Annulation de la compilation demandée...",
-                "Compilation cancellation requested...",
-            )
-        else:
-            log_i18n_level(
-                self,
-                "warning",
-                "Impossible d'annuler la compilation.",
-                "Unable to cancel compilation.",
-            )
-        return success
+    # Marquer l'annulation le plus tôt possible pour stopper le pipeline BCASL -> compile.
+    try:
+        self._cancel_requested_during_precompile = True
+    except Exception:
+        pass
 
-    # Cas 2: pré-compilation BCASL en cours (avant process moteur)
+    cancelled = False
+
+    # 1) Stop compilation engine process/tree immediately.
+    try:
+        if main_process.is_compiling:
+            cancelled = bool(main_process.cancel()) or cancelled
+    except Exception:
+        pass
+
+    # 2) Stop BCASL thread + workers aggressively (short timeout).
+    bcasl_was_running = False
     try:
         bcasl_thread = getattr(self, "_bcasl_thread", None)
-        bcasl_running = bool(
+        bcasl_was_running = bool(
             bcasl_thread is not None
             and hasattr(bcasl_thread, "isRunning")
             and bcasl_thread.isRunning()
         )
     except Exception:
-        bcasl_running = False
+        bcasl_was_running = False
+    try:
+        from bcasl.Loader import ensure_bcasl_thread_stopped
 
-    if bcasl_running:
-        try:
-            from bcasl.Loader import ensure_bcasl_thread_stopped
+        ensure_bcasl_thread_stopped(self, timeout_ms=200)
+        if bcasl_was_running:
+            cancelled = True
+    except Exception:
+        pass
+    try:
+        from bcasl.executor import kill_active_workers
 
-            ensure_bcasl_thread_stopped(self, timeout_ms=2000)
-        except Exception:
-            pass
-        try:
-            self._cancel_requested_during_precompile = True
-        except Exception:
-            pass
-        try:
-            self.set_controls_enabled(True)
-        except Exception:
-            pass
+        if kill_active_workers() > 0:
+            cancelled = True
+    except Exception:
+        pass
+
+    # 3) Re-enable GUI controls right away.
+    try:
+        self.set_controls_enabled(True)
+    except Exception:
+        pass
+
+    if cancelled:
         log_i18n_level(
             self,
             "info",
-            "Annulation demandée pendant la pré-compilation (BCASL).",
-            "Cancellation requested during pre-compilation (BCASL).",
+            "Annulation forcée demandée (compilation + BCASL).",
+            "Forced cancellation requested (compilation + BCASL).",
         )
         return True
 
