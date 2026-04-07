@@ -6,7 +6,6 @@ from __future__ import annotations
 import json
 import os
 import platform
-import fnmatch
 import re
 import shlex
 import subprocess
@@ -128,6 +127,8 @@ def _get_entrypoint(cfg: dict[str, Any]) -> str | None:
 
 
 def _should_exclude(rel_path: str, patterns: list[str]) -> bool:
+    import fnmatch
+
     rel_posix = rel_path.replace(os.sep, "/")
     for pattern in patterns:
         pat = str(pattern or "").replace("\\", "/").strip()
@@ -149,6 +150,63 @@ def _normalize_workspace(workspace: str | None) -> str | None:
         return str(Path(workspace).expanduser().resolve())
     except Exception:
         return str(workspace)
+
+
+def _scan_workspace_python_files(
+    ws_path: Path,
+    exclusion_patterns: list[str],
+    should_exclude_file_fn=None,
+) -> list[str]:
+    """Scan workspace and return sorted relative Python files with exclusion logic."""
+    python_files: list[str] = []
+    for path in ws_path.rglob("*.py"):
+        try:
+            rel = str(path.relative_to(ws_path)).replace(os.sep, "/")
+            if callable(should_exclude_file_fn):
+                if should_exclude_file_fn(str(path), str(ws_path), exclusion_patterns):
+                    continue
+            elif _should_exclude(rel, exclusion_patterns):
+                continue
+            python_files.append(rel)
+        except Exception:
+            continue
+    python_files.sort()
+    return python_files
+
+
+def _resolve_entrypoint_for_workspace(
+    ws_path: Path,
+    python_files: list[str],
+    entrypoint: str | None = None,
+) -> tuple[str | None, str | None]:
+    """
+    Resolve and validate entrypoint for a workspace.
+
+    Returns:
+        (resolved_entrypoint, error_message)
+    """
+    resolved_entrypoint = None
+    if entrypoint:
+        raw = str(entrypoint).strip()
+        try:
+            ep_path = Path(raw)
+            if ep_path.is_absolute():
+                ep_path = ep_path.resolve()
+                try:
+                    rel = ep_path.relative_to(ws_path.resolve())
+                except Exception:
+                    return None, "entrypoint must be inside workspace"
+                resolved_entrypoint = str(rel).replace(os.sep, "/")
+            else:
+                resolved_entrypoint = raw.replace("\\", "/")
+        except Exception:
+            resolved_entrypoint = raw.replace("\\", "/")
+    else:
+        resolved_entrypoint = _detect_entrypoint(str(ws_path), python_files)
+
+    if resolved_entrypoint and resolved_entrypoint not in python_files:
+        return resolved_entrypoint, "entrypoint is not a Python file in workspace"
+    return resolved_entrypoint, None
 
 
 def _workspace_config_candidates(workspace_dir: str) -> list[Path]:
@@ -512,7 +570,12 @@ def workspace_config_auto_payload(
         return init_payload
 
     try:
-        from Core.ArkConfigManager import load_ark_config, save_ark_config
+        from Core.ArkConfigManager import (
+            load_ark_config,
+            save_ark_config,
+            set_entrypoint,
+            should_exclude_file,
+        )
     except Exception as exc:
         return {
             "ok": False,
@@ -523,16 +586,11 @@ def workspace_config_auto_payload(
     cfg = load_ark_config(str(ws_path))
     exclusion_patterns = cfg.get("exclusion_patterns", []) if isinstance(cfg, dict) else []
 
-    python_files: list[str] = []
-    for path in ws_path.rglob("*.py"):
-        try:
-            rel = str(path.relative_to(ws_path)).replace(os.sep, "/")
-            if _should_exclude(rel, exclusion_patterns):
-                continue
-            python_files.append(rel)
-        except Exception:
-            continue
-    python_files.sort()
+    python_files = _scan_workspace_python_files(
+        ws_path,
+        list(exclusion_patterns) if isinstance(exclusion_patterns, list) else [],
+        should_exclude_file_fn=should_exclude_file,
+    )
 
     deps = cfg.get("dependencies", {}) if isinstance(cfg, dict) else {}
     if not isinstance(deps, dict):
@@ -553,41 +611,26 @@ def workspace_config_auto_payload(
         item for item in req_candidates if item not in found_req_files
     ]
 
-    resolved_entrypoint = None
-    if entrypoint:
-        raw = str(entrypoint).strip()
-        try:
-            ep_path = Path(raw)
-            if ep_path.is_absolute():
-                ep_path = ep_path.resolve()
-                try:
-                    rel = ep_path.relative_to(ws_path.resolve())
-                except Exception:
-                    return {
-                        "ok": False,
-                        "error": "entrypoint must be inside workspace",
-                        "workspace": str(ws_path),
-                    }
-                resolved_entrypoint = str(rel).replace(os.sep, "/")
-            else:
-                resolved_entrypoint = raw.replace("\\", "/")
-        except Exception:
-            resolved_entrypoint = raw.replace("\\", "/")
-    else:
-        resolved_entrypoint = _detect_entrypoint(str(ws_path), python_files)
-
-    build = cfg.get("build", {}) if isinstance(cfg, dict) else {}
-    if not isinstance(build, dict):
-        build = {}
-    if resolved_entrypoint and resolved_entrypoint not in python_files:
+    resolved_entrypoint, entrypoint_error = _resolve_entrypoint_for_workspace(
+        ws_path,
+        python_files,
+        entrypoint=entrypoint,
+    )
+    if entrypoint_error:
         return {
             "ok": False,
-            "error": "entrypoint is not a Python file in workspace",
+            "error": entrypoint_error,
             "workspace": str(ws_path),
             "entrypoint": resolved_entrypoint,
         }
-    build["entrypoint"] = resolved_entrypoint
-    cfg["build"] = build
+    if not set_entrypoint(str(ws_path), resolved_entrypoint):
+        return {
+            "ok": False,
+            "error": "unable to persist workspace entrypoint",
+            "workspace": str(ws_path),
+            "entrypoint": resolved_entrypoint,
+        }
+    cfg = load_ark_config(str(ws_path))
 
     deps["requirements_files"] = merged_requirements_files
     deps["auto_generate_from_imports"] = True
@@ -932,24 +975,26 @@ def workspace_inspect_payload(workspace: str | None) -> dict[str, Any]:
     if not ws_path.exists() or not ws_path.is_dir():
         return {"workspace": ws, "exists": False, "error": "workspace not found"}
 
-    cfg = _load_workspace_config(str(ws_path))
-    entrypoint = _get_entrypoint(cfg)
+    should_exclude_file = None
+    try:
+        from Core.ArkConfigManager import get_entrypoint, load_ark_config, should_exclude_file
+
+        cfg = load_ark_config(str(ws_path))
+        entrypoint = get_entrypoint(cfg)
+    except Exception:
+        cfg = _load_workspace_config(str(ws_path))
+        entrypoint = _get_entrypoint(cfg)
+        should_exclude_file = None  # type: ignore[assignment]
+
     dep_opts = cfg.get("dependencies", {}) if isinstance(cfg, dict) else {}
-    req_candidates = (
-        dep_opts.get("requirements_files", []) if isinstance(dep_opts, dict) else []
-    )
+    req_candidates = dep_opts.get("requirements_files", []) if isinstance(dep_opts, dict) else []
     exclusion_patterns = cfg.get("exclusion_patterns", []) if isinstance(cfg, dict) else []
 
-    python_files: list[str] = []
-    for path in ws_path.rglob("*.py"):
-        try:
-            rel = str(path.relative_to(ws_path)).replace(os.sep, "/")
-            if _should_exclude(rel, exclusion_patterns):
-                continue
-            python_files.append(rel)
-        except Exception:
-            continue
-    python_files.sort()
+    python_files = _scan_workspace_python_files(
+        ws_path,
+        list(exclusion_patterns) if isinstance(exclusion_patterns, list) else [],
+        should_exclude_file_fn=should_exclude_file,
+    )
 
     detected_req_files = []
     for name in req_candidates:
@@ -968,6 +1013,128 @@ def workspace_inspect_payload(workspace: str | None) -> dict[str, Any]:
         "python_files_preview": python_files[:25],
         "requirements_files_found": detected_req_files,
         "config": cfg,
+    }
+
+
+def workspace_apply_payload(
+    workspace: str | None,
+    *,
+    with_venv: bool = False,
+    entrypoint: str | None = None,
+    auto_config: bool = True,
+    inspect_files: bool = True,
+    apply_venv_pref: bool = True,
+    apply_engine_configs: bool = True,
+    require_entrypoint: bool = False,
+) -> dict[str, Any]:
+    ws = _normalize_workspace(workspace)
+    if not ws:
+        return {"ok": False, "error": "workspace is required", "workspace": None}
+
+    init_payload = workspace_init_payload(ws, with_venv=with_venv)
+    if not init_payload.get("ok"):
+        return {
+            "ok": False,
+            "workspace": ws,
+            "init": init_payload,
+            "error": init_payload.get("error", "workspace init failed"),
+        }
+
+    config_payload: dict[str, Any] | None = None
+    if auto_config:
+        config_payload = workspace_config_auto_payload(ws, entrypoint=entrypoint)
+        if not config_payload.get("ok"):
+            return {
+                "ok": False,
+                "workspace": ws,
+                "init": init_payload,
+                "config_auto": config_payload,
+                "error": config_payload.get("error", "workspace auto-config failed"),
+            }
+
+    inspect_payload: dict[str, Any] = (
+        workspace_inspect_payload(ws) if inspect_files else {"workspace": ws, "exists": True}
+    )
+
+    venv_state: dict[str, Any] = {"applied": False, "mode": "skipped", "venv_path": None}
+    if apply_venv_pref:
+        try:
+            gui = _HeadlessGui(workspace_dir=ws)
+            manager = getattr(gui, "venv_manager", None)
+            if manager is None:
+                venv_state = {"applied": False, "mode": "unavailable", "venv_path": None}
+            else:
+                applied = bool(manager.apply_workspace_pref(ws))
+                mode = (
+                    "system"
+                    if bool(getattr(gui, "use_system_python", False))
+                    else ("venv" if bool(getattr(gui, "venv_path_manuel", None)) else "none")
+                )
+                try:
+                    resolved = manager.resolve_existing_venv(ws)
+                except Exception:
+                    resolved = getattr(gui, "venv_path_manuel", None)
+                venv_state = {
+                    "applied": applied,
+                    "mode": mode,
+                    "venv_path": resolved,
+                }
+        except Exception as exc:
+            venv_state = {
+                "applied": False,
+                "mode": "error",
+                "venv_path": None,
+                "error": str(exc),
+            }
+
+    engine_configs_state: dict[str, Any] = {
+        "applied": False,
+        "loaded_count": 0,
+        "total_count": 0,
+        "mode": "skipped",
+    }
+    if apply_engine_configs:
+        try:
+            import EngineLoader as engines_loader
+            from Core.EngineConfigManager import apply_engine_configs_for_workspace, load_engine_config
+
+            gui = _HeadlessGui(workspace_dir=ws)
+            engine_ids = list(engines_loader.available_engines())
+            loaded = 0
+            for eid in engine_ids:
+                if load_engine_config(ws, eid):
+                    loaded += 1
+            apply_engine_configs_for_workspace(gui, ws)
+            engine_configs_state = {
+                "applied": True,
+                "loaded_count": loaded,
+                "total_count": len(engine_ids),
+            }
+        except Exception as exc:
+            engine_configs_state = {
+                "applied": False,
+                "loaded_count": 0,
+                "total_count": 0,
+                "mode": "error",
+                "error": str(exc),
+            }
+
+    entry = inspect_payload.get("entrypoint")
+    precheck_failed = bool(require_entrypoint and not entry)
+    return {
+        "ok": not precheck_failed,
+        "workspace": ws,
+        "with_venv": bool(with_venv),
+        "auto_config": bool(auto_config),
+        "inspect_files": bool(inspect_files),
+        "apply_venv_pref": bool(apply_venv_pref),
+        "apply_engine_configs": bool(apply_engine_configs),
+        "require_entrypoint": bool(require_entrypoint),
+        "init": init_payload,
+        "config_auto": config_payload,
+        "inspect": inspect_payload,
+        "venv": venv_state,
+        "engine_configs": engine_configs_state,
     }
 
 

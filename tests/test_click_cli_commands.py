@@ -63,6 +63,35 @@ def test_workspace_inspect_json(tmp_path) -> None:
     assert payload["python_file_count"] >= 1
 
 
+def test_workspace_apply_json(tmp_path) -> None:
+    runner = CliRunner()
+    cli = build_cli("test")
+    (tmp_path / "main.py").write_text("print('ok')\n", encoding="utf-8")
+
+    result = runner.invoke(cli, ["workspace", "apply", str(tmp_path), "--json"])
+
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    assert payload["ok"] is True
+    assert payload["workspace"] == str(tmp_path.resolve())
+    assert payload["inspect"]["python_file_count"] >= 1
+
+
+def test_workspace_apply_strict_fails_without_entrypoint(tmp_path) -> None:
+    runner = CliRunner()
+    cli = build_cli("test")
+
+    result = runner.invoke(
+        cli,
+        ["workspace", "apply", str(tmp_path), "--no-auto-config", "--strict", "--json"],
+    )
+
+    assert result.exit_code == 3
+    payload = json.loads(result.output)
+    assert payload["ok"] is False
+    assert payload["require_entrypoint"] is True
+
+
 def test_scaffold_engine_json(tmp_path) -> None:
     runner = CliRunner()
     cli = build_cli("test")
