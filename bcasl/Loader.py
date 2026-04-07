@@ -307,6 +307,7 @@ def _run_bcasl_sync(
     cfg: dict[str, Any],
     plugin_timeout: float,
     log_cb: Optional[callable] = None,
+    stop_requested: Optional[callable] = None,
 ):
     """Exécute BCASL en mode synchrone et retourne le rapport."""
     manager = BCASL(workspace_root, config=cfg, plugin_timeout_s=plugin_timeout)
@@ -319,7 +320,8 @@ def _run_bcasl_sync(
 
     workspace_meta = _build_workspace_meta(workspace_root, cfg)
     return manager.run_pre_compile(
-        PreCompileContext(workspace_root, config=cfg, workspace_metadata=workspace_meta)
+        PreCompileContext(workspace_root, config=cfg, workspace_metadata=workspace_meta),
+        stop_requested=stop_requested,
     )
 
 
@@ -539,6 +541,13 @@ if QObject is not None and Signal is not None:  # pragma: no cover
             self.Plugins_dir = Plugins_dir
             self.cfg = cfg
             self.plugin_timeout = plugin_timeout
+            self._cancel_requested = False
+
+        def request_cancel(self) -> None:
+            try:
+                self._cancel_requested = True
+            except Exception:
+                pass
 
         @Slot()
         def run(self) -> None:
@@ -549,6 +558,7 @@ if QObject is not None and Signal is not None:  # pragma: no cover
                     self.cfg,
                     self.plugin_timeout,
                     log_cb=self.log.emit,
+                    stop_requested=lambda: bool(self._cancel_requested),
                 )
                 self.finished.emit(report)
             except Exception as e:
@@ -615,6 +625,19 @@ if QObject is not None and Signal is not None:  # pragma: no cover
 def ensure_bcasl_thread_stopped(self, timeout_ms: int = 5000) -> None:
     """Arrête proprement un thread BCASL en cours (si présent)."""
     try:
+        # Request cooperative cancellation first, then hard-kill any sandbox workers.
+        try:
+            w = getattr(self, "_bcasl_worker", None)
+            if w is not None and hasattr(w, "request_cancel"):
+                w.request_cancel()
+        except Exception:
+            pass
+        try:
+            from .executor import kill_active_workers
+
+            kill_active_workers()
+        except Exception:
+            pass
         t = getattr(self, "_bcasl_thread", None)
         if t is not None:
             try:
@@ -632,6 +655,12 @@ def ensure_bcasl_thread_stopped(self, timeout_ms: int = 5000) -> None:
                             t.wait(1000)
                         except Exception:
                             pass
+                    try:
+                        from .executor import kill_active_workers
+
+                        kill_active_workers()
+                    except Exception:
+                        pass
             except Exception:
                 pass
         # Nettoyage
