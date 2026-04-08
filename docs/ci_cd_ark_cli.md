@@ -28,6 +28,7 @@ python3 /path/to/PyCompiler_ARK/pycompiler_ark.py
 ARK_BIN="python3 /path/to/PyCompiler_ARK/pycompiler_ark.py"
 WORKSPACE_DIR="/path/to/workspace"
 ENGINE_ID="<engine_id>"
+export ARK_AUTO_INSTALL_SYSTEM_TOOLS=1
 
 # Single-step workspace flow (init + auto-config + inspect)
 $ARK_BIN workspace apply "$WORKSPACE_DIR" --with-venv --strict --json > "$WORKSPACE_DIR/.ark_workspace_apply.json"
@@ -48,7 +49,19 @@ PY
 ENTRYPOINT_FILE="$WORKSPACE_DIR/$ENTRYPOINT_REL"
 
 $ARK_BIN engine info "$ENGINE_ID" --workspace "$WORKSPACE_DIR" --json > "$WORKSPACE_DIR/.ark_engine_info.json"
-$ARK_BIN engine compile "$ENGINE_ID" "$ENTRYPOINT_FILE" --workspace "$WORKSPACE_DIR" --json > "$WORKSPACE_DIR/.ark_build_result.json"
+if ! $ARK_BIN engine compile "$ENGINE_ID" "$ENTRYPOINT_FILE" --workspace "$WORKSPACE_DIR" --json > "$WORKSPACE_DIR/.ark_build_result.json"; then
+  WORKSPACE_DIR="$WORKSPACE_DIR" python3 - <<'PY'
+import json, os
+from pathlib import Path
+p = Path(os.environ["WORKSPACE_DIR"]) / ".ark_build_result.json"
+try:
+    d = json.loads(p.read_text(encoding="utf-8"))
+    print("Compilation failed:", d.get("error") or "unknown error")
+except Exception:
+    print("Compilation failed (invalid .ark_build_result.json)")
+PY
+  exit 1
+fi
 ```
 
 You can explicitly set or clear entrypoint in CI when needed:
@@ -72,10 +85,26 @@ $ARK_BIN workspace entrypoint-clear "$WORKSPACE_DIR" --json
 
 - `engine compile`
   - compiles the resolved entrypoint with the selected engine
+  - returns non-zero on build failure, even in `--json` mode (pipeline-friendly)
 - `engine config set/reset`
   - lets CI apply or reset workspace engine options without opening GUI
 - `venv status/use-system/use-venv/install-req`
   - lets CI enforce workspace Python mode and requirements installation policy
+
+## System Tool Auto-install Policy (CI Security)
+
+When `ARK_AUTO_INSTALL_SYSTEM_TOOLS=1` is set, ARK can attempt to install missing
+system tools required by engines. In CI/headless mode:
+
+- installation is strictly non-interactive
+- ARK does not prompt for or persist sudo passwords
+- ARK uses root privileges when already running as root, otherwise `sudo -n`
+
+If auto-install fails in CI:
+
+- run the pipeline as root, or
+- preinstall required system tools in the runner/base image, or
+- configure narrowly-scoped `sudoers` rules (NOPASSWD) for your CI user
 
 ## Workspace Apply Options (CI-focused)
 
@@ -199,6 +228,41 @@ If your team prefers a checked-in shell wrapper, create a script that chains:
 3. `engine compile ... --json`
 
 Then archive JSON outputs as CI artifacts for troubleshooting.
+
+## Final Summary Pattern
+
+For readable CI logs, print a final status summary from generated JSON reports.
+This keeps one clear block with step-by-step `OK`/`FAIL` states:
+
+```bash
+WORKSPACE_DIR="/path/to/workspace"
+WORKSPACE_DIR="$WORKSPACE_DIR" python3 - <<'PY'
+import json, os
+from pathlib import Path
+
+ws = Path(os.environ["WORKSPACE_DIR"])
+reports = [
+    ("workspace-apply", ws / ".ark_workspace_apply.json", lambda d: bool(d.get("ok"))),
+    ("check", ws / ".ark_check.json", lambda d: bool(d.get("ok"))),
+    ("engine-info", ws / ".ark_engine_info.json", lambda d: bool(d.get("found", True))),
+    ("compile", ws / ".ark_build_result.json", lambda d: bool(d.get("success"))),
+]
+
+for name, path, ok_fn in reports:
+    if not path.exists():
+        print(f"[MISS] {name}: {path.name} not found")
+        continue
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except Exception as exc:
+        print(f"[FAIL] {name}: invalid json ({exc})")
+        continue
+    ok = bool(ok_fn(data))
+    detail = data.get("error") or data.get("message") or ""
+    status = "OK" if ok else "FAIL"
+    print(f"[{status}] {name}" + (f": {detail}" if detail else ""))
+PY
+```
 
 ## GitHub Actions Dogfooding Workflow
 
