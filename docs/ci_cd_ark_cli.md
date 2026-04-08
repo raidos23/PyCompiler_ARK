@@ -8,6 +8,11 @@ Use this document as the single source of truth for ARK CI/CD behavior and examp
 When pipeline behavior changes (flags, exit codes, fail-fast rules, JSON contracts),
 update this page first and keep other references aligned to it.
 
+Scope boundary:
+
+- CI/CD persistence must be explicit through CLI commands (for example `workspace entrypoint-set`).
+- GUI temporary selections are not a CI contract and must not be treated as persisted workspace state.
+
 ## Goal
 
 Automate the following steps for a workspace:
@@ -88,6 +93,12 @@ You can explicitly set or clear entrypoint in CI when needed:
 $ARK_BIN workspace entrypoint-set "$WORKSPACE_DIR" src/main.py --json
 $ARK_BIN workspace entrypoint-clear "$WORKSPACE_DIR" --json
 ```
+
+Important:
+
+- In Engines standalone GUI, selecting a file is a temporary build/session choice.
+- It can read `ARK_Main_Config.yml`, but it does not write entrypoint changes back to config files.
+- For reproducible CI, persist entrypoint only with `workspace entrypoint-set`.
 
 ## Command Breakdown
 
