@@ -301,6 +301,8 @@ def _print_bcasl_help() -> None:
         plain("  bcasl list")
         plain("  bcasl run <workspace> [--timeout SECONDS]")
         plain("  bcasl run -w <workspace> [--timeout SECONDS]")
+        plain("  bcasl doctor [workspace] [--strict]")
+        plain("  bcasl doctor -w <workspace> [--strict]")
         plain("")
         plain("Examples:")
         plain("  bcasl")
@@ -308,6 +310,7 @@ def _print_bcasl_help() -> None:
         plain("  bcasl list")
         plain("  bcasl run /path/to/workspace")
         plain("  bcasl run /path/to/workspace --timeout 30")
+        plain("  bcasl doctor /path/to/workspace --strict")
         plain("")
         return
 
@@ -318,10 +321,12 @@ def _print_bcasl_help() -> None:
     table.add_row("bcasl list", "List BCASL plugins")
     table.add_row("bcasl run <workspace>", "Run plugins headless")
     table.add_row("bcasl run -w <workspace>", "Run plugins headless")
+    table.add_row("bcasl doctor [workspace]", "Run BCASL diagnostics")
     _RICH_CONSOLE.print(table)
     _RICH_CONSOLE.print("[bold]Examples[/bold]")
     _print_cmdline("bcasl list")
     _print_cmdline("bcasl run /path/to/workspace --timeout 30")
+    _print_cmdline("bcasl doctor /path/to/workspace --strict")
 
 
 def _run_bcasl_headless(args: list[str]) -> int:
@@ -413,6 +418,41 @@ def _run_bcasl_headless(args: list[str]) -> int:
         failed = sum(1 for item in report if not item.success)
         error(f"BCASL run finished with failures: {failed} plugin(s) failed.")
         return 1
+
+    if sub == "doctor":
+        workspace: str | None = None
+        strict = False
+        i = 1
+        while i < len(args):
+            tok = args[i]
+            if tok in ("-w", "--workspace"):
+                if i + 1 >= len(args):
+                    error("Missing workspace path after --workspace")
+                    return 2
+                workspace = _resolve_workspace(args[i + 1])
+                i += 2
+                continue
+            if tok == "--strict":
+                strict = True
+                i += 1
+                continue
+            if workspace is None and not tok.startswith("-"):
+                workspace = _resolve_workspace(tok)
+                i += 1
+                continue
+            error(f"Unknown option for bcasl doctor: {tok}")
+            return 2
+
+        from .headless_ops import bcasl_doctor_payload
+
+        payload = bcasl_doctor_payload(workspace=workspace)
+        plain("BCASL Doctor")
+        for check in payload.get("checks", []):
+            status = "OK" if check.get("ok") else "FAIL"
+            plain(f"  [{status}] {check.get('name')}: {check.get('message') or ''}")
+        if strict and not payload.get("ok", False):
+            return 1
+        return 0
 
     error(f"Unknown bcasl subcommand: {sub}")
     _print_bcasl_help()
