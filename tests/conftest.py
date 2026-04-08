@@ -29,8 +29,20 @@ if str(ROOT_DIR) not in sys.path:
 
 @pytest.fixture()
 def test_workspace(tmp_path: Path) -> Path:
-    """Return a temporary copy of tests/workspace_for_test for file operations."""
+    """Return a temporary workspace for file-operation tests.
+
+    The fixture prefers copying `tests/workspace_for_test` when available.
+    If that template folder is missing, it creates a minimal workspace in
+    `tmp_path` so tests remain hermetic and portable.
+    """
     src = Path(__file__).parent / "workspace_for_test"
     dest = tmp_path / "workspace"
-    shutil.copytree(src, dest)
+    if src.exists():
+        shutil.copytree(src, dest)
+        return dest
+
+    dest.mkdir(parents=True, exist_ok=True)
+    (dest / "main.py").write_text("print('hello from test workspace')\n", encoding="utf-8")
+    (dest / "requirements.txt").write_text("requests\n", encoding="utf-8")
+    (dest / ".ark").mkdir(parents=True, exist_ok=True)
     return dest

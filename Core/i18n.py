@@ -143,7 +143,16 @@ async def normalize_lang_pref(pref: str | None) -> str:
 
 def _resolve_system_language_sync() -> str:
     try:
-        loc = locale.getdefaultlocale()[0] or ""
+        # Python 3.15+: avoid deprecated locale.getdefaultlocale().
+        loc = (locale.getlocale()[0] or "").strip()
+        if not loc:
+            # Fallback env-based locale resolution for non-initialized locale contexts.
+            loc = (
+                os.environ.get("LC_ALL")
+                or os.environ.get("LC_MESSAGES")
+                or os.environ.get("LANG")
+                or ""
+            ).strip()
         return "fr" if loc.lower().startswith(("fr", "fr_")) else "en"
     except Exception:
         return "en"
