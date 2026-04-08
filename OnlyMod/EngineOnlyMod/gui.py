@@ -224,6 +224,8 @@ class EnginesStandaloneGui(QMainWindow):
         self.theme = theme
         self.selected_engine_id = None
         self.selected_file = None
+        self.entrypoint_file = None
+        self._entrypoint_relpath = None
 
         # État du venv
         self.venv_path: Optional[str] = None
@@ -247,6 +249,8 @@ class EnginesStandaloneGui(QMainWindow):
 
         # Initialisation du gestionnaire de venv
         self._init_venv_manager()
+        self._load_entrypoint_from_workspace()
+        self._apply_entrypoint_marker()
 
         # Centre la fenêtre sur l'écran
         self._center_window()
@@ -325,20 +329,6 @@ class EnginesStandaloneGui(QMainWindow):
         project_layout.setHorizontalSpacing(8)
         project_layout.setVerticalSpacing(8)
 
-        file_label = QLabel("File:")
-        file_label.setMinimumWidth(72)
-        self.file_path_edit = QLineEdit()
-        self.file_path_edit.setPlaceholderText("Select a Python file to compile...")
-        self.file_path_edit.setMinimumHeight(30)
-        browse_btn = QPushButton("Browse")
-        browse_btn.setObjectName("secondary_button")
-        browse_btn.setMinimumHeight(30)
-        browse_btn.setMinimumWidth(84)
-        browse_btn.clicked.connect(self._browse_file)
-        project_layout.addWidget(file_label, 0, 0)
-        project_layout.addWidget(self.file_path_edit, 0, 1)
-        project_layout.addWidget(browse_btn, 0, 2)
-
         workspace_label = QLabel("Workspace:")
         workspace_label.setMinimumWidth(72)
         self.workspace_edit = QLineEdit()
@@ -351,9 +341,27 @@ class EnginesStandaloneGui(QMainWindow):
         workspace_browse_btn.setMinimumHeight(30)
         workspace_browse_btn.setMinimumWidth(84)
         workspace_browse_btn.clicked.connect(self._browse_workspace)
-        project_layout.addWidget(workspace_label, 1, 0)
-        project_layout.addWidget(self.workspace_edit, 1, 1)
-        project_layout.addWidget(workspace_browse_btn, 1, 2)
+        project_layout.addWidget(workspace_label, 0, 0)
+        project_layout.addWidget(self.workspace_edit, 0, 1)
+        project_layout.addWidget(workspace_browse_btn, 0, 2)
+
+        file_label = QLabel("File:")
+        file_label.setMinimumWidth(72)
+        self.file_path_edit = QLineEdit()
+        self.file_path_edit.setPlaceholderText("Select a Python file (entrypoint)...")
+        self.file_path_edit.setMinimumHeight(30)
+        browse_file_btn = QPushButton("Browse")
+        browse_file_btn.setObjectName("secondary_button")
+        browse_file_btn.setMinimumHeight(30)
+        browse_file_btn.setMinimumWidth(84)
+        browse_file_btn.clicked.connect(self._browse_file)
+        project_layout.addWidget(file_label, 1, 0)
+        project_layout.addWidget(self.file_path_edit, 1, 1)
+        project_layout.addWidget(browse_file_btn, 1, 2)
+
+        self.entrypoint_info_label = QLabel("Entrypoint: not set")
+        self.entrypoint_info_label.setObjectName("subtle_label")
+        project_layout.addWidget(self.entrypoint_info_label, 2, 0, 1, 3)
         left_layout.addWidget(project_group)
 
         venv_group = QGroupBox("Virtual Environment")
@@ -893,18 +901,96 @@ class EnginesStandaloneGui(QMainWindow):
         except Exception as e:
             self._log(f"Error checking compatibility: {e}")
 
-    def _browse_file(self):
-        """Ouvre une boîte de dialogue pour sélectionner un fichier."""
+    def _load_entrypoint_from_workspace(self) -> None:
+        """Load entrypoint from ARK_Main_Config.yml for current workspace."""
+        self._entrypoint_relpath = None
+        self.entrypoint_file = None
+        ws = (self.workspace_edit.text() or "").strip()
+        if not ws:
+            return
+        try:
+            from Core.ArkConfigManager import get_entrypoint, load_ark_config
+
+            cfg = load_ark_config(ws)
+            rel = get_entrypoint(cfg)
+            if rel:
+                abs_path = os.path.join(ws, rel)
+                if os.path.isfile(abs_path):
+                    self._entrypoint_relpath = rel
+                    self.entrypoint_file = abs_path
+        except Exception:
+            return
+
+    def _apply_entrypoint_marker(self) -> None:
+        """Refresh entrypoint labels and file preview."""
+        if self.selected_file:
+            try:
+                ws = self.workspace_edit.text().strip() or self.workspace_dir or ""
+                rel = (
+                    os.path.relpath(self.selected_file, ws).replace("\\", "/")
+                    if ws
+                    else self.selected_file
+                )
+            except Exception:
+                rel = self.selected_file
+            self.entrypoint_info_label.setText(f"Entrypoint (this build only): {rel}")
+            if self._is_valid(self.file_path_edit):
+                self.file_path_edit.setText(self.selected_file)
+            return
+
+        rel = self._entrypoint_relpath
+        if rel:
+            self.entrypoint_info_label.setText(f"Entrypoint (config): {rel}")
+            if self._is_valid(self.file_path_edit):
+                self.file_path_edit.setText(self.entrypoint_file or rel)
+        else:
+            self.entrypoint_info_label.setText("Entrypoint: not set")
+            if self._is_valid(self.file_path_edit):
+                self.file_path_edit.clear()
+
+    def _browse_file(self) -> None:
+        """Select a Python file as temporary build entrypoint (no config write)."""
+        start_dir = self.workspace_edit.text().strip() or self.workspace_dir or "."
         file_path, _ = QFileDialog.getOpenFileName(
             self,
-            "Select Python file to compile",
-            self.workspace_edit.text() or ".",
+            "Select Python file (temporary entrypoint)",
+            start_dir,
             "Python files (*.py);;All files (*)",
         )
+        if not file_path:
+            return
 
-        if file_path:
-            self.file_path_edit.setText(file_path)
-            self.selected_file = file_path
+        abs_file = os.path.abspath(file_path)
+        ws = self.workspace_edit.text().strip()
+        if not ws:
+            ws = os.path.dirname(abs_file)
+            self.workspace_edit.setText(ws)
+        ws = os.path.abspath(ws)
+        self.workspace_dir = ws
+
+        # If selected file is outside current workspace, align workspace to file folder.
+        try:
+            common = os.path.commonpath([ws, abs_file])
+        except Exception:
+            common = ""
+        if common != ws:
+            ws = os.path.dirname(abs_file)
+            self.workspace_dir = ws
+            self.workspace_edit.setText(ws)
+
+        self.selected_file = abs_file
+
+        self._apply_entrypoint_marker()
+        self._detect_venv()
+        self._log("Temporary entrypoint selected for this build only")
+
+    def _resolve_compile_target(self) -> str | None:
+        """Resolve compile target from session selection first, then config."""
+        if self.selected_file and os.path.isfile(self.selected_file):
+            return self.selected_file
+        if self.entrypoint_file and os.path.isfile(self.entrypoint_file):
+            return self.entrypoint_file
+        return None
 
     def _browse_workspace(self):
         """Ouvre une boîte de dialogue pour sélectionner un workspace."""
@@ -915,6 +1001,10 @@ class EnginesStandaloneGui(QMainWindow):
         if workspace_dir:
             self.workspace_edit.setText(workspace_dir)
             self.workspace_dir = workspace_dir
+            self.selected_file = None
+            self._load_entrypoint_from_workspace()
+            self._apply_entrypoint_marker()
+            self._detect_venv()
 
     def _run_compilation(self):
         """Exécute la compilation avec le moteur de l'onglet courant."""
@@ -964,15 +1054,15 @@ class EnginesStandaloneGui(QMainWindow):
             )
             return
 
-        file_path = self.file_path_edit.text()
+        file_path = self._resolve_compile_target()
         if not file_path:
             QMessageBox.warning(
                 self,
                 "Warning",
                 (
-                    "Please select a file to compile"
+                    "Configure a workspace entrypoint before compiling"
                     if self.language == "en"
-                    else "Veuillez sélectionner un fichier à compiler"
+                    else "Configurez un point d'entrée du workspace avant de compiler"
                 ),
             )
             return
@@ -1143,9 +1233,13 @@ class EnginesStandaloneGui(QMainWindow):
             QMessageBox.warning(self, "Warning", "No engine available")
             return
 
-        file_path = self.file_path_edit.text()
+        file_path = self._resolve_compile_target()
         if not file_path:
-            QMessageBox.warning(self, "Warning", "Please select a file to compile")
+            QMessageBox.warning(
+                self,
+                "Warning",
+                "Configure a workspace entrypoint before dry-run",
+            )
             return
 
         try:
