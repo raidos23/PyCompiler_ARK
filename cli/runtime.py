@@ -259,7 +259,7 @@ def should_enable_qt(argv: list[str] | None) -> bool:
         "ws",
         "scaffold",
     }
-    gui_commands = {"gui", "main"}
+    gui_commands = {"gui", "main", "prog-engine"}
     if cmd in gui_commands:
         return True
     if cmd in headless_commands:
