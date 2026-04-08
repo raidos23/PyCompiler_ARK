@@ -593,6 +593,8 @@ def build_cli(app_version: str):
         )
         result = app.run_compilation(engine_id, str(Path(file_path)), dry_run=True)
         if as_json:
+            if not result.get("success"):
+                _emit_and_exit(result, EXIT_PRECHECK_FAILED, as_json=True)
             _echo_payload(result, as_json=True)
             return
         if result.get("success"):
@@ -618,6 +620,8 @@ def build_cli(app_version: str):
         )
         result = app.run_compilation(engine_id, str(Path(file_path)), dry_run=False)
         if as_json:
+            if not result.get("success"):
+                _emit_and_exit(result, EXIT_PRECHECK_FAILED, as_json=True)
             _echo_payload(result, as_json=True)
             return
         if result.get("success"):
