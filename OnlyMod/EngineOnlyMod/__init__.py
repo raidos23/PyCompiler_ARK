@@ -14,26 +14,26 @@
 # limitations under the License.
 
 """
-Engines Standalone Module — Module de Gestion des Moteurs de Compilation
+Engines Standalone Module — Module de Gestion des Engines de Compilation
 
-Module autonome permettant d'exécuter les moteurs de compilation PyCompiler ARK
-sans lancer l'application principale.
+Module standalone permettant d'executer les compilation engines PyCompiler ARK
+sans lancer l'application maine.
 
 Fonctionnalités:
-    - Interface graphique complète pour gérer les moteurs de compilation
-    - Mode CLI pour lister les moteurs et vérifier la compatibilité
-    - Support de plusieurs moteurs via le registre EngineLoader
-    - Thèmes clair/sombre et langues anglais/français
+  - Interface graphique complète pour gérer les compilation engines
+  - Mode CLI pour lister les engines et checkr la compatibilité
+  - Support de plusieurs engines via le registre EngineLoader
+  - Thèmes clair/sombre et languages anglais/français
 
 Utilisation:
-    # Interface GUI
-    python -m OnlyMod.EngineOnlyMod
+  # Interface GUI
+  python -m OnlyMod.EngineOnlyMod
 
-    # Mode CLI - lister les moteurs
-    python -m OnlyMod.EngineOnlyMod --list-engines
+  # Mode CLI - lister les engines
+  python -m OnlyMod.EngineOnlyMod --list-engines
 
-    # Mode CLI - vérifier compatibilité
-    python -m OnlyMod.EngineOnlyMod --check-compat <engine_id>
+  # Mode CLI - checkr compatibilité
+  python -m OnlyMod.EngineOnlyMod --check-compat <engine_id>
 
 Documentation complète : voir README.md
 """
@@ -50,16 +50,16 @@ def launch_engines_gui(
     language: str = "en",
     theme: str = "dark",
 ) -> int:
-    """Lance l'application Engines Standalone GUI.
+    """Launch the Engines Standalone GUI application.
 
-    Args:
-        workspace_dir: Chemin du workspace (optionnel)
-        language: Code de langue ('en' ou 'fr')
-        theme: Nom du thème ('light' ou 'dark')
+  Args:
+    workspace_dir: Chemin du workspace (optionnel)
+    language: Code de language ('en' ou 'fr')
+    theme: Nom du theme ('light' ou 'dark')
 
-    Returns:
-        Code de retour de l'application
-    """
+  Returns:
+    Code de retour de l'application
+  """
     from .gui import launch_engines_gui as _launch
 
     return _launch(workspace_dir, language, theme)
@@ -71,14 +71,14 @@ def launch_prog_engine_gui(
     language: str = "en",
     theme: str = "dark",
 ) -> int:
-    """Lance la GUI dédiée à un seul moteur avec éditeur de config."""
+    """Launch dedicated GUI for one engine with config editor."""
     from .gui import launch_prog_engine_gui as _launch
 
     return _launch(engine_id, workspace_dir, language, theme)
 
 
 def main():
-    """Point d'entrée principal du module."""
+    """Main module entry point."""
     from . import __main__ as _main_module
 
     return _main_module.main()

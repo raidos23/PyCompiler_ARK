@@ -15,12 +15,12 @@
 
 """
 Custom dialogs for PyCompiler ARK.
-Inclut ProgressDialog, boîtes de message, et autres dialogues spécifiques.
+Inclut ProgressDialog, dialogs de message, et autres dialogues spécifiques.
 
-IMPORTANT: Tous les dialogs ici exécutent les opérations Qt dans le thread principal
+IMPORTANT: Tous les dialogs ici executent les opérations Qt dans le thread main
 via le système d'invoker de Plugins_SDK.GeneralContext.Dialog pour assurer:
-- L'héritage du thème de l'application
-- L'intégration visuelle avec l'application principale
+- L'héritage du theme de l'application
+- L'intégration visuelle avec l'application maine
 - La sécurité des threads
 """
 
@@ -307,12 +307,12 @@ def sys_msgbox_for_installing(
 ) -> Optional[InstallAuth]:
     """Interactive prompt for multi-OS installation authorization.
 
-  - Windows: pas de mot de passe (UAC natif). Return InstallAuth(method='uac', secret=None) si confirmé.
-  - Linux/macOS: demande de mot de passe sudo. Return InstallAuth(method='sudo', secret='<pwd>') si confirmé.
+ - Windows: pas de mot de passe (UAC natif). Return InstallAuth(method='uac', secret=None) si confirmé.
+ - Linux/macOS: demande de mot de passe sudo. Return InstallAuth(method='sudo', secret='<pwd>') si confirmé.
 
-  Aucun secret n'est loggé. Fournit uniquement les informations nécessaires au plugin pour exécuter
-  l'installation avec élévation adaptée à l'OS.
-  """
+ No secret n'est loggé. Fournit uniquement les informations nécessaires au plugin pour executer
+ l'installation avec élévation adaptée à l'OS.
+ """
     is_windows = platform.system().lower().startswith("win")
     try:
         from Core.i18n import tr_fr_en, is_french_language
@@ -398,11 +398,11 @@ def sys_msgbox_for_installing(
 class ProgressDialog(QDialog):
     """Progress dialog tightly integrated with application.
 
-  S'exécute toujours dans le thread principal pour assurer:
-  - L'héritage du thème de l'application
-  - L'intégration visuelle avec l'application principale
-  - La sécurité des threads
-  """
+ S'execute toujours dans le thread main pour assurer:
+ - L'héritage du theme de l'application
+ - L'intégration visuelle avec l'application maine
+ - La sécurité des threads
+ """
 
     def __init__(
         self,

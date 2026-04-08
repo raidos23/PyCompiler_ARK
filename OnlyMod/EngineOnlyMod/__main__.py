@@ -16,24 +16,24 @@
 """
 Engines Standalone Module Entry Point
 
-Permet d'exécuter l'application moteurs de compilation de manière autonome:
-    python -m OnlyMod.EngineOnlyMod [options]
+Permet d'executer l'application compilation engines de manière standalone:
+  python -m OnlyMod.EngineOnlyMod [options]
 
 Sans arguments, lance l'interface GUI complète.
 Avec --list-engines ou --check-compat, lance en mode CLI.
 
 Exemples:
-    # Lancer l'interface GUI
-    python -m OnlyMod.EngineOnlyMod
+  # Lancer l'interface GUI
+  python -m OnlyMod.EngineOnlyMod
 
-    # Lister les moteurs disponibles (CLI mode)
-    python -m OnlyMod.EngineOnlyMod --list-engines
+  # Lister les engines disponibles (CLI mode)
+  python -m OnlyMod.EngineOnlyMod --list-engines
 
-    # Vérifier la compatibilité d'un moteur
-    python -m OnlyMod.EngineOnlyMod --check-compat <engine_id>
+  # Checkr la compatibilité d'un engine
+  python -m OnlyMod.EngineOnlyMod --check-compat <engine_id>
 
-    # Compiler un fichier (mode dry-run)
-    python -m OnlyMod.EngineOnlyMod --engine <engine_id> -f script.py --dry-run
+  # Compiler un file (mode dry-run)
+  python -m OnlyMod.EngineOnlyMod --engine <engine_id> -f script.py --dry-run
 """
 
 import argparse
@@ -43,7 +43,7 @@ from .gui import launch_engines_gui, launch_prog_engine_gui
 
 
 def run_cli(args):
-    """Exécute en mode CLI."""
+    """Execute en mode CLI."""
     from .app import EnginesStandaloneApp
 
     app = EnginesStandaloneApp(
@@ -96,7 +96,7 @@ def run_cli(args):
 
 
 def main():
-    """Point d'entrée principal."""
+    """Point d'entrée main."""
     parser = argparse.ArgumentParser(
         description="Engines Standalone - Execute compilation engines independently",
         formatter_class=argparse.RawDescriptionHelpFormatter,

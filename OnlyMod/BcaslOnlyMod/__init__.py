@@ -14,17 +14,17 @@
 # limitations under the License.
 
 """
-BcaslOnlyMod - Module autonome pour gérer les plugins BCASL
+BcaslOnlyMod - Standalone module for managing BCASL plugins
 
-Interface complète pour exécuter et configurer les plugins BCASL
-indépendamment de l'application principale PyCompiler ARK.
+Interface complète pour executer et configurer les BCASL plugins
+indépendamment de l'application maine PyCompiler ARK.
 
 Fournit une interface utilisateur moderne permettant de:
-- Découvrir et lister les plugins BCASL disponibles
+- Découvrir et lister les BCASL plugins disponibles
 - Activer/désactiver les plugins
 - Réordonner l'exécution des plugins
-- Exécuter les plugins de pré-compilation
-- Afficher les rapports d'exécution
+- Executer les plugins de pre-compilation
+- Displayr les rapports d'exécution
 """
 
 from __future__ import annotations

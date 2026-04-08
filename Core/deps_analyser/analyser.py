@@ -146,10 +146,10 @@ EXCLUDED_STDLIB = _load_excluded_stdlib()
 @functools.lru_cache(maxsize=256)
 def _is_stdlib_module(module_name: str) -> bool:
     """
-  Determine whether module belongs to Python standard library.
-  Combine une liste d'exclusion explicite et une détection basée sur importlib.util.find_spec.
-  Résultats cachés pour éviter les appels répétés.
-  """
+ Determine whether module belongs to Python standard library.
+ Combine une liste d'exclusion explicite et une détection basée sur importlib.util.find_spec.
+ Résultats cachés pour éviter les appels répétés.
+ """
     try:
         if module_name in EXCLUDED_STDLIB:
             return True
@@ -636,16 +636,16 @@ def _check_module_installed(module: str) -> bool:
 
 def _find_pip_executable(venv_path: str = None, workspace_dir: str = None) -> tuple:
     """
-  Locate pip executable with multiple fallback strategies.
-  Return un tuple (program, prefix_args) où:
-  - program: path vers l'executable ou 'python'
-  - prefix_args: arguments à préfixer ([] pour pip direct, ['-m', 'pip'] pour module)
+ Locate pip executable with multiple fallback strategies.
+ Return un tuple (program, prefix_args) où:
+ - program: path vers l'executable ou 'python'
+ - prefix_args: arguments à préfixer ([] pour pip direct, ['-m', 'pip'] pour module)
 
-  Stratégies (dans l'ordre):
-  1. pip du venv (Scripts/pip.exe ou bin/pip)
-  2. python -m pip du venv
-  3. python -m pip du système
-  """
+ Stratégies (dans l'ordre):
+ 1. pip du venv (Scripts/pip.exe ou bin/pip)
+ 2. python -m pip du venv
+ 3. python -m pip du système
+ """
     import sys
 
     # Déterminer le chemin du venv
@@ -711,9 +711,9 @@ def _find_pip_executable(venv_path: str = None, workspace_dir: str = None) -> tu
 
 def suggest_missing_dependencies(self):
     """
-  Analyze primary files to compile and detect imported modules,
-  vérifie leur présence dans le venv, et propose d'installer ceux qui manquent.
-  """
+ Analyze primary files to compile and detect imported modules,
+ check leur présence dans le venv, et propose d'installer ceux qui manquent.
+ """
 
     def _t(_key: str, fr: str, en: str) -> str:
         try:

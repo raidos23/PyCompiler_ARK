@@ -18,13 +18,13 @@ BCASL - Before-Compilation Actions System Loader
 
 Point d'entrée du package: expose l'Plugins publique minimale et stable.
 
-    from bcasl import (
-        BCASL, PluginBase, PluginMeta, PreCompileContext, ExecutionReport,
-        register_plugin, BCASL_PLUGIN_REGISTER_FUNC,
-        run_pre_compile_async, run_pre_compile,
-        ensure_bcasl_thread_stopped, open_bc_loader_dialog,
-        resolve_bcasl_timeout,
-    )
+  from bcasl import (
+    BCASL, PluginBase, PluginMeta, PreCompileContext, ExecutionReport,
+    register_plugin, BCASL_PLUGIN_REGISTER_FUNC,
+    run_pre_compile_async, run_pre_compile,
+    ensure_bcasl_thread_stopped, open_bc_loader_dialog,
+    resolve_bcasl_timeout,
+  )
 """
 
 from __future__ import annotations

@@ -77,25 +77,25 @@ DEFAULT_TAG_PRIORITY = 100
 def compute_tag_order(meta_map: dict[str, dict[str, Any]]) -> list[str]:
     """Trie les plugins par score de tag (plus petit d'abord), puis par id.
 
-    Utilise TAG_PRIORITY_MAP pour déterminer la priorité basée sur les tags.
-    Tags pris depuis meta_map[pid]["tags"]. Inconnu => DEFAULT_TAG_PRIORITY.
+  Utilise TAG_PRIORITY_MAP pour determiner la priorité basée sur les tags.
+  Tags pris depuis meta_map[pid]["tags"]. Inconnu => DEFAULT_TAG_PRIORITY.
 
-    Phases d'exécution:
-    - 0: Nettoyage (clean, cleanup, sanitize)
-    - 10: Validation (check, requirements, verify)
-    - 20: Préparation (prepare, generate, install, configure)
-    - 30: Conformité (license, header, normalize, inject)
-    - 40: Linting (lint, format, typecheck, style)
-    - 50: Obfuscation (obfuscate, transpile, protect, encrypt)
-    - 100: Défaut (aucun tag reconnu)
-    """
+  Phases d'exécution:
+  - 0: Nettoyage (clean, cleanup, sanitize)
+  - 10: Validation (check, requirements, verify)
+  - 20: Préparation (prepare, generate, install, configure)
+  - 30: Conformité (license, header, normalize, inject)
+  - 40: Linting (lint, format, typecheck, style)
+  - 50: Obfuscation (obfuscate, transpile, protect, encrypt)
+  - 100: Défaut (none tag reconnu)
+  """
 
     def _compute_score(pid: str) -> int:
         """Calcule le score de priorité pour un plugin.
 
-        Retourne le score minimum parmi tous les tags du plugin.
-        Si aucun tag, retourne DEFAULT_TAG_PRIORITY.
-        """
+    Return le score minimum parmi tous les tags du plugin.
+    Si none tag, return DEFAULT_TAG_PRIORITY.
+    """
         try:
             tags = meta_map.get(pid, {}).get("tags")
             if not tags:
@@ -121,7 +121,7 @@ def compute_tag_order(meta_map: dict[str, dict[str, Any]]) -> list[str]:
 
 
 def get_tag_phase_name(tag: str) -> str:
-    """Retourne le nom lisible de la phase pour un tag donné."""
+    """Return le nom lisible de la phase pour un tag donné."""
     tag_lower = str(tag).strip().lower()
     score = TAG_PRIORITY_MAP.get(tag_lower, DEFAULT_TAG_PRIORITY)
 
@@ -139,10 +139,10 @@ def get_tag_phase_name(tag: str) -> str:
 
 
 def describe_plugin_priority(plugin_id: str, tags: list[str]) -> str:
-    """Retourne une description lisible de la priorité d'un plugin.
+    """Return une description lisible de la priorité d'un plugin.
 
-    Exemple: "plugin_id (lint, format) -> Phase 4: Linting"
-    """
+  Exemple: "plugin_id (lint, format) -> Phase 4: Linting"
+  """
     if not tags:
         return f"{plugin_id} (aucun tag) -> Phase {DEFAULT_TAG_PRIORITY}: Défaut"
 

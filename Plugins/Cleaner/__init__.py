@@ -73,9 +73,9 @@ PLUGIN_META = PluginMeta(
 class Cleaner(BcPluginBase):
     """Plugin de nettoyage du workspace avant compilation.
 
-    Supprime les fichiers .pyc et les dossiers __pycache__ pour réduire la taille
-    et éviter les problèmes de cache lors de la compilation.
-    """
+  Remove les files .pyc et les folders __pycache__ pour réduire la taille
+  et éviter les problèmes de cache lors de la compilation.
+  """
 
     meta = PLUGIN_META
 
@@ -176,9 +176,9 @@ class Cleaner(BcPluginBase):
     def on_pre_compile(self, ctx: PreCompileContext) -> None:
         """Nettoie le workspace avant la compilation.
 
-        Args:
-            ctx: PreCompileContext avec les informations du workspace depuis bcasl.yml
-        """
+    Args:
+      ctx: PreCompileContext avec les informations du workspace depuis bcasl.yml
+    """
         try:
             # Vérifier que le workspace est valide et configuré dans bcasl.yml
             if not ctx.is_workspace_valid():

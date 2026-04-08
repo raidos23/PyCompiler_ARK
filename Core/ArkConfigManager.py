@@ -24,10 +24,10 @@ Ce module est responsable de:
 
 Le file de configuration utilise le format YAML et permet de personnaliser:
 - Les patterns de files à inclure/exclure de la compilation
-- Les gestionnaires d'environnement virtuel (Poetry, Pipenv, Conda, etc.)
-- Les options de dépendances
+- Les managementnaires d'environment virtual (Poetry, Pipenv, Conda, etc.)
+- Les options de dependencies
 
-Note: La configuration des plugins BCASL est gérée exclusivement par bcasl.yml
+Note: La configuration des BCASL plugins est gérée exclusivement par bcasl.yml
 """
 
 import os
@@ -131,19 +131,19 @@ DEFAULT_CONFIG = {
 
 def _deep_merge_dict(base: dict, override: dict) -> dict:
     """
-  Recursively merge two dictionaries.
+ Recursively merge two dictionaries.
 
-  Cette fonction permet de combiner une configuration de base avec des
-  valeurs personnalisées. Les dictionnaires imbriqués sont fusionnés
-  plutôt que remplacés, permettant une configuration modulaire.
+ Cette fonction permet de combiner une configuration de base avec des
+ valeurs personnalisées. Les dictionnaires imbriqués sont fusionnés
+ plutôt que remplacés, permettant une configuration modulaire.
 
-  Args:
-    base: Dictionnaire de configuration de base
-    override: Dictionnaire contenant les valeurs à surcharger
+ Args:
+  base: Dictionnaire de configuration de base
+  override: Dictionnaire contenant les valeurs à surloadr
 
-  Returns:
-    Un nouveau dictionnaire avec les valeurs fusionnées
-  """
+ Returns:
+  Un nouveau dictionnaire avec les valeurs fusionnées
+ """
     result = base.copy()
     for key, value in override.items():
         if key in result and isinstance(result[key], dict) and isinstance(value, dict):
@@ -157,25 +157,25 @@ def _deep_merge_dict(base: dict, override: dict) -> dict:
 
 def load_ark_config(workspace_dir: str) -> dict[str, Any]:
     """
-  Load ARK configuration from a YAML file.
+ Load ARK configuration from a YAML file.
 
-  Cette fonction recherche un file de configuration dans le workspace
-  selon un ordre de priorité prédéfini et fusionne la configuration
-  utilisateur avec les valeurs par défaut.
+ Cette fonction recherche un file de configuration dans le workspace
+ selon un ordre de priorité prédéfini et fusionne la configuration
+ utilisateur avec les valeurs par défaut.
 
-  Fichiers recherchés (ordre de priorité):
-  1. ARK_Main_Config.yaml
-  2. ARK_Main_Config.yml
-  3. .ARK_Main_Config.yaml
-  4. .ARK_Main_Config.yml
+ Fichiers recherchés (ordre de priorité):
+ 1. ARK_Main_Config.yaml
+ 2. ARK_Main_Config.yml
+ 3. .ARK_Main_Config.yaml
+ 4. .ARK_Main_Config.yml
 
-  Args:
-    workspace_dir: Path absolu vers le directory du workspace
+ Args:
+  workspace_dir: Path absolu vers le directory du workspace
 
-  Returns:
-    Dictionnaire complet de configuration, incluant les valeurs par défaut
-    et les personnalisations utilisateur
-  """
+ Returns:
+  Dictionnaire complet de configuration, incluant les valeurs par défaut
+  et les personnalisations utilisateur
+ """
     import copy
 
     # Commencer avec une copie complète de la configuration par défaut
@@ -283,11 +283,11 @@ def load_ark_config(workspace_dir: str) -> dict[str, Any]:
 
 def get_dependency_options(config: dict[str, Any]) -> dict[str, Any]:
     """
-  Return dependency management options.
+ Return dependency management options.
 
-  Returns:
-    Dictionnaire des options de dépendances
-  """
+ Returns:
+  Dictionnaire des options de dependencies
+ """
     return config.get("dependencies", {})
 
 
@@ -313,11 +313,11 @@ def get_build_options(config: dict[str, Any]) -> dict[str, Any]:
 
 def get_entrypoint(config: dict[str, Any]) -> Optional[str]:
     """
-  Return configured entry point.
+ Return configured entry point.
 
-  Returns:
-    Path relatif du point d'entrée ou None
-  """
+ Returns:
+  Path relatif du point d'entrée ou None
+ """
     build_opts = get_build_options(config)
     if not isinstance(build_opts, dict):
         return None
@@ -327,15 +327,15 @@ def get_entrypoint(config: dict[str, Any]) -> Optional[str]:
 
 def save_ark_config(workspace_dir: str, config: dict[str, Any]) -> bool:
     """
-  Save ARK configuration to ARK_Main_Config.yml.
+ Save ARK configuration to ARK_Main_Config.yml.
 
-  Args:
-    workspace_dir: Path du workspace
-    config: Configuration complète à enregistrer
+ Args:
+  workspace_dir: Path du workspace
+  config: Configuration complète à enregistrer
 
-  Returns:
-    True si succès, False sinon
-  """
+ Returns:
+  True si success, False sinon
+ """
     if not workspace_dir or not isinstance(config, dict):
         return False
     try:
@@ -356,15 +356,15 @@ def save_ark_config(workspace_dir: str, config: dict[str, Any]) -> bool:
 
 def set_entrypoint(workspace_dir: str, entrypoint: Optional[str]) -> bool:
     """
-  Update entry point in ARK_Main_Config.yml.
+ Update entry point in ARK_Main_Config.yml.
 
-  Args:
-    workspace_dir: Path du workspace
-    entrypoint: Path relatif du point d'entrée (ou None pour effacer)
+ Args:
+  workspace_dir: Path du workspace
+  entrypoint: Path relatif du point d'entrée (ou None pour clearr)
 
-  Returns:
-    True si succès, False sinon
-  """
+ Returns:
+  True si success, False sinon
+ """
     if not workspace_dir:
         return False
     cfg = load_ark_config(workspace_dir)
@@ -382,12 +382,12 @@ def set_entrypoint(workspace_dir: str, entrypoint: Optional[str]) -> bool:
 
 def _normalize_exclusion_pattern(pattern: str) -> str:
     """
-  Normalize exclusion pattern for reliable cross-platform matching.
+ Normalize exclusion pattern for reliable cross-platform matching.
 
-  - Convertit les séparateurs Windows en "/"
-  - Retire le préfixe "./"
-  - Si le pattern se termine par "/", on l'étend à "/**"
-  """
+ - Convertit les séparateurs Windows en "/"
+ - Retire le préfixe "./"
+ - Si le pattern se termine par "/", on l'étend à "/**"
+ """
     p = str(pattern).strip()
     if not p:
         return ""
@@ -482,19 +482,19 @@ def should_exclude_file(
 
 def create_default_ark_config(workspace_dir: str) -> bool:
     """
-  Create ARK_Main_Config.yml with default configuration.
+ Create ARK_Main_Config.yml with default configuration.
 
-  Cette fonction génère un file de configuration complet avec
-  toutes les options disponibles et leurs valeurs par défaut.
-  Elle ne remplace pas un file existant.
+ Cette fonction génère un file de configuration complet avec
+ toutes les options disponibles et leurs valeurs par défaut.
+ Elle ne remplace pas un file existant.
 
-  Args:
-    workspace_dir: Path du directory du workspace
+ Args:
+  workspace_dir: Path du directory du workspace
 
-  Returns:
-    True si le file a été créé avec succès, False s'il existe déjà
-    ou si une erreur s'est produite
-  """
+ Returns:
+  True si le file a été créé avec success, False s'il existe déjà
+  ou si une erreur s'est produite
+ """
     if not workspace_dir:
         return False
 

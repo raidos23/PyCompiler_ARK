@@ -835,11 +835,11 @@ def _refresh_log_palette(self, css: str | None = None) -> None:
 
 def apply_theme(self, pref: str) -> None:
     """
-  Apply a theme from themes directory.
-  - "System": détection (sombre/clair) et sélection d'un .qss correspondant
-  - Sinon: appliquer le .qss dont le nom correspond (insensible à la casse/espaces)
-  - Repli: pas de stylesheet si aucun thème trouvé
-  """
+ Apply a theme from themes directory.
+ - "System": détection (sombre/clair) et selection d'un .qss correspondant
+ - Sinon: appliquer le .qss dont le nom correspond (insensible à la casse/espaces)
+ - Repli: pas de stylesheet si none theme trouvé
+ """
     try:
         from PySide6.QtWidgets import QApplication
 
