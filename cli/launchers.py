@@ -112,7 +112,7 @@ def launch_engines_only_standalone(workspace_dir: Optional[str] = None) -> int:
 
 
 def launch_prog_engine_standalone(
-    engine_id: str, workspace_dir: Optional[str] = None
+    engine_id: Optional[str], workspace_dir: Optional[str] = None
 ) -> int:
     try:
         from OnlyMod.EngineOnlyMod.gui import launch_prog_engine_gui
@@ -124,7 +124,7 @@ def launch_prog_engine_standalone(
                 pass
 
         return launch_prog_engine_gui(
-            engine_id=str(engine_id),
+            engine_id=str(engine_id) if engine_id else None,
             workspace_dir=workspace_dir,
         )
     except ImportError as exc:
