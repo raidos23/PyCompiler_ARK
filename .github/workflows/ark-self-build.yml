@@ -35,9 +35,19 @@ jobs:
   self-compile:
     name: Self-compile with ARK CLI (nuitka)
     runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    concurrency:
+      group: ark-self-build-${{ github.ref }}
+      cancel-in-progress: true
     env:
       QT_QPA_PLATFORM: offscreen
       PYTHONUNBUFFERED: "1"
+      ARK_BIN: "python3 pycompiler_ark.py"
+      WORKSPACE_DIR: "${{ github.workspace }}"
+      ENTRYPOINT_FILE: "${{ github.workspace }}/pycompiler_ark.py"
+      REPORT_DIR: "${{ github.workspace }}/.ark_ci_artifacts"
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -57,44 +67,122 @@ jobs:
 
       - name: Install system tools for CI precheck + Nuitka
         run: |
-          sudo apt-get update
-          sudo apt-get install -y patchelf cloc
+          set -euo pipefail
+          for attempt in 1 2 3; do
+            if sudo apt-get update && sudo apt-get install -y patchelf cloc; then
+              exit 0
+            fi
+            echo "apt attempt ${attempt} failed, retrying..."
+            sleep $((attempt * 4))
+          done
+          echo "apt install failed after retries"
+          exit 1
 
       - name: Install build engine dependencies (Nuitka)
         run: |
           python -m pip install nuitka
 
-      - name: ARK self-build pipeline
+      - name: Prepare report directory
+        run: |
+          mkdir -p "$REPORT_DIR"
+
+      - name: "[1/8] Init workspace (+venv)"
         shell: bash
         run: |
           set -euo pipefail
-          ARK_BIN="python3 pycompiler_ark.py"
-          WORKSPACE_DIR="$GITHUB_WORKSPACE"
-          ENTRYPOINT_FILE="$WORKSPACE_DIR/pycompiler_ark.py"
-          REPORT_DIR="$WORKSPACE_DIR/.ark_ci_artifacts"
-
-          mkdir -p "$REPORT_DIR"
-
-          echo "[1/7] init workspace"
           $ARK_BIN init "$WORKSPACE_DIR" --with-venv --json > "$REPORT_DIR/init.json"
 
-          echo "[2/7] auto-config entrypoint"
+      - name: "[2/8] Auto-config entrypoint"
+        shell: bash
+        run: |
+          set -euo pipefail
           $ARK_BIN cfg-auto "$WORKSPACE_DIR" --entrypoint "pycompiler_ark.py" --json > "$REPORT_DIR/cfg_auto.json"
 
-          echo "[3/7] strict precheck (fail-fast)"
-          $ARK_BIN check "$WORKSPACE_DIR" --json --strict > "$REPORT_DIR/check.json"
+      - name: "[3/8] Strict precheck (fail-fast)"
+        shell: bash
+        run: |
+          set -euo pipefail
+          $ARK_BIN check "$WORKSPACE_DIR" --json --strict --require-entrypoint > "$REPORT_DIR/check.json"
 
-          echo "[4/7] target engine info"
+      - name: "[4/8] Engine info (nuitka)"
+        shell: bash
+        run: |
+          set -euo pipefail
           $ARK_BIN engine info nuitka --workspace "$WORKSPACE_DIR" --json > "$REPORT_DIR/engine_info.json"
 
-          echo "[5/7] optional doctor snapshot"
+      - name: "[5/8] Doctor snapshot"
+        shell: bash
+        run: |
+          set -euo pipefail
           $ARK_BIN doctor --json > "$REPORT_DIR/doctor.json"
 
-          echo "[6/7] self-build using ARK -> Nuitka"
+      - name: "[6/8] Compile ARK using ARK (Nuitka)"
+        shell: bash
+        run: |
+          set -euo pipefail
           $ARK_BIN engine compile nuitka "$ENTRYPOINT_FILE" --workspace "$WORKSPACE_DIR" --json > "$REPORT_DIR/build_result.json"
 
-          echo "[7/7] post-build workspace snapshot"
+      - name: "[7/8] Workspace inspect snapshot"
+        shell: bash
+        run: |
+          set -euo pipefail
           $ARK_BIN workspace inspect "$WORKSPACE_DIR" --json > "$REPORT_DIR/workspace_inspect.json"
+
+      - name: "[8/8] Validate JSON payloads and build result"
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          report_dir = Path(".ark_ci_artifacts")
+          required = [
+              "init.json",
+              "cfg_auto.json",
+              "check.json",
+              "engine_info.json",
+              "doctor.json",
+              "build_result.json",
+              "workspace_inspect.json",
+          ]
+
+          payloads = {}
+          for name in required:
+              path = report_dir / name
+              if not path.is_file():
+                  raise SystemExit(f"missing report: {name}")
+              with path.open("r", encoding="utf-8") as fh:
+                  payloads[name] = json.load(fh)
+
+          if payloads["init.json"].get("ok") is not True:
+              raise SystemExit("init.json reports failure")
+          if payloads["cfg_auto.json"].get("ok") is not True:
+              raise SystemExit("cfg_auto.json reports failure")
+          if payloads["check.json"].get("ok") is not True:
+              raise SystemExit("check.json reports failure")
+          if payloads["engine_info.json"].get("found") is not True:
+              raise SystemExit("engine_info.json reports engine not found")
+          if payloads["build_result.json"].get("success") is not True:
+              raise SystemExit("build_result.json reports build failure")
+
+          print("JSON validation OK")
+          PY
+
+      - name: Verify compiled artifact presence
+        shell: bash
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          dist_files=(dist/*)
+          build_files=(build/*)
+          if [ ${#dist_files[@]} -eq 0 ] && [ ${#build_files[@]} -eq 0 ]; then
+            echo "No build artifacts found in dist/ or build/"
+            exit 1
+          fi
+          echo "Artifacts detected:"
+          ls -la dist 2>/dev/null || true
+          ls -la build 2>/dev/null || true
 
       - name: Collect artifacts
         if: always()
@@ -114,6 +202,7 @@ jobs:
           if [ -d .ark_ci_artifacts ]; then
             cp -r .ark_ci_artifacts ci_artifacts/reports
           fi
+          (cd ci_artifacts && find . -maxdepth 3 -type f | sort > ARTIFACT_MANIFEST.txt)
 
       - name: Upload self-build artifacts
         if: always()
