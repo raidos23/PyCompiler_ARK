@@ -662,8 +662,9 @@ class EnginesStandaloneGui(QMainWindow):
             css = qss_path.read_text(encoding="utf-8")
             self.setStyleSheet(css)
         except Exception:
-            # Minimal fallback only if theme file cannot be read.
+            # Keep the window usable even if theme loading fails.
             self.setStyleSheet("")
+            self.statusBar().showMessage("Arctic theme unavailable: fallback active")
 
     def _apply_language(self, lang_code: str):
         """Applique la langue de l'interface."""
