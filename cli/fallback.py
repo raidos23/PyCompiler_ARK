@@ -49,7 +49,7 @@ Usage:
     python -m pycompiler_ark bcasl /path/to/ws  # Launch BCASL with workspace
     python -m pycompiler_ark engines            # Launch Engines standalone GUI
     python -m pycompiler_ark engines --dry-run  # List available engines
-    python -m pycompiler_ark prog-engine <engine_id> [workspace]  # Launch focused engine GUI
+    python -m pycompiler_ark prog-engine [engine_id] <workspace>  # Launch focused engine GUI
     python -m pycompiler_ark unload             # Unload all engines
     python -m pycompiler_ark check [workspace]  # CI/CD strict checks
     python -m pycompiler_ark init [workspace]   # Init workspace config
@@ -143,10 +143,18 @@ def run(argv: list[str] | None, app_version: str) -> int:
         return _run_engines(rest)
     if cmd == "prog-engine":
         if not rest:
-            error("Usage: prog-engine <engine_id> [workspace]")
+            error("Usage: prog-engine [engine_id] <workspace>")
             return EXIT_USAGE_ERROR
-        engine_id = rest[0]
-        workspace = normalize_path(first_positional(rest[1:]))
+        engine_id = None
+        workspace = None
+        if len(rest) == 1:
+            workspace = normalize_path(rest[0])
+        else:
+            engine_id = rest[0]
+            workspace = normalize_path(first_positional(rest[1:]))
+        if not workspace:
+            error("Workspace is required. Usage: prog-engine [engine_id] <workspace>")
+            return EXIT_USAGE_ERROR
         return launch_prog_engine_gui(engine_id=engine_id, workspace_dir=workspace)
     if cmd == "check":
         return run_check(rest)
