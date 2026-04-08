@@ -30,6 +30,7 @@ from __future__ import annotations
 
 import os
 import sys
+import json
 import subprocess
 from pathlib import Path
 from typing import Optional, Dict, Any, List
@@ -1519,17 +1520,15 @@ class ProgEngineConfigGui(QMainWindow):
 
     def __init__(
         self,
-        engine_id: str,
+        engine_id: str | None,
         workspace_dir: Optional[str] = None,
         language: str = "en",
         theme: str = "dark",
     ):
         super().__init__()
-        self.engine_id = str(engine_id or "").strip()
+        self.engine_id = str(engine_id or "").strip() or None
         self.workspace_dir = (
-            os.path.abspath(str(workspace_dir))
-            if workspace_dir
-            else os.path.abspath(os.getcwd())
+            os.path.abspath(str(workspace_dir)) if workspace_dir else None
         )
         self.language = language
         self.theme = theme
@@ -1540,16 +1539,18 @@ class ProgEngineConfigGui(QMainWindow):
         self._tab_push_guard = False
         self._pending_editor_apply = False
         self._pending_tab_sync = False
-        self._engine = None
+        self._engines_by_id: dict[str, object] = {}
+        self._tab_engine_map: dict[int, str] = {}
         self.log = _ProgLog()
 
-        self.setWindowTitle(f"Prog Engine - {self.engine_id}")
+        target = self.engine_id or "all"
+        self.setWindowTitle(f"Prog Engine - {target}")
         self.resize(1320, 820)
         self.setMinimumSize(1024, 640)
 
         self._setup_ui()
         self._apply_theme()
-        self._load_engine_tab()
+        self._load_engine_tabs()
         self._load_workspace_config()
         self._sync_editor_from_tab()
 
@@ -1569,12 +1570,30 @@ class ProgEngineConfigGui(QMainWindow):
         root.setContentsMargins(8, 8, 8, 8)
         root.setSpacing(8)
 
-        header = QLabel(
-            f"Engine: {self.engine_id} | Workspace: {self.workspace_dir}",
+        self.header_label = QLabel(
+            f"Engine: {self.engine_id or 'all'} | Workspace: {self.workspace_dir or '(required)'}",
             self,
         )
-        header.setObjectName("prog_header")
-        root.addWidget(header)
+        self.header_label.setObjectName("prog_header")
+        root.addWidget(self.header_label)
+
+        workspace_row = QHBoxLayout()
+        workspace_row.setSpacing(6)
+        workspace_row.addWidget(QLabel("Workspace:", self))
+        self.workspace_edit = QLineEdit(self)
+        self.workspace_edit.setPlaceholderText("Select workspace folder...")
+        if self.workspace_dir:
+            self.workspace_edit.setText(self.workspace_dir)
+        workspace_row.addWidget(self.workspace_edit, 1)
+        self.workspace_browse_btn = QPushButton("Browse", self)
+        self.workspace_browse_btn.setMinimumHeight(30)
+        self.workspace_browse_btn.clicked.connect(self._select_workspace)
+        workspace_row.addWidget(self.workspace_browse_btn)
+        self.workspace_clear_btn = QPushButton("Clear", self)
+        self.workspace_clear_btn.setMinimumHeight(30)
+        self.workspace_clear_btn.clicked.connect(self._clear_workspace)
+        workspace_row.addWidget(self.workspace_clear_btn)
+        root.addLayout(workspace_row)
 
         split = QSplitter(Qt.Horizontal, self)
         split.setChildrenCollapsible(False)
@@ -1590,6 +1609,7 @@ class ProgEngineConfigGui(QMainWindow):
         self.compiler_tabs.setDocumentMode(False)
         self.compiler_tabs.setTabsClosable(False)
         self.compiler_tabs.setMovable(False)
+        self.compiler_tabs.currentChanged.connect(lambda *_: self._schedule_editor_sync())
         left_layout.addWidget(self.compiler_tabs, 1)
 
         self.save_config_btn = QPushButton("Save Config", left)
@@ -1629,6 +1649,45 @@ class ProgEngineConfigGui(QMainWindow):
             except Exception:
                 pass
 
+    def _refresh_workspace_header(self) -> None:
+        """Refresh header label with current workspace."""
+        try:
+            self.header_label.setText(
+                f"Engine: {self.engine_id or 'all'} | Workspace: {self.workspace_dir or '(required)'}"
+            )
+        except Exception:
+            pass
+
+    def _select_workspace(self) -> None:
+        """Open folder dialog and set workspace for the prog-engine session."""
+        start = self.workspace_dir or self.workspace_edit.text().strip() or str(
+            Path.home()
+        )
+        folder = QFileDialog.getExistingDirectory(
+            self,
+            "Select workspace directory",
+            start,
+        )
+        if not folder:
+            return
+        try:
+            self.workspace_dir = os.path.abspath(folder)
+        except Exception:
+            self.workspace_dir = folder
+        self.workspace_edit.setText(self.workspace_dir)
+        self._refresh_workspace_header()
+        self._load_workspace_config()
+        self._sync_editor_from_tab()
+        self._set_editor_status("Workspace updated", ok=True)
+
+    def _clear_workspace(self) -> None:
+        """Clear workspace selection in prog-engine GUI."""
+        self.workspace_dir = None
+        self.workspace_edit.clear()
+        self._refresh_workspace_header()
+        self._sync_editor_from_tab()
+        self._set_editor_status("Workspace cleared", ok=False)
+
     def _apply_theme(self) -> None:
         if str(self.theme).lower() == "light":
             self.setStyleSheet(
@@ -1661,40 +1720,77 @@ class ProgEngineConfigGui(QMainWindow):
             """
         )
 
-    def _load_engine_tab(self) -> None:
+    def _load_engine_tabs(self) -> None:
+        """Load one engine tab (targeted mode) or all engine tabs (global mode)."""
+        self.compiler_tabs.clear()
+        self._engines_by_id = {}
+        self._tab_engine_map = {}
         try:
-            engine = create_engine(self.engine_id)
-            self._engine = engine
-            pair = None
-            try:
-                make_tab = getattr(engine, "create_tab", None)
-                if callable(make_tab):
-                    pair = make_tab(self)
-            except Exception as exc:
-                self._set_editor_status(f"Tab creation failed: {exc}", ok=False)
+            engine_ids = [self.engine_id] if self.engine_id else list(available_engines())
+            if not engine_ids:
+                empty = QWidget(self)
+                lay = QVBoxLayout(empty)
+                lay.addWidget(QLabel("No engines available.", empty))
+                self.compiler_tabs.addTab(empty, "No Engines")
+                return
 
-            if pair and isinstance(pair, tuple) and len(pair) == 2:
-                tab_widget, label = pair
-                self.compiler_tabs.addTab(tab_widget, label)
-            else:
-                fallback_tab = QWidget(self)
-                fb = QVBoxLayout(fallback_tab)
-                fb.addWidget(
-                    QLabel(
-                        f"Engine tab unavailable for '{self.engine_id}'.\n"
-                        "Using config editor only.",
-                        fallback_tab,
-                    )
-                )
-                self.compiler_tabs.addTab(fallback_tab, self.engine_id)
+            for eid in engine_ids:
+                if not eid:
+                    continue
+                try:
+                    engine = create_engine(eid)
+                    self._engines_by_id[str(eid)] = engine
+                    pair = None
+                    try:
+                        make_tab = getattr(engine, "create_tab", None)
+                        if callable(make_tab):
+                            pair = make_tab(self)
+                    except Exception as exc:
+                        self._set_editor_status(
+                            f"Tab creation failed for {eid}: {exc}", ok=False
+                        )
+                    if pair and isinstance(pair, tuple) and len(pair) == 2:
+                        tab_widget, label = pair
+                        idx = self.compiler_tabs.addTab(tab_widget, label)
+                    else:
+                        fallback_tab = QWidget(self)
+                        fb = QVBoxLayout(fallback_tab)
+                        fb.addWidget(
+                            QLabel(
+                                f"Engine tab unavailable for '{eid}'.\nUsing config editor only.",
+                                fallback_tab,
+                            )
+                        )
+                        idx = self.compiler_tabs.addTab(fallback_tab, str(eid))
+                    self._tab_engine_map[int(idx)] = str(eid)
+                except Exception as exc:
+                    self._set_editor_status(f"Engine load failed for {eid}: {exc}", ok=False)
+
             self._attach_live_hooks()
         except Exception as exc:
             self.compiler_tabs.clear()
             failure_tab = QWidget(self)
             fl = QVBoxLayout(failure_tab)
-            fl.addWidget(QLabel(f"Unable to load engine '{self.engine_id}': {exc}"))
+            fl.addWidget(QLabel(f"Unable to load engines: {exc}"))
             self.compiler_tabs.addTab(failure_tab, "Error")
             self._set_editor_status(f"Engine load failed: {exc}", ok=False)
+
+    def _current_engine_id(self) -> str | None:
+        """Return engine id mapped to current tab."""
+        try:
+            idx = int(self.compiler_tabs.currentIndex())
+        except Exception:
+            return None
+        if idx < 0:
+            return None
+        return self._tab_engine_map.get(idx)
+
+    def _current_engine(self):
+        """Return engine instance for current tab."""
+        eid = self._current_engine_id()
+        if not eid:
+            return None
+        return self._engines_by_id.get(eid)
 
     def _load_workspace_config(self) -> None:
         try:
@@ -1703,15 +1799,16 @@ class ProgEngineConfigGui(QMainWindow):
                 load_engine_config,
             )
 
-            if self._engine is None:
+            if not self._engines_by_id or not self.workspace_dir:
                 return
-            data = load_engine_config(self.workspace_dir, self.engine_id)
-            if data:
-                self._tab_push_guard = True
-                try:
-                    apply_engine_config(self, self._engine, data)
-                finally:
-                    self._tab_push_guard = False
+            self._tab_push_guard = True
+            try:
+                for eid, engine in list(self._engines_by_id.items()):
+                    data = load_engine_config(self.workspace_dir, eid)
+                    if data:
+                        apply_engine_config(self, engine, data)
+            finally:
+                self._tab_push_guard = False
         except Exception as exc:
             self._set_editor_status(f"Config load warning: {exc}", ok=False)
 
@@ -1762,10 +1859,11 @@ class ProgEngineConfigGui(QMainWindow):
     def _sync_editor_from_tab(self) -> None:
         if self._editor_push_guard or self._tab_push_guard:
             return
-        if self._engine is None:
+        engine = self._current_engine()
+        if engine is None:
             return
         try:
-            getter = getattr(self._engine, "get_config", None)
+            getter = getattr(engine, "get_config", None)
             if not callable(getter):
                 return
             cfg = getter(self) or {}
@@ -1800,7 +1898,8 @@ class ProgEngineConfigGui(QMainWindow):
     def _apply_editor_to_tab(self) -> None:
         if self._editor_push_guard or self._tab_push_guard:
             return
-        if self._engine is None:
+        engine = self._current_engine()
+        if engine is None:
             return
         raw = self.config_editor.toPlainText()
         try:
@@ -1812,7 +1911,7 @@ class ProgEngineConfigGui(QMainWindow):
             self._set_editor_status(f"Invalid JSON: {exc}", ok=False)
             return
         try:
-            setter = getattr(self._engine, "set_config", None)
+            setter = getattr(engine, "set_config", None)
             if callable(setter):
                 self._editor_push_guard = True
                 try:
@@ -1834,23 +1933,55 @@ class ProgEngineConfigGui(QMainWindow):
 
     def _save_current_engine_config(self) -> None:
         try:
+            manual_ws = self.workspace_edit.text().strip() if self.workspace_edit else ""
+            if manual_ws and not self.workspace_dir:
+                try:
+                    self.workspace_dir = os.path.abspath(manual_ws)
+                except Exception:
+                    self.workspace_dir = manual_ws
+                self._refresh_workspace_header()
+            if not self.workspace_dir:
+                QMessageBox.warning(
+                    self,
+                    "Workspace Required",
+                    "Workspace is required to save engine config.",
+                )
+                self._set_editor_status("Workspace is required", ok=False)
+                return
+            if not Path(self.workspace_dir).is_dir():
+                QMessageBox.warning(
+                    self,
+                    "Invalid Workspace",
+                    "Workspace path is invalid or does not exist.",
+                )
+                self._set_editor_status("Invalid workspace path", ok=False)
+                return
             from Core.EngineConfigManager import save_engine_config_for_gui
 
             self._apply_editor_to_tab()
-            saved = save_engine_config_for_gui(self, self.engine_id)
+            current_eid = self._current_engine_id()
+            if not current_eid:
+                self._set_editor_status("No engine tab selected", ok=False)
+                QMessageBox.warning(
+                    self,
+                    "Save Failed",
+                    "No engine tab selected.",
+                )
+                return
+            saved = save_engine_config_for_gui(self, current_eid)
             if saved:
                 self._set_editor_status("Config saved", ok=True)
                 QMessageBox.information(
                     self,
                     "Config Saved",
-                    f"Configuration saved for engine: {self.engine_id}",
+                    f"Configuration saved for engine: {current_eid}",
                 )
             else:
                 self._set_editor_status("Config save failed", ok=False)
                 QMessageBox.warning(
                     self,
                     "Save Failed",
-                    f"Unable to save configuration for engine: {self.engine_id}",
+                    f"Unable to save configuration for engine: {current_eid}",
                 )
         except Exception as exc:
             self._set_editor_status(f"Save failed: {exc}", ok=False)
@@ -1858,12 +1989,14 @@ class ProgEngineConfigGui(QMainWindow):
 
 
 def launch_prog_engine_gui(
-    engine_id: str,
+    engine_id: str | None,
     workspace_dir: Optional[str] = None,
     language: str = "en",
     theme: str = "dark",
 ) -> int:
     """Launch dedicated programmatic engine config GUI."""
+    if not workspace_dir:
+        raise ValueError("workspace is required for prog-engine GUI")
     app = QApplication(sys.argv)
     app.setApplicationName("PyCompiler ARK Prog Engine")
     app.setOrganizationName("raidos23")
