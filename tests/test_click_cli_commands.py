@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import json
 import sys
+import types
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -461,3 +462,70 @@ def test_venv_status_and_use_system_json(monkeypatch, tmp_path) -> None:
     assert use_system_result.exit_code == 0
     use_system_payload = json.loads(use_system_result.output)
     assert use_system_payload["mode"] == "system"
+
+
+def test_engine_compile_json_exits_non_zero_on_failure(monkeypatch, tmp_path) -> None:
+    runner = CliRunner()
+    cli = build_cli("test")
+    entry = tmp_path / "app.py"
+    entry.write_text("print('ok')\n", encoding="utf-8")
+
+    fake_mod = types.ModuleType("OnlyMod.EngineOnlyMod.app")
+
+    class _FakeApp:
+        def __init__(self, **_kwargs) -> None:
+            return None
+
+        def run_compilation(self, engine_id, file_path, dry_run=False):
+            return {
+                "success": False,
+                "engine_id": engine_id,
+                "file_path": file_path,
+                "dry_run": dry_run,
+                "error": "compile failed",
+            }
+
+    fake_mod.EnginesStandaloneApp = _FakeApp
+    monkeypatch.setitem(sys.modules, "OnlyMod.EngineOnlyMod.app", fake_mod)
+
+    result = runner.invoke(
+        cli, ["engine", "compile", "pyinstaller", str(entry), "--json"]
+    )
+
+    assert result.exit_code == 3
+    payload = json.loads(result.output)
+    assert payload["success"] is False
+    assert payload["error"] == "compile failed"
+
+
+def test_engine_compile_json_returns_zero_on_success(monkeypatch, tmp_path) -> None:
+    runner = CliRunner()
+    cli = build_cli("test")
+    entry = tmp_path / "app.py"
+    entry.write_text("print('ok')\n", encoding="utf-8")
+
+    fake_mod = types.ModuleType("OnlyMod.EngineOnlyMod.app")
+
+    class _FakeApp:
+        def __init__(self, **_kwargs) -> None:
+            return None
+
+        def run_compilation(self, engine_id, file_path, dry_run=False):
+            return {
+                "success": True,
+                "engine_id": engine_id,
+                "file_path": file_path,
+                "dry_run": dry_run,
+                "stdout": "ok",
+            }
+
+    fake_mod.EnginesStandaloneApp = _FakeApp
+    monkeypatch.setitem(sys.modules, "OnlyMod.EngineOnlyMod.app", fake_mod)
+
+    result = runner.invoke(
+        cli, ["engine", "compile", "pyinstaller", str(entry), "--json"]
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    assert payload["success"] is True
