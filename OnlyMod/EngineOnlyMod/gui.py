@@ -271,158 +271,186 @@ class EnginesStandaloneGui(QMainWindow):
 
     def _setup_ui(self):
         """Configure l'interface utilisateur."""
-        # Widget central
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
 
-        # Layout principal avec marge réduite
         main_layout = QVBoxLayout(central_widget)
-        main_layout.setSpacing(6)
-        main_layout.setContentsMargins(6, 6, 6, 6)
+        main_layout.setSpacing(10)
+        main_layout.setContentsMargins(10, 10, 10, 10)
 
-        # === En-tête ===
-        header_container = QVBoxLayout()
-        header_container.setSpacing(6)
+        # Header
+        header_container = QWidget()
+        header_container.setObjectName("header_card")
+        header_layout = QVBoxLayout(header_container)
+        header_layout.setContentsMargins(12, 10, 12, 10)
+        header_layout.setSpacing(4)
+
         header_top = QHBoxLayout()
         header_top.setSpacing(8)
 
         title_label = QLabel("Engines Standalone")
-        title_label.setStyleSheet("font-size: 20px; font-weight: bold; color: #4da6ff;")
+        title_label.setObjectName("header_title")
         header_top.addWidget(title_label)
         header_top.addStretch()
 
-        # Version info (top right)
         version_label = QLabel(
             f"Core: {get_core_version()} | SDK: {get_engine_sdk_version()}"
         )
-        version_label.setStyleSheet("color: #888; font-size: 11px;")
+        version_label.setObjectName("header_meta")
         header_top.addWidget(version_label)
+        header_layout.addLayout(header_top)
 
-        header_container.addLayout(header_top)
-
-        # === Section Venv ===
-        venv_layout = QHBoxLayout()
-        venv_layout.setSpacing(6)
-
-        # Label venv
-        venv_label = QLabel("Venv:")
-        venv_label.setStyleSheet("font-weight: bold; font-size: 12px; color: #aaaaaa;")
-        venv_layout.addWidget(venv_label)
-
-        # Champ d'affichage du chemin du venv
-        self.venv_path_edit = QLineEdit()
-        self.venv_path_edit.setPlaceholderText("Select a virtual environment...")
-        self.venv_path_edit.setReadOnly(True)
-        self.venv_path_edit.setMinimumWidth(220)
-        self.venv_path_edit.setMaximumWidth(360)
-        self.venv_path_edit.setStyleSheet("""
-            QLineEdit {
-                background-color: #2d2d2d;
-                color: #ffffff;
-                border: 1px solid #404040;
-                border-radius: 4px;
-                padding: 4px 8px;
-                font-size: 11px;
-            }
-        """)
-        venv_layout.addWidget(self.venv_path_edit)
-
-        # Bouton sélectionner venv
-        self.btn_select_venv = QPushButton("📁")
-        self.btn_select_venv.setMinimumSize(32, 28)
-        self.btn_select_venv.setToolTip("Select virtual environment folder")
-        self.btn_select_venv.setStyleSheet("""
-            QPushButton {
-                background-color: #404040;
-                color: white;
-                border-radius: 4px;
-                padding: 4px 8px;
-                font-size: 14px;
-            }
-            QPushButton:hover {
-                background-color: #4da6ff;
-            }
-        """)
-        self.btn_select_venv.clicked.connect(self._select_venv)
-        venv_layout.addWidget(self.btn_select_venv)
-
-        # Bouton auto-détecter venv
-        self.btn_autodetect_venv = QPushButton("🔍")
-        self.btn_autodetect_venv.setMinimumSize(32, 28)
-        self.btn_autodetect_venv.setToolTip("Auto-detect best virtual environment")
-        self.btn_autodetect_venv.setStyleSheet("""
-            QPushButton {
-                background-color: #404040;
-                color: white;
-                border-radius: 4px;
-                padding: 4px 8px;
-                font-size: 14px;
-            }
-            QPushButton:hover {
-                background-color: #4caf50;
-            }
-        """)
-        self.btn_autodetect_venv.clicked.connect(self._autodetect_venv)
-        venv_layout.addWidget(self.btn_autodetect_venv)
-
-        # Bouton clear venv
-        self.btn_clear_venv = QPushButton("✕")
-        self.btn_clear_venv.setMinimumSize(32, 28)
-        self.btn_clear_venv.setToolTip("Clear venv selection")
-        self.btn_clear_venv.setStyleSheet("""
-            QPushButton {
-                background-color: #404040;
-                color: white;
-                border-radius: 4px;
-                padding: 4px 8px;
-                font-size: 12px;
-            }
-            QPushButton:hover {
-                background-color: #f44336;
-            }
-        """)
-        self.btn_clear_venv.clicked.connect(self._clear_venv)
-        venv_layout.addWidget(self.btn_clear_venv)
-
-        venv_layout.addStretch(1)
-        header_container.addLayout(venv_layout)
-
-        main_layout.addLayout(header_container)
-
-        # === Séparateur fin ===
         separator = QFrame()
         separator.setFrameShape(QFrame.HLine)
-        separator.setFrameShadow(QFrame.Sunken)
-        separator.setStyleSheet("background-color: #404040; max-height: 2px;")
-        main_layout.addWidget(separator)
+        separator.setObjectName("header_separator")
+        header_layout.addWidget(separator)
+        main_layout.addWidget(header_container)
 
-        # === Splitter principal ===
-        main_splitter = QSplitter(Qt.Vertical)
-        main_splitter.setChildrenCollapsible(True)
-        main_splitter.setHandleWidth(6)
-        main_splitter.setCollapsible(0, True)
-        main_splitter.setCollapsible(1, True)
-        main_layout.addWidget(main_splitter)
+        # Main body split in 3 clear zones: project/actions | engine config | logs
+        body_splitter = QSplitter(Qt.Horizontal)
+        body_splitter.setChildrenCollapsible(False)
+        body_splitter.setHandleWidth(6)
+        main_layout.addWidget(body_splitter, 1)
 
-        # === Panneau supérieur avec splitter horizontal ===
-        top_splitter = QSplitter(Qt.Horizontal)
-        top_splitter.setChildrenCollapsible(True)
-        top_splitter.setHandleWidth(6)
-        top_splitter.setCollapsible(0, True)
-        top_splitter.setCollapsible(1, True)
-        top_splitter.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-
-        # === Section Configuration (gauche) ===
+        # Left sidebar: project + venv + actions
         left_panel = QWidget()
+        left_panel.setObjectName("sidebar_panel")
         left_layout = QVBoxLayout(left_panel)
-        left_layout.setSpacing(8)
-        left_layout.setContentsMargins(4, 4, 4, 4)
+        left_layout.setSpacing(10)
+        left_layout.setContentsMargins(0, 0, 0, 0)
 
-        # Moteur
+        project_group = QGroupBox("Project")
+        project_group.setObjectName("panel_group")
+        project_layout = QGridLayout(project_group)
+        project_layout.setHorizontalSpacing(8)
+        project_layout.setVerticalSpacing(8)
+
+        file_label = QLabel("File:")
+        file_label.setMinimumWidth(72)
+        self.file_path_edit = QLineEdit()
+        self.file_path_edit.setPlaceholderText("Select a Python file to compile...")
+        self.file_path_edit.setMinimumHeight(30)
+        browse_btn = QPushButton("Browse")
+        browse_btn.setObjectName("secondary_button")
+        browse_btn.setMinimumHeight(30)
+        browse_btn.setMinimumWidth(84)
+        browse_btn.clicked.connect(self._browse_file)
+        project_layout.addWidget(file_label, 0, 0)
+        project_layout.addWidget(self.file_path_edit, 0, 1)
+        project_layout.addWidget(browse_btn, 0, 2)
+
+        workspace_label = QLabel("Workspace:")
+        workspace_label.setMinimumWidth(72)
+        self.workspace_edit = QLineEdit()
+        if self.workspace_dir:
+            self.workspace_edit.setText(self.workspace_dir)
+        self.workspace_edit.setPlaceholderText("Select workspace folder...")
+        self.workspace_edit.setMinimumHeight(30)
+        workspace_browse_btn = QPushButton("Browse")
+        workspace_browse_btn.setObjectName("secondary_button")
+        workspace_browse_btn.setMinimumHeight(30)
+        workspace_browse_btn.setMinimumWidth(84)
+        workspace_browse_btn.clicked.connect(self._browse_workspace)
+        project_layout.addWidget(workspace_label, 1, 0)
+        project_layout.addWidget(self.workspace_edit, 1, 1)
+        project_layout.addWidget(workspace_browse_btn, 1, 2)
+        left_layout.addWidget(project_group)
+
+        venv_group = QGroupBox("Virtual Environment")
+        venv_group.setObjectName("panel_group")
+        venv_layout = QVBoxLayout(venv_group)
+        venv_layout.setSpacing(8)
+
+        self.venv_path_edit = QLineEdit()
+        self.venv_path_edit.setObjectName("venv_path_input")
+        self.venv_path_edit.setPlaceholderText("Select a virtual environment...")
+        self.venv_path_edit.setReadOnly(True)
+        self.venv_path_edit.setMinimumHeight(30)
+        venv_layout.addWidget(self.venv_path_edit)
+
+        venv_btn_row = QHBoxLayout()
+        venv_btn_row.setSpacing(6)
+        self.btn_select_venv = QPushButton("📁")
+        self.btn_select_venv.setObjectName("tool_button")
+        self.btn_select_venv.setMinimumSize(32, 30)
+        self.btn_select_venv.setToolTip("Select virtual environment folder")
+        self.btn_select_venv.clicked.connect(self._select_venv)
+        venv_btn_row.addWidget(self.btn_select_venv)
+
+        self.btn_autodetect_venv = QPushButton("🔍")
+        self.btn_autodetect_venv.setObjectName("tool_button")
+        self.btn_autodetect_venv.setMinimumSize(32, 30)
+        self.btn_autodetect_venv.setToolTip("Auto-detect best virtual environment")
+        self.btn_autodetect_venv.clicked.connect(self._autodetect_venv)
+        venv_btn_row.addWidget(self.btn_autodetect_venv)
+
+        self.btn_clear_venv = QPushButton("✕")
+        self.btn_clear_venv.setObjectName("tool_button")
+        self.btn_clear_venv.setMinimumSize(32, 30)
+        self.btn_clear_venv.setToolTip("Clear venv selection")
+        self.btn_clear_venv.clicked.connect(self._clear_venv)
+        venv_btn_row.addWidget(self.btn_clear_venv)
+        venv_btn_row.addStretch(1)
+        venv_layout.addLayout(venv_btn_row)
+        left_layout.addWidget(venv_group)
+
+        actions_group = QGroupBox("Actions")
+        actions_group.setObjectName("panel_group")
+        actions_layout = QVBoxLayout(actions_group)
+        actions_layout.setSpacing(8)
+
+        self.compile_btn = QPushButton("Compile")
+        self.compile_btn.setObjectName("compile_btn")
+        self.compile_btn.setMinimumHeight(34)
+        self.compile_btn.clicked.connect(self._run_compilation)
+        actions_layout.addWidget(self.compile_btn)
+
+        self.cancel_btn = QPushButton("Cancel")
+        self.cancel_btn.setObjectName("cancel_btn")
+        self.cancel_btn.setMinimumHeight(34)
+        self.cancel_btn.clicked.connect(self._cancel_compilation)
+        self.cancel_btn.setEnabled(False)
+        actions_layout.addWidget(self.cancel_btn)
+
+        button_row = QGridLayout()
+        button_row.setHorizontalSpacing(6)
+        button_row.setVerticalSpacing(6)
+
+        dry_run_btn = QPushButton("Dry Run")
+        dry_run_btn.setObjectName("secondary_button")
+        dry_run_btn.setMinimumHeight(30)
+        dry_run_btn.clicked.connect(self._dry_run)
+        button_row.addWidget(dry_run_btn, 0, 0)
+
+        refresh_btn = QPushButton("Refresh Engines")
+        refresh_btn.setObjectName("secondary_button")
+        refresh_btn.setMinimumHeight(30)
+        refresh_btn.clicked.connect(self._refresh_engines)
+        button_row.addWidget(refresh_btn, 0, 1)
+
+        clear_log_btn = QPushButton("Clear Log")
+        clear_log_btn.setObjectName("secondary_button")
+        clear_log_btn.setMinimumHeight(30)
+        clear_log_btn.clicked.connect(self._clear_log)
+        button_row.addWidget(clear_log_btn, 1, 0, 1, 2)
+
+        actions_layout.addLayout(button_row)
+        left_layout.addWidget(actions_group)
+        left_layout.addStretch(1)
+        left_panel.setMinimumWidth(340)
+        left_panel.setMaximumWidth(440)
+        body_splitter.addWidget(left_panel)
+
+        # Center: engine tabs + compatibility
+        center_panel = QWidget()
+        center_layout = QVBoxLayout(center_panel)
+        center_layout.setSpacing(10)
+        center_layout.setContentsMargins(0, 0, 0, 0)
+
         engine_group = QGroupBox("Engine Configuration")
-        engine_group.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        engine_layout = QVBoxLayout()
-        engine_layout.setSpacing(6)
+        engine_group.setObjectName("panel_group")
+        engine_layout = QVBoxLayout(engine_group)
+        engine_layout.setSpacing(8)
 
         self.compiler_tabs = QTabWidget()
         self.compiler_tabs.setDocumentMode(False)
@@ -431,219 +459,52 @@ class EnginesStandaloneGui(QMainWindow):
         self.compiler_tabs.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         engine_layout.addWidget(self.compiler_tabs)
 
+        compat_row = QHBoxLayout()
+        compat_row.setSpacing(8)
         compat_btn = QPushButton("Check Compatibility")
+        compat_btn.setObjectName("secondary_button")
         compat_btn.setMinimumHeight(30)
         compat_btn.clicked.connect(self._check_compatibility)
-        engine_layout.addWidget(compat_btn)
+        compat_row.addWidget(compat_btn)
 
         self.compat_status_label = QLabel("")
-        self.compat_status_label.setStyleSheet("font-weight: bold; font-size: 11px;")
-        engine_layout.addWidget(self.compat_status_label)
+        self.compat_status_label.setObjectName("compat_status")
+        compat_row.addWidget(self.compat_status_label, 1)
+        engine_layout.addLayout(compat_row)
+        center_layout.addWidget(engine_group, 1)
+        body_splitter.addWidget(center_panel)
 
-        engine_group.setLayout(engine_layout)
-
-        # Projet (Fichier + Workspace)
-        project_group = QGroupBox("Project")
-        project_group.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        project_layout = QVBoxLayout()
-        project_layout.setSpacing(6)
-
-        file_row = QHBoxLayout()
-        file_row.setSpacing(6)
-        file_label = QLabel("File:")
-        file_label.setMinimumWidth(70)
-        file_row.addWidget(file_label)
-
-        self.file_path_edit = QLineEdit()
-        self.file_path_edit.setPlaceholderText("Select a Python file to compile...")
-        self.file_path_edit.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        self.file_path_edit.setMinimumHeight(28)
-        file_row.addWidget(self.file_path_edit)
-
-        browse_btn = QPushButton("Browse")
-        browse_btn.setMinimumHeight(28)
-        browse_btn.setMinimumWidth(80)
-        browse_btn.clicked.connect(self._browse_file)
-        file_row.addWidget(browse_btn)
-        project_layout.addLayout(file_row)
-
-        workspace_row = QHBoxLayout()
-        workspace_row.setSpacing(6)
-        workspace_label = QLabel("Workspace:")
-        workspace_label.setMinimumWidth(70)
-        workspace_row.addWidget(workspace_label)
-
-        self.workspace_edit = QLineEdit()
-        if self.workspace_dir:
-            self.workspace_edit.setText(self.workspace_dir)
-        self.workspace_edit.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        self.workspace_edit.setMinimumHeight(28)
-        workspace_row.addWidget(self.workspace_edit)
-
-        workspace_browse_btn = QPushButton("Browse")
-        workspace_browse_btn.setMinimumHeight(28)
-        workspace_browse_btn.setMinimumWidth(80)
-        workspace_browse_btn.clicked.connect(self._browse_workspace)
-        workspace_row.addWidget(workspace_browse_btn)
-        project_layout.addLayout(workspace_row)
-
-        project_group.setLayout(project_layout)
-
-        # Actions
-        actions_group = QGroupBox("Actions")
-        actions_group.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        actions_layout = QVBoxLayout()
-        actions_layout.setSpacing(6)
-
-        self.compile_btn = QPushButton("Compile")
-        self.compile_btn.setMinimumHeight(30)
-        self.compile_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #4caf50;
-                color: white;
-                font-size: 14px;
-                font-weight: bold;
-                border-radius: 6px;
-                padding: 6px 12px;
-            }
-            QPushButton:hover {
-                background-color: #45a049;
-            }
-            QPushButton:disabled {
-                background-color: #666;
-            }
-        """)
-        self.compile_btn.clicked.connect(self._run_compilation)
-        actions_layout.addWidget(self.compile_btn)
-
-        # Cancel button
-        self.cancel_btn = QPushButton("Cancel")
-        self.cancel_btn.setMinimumHeight(30)
-        self.cancel_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #f44336;
-                color: white;
-                font-size: 14px;
-                font-weight: bold;
-                border-radius: 6px;
-                padding: 6px 12px;
-            }
-            QPushButton:hover {
-                background-color: #d32f2f;
-            }
-            QPushButton:disabled {
-                background-color: #666;
-            }
-        """)
-        self.cancel_btn.clicked.connect(self._cancel_compilation)
-        self.cancel_btn.setEnabled(False)  # Disabled by default
-        actions_layout.addWidget(self.cancel_btn)
-
-        button_row = QHBoxLayout()
-        button_row.setSpacing(8)
-
-        dry_run_btn = QPushButton("Dry Run")
-        dry_run_btn.setMinimumHeight(28)
-        dry_run_btn.clicked.connect(self._dry_run)
-        button_row.addWidget(dry_run_btn)
-
-        refresh_btn = QPushButton("Refresh Engines")
-        refresh_btn.setMinimumHeight(28)
-        refresh_btn.clicked.connect(self._refresh_engines)
-        button_row.addWidget(refresh_btn)
-
-        clear_log_btn = QPushButton("Clear Log")
-        clear_log_btn.setMinimumHeight(28)
-        clear_log_btn.clicked.connect(self._clear_log)
-        button_row.addWidget(clear_log_btn)
-
-        actions_layout.addLayout(button_row)
-        actions_group.setLayout(actions_layout)
-
-        # Splitter between project/actions and engine for fresh ergonomics
-        left_splitter = QSplitter(Qt.Vertical)
-        left_splitter.setChildrenCollapsible(True)
-        left_splitter.setHandleWidth(6)
-        left_splitter.setCollapsible(0, True)
-        left_splitter.setCollapsible(1, True)
-
-        engine_wrap = QWidget()
-        engine_wrap_layout = QVBoxLayout(engine_wrap)
-        engine_wrap_layout.setContentsMargins(0, 0, 0, 0)
-        engine_wrap_layout.addWidget(engine_group)
-
-        lower_wrap = QWidget()
-        lower_layout = QVBoxLayout(lower_wrap)
-        lower_layout.setContentsMargins(0, 0, 0, 0)
-        lower_layout.setSpacing(8)
-        lower_layout.addWidget(project_group)
-        lower_layout.addWidget(actions_group)
-        lower_layout.addStretch(1)
-
-        left_splitter.addWidget(engine_wrap)
-        left_splitter.addWidget(lower_wrap)
-        left_splitter.setSizes([620, 300])
-
-        left_layout.addWidget(left_splitter)
-
-        left_scroll = QScrollArea()
-        left_scroll.setWidgetResizable(True)
-        left_scroll.setFrameShape(QFrame.NoFrame)
-        left_scroll.setWidget(left_panel)
-
-        top_splitter.addWidget(left_scroll)
-
-        # === Section Log (droite avec plus d'espace) ===
+        # Right: logs and progress
         log_container = QWidget()
         log_layout = QVBoxLayout(log_container)
-        log_layout.setSpacing(6)
-        log_layout.setContentsMargins(4, 4, 4, 4)
+        log_layout.setSpacing(10)
+        log_layout.setContentsMargins(0, 0, 0, 0)
 
         log_group = QGroupBox("Compilation Log")
-        log_group.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        log_layout_inner = QVBoxLayout()
-        log_layout_inner.setSpacing(6)
+        log_group.setObjectName("panel_group")
+        log_layout_inner = QVBoxLayout(log_group)
+        log_layout_inner.setSpacing(8)
 
         self.log_text = QTextEdit()
+        self.log_text.setObjectName("log")
         self.log_text.setFont(QFont("Consolas", 10))
         self.log_text.setReadOnly(True)
         self.log_text.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.log_text.setStyleSheet("""
-            QTextEdit {
-                background-color: #1e1e1e;
-                color: #e0e0e0;
-                border: 1px solid #404040;
-                border-radius: 4px;
-                padding: 8px;
-            }
-        """)
         log_layout_inner.addWidget(self.log_text)
 
-        # Progress bar
         self.progress_bar = QProgressBar()
         self.progress_bar.setVisible(False)
         self.progress_bar.setMinimumHeight(14)
         log_layout_inner.addWidget(self.progress_bar)
-
-        log_group.setLayout(log_layout_inner)
         log_layout.addWidget(log_group)
+        body_splitter.addWidget(log_container)
+        body_splitter.setSizes([360, 680, 520])
 
-        top_splitter.addWidget(log_container)
-
-        # Définir les proportions (40% config, 60% log)
-        top_splitter.setSizes([520, 780])
-
-        main_splitter.addWidget(top_splitter)
-
-        # === Barre de statut ===
         self.statusBar = QStatusBar()
         self.statusBar.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         self.statusBar.setMinimumHeight(20)
         self.setStatusBar(self.statusBar)
         self.statusBar.showMessage("Ready")
-
-        # Définir les proportions du splitter vertical
-        main_splitter.setSizes([600, 200])
 
     def _center_window(self):
         """Centre la fenêtre sur l'écran."""
@@ -792,168 +653,17 @@ class EnginesStandaloneGui(QMainWindow):
             return False
 
     def _apply_theme(self, theme_name: str):
-        """Applique le thème visuel."""
-        if theme_name == "dark":
-            self.setStyleSheet("""
-                QMainWindow, QWidget {
-                    background-color: #1e1e1e;
-                    color: #ffffff;
-                }
-                QGroupBox {
-                    font-weight: bold;
-                    font-size: 12px;
-                    border: 1px solid #404040;
-                    border-radius: 5px;
-                    margin-top: 8px;
-                    padding-top: 8px;
-                }
-                QGroupBox::title {
-                    subcontrol-origin: margin;
-                    left: 8px;
-                    padding: 0 5px;
-                }
-                QLabel {
-                    color: #ffffff;
-                    font-size: 12px;
-                }
-                QComboBox, QLineEdit {
-                    background-color: #2d2d2d;
-                    color: #ffffff;
-                    border: 1px solid #404040;
-                    border-radius: 4px;
-                    padding: 6px;
-                    font-size: 12px;
-                }
-                QComboBox:focus, QLineEdit:focus {
-                    border-color: #4da6ff;
-                }
-                QPushButton {
-                    background-color: #3d3d3d;
-                    color: #ffffff;
-                    border: 1px solid #505050;
-                    border-radius: 4px;
-                    padding: 6px 12px;
-                    font-size: 12px;
-                }
-                QPushButton:hover {
-                    background-color: #4d4d4d;
-                }
-                QTabWidget::pane {
-                    border: 1px solid #404040;
-                    background-color: #252525;
-                }
-                QTabBar::tab {
-                    background-color: #2d2d2d;
-                    color: #ffffff;
-                    padding: 8px 12px;
-                    border: 1px solid #404040;
-                    border-bottom: none;
-                    margin-right: 2px;
-                }
-                QTabBar::tab:selected {
-                    background-color: #3d3d3d;
-                    border-bottom: 2px solid #4da6ff;
-                }
-                QScrollArea {
-                    background: transparent;
-                    border: none;
-                }
-                QScrollBar:vertical {
-                    background: #1f1f1f;
-                    width: 10px;
-                    margin: 2px;
-                    border-radius: 5px;
-                }
-                QScrollBar::handle:vertical {
-                    background: #3d3d3d;
-                    min-height: 24px;
-                    border-radius: 5px;
-                }
-                QScrollBar::handle:vertical:hover {
-                    background: #4a4a4a;
-                }
-                QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
-                    height: 0px;
-                }
-                QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
-                    background: none;
-                }
-                QStatusBar {
-                    background-color: #252525;
-                    color: #aaaaaa;
-                    font-size: 11px;
-                }
-            """)
-        else:  # light theme
-            self.setStyleSheet("""
-                QMainWindow, QWidget {
-                    background-color: #f5f5f5;
-                    color: #000000;
-                }
-                QGroupBox {
-                    font-weight: bold;
-                    font-size: 12px;
-                    border: 1px solid #cccccc;
-                    border-radius: 5px;
-                    margin-top: 8px;
-                    padding-top: 8px;
-                }
-                QGroupBox::title {
-                    subcontrol-origin: margin;
-                    left: 8px;
-                    padding: 0 5px;
-                }
-                QLabel {
-                    color: #000000;
-                    font-size: 12px;
-                }
-                QComboBox, QLineEdit {
-                    background-color: #ffffff;
-                    color: #000000;
-                    border: 1px solid #cccccc;
-                    border-radius: 4px;
-                    padding: 6px;
-                    font-size: 12px;
-                }
-                QComboBox:focus, QLineEdit:focus {
-                    border-color: #0066cc;
-                }
-                QPushButton {
-                    background-color: #e0e0e0;
-                    color: #000000;
-                    border: 1px solid #bbbbbb;
-                    border-radius: 4px;
-                    padding: 6px 12px;
-                    font-size: 12px;
-                }
-                QPushButton:hover {
-                    background-color: #d0d0d0;
-                }
-                QScrollArea {
-                    background: transparent;
-                    border: none;
-                }
-                QScrollBar:vertical {
-                    background: #f0f0f0;
-                    width: 10px;
-                    margin: 2px;
-                    border-radius: 5px;
-                }
-                QScrollBar::handle:vertical {
-                    background: #c0c0c0;
-                    min-height: 24px;
-                    border-radius: 5px;
-                }
-                QScrollBar::handle:vertical:hover {
-                    background: #b0b0b0;
-                }
-                QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
-                    height: 0px;
-                }
-                QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
-                    background: none;
-                }
-            """)
+        """Apply the exact Arctic Light QSS from themes/."""
+        _ = theme_name  # Kept for signature compatibility.
+        try:
+            qss_path = (
+                Path(__file__).resolve().parents[2] / "themes" / "arctic_light.qss"
+            )
+            css = qss_path.read_text(encoding="utf-8")
+            self.setStyleSheet(css)
+        except Exception:
+            # Minimal fallback only if theme file cannot be read.
+            self.setStyleSheet("")
 
     def _apply_language(self, lang_code: str):
         """Applique la langue de l'interface."""
