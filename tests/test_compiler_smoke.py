@@ -110,7 +110,9 @@ def test_compile_all_uses_entrypoint(test_workspace, monkeypatch) -> None:
     assert captured.get("files") == [str(entry)]
 
 
-def test_compile_all_stops_when_bcasl_report_is_failure(test_workspace, monkeypatch) -> None:
+def test_compile_all_stops_when_bcasl_report_is_failure(
+    test_workspace, monkeypatch
+) -> None:
     entry = test_workspace / "main.py"
     assert set_entrypoint(str(test_workspace), "main.py") is True
 

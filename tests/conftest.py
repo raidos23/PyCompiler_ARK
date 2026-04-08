@@ -42,7 +42,9 @@ def test_workspace(tmp_path: Path) -> Path:
         return dest
 
     dest.mkdir(parents=True, exist_ok=True)
-    (dest / "main.py").write_text("print('hello from test workspace')\n", encoding="utf-8")
+    (dest / "main.py").write_text(
+        "print('hello from test workspace')\n", encoding="utf-8"
+    )
     (dest / "requirements.txt").write_text("requests\n", encoding="utf-8")
     (dest / ".ark").mkdir(parents=True, exist_ok=True)
     return dest

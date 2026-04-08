@@ -1401,7 +1401,9 @@ class ProgEngineConfigGui(QMainWindow):
         self.compiler_tabs.setDocumentMode(False)
         self.compiler_tabs.setTabsClosable(False)
         self.compiler_tabs.setMovable(False)
-        self.compiler_tabs.currentChanged.connect(lambda *_: self._schedule_editor_sync())
+        self.compiler_tabs.currentChanged.connect(
+            lambda *_: self._schedule_editor_sync()
+        )
         left_layout.addWidget(self.compiler_tabs, 1)
 
         self.save_config_btn = QPushButton("Save Config", left)
@@ -1452,8 +1454,8 @@ class ProgEngineConfigGui(QMainWindow):
 
     def _select_workspace(self) -> None:
         """Open folder dialog and set workspace for the prog-engine session."""
-        start = self.workspace_dir or self.workspace_edit.text().strip() or str(
-            Path.home()
+        start = (
+            self.workspace_dir or self.workspace_edit.text().strip() or str(Path.home())
         )
         folder = QFileDialog.getExistingDirectory(
             self,
@@ -1482,8 +1484,7 @@ class ProgEngineConfigGui(QMainWindow):
 
     def _apply_theme(self) -> None:
         if str(self.theme).lower() == "light":
-            self.setStyleSheet(
-                """
+            self.setStyleSheet("""
                 QMainWindow, QWidget { background: #f7f7f7; color: #111; }
                 QTabWidget::pane { border: 1px solid #d2d2d2; background: #fff; }
                 QTabBar::tab { background: #efefef; border: 1px solid #d2d2d2; padding: 8px 12px; }
@@ -1494,11 +1495,9 @@ class ProgEngineConfigGui(QMainWindow):
                 #prog_header { font-weight: 700; color: #333; }
                 #prog_editor_title { font-weight: 700; color: #222; }
                 #prog_editor_status { color: #555; }
-                """
-            )
+                """)
             return
-        self.setStyleSheet(
-            """
+        self.setStyleSheet("""
             QMainWindow, QWidget { background: #1d1f24; color: #e8e8e8; }
             QTabWidget::pane { border: 1px solid #363a43; background: #23262d; }
             QTabBar::tab { background: #2b3038; border: 1px solid #404652; padding: 8px 12px; color: #d9d9d9; }
@@ -1509,8 +1508,7 @@ class ProgEngineConfigGui(QMainWindow):
             #prog_header { font-weight: 700; color: #b8d9ff; }
             #prog_editor_title { font-weight: 700; color: #8ac6ff; }
             #prog_editor_status { color: #9ca8b5; }
-            """
-        )
+            """)
 
     def _load_engine_tabs(self) -> None:
         """Load one engine tab (targeted mode) or all engine tabs (global mode)."""
@@ -1518,7 +1516,9 @@ class ProgEngineConfigGui(QMainWindow):
         self._engines_by_id = {}
         self._tab_engine_map = {}
         try:
-            engine_ids = [self.engine_id] if self.engine_id else list(available_engines())
+            engine_ids = (
+                [self.engine_id] if self.engine_id else list(available_engines())
+            )
             if not engine_ids:
                 empty = QWidget(self)
                 lay = QVBoxLayout(empty)
@@ -1556,7 +1556,9 @@ class ProgEngineConfigGui(QMainWindow):
                         idx = self.compiler_tabs.addTab(fallback_tab, str(eid))
                     self._tab_engine_map[int(idx)] = str(eid)
                 except Exception as exc:
-                    self._set_editor_status(f"Engine load failed for {eid}: {exc}", ok=False)
+                    self._set_editor_status(
+                        f"Engine load failed for {eid}: {exc}", ok=False
+                    )
 
             self._attach_live_hooks()
         except Exception as exc:
@@ -1725,7 +1727,9 @@ class ProgEngineConfigGui(QMainWindow):
 
     def _save_current_engine_config(self) -> None:
         try:
-            manual_ws = self.workspace_edit.text().strip() if self.workspace_edit else ""
+            manual_ws = (
+                self.workspace_edit.text().strip() if self.workspace_edit else ""
+            )
             if manual_ws and not self.workspace_dir:
                 try:
                     self.workspace_dir = os.path.abspath(manual_ws)

@@ -161,8 +161,8 @@ def _resolve_system_language_sync() -> str:
 def _load_language_file_sync(code: str) -> tuple[str | None, dict[str, Any] | None]:
     """Load a language JSON file with flexible code matching.
 
-  Returns (resolved_code, data) or (None, None) if not found/invalid.
-  """
+    Returns (resolved_code, data) or (None, None) if not found/invalid.
+    """
     try:
         raw = str(code or "").strip()
     except Exception:
@@ -287,10 +287,10 @@ def _merge_translations(
 ) -> dict[str, Any]:
     """Merge translations with robust fallbacks.
 
-  - Keep all keys from base (English).
-  - Override with non-empty string values from override.
-  - Preserve override metadata when valid.
-  """
+    - Keep all keys from base (English).
+    - Override with non-empty string values from override.
+    - Preserve override metadata when valid.
+    """
     merged: dict[str, Any] = dict(base) if isinstance(base, dict) else {}
 
     if isinstance(override, dict):
@@ -488,9 +488,9 @@ def _is_french_token(value: object | None) -> bool:
 def is_french_language(gui: object | None = None) -> bool:
     """Return True if the effective language is French; otherwise False.
 
-  Rule enforced: French only when explicitly selected (or system language is French).
-  Any other language must fall back to English.
-  """
+    Rule enforced: French only when explicitly selected (or system language is French).
+    Any other language must fall back to English.
+    """
     try:
         if gui is not None:
             for attr in ("language_pref", "language"):
@@ -910,9 +910,9 @@ def apply_language(self, lang_display: str) -> None:
 def _apply_main_app_translations(self, tr: dict[str, object]) -> None:
     """Apply translations to main app UI elements.
 
-  This is a fused version combining the best features from both implementations.
-  Uses the _set helper pattern for cleaner code while maintaining comprehensive coverage.
-  """
+    This is a fused version combining the best features from both implementations.
+    Uses the _set helper pattern for cleaner code while maintaining comprehensive coverage.
+    """
 
     # Internal helper for setting widget text with fallback
     def _set(attr: str, key: str, method: str = "setText"):

@@ -46,18 +46,18 @@ BCASL_PLUGIN_REGISTER_FUNC = "bcasl_register"
 class PluginMeta:
     """Métadonnées d'un plugin.
 
-  id: identifiant unique (stable)
-  name: nom
-  version: chaîne de version
-  description: courte description
-  author: optionnel
-  tags: liste de tags pour la priorité d'exécution (ex: ["lint", "format"])
-  required_bcasl_version: version minimale requise de BCASL (ex: "2.0.0")
-  required_core_version: version minimale requise du Core (ex: "1.0.0")
-  required_plugins_sdk_version: version minimale requise du Plugins SDK (ex: "1.0.0")
-  required_bc_plugin_context_version: version minimale requise de BcPluginContext (ex: "1.0.0")
-  required_general_context_version: version minimale requise de GeneralContext (ex: "1.0.0")
-  """
+    id: identifiant unique (stable)
+    name: nom
+    version: chaîne de version
+    description: courte description
+    author: optionnel
+    tags: liste de tags pour la priorité d'exécution (ex: ["lint", "format"])
+    required_bcasl_version: version minimale requise de BCASL (ex: "2.0.0")
+    required_core_version: version minimale requise du Core (ex: "1.0.0")
+    required_plugins_sdk_version: version minimale requise du Plugins SDK (ex: "1.0.0")
+    required_bc_plugin_context_version: version minimale requise de BcPluginContext (ex: "1.0.0")
+    required_general_context_version: version minimale requise de GeneralContext (ex: "1.0.0")
+    """
 
     id: str
     name: str
@@ -99,16 +99,16 @@ class PluginMeta:
 class BcPluginBase:
     """Classe de base minimale que doivent étendre les BCASL plugins.
 
-  Un plugin doit fournir:
-  - meta: PluginMeta (avec id unique)
-  - requires: dependencies (liste d'ids d'autres plugins)
-  - priority: entier pour l'ordonnancement (plus petit => plus tôt)
-  - on_pre_compile(ctx): hook main exécuté avant compilation
+    Un plugin doit fournir:
+    - meta: PluginMeta (avec id unique)
+    - requires: dependencies (liste d'ids d'autres plugins)
+    - priority: entier pour l'ordonnancement (plus petit => plus tôt)
+    - on_pre_compile(ctx): hook main exécuté avant compilation
 
-  Remarques:
-  - Les opérations doivent être idempotentes et robustes (embarqués)
-  - Éviter les dependencies externes; stdlib uniquement
-  """
+    Remarques:
+    - Les opérations doivent être idempotentes et robustes (embarqués)
+    - Éviter les dependencies externes; stdlib uniquement
+    """
 
     meta: PluginMeta
     requires: tuple[str, ...]
@@ -359,15 +359,15 @@ class BcPluginBase:
     ):
         """Optionnel: construire un onglet UI de configuration pour la dialog BCASL.
 
-    Doit returnr soit:
-    - None (pas d'UI)
-    - Un widget Qt
-    - Un tuple (title, widget) ou (title, widget, on_save)
-    - Un dict {"title": ..., "widget": ..., "on_save": ...}
+        Doit returnr soit:
+        - None (pas d'UI)
+        - Un widget Qt
+        - Un tuple (title, widget) ou (title, widget, on_save)
+        - Un dict {"title": ..., "widget": ..., "on_save": ...}
 
-    Le callback on_save (si fourni) sera appelé lors de l'enregistrement:
-      on_save(config_dict) -> dict | None
-    """
+        Le callback on_save (si fourni) sera appelé lors de l'enregistrement:
+          on_save(config_dict) -> dict | None
+        """
         return None
 
 
@@ -375,9 +375,9 @@ class BcPluginBase:
 class PreCompileContext:
     """Contexte passé aux plugins.
 
-  Fournit utilitaires peu coûteux pour la découverte des files et la config.
-  Donne accès complet au workspace selectionné et à ses métadonnées.
-  """
+    Fournit utilitaires peu coûteux pour la découverte des files et la config.
+    Donne accès complet au workspace selectionné et à ses métadonnées.
+    """
 
     project_root: Path
     config: dict[str, Any] = field(default_factory=dict)
@@ -458,10 +458,10 @@ class PreCompileContext:
     ) -> Iterable[Path]:
         """Itère sur les files du projet en appliquant des motifs glob d'inclusion/exclusion.
 
-    - include: motifs type glob (ex: "**/*.py", "src/**/*.c")
-    - exclude: motifs à exclure (ex: "venv/**", "**/__pycache__/**")
-    Optimisé: évite la création de grosses listes; yield au fil de l'eau.
-    """
+        - include: motifs type glob (ex: "**/*.py", "src/**/*.c")
+        - exclude: motifs à exclure (ex: "venv/**", "**/__pycache__/**")
+        Optimisé: évite la création de grosses listes; yield au fil de l'eau.
+        """
         root = self.project_root
         inc = tuple(include) if include else ("**/*",)
         exc = tuple(exclude) if exclude else tuple()
@@ -583,12 +583,12 @@ class _PluginRecord:
 def register_plugin(cls: Any) -> Any:
     """Marque une classe comme plugin BCASL (legacy).
 
-  Args:
-    cls: Classe à marquer
+    Args:
+      cls: Classe à marquer
 
-  Returns:
-    La classe inchangée, avec l'attribut __bcasl_plugin__ = True
-  """
+    Returns:
+      La classe inchangée, avec l'attribut __bcasl_plugin__ = True
+    """
     setattr(cls, "__bcasl_plugin__", True)
     return cls
 
@@ -602,89 +602,89 @@ def bc_register(
 ) -> Any:
     """Décorateur pour enregistrer un plugin BCASL.
 
-  Peut être utilisé de plusieurs façons:
+    Peut être utilisé de plusieurs façons:
 
-  1. En tant que décorateur simple (le plugin sera automatiquement instancié
-    et enregistré lorsque le module est importé par BCASL):
+    1. En tant que décorateur simple (le plugin sera automatiquement instancié
+      et enregistré lorsque le module est importé par BCASL):
 
-    @bc_register
-    class MyPlugin(BcPluginBase):
-      meta = PluginMeta(
-        id="my_plugin",
-        name="My Plugin",
-        version="1.0.0",
-      )
+      @bc_register
+      class MyPlugin(BcPluginBase):
+        meta = PluginMeta(
+          id="my_plugin",
+          name="My Plugin",
+          version="1.0.0",
+        )
 
-      def on_pre_compile(self, ctx: PreCompileContext) -> None:
+        def on_pre_compile(self, ctx: PreCompileContext) -> None:
+          ...
+
+    2. Avec un manager explicite (pour enregistrement immédiat):
+
+      @bc_register(manager=my_manager)
+      class MyPlugin(BcPluginBase):
+        meta = PluginMeta(
+          id="my_plugin",
+          name="My Plugin",
+          version="1.0.0",
+        )
         ...
 
-  2. Avec un manager explicite (pour enregistrement immédiat):
+    3. Avec des options de configuration:
 
-    @bc_register(manager=my_manager)
-    class MyPlugin(BcPluginBase):
-      meta = PluginMeta(
-        id="my_plugin",
-        name="My Plugin",
-        version="1.0.0",
-      )
-      ...
+      @bc_register(priority=10)
+      class MyPlugin(BcPluginBase):
+        meta = PluginMeta(
+          id="my_plugin",
+          name="My Plugin",
+          version="1.0.0",
+        )
+        ...
 
-  3. Avec des options de configuration:
+    Args:
+      cls: Classe de plugin (rempli automatiquement par Python lors de l'utilisation
+         du décorateur sans parenthèses).
+      manager: Instance optionnelle de BCASL pour enregistrement immédiat.
+      auto_instantiate: Si True (défaut), le plugin est instancié automatiquement.
+      priority: Priorité optionnelle du plugin (écrase celle définie dans le meta).
 
-    @bc_register(priority=10)
-    class MyPlugin(BcPluginBase):
-      meta = PluginMeta(
-        id="my_plugin",
-        name="My Plugin",
-        version="1.0.0",
-      )
-      ...
+    Returns:
+      La classe de plugin (avec instance créée si auto_instantiate=True)
 
-  Args:
-    cls: Classe de plugin (rempli automatiquement par Python lors de l'utilisation
-       du décorateur sans parenthèses).
-    manager: Instance optionnelle de BCASL pour enregistrement immédiat.
-    auto_instantiate: Si True (défaut), le plugin est instancié automatiquement.
-    priority: Priorité optionnelle du plugin (écrase celle définie dans le meta).
+    Raises:
+      TypeError: Si la classe décorée n'hérite pas de BcPluginBase
+      ValueError: Si le plugin n'a pas de métadonnées validates
 
-  Returns:
-    La classe de plugin (avec instance créée si auto_instantiate=True)
+    Example:
+      # Utilisation simple
+      from bcasl import BcPluginBase, PluginMeta, bc_register
+      from bcasl.Base import PreCompileContext
 
-  Raises:
-    TypeError: Si la classe décorée n'hérite pas de BcPluginBase
-    ValueError: Si le plugin n'a pas de métadonnées validates
+      @bc_register
+      class MyLinter(BcPluginBase):
+        meta = PluginMeta(
+          id="my_linter",
+          name="My Linter",
+          version="1.0.0",
+          tags=["lint"],
+        )
 
-  Example:
-    # Utilisation simple
-    from bcasl import BcPluginBase, PluginMeta, bc_register
-    from bcasl.Base import PreCompileContext
+        def on_pre_compile(self, ctx: PreCompileContext) -> None:
+          # Votre logique de linting ici
+          pass
 
-    @bc_register
-    class MyLinter(BcPluginBase):
-      meta = PluginMeta(
-        id="my_linter",
-        name="My Linter",
-        version="1.0.0",
-        tags=["lint"],
-      )
+      # Utilisation avec options
+      @bc_register(priority=5)
+      class EarlyPlugin(BcPluginBase):
+        meta = PluginMeta(
+          id="early_plugin",
+          name="Early Plugin",
+          version="1.0.0",
+          tags=["prepare"],
+        )
 
-      def on_pre_compile(self, ctx: PreCompileContext) -> None:
-        # Votre logique de linting ici
-        pass
-
-    # Utilisation avec options
-    @bc_register(priority=5)
-    class EarlyPlugin(BcPluginBase):
-      meta = PluginMeta(
-        id="early_plugin",
-        name="Early Plugin",
-        version="1.0.0",
-        tags=["prepare"],
-      )
-
-      def on_pre_compile(self, ctx: PreCompileContext) -> None:
-        pass
-  """
+        def on_pre_compile(self, ctx: PreCompileContext) -> None:
+          pass
+    """
 
     def decorator_inner(cls_to_decorate: type) -> Any:
         # Vérifier que c'est bien une classe

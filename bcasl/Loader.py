@@ -61,9 +61,9 @@ def _has_bcasl_marker(pkg_dir: Path) -> bool:
 
 def _discover_bcasl_meta(Plugins_dir: Path) -> dict[str, dict[str, Any]]:
     """Décopen les plugins en important chaque package et en appelant bcasl_register(manager).
-  Supporte également les plugins enregistrés avec le décorateur @bc_register.
-  Return un mapping plugin_id -> meta dict {id, name, version, description, author, requirements}
-  """
+    Supporte également les plugins enregistrés avec le décorateur @bc_register.
+    Return un mapping plugin_id -> meta dict {id, name, version, description, author, requirements}
+    """
     meta: dict[str, dict[str, Any]] = {}
     try:
         import importlib.util as _ilu
@@ -421,9 +421,9 @@ def _build_plugin_item(
 def _load_workspace_config(workspace_root: Path) -> dict[str, Any]:
     """Load bcasl.yml si présent, sinon génère une config par défaut minimale et l'écrit.
 
-  Fusionne aussi avec ARK_Main_Config.yml si disponible pour les patterns et options plugins.
-  YML ONLY - YAML and JSON files are NOT supported.
-  """
+    Fusionne aussi avec ARK_Main_Config.yml si disponible pour les patterns et options plugins.
+    YML ONLY - YAML and JSON files are NOT supported.
+    """
 
     def _read_yml(p: Path) -> dict[str, Any]:
         try:
@@ -679,8 +679,8 @@ def ensure_bcasl_thread_stopped(self, timeout_ms: int = 5000) -> None:
 
 def resolve_bcasl_timeout(self) -> float:
     """Résout le timeout effectif des plugins à partir de la config et de l'env.
-  <= 0 => illimité (0.0 renvoyé)
-  """
+    <= 0 => illimité (0.0 renvoyé)
+    """
     try:
         if not getattr(self, "workspace_dir", None):
             return 0.0
@@ -693,8 +693,8 @@ def resolve_bcasl_timeout(self) -> float:
 
 def open_bc_loader_dialog(self) -> None:  # UI minimale
     """Fenêtre simple pour activer/désactiver et réordonner les plugins(BCASL).
-  Persiste dans <workspace>/bcasl.yml uniquement (YML).
-  """
+    Persiste dans <workspace>/bcasl.yml uniquement (YML).
+    """
     try:  # Importer QtWidgets à la demande pour compatibilité headless
         from PySide6.QtWidgets import (
             QAbstractItemView,
@@ -1046,8 +1046,8 @@ def open_bc_loader_dialog(self) -> None:  # UI minimale
 
 def run_pre_compile_async(self, on_done: Optional[callable] = None) -> None:
     """Lance BCASL en arrière-plan si QtCore est dispo; sinon, exécution bloquante rPluginsde.
-  on_done(report) appelé à la fin si fourni.
-  """
+    on_done(report) appelé à la fin si fourni.
+    """
     try:
         if not getattr(self, "workspace_dir", None):
             if callable(on_done):

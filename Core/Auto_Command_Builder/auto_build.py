@@ -179,8 +179,8 @@ def _load_mapping(
     base_dir: str, workspace_dir: Optional[str] = None
 ) -> tuple[dict[str, dict[str, Optional[str]]], Optional[str]]:
     """Load mapping from environment variable only.
-  Returns `(mapping, used_path)` or `({}, None)` when undefined.
-  """
+    Returns `(mapping, used_path)` or `({}, None)` when undefined.
+    """
     # ENV-only mapping loader; legacy locations disabled
     try:
         env_path = os.environ.get("PYCOMPILER_MAPPING")
@@ -198,9 +198,9 @@ def _load_mapping(
 
 def _parse_requirements(requirements_path: str) -> set[str]:
     """Extract package names from requirements.txt, handling URLs, VCS, and extras.
-  - Supports lines like 'package==1.2', 'package[extra]', 'name @ https://...', 'git+https://...#egg=name'
-  - Ignores comments, markers, and includes (-r ...)
-  """
+    - Supports lines like 'package==1.2', 'package[extra]', 'name @ https://...', 'git+https://...#egg=name'
+    - Ignores comments, markers, and includes (-r ...)
+    """
     found: set[str] = set()
     if not os.path.isfile(requirements_path):
         return found
@@ -259,10 +259,10 @@ def _parse_requirements(requirements_path: str) -> set[str]:
 
 def _scan_imports(py_files: list[str], workspace_dir: str) -> set[str]:
     """Analyze .py files and return imported top-level module names.
- - Ignore venv/, __pycache__/ et folders cachés
- - Ignore files trop volumineux (>1.5 Mo) pour robustesse
- - Tolérant aux erreurs d'encodage/syntaxe
- """
+    - Ignore venv/, __pycache__/ et folders cachés
+    - Ignore files trop volumineux (>1.5 Mo) pour robustesse
+    - Tolérant aux erreurs d'encodage/syntaxe
+    """
     found: set[str] = set()
     # Exclure venv interne
     venv_dir = os.path.abspath(os.path.join(workspace_dir, "venv"))
@@ -312,9 +312,9 @@ def _match_modules_to_mapping(
     modules: set[str], mapping: dict[str, dict[str, Optional[str]]]
 ) -> tuple[dict[str, dict[str, Optional[str]]], dict[str, str]]:
     """Return two dictionaries:
-  - `matched`: `{package_key_in_mapping: mapping_entry}`
-  - `package_to_import_name`: `{package_key_in_mapping: import_name}`
-  """
+    - `matched`: `{package_key_in_mapping: mapping_entry}`
+    - `package_to_import_name`: `{package_key_in_mapping: import_name}`
+    """
     # Build lookup index insensible à la casse et aux tirets
     index = {_norm(name): name for name in mapping.keys()}
 
@@ -395,8 +395,8 @@ _ENGINE_BUILDERS: dict[str, callable] = {}
 
 def register_auto_builder(engine_id: str, builder) -> None:
     """Register a builder function for a given engine_id.
-  The builder signature must be (matched: dict, pkg_to_import: dict) -> List[str].
-  """
+    The builder signature must be (matched: dict, pkg_to_import: dict) -> List[str].
+    """
     if not engine_id or not callable(builder):
         return
     _ENGINE_BUILDERS[engine_id] = builder
@@ -404,8 +404,8 @@ def register_auto_builder(engine_id: str, builder) -> None:
 
 def _maybe_load_plugin_auto_builder(engine_id: str) -> None:
     """Optionally load a plugin-provided auto builder for engine_id.
-  Tries to import '<engine_id>.auto_plugins' without failing app logic.
-  """
+    Tries to import '<engine_id>.auto_plugins' without failing app logic.
+    """
     try:
         mod = importlib.import_module(f"{engine_id}.auto_plugins")
         auto_builder = getattr(mod, "AUTO_BUILDER", None)
@@ -580,14 +580,14 @@ def compute_for_all(
     self, engine_ids: Optional[list[str]] = None
 ) -> dict[str, list[str]]:
     """
- Compute auto arguments for all engines (plug-and-play).
- - engine_ids: liste optionnelle d'identifiants de engines à traiter. Si None,
-  on detect automatiquement:
-  * engines enregistrés dans _ENGINE_BUILDERS
-  * engines avec un mapping engine_plugins/<engine_id>/mapping.json
-  * engines embarqués utils/engines/<engine_id>/mapping.json
- Return un dict: { engine_id: List[str] }.
- """
+    Compute auto arguments for all engines (plug-and-play).
+    - engine_ids: liste optionnelle d'identifiants de engines à traiter. Si None,
+     on detect automatiquement:
+     * engines enregistrés dans _ENGINE_BUILDERS
+     * engines avec un mapping engine_plugins/<engine_id>/mapping.json
+     * engines embarqués utils/engines/<engine_id>/mapping.json
+    Return un dict: { engine_id: List[str] }.
+    """
     # Construire la liste ordonnée des moteurs à traiter
     ordered: list[str] = []
     if engine_ids:
@@ -646,11 +646,11 @@ def _load_engine_package_mapping(
     engine_id: str,
 ) -> tuple[dict[str, dict[str, Optional[str]]], Optional[str]]:
     """Load engine-specific mapping from multiple locations with priorities:
-  1) `mapping.json` embedded in imported engine package (`engine_id`)
-  2) `ENGINES/<engine_id>/mapping.json` from project files
-  3) Optional path from `PYCOMPILER_MAPPING` environment variable (merged)
-  Returns `(combined_mapping, primary_used_path)`.
-  """
+    1) `mapping.json` embedded in imported engine package (`engine_id`)
+    2) `ENGINES/<engine_id>/mapping.json` from project files
+    3) Optional path from `PYCOMPILER_MAPPING` environment variable (merged)
+    Returns `(combined_mapping, primary_used_path)`.
+    """
     combined: dict[str, dict[str, Optional[str]]] = {}
     used: Optional[str] = None
 
