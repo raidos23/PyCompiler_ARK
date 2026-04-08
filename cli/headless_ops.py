@@ -1673,6 +1673,13 @@ def doctor_payload(workspace: str | None = None) -> dict[str, Any]:
     }
     if workspace:
         payload["workspace"] = workspace_inspect_payload(workspace)
+    workspace_payload = payload.get("workspace")
+    has_workspace_issue = isinstance(workspace_payload, dict) and not workspace_payload.get(
+        "exists", True
+    )
+    has_engine_issue = compatible_count != engine_summary["count"]
+    has_qt_issue = not qt_available
+    payload["ok"] = not (has_workspace_issue or has_engine_issue or has_qt_issue)
     return payload
 
 
@@ -1726,6 +1733,7 @@ def bcasl_doctor_payload(workspace: str | None = None) -> dict[str, Any]:
         "workspace": ws,
         "plugins": plugins,
         "checks": checks,
+        "ok": all(bool(check.get("ok")) for check in checks),
     }
 
 
