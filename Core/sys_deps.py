@@ -372,10 +372,10 @@ class SysDependencyManager:
         on_finished: Optional[Callable[[int, QProcess.ExitStatus], None]] = None,
     ) -> Optional[QProcess]:
         """
-        Non-blocking execution of a command without sudo using QProcess.
-        Does not display any dialog and streams output via callbacks.
-        Returns the QProcess instance or None on failure.
-        """
+    Non-blocking execution of a command without sudo using QProcess.
+    Does not display any dialog and streams output via callbacks.
+    Returns the QProcess instance or None on failure.
+    """
         try:
             proc = QProcess(self.parent_widget)
             if cwd:
@@ -451,10 +451,10 @@ class SysDependencyManager:
         timeout_s: Optional[int] = None,
     ) -> Optional[QProcess]:
         """
-        Non-blocking execution of a sudo-enabled shell command string on Linux using QProcess.
-        No dialog is shown. The sudo password is written to stdin when the process starts.
-        Streams output via callbacks and returns the QProcess instance or None on failure.
-        """
+    Non-blocking execution of a sudo-enabled shell command string on Linux using QProcess.
+    No dialog is shown. The sudo password is written to stdin when the process starts.
+    Streams output via callbacks and returns the QProcess instance or None on failure.
+    """
         try:
             if platform.system() != "Linux":
                 self.msg_error(
@@ -591,12 +591,12 @@ class SysDependencyManager:
 
     def install_packages_windows(self, packages: list[dict]) -> Optional[QProcess]:
         """
-        Install Windows packages via winget with a progress dialog.
-        packages: list of dicts with keys:
-          - id: winget package id (e.g., 'Microsoft.VisualStudio.2022.BuildTools')
-          - override: optional string for --override parameters
-        Returns the first QProcess started (installation is chained), or None on failure/cancel.
-        """
+    Install Windows packages via winget with a progress dialog.
+    packages: list of dicts with keys:
+     - id: winget package id (e.g., 'Microsoft.VisualStudio.2022.BuildTools')
+     - override: optional string for --override parameters
+    Returns the first QProcess started (installation is chained), or None on failure/cancel.
+    """
         try:
             if platform.system() != "Windows":
                 self.msg_error(
@@ -748,10 +748,10 @@ class SysDependencyManager:
         start_msg_en: str = "Starting...",
     ) -> Optional[QProcess]:
         """
-        Lance un processus avec une boîte de progression indéterminée.
-        Retourne l'objet QProcess (non bloquant) ou None en cas d'échec.
-        Le dialogue se ferme automatiquement à la fin du processus.
-        """
+    Launch process with indeterminate progress dialog.
+    Return l'objet QProcess (non bloquant) ou None en cas d'échec.
+    Le dialogue se ferme automatiquement à la fin du process.
+    """
         try:
             dlg = ProgressDialog(
                 self.tr(title_fr, title_en), self.parent_widget, cancelable=True
@@ -826,9 +826,9 @@ class SysDependencyManager:
         timeout_s: Optional[int] = None,
     ) -> Optional[QProcess]:
         """
-        Exécute une commande shell (Linux) qui attend un sudo -S sur stdin, avec boîte de progression indéterminée.
-        Retourne QProcess (non bloquant). Le mot de passe est écrit sur stdin au démarrage.
-        """
+    Run shell command (Linux) expecting sudo -S on stdin with indeterminate progress dialog.
+    Return QProcess (non bloquant). Le mot de passe est écrit sur stdin au démarrage.
+    """
         try:
             if platform.system() != "Linux":
                 self.msg_error(
@@ -965,10 +965,10 @@ class SysDependencyManager:
         password: Optional[str] = None,
     ) -> Optional[QProcess]:
         """
-        Helper haut-niveau: demande consentement + mot de passe (si absent),
-        construit la commande selon le gestionnaire et lance l'installation avec une
-        boîte de progression indéterminée. Retourne QProcess (non bloquant) ou None.
-        """
+    High-level helper: request consent + password (if missing),
+    construit la commande selon le gestionnaire et lance l'installation avec une
+    boîte de progression indéterminée. Return QProcess (non bloquant) ou None.
+    """
         try:
             if platform.system() != "Linux":
                 self.msg_error(
@@ -1065,10 +1065,10 @@ class SysDependencyManager:
 
 def check_system_packages(packages: list[str]) -> bool:
     """
-    Check if system packages/tools are installed.
-    Returns True if all packages/tools are available, False otherwise.
-    Uses shutil.which() to check for command availability.
-    """
+  Check if system packages/tools are installed.
+  Returns True if all packages/tools are available, False otherwise.
+  Uses shutil.which() to check for command availability.
+  """
     try:
         if not packages:
             return True
@@ -1082,9 +1082,9 @@ def check_system_packages(packages: list[str]) -> bool:
 
 def install_system_packages(packages: list[str], gui=None) -> bool:
     """
-    Install system packages using the appropriate package manager.
-    Returns True if successful, False otherwise.
-    """
+  Install system packages using the appropriate package manager.
+  Returns True if successful, False otherwise.
+  """
     try:
         # Mode headless (CLI/CI): ne jamais instancier de widgets Qt.
         if gui is None:

@@ -16,24 +16,13 @@
 """
 PyCompiler ARK - Compiler Core Module
 
-Module principal du compilateur pour PyCompiler ARK.
-Gère l'exécution des processus de compilation avec support threading
-et communication en temps réel avec l'interface utilisateur.
+Main compiler orchestration module for PyCompiler ARK.
 
-Classes principales:
-- CompilerCore: Classe principale du compilateur
-- CompilationThread: Thread pour exécution non-bloquante
-- MainProcess: Processus principal de compilation
-- ProcessKiller: Gestion des processus
-
-Fonctions:
-- kill_process: Tue un processus
-- kill_process_tree: Tue un processus et ses enfants
-- build_command: Construit une commande de compilation
-- validate_command: Valide une commande de compilation
-
-Note: Les fonctions de command_helpers.py ont été intégrées dans mainprocess.py
-      pour supporter l'intégration avec ArkConfigManager pour les exclusions.
+This module connects GUI actions to compilation runtime services:
+- command preparation and validation
+- process lifecycle management
+- BCASL pre-compile gating
+- cancellation and UI feedback
 """
 
 from __future__ import annotations
@@ -162,7 +151,7 @@ _main_process: Optional[MainProcess] = None
 
 
 def _get_main_process() -> MainProcess:
-    """Retourne l'instance de MainProcess, en la créant si nécessaire."""
+    """Return the singleton `MainProcess` instance, creating it on demand."""
     global _main_process
     if _main_process is None:
         _main_process = MainProcess()
@@ -170,7 +159,7 @@ def _get_main_process() -> MainProcess:
 
 
 def _run_bcasl_before_compile(self, on_done) -> None:
-    """Lance BCASL avant compilation, puis appelle on_done(report)."""
+    """Run BCASL pre-compile stage, then invoke `on_done(report)`."""
     try:
         from bcasl import run_pre_compile_async
     except Exception:
@@ -251,9 +240,9 @@ def _bcasl_report_allows_compile(self, report) -> bool:
 
 def compile_all(self) -> None:
     """
-    Slot connected to the compile button.
-    Starts compilation for all selected Python files.
-    """
+  Slot connected to the compile button.
+  Starts compilation for all selected Python files.
+  """
 
     def _t(_key: str, fr: str, en: str) -> str:
         try:
@@ -479,7 +468,7 @@ def compile_all(self) -> None:
 
 
 def _start_compilation_queue(self, engine, files_to_compile: list) -> None:
-    """Démarre la compilation d'une file de fichiers."""
+    """Start compilation of a queue of files."""
     main_process = _get_main_process()
 
     # Connecter les signaux de MainProcess si pas déjà fait
@@ -589,12 +578,12 @@ def _start_compilation_queue(self, engine, files_to_compile: list) -> None:
 
 def cancel_all_compilations(self) -> bool:
     """
-    Slot connected to the cancel button.
-    Cancels all ongoing compilations.
-    """
+  Slot connected to the cancel button.
+  Cancels all ongoing compilations.
+  """
     main_process = _get_main_process()
 
-    # Marquer l'annulation le plus tôt possible pour stopper le pipeline BCASL -> compile.
+    # Étape 1: marquer l'annulation immédiatement (BCASL -> compile).
     try:
         self._cancel_requested_during_precompile = True
     except Exception:
@@ -602,14 +591,14 @@ def cancel_all_compilations(self) -> bool:
 
     cancelled = False
 
-    # 1) Stop compilation engine process/tree immediately.
+    # Étape 2: arrêter le process de compilation au plus tôt.
     try:
         if main_process.is_compiling:
             cancelled = bool(main_process.cancel()) or cancelled
     except Exception:
         pass
 
-    # 2) Stop BCASL thread + workers aggressively (short timeout).
+    # Étape 3: stopper BCASL thread + workers (mode agressif).
     bcasl_was_running = False
     try:
         bcasl_thread = getattr(self, "_bcasl_thread", None)
@@ -636,7 +625,7 @@ def cancel_all_compilations(self) -> bool:
     except Exception:
         pass
 
-    # 3) Re-enable GUI controls right away.
+    # Étape 4: réactiver l'UI sans attendre.
     try:
         self.set_controls_enabled(True)
     except Exception:
@@ -690,9 +679,9 @@ def show_error_dialog(self, title: str, message: str) -> None:
 
 def try_install_missing_modules(self, modules: list) -> bool:
     """
-    Try to install missing Python modules.
-    Returns True if installation succeeded or no install needed.
-    """
+  Try to install missing Python modules.
+  Returns True if installation succeeded or no install needed.
+  """
     if not modules:
         return True
 
@@ -714,16 +703,16 @@ def try_install_missing_modules(self, modules: list) -> bool:
 
 def start_compilation_process(self, engine_id: str, file_path: str) -> bool:
     """
-    Start a single compilation process using MainProcess.
+  Start a single compilation process using MainProcess.
 
-    Args:
-        self: GUI instance
-        engine_id: ID of the compilation engine
-        file_path: Path to the Python file to compile
+  Args:
+    self: GUI instance
+    engine_id: ID of the compilation engine
+    file_path: Path to the Python file to compile
 
-    Returns:
-        True if compilation started, False otherwise
-    """
+  Returns:
+    True if compilation started, False otherwise
+  """
     # Sauvegarder la configuration UI de l'engine actif dans le workspace
     try:
         from Core.EngineConfigManager import save_engine_config_for_gui
@@ -879,9 +868,9 @@ def start_compilation_process(self, engine_id: str, file_path: str) -> bool:
 
 def try_start_processes(self) -> bool:
     """
-    Try to start compilation processes for all selected files.
-    Returns True if at least one process started.
-    """
+  Try to start compilation processes for all selected files.
+  Returns True if at least one process started.
+  """
     if not self.python_files:
         log_i18n_level(
             self, "warning", "Aucun fichier à compiler.", "No files to compile."
@@ -908,9 +897,9 @@ def try_start_processes(self) -> bool:
 
 def _continue_compile_all(self) -> None:
     """
-    Continue compilation of remaining files after one completes.
-    Called from handle_finished when a compilation succeeds.
-    """
+  Continue compilation of remaining files after one completes.
+  Called from handle_finished when a compilation succeeds.
+  """
     # Cette fonction est appelée après chaque compilation réussie
     # Elle peut être utilisée pour compiler les fichiers suivants en file d'attente
     pass
