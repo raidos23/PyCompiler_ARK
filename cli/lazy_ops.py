@@ -28,6 +28,12 @@ def launch_engines_gui(workspace_dir: str | None = None) -> int:
     return launch_engines_only_standalone(workspace_dir)
 
 
+def launch_prog_engine_gui(engine_id: str, workspace_dir: str | None = None) -> int:
+    from .launchers import launch_prog_engine_standalone
+
+    return launch_prog_engine_standalone(engine_id, workspace_dir)
+
+
 def launch_main_gui(
     no_splash: bool = False, ide_gui: bool = False, classic_gui: bool = False
 ) -> int:
