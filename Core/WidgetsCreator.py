@@ -14,7 +14,7 @@
 # limitations under the License.
 
 """
-Dialogues personnalisés pour PyCompiler ARK.
+Custom dialogs for PyCompiler ARK.
 Inclut ProgressDialog, boîtes de message, et autres dialogues spécifiques.
 
 IMPORTANT: Tous les dialogs ici exécutent les opérations Qt dans le thread principal
@@ -47,11 +47,11 @@ from PySide6 import QtCore as _QtC
 
 def _get_linux_display_server() -> str:
     """
-    Detect the Linux display server being used.
+  Detect the Linux display server being used.
 
-    Returns:
-        'wayland', 'x11', or 'unknown'
-    """
+  Returns:
+    'wayland', 'x11', or 'unknown'
+  """
     try:
         import os
 
@@ -75,24 +75,24 @@ def _get_linux_display_server() -> str:
 
 def _invoke_in_main_thread(fn, *args, **kwargs):
     """
-    Invoke a function in the main Qt thread.
+  Invoke a function in the main Qt thread.
 
-    This ensures that all UI operations are thread-safe and properly
-    integrated with the application's event loop and theme system.
+  This ensures that all UI operations are thread-safe and properly
+  integrated with the application's event loop and theme system.
 
-    Adapts the invocation method based on the platform and display server:
-    - Linux/Wayland: Uses BlockingQueuedConnection with extra safety
-    - Linux/X11: Uses BlockingQueuedConnection
-    - Other platforms: Uses BlockingQueuedConnection
+  Adapts the invocation method based on the platform and display server:
+  - Linux/Wayland: Uses BlockingQueuedConnection with extra safety
+  - Linux/X11: Uses BlockingQueuedConnection
+  - Other platforms: Uses BlockingQueuedConnection
 
-    Args:
-        fn: Function to invoke
-        *args: Positional arguments for the function
-        **kwargs: Keyword arguments for the function
+  Args:
+    fn: Function to invoke
+    *args: Positional arguments for the function
+    **kwargs: Keyword arguments for the function
 
-    Returns:
-        Result of the function call
-    """
+  Returns:
+    Result of the function call
+  """
     try:
         app = QApplication.instance()
         if app is None:
@@ -227,14 +227,14 @@ def show_msgbox(
     kind: str, title: str, text: str, *, parent=None, buttons=None, default=None
 ) -> Optional[bool]:
     """
-    Show a message box if a Qt toolkit is available; fallback to console output otherwise.
-    Executes in the main Qt thread to ensure theme inheritance and proper UI integration.
+  Show a message box if a Qt toolkit is available; fallback to console output otherwise.
+  Executes in the main Qt thread to ensure theme inheritance and proper UI integration.
 
-    kind: 'info' | 'warning' | 'error' | 'question'
-    Returns:
-      - question: True if Yes (or default), False otherwise
-      - others: None
-    """
+  kind: 'info' | 'warning' | 'error' | 'question'
+  Returns:
+   - question: True if Yes (or default), False otherwise
+   - others: None
+  """
     if QApplication.instance() is None or _is_noninteractive():
         # Console fallback
         try:
@@ -305,14 +305,14 @@ def show_msgbox(
 def sys_msgbox_for_installing(
     subject: str, explanation: Optional[str] = None, title: str = "Installation requise"
 ) -> Optional[InstallAuth]:
-    """Demande interactive d'autorisation d'installation multi-OS.
+    """Interactive prompt for multi-OS installation authorization.
 
-    - Windows: pas de mot de passe (UAC natif). Retourne InstallAuth(method='uac', secret=None) si confirmé.
-    - Linux/macOS: demande de mot de passe sudo. Retourne InstallAuth(method='sudo', secret='<pwd>') si confirmé.
+  - Windows: pas de mot de passe (UAC natif). Return InstallAuth(method='uac', secret=None) si confirmé.
+  - Linux/macOS: demande de mot de passe sudo. Return InstallAuth(method='sudo', secret='<pwd>') si confirmé.
 
-    Aucun secret n'est loggé. Fournit uniquement les informations nécessaires au plugin pour exécuter
-    l'installation avec élévation adaptée à l'OS.
-    """
+  Aucun secret n'est loggé. Fournit uniquement les informations nécessaires au plugin pour exécuter
+  l'installation avec élévation adaptée à l'OS.
+  """
     is_windows = platform.system().lower().startswith("win")
     try:
         from Core.i18n import tr_fr_en, is_french_language
@@ -396,13 +396,13 @@ def sys_msgbox_for_installing(
 
 
 class ProgressDialog(QDialog):
-    """Dialog de progression étroitement lié à l'application.
+    """Progress dialog tightly integrated with application.
 
-    S'exécute toujours dans le thread principal pour assurer:
-    - L'héritage du thème de l'application
-    - L'intégration visuelle avec l'application principale
-    - La sécurité des threads
-    """
+  S'exécute toujours dans le thread principal pour assurer:
+  - L'héritage du thème de l'application
+  - L'intégration visuelle avec l'application principale
+  - La sécurité des threads
+  """
 
     def __init__(
         self,
@@ -445,8 +445,7 @@ class ProgressDialog(QDialog):
         self.setLayout(layout)
 
     def set_message(self, msg):
-        """Mettre à jour le message du dialog."""
-
+        """Update dialog message."""
         def _set():
             self.label.setText(msg)
             QApplication.processEvents()
@@ -454,12 +453,11 @@ class ProgressDialog(QDialog):
         _invoke_in_main_thread(_set)
 
     def set_status(self, msg):
-        """Alias de set_message pour compatibilité."""
+        """Alias of `set_message` for compatibility."""
         self.set_message(msg)
 
     def set_progress(self, value, maximum=None):
-        """Mettre à jour la barre de progression."""
-
+        """Update progress bar."""
         def _set():
             if maximum is not None:
                 self.progress.setMaximum(maximum)
@@ -469,7 +467,7 @@ class ProgressDialog(QDialog):
         _invoke_in_main_thread(_set)
 
     def show(self):
-        """Afficher le dialog dans le thread principal."""
+        """Show dialog from the main UI thread."""
 
         def _show():
             super(ProgressDialog, self).show()
@@ -477,7 +475,7 @@ class ProgressDialog(QDialog):
         _invoke_in_main_thread(_show)
 
     def close(self):
-        """Fermer le dialog dans le thread principal."""
+        """Close dialog from the main UI thread."""
 
         def _close():
             try:
@@ -499,7 +497,7 @@ class ProgressDialog(QDialog):
 
 
 class CompilationProcessDialog(ProgressDialog):
-    """Dialog étroitement lié à l'application pour afficher le chargement du workspace."""
+    """Dialog integrated with application to display workspace loading."""
 
     def __init__(self, title="Chargement", parent=None):
         super().__init__(title=title, parent=parent, cancelable=True, closeable=True)
@@ -512,14 +510,14 @@ _app_main_window = None
 
 def connect_to_app(main_window):
     """
-    Connect dialogs to the main application window for theme synchronization.
+  Connect dialogs to the main application window for theme synchronization.
 
-    This function should be called from init_ui() to ensure that all dialogs
-    created afterwards will automatically inherit the application's theme.
+  This function should be called from init_ui() to ensure that all dialogs
+  created afterwards will automatically inherit the application's theme.
 
-    Args:
-        main_window: The main application window (usually self from PyCompilerArkGui)
-    """
+  Args:
+    main_window: The main application window (usually self from PyCompilerArkGui)
+  """
     global _app_main_window
     _app_main_window = main_window
     try:

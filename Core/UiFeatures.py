@@ -16,15 +16,13 @@
 """
 UiFeatures Module
 
-Module de fonctionnalités UI pour PyCompiler ARK.
-Contient les méthodes liées à l'interface utilisateur qui peuvent être
-déconnectées ou remplacées selon les besoins de l'application.
+UI feature mixin for PyCompiler ARK.
 
-Fournit:
-- Gestion des icônes
-- Export/Import de configuration
-- Langue et internationalisation
-- Contrôles d'interface
+This module groups reusable GUI helpers:
+- icon selection
+- config export/import
+- entrypoint management
+- i18n and UI state controls
 """
 
 import asyncio
@@ -40,18 +38,18 @@ from PySide6.QtWidgets import QApplication, QFileDialog, QMessageBox, QMenu
 
 class UiFeatures:
     """
-    Classe de fonctionnalités UI pour PyCompiler ARK.
+  UI helper mixin used by the main GUI.
 
-    Cette classe contient les méthodes liées à l'interface utilisateur
-    et peut être utilisée comme mixin ou importée séparément.
-    """
+  Methods are organized by feature area and can be reused across
+  UI variants (classic and IDE-like).
+  """
 
     # =========================================================================
     # SÉLECTION D'ICÔNE
     # =========================================================================
 
     def select_icon(self):
-        """Ouvre une boîte de dialogue pour sélectionner une icône."""
+        """Open a file dialog to select the main icon."""
         icon_preview = getattr(self, "icon_preview", None)
         file, _ = QFileDialog.getOpenFileName(
             self, "Choisir un fichier .ico", "", "Icon Files (*.ico)"
@@ -88,7 +86,7 @@ class UiFeatures:
             pass
 
     def select_nuitka_icon(self):
-        """Ouvre une boîte de dialogue pour sélectionner une icône pour Nuitka (Windows uniquement)."""
+        """Open a file dialog to select a Nuitka icon (Windows only)."""
         import platform
 
         if platform.system() != "Windows":
@@ -111,7 +109,7 @@ class UiFeatures:
     # =========================================================================
 
     def show_help_dialog(self):
-        """Affiche une boîte de dialogue d'aide."""
+        """Show the localized help dialog."""
         try:
             from .i18n import FALLBACK_EN, is_french_language
 
@@ -142,7 +140,7 @@ class UiFeatures:
     # =========================================================================
 
     def setup_entrypoint_selector(self) -> None:
-        """Configure le menu contextuel pour choisir le point d'entrée."""
+        """Enable context menu actions for entrypoint selection."""
         if not getattr(self, "file_list", None):
             return
         try:
@@ -154,7 +152,7 @@ class UiFeatures:
             pass
 
     def _show_entrypoint_menu(self, pos) -> None:
-        """Affiche un menu contextuel pour gérer le point d'entrée."""
+        """Show context actions to set/clear workspace entrypoint."""
         if not getattr(self, "file_list", None):
             return
         item = self.file_list.itemAt(pos)
@@ -178,7 +176,7 @@ class UiFeatures:
             self.clear_entrypoint()
 
     def _entrypoint_icon(self) -> QIcon | None:
-        """Retourne l'icône utilisée pour marquer le point d'entrée."""
+        """Return the icon used to mark the current entrypoint."""
         icon = getattr(self, "_entrypoint_icon_cache", None)
         token = getattr(self, "_entrypoint_icon_theme_token", None)
         try:
@@ -211,7 +209,7 @@ class UiFeatures:
         return None
 
     def _refresh_entrypoint_marker(self) -> None:
-        """Met à jour l'affichage du point d'entrée dans la liste des fichiers."""
+        """Refresh entrypoint visual marker in the file list."""
         if not getattr(self, "file_list", None):
             return
         entry_rel = getattr(self, "_entrypoint_relpath", None)
@@ -226,7 +224,7 @@ class UiFeatures:
                 item.setIcon(QIcon())
 
     def load_entrypoint_from_config(self) -> None:
-        """Charge le point d'entrée depuis ARK_Main_Config.yml."""
+        """Load workspace entrypoint from `ARK_Main_Config.yml`."""
         workspace_dir = getattr(self, "workspace_dir", None)
         if not workspace_dir:
             return
@@ -246,14 +244,15 @@ class UiFeatures:
         self._refresh_entrypoint_marker()
 
     def set_entrypoint_from_item(self, item) -> None:
-        """Définit le point d'entrée à partir d'un item de la liste."""
+        """Set entrypoint using a selected file-list item."""
         if item is None:
             return
         rel_path = item.text()
         self.set_entrypoint(rel_path)
 
     def set_entrypoint(self, rel_path: str) -> None:
-        """Définit et sauvegarde le point d'entrée dans la config ARK."""
+        """Persist a new workspace entrypoint in ARK config."""
+        # Étape 1: valider le workspace et le chemin relatif.
         workspace_dir = getattr(self, "workspace_dir", None)
         if not workspace_dir or not rel_path:
             return
@@ -267,10 +266,12 @@ class UiFeatures:
         try:
             from .ArkConfigManager import set_entrypoint
 
+            # Étape 2: écrire la valeur d'entrypoint dans la config workspace.
             ok = set_entrypoint(workspace_dir, rel_path)
         except Exception:
             ok = False
         if ok:
+            # Étape 3: synchroniser l'état UI et journaliser.
             self._entrypoint_relpath = rel_path
             self.entrypoint_file = abs_path
             self._refresh_entrypoint_marker()
@@ -285,7 +286,7 @@ class UiFeatures:
             )
 
     def clear_entrypoint(self) -> None:
-        """Efface le point d'entrée et met à jour la configuration."""
+        """Clear workspace entrypoint and update UI markers."""
         workspace_dir = getattr(self, "workspace_dir", None)
         if not workspace_dir:
             return
@@ -314,7 +315,7 @@ class UiFeatures:
     # =========================================================================
 
     def export_config(self):
-        """Exporte la configuration vers un fichier JSON."""
+        """Export minimal GUI preferences to a JSON file."""
         file, _ = QFileDialog.getSaveFileName(
             self, "Exporter la configuration", "", "JSON Files (*.json)"
         )
@@ -358,7 +359,7 @@ class UiFeatures:
                 )
 
     def import_config(self):
-        """Importe la configuration depuis un fichier JSON."""
+        """Import GUI preferences from a JSON file."""
         file, _ = QFileDialog.getOpenFileName(
             self, "Importer la configuration", "", "JSON Files (*.json)"
         )
@@ -490,7 +491,7 @@ class UiFeatures:
             )
 
     def update_command_preview(self):
-        """Met à jour l'aperçu de commande (placeholder)."""
+        """Update command preview (currently a no-op placeholder)."""
         # Cette méthode est maintenant vide car les options sont gérées dynamiquement par les moteurs
         pass
 
@@ -499,7 +500,7 @@ class UiFeatures:
     # =========================================================================
 
     def set_controls_enabled(self, enabled: bool) -> None:
-        """Active ou désactive les contrôles de l'interface."""
+        """Enable or disable primary UI controls."""
         self.compile_btn.setEnabled(enabled)
         # Forcer une mise à jour visuelle
         try:
@@ -561,7 +562,7 @@ class UiFeatures:
         self._refresh_grey_targets()
 
     def _refresh_grey_targets(self) -> None:
-        """Rafraîchit l'état visuel des contrôles."""
+        """Refresh visual state of controls."""
         try:
             grey_targets = [
                 getattr(self, "compile_btn", None),
@@ -598,7 +599,7 @@ class UiFeatures:
             pass
 
     def set_compilation_ui_enabled(self, enabled: bool) -> None:
-        """Alias pour set_controls_enabled pendant la compilation."""
+        """Alias for set_controls_enabled during compilation."""
         self.set_controls_enabled(enabled)
 
     # =========================================================================
@@ -606,7 +607,7 @@ class UiFeatures:
     # =========================================================================
 
     def show_statistics(self) -> None:
-        """Affiche les statistiques de compilation."""
+        """Show compilation statistics."""
         try:
             import psutil
         except Exception:
@@ -744,13 +745,13 @@ class UiFeatures:
     # =========================================================================
 
     def apply_language(self, lang_display: str) -> None:
-        """Applique la langue sélectionnée."""
+        """Apply the selected language."""
         from .i18n import apply_language as _i18n_apply_language
 
         _i18n_apply_language(self, lang_display)
 
     def register_language_refresh(self, callback: Callable) -> None:
-        """Enregistre un callback pour le rafraîchissement de langue."""
+        """Register a callback used for language refresh."""
         try:
             if not hasattr(self, "_language_refresh_callbacks"):
                 self._language_refresh_callbacks = []
@@ -760,7 +761,7 @@ class UiFeatures:
             pass
 
     def log_i18n(self, fr: str, en: str) -> None:
-        """Ajoute un message localisé au journal."""
+        """Append a localized message to the log."""
         try:
             from .i18n import log_i18n_level
 
@@ -798,13 +799,13 @@ class UiFeatures:
                 pass
 
     def show_language_dialog(self) -> None:
-        """Affiche la boîte de dialogue de sélection de langue."""
+        """Open language selection dialog."""
         from .i18n import show_language_dialog as _i18n_show_dialog
 
         _i18n_show_dialog(self)
 
     def _apply_main_app_translations(self, tr: dict) -> None:
-        """Applique les traductions aux éléments UI."""
+        """Apply translations to main UI elements."""
         from .i18n import _apply_main_app_translations as _i18n_apply_translations
 
         _i18n_apply_translations(self, tr)

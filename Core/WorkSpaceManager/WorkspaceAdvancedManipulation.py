@@ -23,16 +23,16 @@ from Core.ArkConfigManager import load_ark_config, should_exclude_file
 
 
 class WorkspaceAdvancedManipulation:
-    """Gestion avancée de la manipulation du workspace (drag & drop, sélection fichiers, etc.)."""
+    """Advanced workspace interactions (drag & drop, file selection, and cleanup)."""
 
     @staticmethod
     def select_files_manually(gui_instance):
         """
-        Ouvre une boîte de dialogue pour sélectionner manuellement des fichiers Python.
+    Open a dialog to select Python files manually.
 
-        Args:
-            gui_instance: Instance de l'interface GUI
-        """
+    Args:
+      gui_instance: GUI instance.
+    """
         workspace_dir = getattr(gui_instance, "workspace_dir", None)
 
         if not workspace_dir:
@@ -98,11 +98,11 @@ class WorkspaceAdvancedManipulation:
     @staticmethod
     def remove_selected_file(gui_instance):
         """
-        Supprime les fichiers sélectionnés de la liste.
+    Remove selected files from the UI list and internal state.
 
-        Args:
-            gui_instance: Instance de l'interface GUI
-        """
+    Args:
+      gui_instance: GUI instance.
+    """
         if not hasattr(gui_instance, "file_list"):
             return
 
@@ -130,12 +130,12 @@ class WorkspaceAdvancedManipulation:
     @staticmethod
     def handle_drag_enter_event(gui_instance, event: QDropEvent):
         """
-        Gère l'événement dragEnter pour accepter les fichiers droppés.
+    Handle `dragEnter` event and accept supported drops.
 
-        Args:
-            gui_instance: Instance de l'interface GUI
-            event: L'événement de drag
-        """
+    Args:
+      gui_instance: GUI instance.
+      event: Drag event.
+    """
         if event.mimeData().hasUrls():
             event.acceptProposedAction()
         else:
@@ -144,15 +144,15 @@ class WorkspaceAdvancedManipulation:
     @staticmethod
     def handle_drop_event(gui_instance, event: QDropEvent):
         """
-        Gère l'événement drop pour ajouter les fichiers droppés.
+    Handle `drop` event and append dropped Python files/folders.
 
-        Args:
-            gui_instance: Instance de l'interface GUI
-            event: L'événement de drop
+    Args:
+      gui_instance: GUI instance.
+      event: Drop event.
 
-        Returns:
-            Nombre de fichiers ajoutés
-        """
+    Returns:
+      Number of files added.
+    """
         from Core.WorkSpaceManager.SetupWorkspace import SetupWorkspace
 
         urls = event.mimeData().urls()
@@ -215,14 +215,14 @@ class WorkspaceAdvancedManipulation:
     @staticmethod
     def get_workspace_status(gui_instance) -> dict:
         """
-        Retourne un dictionnaire avec le statut actuel du workspace.
+    Return dictionary describing current workspace status.
 
-        Args:
-            gui_instance: Instance de l'interface GUI
+    Args:
+      gui_instance: GUI instance.
 
-        Returns:
-            Dictionnaire avec les informations du workspace
-        """
+    Returns:
+      Workspace status information.
+    """
         workspace_dir = getattr(gui_instance, "workspace_dir", None)
         python_files = getattr(gui_instance, "python_files", [])
         selected_files = getattr(gui_instance, "selected_files", [])
@@ -238,15 +238,15 @@ class WorkspaceAdvancedManipulation:
     @staticmethod
     def clear_workspace(gui_instance, keep_dir: bool = True) -> bool:
         """
-        Efface le workspace actuel.
+    Clear current workspace state.
 
-        Args:
-            gui_instance: Instance de l'interface GUI
-            keep_dir: Si True, garde le dossier mais efface les fichiers
+    Args:
+      gui_instance: GUI instance.
+      keep_dir: When `True`, keep selected folder but clear files.
 
-        Returns:
-            True si succès
-        """
+    Returns:
+      `True` on success.
+    """
         try:
             workspace_dir = getattr(gui_instance, "workspace_dir", None)
 

@@ -14,16 +14,16 @@
 # limitations under the License.
 
 """
-Module de chargement de la configuration ARK
+ARK configuration loading module
 
 Ce module est responsable de:
-- Charger la configuration depuis le fichier ARK_Main_Config.yml à la racine du workspace
-- Gérer les patterns d'inclusion/exclusion de fichiers
+- Loadr la configuration depuis le file ARK_Main_Config.yml à la racine du workspace
+- Gérer les patterns d'inclusion/exclusion de files
 - Fournir des fonctions utilitaires pour accéder aux options de configuration
-- Créer un fichier de configuration par défaut si nécessaire
+- Créer un file de configuration par défaut si nécessaire
 
-Le fichier de configuration utilise le format YAML et permet de personnaliser:
-- Les patterns de fichiers à inclure/exclure de la compilation
+Le file de configuration utilise le format YAML et permet de personnaliser:
+- Les patterns de files à inclure/exclure de la compilation
 - Les gestionnaires d'environnement virtuel (Poetry, Pipenv, Conda, etc.)
 - Les options de dépendances
 
@@ -131,19 +131,19 @@ DEFAULT_CONFIG = {
 
 def _deep_merge_dict(base: dict, override: dict) -> dict:
     """
-    Fusionne récursivement deux dictionnaires.
+  Recursively merge two dictionaries.
 
-    Cette fonction permet de combiner une configuration de base avec des
-    valeurs personnalisées. Les dictionnaires imbriqués sont fusionnés
-    plutôt que remplacés, permettant une configuration modulaire.
+  Cette fonction permet de combiner une configuration de base avec des
+  valeurs personnalisées. Les dictionnaires imbriqués sont fusionnés
+  plutôt que remplacés, permettant une configuration modulaire.
 
-    Args:
-        base: Dictionnaire de configuration de base
-        override: Dictionnaire contenant les valeurs à surcharger
+  Args:
+    base: Dictionnaire de configuration de base
+    override: Dictionnaire contenant les valeurs à surcharger
 
-    Returns:
-        Un nouveau dictionnaire avec les valeurs fusionnées
-    """
+  Returns:
+    Un nouveau dictionnaire avec les valeurs fusionnées
+  """
     result = base.copy()
     for key, value in override.items():
         if key in result and isinstance(result[key], dict) and isinstance(value, dict):
@@ -157,25 +157,25 @@ def _deep_merge_dict(base: dict, override: dict) -> dict:
 
 def load_ark_config(workspace_dir: str) -> dict[str, Any]:
     """
-    Charge la configuration ARK depuis un fichier YAML.
+  Load ARK configuration from a YAML file.
 
-    Cette fonction recherche un fichier de configuration dans le workspace
-    selon un ordre de priorité prédéfini et fusionne la configuration
-    utilisateur avec les valeurs par défaut.
+  Cette fonction recherche un file de configuration dans le workspace
+  selon un ordre de priorité prédéfini et fusionne la configuration
+  utilisateur avec les valeurs par défaut.
 
-    Fichiers recherchés (ordre de priorité):
-    1. ARK_Main_Config.yaml
-    2. ARK_Main_Config.yml
-    3. .ARK_Main_Config.yaml
-    4. .ARK_Main_Config.yml
+  Fichiers recherchés (ordre de priorité):
+  1. ARK_Main_Config.yaml
+  2. ARK_Main_Config.yml
+  3. .ARK_Main_Config.yaml
+  4. .ARK_Main_Config.yml
 
-    Args:
-        workspace_dir: Chemin absolu vers le répertoire du workspace
+  Args:
+    workspace_dir: Path absolu vers le directory du workspace
 
-    Returns:
-        Dictionnaire complet de configuration, incluant les valeurs par défaut
-        et les personnalisations utilisateur
-    """
+  Returns:
+    Dictionnaire complet de configuration, incluant les valeurs par défaut
+    et les personnalisations utilisateur
+  """
     import copy
 
     # Commencer avec une copie complète de la configuration par défaut
@@ -283,41 +283,41 @@ def load_ark_config(workspace_dir: str) -> dict[str, Any]:
 
 def get_dependency_options(config: dict[str, Any]) -> dict[str, Any]:
     """
-    Récupère les options de gestion des dépendances.
+  Return dependency management options.
 
-    Returns:
-        Dictionnaire des options de dépendances
-    """
+  Returns:
+    Dictionnaire des options de dépendances
+  """
     return config.get("dependencies", {})
 
 
 def get_environment_manager_options(config: dict[str, Any]) -> dict[str, Any]:
     """
-    Récupère les options du gestionnaire d'environnement virtuel.
+  Return virtual environment manager options.
 
-    Returns:
-        Dictionnaire des options du gestionnaire d'environnement
-    """
+  Returns:
+    Dictionary of environment manager options.
+  """
     return config.get("environment_manager", {})
 
 
 def get_build_options(config: dict[str, Any]) -> dict[str, Any]:
     """
-    Récupère les options de build.
+  Return build options.
 
-    Returns:
-        Dictionnaire des options de build
-    """
+  Returns:
+    Dictionary of build options.
+  """
     return config.get("build", {})
 
 
 def get_entrypoint(config: dict[str, Any]) -> Optional[str]:
     """
-    Récupère le point d'entrée configuré.
+  Return configured entry point.
 
-    Returns:
-        Chemin relatif du point d'entrée ou None
-    """
+  Returns:
+    Path relatif du point d'entrée ou None
+  """
     build_opts = get_build_options(config)
     if not isinstance(build_opts, dict):
         return None
@@ -327,15 +327,15 @@ def get_entrypoint(config: dict[str, Any]) -> Optional[str]:
 
 def save_ark_config(workspace_dir: str, config: dict[str, Any]) -> bool:
     """
-    Sauvegarde la configuration ARK dans ARK_Main_Config.yml.
+  Save ARK configuration to ARK_Main_Config.yml.
 
-    Args:
-        workspace_dir: Chemin du workspace
-        config: Configuration complète à enregistrer
+  Args:
+    workspace_dir: Path du workspace
+    config: Configuration complète à enregistrer
 
-    Returns:
-        True si succès, False sinon
-    """
+  Returns:
+    True si succès, False sinon
+  """
     if not workspace_dir or not isinstance(config, dict):
         return False
     try:
@@ -356,15 +356,15 @@ def save_ark_config(workspace_dir: str, config: dict[str, Any]) -> bool:
 
 def set_entrypoint(workspace_dir: str, entrypoint: Optional[str]) -> bool:
     """
-    Met à jour le point d'entrée dans ARK_Main_Config.yml.
+  Update entry point in ARK_Main_Config.yml.
 
-    Args:
-        workspace_dir: Chemin du workspace
-        entrypoint: Chemin relatif du point d'entrée (ou None pour effacer)
+  Args:
+    workspace_dir: Path du workspace
+    entrypoint: Path relatif du point d'entrée (ou None pour effacer)
 
-    Returns:
-        True si succès, False sinon
-    """
+  Returns:
+    True si succès, False sinon
+  """
     if not workspace_dir:
         return False
     cfg = load_ark_config(workspace_dir)
@@ -382,12 +382,12 @@ def set_entrypoint(workspace_dir: str, entrypoint: Optional[str]) -> bool:
 
 def _normalize_exclusion_pattern(pattern: str) -> str:
     """
-    Normalise un pattern d'exclusion pour un matching fiable cross-plateforme.
+  Normalize exclusion pattern for reliable cross-platform matching.
 
-    - Convertit les séparateurs Windows en "/"
-    - Retire le préfixe "./"
-    - Si le pattern se termine par "/", on l'étend à "/**"
-    """
+  - Convertit les séparateurs Windows en "/"
+  - Retire le préfixe "./"
+  - Si le pattern se termine par "/", on l'étend à "/**"
+  """
     p = str(pattern).strip()
     if not p:
         return ""
@@ -403,21 +403,20 @@ def should_exclude_file(
     file_path: str, workspace_dir: str, exclusion_patterns: Optional[list[str]]
 ) -> bool:
     """
-    Détermine si un fichier doit être exclu de la compilation.
+  Determine whether a file must be excluded from compilation.
 
-    Cette fonction compare le chemin du fichier avec les patterns
-    d'exclusion définis dans la configuration. Elle normalise les
-    séparateurs puis combine Path.match() et fnmatch pour supporter
-    les patterns glob avec "**" de façon cross-plateforme.
+  Compare file path with configured exclusion patterns. The function
+  normalizes separators and combines `Path.match()` with `fnmatch` to
+  support glob patterns like `**` in a cross-platform way.
 
-    Args:
-        file_path: Chemin absolu du fichier à vérifier
-        workspace_dir: Chemin absolu du workspace
-        exclusion_patterns: Liste des patterns d'exclusion
+  Args:
+    file_path: Absolute file path to check.
+    workspace_dir: Absolute workspace path.
+    exclusion_patterns: List of exclusion patterns.
 
-    Returns:
-        True si le fichier doit être exclu, False sinon
-    """
+  Returns:
+    `True` when file must be excluded, otherwise `False`.
+  """
     try:
         if not file_path or not workspace_dir:
             return False
@@ -483,19 +482,19 @@ def should_exclude_file(
 
 def create_default_ark_config(workspace_dir: str) -> bool:
     """
-    Crée un fichier ARK_Main_Config.yml avec la configuration par défaut.
+  Create ARK_Main_Config.yml with default configuration.
 
-    Cette fonction génère un fichier de configuration complet avec
-    toutes les options disponibles et leurs valeurs par défaut.
-    Elle ne remplace pas un fichier existant.
+  Cette fonction génère un file de configuration complet avec
+  toutes les options disponibles et leurs valeurs par défaut.
+  Elle ne remplace pas un file existant.
 
-    Args:
-        workspace_dir: Chemin du répertoire du workspace
+  Args:
+    workspace_dir: Path du directory du workspace
 
-    Returns:
-        True si le fichier a été créé avec succès, False s'il existe déjà
-        ou si une erreur s'est produite
-    """
+  Returns:
+    True si le file a été créé avec succès, False s'il existe déjà
+    ou si une erreur s'est produite
+  """
     if not workspace_dir:
         return False
 

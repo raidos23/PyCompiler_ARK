@@ -16,11 +16,10 @@
 """
 PyCompiler ARK GUI Module
 
-Module principal de l'interface utilisateur pour PyCompiler ARK.
-Délègue les fonctionnalités UI à UiFeatures et gère la fenêtre principale.
+Main GUI module for PyCompiler ARK.
 
-Ce module est simplifié et délègue les fonctionnalités UI à Core/UiFeatures.py
-pour une meilleure modularité.
+This module owns the main window lifecycle and delegates most UI behaviors
+to `Core/UiFeatures.py` for modularity.
 """
 
 import asyncio
@@ -56,7 +55,7 @@ from Core.WorkSpaceManager.WorkspaceAdvancedManipulation import (
 
 
 def get_selected_workspace() -> Optional[str]:
-    """Retourne le workspace sélectionné de manière thread-safe."""
+    """Return the currently selected workspace in a thread-safe way."""
     try:
         with _workspace_dir_lock:
             val = _workspace_dir_cache
@@ -75,10 +74,11 @@ def get_selected_workspace() -> Optional[str]:
 
 class PyCompilerArkGui(QMainWindow, UiFeatures):
     """
-    Classe principale de la fenêtre GUI pour PyCompiler ARK.
+  Main PyCompiler ARK GUI window.
 
-    Hérité de UiFeatures pour les fonctionnalités UI déléguées.
-    """
+  This class extends `UiFeatures` and keeps high-level orchestration concerns
+  (window lifecycle, variant selection, and background-task shutdown).
+  """
 
     def __init__(self):
         super().__init__()
@@ -89,7 +89,7 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
         self.setGeometry(100, 100, 1280, 720)
         self.setAcceptDrops(True)
 
-        # Initialisation des attributs d'état
+        # Étape 1: initialiser l'état runtime de la fenêtre.
         self.workspace_dir = None
         self.python_files = []
         self.icon_path = None
@@ -102,10 +102,10 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
         self._closing = False
         self._language_refresh_callbacks = []
 
-        # Gestion du venv via VenvManager
+        # Étape 2: brancher les services partagés (venv manager).
         self.venv_manager = VenvManager(self)
 
-        # Charger les préférences et initialiser l'UI
+        # Étape 3: charger les préférences puis choisir la variante UI.
         self.load_preferences()
         ui_variant = str(os.environ.get("PYCOMPILER_UI_VARIANT", "")).strip().lower()
         if not ui_variant:
@@ -129,7 +129,7 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
             self._ui_variant_active = "classic"
             self.init_ui()
 
-        # Détection et application de la langue système
+        # Étape 4: résoudre la langue effective et appliquer l'i18n.
         import locale
 
         sys_lang = None
@@ -209,49 +209,49 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
     # =========================================================================
 
     def dragEnterEvent(self, event: QDropEvent):
-        """Gère l'événement dragEnter."""
+        """Handle drag-enter events."""
         WorkspaceAdvancedManipulation.handle_drag_enter_event(self, event)
 
     def dropEvent(self, event: QDropEvent):
-        """Gère l'événement drop."""
+        """Handle drop events."""
         WorkspaceAdvancedManipulation.handle_drop_event(self, event)
 
     def add_py_files_from_folder(self, folder):
-        """Ajoute les fichiers Python du dossier."""
+        """Add Python files from a folder into the workspace list."""
         return SetupWorkspace.add_py_files_from_folder(self, folder)
 
     def select_workspace(self):
-        """Ouvre une boîte de dialogue pour sélectionner le workspace."""
+        """Open a dialog to select the workspace directory."""
         folder = SetupWorkspace.select_workspace(self)
         if folder:
             self.apply_workspace_selection(folder, source="ui")
 
     def apply_workspace_selection(self, folder: str, source: str = "ui") -> bool:
-        """Applique la sélection du workspace."""
+        """Apply workspace selection and refresh GUI state."""
         return SetupWorkspace.apply_workspace_selection(self, folder, source)
 
     def select_venv_manually(self):
-        """Sélectionne un venv manuellement."""
+        """Open manual virtual environment selection."""
         self.venv_manager.select_venv_manually()
 
     def create_venv_if_needed(self, path):
-        """Crée un venv si nécessaire."""
+        """Create a virtual environment when required."""
         self.venv_manager.create_venv_if_needed(path)
 
     def install_requirements_if_needed(self, path):
-        """Installe les requirements si nécessaire."""
+        """Install requirements when needed."""
         self.venv_manager.install_requirements_if_needed(path)
 
     def select_files_manually(self):
-        """Ouvre une boîte de dialogue pour sélectionner des fichiers."""
+        """Open a dialog to add files manually."""
         WorkspaceAdvancedManipulation.select_files_manually(self)
 
     def open_ark_config(self):
-        """Ouvre le fichier ARK_Main_Config.yml."""
+        """Open `ARK_Main_Config.yml` from the current workspace."""
         SetupWorkspace.open_ark_config(self)
 
     def on_main_only_changed(self):
-        """Gestion du changement de l'option main uniquement."""
+        """Handle the `main-only` option toggle."""
         if self.opt_main_only.isChecked():
             mains = [
                 f
@@ -270,19 +270,19 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
         self.update_command_preview()
 
     def add_remove_file_button(self):
-        """Cette méthode n'est plus nécessaire."""
+        """Deprecated compatibility shim."""
         pass
 
     def remove_selected_file(self):
-        """Supprime les fichiers sélectionnés."""
+        """Remove selected files from the workspace list."""
         WorkspaceAdvancedManipulation.remove_selected_file(self)
 
     def clear_workspace(self):
-        """Vide la liste des fichiers du workspace sans changer le dossier."""
+        """Clear workspace file list without changing the folder."""
         WorkspaceAdvancedManipulation.clear_workspace(self, keep_dir=True)
 
     def apply_file_filter(self, text: Optional[str] = None) -> None:
-        """Filtre la liste des fichiers affichés selon un texte."""
+        """Filter visible files using the provided text input."""
         try:
             if text is None:
                 try:
@@ -343,7 +343,7 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
     current_language = "English"
 
     def tr(self, fr: str, en: str) -> str:
-        """Retourne le texte FR si la langue est Français, sinon EN."""
+        """Return FR text for French UI, otherwise EN text."""
         return tr_fr_en(self, fr, en)
 
     # =========================================================================
@@ -397,7 +397,7 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
         return "info"
 
     def _safe_log(self, text):
-        """Journalise de manière sécurisée."""
+        """Write a log line with safe fallback behavior."""
         try:
             level = self._infer_log_level(text)
             log_with_level(self, level, text)
@@ -410,7 +410,7 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
     # =========================================================================
 
     def _has_active_background_tasks(self) -> bool:
-        """Vérifie s'il y a des tâches en arrière-plan actives."""
+        """Check whether any background task is still active."""
         if self.processes:
             return True
         if (
@@ -436,7 +436,7 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
         return False
 
     def _terminate_background_tasks(self):
-        """Arrête les tâches en arrière-plan."""
+        """Terminate running background tasks safely."""
         try:
             if hasattr(self, "venv_manager") and self.venv_manager:
                 self.venv_manager.terminate_tasks()
@@ -467,7 +467,7 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
     # =========================================================================
 
     def closeEvent(self, event):
-        """Gère l'événement de fermeture de la fenêtre."""
+        """Handle application close and guard against active background tasks."""
         if self._has_active_background_tasks():
             details = []
             if self.processes:

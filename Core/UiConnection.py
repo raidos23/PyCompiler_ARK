@@ -38,12 +38,15 @@ from .i18n import show_language_dialog
 
 def _detect_system_color_scheme() -> str:
     """
-    Retourne "sombre" ou "clair" selon le thème système détecté.
-    - Windows : registre AppsUseLightTheme (0 = sombre, 1 = clair)
-    - macOS : defaults read -g AppleInterfaceStyle (Dark = sombre)
-    - Linux (GNOME/KDE) : gsettings ou kdeglobals, repli sur GTK_THEME
-    En cas d'échec, renvoie "clair".
-    """
+  Detect the OS color scheme and return ``"sombre"`` or ``"clair"``.
+
+  Detection order:
+  - Windows registry (`AppsUseLightTheme`)
+  - macOS defaults (`AppleInterfaceStyle`)
+  - Linux desktop hints (GNOME/KDE/GTK theme)
+
+  Returns ``"clair"`` as a safe fallback.
+  """
     try:
         import os as _os
         import platform
@@ -150,7 +153,7 @@ def _detect_system_color_scheme() -> str:
 
 
 def _load_ui_file(self) -> None:
-    """Charge le fichier .ui et installe le widget central."""
+    """Load the classic `.ui` file and install its central widget."""
     loader = QUiLoader()
     ui_path = os.path.join(
         os.path.dirname(os.path.abspath(__file__)), "..", "ui", "ui_design.ui"
@@ -166,7 +169,7 @@ def _load_ui_file(self) -> None:
 
 
 def _clear_inline_styles(self) -> None:
-    """Supprime les styles inline pour laisser le style global s'appliquer."""
+    """Remove inline styles so the global theme can apply consistently."""
     from PySide6.QtWidgets import QWidget
 
     widgets = [self.ui] + self.ui.findChildren(QWidget)
@@ -176,7 +179,7 @@ def _clear_inline_styles(self) -> None:
 
 
 def _connect_dialogs_to_app(self) -> None:
-    """Connecte les dialogues à l'application pour synchroniser le thème."""
+    """Connect helper dialogs to the app for theme synchronization."""
     try:
         from Core.WidgetsCreator import connect_to_app
 
@@ -186,7 +189,7 @@ def _connect_dialogs_to_app(self) -> None:
 
 
 def _apply_initial_theme(self) -> None:
-    """Applique le thème initial selon les préférences utilisateur."""
+    """Apply the initial theme from persisted user preferences."""
     pref = getattr(self, "theme", "System")
     apply_theme(self, pref)
     try:
@@ -197,7 +200,7 @@ def _apply_initial_theme(self) -> None:
 
 
 def _setup_sidebar_logo(self) -> None:
-    """Configure le logo latéral si un QLabel dédié est présent dans l'UI."""
+    """Configure the sidebar logo when a dedicated label is available."""
     if not getattr(self, "ui", None):
         return
     candidates = [
@@ -227,7 +230,7 @@ def _setup_sidebar_logo(self) -> None:
 
 
 def _auto_resize_for_screen(self) -> None:
-    """Ajuste la taille de la fenêtre selon l'écran pour éviter les glitches."""
+    """Resize and center the window to fit the current screen safely."""
     try:
         from PySide6.QtWidgets import QApplication
 
@@ -245,14 +248,14 @@ def _auto_resize_for_screen(self) -> None:
         if aw <= 0 or ah <= 0:
             return
 
-        # Respecter les états maximisé/plein écran
+        # Étape 1: respecter les états maximisé/plein écran.
         try:
             if self.isMaximized() or self.isFullScreen():
                 return
         except Exception:
             pass
 
-        # Définir des bornes raisonnables
+        # Étape 2: appliquer des bornes de taille raisonnables.
         min_w = max(800, int(aw * 0.55))
         min_h = max(600, int(ah * 0.55))
         try:
@@ -264,7 +267,7 @@ def _auto_resize_for_screen(self) -> None:
         except Exception:
             pass
 
-        # Calculer une taille cible à partir du hint
+        # Étape 3: calculer la taille cible à partir des hints UI.
         try:
             hint = self.sizeHint()
             base_w = max(self.width(), hint.width())
@@ -280,7 +283,7 @@ def _auto_resize_for_screen(self) -> None:
         except Exception:
             pass
 
-        # Centrer la fenêtre
+        # Étape 4: centrer la fenêtre dans l'écran disponible.
         try:
             x = geo.x() + max(0, (aw - target_w) // 2)
             y = geo.y() + max(0, (ah - target_h) // 2)
@@ -292,7 +295,7 @@ def _auto_resize_for_screen(self) -> None:
 
 
 def _apply_button_icons(self) -> None:
-    """Applique des icônes SVG aux boutons principaux si disponibles."""
+    """Apply SVG icons to primary controls when icon assets are available."""
     if not getattr(self, "ui", None):
         return
     icons_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "icons")
@@ -423,12 +426,12 @@ def _apply_button_icons(self) -> None:
 
 
 def _setup_widgets(self) -> None:
-    """Récupère les widgets depuis l'UI et initialise les attributs."""
+    """Resolve UI widgets and initialize expected attributes."""
     if not getattr(self, "ui", None):
         return
 
     def _find(cls, name: str):
-        """Raccourci pour trouver un widget par nom."""
+        """Shortcut helper to find a widget by object name."""
         return self.ui.findChild(cls, name)
 
     self.btn_select_folder = _find(QPushButton, "btn_select_folder")
@@ -500,7 +503,7 @@ def _setup_widgets(self) -> None:
 
 
 def _setup_compiler_tabs(self) -> None:
-    """Configure les onglets de compilation et charge les moteurs."""
+    """Initialize compiler tabs and bind available engines."""
     from PySide6.QtWidgets import QTabWidget, QWidget
 
     if not getattr(self, "ui", None):
@@ -519,10 +522,10 @@ def _setup_compiler_tabs(self) -> None:
 
 
 def _connect_signals(self) -> None:
-    """Connecte les signaux des widgets lorsque disponibles."""
+    """Connect widget signals when corresponding controls are available."""
 
     def _connect_clicked(widget, handler) -> None:
-        """Connecte le signal clicked d'un bouton si possible."""
+        """Connect button `clicked` signal when possible."""
         if widget is None:
             return
         try:
@@ -576,7 +579,7 @@ def _connect_signals(self) -> None:
         _connect_clicked(self.select_theme, lambda: show_theme_dialog(self))
 
     def update_compiler_options_enabled() -> None:
-        """Met à jour l'état des options selon l'onglet actif."""
+        """Update option state based on active tab."""
         if not self.compiler_tabs:
             return
         try:
@@ -596,13 +599,13 @@ def _connect_signals(self) -> None:
 
 
 def _show_initial_help_message(self) -> None:
-    """Affiche un message d'aide si aucun workspace n'est sélectionné."""
+    """Show help hint when no workspace is selected."""
     # Désactivé à la demande : pas de message d'astuce par défaut dans le log.
     return
 
 
 def init_ui(self) -> None:
-    """Initialise l'interface utilisateur et branche les fonctionnalités."""
+    """Initialize UI and connect shared feature wiring."""
     _load_ui_file(self)
     _clear_inline_styles(self)
     _apply_initial_theme(self)
@@ -633,7 +636,7 @@ def init_ui(self) -> None:
 
 
 def _themes_dir() -> str:
-    """Retourne le chemin absolu du dossier themes."""
+    """Return absolute path to the `themes` directory."""
     return os.path.abspath(
         os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "themes")
     )
@@ -641,9 +644,10 @@ def _themes_dir() -> str:
 
 def _list_available_themes() -> list[tuple[str, str]]:
     """
-    Retourne une liste (display_name, absolute_path) pour tous les fichiers .qss
-    présents dans themes. display_name est dérivé du nom de fichier.
-    """
+  Return `(display_name, absolute_path)` pairs for `.qss` theme files.
+
+  The display name is derived from the file name.
+  """
     themes: list[tuple[str, str]] = []
     try:
         tdir = _themes_dir()
@@ -660,7 +664,7 @@ def _list_available_themes() -> list[tuple[str, str]]:
 
 
 def _is_qss_dark(css: str) -> bool:
-    """Heuristique pour déterminer si un QSS est sombre ou clair."""
+    """Heuristic to determine whether a QSS theme is dark or light."""
     try:
         import re
 
@@ -682,7 +686,7 @@ def _is_qss_dark(css: str) -> bool:
             return False
 
         def _to_rgb(val: str):
-            """Convertit une couleur CSS en tuple RGB."""
+            """Convert CSS color token into an RGB tuple."""
             try:
                 v = val.strip()
                 if v.startswith("#"):
@@ -807,7 +811,7 @@ def themed_svg_icon(path: str, size: int = 18, css: str | None = None) -> QIcon 
 
 
 def _refresh_log_palette(self, css: str | None = None) -> None:
-    """Assure une couleur de texte lisible pour le journal, selon le thème."""
+    """Ensure readable log text color according to active theme."""
     if not getattr(self, "log", None):
         return
     try:
@@ -831,11 +835,11 @@ def _refresh_log_palette(self, css: str | None = None) -> None:
 
 def apply_theme(self, pref: str) -> None:
     """
-    Applique un thème depuis themes.
-    - "System" : détection (sombre/clair) et sélection d'un .qss correspondant
-    - Sinon : appliquer le .qss dont le nom correspond (insensible à la casse/espaces)
-    - Repli : pas de stylesheet si aucun thème trouvé
-    """
+  Apply a theme from themes directory.
+  - "System": détection (sombre/clair) et sélection d'un .qss correspondant
+  - Sinon: appliquer le .qss dont le nom correspond (insensible à la casse/espaces)
+  - Repli: pas de stylesheet si aucun thème trouvé
+  """
     try:
         from PySide6.QtWidgets import QApplication
 
@@ -958,7 +962,7 @@ def apply_theme(self, pref: str) -> None:
 
 
 def show_theme_dialog(self) -> None:
-    """Affiche la boîte de dialogue de sélection de thème."""
+    """Open theme selection dialog."""
     from PySide6.QtWidgets import QInputDialog
 
     themes = _list_available_themes()
