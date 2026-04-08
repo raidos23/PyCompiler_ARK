@@ -145,8 +145,10 @@ Exemples:
     )
     parser.add_argument(
         "--prog-engine",
+        nargs="?",
+        const="",
         metavar="ENGINE_ID",
-        help="Launch GUI focused on one engine tab only",
+        help="Launch prog-engine GUI (optional ENGINE_ID, otherwise load all engines)",
     )
     parser.add_argument(
         "-f",
@@ -185,7 +187,10 @@ Exemples:
         # Mode CLI
         return run_cli(args)
     else:
-        if args.prog_engine:
+        if args.prog_engine is not None:
+            if not args.workspace:
+                print("Error: --prog-engine requires --workspace <path>")
+                return 1
             return launch_prog_engine_gui(
                 engine_id=args.prog_engine,
                 workspace_dir=args.workspace,
