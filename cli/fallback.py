@@ -15,7 +15,7 @@ from .contracts import (
     first_positional,
     normalize_path,
 )
-from .dedicated import run_dedicated_cli
+from .dedicated import _run_bcasl_headless, run_dedicated_cli
 from .headless_commands import (
     run_check,
     run_config_auto,
@@ -134,6 +134,8 @@ def run(argv: list[str] | None, app_version: str) -> int:
     if cmd in ("--unload", "unload"):
         return _run_unload()
     if cmd == "bcasl":
+        if rest and rest[0] in ("list", "run", "doctor"):
+            return _run_bcasl_headless(rest)
         return launch_bcasl_gui(normalize_path(first_positional(rest)))
     if cmd == "engines":
         return _run_engines(rest)

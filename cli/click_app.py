@@ -817,22 +817,30 @@ def build_cli(app_version: str):
         sys.exit(_run_bcasl_headless(["list"]))
 
     @bcasl.command("run")
-    @click.argument("workspace", type=click.Path(exists=False))
+    @click.argument("workspace", required=False, type=click.Path(exists=False))
+    @click.option("-w", "--workspace", "workspace_opt", type=click.Path(exists=False))
     @click.option("--timeout", type=float, default=0.0)
-    def bcasl_run(workspace, timeout):
+    def bcasl_run(workspace, workspace_opt, timeout):
         """Run BCASL pipeline headlessly for one workspace."""
-        args = ["run", _resolve_workspace_path(workspace) or workspace]
+        selected_workspace = workspace_opt or workspace
+        if not selected_workspace:
+            raise click.ClickException("Missing workspace path for bcasl run")
+        args = ["run", _resolve_workspace_path(selected_workspace) or selected_workspace]
         if timeout:
             args.extend(["--timeout", str(timeout)])
         sys.exit(_run_bcasl_headless(args))
 
     @bcasl.command("doctor")
     @click.argument("workspace", required=False, type=click.Path(exists=False))
+    @click.option("-w", "--workspace", "workspace_opt", type=click.Path(exists=False))
     @click.option("--json", "as_json", is_flag=True)
     @click.option("--strict", is_flag=True, help="Exit non-zero when BCASL checks fail")
-    def bcasl_doctor(workspace, as_json, strict):
+    def bcasl_doctor(workspace, workspace_opt, as_json, strict):
         """Run BCASL diagnostics and optionally enforce strict mode."""
-        payload = bcasl_doctor_payload(workspace=_resolve_workspace_path(workspace))
+        selected_workspace = workspace_opt or workspace
+        payload = bcasl_doctor_payload(
+            workspace=_resolve_workspace_path(selected_workspace)
+        )
         if as_json:
             if strict and any(not check["ok"] for check in payload.get("checks", [])):
                 _emit_and_exit(payload, EXIT_PRECHECK_FAILED, as_json=True)
