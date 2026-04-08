@@ -18,6 +18,7 @@ def register_workspace_commands(
     cli: Any,
     click: Any,
     resolve_workspace_path: Callable[[str | None], str | None],
+    require_workspace_path: Callable[[str | None, str], str],
     emit_and_exit: Callable[[object, int, bool], None],
     echo_payload: Callable[[object, bool], None],
     workspace_init_emit: Callable[[str, bool, bool], None],
@@ -42,7 +43,9 @@ def register_workspace_commands(
     def workspace_inspect(path, as_json, strict):
         """Inspect workspace state and optionally enforce strict existence checks."""
         # Inspection non destructive: lit l'état workspace sans rien modifier.
-        payload = workspace_inspect_payload(resolve_workspace_path(path or "."))
+        payload = workspace_inspect_payload(
+            require_workspace_path(path, "workspace inspect")
+        )
         if as_json:
             if strict and not payload.get("exists"):
                 emit_and_exit(payload, EXIT_WORKSPACE_INVALID, True)
@@ -67,7 +70,9 @@ def register_workspace_commands(
     def workspace_entrypoint(path, as_json, strict):
         """Return the current workspace entrypoint in compact text or JSON form."""
         # Sortie volontairement compacte pour simplifier les scripts shell.
-        payload = workspace_inspect_payload(resolve_workspace_path(path or "."))
+        payload = workspace_inspect_payload(
+            require_workspace_path(path, "workspace entrypoint")
+        )
         result = {
             "workspace": payload.get("workspace"),
             "entrypoint": payload.get("entrypoint"),
@@ -88,7 +93,7 @@ def register_workspace_commands(
     def workspace_entrypoint_set(path, entrypoint, as_json):
         """Set and persist an explicit workspace entrypoint."""
         payload = workspace_entrypoint_set_payload(
-            resolve_workspace_path(path or "."),
+            require_workspace_path(path, "workspace entrypoint-set"),
             entrypoint,
         )
         if as_json:
@@ -112,7 +117,7 @@ def register_workspace_commands(
     def workspace_entrypoint_clear(path, as_json):
         """Clear the persisted workspace entrypoint."""
         payload = workspace_entrypoint_clear_payload(
-            resolve_workspace_path(path or ".")
+            require_workspace_path(path, "workspace entrypoint-clear")
         )
         if as_json:
             if not payload.get("ok"):
@@ -137,7 +142,9 @@ def register_workspace_commands(
     def workspace_files(path, as_json):
         """Show a preview list of Python files discovered in the workspace."""
         # Preview partielle: on ne dump pas toute l'arborescence pour rester lisible.
-        payload = workspace_inspect_payload(resolve_workspace_path(path or "."))
+        payload = workspace_inspect_payload(
+            require_workspace_path(path, "workspace files")
+        )
         result = {
             "workspace": payload.get("workspace"),
             "python_file_count": payload.get("python_file_count", 0),
@@ -190,8 +197,9 @@ def register_workspace_commands(
         require_entrypoint,
     ):
         """Apply the full workspace workflow in a single command."""
+        resolved_path = require_workspace_path(path, "workspace apply")
         args = build_workspace_apply_args(
-            path=path,
+            path=resolved_path,
             as_json=bool(as_json),
             with_venv=bool(with_venv),
             entrypoint=entrypoint,
@@ -246,8 +254,9 @@ def register_workspace_commands(
         require_entrypoint,
     ):
         """Alias of workspace apply that keeps GUI wording familiarity."""
+        resolved_path = require_workspace_path(path, "workspace select")
         args = build_workspace_apply_args(
-            path=path,
+            path=resolved_path,
             as_json=bool(as_json),
             with_venv=bool(with_venv),
             entrypoint=entrypoint,
@@ -271,7 +280,7 @@ def register_workspace_commands(
     def init_cmd(workspace, as_json, with_venv):
         """Initialize workspace structure and baseline configuration files."""
         # Les effets de bord (création fichiers/dossiers) sont encapsulés dans workspace_init_emit.
-        workspace_dir = resolve_workspace_path(workspace or ".")
+        workspace_dir = require_workspace_path(workspace, "init")
         workspace_init_emit(workspace_dir, as_json=as_json, with_venv=with_venv)
 
     @cli.command("config-auto")
@@ -282,7 +291,7 @@ def register_workspace_commands(
         """Auto-configure workspace entrypoint and dependency settings."""
         # Support d'override explicite via --entrypoint pour bypasser l'auto-détection.
         workspace_config_auto_emit(
-            resolve_workspace_path(workspace or "."),
+            require_workspace_path(workspace, "config-auto"),
             entrypoint=entrypoint,
             as_json=as_json,
         )
@@ -294,7 +303,7 @@ def register_workspace_commands(
     def cfg_auto_cmd(workspace, entrypoint, as_json):
         """Short alias for config-auto."""
         workspace_config_auto_emit(
-            resolve_workspace_path(workspace or "."),
+            require_workspace_path(workspace, "cfg-auto"),
             entrypoint=entrypoint,
             as_json=as_json,
         )
@@ -312,7 +321,7 @@ def register_workspace_commands(
     def ws_init_cmd(workspace, as_json, with_venv):
         """Initialize workspace using the short ws namespace."""
         # Alias strict de `init` pour garder une UX type "git-like".
-        workspace_dir = resolve_workspace_path(workspace or ".")
+        workspace_dir = require_workspace_path(workspace, "ws init")
         workspace_init_emit(workspace_dir, as_json=as_json, with_venv=with_venv)
 
     @ws.command("config-auto")
@@ -322,7 +331,7 @@ def register_workspace_commands(
     def ws_config_auto_cmd(workspace, entrypoint, as_json):
         """Auto-configure workspace using the short ws namespace."""
         workspace_config_auto_emit(
-            resolve_workspace_path(workspace or "."),
+            require_workspace_path(workspace, "ws config-auto"),
             entrypoint=entrypoint,
             as_json=as_json,
         )
@@ -334,7 +343,7 @@ def register_workspace_commands(
     def ws_entrypoint_set_cmd(workspace, entrypoint, as_json):
         """Set workspace entrypoint through the short ws namespace."""
         payload = workspace_entrypoint_set_payload(
-            resolve_workspace_path(workspace or "."),
+            require_workspace_path(workspace, "ws entrypoint-set"),
             entrypoint,
         )
         if as_json:
@@ -358,7 +367,7 @@ def register_workspace_commands(
     def ws_entrypoint_clear_cmd(workspace, as_json):
         """Clear workspace entrypoint through the short ws namespace."""
         payload = workspace_entrypoint_clear_payload(
-            resolve_workspace_path(workspace or ".")
+            require_workspace_path(workspace, "ws entrypoint-clear")
         )
         if as_json:
             if not payload.get("ok"):
@@ -417,8 +426,9 @@ def register_workspace_commands(
         require_entrypoint,
     ):
         """Apply workspace workflow using the short ws namespace."""
+        resolved_path = require_workspace_path(workspace, "ws apply")
         args = build_workspace_apply_args(
-            path=workspace,
+            path=resolved_path,
             as_json=bool(as_json),
             with_venv=bool(with_venv),
             entrypoint=entrypoint,
@@ -473,8 +483,9 @@ def register_workspace_commands(
         require_entrypoint,
     ):
         """Select/apply workspace using the short ws namespace."""
+        resolved_path = require_workspace_path(workspace, "ws select")
         args = build_workspace_apply_args(
-            path=workspace,
+            path=resolved_path,
             as_json=bool(as_json),
             with_venv=bool(with_venv),
             entrypoint=entrypoint,

@@ -142,6 +142,16 @@ def _resolve_workspace_path(workspace: str | None) -> str | None:
     return normalize_path(workspace)
 
 
+def _require_workspace_path(workspace: str | None, command_hint: str) -> str:
+    """Resolve a mandatory workspace path or raise a usage error."""
+    resolved = _resolve_workspace_path(workspace)
+    if resolved:
+        return resolved
+    raise click.ClickException(
+        f"Workspace is required. Usage: pycompiler_ark {command_hint} <workspace>"
+    )
+
+
 def _workspace_init_emit(workspace_dir: str, as_json: bool, with_venv: bool) -> None:
     """Run init workflow and emit output according to CLI output mode."""
     # Mode JSON destiné à l'automatisation (CI, scripts, wrappers).
@@ -337,14 +347,23 @@ def build_cli(app_version: str):
         )
 
     @cli.command("prog-engine")
-    @click.argument("engine_id")
+    @click.argument("engine_or_workspace", required=False, type=str)
     @click.argument("workspace", required=False, type=click.Path(exists=False))
-    def prog_engine_cmd(engine_id, workspace):
-        """Launch dedicated single-engine config GUI with live JSON editor."""
+    def prog_engine_cmd(engine_or_workspace, workspace):
+        """Launch prog-engine GUI (single engine, or all engines when id is omitted)."""
+        engine_id = None
+        workspace_value = workspace
+        if workspace_value:
+            engine_id = engine_or_workspace
+        else:
+            workspace_value = engine_or_workspace
+
         sys.exit(
             launch_prog_engine_gui(
                 engine_id=engine_id,
-                workspace_dir=_ensure_workspace_exists(_resolve_workspace_path(workspace)),
+                workspace_dir=_ensure_workspace_exists(
+                    _require_workspace_path(workspace_value, "prog-engine")
+                ),
             )
         )
 
@@ -656,7 +675,9 @@ def build_cli(app_version: str):
     @click.option("--json", "as_json", is_flag=True)
     def venv_status(workspace, as_json):
         """Show current workspace Python mode and venv preference."""
-        payload = venv_status_payload(_resolve_workspace_path(workspace or "."))
+        payload = venv_status_payload(
+            _require_workspace_path(workspace, "venv status")
+        )
         if as_json:
             if not payload.get("ok"):
                 _emit_and_exit(payload, EXIT_WORKSPACE_INVALID, as_json=True)
@@ -676,7 +697,9 @@ def build_cli(app_version: str):
     @click.option("--json", "as_json", is_flag=True)
     def venv_use_system(workspace, as_json):
         """Switch workspace Python mode to system interpreter."""
-        payload = venv_use_system_payload(_resolve_workspace_path(workspace or "."))
+        payload = venv_use_system_payload(
+            _require_workspace_path(workspace, "venv use-system")
+        )
         if as_json:
             if not payload.get("ok"):
                 _emit_and_exit(payload, EXIT_WORKSPACE_INVALID, as_json=True)
@@ -698,7 +721,7 @@ def build_cli(app_version: str):
     def venv_use_venv(workspace, venv_path, create, as_json):
         """Switch workspace Python mode to venv and persist preference."""
         payload = venv_use_venv_payload(
-            _resolve_workspace_path(workspace or "."),
+            _require_workspace_path(workspace, "venv use-venv"),
             venv_path=venv_path,
             create_if_missing=bool(create),
         )
@@ -719,7 +742,7 @@ def build_cli(app_version: str):
     def venv_install_req(workspace, force_pip, as_json):
         """Install workspace requirements using current Python mode."""
         payload = venv_install_requirements_payload(
-            _resolve_workspace_path(workspace or "."),
+            _require_workspace_path(workspace, "venv install-req"),
             force_pip=bool(force_pip),
         )
         if as_json:
@@ -741,6 +764,7 @@ def build_cli(app_version: str):
         cli=cli,
         click=click,
         resolve_workspace_path=_resolve_workspace_path,
+        require_workspace_path=_require_workspace_path,
         emit_and_exit=_emit_and_exit,
         echo_payload=_echo_payload,
         workspace_init_emit=_workspace_init_emit,
