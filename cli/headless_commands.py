@@ -59,6 +59,17 @@ def extract_option_value(args: list[str], option: str) -> tuple[str | None, list
     return value, clean
 
 
+def require_workspace_arg(args: list[str], command_hint: str) -> str | None:
+    """Return explicit workspace from args or emit usage error and return None."""
+    workspace = normalize_path(
+        first_positional([token for token in args if not token.startswith("-")])
+    )
+    if workspace:
+        return workspace
+    error(f"Workspace is required. Usage: {command_hint} <workspace>")
+    return None
+
+
 def run_check(args: list[str]) -> int:
     """Execute the strict CI/CD check command in headless mode."""
     # On garde les mêmes valeurs par défaut que la commande click `check`.
@@ -91,12 +102,9 @@ def run_init(args: list[str]) -> int:
     # Le rendu texte suit le format partagé pour limiter les divergences d'UX.
     as_json = "--json" in args
     with_venv = "--with-venv" in args
-    workspace = (
-        normalize_path(
-            first_positional([token for token in args if not token.startswith("-")])
-        )
-        or "."
-    )
+    workspace = require_workspace_arg(args, "init")
+    if not workspace:
+        return EXIT_USAGE_ERROR
     # L'initialisation unifie création dossier/config/bcasl/pref (et venv optionnel).
     payload = workspace_init_payload(workspace, with_venv=with_venv)
     if as_json:
@@ -121,14 +129,9 @@ def run_config_auto(args: list[str]) -> int:
     except ValueError as exc:
         error(str(exc))
         return EXIT_USAGE_ERROR
-    workspace = (
-        normalize_path(
-            first_positional(
-                [token for token in clean_args if not token.startswith("-")]
-            )
-        )
-        or "."
-    )
+    workspace = require_workspace_arg(clean_args, "config-auto")
+    if not workspace:
+        return EXIT_USAGE_ERROR
     # Détection auto de l'entrypoint + mise à jour config workspace.
     payload = workspace_config_auto_payload(workspace, entrypoint=entrypoint)
     if as_json:
@@ -165,14 +168,9 @@ def run_workspace_apply(args: list[str]) -> int:
         error(str(exc))
         return EXIT_USAGE_ERROR
 
-    workspace = (
-        normalize_path(
-            first_positional(
-                [token for token in clean_args if not token.startswith("-")]
-            )
-        )
-        or "."
-    )
+    workspace = require_workspace_arg(clean_args, "workspace apply")
+    if not workspace:
+        return EXIT_USAGE_ERROR
 
     payload = workspace_apply_payload(
         workspace,
