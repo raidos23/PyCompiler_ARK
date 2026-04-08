@@ -1,63 +1,64 @@
-## IDE-like Main GUI (`gui main --ide`)
+# IDE-like Main GUI (`gui main --ide`)
 
-PyCompiler ARK can launch an alternative main interface layout inspired by IDE tools.
-The preferred entrypoint is the grouped CLI form `gui main --ide`.
+This page documents the IDE-like variant of the ARK main GUI.
 
-Use:
+## Launch
+
+Preferred command:
 
 ```bash
 python pycompiler_ark.py gui main --ide
-# or
-python -m pycompiler_ark gui main --ide
 ```
 
-From the dedicated CLI:
+Equivalent forms:
+
+```bash
+python -m pycompiler_ark gui main --ide
+python -m pycompiler_ark --ide-gui
+```
+
+From dedicated CLI:
 
 ```text
 ark-cli> main --ide-gui
 ```
 
-Legacy compatibility alias:
+## What This Mode Changes
 
-```bash
-python -m pycompiler_ark --ide-gui
-```
+- Loads the IDE-like UI layout (`ui/ui_ide_design2.ui`).
+- Keeps the same Core workflow as classic GUI:
+  - workspace selection
+  - compile/cancel flow
+  - engine and plugin integration
+  - entrypoint handling
+- Adds IDE-oriented affordances (activity area, overflow menu, dependencies quick access).
 
-## What It Changes
+## What This Mode Does Not Change
 
-- Loads `ui/ui_ide_design2.ui` as the main window layout.
-- Keeps existing Core logic (workspace, compilation, cancellation, etc.).
-- Reuses the classic shared signal wiring and policies instead of duplicating them.
-- Uses a wiring layer only (no duplicated business logic) through:
-  - `Core/IdeLikeGui/__init__.py`
-  - `Core/IdeLikeGui/connections.py`
-- Keeps IDE-specific affordances:
-  - `...` activity-bar menu
-  - dependencies activity button
-- Tunes the loaded layout at runtime to reduce label compression in the header, center panel, and logs area.
+- No separate business logic is introduced for compilation.
+- No dedicated engine/runtime pipeline is introduced.
+- CLI and CI/CD behavior remains unchanged.
 
-## Runtime Switch
+## Architecture Notes
 
-The launcher sets:
+IDE-like mode is a wiring layer on top of existing Core behavior:
+
+- `Core/IdeLikeGui/__init__.py`
+- `Core/IdeLikeGui/connections.py`
+- `Core/Gui.py` (variant switch + fallback)
+
+Runtime variant switch:
 
 ```text
 PYCOMPILER_UI_VARIANT=ide2
 ```
 
-`Core/Gui.py` then selects `init_ide_like_ui()` and falls back to `init_ui()` if needed.
+If IDE-like UI cannot be loaded, ARK falls back to the classic GUI.
 
-## Current Scope
+## Maintenance Rule
 
-The IDE-like wiring reuses the classic shared signal connector, then adds its
-own IDE-specific actions on top.
+When GUI behavior changes:
 
-In practice, the IDE-like GUI inherits the classic main workflow instead of
-exposing only a small subset of actions.
-
-Notable points:
-
-- classic shared signal wiring is reused
-- IDE-specific actions are connected afterward
-- the entrypoint selector is initialized in IDE mode as well
-
-For parity details and remaining checks, review the IDE/classic behavior in the current GUI implementation and tests.
+1. Keep parity with classic mode for shared features.
+2. Update this document if launch commands, scope, or fallback behavior changes.
+3. Keep CI/CD guidance in `docs/ci_cd_ark_cli.md` as source of truth for pipeline behavior.
