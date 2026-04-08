@@ -77,6 +77,7 @@ Release-oriented checks should follow the CLI examples in this guide and the REA
 - If you change CLI flags, commands, or docs-linked behavior, update the README.
 - If you change the command hierarchy (`gui`, `engine`, `workspace`, `init`, `config-auto`, `check`, `scaffold`) or JSON outputs, update the CLI docs.
 - Keep CI-facing exit codes stable, or document the change explicitly in the README.
+- For CI/CD behavior, keep [`docs/ci_cd_ark_cli.md`](./ci_cd_ark_cli.md) as the single source of truth and align other docs/examples to it.
 - If you change IDE/classic behavior, update the IDE docs when appropriate.
 
 ## Documentation expectations

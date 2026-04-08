@@ -2,6 +2,12 @@
 
 This page provides a practical and reproducible CI/CD flow using `pycompiler_ark`.
 
+## CI/CD Source Of Truth
+
+Use this document as the single source of truth for ARK CI/CD behavior and examples.
+When pipeline behavior changes (flags, exit codes, fail-fast rules, JSON contracts),
+update this page first and keep other references aligned to it.
+
 ## Goal
 
 Automate the following steps for a workspace:
