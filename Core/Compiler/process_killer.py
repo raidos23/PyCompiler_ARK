@@ -16,15 +16,15 @@
 """
 Process Killer Module
 
-Module de gestion et terminaison des processus pour PyCompiler ARK.
-Fournit des outils pour tuer proprement les processus de compilation
-et leurs processus enfants.
+Process termination and cleanup module for PyCompiler ARK.
+Provides utilities to stop compilation processes and their child processes
+reliably across supported platforms.
 
-Fournit:
-- Classe ProcessKiller pour tuer les processus
-- kill_process() fonction utilitaire
-- kill_process_tree() pour tuer un processus et ses enfants
-- get_child_pids() pour lister les processus enfants
+Provides:
+- `ProcessKiller` class for process termination
+- `kill_process()` utility function
+- `kill_process_tree()` utility for parent + child termination
+- `get_child_pids()` utility for child process discovery
 """
 
 from __future__ import annotations
@@ -45,17 +45,17 @@ _IS_MACOS = sys.platform == "darwin"
 
 
 class ProcessInfo:
-    """Informations sur un processus."""
+    """Information about a process."""
 
     def __init__(self, pid: int, name: str, command: str):
         """
-        Initialise les infos du processus.
+    Initialize process information.
 
-        Args:
-            pid: ID du processus
-            name: Nom du processus
-            command: Commande complète
-        """
+    Args:
+      pid: Process ID.
+      name: Process name.
+      command: Full command line.
+    """
         self.pid = pid
         self.name = name
         self.command = command
@@ -63,7 +63,7 @@ class ProcessInfo:
         self.children: List[int] = []
 
     def to_dict(self) -> Dict[str, Any]:
-        """Retourne un dictionnaire avec les infos."""
+        """Return a dictionary containing process information."""
         return {
             "pid": self.pid,
             "name": self.name,
@@ -75,14 +75,14 @@ class ProcessInfo:
 
 class ProcessKiller:
     """
-    Classe pour tuer proprement les processus de compilation.
+  Helper class to terminate compilation processes safely.
 
-    Supporte:
-    - Terminaison simple de processus
-    - Terminaison d'arborescence de processus (parents + enfants)
-    - Différents niveaux de force (graceful, force, kill)
-    - Détection et nettoyage des processus zombies
-    """
+  Supports:
+  - Single process termination
+  - Process tree termination (parent + children)
+  - Multiple termination strengths (graceful, force, kill)
+  - Zombie process cleanup
+  """
 
     # Délais de terminaison en secondes
     TERMINATE_TIMEOUT = 5.0  # Temps pour terminate()
@@ -90,27 +90,27 @@ class ProcessKiller:
 
     def __init__(self, timeout: Optional[float] = None):
         """
-        Initialise le killer de processus.
+    Initialize the process killer helper.
 
-        Args:
-            timeout: Timeout global pour la terminaison (optionnel)
-        """
+    Args:
+      timeout: Optional global termination timeout.
+    """
         self.timeout = timeout or (self.TERMINATE_TIMEOUT + self.KILL_TIMEOUT)
 
     def kill(
         self, pid: int, force: bool = False, recursive: bool = False
     ) -> Dict[str, Any]:
         """
-        Tue un processus.
+    Kill one process.
 
-        Args:
-            pid: ID du processus à tuer
-            force: Utiliser kill() directement au lieu de terminate()
-            recursive: Tuer aussi les processus enfants
+    Args:
+      pid: ID du process à tuer
+      force: Utiliser kill() directement au lieu de terminate()
+      recursive: Killr aussi les process enfants
 
-        Returns:
-            Dictionnaire avec le résultat
-        """
+    Returns:
+      Dictionnaire avec le résultat
+    """
         result = {
             "success": False,
             "pid": pid,
@@ -166,15 +166,15 @@ class ProcessKiller:
         self, pid: int, include_parent: bool = True
     ) -> Dict[str, Any]:
         """
-        Tue un processus et tous ses enfants.
+    Kill one process and all its children.
 
-        Args:
-            pid: ID du processus parent
-            include_parent: Inclure le processus parent dans la terminaison
+    Args:
+      pid: ID du process parent
+      include_parent: Inclure le process parent dans la terminaison
 
-        Returns:
-            Dictionnaire avec le résultat
-        """
+    Returns:
+      Dictionnaire avec le résultat
+    """
         result = {
             "success": False,
             "parent_pid": pid,
@@ -215,15 +215,15 @@ class ProcessKiller:
         self, process_name: str, exclude_pids: Optional[List[int]] = None
     ) -> Dict[str, Any]:
         """
-        Tue tous les processus avec un nom donné.
+    Kill all processes matching a given name.
 
-        Args:
-            process_name: Nom du processus à tuer
-            exclude_pids: Liste de PID à exclure
+    Args:
+      process_name: Nom du process à tuer
+      exclude_pids: Liste de PID à exclure
 
-        Returns:
-            Dictionnaire avec le résultat
-        """
+    Returns:
+      Dictionnaire avec le résultat
+    """
         result = {
             "success": False,
             "process_name": process_name,
@@ -255,14 +255,14 @@ class ProcessKiller:
 
     def get_child_pids(self, pid: int) -> List[int]:
         """
-        Retourne la liste des PID enfants d'un processus.
+    Return child PIDs for a parent process.
 
-        Args:
-            pid: ID du processus parent
+    Args:
+      pid: Parent process ID.
 
-        Returns:
-            Liste des PID enfants
-        """
+    Returns:
+      List of child process IDs.
+    """
         children = []
 
         if _IS_WINDOWS:
@@ -312,14 +312,14 @@ class ProcessKiller:
 
     def find_pids_by_name(self, process_name: str) -> List[int]:
         """
-        Trouve tous les PID correspondant à un nom de processus.
+    Find all PIDs matching a process name.
 
-        Args:
-            process_name: Nom du processus
+    Args:
+      process_name: Nom du process
 
-        Returns:
-            Liste des PID trouvés
-        """
+    Returns:
+      Liste des PID trouvés
+    """
         pids = []
 
         if _IS_WINDOWS:
@@ -368,7 +368,7 @@ class ProcessKiller:
         return pids
 
     def _get_all_pids(self) -> List[int]:
-        """Retourne tous les PID du système."""
+        """Return all system process IDs."""
         pids = []
         proc_path = Path("/proc")
 
@@ -382,7 +382,7 @@ class ProcessKiller:
         return pids
 
     def _get_process_cmdline(self, pid: int) -> Optional[str]:
-        """Retourne la ligne de commande d'un processus."""
+        """Return command line for a process."""
         try:
             cmdline_file = Path(f"/proc/{pid}/cmdline")
             if cmdline_file.exists():
@@ -392,7 +392,7 @@ class ProcessKiller:
         return None
 
     def _is_process_alive(self, pid: int) -> bool:
-        """Vérifie si un processus est toujours en vie."""
+        """Check whether a process is still alive."""
         if _IS_WINDOWS:
             try:
                 result = subprocess.run(
@@ -417,7 +417,7 @@ class ProcessKiller:
                 return False
 
     def _terminate_signal(self, pid: int) -> None:
-        """Envoie le signal de terminaison (SIGTERM ou équivalent)."""
+        """Send termination signal (SIGTERM or equivalent)."""
         if _IS_WINDOWS:
             # Sur Windows, utiliser os.terminate()
             os.terminate()
@@ -425,7 +425,7 @@ class ProcessKiller:
             os.kill(pid, signal.SIGTERM)
 
     def _kill_signal(self, pid: int) -> None:
-        """Envoie le signal de terminaison forcée (SIGKILL ou équivalent)."""
+        """Send forced termination signal (SIGKILL or equivalent)."""
         if _IS_WINDOWS:
             # Sur Windows, pas de SIGKILL équivalent direct
             os.kill(pid, signal.SIGTERM)
@@ -433,7 +433,7 @@ class ProcessKiller:
             os.kill(pid, signal.SIGKILL)
 
     def _wait_for_termination(self, pid: int, timeout: float) -> bool:
-        """Attend la terminaison d'un processus."""
+        """Wait for process termination."""
         start_time = time.time()
 
         while time.time() - start_time < timeout:
@@ -448,45 +448,45 @@ def kill_process(
     pid: int, force: bool = False, recursive: bool = False
 ) -> Dict[str, Any]:
     """
-    Tue un processus (fonction utilitaire).
+  Kill one process (utility function).
 
-    Args:
-        pid: ID du processus
-        force: Utiliser kill() directement
-        recursive: Tuer aussi les enfants
+  Args:
+    pid: ID du process
+    force: Utiliser kill() directement
+    recursive: Killr aussi les enfants
 
-    Returns:
-        Dictionnaire avec le résultat
-    """
+  Returns:
+    Dictionnaire avec le résultat
+  """
     killer = ProcessKiller()
     return killer.kill(pid, force, recursive)
 
 
 def kill_process_tree(pid: int, include_parent: bool = True) -> Dict[str, Any]:
     """
-    Tue un processus et tous ses enfants (fonction utilitaire).
+  Kill one process and all its children (utility function).
 
-    Args:
-        pid: ID du processus parent
-        include_parent: Inclure le parent
+  Args:
+    pid: ID du process parent
+    include_parent: Inclure le parent
 
-    Returns:
-        Dictionnaire avec le résultat
-    """
+  Returns:
+    Dictionnaire avec le résultat
+  """
     killer = ProcessKiller()
     return killer.kill_process_tree(pid, include_parent)
 
 
 def get_process_info(pid: int) -> Optional[ProcessInfo]:
     """
-    Retourne les informations sur un processus.
+  Return information for one process.
 
-    Args:
-        pid: ID du processus
+  Args:
+    pid: ID du process
 
-    Returns:
-        ProcessInfo ou None si non trouvé
-    """
+  Returns:
+    ProcessInfo ou None si non trouvé
+  """
     try:
         if _IS_WINDOWS:
             result = subprocess.run(

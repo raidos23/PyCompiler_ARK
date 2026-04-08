@@ -16,15 +16,14 @@
 """
 Main Process Module
 
-Module de processus principal pour PyCompiler ARK.
-Coordonne la compilation, la gestion des workspaces et l'interaction
-avec les moteurs de compilation.
+Main process module for PyCompiler ARK.
+Coordinates compilation, workspace lifecycle, and engine interactions.
 
-Fournit:
-- Classe MainProcess pour orchestrer la compilation
-- Gestion du workspace
-- Communication avec l'interface utilisateur
-- Intégration ArkConfigManager pour les exclusions de fichiers
+Provides:
+- `MainProcess` class for compilation orchestration
+- Workspace management
+- User interface communication
+- ArkConfigManager integration for file exclusion rules
 """
 
 from __future__ import annotations
@@ -57,7 +56,7 @@ from Core.ArkConfigManager import (
 
 
 class ProcessState(Enum):
-    """États possibles du processus principal."""
+    """Possible states of the main process."""
 
     IDLE = "idle"
     INITIALIZING = "initializing"
@@ -68,7 +67,7 @@ class ProcessState(Enum):
 
 
 class MainProcessSignals(QObject):
-    """Signaux pour la communication avec l'interface utilisateur."""
+    """Signals used to communicate with the user interface."""
 
     state_changed = Signal(ProcessState)
     log_message = Signal(str, str)  # niveau, message
@@ -80,16 +79,16 @@ class MainProcessSignals(QObject):
 
 class MainProcess(QObject):
     """
-    Classe principale de processus pour la compilation.
+  Main process class used to orchestrate compilation.
 
-    Coordonne l'ensemble du processus de compilation:
-    - Initialisation du workspace
-    - Sélection et configuration du moteur
-    - Exécution de la compilation
-    - Gestion des erreurs et annulation
+  Coordinates the full compilation flow:
+  - Workspace initialization
+  - Engine selection and configuration
+  - Compilation execution
+  - Error handling and cancellation
 
-    Utilise CompilerCore pour l'exécution réelle.
-    """
+  Uses `CompilerCore` for the underlying execution.
+  """
 
     # Signaux
     state_changed = Signal(ProcessState)
@@ -106,12 +105,12 @@ class MainProcess(QObject):
         self, workspace_dir: Optional[str] = None, parent: Optional[QObject] = None
     ):
         """
-        Initialise le processus principal.
+    Initialize the main process.
 
-        Args:
-            workspace_dir: Chemin du workspace (optionnel)
-            parent: Widget parent (optionnel)
-        """
+    Args:
+      workspace_dir: Optional workspace path.
+      parent: Optional parent object.
+    """
         super().__init__(parent)
 
         # État interne
@@ -131,7 +130,7 @@ class MainProcess(QObject):
         self._set_state(ProcessState.READY)
 
     def _connect_signals(self) -> None:
-        """Connecte les signaux du compilateur aux signaux du processus."""
+        """Connect compiler signals to process-level signals."""
         # Signaux du compilateur vers le processus
         self.compiler.output_ready.connect(self.output_ready.emit)
         self.compiler.error_ready.connect(self.error_ready.emit)
@@ -141,55 +140,55 @@ class MainProcess(QObject):
         self.compiler.log_message.connect(self.log_message.emit)
 
     def _set_state(self, state: ProcessState) -> None:
-        """Change l'état du processus."""
+        """Update process state."""
         self._state = state
         self.state_changed.emit(state)
 
     @property
     def state(self) -> ProcessState:
-        """Retourne l'état actuel du processus."""
+        """Return current process state."""
         return self._state
 
     @property
     def workspace_dir(self) -> Optional[str]:
-        """Retourne le chemin du workspace."""
+        """Return workspace path."""
         return self._workspace_dir
 
     @property
     def current_file(self) -> Optional[str]:
-        """Retourne le fichier en cours de compilation."""
+        """Return the file currently being compiled."""
         return self._current_file
 
     @property
     def current_engine(self) -> Optional[str]:
-        """Retourne le moteur de compilation actuel."""
+        """Return the current compilation engine."""
         return self._current_engine
 
     @property
     def is_ready(self) -> bool:
-        """Retourne True si le processus est prêt."""
+        """Return True when the process is ready."""
         return self._state in (ProcessState.READY, ProcessState.IDLE)
 
     @property
     def is_compiling(self) -> bool:
-        """Retourne True si une compilation est en cours."""
+        """Return True when a compilation is currently running."""
         return self._state == ProcessState.COMPILING
 
     @property
     def is_idle(self) -> bool:
-        """Retourne True si le processus est inactif."""
+        """Return True when the process is idle."""
         return self._state == ProcessState.IDLE
 
     def set_workspace(self, workspace_dir: str) -> bool:
         """
-        Définit le workspace de travail.
+    Set workspace directory.
 
-        Args:
-            workspace_dir: Chemin du workspace
+    Args:
+      workspace_dir: Path du workspace
 
-        Returns:
-            True si le workspace a été défini, False sinon
-        """
+    Returns:
+      True si le workspace a été défini, False sinon
+    """
         if not workspace_dir or not os.path.isdir(workspace_dir):
             self.log_message.emit(
                 "error", f"Invalid workspace directory: {workspace_dir}"
@@ -208,14 +207,14 @@ class MainProcess(QObject):
 
     def set_file(self, file_path: str) -> bool:
         """
-        Définit le fichier à compiler.
+    Set file to compile.
 
-        Args:
-            file_path: Chemin du fichier Python
+    Args:
+      file_path: Path du file Python
 
-        Returns:
-            True si le fichier a été défini, False sinon
-        """
+    Returns:
+      True si le file a été défini, False sinon
+    """
         if not file_path or not os.path.isfile(file_path):
             self.log_message.emit("error", f"File not found: {file_path}")
             return False
@@ -227,11 +226,11 @@ class MainProcess(QObject):
 
     def set_engine(self, engine_id: str) -> None:
         """
-        Définit le moteur de compilation à utiliser.
+    Set compilation engine to use.
 
-        Args:
-            engine_id: Identifiant du moteur
-        """
+    Args:
+      engine_id: Identifiant du moteur
+    """
         self._current_engine = engine_id
         self.log_message.emit("info", f"Engine selected: {engine_id}")
         self.engine_ready.emit(engine_id)
@@ -246,19 +245,19 @@ class MainProcess(QObject):
         workspace_dir: Optional[str] = None,
     ) -> bool:
         """
-        Démarre une compilation.
+    Start a compilation.
 
-        Args:
-            program: Programme à exécuter
-            args: Arguments de compilation
-            env: Variables d'environnement (optionnel)
-            engine_id: Identifiant du moteur (optionnel)
-            file_path: Chemin du fichier (optionnel)
-            workspace_dir: Répertoire de travail (optionnel)
+    Args:
+      program: Programme à exécuter
+      args: Arguments de compilation
+      env: Variables d'environnement (optionnel)
+      engine_id: Identifiant du moteur (optionnel)
+      file_path: Path du file (optionnel)
+      workspace_dir: Répertoire de travail (optionnel)
 
-        Returns:
-            True si la compilation a démarré, False sinon
-        """
+    Returns:
+      True si la compilation a démarré, False sinon
+    """
         if self.is_compiling:
             self.log_message.emit("warning", "Compilation already in progress")
             return False
@@ -315,11 +314,11 @@ class MainProcess(QObject):
 
     def cancel(self) -> bool:
         """
-        Annule la compilation en cours.
+    Cancel current compilation.
 
-        Returns:
-            True si l'annulation a été demandée, False sinon
-        """
+    Returns:
+      True si l'annulation a été demandée, False sinon
+    """
         if not self.is_compiling:
             return False
 
@@ -334,22 +333,22 @@ class MainProcess(QObject):
         workspace_dir: Optional[str] = None,
     ) -> str:
         """
-        Simule une compilation sans l'exécuter.
+    Simulate compilation without execution.
 
-        Args:
-            program: Programme à exécuter
-            args: Arguments
-            env: Variables d'environnement (optionnel)
-            workspace_dir: Répertoire de travail (optionnel)
+    Args:
+      program: Programme à exécuter
+      args: Arguments
+      env: Variables d'environnement (optionnel)
+      workspace_dir: Répertoire de travail (optionnel)
 
-        Returns:
-            Description de la commande à exécuter
-        """
+    Returns:
+      Description de la commande à exécuter
+    """
         working_dir = workspace_dir or self._workspace_dir
         return self.compiler.dry_run(program, args, env, working_dir)
 
     def _on_compilation_finished(self, return_code: int) -> None:
-        """Appelé lorsque la compilation est terminée."""
+        """Called when compilation is finished."""
         compile_info = {
             "engine": self._current_engine,
             "file": self._current_file,
@@ -367,7 +366,7 @@ class MainProcess(QObject):
             self._set_state(ProcessState.ERROR)
 
     def _on_status_changed(self, status: CompilationStatus) -> None:
-        """Appelé lorsque le statut du compilateur change."""
+        """Called when compiler status changes."""
         # Traduire le statut du compilateur vers l'état du processus
         if status == CompilationStatus.RUNNING:
             self._set_state(ProcessState.COMPILING)
@@ -382,11 +381,11 @@ class MainProcess(QObject):
 
     def get_compilation_info(self) -> Dict[str, Any]:
         """
-        Retourne les informations de compilation actuelles.
+    Return current compilation information.
 
-        Returns:
-            Dictionnaire avec les infos de compilation
-        """
+    Returns:
+      Dictionnaire avec les infos de compilation
+    """
         return {
             "engine": self._current_engine,
             "file": self._current_file,
@@ -397,7 +396,7 @@ class MainProcess(QObject):
         }
 
     def reset(self) -> None:
-        """Réinitialise le processus pour une nouvelle compilation."""
+        """Reset process state for a new compilation."""
         self._current_file = None
         self._current_engine = None
         self._set_state(ProcessState.READY)
@@ -409,11 +408,11 @@ class MainProcess(QObject):
 
     def get_exclusion_patterns(self) -> List[str]:
         """
-        Retourne les patterns d'exclusion configurés.
+    Return configured exclusion patterns.
 
-        Returns:
-            Liste des patterns d'exclusion
-        """
+    Returns:
+      Liste des patterns d'exclusion
+    """
         if self._workspace_dir:
             try:
                 config = load_ark_config(self._workspace_dir)
@@ -424,14 +423,14 @@ class MainProcess(QObject):
 
     def should_exclude(self, file_path: str) -> bool:
         """
-        Détermine si un fichier doit être exclu de la compilation.
+    Determine whether a file must be excluded from compilation.
 
-        Args:
-            file_path: Chemin absolu du fichier à vérifier
+    Args:
+      file_path: Path absolu du file à vérifier
 
-        Returns:
-            True si le fichier doit être exclu, False sinon
-        """
+    Returns:
+      True si le file doit être exclu, False sinon
+    """
         if not self._workspace_dir:
             return False
         patterns = self.get_exclusion_patterns()
@@ -455,18 +454,18 @@ def build_command(
     use_shell: bool = False,
 ) -> Tuple[str, Dict[str, str]]:
     """
-    Construit une commande de compilation complète.
+  Build a complete compilation command.
 
-    Args:
-        program: Programme principal (python, pyinstaller, etc.)
-        args: Arguments de la commande
-        working_dir: Répertoire de travail
-        env: Variables d'environnement supplémentaires
-        use_shell: Utiliser shell pour l'exécution
+  Args:
+    program: Programme principal (python, pyinstaller, etc.)
+    args: Arguments de la commande
+    working_dir: Répertoire de travail
+    env: Variables d'environnement supplémentaires
+    use_shell: Utiliser shell pour l'exécution
 
-    Returns:
-        Tuple (commande str, environnement dict)
-    """
+  Returns:
+    Tuple (commande str, environnement dict)
+  """
     # Construire la commande
     if args:
         cmd_parts = [program] + args
@@ -494,16 +493,16 @@ def validate_command(
     program: str, args: Optional[List[str]] = None, working_dir: Optional[str] = None
 ) -> Tuple[bool, str]:
     """
-    Valide une commande de compilation.
+  Validate a compilation command.
 
-    Args:
-        program: Programme principal
-        args: Arguments
-        working_dir: Répertoire de travail
+  Args:
+    program: Programme principal
+    args: Arguments
+    working_dir: Répertoire de travail
 
-    Returns:
-        Tuple (est_valide, message_erreur)
-    """
+  Returns:
+    Tuple (est_valide, message_erreur)
+  """
     # Vérifier le programme
     if not program:
         return False, "No program specified"
@@ -554,14 +553,14 @@ def validate_command(
 
 def escape_arguments(args: List[str]) -> List[str]:
     """
-    Échappe les arguments pour une utilisation sécurisée.
+  Escape arguments for secure usage.
 
-    Args:
-        args: Liste d'arguments
+  Args:
+    args: Liste d'arguments
 
-    Returns:
-        Liste d'arguments échappés
-    """
+  Returns:
+    Liste d'arguments échappés
+  """
     escaped = []
     for arg in args:
         # Échapper les caractères spéciaux
@@ -571,14 +570,14 @@ def escape_arguments(args: List[str]) -> List[str]:
 
 def sanitize_path(path: str) -> str:
     """
-    Sanitize un chemin pour éviter les injections.
+  Sanitize a path to avoid injections.
 
-    Args:
-        path: Chemin à sanitizer
+  Args:
+    path: Path à sanitizer
 
-    Returns:
-        Chemin sanitisé
-    """
+  Returns:
+    Path sanitisé
+  """
     # Supprimer les caractères dangereux
     dangerous_chars = [
         ";",
@@ -615,22 +614,22 @@ def sanitize_path(path: str) -> str:
 
 class CommandBuilder:
     """
-    Classe pour construire des commandes de compilation complexes.
+  Class to build advanced compilation commands.
 
-    Supporte:
-    - Arguments positionnels et nommés
-    - Options conditionnelles
-    - Validation progressive
-    - Génération de documentation
-    """
+  Supports:
+  - Positional and named arguments
+  - Conditional flags/options
+  - Progressive validation
+  - Command documentation output
+  """
 
     def __init__(self, program: str):
         """
-        Initialise le builder avec un programme.
+    Initialize builder with a target program.
 
-        Args:
-            program: Programme principal
-        """
+    Args:
+      program: Main executable/program.
+    """
         self.program = program
         self.args: List[str] = []
         self.env: Dict[str, str] = {}
@@ -640,14 +639,14 @@ class CommandBuilder:
 
     def add_arg(self, arg: str) -> "CommandBuilder":
         """
-        Ajoute un argument simple.
+    Add a simple argument.
 
-        Args:
-            arg: Argument à ajouter
+    Args:
+      arg: Argument to append.
 
-        Returns:
-            self pour chainage
-        """
+    Returns:
+      `self` for fluent chaining.
+    """
         sanitized = (
             sanitize_path(arg) if any(c in arg for c in [" ", "(", ")", "&"]) else arg
         )
@@ -656,15 +655,15 @@ class CommandBuilder:
 
     def add_option(self, option: str, value: Any) -> "CommandBuilder":
         """
-        Ajoute une option avec valeur.
+    Add an option with value.
 
-        Args:
-            option: Nom de l'option (avec ou sans --)
-            value: Valeur de l'option
+    Args:
+      option: Option name (with or without `--`).
+      value: Option value.
 
-        Returns:
-            self pour chainage
-        """
+    Returns:
+      `self` for fluent chaining.
+    """
         if not option.startswith("--"):
             option = "--" + option
         self.args.append(option)
@@ -673,15 +672,15 @@ class CommandBuilder:
 
     def add_flag(self, flag: str, condition: bool = True) -> "CommandBuilder":
         """
-        Ajoute un flag conditionnel.
+    Add a conditional flag.
 
-        Args:
-            flag: Nom du flag (avec ou sans --)
-            condition: Condition pour ajouter le flag
+    Args:
+      flag: Flag name (with or without `--`).
+      condition: Condition used to include the flag.
 
-        Returns:
-            self pour chainage
-        """
+    Returns:
+      `self` for fluent chaining.
+    """
         if condition:
             if not flag.startswith("--"):
                 flag = "--" + flag
@@ -690,15 +689,15 @@ class CommandBuilder:
 
     def add_file_option(self, option: str, file_path: str) -> "CommandBuilder":
         """
-        Ajoute une option de fichier avec validation.
+    Add a file option with path validation.
 
-        Args:
-            option: Nom de l'option
-            file_path: Chemin du fichier
+    Args:
+      option: Option name.
+      file_path: File path.
 
-        Returns:
-            self pour chainage
-        """
+    Returns:
+      `self` for fluent chaining.
+    """
         sanitized = sanitize_path(file_path)
         if os.path.exists(sanitized):
             self.add_option(option, sanitized)
@@ -706,15 +705,15 @@ class CommandBuilder:
 
     def add_directory_option(self, option: str, dir_path: str) -> "CommandBuilder":
         """
-        Ajoute une option de répertoire avec validation.
+    Add a directory option with path validation.
 
-        Args:
-            option: Nom de l'option
-            dir_path: Chemin du répertoire
+    Args:
+      option: Option name.
+      dir_path: Directory path.
 
-        Returns:
-            self pour chainage
-        """
+    Returns:
+      `self` for fluent chaining.
+    """
         sanitized = sanitize_path(dir_path)
         if os.path.isdir(sanitized):
             self.add_option(option, sanitized)
@@ -722,28 +721,28 @@ class CommandBuilder:
 
     def set_env(self, key: str, value: str) -> "CommandBuilder":
         """
-        Définit une variable d'environnement.
+    Set an environment variable override.
 
-        Args:
-            key: Nom de la variable
-            value: Valeur
+    Args:
+      key: Variable name.
+      value: Variable value.
 
-        Returns:
-            self pour chainage
-        """
+    Returns:
+      `self` for fluent chaining.
+    """
         self.env[key] = str(value)
         return self
 
     def set_working_dir(self, path: str) -> "CommandBuilder":
         """
-        Définit le répertoire de travail.
+    Set le directory de travail.
 
-        Args:
-            path: Chemin du répertoire
+    Args:
+      path: Path du directory
 
-        Returns:
-            self pour chainage
-        """
+    Returns:
+      self pour chainage
+    """
         sanitized = sanitize_path(path)
         if os.path.isdir(sanitized):
             self.working_dir = sanitized
@@ -751,26 +750,26 @@ class CommandBuilder:
 
     def add_multiple(self, option: str, values: List[str]) -> "CommandBuilder":
         """
-        Ajoute plusieurs valeurs pour une même option.
+    Add multiple values for the same option.
 
-        Args:
-            option: Nom de l'option
-            values: Liste de valeurs
+    Args:
+      option: Nom de l'option
+      values: Liste de valeurs
 
-        Returns:
-            self pour chainage
-        """
+    Returns:
+      self pour chainage
+    """
         for value in values:
             self.add_option(option, value)
         return self
 
     def build(self) -> Tuple[str, Dict[str, str], Optional[str]]:
         """
-        Construit la commande finale.
+    Build la commande finale.
 
-        Returns:
-            Tuple (commande str, environnement, répertoire de travail)
-        """
+    Returns:
+      Tuple (commande str, environnement, directory de travail)
+    """
         full_env = os.environ.copy()
         full_env.update(self.env)
         full_env.setdefault("PYTHONUNBUFFERED", "1")
@@ -782,11 +781,11 @@ class CommandBuilder:
 
     def build_for_execution(self) -> Tuple[List[str], Dict[str, str], Optional[str]]:
         """
-        Construit la commande pour exécution directe.
+    Build command for direct execution.
 
-        Returns:
-            Tuple (commande list, environnement, répertoire de travail)
-        """
+    Returns:
+      Tuple (commande list, environnement, directory de travail)
+    """
         full_env = os.environ.copy()
         full_env.update(self.env)
         full_env.setdefault("PYTHONUNBUFFERED", "1")
@@ -795,11 +794,11 @@ class CommandBuilder:
 
     def get_summary(self) -> Dict[str, Any]:
         """
-        Retourne un résumé de la commande.
+    Return un summary de la commande.
 
-        Returns:
-            Dictionnaire avec le résumé
-        """
+    Returns:
+      Dictionnaire avec le summary
+    """
         return {
             "program": self.program,
             "args": self.args,
@@ -810,11 +809,11 @@ class CommandBuilder:
 
     def copy(self) -> "CommandBuilder":
         """
-        Crée une copie du builder.
+    Create a copy of the builder.
 
-        Returns:
-            Nouvelle instance avec les mêmes paramètres
-        """
+    Returns:
+      Nouvelle instance avec les mêmes paramètres
+    """
         builder = CommandBuilder(self.program)
         builder.args = self.args.copy()
         builder.env = self.env.copy()
@@ -824,25 +823,25 @@ class CommandBuilder:
 
 def detect_python_executable() -> str:
     """
-    Détecte l'exécutable Python à utiliser.
+  Detect Python executable to use.
 
-    Returns:
-        Chemin de l'exécutable Python
-    """
+  Returns:
+    Path de l'executable Python
+  """
     # Utiliser le Python courant
     return sys.executable
 
 
 def get_interpreter_version(python_path: Optional[str] = None) -> Tuple[int, int, int]:
     """
-    Retourne la version de l'interpréteur Python.
+  Return Python interpreter version.
 
-    Args:
-        python_path: Chemin de l'interpréteur (défaut: sys.executable)
+  Args:
+    python_path: Path de l'interpréteur (défaut: sys.executable)
 
-    Returns:
-        Tuple (major, minor, patch)
-    """
+  Returns:
+    Tuple (major, minor, patch)
+  """
     if python_path is None:
         python_path = sys.executable
 
@@ -862,15 +861,15 @@ def get_interpreter_version(python_path: Optional[str] = None) -> Tuple[int, int
 
 def check_module_available(module_name: str, python_path: Optional[str] = None) -> bool:
     """
-    Vérifie si un module Python est disponible.
+  Check whether a Python module is available.
 
-    Args:
-        module_name: Nom du module
-        python_path: Chemin de l'interpréteur
+  Args:
+    module_name: Nom du module
+    python_path: Path de l'interpréteur
 
-    Returns:
-        True si le module est disponible
-    """
+  Returns:
+    True si le module est disponible
+  """
     try:
         if python_path:
             result = subprocess.run(

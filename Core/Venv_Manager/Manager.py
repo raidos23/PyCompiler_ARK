@@ -18,17 +18,17 @@ from ..i18n import log_i18n_level, log_with_level
 
 class VenvManager:
     """
-    Encapsulates all virtual environment (venv) related operations for the GUI.
+  Encapsulates all virtual environment (venv) related operations for the GUI.
 
-    Responsibilities:
-    - Manual venv selection (updates parent UI label and internal path)
-    - Create venv if missing
-    - Check/install tools in an existing venv
-    - Install project requirements.txt
-    - Report/terminate active background tasks related to venv operations
+  Responsibilities:
+  - Manual venv selection (updates parent UI label and internal path)
+  - Create venv if missing
+  - Check/install tools in an existing venv
+  - Install project requirements.txt
+  - Report/terminate active background tasks related to venv operations
 
-    The class uses the parent QWidget to own QProcess instances and for logging/UI.
-    """
+  The class uses the parent QWidget to own QProcess instances and for logging/UI.
+  """
 
     def __init__(self, parent_widget):
         """Initialize instance state and runtime dependencies."""
@@ -383,9 +383,9 @@ class VenvManager:
     def resolve_existing_venv(self, workspace_dir: str | None = None) -> str | None:
         """Resolve an existing venv path (manual/local/manager).
 
-        Returns only if a real, existing environment is found.
-        Does not return a default path when no venv exists.
-        """
+    Returns only if a real, existing environment is found.
+    Does not return a default path when no venv exists.
+    """
         try:
             if getattr(self.parent, "use_system_python", False):
                 return None
@@ -444,8 +444,8 @@ class VenvManager:
 
     def resolve_project_venv(self) -> str | None:
         """Resolve the venv root to use based on manual selection or workspace.
-        Prefers an existing .venv over venv; if none exists, returns the default path (.venv).
-        """
+    Prefers an existing .venv over venv; if none exists, returns the default path (.venv).
+    """
         try:
             if getattr(self.parent, "use_system_python", False):
                 return None
@@ -505,8 +505,8 @@ class VenvManager:
 
     def has_tool_binary(self, venv_root: str, tool: str) -> bool:
         """Non-blocking heuristic check: detect console script/binary inside the venv.
-        This avoids spawning subprocesses and keeps UI fully responsive.
-        """
+    This avoids spawning subprocesses and keeps UI fully responsive.
+    """
         try:
             bindir = os.path.join(
                 venv_root, "Scripts" if platform.system() == "Windows" else "bin"
@@ -575,9 +575,9 @@ class VenvManager:
 
     def is_tool_installed(self, venv_root: str, tool: str) -> bool:
         """Non-blocking check for tool presence in venv.
-        Uses has_tool_binary() only (no subprocess run). If uncertain, returns False
-        so that callers can trigger the asynchronous ensure_tools_installed() flow.
-        """
+    Uses has_tool_binary() only (no subprocess run). If uncertain, returns False
+    so that callers can trigger the asynchronous ensure_tools_installed() flow.
+    """
         return self.has_tool_binary(venv_root, tool)
 
     def is_tool_installed_system(self, tool: str) -> bool:
@@ -590,8 +590,8 @@ class VenvManager:
 
     def is_tool_installed_async(self, venv_root: str, tool: str, callback) -> None:
         """Asynchronous check using 'pip show <tool>' via QProcess, then callback(bool).
-        Safe for UI: does not block. On any error, returns False.
-        """
+    Safe for UI: does not block. On any error, returns False.
+    """
         try:
             pip_exe = self.pip_path(venv_root)
             if not pip_exe or not os.path.isfile(pip_exe):
@@ -878,8 +878,8 @@ class VenvManager:
 
     def _prompt_recreate_invalid_venv(self, venv_root: str, reason: str) -> bool:
         """Show an English message box explaining the invalid venv and propose deletion/recreation.
-        Returns True if user accepted to recreate, False otherwise.
-        """
+    Returns True if user accepted to recreate, False otherwise.
+    """
         try:
             title = "Environnement virtuel invalide / Invalid virtual environment"
             folder = os.path.basename(os.path.normpath(venv_root))
@@ -942,15 +942,15 @@ class VenvManager:
             return False
 
     def validate_venv_strict(self, venv_root: str) -> tuple[bool, str]:
-        """Validation stricte d'un venv.
-        Retourne (ok, raison_si_ko).
-        Règles:
-          - Dossier existant
-          - pyvenv.cfg présent
-          - Scripts/python.exe (Windows) ou bin/python[3] (POSIX) présent
-          - include-system-site-packages=false (refus si true)
-          - pyvenv.cfg, dossier Scripts/bin et exécutable Python doivent rester confinés dans le venv (pas de liens sortants)
-        """
+        """Strict validation of a venv.
+    Return (ok, raison_si_ko).
+    Règles:
+     - Dossier existant
+     - pyvenv.cfg présent
+     - Scripts/python.exe (Windows) ou bin/python[3] (POSIX) présent
+     - include-system-site-packages=false (refus si true)
+     - pyvenv.cfg, folder Scripts/bin et executable Python doivent rester confinés dans le venv (pas de liens sortants)
+    """
         try:
             if not venv_root or not os.path.isdir(venv_root):
                 return False, "Chemin invalide (dossier manquant)"
@@ -1607,7 +1607,7 @@ class VenvManager:
         self._safe_log(data)
 
     def verify_venv_binding(self, venv_root: str) -> bool:
-        """Conservation de la version synchrone pour compat interne (éviter blocages ailleurs)."""
+        """Keep synchronous verification path for internal compatibility."""
         try:
             import subprocess
 
@@ -1643,7 +1643,7 @@ class VenvManager:
             return False
 
     def _verify_venv_binding_async(self, venv_root: str, callback):
-        """Vérifie de manière asynchrone que python et pip du venv pointent bien vers ce venv, puis appelle callback(bool)."""
+        """Asynchronously verify that venv Python and pip bind to the same venv."""
         try:
             vpython = self.python_path(venv_root)
             if not os.path.isfile(vpython):
@@ -1758,8 +1758,8 @@ class VenvManager:
 
     def _find_all_venvs_in(self, base: str) -> list[str]:
         """Find all potential venv directories in the base path.
-        Returns a list of valid venv paths, sorted by preference.
-        """
+    Returns a list of valid venv paths, sorted by preference.
+    """
         try:
             base = os.path.abspath(base)
         except Exception:
@@ -1779,15 +1779,15 @@ class VenvManager:
 
     def _score_venv(self, venv_path: str, workspace_dir: str) -> tuple[int, str]:
         """Score a venv based on its completeness and requirements satisfaction.
-        Returns (score, reason) where higher score = better venv.
+    Returns (score, reason) where higher score = better venv.
 
-        Scoring criteria:
-        - Has requirements.txt satisfied: +100
-        - Has required engine python tools: +50 each
-        - Has pip/setuptools/wheel: +30
-        - Is valid venv: +10
-        - Has binding verified: +20
-        """
+    Scoring criteria:
+    - Has requirements.txt satisfied: +100
+    - Has required engine python tools: +50 each
+    - Has pip/setuptools/wheel: +30
+    - Is valid venv: +10
+    - Has binding verified: +20
+    """
         score = 0
         reasons = []
 
@@ -1836,12 +1836,12 @@ class VenvManager:
     def select_best_venv(self, workspace_dir: str) -> str | None:
         """Select the best venv from multiple candidates.
 
-        Strategy:
-        1. Find all valid venvs in workspace
-        2. Score each based on completeness and requirements satisfaction
-        3. Return the highest-scoring venv
-        4. If no valid venv found, return None
-        """
+    Strategy:
+    1. Find all valid venvs in workspace
+    2. Score each based on completeness and requirements satisfaction
+    3. Return the highest-scoring venv
+    4. If no valid venv found, return None
+    """
         try:
             venvs = self._find_all_venvs_in(workspace_dir)
 
@@ -2104,11 +2104,11 @@ class VenvManager:
         self, path: str, workspace_dir: str | None = None
     ) -> list[str]:
         """Find all potential requirements files in the project.
-        Supports: requirements.txt, requirements-*.txt, Pipfile, Pipfile.lock,
-                  pyproject.toml, setup.py, setup.cfg, poetry.lock, etc.
+    Supports: requirements.txt, requirements-*.txt, Pipfile, Pipfile.lock,
+         pyproject.toml, setup.py, setup.cfg, poetry.lock, etc.
 
-        Uses ARK config to determine priority order if available.
-        """
+    Uses ARK config to determine priority order if available.
+    """
         try:
             path = os.path.abspath(path)
         except Exception:
@@ -2187,8 +2187,8 @@ class VenvManager:
 
     def _generate_requirements_from_imports(self, workspace_dir: str) -> str | None:
         """Generate requirements.txt by analyzing Python imports in the project.
-        Returns the path to the generated requirements.txt, or None if failed.
-        """
+    Returns the path to the generated requirements.txt, or None if failed.
+    """
         try:
             import ast
             import re as _re
@@ -2372,13 +2372,13 @@ class VenvManager:
     def _get_requirements_file(self, workspace_dir: str) -> str | None:
         """Get or generate a requirements file for the project.
 
-        Strategy:
-        1. Load ARK config to get requirements file preferences
-        2. Look for existing requirements files (requirements.txt, Pipfile, pyproject.toml, etc.)
-        3. If found, convert to requirements.txt if needed
-        4. If not found, generate from project imports (if enabled in ARK config)
-        5. Return path to requirements.txt
-        """
+    Strategy:
+    1. Load ARK config to get requirements file preferences
+    2. Look for existing requirements files (requirements.txt, Pipfile, pyproject.toml, etc.)
+    3. If found, convert to requirements.txt if needed
+    4. If not found, generate from project imports (if enabled in ARK config)
+    5. Return path to requirements.txt
+    """
         try:
             workspace_dir = os.path.abspath(workspace_dir)
 
@@ -2823,7 +2823,7 @@ class VenvManager:
                 pass
 
     def get_active_task_labels(self, lang: str) -> list[str]:
-        """Return active venv task labels in requested language ('English' or 'Français')."""
+        """Return active venv task labels in requested language ('English' or 'French')."""
         labels_fr = {
             "create": "création du venv",
             "reqs": "installation des dépendances",
@@ -2857,17 +2857,17 @@ class VenvManager:
     def _detect_environment_manager(self, workspace_dir: str) -> str:
         """Detect which environment manager is used in the project.
 
-        Uses ARK configuration to determine priority order if available.
-        Falls back to default priority if not configured.
+    Uses ARK configuration to determine priority order if available.
+    Falls back to default priority if not configured.
 
-        Default priority order:
-        1. Poetry (pyproject.toml with [tool.poetry])
-        2. Pipenv (Pipfile)
-        3. Conda (environment.yml, conda.yml)
-        4. PDM (pyproject.toml with [tool.pdm])
-        5. UV (pyproject.toml with [tool.uv])
-        6. Pip (requirements.txt, setup.py)
-        """
+    Default priority order:
+    1. Poetry (pyproject.toml with [tool.poetry])
+    2. Pipenv (Pipfile)
+    3. Conda (environment.yml, conda.yml)
+    4. PDM (pyproject.toml with [tool.pdm])
+    5. UV (pyproject.toml with [tool.uv])
+    6. Pip (requirements.txt, setup.py)
+    """
         try:
             workspace_dir = os.path.abspath(workspace_dir)
 
@@ -3369,17 +3369,17 @@ class VenvManager:
     def setup_workspace(self, workspace_dir: str, check_tools: bool = True) -> bool:
         """Setup a workspace with venv and dependencies.
 
-        This centralizes the workspace setup logic that was previously
-        scattered in PyCompilerArkGui.apply_workspace_selection().
+    This centralizes the workspace setup logic that was previously
+    scattered in PyCompilerArkGui.apply_workspace_selection().
 
-        Args:
-            workspace_dir: Path to the workspace directory
-            check_tools: Whether to check and install tools required by discovered engines
-                        after venv creation. Defaults to True.
+    Args:
+      workspace_dir: Path to the workspace directory
+      check_tools: Whether to check and install tools required by discovered engines
+            after venv creation. Defaults to True.
 
-        Returns:
-            bool: True if setup successful, False otherwise
-        """
+    Returns:
+      bool: True if setup successful, False otherwise
+    """
         try:
             workspace_dir = os.path.abspath(workspace_dir)
 
