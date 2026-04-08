@@ -18,20 +18,20 @@
 PyCompiler ARK — Cross-platform hardened bootstrap with Intelligent CLI Entry Point
 
 Usage:
-    python -m pycompiler_ark                    # Launch main application
-    python -m pycompiler_ark --help             # Show help
-    python -m pycompiler_ark --version          # Show version
-    python -m pycompiler_ark --cli              # Open dedicated interactive CLI
-    python -m pycompiler_ark --ide-gui          # Launch IDE-like main GUI
-    python -m pycompiler_ark --verbose          # Enable verbose logging
-    python -m pycompiler_ark --no-splash        # Disable splash screen
-    python -m pycompiler_ark bcasl              # Launch BCASL standalone
-    python -m pycompiler_ark bcasl /path/to/ws  # Launch BCASL with workspace
-    python -m pycompiler_ark engines            # Launch Engines standalone GUI
-    python -m pycompiler_ark engines /path/to/ws  # Launch Engines with workspace
-    python -m pycompiler_ark prog-engine nuitka /path/to/ws  # Launch GUI focused on one engine
-    python -m pycompiler_ark engines --dry-run  # List available engines
-    python -m pycompiler_ark unload             # Unload all engines
+  python -m pycompiler_ark          # Launch main application
+  python -m pycompiler_ark --help       # Show help
+  python -m pycompiler_ark --version     # Show version
+  python -m pycompiler_ark --cli       # Open dedicated interactive CLI
+  python -m pycompiler_ark --ide-gui     # Launch IDE-like main GUI
+  python -m pycompiler_ark --verbose     # Enable verbose logging
+  python -m pycompiler_ark --no-splash    # Disable splash screen
+  python -m pycompiler_ark bcasl       # Launch BCASL standalone
+  python -m pycompiler_ark bcasl /path/to/ws # Launch BCASL with workspace
+  python -m pycompiler_ark engines      # Launch Engines standalone GUI
+  python -m pycompiler_ark engines /path/to/ws # Launch Engines with workspace
+  python -m pycompiler_ark prog-engine nuitka /path/to/ws # Launch GUI focused on one engine
+  python -m pycompiler_ark engines --dry-run # List available engines
+  python -m pycompiler_ark unload       # Unload all engines
 """
 
 from __future__ import annotations
@@ -45,6 +45,7 @@ _ONLYMOD_LOG_HISTORY: list[str] = []
 
 def onlymod_log(message: str, gui: Optional[object] = None) -> str:
     """Centralized logging for OnlyMod GUIs."""
+    # Étape 1: garantir une config logging minimale.
     try:
         if not logging.getLogger().handlers:
             logging.basicConfig(
@@ -94,16 +95,19 @@ def onlymod_log(message: str, gui: Optional[object] = None) -> str:
     clean_message = _strip_emoji_prefix(message)
     line = f"[{ts}] {clean_message}" if ts else str(clean_message)
 
+    # Étape 2: historiser la ligne normalisée.
     try:
         _ONLYMOD_LOG_HISTORY.append(line)
     except Exception:
         pass
 
+    # Étape 3: émettre côté logger standard.
     try:
         logger.info("[OnlyMod] %s", clean_message)
     except Exception:
         pass
 
+    # Étape 4: refléter la ligne dans la GUI si elle est valide.
     if gui is not None:
         try:
             log_text = getattr(gui, "log_text", None)

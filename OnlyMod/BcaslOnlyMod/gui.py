@@ -14,17 +14,10 @@
 # limitations under the License.
 
 """
-BcaslOnlyMod GUI - Interface Graphique pour les Plugins BCASL
+BcaslOnlyMod GUI for BCASL plugins.
 
-Interface complète pour exécuter et configurer les plugins BCASL
-indépendamment de l'application principale PyCompiler ARK.
-
-Fournit une interface utilisateur moderne permettant de:
-- Découvrir et lister les plugins BCASL disponibles
-- Activer/désactiver les plugins
-- Réordonner l'exécution des plugins
-- Exécuter les plugins de pré-compilation
-- Afficher les rapports d'exécution
+This module exposes a standalone interface to discover, configure, and run
+BCASL plugins outside of the main PyCompiler ARK application.
 """
 
 from __future__ import annotations
@@ -84,9 +77,9 @@ from Core.allversion import get_core_version, get_bcasl_version
 
 
 def tr(en_text: str, fr_text: str) -> str:
-    """Fonction de traduction simple pour BcaslOnlyMod.
+    """Simple translation helper for BcaslOnlyMod.
 
-    Utilise la variable globale _CURRENT_LANGUAGE pour déterminer la langue.
+    The global `_CURRENT_LANGUAGE` controls the selected language.
     """
     return fr_text if _CURRENT_LANGUAGE == "fr" else en_text
 
@@ -96,7 +89,7 @@ _CURRENT_LANGUAGE = "en"
 
 
 class BcaslExecutionThread(QThread):
-    """Thread pour exécuter les plugins BCASL sans bloquer l'UI."""
+    """Run BCASL plugins in a background thread to keep UI responsive."""
 
     progress = Signal(int, int)  # current, total
     log_message = Signal(str)
@@ -123,7 +116,7 @@ class BcaslExecutionThread(QThread):
         self.venv_path = venv_path
 
     def run(self):
-        """Exécute les plugins BCASL dans un thread séparé."""
+        """Execute BCASL plugins in a dedicated worker thread."""
         try:
             # Log du venv utilisé
             if self.venv_path:
@@ -183,14 +176,9 @@ class BcaslExecutionThread(QThread):
 
 class BcaslStandaloneGui(QMainWindow):
     """
-    Interface graphique principale pour gérer les plugins BCASL.
+    Main standalone window used to manage BCASL plugins.
 
-    Cette classe fournit une interface utilisateur complète pour:
-    - Lister les plugins BCASL disponibles avec leurs métadonnées
-    - Activer/désactiver les plugins individuellement
-    - Réordonner l'exécution des plugins
-    - Exécuter les plugins de pré-compilation
-    - Afficher les rapports d'exécution détaillés
+    It supports plugin discovery, activation, ordering, and execution reports.
     """
 
     def __init__(
@@ -200,12 +188,12 @@ class BcaslStandaloneGui(QMainWindow):
         theme: str = "dark",
     ):
         """
-        Initialise l'interface Bcasl Standalone GUI.
+        Initialize the Bcasl standalone GUI.
 
         Args:
-            workspace_dir: Chemin du workspace (optionnel)
-            language: Code de langue ('en' ou 'fr')
-            theme: Nom du thème ('light' ou 'dark')
+            workspace_dir: Optional workspace path.
+            language: UI language code (`en` or `fr`).
+            theme: Theme name (`light` or `dark`).
         """
         super().__init__()
 
@@ -246,7 +234,7 @@ class BcaslStandaloneGui(QMainWindow):
         self._center_window()
 
     def _load_config(self):
-        """Charge la configuration BCASL du workspace."""
+        """Load BCASL configuration from the current workspace."""
         from bcasl.Loader import _load_workspace_config
 
         self.config: Dict[str, Any] = {}
@@ -274,7 +262,7 @@ class BcaslStandaloneGui(QMainWindow):
             self._log(f"⚠️ Impossible d'initialiser le gestionnaire de venv: {e}")
 
     def _detect_venv(self):
-        """Détecte automatiquement le meilleur venv disponible."""
+        """Auto-detect the best virtual environment for the workspace."""
         if not self.venv_manager or not self.workspace_dir:
             return
 
@@ -289,7 +277,7 @@ class BcaslStandaloneGui(QMainWindow):
             self._log(f"⚠️ Erreur détection venv: {e}")
 
     def _setup_ui(self):
-        """Configure l'interface utilisateur."""
+        """Build and wire the standalone BCASL interface."""
         # Widget central
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
@@ -663,7 +651,7 @@ class BcaslStandaloneGui(QMainWindow):
         main_splitter.setSizes([500, 200])
 
     def _center_window(self):
-        """Centre la fenêtre sur l'écran."""
+        """Center the window on the primary screen."""
         try:
             screen_geometry = QApplication.primaryScreen().geometry()
             x = (screen_geometry.width() - self.width()) // 2
@@ -673,7 +661,7 @@ class BcaslStandaloneGui(QMainWindow):
             pass
 
     def _select_workspace(self):
-        """Ouvre une boîte de dialogue pour sélectionner le workspace."""
+        """Open a dialog to select a workspace directory."""
         current_path = self.workspace_dir or ""
 
         folder = QFileDialog.getExistingDirectory(
@@ -700,7 +688,7 @@ class BcaslStandaloneGui(QMainWindow):
             self.statusBar.showMessage(tr("Workspace updated", "Workspace mis à jour"))
 
     def _clear_workspace(self):
-        """Efface la sélection du workspace."""
+        """Clear workspace selection and refresh plugin data."""
         self.workspace_dir = None
         self.workspace_path_edit.clear()
         self.workspace_path_edit.setPlaceholderText(
@@ -716,7 +704,7 @@ class BcaslStandaloneGui(QMainWindow):
         self.statusBar.showMessage(tr("Workspace cleared", "Workspace effacé"))
 
     def _select_venv(self):
-        """Ouvre une boîte de dialogue pour sélectionner le venv."""
+        """Open a dialog to select a virtual environment folder."""
         if not self.venv_manager:
             QMessageBox.warning(
                 self,
@@ -772,7 +760,7 @@ class BcaslStandaloneGui(QMainWindow):
                 )
 
     def _autodetect_venv(self):
-        """Auto-détecte le meilleur venv disponible."""
+        """Run explicit virtual environment auto-detection."""
         if not self.venv_manager:
             QMessageBox.warning(
                 self,
@@ -838,7 +826,7 @@ class BcaslStandaloneGui(QMainWindow):
             )
 
     def _clear_venv(self):
-        """Efface la sélection du venv."""
+        """Clear the currently selected virtual environment."""
         self.venv_path = None
         self.venv_path_edit.clear()
         self.venv_path_edit.setPlaceholderText(
@@ -860,16 +848,13 @@ class BcaslStandaloneGui(QMainWindow):
         )
 
     def _is_valid(self, widget) -> bool:
-        """Vérifie si un widget Qt est toujours valide.
-
-        Contrairement à hasattr(), cette méthode vérifie si l'objet C++
-        sous-jacent n'a pas été détruit.
+        """Return whether a Qt widget still has a valid underlying C++ object.
 
         Args:
-            widget: Le widget Qt à vérifier
+            widget: Qt widget to validate.
 
         Returns:
-            True si le widget est valide, False sinon
+            `True` when widget is valid, otherwise `False`.
         """
         if widget is None:
             return False
@@ -911,7 +896,7 @@ class BcaslStandaloneGui(QMainWindow):
             pass
 
     def _apply_language(self, lang_code: str):
-        """Applique la langue de l'interface."""
+        """Apply interface language and translated labels."""
         global _CURRENT_LANGUAGE
         self.language = lang_code
         _CURRENT_LANGUAGE = lang_code
@@ -925,7 +910,7 @@ class BcaslStandaloneGui(QMainWindow):
                 pass  # Ignorer si le widget a été supprimé
 
     def _discover_plugins(self):
-        """Découvre et affiche les plugins BCASL disponibles."""
+        """Discover available BCASL plugins and refresh the list UI."""
         # Vérifier que les widgets sont initialisés et valides
         if not self._is_valid(self.plugins_list):
             return
@@ -996,7 +981,7 @@ class BcaslStandaloneGui(QMainWindow):
         self._sync_plugin_tabs()
 
     def _add_plugin_item(self, plugin_id: str, meta: Dict[str, Any]):
-        """Ajoute un plugin à la liste."""
+        """Add one plugin row into the list widget."""
         name = meta.get("name", plugin_id)
         version = meta.get("version", "")
         description = meta.get("description", "")
@@ -1247,7 +1232,7 @@ class BcaslStandaloneGui(QMainWindow):
             pass
 
     def _on_global_toggle(self, checked: bool):
-        """Gère l'activation/désactivation globale de BCASL."""
+        """Handle global BCASL enable or disable action."""
         # Vérifier que la liste des plugins est valide
         if not self._is_valid(self.plugins_list):
             return
@@ -1282,7 +1267,7 @@ class BcaslStandaloneGui(QMainWindow):
             pass
 
     def _move_plugin_up(self):
-        """Déplace le plugin sélectionné vers le haut."""
+        """Move selected plugin one row up."""
         # Vérifier que la liste des plugins est valide
         if not self._is_valid(self.plugins_list):
             return
@@ -1299,7 +1284,7 @@ class BcaslStandaloneGui(QMainWindow):
             pass  # Widget supprimé
 
     def _move_plugin_down(self):
-        """Déplace le plugin sélectionné vers le bas."""
+        """Move selected plugin one row down."""
         # Vérifier que la liste des plugins est valide
         if not self._is_valid(self.plugins_list):
             return
@@ -1316,7 +1301,7 @@ class BcaslStandaloneGui(QMainWindow):
             pass  # Widget supprimé
 
     def _get_plugin_order(self) -> List[str]:
-        """Récupère l'ordre actuel des plugins."""
+        """Return current plugin execution order from the list UI."""
         # Vérifier que la liste des plugins est valide
         if not self._is_valid(self.plugins_list):
             return []
@@ -1333,7 +1318,7 @@ class BcaslStandaloneGui(QMainWindow):
         return order
 
     def _get_enabled_plugins(self) -> Dict[str, bool]:
-        """Récupère l'état d'activation des plugins."""
+        """Return enabled state for each plugin in the list UI."""
         # Vérifier que la liste des plugins est valide
         if not self._is_valid(self.plugins_list):
             return {}
@@ -1350,7 +1335,7 @@ class BcaslStandaloneGui(QMainWindow):
         return enabled
 
     def _run_plugins(self):
-        """Exécute les plugins BCASL."""
+        """Run BCASL plugins with current UI configuration."""
         if not self.workspace_dir:
             QMessageBox.warning(
                 self,
@@ -1482,7 +1467,7 @@ class BcaslStandaloneGui(QMainWindow):
         self.execution_thread.start()
 
     def _cancel_execution(self):
-        """Annule l'exécution des plugins."""
+        """Cancel plugin execution when a worker thread is active."""
         if self.execution_thread and self.execution_thread.isRunning():
             self._log(tr("Cancelling execution...", "Annulation de l'exécution..."))
             self.execution_thread.terminate()
@@ -1491,14 +1476,14 @@ class BcaslStandaloneGui(QMainWindow):
         self._on_execution_finished(None, cancelled=True)
 
     def _on_progress(self, current: int, total: int):
-        """Met à jour la progression."""
+        """Update execution progress bar values."""
         self.progress_bar.setRange(0, total)
         self.progress_bar.setValue(current)
 
     def _on_execution_finished(
         self, report: Optional[ExecutionReport], cancelled: bool = False
     ):
-        """Appelé lorsque l'exécution est terminée."""
+        """Finalize UI state once plugin execution is complete."""
         # Réactiver les contrôles
         self.btn_run.setEnabled(True)
         self.btn_cancel.setEnabled(False)
@@ -1550,7 +1535,7 @@ class BcaslStandaloneGui(QMainWindow):
         self._log("=" * 50)
 
     def _on_execution_error(self, error: str):
-        """Gère les erreurs d'exécution."""
+        """Handle plugin execution errors."""
         self._log(f"⚠️ {tr('Error:', 'Erreur :')} {error}")
         self.statusBar.showMessage(tr("Error", "Erreur"))
 
@@ -1565,7 +1550,7 @@ class BcaslStandaloneGui(QMainWindow):
         self.progress_bar.setVisible(False)
 
     def _clear_log(self):
-        """Efface le log."""
+        """Clear the execution log pane."""
         if self._is_valid(self.log_text):
             try:
                 self.log_text.clear()
@@ -1573,7 +1558,7 @@ class BcaslStandaloneGui(QMainWindow):
                 pass  # Ignorer si le widget a été supprimé
 
     def _log(self, message: str):
-        """Ajoute un message au log."""
+        """Append a timestamped line to the execution log."""
         try:
             from pycompiler_ark import onlymod_log
 
@@ -1599,15 +1584,15 @@ def launch_bcasl_gui(
     language: str = "en",
     theme: str = "dark",
 ) -> int:
-    """Lance l'application Bcasl Standalone GUI.
+    """Launch the Bcasl standalone GUI.
 
     Args:
-        workspace_dir: Chemin du workspace (optionnel)
-        language: Code de langue ('en' ou 'fr')
-        theme: Nom du thème ('light' ou 'dark')
+        workspace_dir: Optional workspace path.
+        language: UI language code (`en` or `fr`).
+        theme: Theme name (`light` or `dark`).
 
     Returns:
-        Code de retour de l'application
+        Application exit code.
     """
     app = QApplication(sys.argv)
     app.setApplicationName("PyCompiler ARK BCASL")
