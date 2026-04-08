@@ -46,7 +46,9 @@ from .gui import EnginesStandaloneGui  # Interface graphique
 
 
 def launch_engines_gui(
-    workspace_dir: str = None, language: str = "en", theme: str = "dark"
+    workspace_dir: str = None,
+    language: str = "en",
+    theme: str = "dark",
 ) -> int:
     """Lance l'application Engines Standalone GUI.
 
@@ -63,6 +65,18 @@ def launch_engines_gui(
     return _launch(workspace_dir, language, theme)
 
 
+def launch_prog_engine_gui(
+    engine_id: str,
+    workspace_dir: str = None,
+    language: str = "en",
+    theme: str = "dark",
+) -> int:
+    """Lance la GUI dédiée à un seul moteur avec éditeur de config."""
+    from .gui import launch_prog_engine_gui as _launch
+
+    return _launch(engine_id, workspace_dir, language, theme)
+
+
 def main():
     """Point d'entrée principal du module."""
     from . import __main__ as _main_module
@@ -75,5 +89,6 @@ __all__ = [
     "EnginesStandaloneApp",
     "EnginesStandaloneGui",
     "launch_engines_gui",
+    "launch_prog_engine_gui",
     "main",
 ]

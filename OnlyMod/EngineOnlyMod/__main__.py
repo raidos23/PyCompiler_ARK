@@ -39,7 +39,7 @@ Exemples:
 import argparse
 import sys
 
-from .gui import launch_engines_gui
+from .gui import launch_engines_gui, launch_prog_engine_gui
 
 
 def run_cli(args):
@@ -144,6 +144,11 @@ Exemples:
         help="Engine ID to use for compilation (CLI mode)",
     )
     parser.add_argument(
+        "--prog-engine",
+        metavar="ENGINE_ID",
+        help="Launch GUI focused on one engine tab only",
+    )
+    parser.add_argument(
         "-f",
         "--file",
         help="File to compile (CLI mode)",
@@ -180,6 +185,13 @@ Exemples:
         # Mode CLI
         return run_cli(args)
     else:
+        if args.prog_engine:
+            return launch_prog_engine_gui(
+                engine_id=args.prog_engine,
+                workspace_dir=args.workspace,
+                language=args.language,
+                theme=args.theme,
+            )
         # Mode GUI
         return launch_engines_gui(
             workspace_dir=args.workspace,

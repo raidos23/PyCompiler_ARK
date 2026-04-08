@@ -58,6 +58,7 @@ from PySide6.QtWidgets import (
     QTabWidget,
     QScrollArea,
     QSizePolicy,
+    QPlainTextEdit,
 )
 from PySide6.QtGui import QIcon, QAction, QFont, QPixmap
 
@@ -70,6 +71,27 @@ from EngineLoader.validator import check_engine_compatibility
 from Core.allversion import get_core_version, get_engine_sdk_version
 import EngineLoader as engines_loader
 from Core.process_security import secure_command, hardened_popen_kwargs
+
+try:
+    from Core.AdvancedConfigEditor import _SimpleHighlighter
+except Exception:
+    _SimpleHighlighter = None
+
+
+class _ProgLog:
+    """Minimal log adapter for prog-engine GUI compatibility."""
+
+    def __init__(self):
+        self.messages: list[str] = []
+
+    def append(self, message: str) -> None:
+        self.messages.append(str(message))
+
+    def clear(self) -> None:
+        self.messages.clear()
+
+    def get_value(self) -> str:
+        return "\n".join(self.messages)
 
 
 class CompilationThread(QThread):
@@ -1011,7 +1033,6 @@ class EnginesStandaloneGui(QMainWindow):
         # Nettoyer les onglets existants
         self.compiler_tabs.clear()
         self.engines_info = {}
-
         engine_ids = available_engines()
 
         if not engine_ids:
@@ -1490,6 +1511,370 @@ def launch_engines_gui(
     )
     window.show()
 
+    return app.exec()
+
+
+class ProgEngineConfigGui(QMainWindow):
+    """Dedicated GUI for fast single-engine configuration editing."""
+
+    def __init__(
+        self,
+        engine_id: str,
+        workspace_dir: Optional[str] = None,
+        language: str = "en",
+        theme: str = "dark",
+    ):
+        super().__init__()
+        self.engine_id = str(engine_id or "").strip()
+        self.workspace_dir = (
+            os.path.abspath(str(workspace_dir))
+            if workspace_dir
+            else os.path.abspath(os.getcwd())
+        )
+        self.language = language
+        self.theme = theme
+        self._tr = {}
+        self.venv_path = None
+        self.venv_manager = None
+        self._editor_push_guard = False
+        self._tab_push_guard = False
+        self._pending_editor_apply = False
+        self._pending_tab_sync = False
+        self._engine = None
+        self.log = _ProgLog()
+
+        self.setWindowTitle(f"Prog Engine - {self.engine_id}")
+        self.resize(1320, 820)
+        self.setMinimumSize(1024, 640)
+
+        self._setup_ui()
+        self._apply_theme()
+        self._load_engine_tab()
+        self._load_workspace_config()
+        self._sync_editor_from_tab()
+
+    def tr(self, fr_text: str, en_text: str) -> str:
+        """Simple i18n bridge used by engines."""
+        try:
+            if str(self.language).lower().startswith("fr"):
+                return fr_text
+        except Exception:
+            pass
+        return en_text
+
+    def _setup_ui(self) -> None:
+        central = QWidget(self)
+        self.setCentralWidget(central)
+        root = QVBoxLayout(central)
+        root.setContentsMargins(8, 8, 8, 8)
+        root.setSpacing(8)
+
+        header = QLabel(
+            f"Engine: {self.engine_id} | Workspace: {self.workspace_dir}",
+            self,
+        )
+        header.setObjectName("prog_header")
+        root.addWidget(header)
+
+        split = QSplitter(Qt.Horizontal, self)
+        split.setChildrenCollapsible(False)
+        split.setHandleWidth(6)
+        root.addWidget(split, 1)
+
+        left = QWidget(self)
+        left_layout = QVBoxLayout(left)
+        left_layout.setContentsMargins(0, 0, 0, 0)
+        left_layout.setSpacing(8)
+
+        self.compiler_tabs = QTabWidget(left)
+        self.compiler_tabs.setDocumentMode(False)
+        self.compiler_tabs.setTabsClosable(False)
+        self.compiler_tabs.setMovable(False)
+        left_layout.addWidget(self.compiler_tabs, 1)
+
+        self.save_config_btn = QPushButton("Save Config", left)
+        self.save_config_btn.setMinimumHeight(34)
+        self.save_config_btn.clicked.connect(self._save_current_engine_config)
+        left_layout.addWidget(self.save_config_btn)
+        split.addWidget(left)
+
+        right = QWidget(self)
+        right_layout = QVBoxLayout(right)
+        right_layout.setContentsMargins(0, 0, 0, 0)
+        right_layout.setSpacing(6)
+
+        editor_title = QLabel("Engine Config JSON (real-time sync)", right)
+        editor_title.setObjectName("prog_editor_title")
+        right_layout.addWidget(editor_title)
+
+        self.config_editor = QPlainTextEdit(right)
+        self.config_editor.setObjectName("prog_config_editor")
+        self.config_editor.setLineWrapMode(QPlainTextEdit.LineWrapMode.NoWrap)
+        self.config_editor.textChanged.connect(self._on_editor_text_changed)
+        right_layout.addWidget(self.config_editor, 1)
+
+        self.editor_status = QLabel("Ready", right)
+        self.editor_status.setObjectName("prog_editor_status")
+        right_layout.addWidget(self.editor_status)
+        split.addWidget(right)
+        split.setSizes([760, 560])
+
+        self.statusBar = QStatusBar(self)
+        self.setStatusBar(self.statusBar)
+        self.statusBar.showMessage("Ready")
+
+        if _SimpleHighlighter is not None:
+            try:
+                _SimpleHighlighter(self.config_editor.document(), "json")
+            except Exception:
+                pass
+
+    def _apply_theme(self) -> None:
+        if str(self.theme).lower() == "light":
+            self.setStyleSheet(
+                """
+                QMainWindow, QWidget { background: #f7f7f7; color: #111; }
+                QTabWidget::pane { border: 1px solid #d2d2d2; background: #fff; }
+                QTabBar::tab { background: #efefef; border: 1px solid #d2d2d2; padding: 8px 12px; }
+                QTabBar::tab:selected { background: #ffffff; border-bottom: 2px solid #1e88e5; }
+                QPushButton { background: #1e88e5; color: #fff; border: 0; border-radius: 6px; padding: 8px 12px; font-weight: 700; }
+                QPushButton:hover { background: #1565c0; }
+                QPlainTextEdit { background: #ffffff; color: #111; border: 1px solid #d2d2d2; border-radius: 6px; font-family: Consolas, 'Courier New', monospace; font-size: 12px; }
+                #prog_header { font-weight: 700; color: #333; }
+                #prog_editor_title { font-weight: 700; color: #222; }
+                #prog_editor_status { color: #555; }
+                """
+            )
+            return
+        self.setStyleSheet(
+            """
+            QMainWindow, QWidget { background: #1d1f24; color: #e8e8e8; }
+            QTabWidget::pane { border: 1px solid #363a43; background: #23262d; }
+            QTabBar::tab { background: #2b3038; border: 1px solid #404652; padding: 8px 12px; color: #d9d9d9; }
+            QTabBar::tab:selected { background: #343a45; border-bottom: 2px solid #35a0ff; }
+            QPushButton { background: #1976d2; color: #fff; border: 0; border-radius: 6px; padding: 8px 12px; font-weight: 700; }
+            QPushButton:hover { background: #1565c0; }
+            QPlainTextEdit { background: #121417; color: #e6edf3; border: 1px solid #363a43; border-radius: 6px; font-family: Consolas, 'Courier New', monospace; font-size: 12px; }
+            #prog_header { font-weight: 700; color: #b8d9ff; }
+            #prog_editor_title { font-weight: 700; color: #8ac6ff; }
+            #prog_editor_status { color: #9ca8b5; }
+            """
+        )
+
+    def _load_engine_tab(self) -> None:
+        try:
+            engine = create_engine(self.engine_id)
+            self._engine = engine
+            pair = None
+            try:
+                make_tab = getattr(engine, "create_tab", None)
+                if callable(make_tab):
+                    pair = make_tab(self)
+            except Exception as exc:
+                self._set_editor_status(f"Tab creation failed: {exc}", ok=False)
+
+            if pair and isinstance(pair, tuple) and len(pair) == 2:
+                tab_widget, label = pair
+                self.compiler_tabs.addTab(tab_widget, label)
+            else:
+                fallback_tab = QWidget(self)
+                fb = QVBoxLayout(fallback_tab)
+                fb.addWidget(
+                    QLabel(
+                        f"Engine tab unavailable for '{self.engine_id}'.\n"
+                        "Using config editor only.",
+                        fallback_tab,
+                    )
+                )
+                self.compiler_tabs.addTab(fallback_tab, self.engine_id)
+            self._attach_live_hooks()
+        except Exception as exc:
+            self.compiler_tabs.clear()
+            failure_tab = QWidget(self)
+            fl = QVBoxLayout(failure_tab)
+            fl.addWidget(QLabel(f"Unable to load engine '{self.engine_id}': {exc}"))
+            self.compiler_tabs.addTab(failure_tab, "Error")
+            self._set_editor_status(f"Engine load failed: {exc}", ok=False)
+
+    def _load_workspace_config(self) -> None:
+        try:
+            from Core.EngineConfigManager import (
+                apply_engine_config,
+                load_engine_config,
+            )
+
+            if self._engine is None:
+                return
+            data = load_engine_config(self.workspace_dir, self.engine_id)
+            if data:
+                self._tab_push_guard = True
+                try:
+                    apply_engine_config(self, self._engine, data)
+                finally:
+                    self._tab_push_guard = False
+        except Exception as exc:
+            self._set_editor_status(f"Config load warning: {exc}", ok=False)
+
+    def _attach_live_hooks(self) -> None:
+        from PySide6.QtWidgets import (
+            QCheckBox,
+            QComboBox,
+            QDoubleSpinBox,
+            QLineEdit,
+            QSpinBox,
+            QTextEdit,
+        )
+
+        def _bind() -> None:
+            if self._tab_push_guard:
+                return
+            self._schedule_editor_sync()
+
+        roots = [self.compiler_tabs]
+        for root in roots:
+            for line in root.findChildren(QLineEdit):
+                line.textChanged.connect(_bind)
+            for check in root.findChildren(QCheckBox):
+                check.toggled.connect(_bind)
+            for combo in root.findChildren(QComboBox):
+                combo.currentTextChanged.connect(_bind)
+                combo.currentIndexChanged.connect(lambda *_: _bind())
+            for spin in root.findChildren(QSpinBox):
+                spin.valueChanged.connect(lambda *_: _bind())
+            for dspin in root.findChildren(QDoubleSpinBox):
+                dspin.valueChanged.connect(lambda *_: _bind())
+            for txt in root.findChildren(QTextEdit):
+                txt.textChanged.connect(_bind)
+            for plain in root.findChildren(QPlainTextEdit):
+                plain.textChanged.connect(_bind)
+
+    def _schedule_editor_sync(self) -> None:
+        if self._pending_tab_sync:
+            return
+        self._pending_tab_sync = True
+
+        def _apply():
+            self._pending_tab_sync = False
+            self._sync_editor_from_tab()
+
+        QTimer.singleShot(90, _apply)
+
+    def _sync_editor_from_tab(self) -> None:
+        if self._editor_push_guard or self._tab_push_guard:
+            return
+        if self._engine is None:
+            return
+        try:
+            getter = getattr(self._engine, "get_config", None)
+            if not callable(getter):
+                return
+            cfg = getter(self) or {}
+            if not isinstance(cfg, dict):
+                cfg = {}
+            text = json.dumps(cfg, ensure_ascii=False, indent=2) + "\n"
+            if self.config_editor.toPlainText() == text:
+                self._set_editor_status("Synced from tab", ok=True)
+                return
+            self._tab_push_guard = True
+            try:
+                self.config_editor.setPlainText(text)
+            finally:
+                self._tab_push_guard = False
+            self._set_editor_status("Synced from tab", ok=True)
+        except Exception as exc:
+            self._set_editor_status(f"Sync from tab failed: {exc}", ok=False)
+
+    def _on_editor_text_changed(self) -> None:
+        if self._tab_push_guard:
+            return
+        if self._pending_editor_apply:
+            return
+        self._pending_editor_apply = True
+
+        def _apply():
+            self._pending_editor_apply = False
+            self._apply_editor_to_tab()
+
+        QTimer.singleShot(90, _apply)
+
+    def _apply_editor_to_tab(self) -> None:
+        if self._editor_push_guard or self._tab_push_guard:
+            return
+        if self._engine is None:
+            return
+        raw = self.config_editor.toPlainText()
+        try:
+            data = json.loads(raw) if raw.strip() else {}
+            if not isinstance(data, dict):
+                self._set_editor_status("Config must be a JSON object", ok=False)
+                return
+        except Exception as exc:
+            self._set_editor_status(f"Invalid JSON: {exc}", ok=False)
+            return
+        try:
+            setter = getattr(self._engine, "set_config", None)
+            if callable(setter):
+                self._editor_push_guard = True
+                try:
+                    setter(self, data)
+                finally:
+                    self._editor_push_guard = False
+            self._set_editor_status("Applied to tab", ok=True)
+        except Exception as exc:
+            self._set_editor_status(f"Apply failed: {exc}", ok=False)
+
+    def _set_editor_status(self, message: str, *, ok: bool) -> None:
+        self.editor_status.setText(message)
+        if ok:
+            self.editor_status.setStyleSheet("color: #4caf50;")
+            self.statusBar.showMessage(message)
+        else:
+            self.editor_status.setStyleSheet("color: #f44336;")
+            self.statusBar.showMessage(message)
+
+    def _save_current_engine_config(self) -> None:
+        try:
+            from Core.EngineConfigManager import save_engine_config_for_gui
+
+            self._apply_editor_to_tab()
+            saved = save_engine_config_for_gui(self, self.engine_id)
+            if saved:
+                self._set_editor_status("Config saved", ok=True)
+                QMessageBox.information(
+                    self,
+                    "Config Saved",
+                    f"Configuration saved for engine: {self.engine_id}",
+                )
+            else:
+                self._set_editor_status("Config save failed", ok=False)
+                QMessageBox.warning(
+                    self,
+                    "Save Failed",
+                    f"Unable to save configuration for engine: {self.engine_id}",
+                )
+        except Exception as exc:
+            self._set_editor_status(f"Save failed: {exc}", ok=False)
+            QMessageBox.warning(self, "Save Failed", str(exc))
+
+
+def launch_prog_engine_gui(
+    engine_id: str,
+    workspace_dir: Optional[str] = None,
+    language: str = "en",
+    theme: str = "dark",
+) -> int:
+    """Launch dedicated programmatic engine config GUI."""
+    app = QApplication(sys.argv)
+    app.setApplicationName("PyCompiler ARK Prog Engine")
+    app.setOrganizationName("raidos23")
+
+    window = ProgEngineConfigGui(
+        engine_id=engine_id,
+        workspace_dir=workspace_dir,
+        language=language,
+        theme=theme,
+    )
+    window.show()
     return app.exec()
 
 
