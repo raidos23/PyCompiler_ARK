@@ -55,6 +55,7 @@ For reliable prechecks, point `check --strict` at a workspace that already
 defines an entrypoint in `ARK_Main_Config.yml`.
 
 Release-oriented checks should follow the CLI examples in this guide and the README.
+For publishing steps, follow [`docs/release_process.md`](./release_process.md).
 
 ## Where to make changes
 
@@ -93,6 +94,7 @@ Contributors should update documentation when they modify:
 
 ## Good first doc touchpoints
 
+- [Release process](./release_process.md)
 - [Architecture overview](./architecture.md)
 - [Dependency analyzer](./dependency_analyzer.md)
 - [Dedicated CLI](./dedicated_cli.md)

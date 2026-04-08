@@ -176,6 +176,9 @@ python -m OnlyMod.EngineOnlyMod --engine nuitka -f script.py --dry-run
 
 ## Documentation
 
+- [Changelog](CHANGELOG.md)
+- [Release process](docs/release_process.md)
+- [Release notes v1.0.0](docs/releases/v1.0.0.md)
 - [Architecture overview](docs/architecture.md)
 - [Contributing guide](docs/contributing.md)
 - [CI/CD with ARK CLI](docs/ci_cd_ark_cli.md)
