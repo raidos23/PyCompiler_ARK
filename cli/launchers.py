@@ -111,6 +111,31 @@ def launch_engines_only_standalone(workspace_dir: Optional[str] = None) -> int:
         return 1
 
 
+def launch_prog_engine_standalone(
+    engine_id: str, workspace_dir: Optional[str] = None
+) -> int:
+    try:
+        from OnlyMod.EngineOnlyMod.gui import launch_prog_engine_gui
+
+        if workspace_dir:
+            try:
+                workspace_dir = str(Path(workspace_dir).expanduser())
+            except Exception:
+                pass
+
+        return launch_prog_engine_gui(
+            engine_id=str(engine_id),
+            workspace_dir=workspace_dir,
+        )
+    except ImportError as exc:
+        error(f"Failed to import Prog Engine GUI module: {exc}")
+        warn("Make sure OnlyMod.EngineOnlyMod is properly installed.")
+        return 1
+    except Exception as exc:
+        error(f"Failed to launch Prog Engine GUI: {exc}")
+        return 1
+
+
 def launch_main_application(
     no_splash: bool = False, ide_gui: bool = False, classic_gui: bool = False
 ) -> int:

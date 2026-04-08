@@ -50,6 +50,7 @@ from .lazy_ops import (
     launch_bcasl_gui,
     launch_engines_gui,
     launch_main_gui,
+    launch_prog_engine_gui,
     unload_all_engines,
 )
 from .output import error, info, plain, success, warn
@@ -280,6 +281,7 @@ def build_cli(app_version: str):
             plain("\nCommand Groups:")
             plain("  gui         Launch graphical interfaces")
             plain("  engine      Inspect and run engines headlessly")
+            plain("  prog-engine Launch Engines GUI focused on one engine")
             plain("  bcasl       BCASL plugin actions")
             plain("  workspace   Inspect workspace state")
             plain("  doctor      Global diagnostics")
@@ -331,6 +333,18 @@ def build_cli(app_version: str):
         sys.exit(
             launch_engines_gui(
                 _ensure_workspace_exists(_resolve_workspace_path(workspace))
+            )
+        )
+
+    @cli.command("prog-engine")
+    @click.argument("engine_id")
+    @click.argument("workspace", required=False, type=click.Path(exists=False))
+    def prog_engine_cmd(engine_id, workspace):
+        """Launch dedicated single-engine config GUI with live JSON editor."""
+        sys.exit(
+            launch_prog_engine_gui(
+                engine_id=engine_id,
+                workspace_dir=_ensure_workspace_exists(_resolve_workspace_path(workspace)),
             )
         )
 
