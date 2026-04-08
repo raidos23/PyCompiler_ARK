@@ -199,6 +199,56 @@ def _run_bcasl_before_compile(self, on_done) -> None:
                 pass
 
 
+def _bcasl_report_allows_compile(self, report) -> bool:
+    """Return True when BCASL pre-compile report allows compilation to continue."""
+    # Sécurité fail-fast: si BCASL plante/échoue, on bloque la compilation.
+    try:
+        if report is None:
+            log_i18n_level(
+                self,
+                "error",
+                "BCASL a échoué ou n'a pas retourné de rapport. Compilation bloquée.",
+                "BCASL failed or returned no report. Compilation blocked.",
+            )
+            return False
+
+        if isinstance(report, dict):
+            status = str(report.get("status", "")).strip().lower()
+            if status in {"disabled", "skipped"}:
+                return True
+            if "ok" in report:
+                ok = bool(report.get("ok"))
+                if not ok:
+                    log_i18n_level(
+                        self,
+                        "error",
+                        "BCASL a signalé un échec. Compilation bloquée.",
+                        "BCASL reported a failure. Compilation blocked.",
+                    )
+                return ok
+            return True
+
+        if hasattr(report, "ok"):
+            ok = bool(getattr(report, "ok"))
+            if not ok:
+                log_i18n_level(
+                    self,
+                    "error",
+                    "BCASL a signalé des erreurs plugins. Compilation bloquée.",
+                    "BCASL reported plugin errors. Compilation blocked.",
+                )
+            return ok
+    except Exception:
+        log_i18n_level(
+            self,
+            "error",
+            "Erreur lors de la validation du rapport BCASL. Compilation bloquée.",
+            "Error while validating BCASL report. Compilation blocked.",
+        )
+        return False
+    return True
+
+
 def compile_all(self) -> None:
     """
     Slot connected to the compile button.
@@ -399,6 +449,9 @@ def compile_all(self) -> None:
                 "Compilation annulée avant le démarrage (phase BCASL).",
                 "Compilation cancelled before start (BCASL phase).",
             )
+            return
+        if not _bcasl_report_allows_compile(self, _report):
+            self.set_controls_enabled(True)
             return
         try:
             log_i18n_level(
@@ -798,6 +851,10 @@ def start_compilation_process(self, engine_id: str, file_path: str) -> bool:
                 "Compilation annulée avant le démarrage (phase BCASL).",
                 "Compilation cancelled before start (BCASL phase).",
             )
+            result["value"] = False
+            return
+        if not _bcasl_report_allows_compile(self, _report):
+            self.set_controls_enabled(True)
             result["value"] = False
             return
         ok = False
