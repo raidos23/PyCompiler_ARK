@@ -296,17 +296,24 @@ class BcaslStandaloneGui(QMainWindow):
 
         # Layout principal
         main_layout = QVBoxLayout(central_widget)
-        main_layout.setSpacing(3)
-        main_layout.setContentsMargins(6, 6, 6, 6)
+        main_layout.setSpacing(10)
+        main_layout.setContentsMargins(10, 10, 10, 10)
 
         # === En-tête ===
-        header_layout = QHBoxLayout()
+        header_card = QWidget()
+        header_card.setObjectName("header_card")
+        header_layout = QVBoxLayout(header_card)
+        header_layout.setSpacing(8)
+        header_layout.setContentsMargins(12, 10, 12, 10)
+
+        header_top = QHBoxLayout()
+        header_top.setSpacing(8)
 
         title_label = QLabel(tr("BCASL Plugins", "Plugins BCASL"))
-        title_label.setStyleSheet("font-size: 22px; font-weight: bold; color: #4da6ff;")
-        header_layout.addWidget(title_label)
+        title_label.setObjectName("header_title")
+        header_top.addWidget(title_label)
 
-        header_layout.addStretch()
+        header_top.addStretch()
 
         # === Section Workspace ===
         workspace_layout = QHBoxLayout()
@@ -314,77 +321,41 @@ class BcaslStandaloneGui(QMainWindow):
 
         # Label workspace
         workspace_label = QLabel(tr("Workspace:", "Workspace :"))
-        workspace_label.setStyleSheet("font-weight: bold; font-size: 12px;")
+        workspace_label.setObjectName("subtle_label")
         workspace_layout.addWidget(workspace_label)
 
-        # Champ de显示 du chemin du workspace
+        # Champ d'affichage du chemin du workspace
         self.workspace_path_edit = QLineEdit()
+        self.workspace_path_edit.setObjectName("path_input")
         self.workspace_path_edit.setPlaceholderText(
             tr("Select a workspace folder...", "Sélectionner un dossier workspace...")
         )
         self.workspace_path_edit.setReadOnly(True)
-        self.workspace_path_edit.setMinimumWidth(250)
-        self.workspace_path_edit.setMaximumWidth(400)
-        self.workspace_path_edit.setStyleSheet("""
-            QLineEdit {
-                background-color: #2d2d2d;
-                color: #ffffff;
-                border: 1px solid #404040;
-                border-radius: 4px;
-                padding: 4px 8px;
-                font-size: 11px;
-            }
-        """)
+        self.workspace_path_edit.setMinimumWidth(280)
         # Afficher le workspace actuel si défini
         if self.workspace_dir:
             self.workspace_path_edit.setText(str(Path(self.workspace_dir).resolve()))
-        workspace_layout.addWidget(self.workspace_path_edit)
+        workspace_layout.addWidget(self.workspace_path_edit, 1)
 
         # Bouton sélectionner workspace
         self.btn_select_workspace = QPushButton("📁")
+        self.btn_select_workspace.setObjectName("tool_button")
         self.btn_select_workspace.setMinimumSize(32, 28)
         self.btn_select_workspace.setToolTip(
             tr("Select workspace folder", "Sélectionner le dossier workspace")
         )
-        self.btn_select_workspace.setStyleSheet("""
-            QPushButton {
-                background-color: #404040;
-                color: white;
-                border-radius: 4px;
-                padding: 4px 8px;
-                font-size: 14px;
-            }
-            QPushButton:hover {
-                background-color: #4da6ff;
-            }
-        """)
         self.btn_select_workspace.clicked.connect(self._select_workspace)
         workspace_layout.addWidget(self.btn_select_workspace)
 
         # Bouton clear workspace
         self.btn_clear_workspace = QPushButton("✕")
+        self.btn_clear_workspace.setObjectName("tool_button")
         self.btn_clear_workspace.setMinimumSize(32, 28)
         self.btn_clear_workspace.setToolTip(
             tr("Clear workspace", "Effacer le workspace")
         )
-        self.btn_clear_workspace.setStyleSheet("""
-            QPushButton {
-                background-color: #404040;
-                color: white;
-                border-radius: 4px;
-                padding: 4px 8px;
-                font-size: 12px;
-            }
-            QPushButton:hover {
-                background-color: #f44336;
-            }
-        """)
         self.btn_clear_workspace.clicked.connect(self._clear_workspace)
         workspace_layout.addWidget(self.btn_clear_workspace)
-
-        header_layout.addLayout(workspace_layout)
-
-        header_layout.addSpacing(20)
 
         # === Section Venv ===
         venv_layout = QHBoxLayout()
@@ -392,11 +363,12 @@ class BcaslStandaloneGui(QMainWindow):
 
         # Label venv
         venv_label = QLabel(tr("Venv:", "Venv :"))
-        venv_label.setStyleSheet("font-weight: bold; font-size: 12px;")
+        venv_label.setObjectName("subtle_label")
         venv_layout.addWidget(venv_label)
 
         # Champ d'affichage du chemin du venv
         self.venv_path_edit = QLineEdit()
+        self.venv_path_edit.setObjectName("path_input")
         self.venv_path_edit.setPlaceholderText(
             tr(
                 "Select a virtual environment...",
@@ -404,86 +376,38 @@ class BcaslStandaloneGui(QMainWindow):
             )
         )
         self.venv_path_edit.setReadOnly(True)
-        self.venv_path_edit.setMinimumWidth(200)
-        self.venv_path_edit.setMaximumWidth(300)
-        self.venv_path_edit.setStyleSheet("""
-            QLineEdit {
-                background-color: #2d2d2d;
-                color: #ffffff;
-                border: 1px solid #404040;
-                border-radius: 4px;
-                padding: 4px 8px;
-                font-size: 11px;
-            }
-        """)
-        venv_layout.addWidget(self.venv_path_edit)
+        self.venv_path_edit.setMinimumWidth(220)
+        venv_layout.addWidget(self.venv_path_edit, 1)
 
         # Bouton sélectionner venv
         self.btn_select_venv = QPushButton("📁")
+        self.btn_select_venv.setObjectName("tool_button")
         self.btn_select_venv.setMinimumSize(32, 28)
         self.btn_select_venv.setToolTip(
             tr("Select virtual environment folder", "Sélectionner le dossier venv")
         )
-        self.btn_select_venv.setStyleSheet("""
-            QPushButton {
-                background-color: #404040;
-                color: white;
-                border-radius: 4px;
-                padding: 4px 8px;
-                font-size: 14px;
-            }
-            QPushButton:hover {
-                background-color: #4da6ff;
-            }
-        """)
         self.btn_select_venv.clicked.connect(self._select_venv)
         venv_layout.addWidget(self.btn_select_venv)
 
         # Bouton auto-détecter venv
         self.btn_autodetect_venv = QPushButton("🔍")
+        self.btn_autodetect_venv.setObjectName("tool_button")
         self.btn_autodetect_venv.setMinimumSize(32, 28)
         self.btn_autodetect_venv.setToolTip(
             tr("Auto-detect best virtual environment", "Auto-détecter le meilleur venv")
         )
-        self.btn_autodetect_venv.setStyleSheet("""
-            QPushButton {
-                background-color: #404040;
-                color: white;
-                border-radius: 4px;
-                padding: 4px 8px;
-                font-size: 14px;
-            }
-            QPushButton:hover {
-                background-color: #4caf50;
-            }
-        """)
         self.btn_autodetect_venv.clicked.connect(self._autodetect_venv)
         venv_layout.addWidget(self.btn_autodetect_venv)
 
         # Bouton clear venv
         self.btn_clear_venv = QPushButton("✕")
+        self.btn_clear_venv.setObjectName("tool_button")
         self.btn_clear_venv.setMinimumSize(32, 28)
         self.btn_clear_venv.setToolTip(
             tr("Clear venv selection", "Effacer la sélection venv")
         )
-        self.btn_clear_venv.setStyleSheet("""
-            QPushButton {
-                background-color: #404040;
-                color: white;
-                border-radius: 4px;
-                padding: 4px 8px;
-                font-size: 12px;
-            }
-            QPushButton:hover {
-                background-color: #f44336;
-            }
-        """)
         self.btn_clear_venv.clicked.connect(self._clear_venv)
         venv_layout.addWidget(self.btn_clear_venv)
-
-        header_layout.addLayout(venv_layout)
-
-        header_layout.addSpacing(20)
 
         # Version info
         version_text = tr(
@@ -491,16 +415,19 @@ class BcaslStandaloneGui(QMainWindow):
             f"Core: {get_core_version()} | BCASL: {get_bcasl_version()}",
         )
         version_label = QLabel(version_text)
-        version_label.setStyleSheet("color: #888; font-size: 11px;")
-        header_layout.addWidget(version_label)
+        version_label.setObjectName("header_meta")
+        header_top.addWidget(version_label)
 
-        main_layout.addLayout(header_layout)
+        header_layout.addLayout(header_top)
+        header_layout.addLayout(workspace_layout)
+        header_layout.addLayout(venv_layout)
+        main_layout.addWidget(header_card)
 
         # === Séparateur ===
         separator = QFrame()
         separator.setFrameShape(QFrame.HLine)
         separator.setFrameShadow(QFrame.Sunken)
-        separator.setStyleSheet("background-color: #404040; max-height: 2px;")
+        separator.setObjectName("header_separator")
         main_layout.addWidget(separator)
 
         # === Splitter principal ===
@@ -561,6 +488,14 @@ class BcaslStandaloneGui(QMainWindow):
         )
         plugins_layout = QVBoxLayout()
         plugins_layout.setSpacing(3)
+
+        self.plugins_filter_input = QLineEdit()
+        self.plugins_filter_input.setPlaceholderText(
+            tr("Filter plugins...", "Filtrer les plugins...")
+        )
+        self.plugins_filter_input.setMinimumHeight(30)
+        self.plugins_filter_input.textChanged.connect(self._filter_plugins_list)
+        plugins_layout.addWidget(self.plugins_filter_input)
 
         # Liste des plugins
         self.plugins_list = QListWidget()
@@ -657,45 +592,15 @@ class BcaslStandaloneGui(QMainWindow):
         actions_layout.setSpacing(8)
 
         self.btn_run = QPushButton(tr("▶ Run Plugins", "▶ Exécuter les Plugins"))
+        self.btn_run.setObjectName("compile_btn")
         self.btn_run.setMinimumHeight(32)
-        self.btn_run.setStyleSheet("""
-            QPushButton {
-                background-color: #4caf50;
-                color: white;
-                font-size: 14px;
-                font-weight: bold;
-                border-radius: 6px;
-                padding: 8px 16px;
-            }
-            QPushButton:hover {
-                background-color: #45a049;
-            }
-            QPushButton:disabled {
-                background-color: #666;
-            }
-        """)
         self.btn_run.clicked.connect(self._run_plugins)
         actions_layout.addWidget(self.btn_run)
 
         self.btn_cancel = QPushButton(tr("Cancel", "Annuler"))
+        self.btn_cancel.setObjectName("cancel_btn")
         self.btn_cancel.setMinimumHeight(32)
         self.btn_cancel.setEnabled(False)
-        self.btn_cancel.setStyleSheet("""
-            QPushButton {
-                background-color: #f44336;
-                color: white;
-                font-size: 14px;
-                font-weight: bold;
-                border-radius: 6px;
-                padding: 8px 16px;
-            }
-            QPushButton:hover {
-                background-color: #d32f2f;
-            }
-            QPushButton:disabled {
-                background-color: #666;
-            }
-        """)
         self.btn_cancel.clicked.connect(self._cancel_execution)
         actions_layout.addWidget(self.btn_cancel)
 
@@ -703,6 +608,7 @@ class BcaslStandaloneGui(QMainWindow):
 
         # Bouton effacer log
         self.btn_clear_log = QPushButton(tr("Clear Log", "Effacer Log"))
+        self.btn_clear_log.setObjectName("secondary_button")
         self.btn_clear_log.setMinimumHeight(32)
         self.btn_clear_log.clicked.connect(self._clear_log)
         actions_layout.addWidget(self.btn_clear_log)
@@ -725,20 +631,12 @@ class BcaslStandaloneGui(QMainWindow):
         log_layout_inner.setSpacing(2)
 
         self.log_text = QTextEdit()
+        self.log_text.setObjectName("log")
         self.log_text.setFont(QFont("Consolas", 10))
         self.log_text.setReadOnly(True)
         self.log_text.setSizePolicy(
             QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding
         )
-        self.log_text.setStyleSheet("""
-            QTextEdit {
-                background-color: #1e1e1e;
-                color: #e0e0e0;
-                border: 1px solid #404040;
-                border-radius: 4px;
-                padding: 8px;
-            }
-        """)
         log_layout_inner.addWidget(self.log_text)
 
         log_group.setLayout(log_layout_inner)
@@ -984,120 +882,33 @@ class BcaslStandaloneGui(QMainWindow):
             return False
 
     def _apply_theme(self, theme_name: str):
-        """Applique le thème visuel."""
-        if theme_name == "dark":
-            self.setStyleSheet("""
-                QWidget {
-                    background-color: #1e1e1e;
-                    color: #ffffff;
-                }
-                QGroupBox {
-                    font-weight: bold;
-                    font-size: 12px;
-                    border: 1px solid #404040;
-                    border-radius: 5px;
-                    margin-top: 8px;
-                    padding-top: 8px;
-                }
-                QGroupBox::title {
-                    subcontrol-origin: margin;
-                    left: 8px;
-                    padding: 0 5px;
-                }
-                QLabel {
-                    color: #ffffff;
-                    font-size: 12px;
-                }
-                QListWidget {
-                    background-color: #2d2d2d;
-                    color: #ffffff;
-                    border: 1px solid #404040;
-                    border-radius: 4px;
-                    padding: 4px;
-                }
-                QListWidget::item:selected {
-                    background-color: #4da6ff;
-                    color: #ffffff;
-                }
-                QListWidget::item:alternate {
-                    background-color: #2a2a2a;
-                }
-                QCheckBox {
-                    color: #ffffff;
-                    spacing: 5px;
-                }
-                QCheckBox::indicator {
-                    width: 16px;
-                    height: 16px;
-                }
-                QStatusBar {
-                    background-color: #252525;
-                    color: #aaaaaa;
-                    font-size: 11px;
-                }
-            """)
-        else:  # light theme
-            self.setStyleSheet("""
-                QWidget {
-                    background-color: #f5f5f5;
-                    color: #000000;
-                }
-                QGroupBox {
-                    font-weight: bold;
-                    font-size: 12px;
-                    border: 1px solid #cccccc;
-                    border-radius: 5px;
-                    margin-top: 8px;
-                    padding-top: 8px;
-                }
-                QGroupBox::title {
-                    subcontrol-origin: margin;
-                    left: 8px;
-                    padding: 0 5px;
-                }
-                QLabel {
-                    color: #000000;
-                    font-size: 12px;
-                }
-                QListWidget {
-                    background-color: #ffffff;
-                    color: #000000;
-                    border: 1px solid #cccccc;
-                    border-radius: 4px;
-                    padding: 4px;
-                }
-                QListWidget::item:selected {
-                    background-color: #0066cc;
-                    color: #ffffff;
-                }
-                QCheckBox {
-                    color: #000000;
-                    spacing: 5px;
-                }
-                QLineEdit {
-                    background-color: #ffffff;
-                    color: #000000;
-                    border: 1px solid #cccccc;
-                    border-radius: 4px;
-                    padding: 4px 8px;
-                    font-size: 11px;
-                }
-                QPushButton {
-                    background-color: #cccccc;
-                    color: #000000;
-                    border-radius: 4px;
-                    padding: 4px 8px;
-                    font-size: 12px;
-                }
-                QPushButton:hover {
-                    background-color: #4da6ff;
-                }
-                QStatusBar {
-                    background-color: #e0e0e0;
-                    color: #666666;
-                    font-size: 11px;
-                }
-            """)
+        """Apply the same theme strategy as EngineOnly (Arctic QSS)."""
+        _ = theme_name  # Kept for signature compatibility.
+        try:
+            qss_path = (
+                Path(__file__).resolve().parents[2] / "themes" / "arctic_light.qss"
+            )
+            css = qss_path.read_text(encoding="utf-8")
+            self.setStyleSheet(css)
+        except Exception:
+            self.setStyleSheet("")
+
+    def _filter_plugins_list(self, text: str) -> None:
+        """Filter plugin list by text (name/id/phase snippet)."""
+        needle = (text or "").strip().lower()
+        if not self._is_valid(self.plugins_list):
+            return
+        try:
+            for i in range(self.plugins_list.count()):
+                item = self.plugins_list.item(i)
+                if item is None:
+                    continue
+                hay = item.text().lower()
+                pid = str(item.data(Qt.ItemDataRole.UserRole) or "").lower()
+                visible = (not needle) or (needle in hay) or (needle in pid)
+                item.setHidden(not visible)
+        except Exception:
+            pass
 
     def _apply_language(self, lang_code: str):
         """Applique la langue de l'interface."""
