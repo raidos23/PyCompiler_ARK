@@ -32,7 +32,10 @@ Provided helpers:
 
 import platform
 import shutil
+import subprocess
 import webbrowser
+import os
+import time
 from collections.abc import Callable
 from typing import Optional, Union
 
@@ -1083,6 +1086,10 @@ def install_system_packages(packages: list[str], gui=None) -> bool:
     Returns True if successful, False otherwise.
     """
     try:
+        # Mode headless (CLI/CI): ne jamais instancier de widgets Qt.
+        if gui is None:
+            return _install_system_packages_headless(packages)
+
         manager = SysDependencyManager(gui)
         system = platform.system().lower()
 
@@ -1118,5 +1125,106 @@ def install_system_packages(packages: list[str], gui=None) -> bool:
             return False
 
         return False
+    except Exception:
+        return False
+
+
+def _install_system_packages_headless(packages: list[str]) -> bool:
+    """Install system packages without Qt UI for CLI/CI contexts."""
+    try:
+        pkgs = [str(p).strip() for p in (packages or []) if str(p).strip()]
+        if not pkgs:
+            return True
+
+        system = platform.system().lower()
+        if system != "linux":
+            # Keep behavior explicit for now: only Linux is supported in CI path.
+            return False
+
+        pm = None
+        for candidate in ("apt", "dnf", "yum", "pacman", "zypper"):
+            if shutil.which(candidate):
+                pm = candidate
+                break
+        if not pm:
+            return False
+
+        def _with_privilege(args: list[str]) -> list[str]:
+            try:
+                if hasattr(os, "geteuid") and os.geteuid() == 0:
+                    return list(args)
+            except Exception:
+                pass
+            # CI/CD mode: strictly non-interactive sudo.
+            return ["sudo", "-n"] + list(args)
+
+        steps: list[list[str]]
+        run_env = os.environ.copy()
+        if pm == "apt":
+            # apt-get is more stable than apt for non-interactive automation.
+            run_env["DEBIAN_FRONTEND"] = "noninteractive"
+            steps = [
+                _with_privilege(["apt-get", "-o", "Acquire::Retries=3", "update"]),
+                _with_privilege(
+                    [
+                        "apt-get",
+                        "-o",
+                        "Dpkg::Options::=--force-confdef",
+                        "-o",
+                        "Dpkg::Options::=--force-confnew",
+                        "-o",
+                        "Acquire::Retries=3",
+                        "install",
+                        "-y",
+                        "--no-install-recommends",
+                        *pkgs,
+                    ]
+                ),
+            ]
+        elif pm == "dnf":
+            steps = [_with_privilege(["dnf", "install", "-y", *pkgs])]
+        elif pm == "yum":
+            steps = [_with_privilege(["yum", "install", "-y", *pkgs])]
+        elif pm == "pacman":
+            steps = [
+                _with_privilege(["pacman", "-Sy", "--noconfirm"]),
+                _with_privilege(["pacman", "-S", "--noconfirm", "--needed", *pkgs]),
+            ]
+        else:
+            steps = [
+                _with_privilege(
+                    [
+                        "zypper",
+                        "--non-interactive",
+                        "--gpg-auto-import-keys",
+                        "--no-gpg-checks",
+                        "install",
+                        "-y",
+                        *pkgs,
+                    ]
+                )
+            ]
+
+        for cmd in steps:
+            ok = False
+            # Retry transient failures (network mirrors, temporary locks, etc.).
+            for attempt in range(3):
+                proc = subprocess.run(
+                    cmd,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    text=True,
+                    timeout=1800,
+                    check=False,
+                    env=run_env,
+                )
+                if proc.returncode == 0:
+                    ok = True
+                    break
+                if attempt < 2:
+                    time.sleep(2)
+            if not ok:
+                return False
+        return True
     except Exception:
         return False
