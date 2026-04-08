@@ -776,7 +776,9 @@ class EnginesStandaloneApp:
                             return (
                                 False,
                                 "Missing system tools and automatic installation failed: "
-                                + ", ".join(missing_system),
+                                + ", ".join(missing_system)
+                                + ". In CI/headless mode, automatic install is non-interactive for security. "
+                                + "Run the script as root or preinstall required tools.",
                             )
                     except Exception as exc:
                         return (
