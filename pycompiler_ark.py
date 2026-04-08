@@ -29,6 +29,7 @@ Usage:
     python -m pycompiler_ark bcasl /path/to/ws  # Launch BCASL with workspace
     python -m pycompiler_ark engines            # Launch Engines standalone GUI
     python -m pycompiler_ark engines /path/to/ws  # Launch Engines with workspace
+    python -m pycompiler_ark prog-engine nuitka /path/to/ws  # Launch GUI focused on one engine
     python -m pycompiler_ark engines --dry-run  # List available engines
     python -m pycompiler_ark unload             # Unload all engines
 """
