@@ -14,16 +14,10 @@
 # limitations under the License.
 
 """
-Engines Standalone GUI Application
+Engines Standalone GUI Application.
 
-Interface complète pour exécuter les moteurs de compilation indépendamment
-de l'application principale PyCompiler ARK.
-
-Fournit une interface utilisateur moderne permettant de:
-- Sélectionner et configurer un moteur de compilation
-- Sélectionner des fichiers sources ou un workspace
-- Exécuter la compilation avec le moteur choisi
-- Afficher les résultats, logs et rapports de compilation
+This module provides a dedicated GUI to run compilation engines independently
+from the main PyCompiler ARK application.
 """
 
 from __future__ import annotations
@@ -96,7 +90,7 @@ class _ProgLog:
 
 
 class CompilationThread(QThread):
-    """Thread pour exécuter la compilation sans bloquer l'UI."""
+    """Run compilation in a background thread to keep UI responsive."""
 
     output_ready = Signal(str)
     error_ready = Signal(str)
@@ -112,7 +106,7 @@ class CompilationThread(QThread):
         self.process = None
 
     def run(self):
-        """Exécute le processus de compilation."""
+        """Execute the compilation process."""
         try:
             safe_program, safe_args, safe_env = secure_command(
                 self.program, self.args, self.env
@@ -188,19 +182,15 @@ class CompilationThread(QThread):
                 self.finished.emit(1)
 
     def cancel(self):
-        """Demande l'annulation de la compilation."""
+        """Request cancellation of the running compilation."""
         self.cancel_requested = True
 
 
 class EnginesStandaloneGui(QMainWindow):
     """
-    Application autonome GUI pour gérer et exécuter les moteurs de compilation.
+    Standalone GUI used to manage and execute compilation engines.
 
-    Cette classe fournit une interface utilisateur complète pour:
-    - Lister les moteurs disponibles
-    - Sélectionner et configurer un moteur
-    - Compiler des fichiers avec le moteur choisi
-    - Afficher les résultats et logs
+    The window allows engine selection, compilation execution, and log viewing.
     """
 
     def __init__(
@@ -210,12 +200,12 @@ class EnginesStandaloneGui(QMainWindow):
         theme: str = "dark",
     ):
         """
-        Initialise l'application standalone engines GUI.
+        Initialize the standalone engines GUI application.
 
         Args:
-            workspace_dir: Chemin du workspace (optionnel)
-            language: Code de langue ('en' ou 'fr')
-            theme: Nom du thème ('light' ou 'dark')
+            workspace_dir: Optional workspace path.
+            language: UI language code (`en` or `fr`).
+            theme: Theme name (`light` or `dark`).
         """
         super().__init__()
 
@@ -256,7 +246,7 @@ class EnginesStandaloneGui(QMainWindow):
         self._center_window()
 
     def _load_icons(self):
-        """Charge les icônes de l'application."""
+        """Load application icons."""
         self.icons = {
             "compile": self._create_icon("▶", "#4caf50"),
             "browse": self._create_icon("📁", "#2196f3"),
@@ -268,13 +258,13 @@ class EnginesStandaloneGui(QMainWindow):
         }
 
     def _create_icon(self, text: str, color: str = "#000000") -> QIcon:
-        """Crée une icône simple à partir de texte et couleur."""
+        """Create a simple icon placeholder from text and color."""
         pixmap = QPixmap(24, 24)
         pixmap.fill(Qt.transparent)
         return QIcon(pixmap)
 
     def _setup_ui(self):
-        """Configure l'interface utilisateur."""
+        """Build and connect the main user interface."""
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
 
@@ -515,14 +505,14 @@ class EnginesStandaloneGui(QMainWindow):
         self.statusBar.showMessage("Ready")
 
     def _center_window(self):
-        """Centre la fenêtre sur l'écran."""
+        """Center the window on the primary screen."""
         screen_geometry = QApplication.primaryScreen().geometry()
         x = (screen_geometry.width() - self.width()) // 2
         y = (screen_geometry.height() - self.height()) // 2
         self.move(x, y)
 
     def _init_venv_manager(self):
-        """Initialise le gestionnaire de venv et détecte le venv."""
+        """Initialize the venv manager and run auto-detection."""
         try:
             from Core.Venv_Manager.Manager import VenvManager
 
@@ -532,7 +522,7 @@ class EnginesStandaloneGui(QMainWindow):
             self._log(f"⚠️ Impossible d'initialiser le gestionnaire de venv: {e}")
 
     def _detect_venv(self):
-        """Détecte automatiquement le meilleur venv disponible."""
+        """Auto-detect the best virtual environment for the workspace."""
         if not self.venv_manager or not self.workspace_dir:
             return
 
@@ -547,7 +537,7 @@ class EnginesStandaloneGui(QMainWindow):
             self._log(f"⚠️ Erreur détection venv: {e}")
 
     def _select_venv(self):
-        """Ouvre une boîte de dialogue pour sélectionner le venv."""
+        """Open a dialog to select a virtual environment folder."""
         if not self.venv_manager:
             QMessageBox.warning(
                 self,
@@ -585,7 +575,7 @@ class EnginesStandaloneGui(QMainWindow):
                 self._log(f"❌ Invalid venv selected: {reason}")
 
     def _autodetect_venv(self):
-        """Auto-détecte le meilleur venv disponible."""
+        """Run virtual environment auto-detection explicitly."""
         if not self.venv_manager:
             QMessageBox.warning(
                 self,
@@ -625,7 +615,7 @@ class EnginesStandaloneGui(QMainWindow):
             )
 
     def _clear_venv(self):
-        """Efface la sélection du venv."""
+        """Clear current virtual environment selection."""
         self.venv_path = None
         self.venv_path_edit.clear()
         self.venv_path_edit.setPlaceholderText("Select a virtual environment...")
@@ -639,16 +629,13 @@ class EnginesStandaloneGui(QMainWindow):
         self._log("Venv selection cleared")
 
     def _is_valid(self, widget) -> bool:
-        """Vérifie si un widget Qt est toujours valide.
-
-        Contrairement à hasattr(), cette méthode vérifie si l'objet C++
-        sous-jacent n'a pas été détruit.
+        """Return whether a Qt widget still has a valid underlying C++ object.
 
         Args:
-            widget: Le widget Qt à vérifier
+            widget: Qt widget to validate.
 
         Returns:
-            True si le widget est valide, False sinon
+            `True` when widget is valid, otherwise `False`.
         """
         if widget is None:
             return False
@@ -675,7 +662,7 @@ class EnginesStandaloneGui(QMainWindow):
             self.statusBar().showMessage("Arctic theme unavailable: fallback active")
 
     def _apply_language(self, lang_code: str):
-        """Applique la langue de l'interface."""
+        """Apply UI language labels."""
         self.language = lang_code
 
         # Traductions
@@ -749,7 +736,7 @@ class EnginesStandaloneGui(QMainWindow):
                 child.setTitle(tr["log"])
 
     def _refresh_engines(self):
-        """Rafraîchit la liste des moteurs disponibles et crée leurs onglets."""
+        """Refresh available engines and rebuild their tabs."""
         # Nettoyer les onglets existants
         self.compiler_tabs.clear()
         self.engines_info = {}
@@ -816,7 +803,7 @@ class EnginesStandaloneGui(QMainWindow):
     def _create_default_engine_widget(
         self, engine_id: str, name: str, version: str, required_core: str
     ) -> QWidget:
-        """Crée un widget par défaut pour un moteur sans create_tab."""
+        """Create a fallback widget for engines without `create_tab`."""
         widget = QWidget()
         layout = QGridLayout()
         layout.setSpacing(8)
@@ -838,7 +825,7 @@ class EnginesStandaloneGui(QMainWindow):
         return widget
 
     def _check_compatibility(self):
-        """Vérifie la compatibilité du moteur de l'onglet courant."""
+        """Check compatibility of the engine in the current tab."""
         # Récupérer l'ID du moteur depuis l'onglet courant
         current_index = self.compiler_tabs.currentIndex()
         if current_index < 0:
@@ -993,7 +980,7 @@ class EnginesStandaloneGui(QMainWindow):
         return None
 
     def _browse_workspace(self):
-        """Ouvre une boîte de dialogue pour sélectionner un workspace."""
+        """Open a dialog to select a workspace directory."""
         workspace_dir = QFileDialog.getExistingDirectory(
             self, "Select workspace directory", self.workspace_edit.text() or "."
         )
@@ -1007,7 +994,7 @@ class EnginesStandaloneGui(QMainWindow):
             self._detect_venv()
 
     def _run_compilation(self):
-        """Exécute la compilation avec le moteur de l'onglet courant."""
+        """Run compilation with the engine from the active tab."""
         # Récupérer l'ID du moteur depuis l'onglet courant
         current_index = self.compiler_tabs.currentIndex()
         if current_index < 0:
@@ -1154,7 +1141,7 @@ class EnginesStandaloneGui(QMainWindow):
             self._log(f"Error: {str(e)}")
 
     def _cancel_compilation(self):
-        """Annule la compilation en cours."""
+        """Cancel the active compilation thread if running."""
         if (
             hasattr(self, "compilation_thread")
             and self.compilation_thread
@@ -1170,11 +1157,11 @@ class EnginesStandaloneGui(QMainWindow):
             self.cancel_btn.setEnabled(False)
 
     def _on_compilation_error(self, message):
-        """Affiche les erreurs de compilation."""
+        """Handle compilation stderr output."""
         self._log(f"STDERR: {message}")
 
     def _on_compilation_finished(self, return_code):
-        """Appelé lorsque la compilation est terminée."""
+        """Finalize UI state when compilation ends."""
         self._log("=" * 50)
 
         end_time = datetime.now()
@@ -1210,7 +1197,7 @@ class EnginesStandaloneGui(QMainWindow):
         self.compile_btn.setEnabled(True)
 
     def _dry_run(self):
-        """Affiche la commande sans l'exécuter en utilisant l'onglet courant."""
+        """Display the generated command without running it."""
         # Récupérer l'ID du moteur depuis l'onglet courant
         current_index = self.compiler_tabs.currentIndex()
         if current_index < 0:
@@ -1266,7 +1253,7 @@ class EnginesStandaloneGui(QMainWindow):
             self._log(f"Error: {str(e)}")
 
     def _clear_log(self):
-        """Efface le log."""
+        """Clear the log pane."""
         if self._is_valid(self.log_text):
             try:
                 self.log_text.clear()
@@ -1274,7 +1261,7 @@ class EnginesStandaloneGui(QMainWindow):
                 pass  # Ignorer si le widget a été supprimé
 
     def _log(self, message: str):
-        """Ajoute un message au log."""
+        """Append a timestamped message to the log pane."""
         try:
             from pycompiler_ark import onlymod_log
 
@@ -1298,15 +1285,15 @@ class EnginesStandaloneGui(QMainWindow):
 def launch_engines_gui(
     workspace_dir: Optional[str] = None, language: str = "en", theme: str = "dark"
 ) -> int:
-    """Lance l'application Engines Standalone GUI.
+    """Launch the standalone engines GUI.
 
     Args:
-        workspace_dir: Chemin du workspace (optionnel)
-        language: Code de langue ('en' ou 'fr')
-        theme: Nom du thème ('light' ou 'dark')
+        workspace_dir: Optional workspace path.
+        language: UI language code (`en` or `fr`).
+        theme: Theme name (`light` or `dark`).
 
     Returns:
-        Code de retour de l'application
+        Application exit code.
     """
     app = QApplication(sys.argv)
     app.setApplicationName("PyCompiler ARK Engines")
