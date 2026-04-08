@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from OnlyMod.EngineOnlyMod.app import EnginesStandaloneApp
+from OnlyMod.EngineOnlyMod.app import EnginesStandaloneApp, MockLog
 
 
 class _DummyEngine:
@@ -78,3 +78,20 @@ def test_run_compilation_headless_returns_preflight_error(monkeypatch) -> None:
     assert result["success"] is False
     assert result["return_code"] == -1
     assert "preflight failed" in result["error"]
+
+
+def test_mock_log_can_disable_stdout_echo(monkeypatch) -> None:
+    called = {"n": 0}
+
+    def _fake_print(*_args, **_kwargs):
+        called["n"] += 1
+
+    monkeypatch.setattr("builtins.print", _fake_print)
+
+    silent_log = MockLog(echo=False)
+    silent_log.append("hello")
+
+    loud_log = MockLog(echo=True)
+    loud_log.append("world")
+
+    assert called["n"] == 1

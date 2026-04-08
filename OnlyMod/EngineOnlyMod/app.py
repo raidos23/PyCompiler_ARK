@@ -72,11 +72,11 @@ class MockGUI:
     en mode standalone sans l'application complète.
     """
 
-    def __init__(self, workspace_dir: Optional[str] = None):
+    def __init__(self, workspace_dir: Optional[str] = None, log_echo: bool = True):
         self.workspace_dir = (
             os.path.abspath(str(workspace_dir)) if workspace_dir else workspace_dir
         )
-        self.log = MockLog()
+        self.log = MockLog(echo=log_echo)
         self._tr = {}
         self.venv_path_manuel = None
         self.venv_path = None
@@ -120,13 +120,15 @@ class MockGUI:
 class MockLog:
     """Mock log object qui collecte les messages pour affichage."""
 
-    def __init__(self):
+    def __init__(self, echo: bool = True):
         self.messages: List[str] = []
+        self._echo = bool(echo)
 
     def append(self, message: str) -> None:
         """Ajoute un message au log."""
         self.messages.append(message)
-        print(message)
+        if self._echo:
+            print(message)
 
     def clear(self) -> None:
         """Efface le log."""
@@ -385,6 +387,7 @@ class EnginesStandaloneApp:
         theme: str = "dark",
         dry_run: bool = False,
         headless: bool = False,
+        quiet_logs: bool = False,
     ):
         """
         Initialise l'application standalone engines.
@@ -397,8 +400,9 @@ class EnginesStandaloneApp:
             theme: Nom du thème ('light' ou 'dark')
             dry_run: Si True, affiche uniquement la commande sans exécuter
             headless: Si True, fonctionne sans interface GUI (mode CLI)
+            quiet_logs: Disable stdout log echo (used for strict JSON payload mode)
         """
-        self.gui = MockGUI(workspace_dir)
+        self.gui = MockGUI(workspace_dir, log_echo=not bool(quiet_logs))
         self.language_manager = LanguageManager()
         self.theme_manager = ThemeManager()
 

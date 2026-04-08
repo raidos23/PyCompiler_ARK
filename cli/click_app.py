@@ -590,6 +590,7 @@ def build_cli(app_version: str):
             theme="dark",
             headless=True,
             dry_run=True,
+            quiet_logs=bool(as_json),
         )
         result = app.run_compilation(engine_id, str(Path(file_path)), dry_run=True)
         if as_json:
@@ -617,6 +618,7 @@ def build_cli(app_version: str):
             language="en",
             theme="dark",
             headless=True,
+            quiet_logs=bool(as_json),
         )
         result = app.run_compilation(engine_id, str(Path(file_path)), dry_run=False)
         if as_json:
