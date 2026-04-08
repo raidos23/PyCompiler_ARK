@@ -34,21 +34,7 @@ def register_quality_commands(
     def doctor(workspace, as_json, strict):
         # `doctor` agrège un état global plateforme + Qt + inventory engines.
         payload = doctor_payload(workspace=resolve_workspace_path(workspace))
-        if strict:
-            # En mode strict, la commande devient un garde-fou CI et non plus seulement informatif.
-            workspace_payload = payload.get("workspace")
-            has_workspace_issue = isinstance(
-                workspace_payload, dict
-            ) and not workspace_payload.get("exists", True)
-            has_engine_issue = (
-                payload["engines"]["compatible_count"] != payload["engines"]["count"]
-            )
-            has_qt_issue = not payload.get("qt_available", False)
-            strict_failed = bool(
-                has_workspace_issue or has_engine_issue or has_qt_issue
-            )
-        else:
-            strict_failed = False
+        strict_failed = bool(strict and not payload.get("ok", True))
         if as_json:
             if strict_failed:
                 emit_and_exit(payload, EXIT_PRECHECK_FAILED, True)
