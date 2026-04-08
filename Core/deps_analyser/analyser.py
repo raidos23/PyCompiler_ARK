@@ -146,10 +146,10 @@ EXCLUDED_STDLIB = _load_excluded_stdlib()
 @functools.lru_cache(maxsize=256)
 def _is_stdlib_module(module_name: str) -> bool:
     """
- Determine whether module belongs to Python standard library.
- Combine une liste d'exclusion explicite et une détection basée sur importlib.util.find_spec.
- Résultats cachés pour éviter les appels répétés.
- """
+    Determine whether module belongs to Python standard library.
+    Combine une liste d'exclusion explicite et une détection basée sur importlib.util.find_spec.
+    Résultats cachés pour éviter les appels répétés.
+    """
     try:
         if module_name in EXCLUDED_STDLIB:
             return True
@@ -514,9 +514,9 @@ def _collect_workspace_module_roots(
     filtered_files: list[str], workspace_dir: str | None
 ) -> set[str]:
     """
-  Build a conservative set of internal module roots from workspace files.
-  Handles common src-layout aliases (src/, lib/, python/).
-  """
+    Build a conservative set of internal module roots from workspace files.
+    Handles common src-layout aliases (src/, lib/, python/).
+    """
     roots: set[str] = set()
     ws = _normalize_realpath(workspace_dir)
     source_roots, hinted_modules = _discover_workspace_hints(ws)
@@ -553,12 +553,12 @@ def _collect_workspace_module_roots(
 @functools.lru_cache(maxsize=1024)
 def _classify_module_origin(module_name: str, workspace_dir: str) -> str:
     """
-  Classify module origin:
-  - stdlib: Python standard library / builtins
-  - internal: module resolved under workspace_dir
-  - third_party: resolved in site-packages/purelib/platlib/dist-packages
-  - unknown: cannot resolve safely
-  """
+    Classify module origin:
+    - stdlib: Python standard library / builtins
+    - internal: module resolved under workspace_dir
+    - third_party: resolved in site-packages/purelib/platlib/dist-packages
+    - unknown: cannot resolve safely
+    """
     if not module_name:
         return "unknown"
     if _is_stdlib_module(module_name):
@@ -622,8 +622,8 @@ def _classify_module_origin(module_name: str, workspace_dir: str) -> str:
 
 def _check_module_installed(module: str) -> bool:
     """
-  Check whether module is installed via importlib.metadata (more reliable than subprocess pip show).
-  """
+    Check whether module is installed via importlib.metadata (more reliable than subprocess pip show).
+    """
     try:
         distribution(module)
         return True
@@ -636,16 +636,16 @@ def _check_module_installed(module: str) -> bool:
 
 def _find_pip_executable(venv_path: str = None, workspace_dir: str = None) -> tuple:
     """
- Locate pip executable with multiple fallback strategies.
- Return un tuple (program, prefix_args) où:
- - program: path vers l'executable ou 'python'
- - prefix_args: arguments à préfixer ([] pour pip direct, ['-m', 'pip'] pour module)
+    Locate pip executable with multiple fallback strategies.
+    Return un tuple (program, prefix_args) où:
+    - program: path vers l'executable ou 'python'
+    - prefix_args: arguments à préfixer ([] pour pip direct, ['-m', 'pip'] pour module)
 
- Stratégies (dans l'ordre):
- 1. pip du venv (Scripts/pip.exe ou bin/pip)
- 2. python -m pip du venv
- 3. python -m pip du système
- """
+    Stratégies (dans l'ordre):
+    1. pip du venv (Scripts/pip.exe ou bin/pip)
+    2. python -m pip du venv
+    3. python -m pip du système
+    """
     import sys
 
     # Déterminer le chemin du venv
@@ -711,9 +711,9 @@ def _find_pip_executable(venv_path: str = None, workspace_dir: str = None) -> tu
 
 def suggest_missing_dependencies(self):
     """
- Analyze primary files to compile and detect imported modules,
- check leur présence dans le venv, et propose d'installer ceux qui manquent.
- """
+    Analyze primary files to compile and detect imported modules,
+    check leur présence dans le venv, et propose d'installer ceux qui manquent.
+    """
 
     def _t(_key: str, fr: str, en: str) -> str:
         try:

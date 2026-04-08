@@ -38,15 +38,15 @@ from .i18n import show_language_dialog
 
 def _detect_system_color_scheme() -> str:
     """
-  Detect the OS color scheme and return ``"sombre"`` or ``"clair"``.
+    Detect the OS color scheme and return ``"sombre"`` or ``"clair"``.
 
-  Detection order:
-  - Windows registry (`AppsUseLightTheme`)
-  - macOS defaults (`AppleInterfaceStyle`)
-  - Linux desktop hints (GNOME/KDE/GTK theme)
+    Detection order:
+    - Windows registry (`AppsUseLightTheme`)
+    - macOS defaults (`AppleInterfaceStyle`)
+    - Linux desktop hints (GNOME/KDE/GTK theme)
 
-  Returns ``"clair"`` as a safe fallback.
-  """
+    Returns ``"clair"`` as a safe fallback.
+    """
     try:
         import os as _os
         import platform
@@ -644,10 +644,10 @@ def _themes_dir() -> str:
 
 def _list_available_themes() -> list[tuple[str, str]]:
     """
-  Return `(display_name, absolute_path)` pairs for `.qss` theme files.
+    Return `(display_name, absolute_path)` pairs for `.qss` theme files.
 
-  The display name is derived from the file name.
-  """
+    The display name is derived from the file name.
+    """
     themes: list[tuple[str, str]] = []
     try:
         tdir = _themes_dir()
@@ -835,11 +835,11 @@ def _refresh_log_palette(self, css: str | None = None) -> None:
 
 def apply_theme(self, pref: str) -> None:
     """
- Apply a theme from themes directory.
- - "System": détection (sombre/clair) et selection d'un .qss correspondant
- - Sinon: appliquer le .qss dont le nom correspond (insensible à la casse/espaces)
- - Repli: pas de stylesheet si none theme trouvé
- """
+    Apply a theme from themes directory.
+    - "System": détection (sombre/clair) et selection d'un .qss correspondant
+    - Sinon: appliquer le .qss dont le nom correspond (insensible à la casse/espaces)
+    - Repli: pas de stylesheet si none theme trouvé
+    """
     try:
         from PySide6.QtWidgets import QApplication
 

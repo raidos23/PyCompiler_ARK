@@ -675,9 +675,7 @@ def build_cli(app_version: str):
     @click.option("--json", "as_json", is_flag=True)
     def venv_status(workspace, as_json):
         """Show current workspace Python mode and venv preference."""
-        payload = venv_status_payload(
-            _require_workspace_path(workspace, "venv status")
-        )
+        payload = venv_status_payload(_require_workspace_path(workspace, "venv status"))
         if as_json:
             if not payload.get("ok"):
                 _emit_and_exit(payload, EXIT_WORKSPACE_INVALID, as_json=True)
@@ -863,7 +861,10 @@ def build_cli(app_version: str):
         selected_workspace = workspace_opt or workspace
         if not selected_workspace:
             raise click.ClickException("Missing workspace path for bcasl run")
-        args = ["run", _resolve_workspace_path(selected_workspace) or selected_workspace]
+        args = [
+            "run",
+            _resolve_workspace_path(selected_workspace) or selected_workspace,
+        ]
         if timeout:
             args.extend(["--timeout", str(timeout)])
         sys.exit(_run_bcasl_headless(args))

@@ -38,11 +38,11 @@ from PySide6.QtWidgets import QApplication, QFileDialog, QMessageBox, QMenu
 
 class UiFeatures:
     """
-  UI helper mixin used by the main GUI.
+    UI helper mixin used by the main GUI.
 
-  Methods are organized by feature area and can be reused across
-  UI variants (classic and IDE-like).
-  """
+    Methods are organized by feature area and can be reused across
+    UI variants (classic and IDE-like).
+    """
 
     # =========================================================================
     # SÉLECTION D'ICÔNE

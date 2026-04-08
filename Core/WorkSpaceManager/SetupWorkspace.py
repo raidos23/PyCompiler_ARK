@@ -30,14 +30,14 @@ class SetupWorkspace:
     @staticmethod
     def select_workspace(gui_instance) -> Optional[str]:
         """
-    Open a folder picker to select a workspace directory.
+        Open a folder picker to select a workspace directory.
 
-    Args:
-      gui_instance: Main GUI instance.
+        Args:
+          gui_instance: Main GUI instance.
 
-    Returns:
-      Selected workspace path, or `None` if canceled.
-    """
+        Returns:
+          Selected workspace path, or `None` if canceled.
+        """
 
         def _t(_key: str, fr: str, en: str) -> str:
             try:
@@ -58,16 +58,16 @@ class SetupWorkspace:
         gui_instance, folder: str, source: str = "ui"
     ) -> bool:
         """
-    Apply workspace selection and refresh all dependent GUI state.
+        Apply workspace selection and refresh all dependent GUI state.
 
-    Args:
-      gui_instance: Main GUI instance.
-      folder: Target workspace directory path.
-      source: Request origin (`"ui"` or `"plugin"`).
+        Args:
+          gui_instance: Main GUI instance.
+          folder: Target workspace directory path.
+          source: Request origin (`"ui"` or `"plugin"`).
 
-    Returns:
-      `True` on success, `False` otherwise.
-    """
+        Returns:
+          `True` on success, `False` otherwise.
+        """
         try:
             # Étape 1: afficher un feedback utilisateur pendant le chargement.
             try:
@@ -320,15 +320,15 @@ class SetupWorkspace:
     @staticmethod
     def add_py_files_from_folder(gui_instance, folder: str) -> int:
         """
-    Recursively add Python files from a folder into the GUI file list.
+        Recursively add Python files from a folder into the GUI file list.
 
-    Args:
-      gui_instance: Main GUI instance.
-      folder: Folder path to scan.
+        Args:
+          gui_instance: Main GUI instance.
+          folder: Folder path to scan.
 
-    Returns:
-      Number of files effectively added.
-    """
+        Returns:
+          Number of files effectively added.
+        """
         count = 0
         excluded_count = 0
 
@@ -394,11 +394,11 @@ class SetupWorkspace:
     @staticmethod
     def open_ark_config(gui_instance):
         """
-    Open `ARK_Main_Config.yml` with the system default editor.
+        Open `ARK_Main_Config.yml` with the system default editor.
 
-    Args:
-      gui_instance: Main GUI instance.
-    """
+        Args:
+          gui_instance: Main GUI instance.
+        """
         workspace_dir = getattr(gui_instance, "workspace_dir", None)
 
         if not workspace_dir:

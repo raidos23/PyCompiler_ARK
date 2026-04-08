@@ -33,7 +33,9 @@ def test_install_system_packages_headless_linux_uses_noninteractive_sudo(
             self.stderr = ""
 
     monkeypatch.setattr("platform.system", lambda: "Linux")
-    monkeypatch.setattr(sys_deps.shutil, "which", lambda name: "/usr/bin/apt" if name == "apt" else None)
+    monkeypatch.setattr(
+        sys_deps.shutil, "which", lambda name: "/usr/bin/apt" if name == "apt" else None
+    )
     monkeypatch.setattr(sys_deps.os, "geteuid", lambda: 1000, raising=False)
 
     def _fake_run(cmd, **_kwargs):
@@ -68,12 +70,16 @@ def test_install_system_packages_headless_does_not_use_qt_manager(monkeypatch) -
     import Core.sys_deps as sys_deps
 
     monkeypatch.setattr("platform.system", lambda: "Linux")
-    monkeypatch.setattr(sys_deps.shutil, "which", lambda name: "/usr/bin/dnf" if name == "dnf" else None)
+    monkeypatch.setattr(
+        sys_deps.shutil, "which", lambda name: "/usr/bin/dnf" if name == "dnf" else None
+    )
     monkeypatch.setattr(sys_deps.os, "geteuid", lambda: 0, raising=False)
     monkeypatch.setattr(
         sys_deps,
         "SysDependencyManager",
-        lambda _gui: (_ for _ in ()).throw(AssertionError("Qt manager should not be used in headless mode")),
+        lambda _gui: (_ for _ in ()).throw(
+            AssertionError("Qt manager should not be used in headless mode")
+        ),
     )
 
     class _Result:
@@ -87,7 +93,9 @@ def test_install_system_packages_headless_does_not_use_qt_manager(monkeypatch) -
     assert sys_deps.install_system_packages(["cloc"], gui=None) is True
 
 
-def test_install_system_packages_headless_retries_transient_failures(monkeypatch) -> None:
+def test_install_system_packages_headless_retries_transient_failures(
+    monkeypatch,
+) -> None:
     """Headless install should retry command steps before failing."""
     import Core.sys_deps as sys_deps
 

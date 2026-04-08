@@ -28,11 +28,11 @@ class WorkspaceAdvancedManipulation:
     @staticmethod
     def select_files_manually(gui_instance):
         """
-    Open a dialog to select Python files manually.
+        Open a dialog to select Python files manually.
 
-    Args:
-      gui_instance: GUI instance.
-    """
+        Args:
+          gui_instance: GUI instance.
+        """
         workspace_dir = getattr(gui_instance, "workspace_dir", None)
 
         if not workspace_dir:
@@ -98,11 +98,11 @@ class WorkspaceAdvancedManipulation:
     @staticmethod
     def remove_selected_file(gui_instance):
         """
-    Remove selected files from the UI list and internal state.
+        Remove selected files from the UI list and internal state.
 
-    Args:
-      gui_instance: GUI instance.
-    """
+        Args:
+          gui_instance: GUI instance.
+        """
         if not hasattr(gui_instance, "file_list"):
             return
 
@@ -130,12 +130,12 @@ class WorkspaceAdvancedManipulation:
     @staticmethod
     def handle_drag_enter_event(gui_instance, event: QDropEvent):
         """
-    Handle `dragEnter` event and accept supported drops.
+        Handle `dragEnter` event and accept supported drops.
 
-    Args:
-      gui_instance: GUI instance.
-      event: Drag event.
-    """
+        Args:
+          gui_instance: GUI instance.
+          event: Drag event.
+        """
         if event.mimeData().hasUrls():
             event.acceptProposedAction()
         else:
@@ -144,15 +144,15 @@ class WorkspaceAdvancedManipulation:
     @staticmethod
     def handle_drop_event(gui_instance, event: QDropEvent):
         """
-    Handle `drop` event and append dropped Python files/folders.
+        Handle `drop` event and append dropped Python files/folders.
 
-    Args:
-      gui_instance: GUI instance.
-      event: Drop event.
+        Args:
+          gui_instance: GUI instance.
+          event: Drop event.
 
-    Returns:
-      Number of files added.
-    """
+        Returns:
+          Number of files added.
+        """
         from Core.WorkSpaceManager.SetupWorkspace import SetupWorkspace
 
         urls = event.mimeData().urls()
@@ -215,14 +215,14 @@ class WorkspaceAdvancedManipulation:
     @staticmethod
     def get_workspace_status(gui_instance) -> dict:
         """
-    Return dictionary describing current workspace status.
+        Return dictionary describing current workspace status.
 
-    Args:
-      gui_instance: GUI instance.
+        Args:
+          gui_instance: GUI instance.
 
-    Returns:
-      Workspace status information.
-    """
+        Returns:
+          Workspace status information.
+        """
         workspace_dir = getattr(gui_instance, "workspace_dir", None)
         python_files = getattr(gui_instance, "python_files", [])
         selected_files = getattr(gui_instance, "selected_files", [])
@@ -238,15 +238,15 @@ class WorkspaceAdvancedManipulation:
     @staticmethod
     def clear_workspace(gui_instance, keep_dir: bool = True) -> bool:
         """
-    Clear current workspace state.
+        Clear current workspace state.
 
-    Args:
-      gui_instance: GUI instance.
-      keep_dir: When `True`, keep selected folder but clear files.
+        Args:
+          gui_instance: GUI instance.
+          keep_dir: When `True`, keep selected folder but clear files.
 
-    Returns:
-      `True` on success.
-    """
+        Returns:
+          `True` on success.
+        """
         try:
             workspace_dir = getattr(gui_instance, "workspace_dir", None)
 

@@ -240,9 +240,9 @@ def _bcasl_report_allows_compile(self, report) -> bool:
 
 def compile_all(self) -> None:
     """
-  Slot connected to the compile button.
-  Starts compilation for all selected Python files.
-  """
+    Slot connected to the compile button.
+    Starts compilation for all selected Python files.
+    """
 
     def _t(_key: str, fr: str, en: str) -> str:
         try:
@@ -578,9 +578,9 @@ def _start_compilation_queue(self, engine, files_to_compile: list) -> None:
 
 def cancel_all_compilations(self) -> bool:
     """
-  Slot connected to the cancel button.
-  Cancels all ongoing compilations.
-  """
+    Slot connected to the cancel button.
+    Cancels all ongoing compilations.
+    """
     main_process = _get_main_process()
 
     # Étape 1: marquer l'annulation immédiatement (BCASL -> compile).
@@ -679,9 +679,9 @@ def show_error_dialog(self, title: str, message: str) -> None:
 
 def try_install_missing_modules(self, modules: list) -> bool:
     """
-  Try to install missing Python modules.
-  Returns True if installation succeeded or no install needed.
-  """
+    Try to install missing Python modules.
+    Returns True if installation succeeded or no install needed.
+    """
     if not modules:
         return True
 
@@ -703,16 +703,16 @@ def try_install_missing_modules(self, modules: list) -> bool:
 
 def start_compilation_process(self, engine_id: str, file_path: str) -> bool:
     """
-  Start a single compilation process using MainProcess.
+    Start a single compilation process using MainProcess.
 
-  Args:
-    self: GUI instance
-    engine_id: ID of the compilation engine
-    file_path: Path to the Python file to compile
+    Args:
+      self: GUI instance
+      engine_id: ID of the compilation engine
+      file_path: Path to the Python file to compile
 
-  Returns:
-    True if compilation started, False otherwise
-  """
+    Returns:
+      True if compilation started, False otherwise
+    """
     # Sauvegarder la configuration UI de l'engine actif dans le workspace
     try:
         from Core.EngineConfigManager import save_engine_config_for_gui
@@ -868,9 +868,9 @@ def start_compilation_process(self, engine_id: str, file_path: str) -> bool:
 
 def try_start_processes(self) -> bool:
     """
-  Try to start compilation processes for all selected files.
-  Returns True if at least one process started.
-  """
+    Try to start compilation processes for all selected files.
+    Returns True if at least one process started.
+    """
     if not self.python_files:
         log_i18n_level(
             self, "warning", "Aucun fichier à compiler.", "No files to compile."
@@ -897,9 +897,9 @@ def try_start_processes(self) -> bool:
 
 def _continue_compile_all(self) -> None:
     """
-  Continue compilation of remaining files after one completes.
-  Called from handle_finished when a compilation succeeds.
-  """
+    Continue compilation of remaining files after one completes.
+    Called from handle_finished when a compilation succeeds.
+    """
     # Cette fonction est appelée après chaque compilation réussie
     # Elle peut être utilisée pour compiler les fichiers suivants en file d'attente
     pass

@@ -74,11 +74,11 @@ def get_selected_workspace() -> Optional[str]:
 
 class PyCompilerArkGui(QMainWindow, UiFeatures):
     """
-  Main PyCompiler ARK GUI window.
+    Main PyCompiler ARK GUI window.
 
-  This class extends `UiFeatures` and keeps high-level orchestration concerns
-  (window lifecycle, variant selection, and background-task shutdown).
-  """
+    This class extends `UiFeatures` and keeps high-level orchestration concerns
+    (window lifecycle, variant selection, and background-task shutdown).
+    """
 
     def __init__(self):
         super().__init__()

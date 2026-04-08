@@ -152,6 +152,7 @@ class LanguageManager:
 
 class ThemeManager:
     """Theme manager for the application."""
+
     def __init__(self, theme_name: str = "dark"):
         self.current_theme = theme_name
         self.colors = self._get_theme_colors(theme_name)
@@ -196,15 +197,15 @@ class ThemeManager:
 
 class BcaslOnlyModApp:
     """
-  Standalone application to manage and execute BCASL plugins.
+    Standalone application to manage and execute BCASL plugins.
 
-  Cette classe fournit une interface programmatique pour:
-  - Découvrir les BCASL plugins disponibles
-  - Gérer l'activation/désactivation des plugins
-  - Réordonner l'exécution des plugins
-  - Executer les plugins de pre-compilation
-  - Displayr les rapports d'exécution
-  """
+    Cette classe fournit une interface programmatique pour:
+    - Découvrir les BCASL plugins disponibles
+    - Gérer l'activation/désactivation des plugins
+    - Réordonner l'exécution des plugins
+    - Executer les plugins de pre-compilation
+    - Displayr les rapports d'exécution
+    """
 
     # Variable de classe pour la langue
     _language = "en"
@@ -217,14 +218,14 @@ class BcaslOnlyModApp:
         headless: bool = False,
     ):
         """
-    Initialize l'application BcaslOnlyMod.
+        Initialize l'application BcaslOnlyMod.
 
-    Args:
-      workspace_dir: Chemin du workspace (optionnel)
-      language: Code de language ('en' ou 'fr')
-      theme: Nom du theme ('light' ou 'dark')
-      headless: Si True, fonctionne sans interface GUI (mode CLI)
-    """
+        Args:
+          workspace_dir: Chemin du workspace (optionnel)
+          language: Code de language ('en' ou 'fr')
+          theme: Nom du theme ('light' ou 'dark')
+          headless: Si True, fonctionne sans interface GUI (mode CLI)
+        """
         self.workspace_dir = workspace_dir
         self.headless = headless
         BcaslOnlyModApp._language = language

@@ -52,14 +52,14 @@ def launch_engines_gui(
 ) -> int:
     """Launch the Engines Standalone GUI application.
 
-  Args:
-    workspace_dir: Chemin du workspace (optionnel)
-    language: Code de language ('en' ou 'fr')
-    theme: Nom du theme ('light' ou 'dark')
+    Args:
+      workspace_dir: Chemin du workspace (optionnel)
+      language: Code de language ('en' ou 'fr')
+      theme: Nom du theme ('light' ou 'dark')
 
-  Returns:
-    Code de retour de l'application
-  """
+    Returns:
+      Code de retour de l'application
+    """
     from .gui import launch_engines_gui as _launch
 
     return _launch(workspace_dir, language, theme)

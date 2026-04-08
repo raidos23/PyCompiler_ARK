@@ -28,8 +28,8 @@ PREFS_BASENAME = "pycompiler_gui_prefs.json"
 
 def _user_config_dir() -> str:
     """
- Return le folder de preferences au sein du projet source: <project_root>/.pref
- """
+    Return le folder de preferences au sein du projet source: <project_root>/.pref
+    """
     try:
         project_root = os.path.abspath(
             os.path.join(os.path.dirname(os.path.abspath(__file__)), os.pardir)
@@ -173,12 +173,12 @@ def save_preferences(self):
 
 def detect_system_color_scheme() -> str:
     """
-  Detect the system color scheme and return "dark" or "light".
-  - Windows: registry AppsUseLightTheme (0 = dark, 1 = light)
-  - macOS: defaults read -g AppleInterfaceStyle (Dark = dark)
-  - Linux (GNOME/KDE): gsettings or kdeglobals, fallback to GTK_THEME
-  Returns "light" on failure.
-  """
+    Detect the system color scheme and return "dark" or "light".
+    - Windows: registry AppsUseLightTheme (0 = dark, 1 = light)
+    - macOS: defaults read -g AppleInterfaceStyle (Dark = dark)
+    - Linux (GNOME/KDE): gsettings or kdeglobals, fallback to GTK_THEME
+    Returns "light" on failure.
+    """
     try:
         import os as _os
         import platform
@@ -270,10 +270,10 @@ def detect_system_color_scheme() -> str:
 
 def detect_system_language() -> tuple[str, str]:
     """
- Detect the system language and return a pair (code, display_name),
- where code is like 'fr' or 'en', and display_name is 'Français' or 'English'.
- Defaults to ('en', 'English') on failure.
- """
+    Detect the system language and return a pair (code, display_name),
+    where code is like 'fr' or 'en', and display_name is 'Français' or 'English'.
+    Defaults to ('en', 'English') on failure.
+    """
     try:
         import locale
 
@@ -287,14 +287,14 @@ def detect_system_language() -> tuple[str, str]:
 
 def preferences_system_info() -> dict:
     """
-  Return a dict summarizing system-related preference defaults and paths.
-  Keys:
-   - config_dir: user configuration directory used by the app
-   - prefs_file: absolute path to the JSON preferences file
-   - system_language_code: e.g., 'fr' or 'en'
-   - system_language_name: human-readable name
-   - system_theme: 'dark' or 'light'
-  """
+    Return a dict summarizing system-related preference defaults and paths.
+    Keys:
+     - config_dir: user configuration directory used by the app
+     - prefs_file: absolute path to the JSON preferences file
+     - system_language_code: e.g., 'fr' or 'en'
+     - system_language_name: human-readable name
+     - system_theme: 'dark' or 'light'
+    """
     try:
         code, name = detect_system_language()
     except Exception:
@@ -314,11 +314,11 @@ def preferences_system_info() -> dict:
 
 def export_system_preferences_json(path: str | None = None) -> str:
     """
- Write JSON file containing system information tied to preferences
- (language système détectée, theme clair/sombre, paths de config).
- Si path n'est pas fourni, écrit dans le folder de config utilisateur
- sous le nom 'system_preferences.json'. Return le path final écrit.
- """
+    Write JSON file containing system information tied to preferences
+    (language système détectée, theme clair/sombre, paths de config).
+    Si path n'est pas fourni, écrit dans le folder de config utilisateur
+    sous le nom 'system_preferences.json'. Return le path final écrit.
+    """
     data = preferences_system_info()
     if not path:
         path = os.path.join(_user_config_dir(), "system_preferences.json")
