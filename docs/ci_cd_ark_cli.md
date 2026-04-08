@@ -104,10 +104,14 @@ $ARK_BIN workspace entrypoint-clear "$WORKSPACE_DIR" --json
 - `bcasl run` (optional)
   - include BCASL plugin execution in pipeline when needed
   - recommended through wrapper flags: `--with-bcasl` / `--no-bcasl`
+  - supports both forms: `bcasl run /path/to/workspace` and `bcasl run --workspace /path/to/workspace`
 
 - `engine compile`
   - compiles the resolved entrypoint with the selected engine
   - returns non-zero on build failure, even in `--json` mode (pipeline-friendly)
+
+- `bcasl doctor`
+  - supports both forms: `bcasl doctor /path/to/workspace` and `bcasl doctor --workspace /path/to/workspace`
 - `engine config set/reset`
   - lets CI apply or reset workspace engine options without opening GUI
 - `venv status/use-system/use-venv/install-req`
