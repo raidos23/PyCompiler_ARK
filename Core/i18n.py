@@ -101,7 +101,7 @@ _CACHE_LOCK = asyncio.Lock()
 
 
 def _project_root() -> str:
-    """Retourne le chemin racine du projet (synchrone, pas d'I/O bloquant)."""
+    """Return project root path (sync, no blocking I/O)."""
     try:
         return os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
     except Exception:
@@ -109,7 +109,7 @@ def _project_root() -> str:
 
 
 def _languages_dir() -> str:
-    """Retourne le chemin du dossier languages (synchrone, pas d'I/O bloquant)."""
+    """Return `languages` directory path (sync, no blocking I/O)."""
     try:
         return os.path.join(_project_root(), "languages")
     except Exception:
@@ -161,8 +161,8 @@ def _resolve_system_language_sync() -> str:
 def _load_language_file_sync(code: str) -> tuple[str | None, dict[str, Any] | None]:
     """Load a language JSON file with flexible code matching.
 
-    Returns (resolved_code, data) or (None, None) if not found/invalid.
-    """
+  Returns (resolved_code, data) or (None, None) if not found/invalid.
+  """
     try:
         raw = str(code or "").strip()
     except Exception:
@@ -287,10 +287,10 @@ def _merge_translations(
 ) -> dict[str, Any]:
     """Merge translations with robust fallbacks.
 
-    - Keep all keys from base (English).
-    - Override with non-empty string values from override.
-    - Preserve override metadata when valid.
-    """
+  - Keep all keys from base (English).
+  - Override with non-empty string values from override.
+  - Preserve override metadata when valid.
+  """
     merged: dict[str, Any] = dict(base) if isinstance(base, dict) else {}
 
     if isinstance(override, dict):
@@ -311,7 +311,7 @@ def _merge_translations(
 
 
 async def resolve_system_language() -> str:
-    """Résout la langue système en temps réel avec gestion d'erreurs."""
+    """Resolve system language in real time with safe fallbacks."""
     try:
         return await asyncio.to_thread(_resolve_system_language_sync)
     except Exception:
@@ -319,7 +319,7 @@ async def resolve_system_language() -> str:
 
 
 async def available_languages() -> list[dict[str, str]]:
-    """Retourne les langues disponibles avec caching thread-safe."""
+    """Return available languages with thread-safe caching."""
     global _LANGUAGES_CACHE
 
     try:
@@ -341,7 +341,7 @@ async def available_languages() -> list[dict[str, str]]:
 
 
 async def get_translations(lang_pref: str | None) -> dict[str, Any]:
-    """Charge les traductions en temps réel avec caching et fallbacks robustes."""
+    """Load translations in real time with caching and robust fallbacks."""
     try:
         # Normaliser la préférence de langue
         code = await normalize_lang_pref(lang_pref)
@@ -380,7 +380,7 @@ async def get_translations(lang_pref: str | None) -> dict[str, Any]:
 
 
 def _normalize_translation_meta(data: dict[str, Any], code: str) -> dict[str, Any]:
-    """Normalise les métadonnées de traduction (synchrone, pas d'I/O)."""
+    """Normalize translation metadata (sync, no I/O)."""
     try:
         if not isinstance(data, dict):
             data = {}
@@ -414,7 +414,7 @@ def _normalize_translation_meta(data: dict[str, Any], code: str) -> dict[str, An
 
 
 def _get_language_name(code: str) -> str:
-    """Retourne le nom de la langue pour un code donné (synchrone, pas d'I/O)."""
+    """Return language display name for a code (sync, no I/O)."""
     code_lower = (code or "").lower()
 
     if code_lower in ("en", "english"):
@@ -441,7 +441,7 @@ def _get_language_name(code: str) -> str:
 
 
 async def clear_translation_cache() -> None:
-    """Vide le cache des traductions (utile pour les tests ou rechargements)."""
+    """Clear translation caches (useful for tests and reloads)."""
     global _TRANSLATION_CACHE, _LANGUAGES_CACHE
 
     try:
@@ -453,7 +453,7 @@ async def clear_translation_cache() -> None:
 
 
 def get_current_language_sync() -> str:
-    """Retourne la langue actuelle depuis les préférences utilisateur (synchrone)."""
+    """Return current language from user preferences (sync)."""
     try:
         # Importer ici pour éviter les imports circulaires
         from .PreferencesManager import PREFS_FILE
@@ -488,9 +488,9 @@ def _is_french_token(value: object | None) -> bool:
 def is_french_language(gui: object | None = None) -> bool:
     """Return True if the effective language is French; otherwise False.
 
-    Rule enforced: French only when explicitly selected (or system language is French).
-    Any other language must fall back to English.
-    """
+  Rule enforced: French only when explicitly selected (or system language is French).
+  Any other language must fall back to English.
+  """
     try:
         if gui is not None:
             for attr in ("language_pref", "language"):
@@ -834,7 +834,7 @@ def log_i18n_level(
 
 
 def apply_language(self, lang_display: str) -> None:
-    """Applique la langue sélectionnée (centralisé)."""
+    """Apply selected language through centralized i18n flow."""
     from .Globals import _run_coro_async
 
     async def _do():
@@ -910,9 +910,9 @@ def apply_language(self, lang_display: str) -> None:
 def _apply_main_app_translations(self, tr: dict[str, object]) -> None:
     """Apply translations to main app UI elements.
 
-    This is a fused version combining the best features from both implementations.
-    Uses the _set helper pattern for cleaner code while maintaining comprehensive coverage.
-    """
+  This is a fused version combining the best features from both implementations.
+  Uses the _set helper pattern for cleaner code while maintaining comprehensive coverage.
+  """
 
     # Internal helper for setting widget text with fallback
     def _set(attr: str, key: str, method: str = "setText"):

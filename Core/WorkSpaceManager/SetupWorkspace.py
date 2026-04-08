@@ -25,19 +25,19 @@ from Core.WidgetsCreator import CompilationProcessDialog
 
 
 class SetupWorkspace:
-    """Gestion de la sélection et de la configuration du workspace."""
+    """Workspace selection and initialization helpers for the main GUI."""
 
     @staticmethod
     def select_workspace(gui_instance) -> Optional[str]:
         """
-        Ouvre une boîte de dialogue pour sélectionner le dossier workspace.
+    Open a folder picker to select a workspace directory.
 
-        Args:
-            gui_instance: Instance de l'interface GUI
+    Args:
+      gui_instance: Main GUI instance.
 
-        Returns:
-            Le chemin du workspace sélectionné ou None si annulé
-        """
+    Returns:
+      Selected workspace path, or `None` if canceled.
+    """
 
         def _t(_key: str, fr: str, en: str) -> str:
             try:
@@ -58,18 +58,18 @@ class SetupWorkspace:
         gui_instance, folder: str, source: str = "ui"
     ) -> bool:
         """
-        Applique la sélection du workspace et configure l'interface.
+    Apply workspace selection and refresh all dependent GUI state.
 
-        Args:
-            gui_instance: Instance de l'interface GUI
-            folder: Chemin du dossier workspace
-            source: Source de la requête ("ui" ou "plugin")
+    Args:
+      gui_instance: Main GUI instance.
+      folder: Target workspace directory path.
+      source: Request origin (`"ui"` or `"plugin"`).
 
-        Returns:
-            True si succès, False sinon
-        """
+    Returns:
+      `True` on success, `False` otherwise.
+    """
         try:
-            # Afficher le dialog de chargement du workspace
+            # Étape 1: afficher un feedback utilisateur pendant le chargement.
             try:
                 loading_dialog = CompilationProcessDialog(
                     gui_instance.tr(
@@ -89,7 +89,7 @@ class SetupWorkspace:
             except Exception:
                 loading_dialog = None
 
-            # Vérifier et créer le dossier si nécessaire
+            # Étape 2: valider/préparer le dossier workspace.
             if not folder:
                 try:
                     gui_instance.log_i18n(
@@ -124,7 +124,7 @@ class SetupWorkspace:
                     except Exception:
                         pass
 
-            # Confirmation et arrêt des compilations en cours
+            # Étape 3: stopper proprement les compilations actives si nécessaire.
             if str(source).lower() == "plugin":
                 try:
                     if (
@@ -158,10 +158,10 @@ class SetupWorkspace:
                     except Exception:
                         pass
 
-            # Appliquer le workspace
+            # Étape 4: appliquer le workspace en mémoire.
             gui_instance.workspace_dir = folder
 
-            # Mettre à jour le cache global
+            # Étape 5: synchroniser le cache global thread-safe.
             try:
                 global _workspace_dir_cache
                 with _workspace_dir_lock:
@@ -169,7 +169,7 @@ class SetupWorkspace:
             except Exception:
                 pass
 
-            # Mettre à jour l'interface
+            # Étape 6: mettre à jour les widgets dépendants du workspace.
             if hasattr(gui_instance, "label_folder"):
                 gui_instance.label_folder.setText(
                     gui_instance.tr(
@@ -222,7 +222,7 @@ class SetupWorkspace:
             except Exception:
                 pass
 
-            # Configuration du venv
+            # Étape 7: appliquer la stratégie venv du workspace.
             try:
                 if hasattr(gui_instance, "venv_manager") and gui_instance.venv_manager:
                     # Do not auto-install engine tools on workspace selection.
@@ -285,7 +285,7 @@ class SetupWorkspace:
                     f"⚠️ Error during workspace setup: {e}",
                 )
 
-            # Appliquer la configuration des engines depuis .ark/<engine_id>/config.json
+            # Étape 8: recharger les configs engines persistées dans le workspace.
             try:
                 from Core.EngineConfigManager import apply_engine_configs_for_workspace
 
@@ -293,7 +293,7 @@ class SetupWorkspace:
             except Exception:
                 pass
 
-            # Fermer le dialog de chargement
+            # Étape 9: fermer le feedback de chargement.
             try:
                 if loading_dialog:
                     loading_dialog.close()
@@ -320,21 +320,21 @@ class SetupWorkspace:
     @staticmethod
     def add_py_files_from_folder(gui_instance, folder: str) -> int:
         """
-        Ajoute récursivement tous les fichiers Python du dossier au projet.
+    Recursively add Python files from a folder into the GUI file list.
 
-        Args:
-            gui_instance: Instance de l'interface GUI
-            folder: Chemin du dossier à scanner
+    Args:
+      gui_instance: Main GUI instance.
+      folder: Folder path to scan.
 
-        Returns:
-            Nombre de fichiers ajoutés
-        """
+    Returns:
+      Number of files effectively added.
+    """
         count = 0
         excluded_count = 0
 
         workspace_dir = getattr(gui_instance, "workspace_dir", None)
 
-        # Charger la configuration ARK pour les patterns d'exclusion
+        # Étape 1: charger les règles d'exclusion workspace.
         ark_config = load_ark_config(workspace_dir)
         exclusion_patterns = ark_config.get("exclusion_patterns", [])
 
@@ -344,7 +344,7 @@ class SetupWorkspace:
                 if f.endswith(".py"):
                     full_path = os.path.join(root, f)
 
-                    # Vérifier si le fichier est dans le workspace
+                    # Étape 2: ignorer les fichiers hors workspace.
                     if (
                         workspace_dir
                         and not os.path.commonpath([full_path, workspace_dir])
@@ -352,7 +352,7 @@ class SetupWorkspace:
                     ):
                         continue
 
-                    # Vérifier les patterns d'exclusion depuis ARK_Main_Config.yml
+                    # Étape 3: appliquer les exclusions ARK_Main_Config.yml.
                     if should_exclude_file(
                         full_path, workspace_dir, exclusion_patterns
                     ):
@@ -376,7 +376,7 @@ class SetupWorkspace:
                                 QApplication.processEvents()
                                 last_pump = now
 
-        # Afficher un message récapitulatif si des fichiers ont été exclus
+        # Étape 4: journaliser le résumé d'exclusion.
         if excluded_count > 0:
             gui_instance.log_i18n(
                 f"⏩ Exclusion appliquée : {excluded_count} fichier(s) exclu(s) selon ARK_Main_Config.yml",
@@ -394,11 +394,11 @@ class SetupWorkspace:
     @staticmethod
     def open_ark_config(gui_instance):
         """
-        Ouvre le fichier ARK_Main_Config.yml dans l'éditeur par défaut.
+    Open `ARK_Main_Config.yml` with the system default editor.
 
-        Args:
-            gui_instance: Instance de l'interface GUI
-        """
+    Args:
+      gui_instance: Main GUI instance.
+    """
         workspace_dir = getattr(gui_instance, "workspace_dir", None)
 
         if not workspace_dir:
@@ -414,7 +414,7 @@ class SetupWorkspace:
 
         config_path = os.path.join(workspace_dir, "ARK_Main_Config.yml")
 
-        # Créer le fichier s'il n'existe pas
+        # Étape 1: créer le fichier config si absent.
         if not os.path.exists(config_path):
             try:
                 from Core.ArkConfigManager import create_default_ark_config
@@ -435,7 +435,7 @@ class SetupWorkspace:
                 )
                 return
 
-        # Ouvrir le fichier dans l'éditeur par défaut
+        # Étape 2: ouvrir le fichier dans l'éditeur système.
         try:
             import subprocess
             import platform

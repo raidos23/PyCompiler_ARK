@@ -1,7 +1,7 @@
 # Copyright (C) 2025
 
 """
-Détection automatique des modules sensibles et application des hooks/plugins
+Automatic detection of sensitive modules and hook/plugin application
 pour les moteurs, basée sur un mapping JSON piloté par les moteurs (ENGINES).
 
 Règles clés:
@@ -178,9 +178,9 @@ def _read_json_file(path: str) -> dict[str, dict[str, Optional[str]]]:
 def _load_mapping(
     base_dir: str, workspace_dir: Optional[str] = None
 ) -> tuple[dict[str, dict[str, Optional[str]]], Optional[str]]:
-    """Charge le mapping via la variable d'environnement uniquement.
-    Retourne (mapping, chemin_utilisé) ou ({}, None) si non défini.
-    """
+    """Load mapping from environment variable only.
+  Returns `(mapping, used_path)` or `({}, None)` when undefined.
+  """
     # ENV-only mapping loader; legacy locations disabled
     try:
         env_path = os.environ.get("PYCOMPILER_MAPPING")
@@ -198,9 +198,9 @@ def _load_mapping(
 
 def _parse_requirements(requirements_path: str) -> set[str]:
     """Extract package names from requirements.txt, handling URLs, VCS, and extras.
-    - Supports lines like 'package==1.2', 'package[extra]', 'name @ https://...', 'git+https://...#egg=name'
-    - Ignores comments, markers, and includes (-r ...)
-    """
+  - Supports lines like 'package==1.2', 'package[extra]', 'name @ https://...', 'git+https://...#egg=name'
+  - Ignores comments, markers, and includes (-r ...)
+  """
     found: set[str] = set()
     if not os.path.isfile(requirements_path):
         return found
@@ -258,11 +258,11 @@ def _parse_requirements(requirements_path: str) -> set[str]:
 
 
 def _scan_imports(py_files: list[str], workspace_dir: str) -> set[str]:
-    """Analyse les fichiers .py et retourne les noms de modules importés (top-level).
-    - Ignore venv/, __pycache__/ et dossiers cachés
-    - Ignore fichiers trop volumineux (>1.5 Mo) pour robustesse
-    - Tolérant aux erreurs d'encodage/syntaxe
-    """
+    """Analyze .py files and return imported top-level module names.
+  - Ignore venv/, __pycache__/ et folders cachés
+  - Ignore files trop volumineux (>1.5 Mo) pour robustesse
+  - Tolérant aux erreurs d'encodage/syntaxe
+  """
     found: set[str] = set()
     # Exclure venv interne
     venv_dir = os.path.abspath(os.path.join(workspace_dir, "venv"))
@@ -311,10 +311,10 @@ def _scan_imports(py_files: list[str], workspace_dir: str) -> set[str]:
 def _match_modules_to_mapping(
     modules: set[str], mapping: dict[str, dict[str, Optional[str]]]
 ) -> tuple[dict[str, dict[str, Optional[str]]], dict[str, str]]:
-    """Retourne deux dicts:
-    - matched: {package_key_in_mapping: mapping_entry}
-    - package_to_import_name: {package_key_in_mapping: import_name}
-    """
+    """Return two dictionaries:
+  - `matched`: `{package_key_in_mapping: mapping_entry}`
+  - `package_to_import_name`: `{package_key_in_mapping: import_name}`
+  """
     # Build lookup index insensible à la casse et aux tirets
     index = {_norm(name): name for name in mapping.keys()}
 
@@ -395,8 +395,8 @@ _ENGINE_BUILDERS: dict[str, callable] = {}
 
 def register_auto_builder(engine_id: str, builder) -> None:
     """Register a builder function for a given engine_id.
-    The builder signature must be (matched: dict, pkg_to_import: dict) -> List[str].
-    """
+  The builder signature must be (matched: dict, pkg_to_import: dict) -> List[str].
+  """
     if not engine_id or not callable(builder):
         return
     _ENGINE_BUILDERS[engine_id] = builder
@@ -404,8 +404,8 @@ def register_auto_builder(engine_id: str, builder) -> None:
 
 def _maybe_load_plugin_auto_builder(engine_id: str) -> None:
     """Optionally load a plugin-provided auto builder for engine_id.
-    Tries to import '<engine_id>.auto_plugins' without failing app logic.
-    """
+  Tries to import '<engine_id>.auto_plugins' without failing app logic.
+  """
     try:
         mod = importlib.import_module(f"{engine_id}.auto_plugins")
         auto_builder = getattr(mod, "AUTO_BUILDER", None)
@@ -427,7 +427,7 @@ def _maybe_load_plugin_auto_builder(engine_id: str) -> None:
 
 
 def _write_report_if_enabled(self, report: dict):
-    """Ecrit un rapport JSON si activé via attribut ou variable d'env (écriture atomique)."""
+    """Write JSON report when enabled via attribute or environment variable (atomic write)."""
     try:
         should = (
             bool(getattr(self, "generate_auto_detection_report", False))
@@ -483,7 +483,7 @@ def _write_report_if_enabled(self, report: dict):
 
 
 def _detect_modules_preferring_requirements(self) -> tuple[set[str], str]:
-    """Retourne (modules_detectés, source: 'requirements'|'pyproject'|'imports')."""
+    """Return `(detected_modules, source: 'requirements'|'pyproject'|'imports')`."""
     # 1) requirements.{txt|in} dans le workspace (configurable via env PYCOMPILER_REQ_FILES)
     req_names = os.environ.get(
         "PYCOMPILER_REQ_FILES", "requirements.txt,requirements.in"
@@ -550,7 +550,7 @@ def _detect_modules_preferring_requirements(self) -> tuple[set[str], str]:
 def _match_with_requirements_aware(
     modules: set[str], mapping: dict[str, dict[str, Optional[str]]]
 ) -> tuple[dict[str, dict[str, Optional[str]]], dict[str, str]]:
-    """Essaye de matcher d'abord sur package names (requirements), sinon via alias import."""
+    """Try matching by package names first, then fallback to import aliases."""
     # D'abord, essayer correspondance directe sur package (utile pour Pillow, opencv, scikit-learn)
     index = {_norm(name): name for name in mapping.keys()}
     matched: dict[str, dict[str, Optional[str]]] = {}
@@ -580,14 +580,14 @@ def compute_for_all(
     self, engine_ids: Optional[list[str]] = None
 ) -> dict[str, list[str]]:
     """
-    Calcule les arguments auto pour tous les moteurs (plug-and-play).
-    - engine_ids: liste optionnelle d'identifiants de moteurs à traiter. Si None,
-      on détecte automatiquement:
-        * moteurs enregistrés dans _ENGINE_BUILDERS
-        * moteurs avec un mapping engine_plugins/<engine_id>/mapping.json
-        * moteurs embarqués utils/engines/<engine_id>/mapping.json
-    Retourne un dict: { engine_id: List[str] }.
-    """
+  Compute auto arguments for all engines (plug-and-play).
+  - engine_ids: liste optionnelle d'identifiants de moteurs à traiter. Si None,
+   on détecte automatiquement:
+    * moteurs enregistrés dans _ENGINE_BUILDERS
+    * moteurs avec un mapping engine_plugins/<engine_id>/mapping.json
+    * moteurs embarqués utils/engines/<engine_id>/mapping.json
+  Return un dict: { engine_id: List[str] }.
+  """
     # Construire la liste ordonnée des moteurs à traiter
     ordered: list[str] = []
     if engine_ids:
@@ -645,12 +645,12 @@ def compute_for_all(
 def _load_engine_package_mapping(
     engine_id: str,
 ) -> tuple[dict[str, dict[str, Optional[str]]], Optional[str]]:
-    """Charge le mapping spécifique au moteur depuis plusieurs emplacements, avec priorités:
-    1) mapping.json embarqué dans le package du moteur importé (engine_id)
-    2) ENGINES/<engine_id>/mapping.json (fichiers du projet)
-    3) (optionnel) chemin défini par l'env PYCOMPILER_MAPPING (fusionné)
-    Retourne (mapping_combiné, chemin_principal_utilisé)
-    """
+    """Load engine-specific mapping from multiple locations with priorities:
+  1) `mapping.json` embedded in imported engine package (`engine_id`)
+  2) `ENGINES/<engine_id>/mapping.json` from project files
+  3) Optional path from `PYCOMPILER_MAPPING` environment variable (merged)
+  Returns `(combined_mapping, primary_used_path)`.
+  """
     combined: dict[str, dict[str, Optional[str]]] = {}
     used: Optional[str] = None
 
@@ -733,7 +733,7 @@ def _load_engine_package_mapping(
 
 
 def compute_auto_for_engine(self, engine_id: str) -> list[str]:
-    """Calcule les arguments auto pour un moteur donné (plug-and-play)."""
+    """Compute auto arguments for a given engine (plug-and-play)."""
     try:
         os.path.realpath(os.path.join(os.path.dirname(__file__), os.pardir))
         getattr(self, "workspace_dir", None)

@@ -16,23 +16,23 @@
 """
 PyCompiler ARK - Compiler Core Module
 
-Module principal du compilateur pour PyCompiler ARK.
-Gère l'exécution des processus de compilation avec support threading
-et communication en temps réel avec l'interface utilisateur.
+Main compiler core module for PyCompiler ARK.
+Handles compilation process execution with threading support and
+real-time communication with the user interface.
 
-Classes principales:
-- CompilerCore: Classe principale du compilateur
-- CompilationThread: Thread pour exécution non-bloquante
-- MainProcess: Processus principal de compilation
-- ProcessKiller: Gestion des processus
+Main classes:
+- CompilerCore: Main compiler class
+- CompilationThread: Non-blocking execution thread
+- MainProcess: Main compilation process
+- ProcessKiller: Process management helpers
 
-Fonctions:
-- compile_all: Compile tous les fichiers sélectionnés
-- cancel_all_compilations: Annule toutes les compilations en cours
-- kill_process: Tue un processus
-- kill_process_tree: Tue un processus et ses enfants
-- build_command: Construit une commande de compilation
-- validate_command: Valide une commande de compilation
+Functions:
+- compile_all: Compile all selected files
+- cancel_all_compilations: Cancel all running compilations
+- kill_process: Terminate one process
+- kill_process_tree: Terminate one process and its children
+- build_command: Build a compilation command
+- validate_command: Validate a compilation command
 """
 
 from __future__ import annotations
@@ -42,7 +42,7 @@ _global_main_process = None
 
 
 def _get_main_process():
-    """Retourne l'instance globale du MainProcess."""
+    """Return the global `MainProcess` instance."""
     global _global_main_process
     if _global_main_process is None:
         _global_main_process = MainProcess()

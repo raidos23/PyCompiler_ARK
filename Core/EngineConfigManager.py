@@ -17,7 +17,7 @@
 EngineConfigManager
 
 Persists engine UI configuration per workspace at:
-    <workspace>/.ark/<engine_id>/config.json
+  <workspace>/.ark/<engine_id>/config.json
 """
 
 from __future__ import annotations

@@ -16,10 +16,10 @@
 """
 WorkSpaceManager Module
 
-Ce module gère toutes les opérations liées au workspace :
+Ce module gère toutes les opérations liées au workspace:
 - Configuration initiale du workspace
-- Manipulation avancée (drag & drop, sélection de fichiers)
-- Gestion des fichiers Python dans le workspace
+- Manipulation avancée (drag & drop, sélection de files)
+- Management des files Python dans le workspace
 """
 
 from .SetupWorkspace import SetupWorkspace

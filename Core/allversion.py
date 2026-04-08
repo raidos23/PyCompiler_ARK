@@ -30,13 +30,13 @@ class VersionInfo:
 
     def __init__(self, name: str, version: str, component_type: str = "unknown"):
         """
-        Initialize version information.
+    Initialize version information.
 
-        Args:
-            name: Component name
-            version: Version string (e.g., "1.0.0")
-            component_type: Type of component (core, sdk, engine, plugin)
-        """
+    Args:
+      name: Component name
+      version: Version string (e.g., "1.0.0")
+      component_type: Type of component (core, sdk, engine, plugin)
+    """
         self.name = name
         self.version = version
         self.component_type = component_type
@@ -130,11 +130,11 @@ def get_system_version() -> str:
 
 def get_all_versions() -> Dict[str, VersionInfo]:
     """
-    Get all version information for the application, SDKs and system.
+  Get all version information for the application, SDKs and system.
 
-    Returns:
-        Dictionary mapping component names to VersionInfo objects
-    """
+  Returns:
+    Dictionary mapping component names to VersionInfo objects
+  """
     versions = {}
 
     # Core
@@ -170,11 +170,11 @@ def get_all_versions() -> Dict[str, VersionInfo]:
 
 def get_versions_dict() -> Dict[str, str]:
     """
-    Get all versions as a simple dictionary mapping names to version strings.
+  Get all versions as a simple dictionary mapping names to version strings.
 
-    Returns:
-        Dictionary mapping component names to version strings
-    """
+  Returns:
+    Dictionary mapping component names to version strings
+  """
     versions = get_all_versions()
     return {name: info.version for name, info in versions.items()}
 
@@ -204,11 +204,11 @@ def print_all_versions() -> None:
 
 def get_version_string() -> str:
     """
-    Get a formatted version string for all components.
+  Get a formatted version string for all components.
 
-    Returns:
-        Formatted string with all version information
-    """
+  Returns:
+    Formatted string with all version information
+  """
     versions = get_all_versions()
     lines = ["PyCompiler ARK Version Information:"]
 
