@@ -10,6 +10,24 @@ on:
       - "Core/**"
       - "EngineLoader/**"
       - "ENGINES/**"
+      - "OnlyMod/**"
+      - "bcasl/**"
+      - "Plugins/**"
+      - "Plugins_SDK/**"
+      - "requirements.txt"
+      - ".github/workflows/ark-self-build.yml"
+  pull_request:
+    branches: [main, develop, develop2]
+    paths:
+      - "pycompiler_ark.py"
+      - "cli/**"
+      - "Core/**"
+      - "EngineLoader/**"
+      - "ENGINES/**"
+      - "OnlyMod/**"
+      - "bcasl/**"
+      - "Plugins/**"
+      - "Plugins_SDK/**"
       - "requirements.txt"
       - ".github/workflows/ark-self-build.yml"
 
@@ -37,10 +55,13 @@ jobs:
       - name: Install runtime dependencies
         run: python -m pip install -r requirements.txt
 
-      - name: Install build engine dependencies (nuitka)
+      - name: Install system tools for CI precheck + Nuitka
         run: |
           sudo apt-get update
-          sudo apt-get install -y patchelf
+          sudo apt-get install -y patchelf cloc
+
+      - name: Install build engine dependencies (Nuitka)
+        run: |
           python -m pip install nuitka
 
       - name: ARK self-build pipeline
@@ -54,11 +75,26 @@ jobs:
 
           mkdir -p "$REPORT_DIR"
 
+          echo "[1/7] init workspace"
           $ARK_BIN init "$WORKSPACE_DIR" --with-venv --json > "$REPORT_DIR/init.json"
+
+          echo "[2/7] auto-config entrypoint"
           $ARK_BIN cfg-auto "$WORKSPACE_DIR" --entrypoint "pycompiler_ark.py" --json > "$REPORT_DIR/cfg_auto.json"
+
+          echo "[3/7] strict precheck (fail-fast)"
           $ARK_BIN check "$WORKSPACE_DIR" --json --strict > "$REPORT_DIR/check.json"
+
+          echo "[4/7] target engine info"
           $ARK_BIN engine info nuitka --workspace "$WORKSPACE_DIR" --json > "$REPORT_DIR/engine_info.json"
+
+          echo "[5/7] optional doctor snapshot"
+          $ARK_BIN doctor --json > "$REPORT_DIR/doctor.json"
+
+          echo "[6/7] self-build using ARK -> Nuitka"
           $ARK_BIN engine compile nuitka "$ENTRYPOINT_FILE" --workspace "$WORKSPACE_DIR" --json > "$REPORT_DIR/build_result.json"
+
+          echo "[7/7] post-build workspace snapshot"
+          $ARK_BIN workspace inspect "$WORKSPACE_DIR" --json > "$REPORT_DIR/workspace_inspect.json"
 
       - name: Collect artifacts
         if: always()
