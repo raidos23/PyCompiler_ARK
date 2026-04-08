@@ -748,10 +748,10 @@ class SysDependencyManager:
         start_msg_en: str = "Starting...",
     ) -> Optional[QProcess]:
         """
-    Launch process with indeterminate progress dialog.
-    Return l'objet QProcess (non bloquant) ou None en cas d'échec.
-    Le dialogue se ferme automatiquement à la fin du process.
-    """
+  Launch process with indeterminate progress dialog.
+  Return l'objet QProcess (non bloquant) ou None en cas d'failure.
+  Le dialogue se close automatiquement à la fin du process.
+  """
         try:
             dlg = ProgressDialog(
                 self.tr(title_fr, title_en), self.parent_widget, cancelable=True
@@ -826,9 +826,9 @@ class SysDependencyManager:
         timeout_s: Optional[int] = None,
     ) -> Optional[QProcess]:
         """
-    Run shell command (Linux) expecting sudo -S on stdin with indeterminate progress dialog.
-    Return QProcess (non bloquant). Le mot de passe est écrit sur stdin au démarrage.
-    """
+  Run shell command (Linux) expecting sudo -S on stdin with indeterminate progress dialog.
+  Return QProcess (non bloquant). Le mot de passe est écrit sur stdin au démarrage.
+  """
         try:
             if platform.system() != "Linux":
                 self.msg_error(
@@ -965,10 +965,10 @@ class SysDependencyManager:
         password: Optional[str] = None,
     ) -> Optional[QProcess]:
         """
-    High-level helper: request consent + password (if missing),
-    construit la commande selon le gestionnaire et lance l'installation avec une
-    boîte de progression indéterminée. Return QProcess (non bloquant) ou None.
-    """
+  High-level helper: request consent + password (if missing),
+  build la commande selon le managementnaire et lance l'installation avec une
+  dialog de progression indéterminée. Return QProcess (non bloquant) ou None.
+  """
         try:
             if platform.system() != "Linux":
                 self.msg_error(

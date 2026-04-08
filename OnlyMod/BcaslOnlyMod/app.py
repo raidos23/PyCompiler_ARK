@@ -16,26 +16,26 @@
 """
 BcaslOnlyMod Application - Application Standalone pour les Plugins BCASL
 
-Module autonome permettant d'exécuter et configurer les plugins BCASL
-indépendamment de l'application principale PyCompiler ARK.
+Module standalone permettant d'executer et configurer les BCASL plugins
+indépendamment de l'application maine PyCompiler ARK.
 
 Fonctionnalités:
-    - Interface graphique complète pour gérer les plugins BCASL
-    - Découverte automatique des plugins dans le dossier Plugins/
-    - Activation/désactivation individuelle des plugins
-    - Réordonnancement de l'exécution des plugins
-    - Exécution synchrone et asynchrone des plugins
-    - Affichage des rapports d'exécution détaillés
-    - Support des thèmes clair/sombre
-    - Support multilingue (EN/FR)
+  - Interface graphique complète pour gérer les BCASL plugins
+  - Découverte automatique des plugins dans le folder Plugins/
+  - Activation/désactivation individuelle des plugins
+  - Réordonnancement de l'exécution des plugins
+  - Exécution synchrone et asynchrone des plugins
+  - Affichage des rapports d'exécution détaillés
+  - Support des themes clair/sombre
+  - Support multilingue (EN/FR)
 
 Utilisation:
-    # Interface GUI
-    python -m OnlyMod.BcaslOnlyMod
+  # Interface GUI
+  python -m OnlyMod.BcaslOnlyMod
 
-    # Via l'application
-    from OnlyMod.BcaslOnlyMod import launch_bcasl_gui
-    launch_bcasl_gui(workspace_dir="/path/to/workspace", language="fr", theme="dark")
+  # Via l'application
+  from OnlyMod.BcaslOnlyMod import launch_bcasl_gui
+  launch_bcasl_gui(workspace_dir="/path/to/workspace", language="fr", theme="dark")
 """
 
 from __future__ import annotations
@@ -74,7 +74,7 @@ def tr(en_text: str, fr_text: str) -> str:
 
 
 class LanguageManager:
-    """Gestionnaire de langues pour l'application."""
+    """Language manager pour l'application."""
 
     def __init__(self, lang_code: str = "en"):
         self.current_language = lang_code
@@ -83,7 +83,7 @@ class LanguageManager:
         self.strings = self._get_strings()
 
     def _get_strings(self) -> Dict[str, Dict[str, str]]:
-        """Retourne les chaînes traduites."""
+        """Return les strings traduites."""
         return {
             "en": {
                 "app_title": "BCASL Standalone - Plugin Manager",
@@ -151,14 +151,13 @@ class LanguageManager:
 
 
 class ThemeManager:
-    """Gestionnaire de thèmes pour l'application."""
-
+    """Theme manager for the application."""
     def __init__(self, theme_name: str = "dark"):
         self.current_theme = theme_name
         self.colors = self._get_theme_colors(theme_name)
 
     def _get_theme_colors(self, theme_name: str) -> Dict[str, str]:
-        """Retourne les couleurs du thème."""
+        """Return les couleurs du theme."""
         if theme_name == "dark":
             return {
                 "bg_primary": "#1e1e1e",
@@ -187,7 +186,7 @@ class ThemeManager:
             }
 
     def set_theme(self, theme_name: str) -> bool:
-        """Définit le thème actuel."""
+        """Définit le theme actuel."""
         if theme_name in ("light", "dark"):
             self.current_theme = theme_name
             self.colors = self._get_theme_colors(theme_name)
@@ -197,15 +196,15 @@ class ThemeManager:
 
 class BcaslOnlyModApp:
     """
-    Application autonome pour gérer et exécuter les plugins BCASL.
+  Standalone application to manage and execute BCASL plugins.
 
-    Cette classe fournit une interface programmatique pour:
-    - Découvrir les plugins BCASL disponibles
-    - Gérer l'activation/désactivation des plugins
-    - Réordonner l'exécution des plugins
-    - Exécuter les plugins de pré-compilation
-    - Afficher les rapports d'exécution
-    """
+  Cette classe fournit une interface programmatique pour:
+  - Découvrir les BCASL plugins disponibles
+  - Gérer l'activation/désactivation des plugins
+  - Réordonner l'exécution des plugins
+  - Executer les plugins de pre-compilation
+  - Displayr les rapports d'exécution
+  """
 
     # Variable de classe pour la langue
     _language = "en"
@@ -218,14 +217,14 @@ class BcaslOnlyModApp:
         headless: bool = False,
     ):
         """
-        Initialise l'application BcaslOnlyMod.
+    Initialize l'application BcaslOnlyMod.
 
-        Args:
-            workspace_dir: Chemin du workspace (optionnel)
-            language: Code de langue ('en' ou 'fr')
-            theme: Nom du thème ('light' ou 'dark')
-            headless: Si True, fonctionne sans interface GUI (mode CLI)
-        """
+    Args:
+      workspace_dir: Chemin du workspace (optionnel)
+      language: Code de language ('en' ou 'fr')
+      theme: Nom du theme ('light' ou 'dark')
+      headless: Si True, fonctionne sans interface GUI (mode CLI)
+    """
         self.workspace_dir = workspace_dir
         self.headless = headless
         BcaslOnlyModApp._language = language
@@ -246,7 +245,7 @@ class BcaslOnlyModApp:
         self._discover_plugins()
 
     def _init_paths(self):
-        """Initialise les chemins."""
+        """Initialize les paths."""
         try:
             self.repo_root = Path(__file__).resolve().parents[1]
             self.Plugins_dir = self.repo_root / "Plugins"
@@ -254,7 +253,7 @@ class BcaslOnlyModApp:
             pass
 
     def _load_config(self):
-        """Charge la configuration BCASL."""
+        """Load la configuration BCASL."""
         from bcasl.Loader import _load_workspace_config
 
         self.config = {}
@@ -263,14 +262,14 @@ class BcaslOnlyModApp:
             self.config = _load_workspace_config(workspace_root)
 
     def _discover_plugins(self):
-        """Découvre les plugins BCASL disponibles."""
+        """Décopen les BCASL plugins disponibles."""
         if not self.Plugins_dir or not self.Plugins_dir.exists():
             return
 
         self.plugins_meta = _discover_bcasl_meta(self.Plugins_dir)
 
     def get_plugins_info(self) -> List[Dict[str, Any]]:
-        """Retourne la liste des plugins avec leurs informations."""
+        """Return la liste des plugins avec leurs informations."""
         if not self.plugins_meta:
             return []
 
@@ -314,7 +313,7 @@ class BcaslOnlyModApp:
     def get_enabled_plugins(
         self, config: Optional[Dict[str, Any]] = None
     ) -> Dict[str, bool]:
-        """Retourne l'état d'activation des plugins."""
+        """Return l'état d'activation des plugins."""
         cfg = config or self.config
         plugins_cfg = cfg.get("plugins", {}) if isinstance(cfg, dict) else {}
 
@@ -342,7 +341,7 @@ class BcaslOnlyModApp:
         timeout: float = 0.0,
         log_callback: Optional[callable] = None,
     ) -> Optional[ExecutionReport]:
-        """Exécute les plugins BCASL de manière synchrone."""
+        """Execute les BCASL plugins de manière synchrone."""
         ws_dir = workspace_dir or self.workspace_dir
         if not ws_dir:
             if log_callback:
@@ -443,7 +442,7 @@ class BcaslOnlyModApp:
         return report
 
     def print_summary(self):
-        """Affiche un résumé de l'état de l'application."""
+        """Display un résumé de l'état de l'application."""
         print("\n" + "=" * 60)
         print("BCASL STANDALONE - Application Summary")
         print("=" * 60)
@@ -502,7 +501,7 @@ def run_cli(
     run: bool = False,
     timeout: float = 0.0,
 ) -> None:
-    """Point d'entrée CLI pour l'application standalone BCASL."""
+    """CLI entry point for standalone BCASL application."""
     global _CURRENT_LANGUAGE
     _CURRENT_LANGUAGE = language
 
@@ -558,7 +557,7 @@ def run_cli(
 
 
 def main():
-    """Point d'entrée principal pour l'application standalone."""
+    """Main entry point for standalone application."""
     parser = argparse.ArgumentParser(
         description="BCASL Standalone - Execute BCASL plugins independently",
         formatter_class=argparse.RawDescriptionHelpFormatter,

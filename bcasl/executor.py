@@ -106,7 +106,7 @@ def kill_active_workers() -> int:
 
 
 def _normalize_tags(tags: Any) -> list[str]:
-    """Normalise les tags en liste de chaînes minuscules."""
+    """Normalise les tags en liste de strings minuscules."""
     if not tags:
         return []
     if isinstance(tags, str):
@@ -813,8 +813,7 @@ def _load_plugin_instance(
 
 
 class BCASL:
-    """Gestionnaire principal des plugins et de leur exécution avant compilation."""
-
+    """Gestionnaire main des plugins et de leur exécution avant compilation."""
     def __init__(
         self,
         project_root: Path,
@@ -889,10 +888,10 @@ class BCASL:
     def load_plugins_from_directory(
         self, directory: Path
     ) -> tuple[int, list[tuple[str, str]]]:
-        """Charge automatiquement tous les plugins depuis un dossier.
+        """Load automatiquement tous les plugins depuis un folder.
 
-        Retourne (nombre_plugins_enregistrés, liste_erreurs[(module, message)]).
-        """
+    Return (nombre_plugins_enregistrés, liste_erreurs[(module, message)]).
+    """
         directory = Path(directory)
         if not directory.exists() or not directory.is_dir():
             _logger.warning("Dossier plugins introuvable: %s", directory)
@@ -1006,17 +1005,17 @@ class BCASL:
 
     # Ordonnancement et exécution
     def _resolve_order_with_tags(self) -> list[str]:
-        """Résout l'ordre d'exécution en respectant dépendances, priorités et tags.
+        """Résout l'ordre d'exécution en respectant dependencies, priorités et tags.
 
-        Utilise le système de tagging pour déterminer la priorité d'exécution:
-        - Phase 0: Nettoyage (clean, cleanup, sanitize)
-        - Phase 1: Validation (check, requirements, verify)
-        - Phase 2: Préparation (prepare, generate, install, configure)
-        - Phase 3: Conformité (license, header, normalize, inject)
-        - Phase 4: Linting (lint, format, typecheck, style)
-        - Phase 5: Obfuscation (obfuscate, transpile, protect, encrypt)
-        - Phase 100: Défaut (aucun tag reconnu)
-        """
+    Utilise le système de tagging pour determiner la priorité d'exécution:
+    - Phase 0: Nettoyage (clean, cleanup, sanitize)
+    - Phase 1: Validation (check, requirements, verify)
+    - Phase 2: Préparation (prepare, generate, install, configure)
+    - Phase 3: Conformité (license, header, normalize, inject)
+    - Phase 4: Linting (lint, format, typecheck, style)
+    - Phase 5: Obfuscation (obfuscate, transpile, protect, encrypt)
+    - Phase 100: Défaut (none tag reconnu)
+    """
         active_items = {pid: rec for pid, rec in self._registry.items() if rec.active}
         if not active_items:
             return []
@@ -1099,13 +1098,13 @@ class BCASL:
         return order
 
     def _resolve_order(self) -> list[str]:
-        """Résout l'ordre d'exécution en respectant dépendances et priorités.
+        """Résout l'ordre d'exécution en respectant dependencies et priorités.
 
-        - Filtre les plugins inactifs
-        - Ignore les dépendances inconnues (log warning)
-        - Kahn + file de priorité (priority, insert_idx) pour stabilité
-        - En cas de cycle, journalise et insère les restants par priorité
-        """
+    - Filtre les plugins inactifs
+    - Ignore les dependencies inconnues (log warning)
+    - Kahn + file de priorité (priority, insert_idx) pour stabilité
+    - En cas de cycle, journalise et insère les restants par priorité
+    """
         active_items = {pid: rec for pid, rec in self._registry.items() if rec.active}
         if not active_items:
             return []
@@ -1158,13 +1157,13 @@ class BCASL:
     def run_pre_compile(
         self, ctx: Optional[PreCompileContext] = None, stop_requested=None
     ) -> ExecutionReport:
-        """Exécute le hook 'on_pre_compile' de tous les plugins actifs.
+        """Execute le hook 'on_pre_compile' de tous les plugins actifs.
 
-        Optimisations de performance:
-        - Exécution parallèle des plugins sandboxés en respectant dépendances/priorités
-        - Cache optionnel des itérations de fichiers (voir PreCompileContext.iter_files)
-        - Paramètres via options.sandbox, options.plugin_parallelism et env PYCOMPILER_BCASL_PARALLELISM
-        """
+    Optimisations de performance:
+    - Exécution parallèle des plugins sandboxés en respectant dependencies/priorités
+    - Cache optionnel des itérations de files (voir PreCompileContext.iter_files)
+    - Paramètres via options.sandbox, options.plugin_parallelism et env PYCOMPILER_BCASL_PARALLELISM
+    """
         if ctx is None:
             ctx = PreCompileContext(self.project_root, self.config)
         else:
@@ -1250,10 +1249,10 @@ class BCASL:
 def _plugin_worker(
     module_path: str, plugin_id: str, project_root: str, config: dict[str, Any], q
 ) -> None:
-    """Charge un module de plugin depuis son chemin et exécute on_pre_compile dans un processus isolé.
+    """Load un module de plugin depuis son path et execute on_pre_compile dans un process isolé.
 
-    Renvoie un dict via la queue: {ok: bool, error: str, duration_ms: float}
-    """
+  Renvoie un dict via la queue: {ok: bool, error: str, duration_ms: float}
+  """
     import time as _time
     import traceback as _tb
     from pathlib import Path as _Path

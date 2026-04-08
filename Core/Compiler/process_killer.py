@@ -101,16 +101,16 @@ class ProcessKiller:
         self, pid: int, force: bool = False, recursive: bool = False
     ) -> Dict[str, Any]:
         """
-    Kill one process.
+  Kill one process.
 
-    Args:
-      pid: ID du process à tuer
-      force: Utiliser kill() directement au lieu de terminate()
-      recursive: Killr aussi les process enfants
+  Args:
+   pid: ID du process à tuer
+   force: Utiliser kill() directement au lieu de terminate()
+   recursive: Killr aussi les process children
 
-    Returns:
-      Dictionnaire avec le résultat
-    """
+  Returns:
+   Dictionnaire avec le résultat
+  """
         result = {
             "success": False,
             "pid": pid,
@@ -166,15 +166,15 @@ class ProcessKiller:
         self, pid: int, include_parent: bool = True
     ) -> Dict[str, Any]:
         """
-    Kill one process and all its children.
+  Kill one process and all its children.
 
-    Args:
-      pid: ID du process parent
-      include_parent: Inclure le process parent dans la terminaison
+  Args:
+   pid: ID du process parent
+   include_parent: Inclure le process parent dans la terminaison
 
-    Returns:
-      Dictionnaire avec le résultat
-    """
+  Returns:
+   Dictionnaire avec le résultat
+  """
         result = {
             "success": False,
             "parent_pid": pid,
@@ -215,15 +215,15 @@ class ProcessKiller:
         self, process_name: str, exclude_pids: Optional[List[int]] = None
     ) -> Dict[str, Any]:
         """
-    Kill all processes matching a given name.
+  Kill all processes matching a given name.
 
-    Args:
-      process_name: Nom du process à tuer
-      exclude_pids: Liste de PID à exclure
+  Args:
+   process_name: Nom du process à tuer
+   exclude_pids: Liste de PID à exclure
 
-    Returns:
-      Dictionnaire avec le résultat
-    """
+  Returns:
+   Dictionnaire avec le résultat
+  """
         result = {
             "success": False,
             "process_name": process_name,
@@ -312,14 +312,14 @@ class ProcessKiller:
 
     def find_pids_by_name(self, process_name: str) -> List[int]:
         """
-    Find all PIDs matching a process name.
+  Find all PIDs matching a process name.
 
-    Args:
-      process_name: Nom du process
+  Args:
+   process_name: Nom du process
 
-    Returns:
-      Liste des PID trouvés
-    """
+  Returns:
+   Liste des PID trouvés
+  """
         pids = []
 
         if _IS_WINDOWS:
@@ -448,45 +448,45 @@ def kill_process(
     pid: int, force: bool = False, recursive: bool = False
 ) -> Dict[str, Any]:
     """
-  Kill one process (utility function).
+ Kill one process (utility function).
 
-  Args:
-    pid: ID du process
-    force: Utiliser kill() directement
-    recursive: Killr aussi les enfants
+ Args:
+  pid: ID du process
+  force: Utiliser kill() directement
+  recursive: Killr aussi les children
 
-  Returns:
-    Dictionnaire avec le résultat
-  """
+ Returns:
+  Dictionnaire avec le résultat
+ """
     killer = ProcessKiller()
     return killer.kill(pid, force, recursive)
 
 
 def kill_process_tree(pid: int, include_parent: bool = True) -> Dict[str, Any]:
     """
-  Kill one process and all its children (utility function).
+ Kill one process and all its children (utility function).
 
-  Args:
-    pid: ID du process parent
-    include_parent: Inclure le parent
+ Args:
+  pid: ID du process parent
+  include_parent: Inclure le parent
 
-  Returns:
-    Dictionnaire avec le résultat
-  """
+ Returns:
+  Dictionnaire avec le résultat
+ """
     killer = ProcessKiller()
     return killer.kill_process_tree(pid, include_parent)
 
 
 def get_process_info(pid: int) -> Optional[ProcessInfo]:
     """
-  Return information for one process.
+ Return information for one process.
 
-  Args:
-    pid: ID du process
+ Args:
+  pid: ID du process
 
-  Returns:
-    ProcessInfo ou None si non trouvé
-  """
+ Returns:
+  ProcessInfo ou None si non trouvé
+ """
     try:
         if _IS_WINDOWS:
             result = subprocess.run(

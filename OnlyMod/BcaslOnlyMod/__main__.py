@@ -14,35 +14,35 @@
 # limitations under the License.
 
 """
-BcaslOnlyMod - Point d'entrée principal
+BcaslOnlyMod - Point d'entrée main
 
-Module autonome permettant d'exécuter et configurer les plugins BCASL
-indépendamment de l'application principale PyCompiler ARK.
+Module standalone permettant d'executer et configurer les BCASL plugins
+indépendamment de l'application maine PyCompiler ARK.
 
 Utilisation:
-    python -m OnlyMod.BcaslOnlyMod [options]
+  python -m OnlyMod.BcaslOnlyMod [options]
 
 Options:
-    -w, --workspace DIR    Répertoire du workspace
-    -l, --language LANG    Langue de l'interface (en/fr)
-    -t, --theme THEME      Thème visuel (light/dark)
-    -g, --gui              Lancer l'interface graphique
-    --list-plugins         Lister les plugins disponibles
-    -r, --run              Exécuter les plugins (mode CLI)
-    --timeout SECONDS      Timeout d'exécution des plugins
+  -w, --workspace DIR  Répertoire du workspace
+  -l, --language LANG  Langue de l'interface (en/fr)
+  -t, --theme THEME   Thème visuel (light/dark)
+  -g, --gui       Lancer l'interface graphique
+  --list-plugins     Lister les plugins disponibles
+  -r, --run       Executer les plugins (mode CLI)
+  --timeout SECONDS   Timeout d'exécution des plugins
 
 Exemples:
-    # Lancer l'interface graphique
-    python -m OnlyMod.BcaslOnlyMod --gui
+  # Lancer l'interface graphique
+  python -m OnlyMod.BcaslOnlyMod --gui
 
-    # Lancer avec workspace spécifique
-    python -m OnlyMod.BcaslOnlyMod --gui --workspace /path/to/workspace
+  # Lancer avec workspace spécifique
+  python -m OnlyMod.BcaslOnlyMod --gui --workspace /path/to/workspace
 
-    # Lister les plugins (mode CLI)
-    python -m OnlyMod.BcaslOnlyMod --list-plugins
+  # Lister les plugins (mode CLI)
+  python -m OnlyMod.BcaslOnlyMod --list-plugins
 
-    # Exécuter les plugins (mode CLI)
-    python -m OnlyMod.BcaslOnlyMod --run --workspace /path/to/workspace
+  # Executer les plugins (mode CLI)
+  python -m OnlyMod.BcaslOnlyMod --run --workspace /path/to/workspace
 """
 
 from __future__ import annotations
@@ -51,7 +51,7 @@ import sys
 
 
 def main():
-    """Point d'entrée principal du module."""
+    """Main module entry point."""
     from .app import main as app_main
 
     sys.exit(app_main())

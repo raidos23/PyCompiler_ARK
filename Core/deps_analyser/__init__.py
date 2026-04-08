@@ -15,7 +15,7 @@
 
 """
 Python dependency analysis for PyCompiler ARK.
-Inclut la détection, la suggestion et l'installation automatique des modules manquants.
+Inclut la détection, la sugmanagement et l'installation automatique des modules manquants.
 
 Optimisations appliquées:
 - Caching des résultats stdlib via @lru_cache
@@ -23,8 +23,8 @@ Optimisations appliquées:
 - Utilisation de importlib.metadata au lieu de subprocess pip show
 - Async I/O pour les opérations bloquantes
 
-Statut: module utilisable pour une suggestion/installation basique. Les
-fonctions d'auto-analyse avancée mentionnées dans la feuille de route ne sont
+Statut: module utilisable pour une sugmanagement/installation basique. Les
+fonctions d'auto-analysis avancée mentionnées dans la feuille de route ne sont
 pas nécessaires à l'exécution et sont désactivées/neutralisées pour éviter tout
 impact en production. Les entrées publiques référencées par l'UI (suggest_missing_dependencies)
 sont conservées.

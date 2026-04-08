@@ -177,8 +177,7 @@ class ProjectStructureInfo:
 
 @dataclass
 class CodeMetrics:
-    """Métriques de code pour un fichier ou projet."""
-
+    """Métriques de code pour un file ou projet."""
     total_lines: int = 0
     code_lines: int = 0
     comment_lines: int = 0
@@ -613,19 +612,19 @@ def get_relative_path(path: Pathish, relative_to: Pathish) -> Optional[str]:
 
 
 def detect_environment_manager(root: Pathish) -> Optional[str]:
-    """Détecte le gestionnaire d'environnement utilisé dans le projet.
+    """Detect le managementnaire d'environment utilisé dans le projet.
 
-    Args:
-        root: Répertoire racine du projet
+  Args:
+    root: Répertoire racine du projet
 
-    Returns:
-        str: Type de gestionnaire ("poetry", "pipenv", "conda", "venv", "pip") ou None
+  Returns:
+    str: Type de managementnaire ("poetry", "pipenv", "conda", "venv", "pip") ou None
 
-    Example:
-        >>> manager = detect_environment_manager(".")
-        >>> if manager == "poetry":
-        ...     print("Projet utilise Poetry")
-    """
+  Example:
+    >>> manager = detect_environment_manager(".")
+    >>> if manager == "poetry":
+    ...   print("Projet utilise Poetry")
+  """
     root_path = Path(root)
 
     # Vérifier Poetry
@@ -658,18 +657,18 @@ def detect_environment_manager(root: Pathish) -> Optional[str]:
 
 
 def get_python_version_from_project(root: Pathish) -> Optional[str]:
-    """Extrait la version Python requise depuis les fichiers de configuration.
+    """Extrait la version Python requise depuis les files de configuration.
 
-    Args:
-        root: Répertoire racine du projet
+  Args:
+    root: Répertoire racine du projet
 
-    Returns:
-        str: Version Python (ex: "3.9", ">=3.8") ou None
+  Returns:
+    str: Version Python (ex: "3.9", ">=3.8") ou None
 
-    Example:
-        >>> version = get_python_version_from_project(".")
-        >>> print(f"Requires Python {version}")
-    """
+  Example:
+    >>> version = get_python_version_from_project(".")
+    >>> print(f"Requires Python {version}")
+  """
     root_path = Path(root)
 
     # Vérifier pyproject.toml
@@ -710,21 +709,21 @@ def get_python_version_from_project(root: Pathish) -> Optional[str]:
 def install_dependencies(
     root: Pathish, dev: bool = False, upgrade: bool = False
 ) -> Tuple[bool, str]:
-    """Installe les dépendances du projet.
+    """Installe les dependencies du projet.
 
-    Args:
-        root: Répertoire racine du projet
-        dev: Installer aussi les dépendances de développement
-        upgrade: Mettre à jour les packages
+  Args:
+    root: Répertoire racine du projet
+    dev: Installer aussi les dependencies de développement
+    upgrade: Mettre à jour les packages
 
-    Returns:
-        Tuple (succès, message)
+  Returns:
+    Tuple (success, message)
 
-    Example:
-        >>> success, msg = install_dependencies(".", dev=True)
-        >>> if success:
-        ...     print("Dependencies installed")
-    """
+  Example:
+    >>> success, msg = install_dependencies(".", dev=True)
+    >>> if success:
+    ...   print("Dependencies installed")
+  """
     root_path = Path(root)
     manager = detect_environment_manager(root_path)
 
@@ -1746,17 +1745,17 @@ def cache_clear(plugin_id: Optional[str] = None) -> None:
 def get_outdated_packages(root: Pathish) -> List[PackageInfo]:
     """Liste les packages obsolètes dans le projet.
 
-    Args:
-    root: Répertoire racine du projet
+  Args:
+  root: Répertoire racine du projet
 
-    Returns:
-        Liste de PackageInfo pour les packages obsolètes
+  Returns:
+    Liste de PackageInfo pour les packages obsolètes
 
-    Example:
-        >>> outdated = get_outdated_packages(".")
-        >>> for pkg in outdated:
-        ...     print(f"{pkg.name}: {pkg.version} -> {pkg.latest_version}")
-    """
+  Example:
+    >>> outdated = get_outdated_packages(".")
+    >>> for pkg in outdated:
+    ...   print(f"{pkg.name}: {pkg.version} -> {pkg.latest_version}")
+  """
     root_path = Path(root)
     outdated = []
 
@@ -1801,18 +1800,18 @@ def get_outdated_packages(root: Pathish) -> List[PackageInfo]:
 
 
 def calculate_code_metrics(path: Pathish) -> CodeMetrics:
-    """Calcule les métriques de code pour un fichier Python.
+    """Calcule les métriques de code pour un file Python.
 
-    Args:
-        path: Chemin du fichier Python
+  Args:
+    path: Chemin du file Python
 
-    Returns:
-        CodeMetrics avec les statistiques
+  Returns:
+    CodeMetrics avec les statistiques
 
-    Example:
-        >>> metrics = calculate_code_metrics("main.py")
-        >>> print(f"LOC: {metrics.code_lines}, Comments: {metrics.comment_lines}")
-    """
+  Example:
+    >>> metrics = calculate_code_metrics("main.py")
+    >>> print(f"LOC: {metrics.code_lines}, Comments: {metrics.comment_lines}")
+  """
     metrics = CodeMetrics()
 
     try:
@@ -1877,16 +1876,16 @@ def calculate_code_metrics(path: Pathish) -> CodeMetrics:
 def calculate_project_metrics(root: Pathish) -> Dict[str, Any]:
     """Calcule les métriques pour tout un projet.
 
-    Args:
-    root: Répertoire racine du projet
+  Args:
+  root: Répertoire racine du projet
 
-    Returns:
-    Dictionnaire avec métriques agrégées
+  Returns:
+  Dictionnaire avec métriques agrégées
 
-    Example:
-    >>> metrics = calculate_project_metrics(".")
-    >>> print(f"Total LOC: {metrics['total_code_lines']}")
-    """
+  Example:
+  >>> metrics = calculate_project_metrics(".")
+  >>> print(f"Total LOC: {metrics['total_code_lines']}")
+  """
     root_path = Path(root)
     total_metrics = {
         "total_files": 0,
@@ -1922,19 +1921,19 @@ def calculate_project_metrics(root: Pathish) -> Dict[str, Any]:
 
 
 def scan_for_secrets(root: Pathish) -> List[SecurityIssue]:
-    """Scanne le code pour détecter des secrets hardcodés.
+    """Scanne le code pour detectr des secrets hardcodés.
 
-    Args:
-        root: Répertoire racine du projet
+  Args:
+    root: Répertoire racine du projet
 
-    Returns:
-        Liste de SecurityIssue détectés
+  Returns:
+    Liste de SecurityIssue détectés
 
-    Example:
-        >>> issues = scan_for_secrets(".")
-        >>> for issue in issues:
-        ...     print(f"Secret trouvé: {issue.file_path}:{issue.line_number}")
-    """
+  Example:
+    >>> issues = scan_for_secrets(".")
+    >>> for issue in issues:
+    ...   print(f"Secret trouvé: {issue.file_path}:{issue.line_number}")
+  """
     issues = []
     root_path = Path(root)
 
@@ -1978,19 +1977,19 @@ def scan_for_secrets(root: Pathish) -> List[SecurityIssue]:
 
 
 def check_dangerous_imports(root: Pathish) -> List[SecurityIssue]:
-    """Détecte les imports potentiellement dangereux.
+    """Detect les imports potentiellement dangereux.
 
-    Args:
-        root: Répertoire racine du projet
+  Args:
+    root: Répertoire racine du projet
 
-    Returns:
-        Liste de SecurityIssue pour imports dangereux
+  Returns:
+    Liste de SecurityIssue pour imports dangereux
 
-    Example:
-        >>> issues = check_dangerous_imports(".")
-        >>> if issues:
-        ...     print(f"Trouvé {len(issues)} imports dangereux")
-    """
+  Example:
+    >>> issues = check_dangerous_imports(".")
+    >>> if issues:
+    ...   print(f"Trouvé {len(issues)} imports dangereux")
+  """
     issues = []
     root_path = Path(root)
 
@@ -2036,16 +2035,16 @@ def check_dangerous_imports(root: Pathish) -> List[SecurityIssue]:
 def get_current_version(root: Pathish) -> Optional[str]:
     """Extrait la version actuelle du projet.
 
-    Args:
-        root: Répertoire racine du projet
+  Args:
+    root: Répertoire racine du projet
 
-    Returns:
-        Version actuelle ou None
+  Returns:
+    Version actuelle ou None
 
-    Example:
-        >>> version = get_current_version(".")
-        >>> print(f"Version actuelle: {version}")
-    """
+  Example:
+    >>> version = get_current_version(".")
+    >>> print(f"Version actuelle: {version}")
+  """
     root_path = Path(root)
 
     # Vérifier pyproject.toml
@@ -2095,18 +2094,18 @@ def get_current_version(root: Pathish) -> Optional[str]:
 def bump_version(root: Pathish, bump_type: str = "patch") -> Tuple[bool, str, str]:
     """Incrémente la version du projet.
 
-    Args:
-        root: Répertoire racine du projet
-        bump_type: Type de bump ("major", "minor", "patch")
+  Args:
+    root: Répertoire racine du projet
+    bump_type: Type de bump ("major", "minor", "patch")
 
-    Returns:
-        Tuple (succès, ancienne_version, nouvelle_version)
+  Returns:
+    Tuple (success, ancienne_version, nouvelle_version)
 
-    Example:
-        >>> success, old, new = bump_version(".", "minor")
-        >>> if success:
-        ...     print(f"Version: {old} -> {new}")
-    """
+  Example:
+    >>> success, old, new = bump_version(".", "minor")
+    >>> if success:
+    ...   print(f"Version: {old} -> {new}")
+  """
     root_path = Path(root)
     current = get_current_version(root_path)
 
@@ -2148,19 +2147,19 @@ def bump_version(root: Pathish, bump_type: str = "patch") -> Tuple[bool, str, st
 
 
 def run_tests(root: Pathish, coverage: bool = False) -> TestResults:
-    """Exécute les tests du projet.
+    """Execute les tests du projet.
 
-    Args:
-        root: Répertoire racine du projet
-        coverage: Activer la couverture de code
+  Args:
+    root: Répertoire racine du projet
+    coverage: Activer la couverture de code
 
-    Returns:
-        TestResults avec les résultats
+  Returns:
+    TestResults avec les résultats
 
-    Example:
-        >>> results = run_tests(".", coverage=True)
-        >>> print(f"Tests: {results.passed}/{results.total} passés")
-    """
+  Example:
+    >>> results = run_tests(".", coverage=True)
+    >>> print(f"Tests: {results.passed}/{results.total} passés")
+  """
     root_path = Path(root)
     results = TestResults()
 
@@ -2229,17 +2228,17 @@ def run_tests(root: Pathish, coverage: bool = False) -> TestResults:
 def analyze_docker_config(root: Pathish) -> DockerInfo:
     """Analyse la configuration Docker du projet.
 
-    Args:
-        root: Répertoire racine du projet
+  Args:
+    root: Répertoire racine du projet
 
-    Returns:
-        DockerInfo avec les informations Docker
+  Returns:
+    DockerInfo avec les informations Docker
 
-    Example:
-        >>> docker = analyze_docker_config(".")
-        >>> if docker.has_dockerfile:
-        ...     print(f"Base image: {docker.base_images[0]}")
-    """
+  Example:
+    >>> docker = analyze_docker_config(".")
+    >>> if docker.has_dockerfile:
+    ...   print(f"Base image: {docker.base_images[0]}")
+  """
     root_path = Path(root)
     info = DockerInfo()
 
@@ -2292,17 +2291,17 @@ def analyze_docker_config(root: Pathish) -> DockerInfo:
 def analyze_ci_config(root: Pathish) -> CIInfo:
     """Analyse la configuration CI/CD du projet.
 
-    Args:
-        root: Répertoire racine du projet
+  Args:
+    root: Répertoire racine du projet
 
-    Returns:
-        CIInfo avec les informations CI/CD
+  Returns:
+    CIInfo avec les informations CI/CD
 
-    Example:
-        >>> ci = analyze_ci_config(".")
-        >>> if ci.has_ci:
-        ...     print(f"CI: {ci.ci_type}")
-    """
+  Example:
+    >>> ci = analyze_ci_config(".")
+    >>> if ci.has_ci:
+    ...   print(f"CI: {ci.ci_type}")
+  """
     root_path = Path(root)
     info = CIInfo()
 
@@ -2370,20 +2369,20 @@ def analyze_ci_config(root: Pathish) -> CIInfo:
 
 
 def download_file(url: str, destination: Pathish, timeout: int = 30) -> bool:
-    """Télécharge un fichier depuis une URL.
+    """Téléload un file depuis une URL.
 
-    Args:
-        url: URL du fichier
-        destination: Chemin de destination
-        timeout: Timeout en secondes
+  Args:
+    url: URL du file
+    destination: Chemin de destination
+    timeout: Timeout en secondes
 
-    Returns:
-        bool: True si succès
+  Returns:
+    bool: True si success
 
-    Example:
-        >>> if download_file("https://example.com/file.txt", "file.txt"):
-        ...     print("Téléchargement réussi")
-    """
+  Example:
+    >>> if download_file("https://example.com/file.txt", "file.txt"):
+    ...   print("Téléloadment réussi")
+  """
     try:
         dest_path = Path(destination)
         dest_path.parent.mkdir(parents=True, exist_ok=True)
@@ -2401,19 +2400,19 @@ def download_file(url: str, destination: Pathish, timeout: int = 30) -> bool:
 
 
 def check_url_accessible(url: str, timeout: int = 10) -> bool:
-    """Vérifie si une URL est accessible.
+    """Check si une URL est accessible.
 
-    Args:
-        url: URL à vérifier
-        timeout: Timeout en secondes
+  Args:
+    url: URL à checkr
+    timeout: Timeout en secondes
 
-    Returns:
-        bool: True si accessible
+  Returns:
+    bool: True si accessible
 
-    Example:
-        >>> if check_url_accessible("https://pypi.org"):
-        ...     print("PyPI est accessible")
-    """
+  Example:
+    >>> if check_url_accessible("https://pypi.org"):
+    ...   print("PyPI est accessible")
+  """
     try:
         parsed = urllib.parse.urlparse(url)
         if parsed.scheme == "https":
@@ -2433,14 +2432,14 @@ def check_url_accessible(url: str, timeout: int = 10) -> bool:
 def get_external_ip() -> Optional[str]:
     """Obtient l'adresse IP externe.
 
-    Returns:
-        str: Adresse IP ou None
+  Returns:
+    str: Adresse IP ou None
 
-    Example:
-        >>> ip = get_external_ip()
-        >>> if ip:
-        ...     print(f"IP externe: {ip}")
-    """
+  Example:
+    >>> ip = get_external_ip()
+    >>> if ip:
+    ...   print(f"IP externe: {ip}")
+  """
     try:
         req = urllib.request.Request("https://Plugins.ipify.org?format=json")
         req.add_header("User-Agent", "PyCompiler-BC-Plugin/1.0")
@@ -2464,23 +2463,23 @@ def search_in_files(
     exclude: Optional[List[str]] = None,
     case_sensitive: bool = True,
 ) -> List[Tuple[Path, int, str]]:
-    """Recherche un pattern dans les fichiers.
+    """Recherche un pattern dans les files.
 
-    Args:
-        root: Répertoire racine
-        pattern: Pattern à rechercher (str ou regex compilé)
-        include: Patterns de fichiers à inclure
-        exclude: Patterns de fichiers à exclure
-        case_sensitive: Recherche sensible à la casse
+  Args:
+    root: Répertoire racine
+    pattern: Pattern à rechercher (str ou regex compilé)
+    include: Patterns de files à inclure
+    exclude: Patterns de files à exclure
+    case_sensitive: Recherche sensible à la casse
 
-    Returns:
-        Liste de tuples (fichier, ligne, contenu)
+  Returns:
+    Liste de tuples (file, ligne, contenu)
 
-    Example:
-        >>> results = search_in_files(".", "TODO", include=["**/*.py"])
-        >>> for file, line, content in results:
-        ...     print(f"{file}:{line}: {content}")
-    """
+  Example:
+    >>> results = search_in_files(".", "TODO", include=["**/*.py"])
+    >>> for file, line, content in results:
+    ...   print(f"{file}:{line}: {content}")
+  """
     results = []
     root_path = Path(root)
 
@@ -2513,23 +2512,23 @@ def replace_in_files(
     exclude: Optional[List[str]] = None,
     dry_run: bool = False,
 ) -> Dict[Path, int]:
-    """Remplace un pattern dans les fichiers.
+    """Remplace un pattern dans les files.
 
-    Args:
-        root: Répertoire racine
-        search_pattern: Pattern à rechercher
-        replacement: Texte de remplacement
-        include: Patterns de fichiers à inclure
-        exclude: Patterns de fichiers à exclure
-        dry_run: Si True, ne modifie pas les fichiers
+  Args:
+    root: Répertoire racine
+    search_pattern: Pattern à rechercher
+    replacement: Texte de remplacement
+    include: Patterns de files à inclure
+    exclude: Patterns de files à exclure
+    dry_run: Si True, ne modifie pas les files
 
-    Returns:
-        Dictionnaire {fichier: nombre_de_remplacements}
+  Returns:
+    Dictionnaire {file: nombre_de_remplacements}
 
-    Example:
-        >>> changes = replace_in_files(".", "TODO", "DONE", include=["**/*.py"], dry_run=True)
-        >>> print(f"Fichiers affectés: {len(changes)}")
-    """
+  Example:
+    >>> changes = replace_in_files(".", "TODO", "DONE", include=["**/*.py"], dry_run=True)
+    >>> print(f"Fichiers affectés: {len(changes)}")
+  """
     changes = {}
     root_path = Path(root)
 
@@ -2568,17 +2567,17 @@ def replace_in_files(
 def generate_requirements_from_imports(root: Pathish) -> List[str]:
     """Génère une liste de requirements à partir des imports.
 
-    Args:
-        root: Répertoire racine du projet
+  Args:
+    root: Répertoire racine du projet
 
-    Returns:
-        Liste de packages requis
+  Returns:
+    Liste de packages requis
 
-    Example:
-        >>> requirements = generate_requirements_from_imports(".")
-        >>> for req in requirements:
-        ...     print(req)
-    """
+  Example:
+    >>> requirements = generate_requirements_from_imports(".")
+    >>> for req in requirements:
+    ...   print(req)
+  """
     root_path = Path(root)
     all_imports = set()
 
@@ -2605,19 +2604,19 @@ def generate_readme(
 ) -> str:
     """Génère un README.md basique pour le projet.
 
-    Args:
-        root: Répertoire racine du projet
-        project_name: Nom du projet
-        description: Description du projet
+  Args:
+    root: Répertoire racine du projet
+    project_name: Nom du projet
+    description: Description du projet
 
-    Returns:
-        str: Contenu du README
+  Returns:
+    str: Contenu du README
 
-    Example:
-        >>> readme = generate_readme(".", "Mon Projet", "Un super projet Python")
-        >>> with open("README.md", "w") as f:
-        ...     f.write(readme)
-    """
+  Example:
+    >>> readme = generate_readme(".", "Mon Projet", "Un super projet Python")
+    >>> with open("README.md", "w") as f:
+    ...   f.write(readme)
+  """
     root_path = Path(root)
 
     if not project_name:
@@ -2710,12 +2709,12 @@ def generate_readme(
 class Timer:
     """Gestionnaire de contexte pour mesurer le temps d'exécution.
 
-    Example:
-        >>> with Timer() as t:
-        ...     # Code à mesurer
-        ...     pass
-        >>> print(f"Durée: {t.elapsed:.2f}s")
-    """
+  Example:
+    >>> with Timer() as t:
+    ...   # Code à mesurer
+    ...   pass
+    >>> print(f"Durée: {t.elapsed:.2f}s")
+  """
 
 
 def __init__(self):
@@ -2737,16 +2736,16 @@ def __exit__(self, *args):
 def format_bytes(bytes_count: int) -> str:
     """Formate un nombre d'octets en format lisible.
 
-    Args:
-        bytes_count: Nombre d'octets
+  Args:
+    bytes_count: Nombre d'octets
 
-    Returns:
-        str: Taille formatée (ex: "1.5 MB")
+  Returns:
+    str: Taille formatée (ex: "1.5 MB")
 
-    Example:
-        >>> print(format_bytes(1500000))
-        '1.43 MB'
-    """
+  Example:
+    >>> print(format_bytes(1500000))
+    '1.43 MB'
+  """
     for unit in ["B", "KB", "MB", "GB", "TB"]:
         if bytes_count < 1024.0:
             return f"{bytes_count:.2f} {unit}"
@@ -2757,16 +2756,16 @@ def format_bytes(bytes_count: int) -> str:
 def format_duration(seconds: float) -> str:
     """Formate une durée en format lisible.
 
-    Args:
-        seconds: Durée en secondes
+  Args:
+    seconds: Durée en secondes
 
-    Returns:
-        str: Durée formatée (ex: "1h 23m 45s")
+  Returns:
+    str: Durée formatée (ex: "1h 23m 45s")
 
-    Example:
-        >>> print(format_duration(3725))
-        '1h 2m 5s'
-    """
+  Example:
+    >>> print(format_duration(3725))
+    '1h 2m 5s'
+  """
     if seconds < 60:
         return f"{seconds:.1f}s"
 

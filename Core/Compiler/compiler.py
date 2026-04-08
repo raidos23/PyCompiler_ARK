@@ -442,20 +442,20 @@ class CompilerCore(QObject):
         workspace_dir: Optional[str] = None,
     ) -> bool:
         """
-    Start a compilation.
+  Start a compilation.
 
-    Args:
-      program: Executable path
-      args: Argument list
-      env: Environment variables (optional)
-      working_dir: Working directory (optional)
-      engine_id: Identifiant du moteur (optionnel)
-      file_path: Path du file à compiler (optionnel)
-      workspace_dir: Path du workspace (optionnel)
+  Args:
+   program: Executable path
+   args: Argument list
+   env: Environment variables (optional)
+   working_dir: Working directory (optional)
+   engine_id: Identifiant du engine (optionnel)
+   file_path: Path du file à compiler (optionnel)
+   workspace_dir: Path du workspace (optionnel)
 
-    Returns:
-      True si la compilation a démarré, False sinon
-    """
+  Returns:
+   True si la compilation a démarré, False sinon
+  """
         if self.is_running:
             self.log_message.emit("warning", "Compilation already in progress")
             return False
@@ -498,11 +498,11 @@ class CompilerCore(QObject):
 
     def cancel(self) -> bool:
         """
-    Cancel current compilation.
+  Cancel current compilation.
 
-    Returns:
-      True si l'annulation a été demandée, False sinon
-    """
+  Returns:
+   True si l'annulation a été demandée, False sinon
+  """
         if not self.is_running:
             return False
 
@@ -555,15 +555,15 @@ class CompilerCore(QObject):
 
     def get_command_line(self, program: str, args: List[str]) -> str:
         """
-    Return the formatted command line.
+  Return the formatted command line.
 
-    Args:
-      program: Programme à exécuter
-      args: Arguments
+  Args:
+   program: Programme à executer
+   args: Arguments
 
-    Returns:
-      Ligne de commande formatée
-    """
+  Returns:
+   Ligne de commande formatée
+  """
         cmd = [program] + args
         return " ".join(cmd)
 
@@ -575,17 +575,17 @@ class CompilerCore(QObject):
         working_dir: Optional[str] = None,
     ) -> str:
         """
-    Simulate compilation and return the command.
+  Simulate compilation and return the command.
 
-    Args:
-      program: Programme à exécuter
-      args: Arguments
-      env: Environment variables (optional)
-      working_dir: Working directory (optional)
+  Args:
+   program: Programme à executer
+   args: Arguments
+   env: Environment variables (optional)
+   working_dir: Working directory (optional)
 
-    Returns:
-      Commande formatée
-    """
+  Returns:
+   Commande formatée
+  """
         cmd = self.get_command_line(program, args)
         result = f"[DRY RUN] Command: {cmd}\n"
         result += f"Working directory: {working_dir or 'current'}\n"

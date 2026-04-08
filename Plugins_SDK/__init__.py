@@ -19,7 +19,7 @@ Plugins_SDK
 
 Kit de développement pour plugins ARK++ couvrant:
 - Contexte BC (Before Compilation)
-- Contexte UI (boîtes de dialogue, i18n)
+- Contexte UI (dialogs de dialogue, i18n)
 
 Ce package expose une SDK stable pour les plugins tiers.
 """

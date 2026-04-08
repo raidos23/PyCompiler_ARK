@@ -60,10 +60,10 @@ def _has_bcasl_marker(pkg_dir: Path) -> bool:
 
 
 def _discover_bcasl_meta(Plugins_dir: Path) -> dict[str, dict[str, Any]]:
-    """Découvre les plugins en important chaque package et en appelant bcasl_register(manager).
-    Supporte également les plugins enregistrés avec le décorateur @bc_register.
-    Retourne un mapping plugin_id -> meta dict {id, name, version, description, author, requirements}
-    """
+    """Décopen les plugins en important chaque package et en appelant bcasl_register(manager).
+  Supporte également les plugins enregistrés avec le décorateur @bc_register.
+  Return un mapping plugin_id -> meta dict {id, name, version, description, author, requirements}
+  """
     meta: dict[str, dict[str, Any]] = {}
     try:
         import importlib.util as _ilu
@@ -181,7 +181,7 @@ def _discover_bcasl_meta(Plugins_dir: Path) -> dict[str, dict[str, Any]]:
 def _discover_bcasl_plugins(
     Plugins_dir: Path, workspace_root: Path, cfg: dict[str, Any]
 ) -> dict[str, BcPluginBase]:
-    """Charge les plugins et retourne un mapping plugin_id -> instance."""
+    """Load les plugins et return un mapping plugin_id -> instance."""
     plugins: dict[str, BcPluginBase] = {}
     try:
         mgr = BCASL(workspace_root, config=cfg, sandbox=False, plugin_timeout_s=0.0)
@@ -230,7 +230,7 @@ def _resolve_plugin_timeout(cfg: dict[str, Any]) -> float:
 
 
 def _is_bcasl_enabled(cfg: dict[str, Any]) -> bool:
-    """Retourne True si BCASL est activé dans la config."""
+    """Return True si BCASL est activé dans la config."""
     try:
         opt = cfg.get("options", {}) if isinstance(cfg, dict) else {}
         return bool(opt.get("enabled", True)) if isinstance(opt, dict) else True
@@ -239,7 +239,7 @@ def _is_bcasl_enabled(cfg: dict[str, Any]) -> bool:
 
 
 def _build_workspace_meta(workspace_root: Path, cfg: dict[str, Any]) -> dict[str, Any]:
-    """Construit les métadonnées du workspace pour BCASL."""
+    """Build les métadonnées du workspace pour BCASL."""
     return {
         "workspace_name": workspace_root.name,
         "workspace_path": str(workspace_root),
@@ -270,7 +270,7 @@ def _apply_plugins_config(
     plugins_dir: Path,
     log_cb: Optional[callable] = None,
 ) -> list[str]:
-    """Applique l'activation et les priorités, retourne l'ordre utilisé."""
+    """Applique l'activation et les priorités, return l'ordre utilisé."""
     pmap = cfg.get("plugins", {}) if isinstance(cfg, dict) else {}
     if isinstance(pmap, dict):
         for pid, val in pmap.items():
@@ -309,7 +309,7 @@ def _run_bcasl_sync(
     log_cb: Optional[callable] = None,
     stop_requested: Optional[callable] = None,
 ):
-    """Exécute BCASL en mode synchrone et retourne le rapport."""
+    """Execute BCASL en mode synchrone et return le rapport."""
     manager = BCASL(workspace_root, config=cfg, plugin_timeout_s=plugin_timeout)
     loaded, errors = manager.load_plugins_from_directory(plugins_dir)
     _emit_log(log_cb, f"BCASL: {loaded} package(s) chargé(s) depuis Plugins/\n")
@@ -419,11 +419,11 @@ def _build_plugin_item(
 
 
 def _load_workspace_config(workspace_root: Path) -> dict[str, Any]:
-    """Charge bcasl.yml si présent, sinon génère une config par défaut minimale et l'écrit.
+    """Load bcasl.yml si présent, sinon génère une config par défaut minimale et l'écrit.
 
-    Fusionne aussi avec ARK_Main_Config.yml si disponible pour les patterns et options plugins.
-    YML ONLY - YAML and JSON files are NOT supported.
-    """
+  Fusionne aussi avec ARK_Main_Config.yml si disponible pour les patterns et options plugins.
+  YML ONLY - YAML and JSON files are NOT supported.
+  """
 
     def _read_yml(p: Path) -> dict[str, Any]:
         try:
@@ -679,8 +679,8 @@ def ensure_bcasl_thread_stopped(self, timeout_ms: int = 5000) -> None:
 
 def resolve_bcasl_timeout(self) -> float:
     """Résout le timeout effectif des plugins à partir de la config et de l'env.
-    <= 0 => illimité (0.0 renvoyé)
-    """
+  <= 0 => illimité (0.0 renvoyé)
+  """
     try:
         if not getattr(self, "workspace_dir", None):
             return 0.0
@@ -693,8 +693,8 @@ def resolve_bcasl_timeout(self) -> float:
 
 def open_bc_loader_dialog(self) -> None:  # UI minimale
     """Fenêtre simple pour activer/désactiver et réordonner les plugins(BCASL).
-    Persiste dans <workspace>/bcasl.yml uniquement (YML).
-    """
+  Persiste dans <workspace>/bcasl.yml uniquement (YML).
+  """
     try:  # Importer QtWidgets à la demande pour compatibilité headless
         from PySide6.QtWidgets import (
             QAbstractItemView,
@@ -1046,8 +1046,8 @@ def open_bc_loader_dialog(self) -> None:  # UI minimale
 
 def run_pre_compile_async(self, on_done: Optional[callable] = None) -> None:
     """Lance BCASL en arrière-plan si QtCore est dispo; sinon, exécution bloquante rPluginsde.
-    on_done(report) appelé à la fin si fourni.
-    """
+  on_done(report) appelé à la fin si fourni.
+  """
     try:
         if not getattr(self, "workspace_dir", None):
             if callable(on_done):
@@ -1144,7 +1144,7 @@ def run_pre_compile_async(self, on_done: Optional[callable] = None) -> None:
 
 
 def run_pre_compile(self) -> Optional[object]:
-    """Exécute la phase BCASL de pré-compilation (chemin synchrone, simple)."""
+    """Execute la phase BCASL de pre-compilation (path synchrone, simple)."""
     try:
         if not getattr(self, "workspace_dir", None):
             return None

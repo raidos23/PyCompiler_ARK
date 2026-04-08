@@ -943,14 +943,14 @@ class VenvManager:
 
     def validate_venv_strict(self, venv_root: str) -> tuple[bool, str]:
         """Strict validation of a venv.
-    Return (ok, raison_si_ko).
-    Règles:
-     - Dossier existant
-     - pyvenv.cfg présent
-     - Scripts/python.exe (Windows) ou bin/python[3] (POSIX) présent
-     - include-system-site-packages=false (refus si true)
-     - pyvenv.cfg, folder Scripts/bin et executable Python doivent rester confinés dans le venv (pas de liens sortants)
-    """
+  Return (ok, raison_si_ko).
+  Règles:
+   - Dossier existant
+   - pyvenv.cfg présent
+   - Scripts/python.exe (Windows) ou bin/python[3] (POSIX) présent
+   - include-system-site-packages=false (refus si true)
+   - pyvenv.cfg, folder Scripts/bin et executable Python doivent rester confinés dans le venv (pas de liens sortants)
+  """
         try:
             if not venv_root or not os.path.isdir(venv_root):
                 return False, "Chemin invalide (dossier manquant)"

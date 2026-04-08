@@ -2,12 +2,12 @@
 
 """
 Automatic detection of sensitive modules and hook/plugin application
-pour les moteurs, basée sur un mapping JSON piloté par les moteurs (ENGINES).
+pour les engines, basée sur un mapping JSON piloté par les engines (ENGINES).
 
 Règles clés:
 - La détection est automatique et non désactivable par l'utilisateur.
 - Priorité à requirements.txt s'il existe dans le workspace, sinon scan des imports.
-- Les actions sont dérivées du JSON (clé = id du moteur).
+- Les actions sont dérivées du JSON (clé = id du engine).
 - Rapport optionnel pouvant être écrit dans le workspace.
 """
 
@@ -259,10 +259,10 @@ def _parse_requirements(requirements_path: str) -> set[str]:
 
 def _scan_imports(py_files: list[str], workspace_dir: str) -> set[str]:
     """Analyze .py files and return imported top-level module names.
-  - Ignore venv/, __pycache__/ et folders cachés
-  - Ignore files trop volumineux (>1.5 Mo) pour robustesse
-  - Tolérant aux erreurs d'encodage/syntaxe
-  """
+ - Ignore venv/, __pycache__/ et folders cachés
+ - Ignore files trop volumineux (>1.5 Mo) pour robustesse
+ - Tolérant aux erreurs d'encodage/syntaxe
+ """
     found: set[str] = set()
     # Exclure venv interne
     venv_dir = os.path.abspath(os.path.join(workspace_dir, "venv"))
@@ -580,14 +580,14 @@ def compute_for_all(
     self, engine_ids: Optional[list[str]] = None
 ) -> dict[str, list[str]]:
     """
-  Compute auto arguments for all engines (plug-and-play).
-  - engine_ids: liste optionnelle d'identifiants de moteurs à traiter. Si None,
-   on détecte automatiquement:
-    * moteurs enregistrés dans _ENGINE_BUILDERS
-    * moteurs avec un mapping engine_plugins/<engine_id>/mapping.json
-    * moteurs embarqués utils/engines/<engine_id>/mapping.json
-  Return un dict: { engine_id: List[str] }.
-  """
+ Compute auto arguments for all engines (plug-and-play).
+ - engine_ids: liste optionnelle d'identifiants de engines à traiter. Si None,
+  on detect automatiquement:
+  * engines enregistrés dans _ENGINE_BUILDERS
+  * engines avec un mapping engine_plugins/<engine_id>/mapping.json
+  * engines embarqués utils/engines/<engine_id>/mapping.json
+ Return un dict: { engine_id: List[str] }.
+ """
     # Construire la liste ordonnée des moteurs à traiter
     ordered: list[str] = []
     if engine_ids:
