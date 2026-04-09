@@ -23,16 +23,12 @@ import json
 import os
 import re
 import shutil
-import socket
 import subprocess
 import sys
-import tempfile
 import time
 import urllib.parse
 import urllib.request
-from collections import defaultdict
 from dataclasses import dataclass, field
-from datetime import datetime
 from pathlib import Path
 from typing import (
     Any,
@@ -43,7 +39,6 @@ from typing import (
     Dict,
     Set,
     Tuple,
-    Callable,
     Pattern,
 )
 

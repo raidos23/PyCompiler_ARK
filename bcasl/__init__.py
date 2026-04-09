@@ -59,7 +59,7 @@ from .validator import (
     print_compatibility_report,
 )
 
-__version__ = "2.0.0"
+__version__ = "1.0.0"
 
 
 def check_plugin_compatibility(

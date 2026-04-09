@@ -28,7 +28,6 @@ import re
 import platform
 import getpass
 from typing import Optional, NamedTuple
-from pathlib import Path
 
 from PySide6.QtWidgets import (
     QApplication,
@@ -117,7 +116,6 @@ def _invoke_in_main_thread(fn, *args, **kwargs):
         # Detect platform and display server for optimal invocation
         try:
             import platform
-            import os
 
             system = platform.system().lower()
 

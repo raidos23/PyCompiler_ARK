@@ -22,18 +22,15 @@ This module owns the main window lifecycle and delegates most UI behaviors
 to `Core/UiFeatures.py` for modularity.
 """
 
-import asyncio
 import os
 from typing import Optional
 
-from PySide6.QtCore import Qt
 from PySide6.QtGui import QDropEvent
 from PySide6.QtWidgets import QMainWindow, QMessageBox
 
 from Core.Globals import _latest_gui_instance, _workspace_dir_cache, _workspace_dir_lock
 
 from .Globals import _run_coro_async
-from .WidgetsCreator import ProgressDialog, CompilationProcessDialog
 from .Venv_Manager import VenvManager
 from .i18n import (
     resolve_system_language,

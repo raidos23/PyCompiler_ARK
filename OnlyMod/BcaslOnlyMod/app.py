@@ -40,12 +40,10 @@ Utilisation:
 
 from __future__ import annotations
 
-import os
 import sys
 import argparse
 from pathlib import Path
 from typing import Optional, Dict, Any, List
-from datetime import datetime
 
 # Importations des modules PyCompiler ARK
 from Core.allversion import get_core_version, get_bcasl_version
@@ -53,8 +51,6 @@ from Core.allversion import get_core_version, get_bcasl_version
 # Importations BCASL
 from bcasl import (
     BCASL,
-    BcPluginBase,
-    PluginMeta,
     PreCompileContext,
     ExecutionReport,
 )
@@ -62,7 +58,6 @@ from bcasl.Loader import _discover_bcasl_meta
 from bcasl.tagging import compute_tag_order
 
 # Importations GUI
-from .gui import BcaslStandaloneGui
 
 # Variable globale pour la langue
 _CURRENT_LANGUAGE = "en"

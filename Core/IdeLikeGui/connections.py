@@ -293,13 +293,15 @@ def _apply_classic_policies(self) -> None:
     # Mirror dependencies action as an activity-bar icon button.
     try:
         if getattr(self, "activity_btn_deps", None):
-            self.activity_btn_deps.setToolTip(
-                self.tr("Analyser dépendances", "Analyze dependencies")
-            )
             src = getattr(self, "btn_suggest_deps", None)
             if src is not None:
                 self.activity_btn_deps.setIcon(src.icon())
                 self.activity_btn_deps.setIconSize(src.iconSize())
+                self.activity_btn_deps.setToolTip(src.toolTip())
+            else:
+                self.activity_btn_deps.setToolTip(
+                    self.tr("Analyser les dependances", "Analyze dependencies")
+                )
     except Exception:
         pass
     _apply_activity_buttons_theme(self)
@@ -403,6 +405,11 @@ def _setup_more_tools_menu(self) -> None:
             "save_engines": act_save_engines,
             "help": act_help,
         }
+
+        try:
+            menu.aboutToShow.connect(lambda: _retranslate_ide_like_actions(self))
+        except Exception:
+            pass
 
         more_btn.setMenu(menu)
         more_btn.setPopupMode(QToolButton.InstantPopup)
@@ -531,27 +538,81 @@ def _apply_activity_buttons_theme(self) -> None:
 
 
 def _retranslate_ide_like_actions(self) -> None:
-    """Keep the IDE '(...)' menu in English at all times."""
+    """Refresh IDE-specific actions using the active translation state."""
     try:
         trf = getattr(self, "tr", None)
         _tr = trf if callable(trf) else (lambda fr, en: en)
     except Exception:
         _tr = lambda fr, en: en
 
+    current_tr = getattr(self, "_tr", {}) or {}
+
+    def _label(key: str, fallback_fr: str, fallback_en: str) -> str:
+        """Resolve a label directly from the active translation table."""
+        try:
+            value = current_tr.get(key)
+            if isinstance(value, str) and value.strip():
+                return value
+        except Exception:
+            pass
+        return _tr(fallback_fr, fallback_en)
+
+    def _widget_text(attr: str) -> str:
+        """Return the current text of a source classic-UI widget when available."""
+        try:
+            widget = getattr(self, attr, None)
+            if widget is not None:
+                text = widget.text()
+                if isinstance(text, str) and text.strip():
+                    return text
+        except Exception:
+            pass
+        return ""
+
+    lang_key = "choose_language_button"
+    try:
+        if (
+            getattr(self, "language_pref", getattr(self, "language", "System"))
+            == "System"
+        ):
+            lang_key = "choose_language_system_button"
+    except Exception:
+        pass
+
+    theme_key = "choose_theme_button"
+    try:
+        if getattr(self, "theme", "System") == "System":
+            theme_key = "choose_theme_system_button"
+    except Exception:
+        pass
+
     actions = getattr(self, "_ide_more_menu_actions", {}) or {}
     labels = {
-        "workspace": "Select workspace",
-        "venv": "Select venv",
-        "add_files": "Add files",
-        "clear_workspace": "Clear workspace",
-        "stats": "Statistics",
-        "language": "Language",
-        "theme": "Theme",
-        "advanced": "Advanced config",
-        "export": "Export config",
-        "import": "Import config",
-        "save_engines": "Save engine configs",
-        "help": "Help",
+        "workspace": _widget_text("btn_select_folder")
+        or _label("action_select_workspace", "Choisir Workspace", "Select Workspace"),
+        "venv": _widget_text("venv_button")
+        or _label("action_select_venv", "Choisir un Venv", "Select Venv"),
+        "add_files": _widget_text("btn_select_files")
+        or _label("action_add_files", "Ajouter des fichiers", "Add files"),
+        "clear_workspace": _widget_text("btn_clear_workspace")
+        or _label("btn_clear_workspace", "Vider le Workspace", "Clear workspace"),
+        "stats": _widget_text("btn_show_stats")
+        or _label("show_stats", "Statistiques", "Statistics"),
+        "language": _widget_text("select_lang")
+        or _label(lang_key, "Langue", "Language"),
+        "theme": _widget_text("select_theme") or _label(theme_key, "Theme", "Theme"),
+        "advanced": _widget_text("advanced_cfg_btn")
+        or _label("advanced_config", "Configurations avancees", "Advanced config"),
+        "export": _widget_text("btn_export_config")
+        or _label("export_config", "Exporter config", "Export config"),
+        "import": _widget_text("btn_import_config")
+        or _label("import_config", "Importer config", "Import config"),
+        "save_engines": _label(
+            "save_engine_configs",
+            "Enregistrer les configs engines",
+            "Save engine configs",
+        ),
+        "help": _widget_text("btn_help") or _label("help", "Aide", "Help"),
     }
     for key, action in actions.items():
         if action is None:
@@ -564,21 +625,25 @@ def _retranslate_ide_like_actions(self) -> None:
     try:
         more_btn = getattr(self, "toolButton_more", None)
         if more_btn is not None:
-            more_btn.setToolTip("More actions")
-    except Exception:
-        pass
-    try:
-        deps_btn = getattr(self, "activity_btn_deps", None)
-        if deps_btn is not None:
-            deps_btn.setToolTip(_tr("Analyser les dependances", "Analyze dependencies"))
+            more_btn.setToolTip(
+                _label("tt_more_actions", "Plus d'actions.", "More actions.")
+            )
     except Exception:
         pass
     try:
         if hasattr(self, "register_language_refresh"):
             if not getattr(self, "_ide_menu_i18n_registered", False):
-                self.register_language_refresh(
-                    lambda: _retranslate_ide_like_actions(self)
-                )
+
+                def _refresh_menu_i18n() -> None:
+                    _retranslate_ide_like_actions(self)
+                    try:
+                        QTimer.singleShot(
+                            0, lambda: _retranslate_ide_like_actions(self)
+                        )
+                    except Exception:
+                        pass
+
+                self.register_language_refresh(_refresh_menu_i18n)
                 self._ide_menu_i18n_registered = True
     except Exception:
         pass

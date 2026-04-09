@@ -23,7 +23,7 @@ This module provides utilities to validate engine compatibility with:
 
 from __future__ import annotations
 
-from typing import Optional, Tuple, List
+from typing import Tuple, List
 from dataclasses import dataclass
 
 

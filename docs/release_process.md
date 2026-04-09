@@ -36,7 +36,7 @@ python -m pycompiler_ark engine list --json
 
 ## 3. Tag and publish
 
-1. Create and push a semantic tag:
+1. Create and push tag:
 
 ```bash
 git checkout main
@@ -45,10 +45,10 @@ git tag -a v1.0.0 -m "PyCompiler ARK v1.0.0"
 git push origin v1.0.0
 ```
 
-2. GitHub Actions `release.yml` triggers on the tag and publishes:
-- platform artifacts
-- per-file checksums
-- combined checksums
+2. .github/workflows/release.yml triggers :
+- Lint/test/smoke CI.
+- Self-build Nuitka Linux onefile.
+- GH Release auto (artifacts + notes).
 
 ## 4. Post-release checks
 

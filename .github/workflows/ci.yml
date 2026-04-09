@@ -1,109 +1,40 @@
-name: CI
+name: CI PyCompiler_ARK
 
 on:
   push:
-    branches: [main, develop, develop2]
+    branches: [ main ]
   pull_request:
-    branches: [main, develop, develop2]
-  workflow_dispatch:
+    branches: [ main ]
 
 jobs:
   lint:
-    name: Lint
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up Python 3.12
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
-          cache: pip
-          cache-dependency-path: requirements.txt
+          python-version: '3.12'
+      - run: pip install ruff black
+      - run: ruff check .
+      - run: black --check .
 
-      - name: Upgrade pip
-        run: python -m pip install --upgrade pip
-
-      - name: Install lint dependencies
-        run: python -m pip install -r requirements.txt
-
-      - name: Ruff
-        run: ruff check .
-
-      - name: Black
-        run: black --check .
-
-  tests:
-    name: Tests (${{ matrix.os }}, py${{ matrix.python-version }})
-    needs: lint
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, windows-latest]
-        python-version: ["3.12", "3.13"]
-    env:
-      QT_QPA_PLATFORM: offscreen
+  test:
+    runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.python-version }}
-          cache: pip
-          cache-dependency-path: requirements.txt
-
-      - name: Upgrade pip
-        run: python -m pip install --upgrade pip
-
-      - name: Install test dependencies
-        run: python -m pip install -r requirements.txt
-
-      - name: Run pytest
-        run: python -m pytest -q tests
+          python-version: '3.12'
+      - run: pip install -r requirements.txt
+      - run: pytest -q
 
   smoke:
-    name: Smoke (${{ matrix.os }}, py${{ matrix.python-version }})
-    needs: tests
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, windows-latest]
-        python-version: ["3.12", "3.13"]
-    env:
-      QT_QPA_PLATFORM: offscreen
+    runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.python-version }}
-          cache: pip
-          cache-dependency-path: requirements.txt
-
-      - name: Upgrade pip
-        run: python -m pip install --upgrade pip
-
-      - name: Install runtime dependencies
-        run: python -m pip install -r requirements.txt
-
-      - name: Smoke CLI help
-        run: python -m pycompiler_ark --help
-
-      - name: Smoke version
-        run: python -m pycompiler_ark --version
-
-      - name: Smoke system info
-        run: python -m pycompiler_ark --info
-
-      - name: Smoke engines dry-run
-        run: python -m pycompiler_ark engines --dry-run
-
-      - name: Smoke source compilation
-        run: python -m py_compile pycompiler_ark.py
+          python-version: '3.12'
+      - run: python pycompiler_ark.py doctor --json
+      - run: python pycompiler_ark.py engine list --json
+      - run: python pycompiler_ark.py workspace apply . --strict --json

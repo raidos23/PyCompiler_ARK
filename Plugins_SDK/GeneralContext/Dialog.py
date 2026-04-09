@@ -27,10 +27,8 @@ from Core.WidgetsCreator import (
     show_msgbox,
     sys_msgbox_for_installing,
     ProgressDialog,
-    CompilationProcessDialog,
     InstallAuth,
     _redact_secrets,
-    _invoke_in_main_thread,
 )
 
 
