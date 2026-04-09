@@ -30,7 +30,6 @@ Le file de configuration utilise le format YAML et permet de personnaliser:
 Note: La configuration des BCASL plugins est gérée exclusivement par bcasl.yml
 """
 
-import os
 import fnmatch
 from pathlib import Path, PurePosixPath
 from typing import Any, Optional

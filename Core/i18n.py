@@ -39,6 +39,8 @@ FALLBACK_EN: dict[str, Any] = {
     "help_text": "<b>PyCompiler ARK — Quick Help</b><br><ul><li>1) Select the Workspace and add your .py files.</li><li>2) Configure pre‑compile plugins via <b>Bc Plugins Loader</b> (BCASL).</li><li>3) Configure options in the <b>PyInstaller</b>, <b>Nuitka</b> or <b>CX_Freeze</b> tab.</li><li>4) Click <b>Build</b> and follow the logs.</li></ul><b>Notes</b><br><ul><li>When a build starts, all action controls are disabled (including Bc Plugins Loader) until it finishes or is canceled.</li><li>Pre‑compilation (BCASL) completes before compilation.</li><li>A <i>venv</i> can be created automatically; requirements.txt is installed if present; tools are installed into the venv as needed.</li><li>Plugins‑initiated workspace changes are auto‑applied; running builds are canceled before switching.</li></ul><b>License</b>: Apache-2.0 — <a href='https://www.apache.org/licenses/LICENSE-2.0'>apache.org/licenses/LICENSE-2.0</a><br><b>Author</b>: Ague Samuel Amen<br>© 2026 Ague Samuel Amen",
     "show_stats": "Statistics",
     "select_lang": "Language",
+    "advanced_config": "Advanced config",
+    "save_engine_configs": "Save engine configs",
     "venv_button": "Choose venv folder",
     "label_workspace_section": "Workspace",
     "venv_label": "Venv selected: None",
@@ -90,6 +92,7 @@ FALLBACK_EN: dict[str, Any] = {
     "tt_venv_button": "Manually select a venv directory to use for compilation.",
     "tt_suggest_deps": "Analyze project dependencies.",
     "tt_show_stats": "Show compilation statistics.",
+    "tt_more_actions": "More actions.",
     "tt_clear_workspace": "Clear the file list and reset the selection.",
 }
 
@@ -850,11 +853,18 @@ def apply_language(self, lang_display: str) -> None:
         if isinstance(res, Exception):
             return
         code, tr = res
-        _apply_main_app_translations(self, tr)
+        meta = tr.get("_meta", {})
         try:
             setattr(self, "_tr", tr)
         except Exception:
             pass
+        try:
+            self.current_language = meta.get("name", lang_display)
+            self.language = lang_display
+            self.language_pref = lang_display
+        except Exception:
+            pass
+        _apply_main_app_translations(self, tr)
         # Notifier les moteurs pour rafraîchir leurs libellés
         try:
             for cb in getattr(self, "_language_refresh_callbacks", []) or []:
@@ -886,9 +896,6 @@ def apply_language(self, lang_display: str) -> None:
                 pass
         except Exception:
             pass
-        meta = tr.get("_meta", {})
-        self.current_language = meta.get("name", lang_display)
-        self.language = lang_display
         try:
             self.save_preferences()
         except Exception:
@@ -946,6 +953,7 @@ def _apply_main_app_translations(self, tr: dict[str, object]) -> None:
         _set("btn_suggest_deps", "suggest_deps")
         _set("btn_help", "help")
         _set("btn_show_stats", "show_stats")
+        _set("advanced_cfg_btn", "advanced_config")
         _set("btn_remove_file", "btn_remove_file")
         _set("btn_clear_workspace", "btn_clear_workspace")
 
@@ -1148,6 +1156,10 @@ def _apply_main_app_translations(self, tr: dict[str, object]) -> None:
         if getattr(self, "btn_suggest_deps", None):
             self.btn_suggest_deps.setToolTip(
                 _tt("tt_suggest_deps", self.btn_suggest_deps.toolTip())
+            )
+        if getattr(self, "activity_btn_deps", None):
+            self.activity_btn_deps.setToolTip(
+                _tt("tt_suggest_deps", self.activity_btn_deps.toolTip())
             )
         if getattr(self, "btn_show_stats", None):
             self.btn_show_stats.setToolTip(

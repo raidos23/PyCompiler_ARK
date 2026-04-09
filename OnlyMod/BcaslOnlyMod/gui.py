@@ -27,14 +27,13 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional, Dict, Any, List
 
-from PySide6.QtCore import Qt, QSize, QThread, Signal, Slot
+from PySide6.QtCore import Qt, QThread, Signal
 from PySide6.QtWidgets import (
     QApplication,
     QWidget,
     QMainWindow,
     QVBoxLayout,
     QHBoxLayout,
-    QGridLayout,
     QGroupBox,
     QLabel,
     QPushButton,
@@ -53,13 +52,11 @@ from PySide6.QtWidgets import (
     QLineEdit,
     QTabWidget,
 )
-from PySide6.QtGui import QFont, QIcon
+from PySide6.QtGui import QFont
 
 # Importations BCASL
 from bcasl import (
     BCASL,
-    BcPluginBase,
-    PluginMeta,
     PreCompileContext,
     ExecutionReport,
 )
@@ -235,7 +232,6 @@ class BcaslStandaloneGui(QMainWindow):
 
     def _load_config(self):
         """Load BCASL configuration from the current workspace."""
-        from bcasl.Loader import _load_workspace_config
 
         self.config: Dict[str, Any] = {}
         self.Plugins_dir: Optional[Path] = None

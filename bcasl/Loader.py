@@ -37,7 +37,6 @@ from .executor import BCASL
 
 from .Base import BcPluginBase, PreCompileContext
 from .tagging import compute_tag_order
-from Core.i18n import log_i18n_level
 
 # Qt (facultatif). Ne pas importer QtWidgets au niveau module pour compatibilité headless.
 try:  # pragma: no cover
@@ -393,7 +392,7 @@ def _build_plugin_item(
             tooltip += f"\n\nTags: {', '.join(tags)}"
         reqs = meta.get("requirements", [])
         if reqs:
-            tooltip += f"\n\nRequirements:\n" + "\n".join(f"  • {req}" for req in reqs)
+            tooltip += "\n\nRequirements:\n" + "\n".join(f"  • {req}" for req in reqs)
         if tooltip:
             item.setToolTip(tooltip)
     except Exception:

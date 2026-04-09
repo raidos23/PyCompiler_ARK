@@ -20,7 +20,7 @@ from typing import Optional
 from PySide6.QtWidgets import QApplication, QFileDialog, QMessageBox
 
 from Core.ArkConfigManager import load_ark_config, should_exclude_file
-from Core.Globals import _workspace_dir_cache, _workspace_dir_lock
+from Core.Globals import _workspace_dir_lock
 from Core.WidgetsCreator import CompilationProcessDialog
 
 

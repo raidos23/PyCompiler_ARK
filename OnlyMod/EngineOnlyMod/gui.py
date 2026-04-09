@@ -27,10 +27,10 @@ import sys
 import json
 import subprocess
 from pathlib import Path
-from typing import Optional, Dict, Any, List
+from typing import Optional
 from datetime import datetime
 
-from PySide6.QtCore import Qt, QSize, QTimer, QProcess, QThread, Signal
+from PySide6.QtCore import Qt, QTimer, QThread, Signal
 from PySide6.QtWidgets import (
     QApplication,
     QMainWindow,
@@ -51,11 +51,10 @@ from PySide6.QtWidgets import (
     QFrame,
     QSplitter,
     QTabWidget,
-    QScrollArea,
     QSizePolicy,
     QPlainTextEdit,
 )
-from PySide6.QtGui import QIcon, QAction, QFont, QPixmap
+from PySide6.QtGui import QIcon, QFont, QPixmap
 
 from EngineLoader import (
     available_engines,
@@ -1609,7 +1608,6 @@ class ProgEngineConfigGui(QMainWindow):
     def _attach_live_hooks(self) -> None:
         from PySide6.QtWidgets import (
             QCheckBox,
-            QComboBox,
             QDoubleSpinBox,
             QLineEdit,
             QSpinBox,

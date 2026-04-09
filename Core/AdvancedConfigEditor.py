@@ -17,12 +17,8 @@
 
 from __future__ import annotations
 
-import difflib
 import json
 import os
-import shutil
-import subprocess
-import tempfile
 from pathlib import Path
 from typing import Any, Callable
 
@@ -84,6 +80,184 @@ def _safe_parse_json(text: str) -> bool:
         return True
     except Exception:
         return False
+
+
+def _build_lcs_table(before: list[str], after: list[str]) -> list[list[int]]:
+    """Build the dynamic-programming table used for a line-based diff."""
+    before_len = len(before)
+    after_len = len(after)
+    table = [[0] * (after_len + 1) for _ in range(before_len + 1)]
+    for before_idx in range(before_len - 1, -1, -1):
+        for after_idx in range(after_len - 1, -1, -1):
+            if before[before_idx] == after[after_idx]:
+                table[before_idx][after_idx] = table[before_idx + 1][after_idx + 1] + 1
+            else:
+                table[before_idx][after_idx] = max(
+                    table[before_idx + 1][after_idx], table[before_idx][after_idx + 1]
+                )
+    return table
+
+
+def _build_diff_ops(before: list[str], after: list[str]) -> list[tuple[str, str]]:
+    """Generate diff operations without relying on external tools."""
+    table = _build_lcs_table(before, after)
+    ops: list[tuple[str, str]] = []
+    before_idx = 0
+    after_idx = 0
+
+    while before_idx < len(before) and after_idx < len(after):
+        if before[before_idx] == after[after_idx]:
+            ops.append(("equal", before[before_idx]))
+            before_idx += 1
+            after_idx += 1
+        elif table[before_idx + 1][after_idx] >= table[before_idx][after_idx + 1]:
+            ops.append(("delete", before[before_idx]))
+            before_idx += 1
+        else:
+            ops.append(("insert", after[after_idx]))
+            after_idx += 1
+
+    while before_idx < len(before):
+        ops.append(("delete", before[before_idx]))
+        before_idx += 1
+
+    while after_idx < len(after):
+        ops.append(("insert", after[after_idx]))
+        after_idx += 1
+
+    return ops
+
+
+def _group_diff_ops(
+    ops: list[tuple[str, str]], context: int = 3
+) -> list[list[tuple[str, str]]]:
+    """Group operations into unified-diff hunks with surrounding context."""
+    change_indexes = [
+        idx for idx, (op, _) in enumerate(ops) if op in {"delete", "insert"}
+    ]
+    if not change_indexes:
+        return []
+
+    hunks: list[list[tuple[str, str]]] = []
+    start = max(change_indexes[0] - context, 0)
+    end = min(change_indexes[0] + context + 1, len(ops))
+
+    for idx in change_indexes[1:]:
+        next_start = max(idx - context, 0)
+        next_end = min(idx + context + 1, len(ops))
+        if next_start <= end:
+            end = max(end, next_end)
+            continue
+        hunks.append(ops[start:end])
+        start = next_start
+        end = next_end
+
+    hunks.append(ops[start:end])
+    return hunks
+
+
+def _format_unified_range(start: int, length: int) -> str:
+    """Format a unified diff range header."""
+    if length == 0:
+        return f"{start},0"
+    if length == 1:
+        return str(start)
+    return f"{start},{length}"
+
+
+def _render_unified_diff(
+    before: str,
+    after: str,
+    fromfile: str = "original",
+    tofile: str = "modified",
+    context: int = 3,
+) -> str:
+    """Render a unified diff using the internal diff engine."""
+    before_lines = before.splitlines()
+    after_lines = after.splitlines()
+    ops = _build_diff_ops(before_lines, after_lines)
+    hunks = _group_diff_ops(ops, context=context)
+
+    if not hunks:
+        return ""
+
+    rendered: list[str] = [f"--- {fromfile}", f"+++ {tofile}"]
+    before_line = 1
+    after_line = 1
+
+    for hunk in hunks:
+        hunk_before_start = before_line
+        hunk_after_start = after_line
+        hunk_before_len = 0
+        hunk_after_len = 0
+        hunk_lines: list[str] = []
+
+        for op, line in hunk:
+            if op == "equal":
+                hunk_lines.append(f" {line}")
+                before_line += 1
+                after_line += 1
+                hunk_before_len += 1
+                hunk_after_len += 1
+            elif op == "delete":
+                hunk_lines.append(f"-{line}")
+                before_line += 1
+                hunk_before_len += 1
+            elif op == "insert":
+                hunk_lines.append(f"+{line}")
+                after_line += 1
+                hunk_after_len += 1
+
+        rendered.append(
+            "@@ -"
+            + _format_unified_range(hunk_before_start, hunk_before_len)
+            + " +"
+            + _format_unified_range(hunk_after_start, hunk_after_len)
+            + " @@"
+        )
+        rendered.extend(hunk_lines)
+
+    return "\n".join(rendered)
+
+
+def _render_colored_diff(before: str, after: str, context: int = 3) -> str:
+    """Render a compact human-friendly diff without git-style headers."""
+    ops = _build_diff_ops(before.splitlines(), after.splitlines())
+    if not any(op in {"delete", "insert"} for op, _ in ops):
+        return ""
+
+    rendered: list[str] = []
+    equal_buffer: list[str] = []
+
+    for op, line in ops:
+        if op == "equal":
+            equal_buffer.append(line)
+            continue
+
+        if equal_buffer:
+            if rendered and len(equal_buffer) > context * 2:
+                head = equal_buffer[:context]
+                tail = equal_buffer[-context:]
+                rendered.extend(f"= {item}" for item in head)
+                rendered.append("...")
+                rendered.extend(f"= {item}" for item in tail)
+            else:
+                rendered.extend(f"= {item}" for item in equal_buffer)
+            equal_buffer.clear()
+
+        if op == "delete":
+            rendered.append(f"D {line}")
+        elif op == "insert":
+            rendered.append(f"A {line}")
+
+    if equal_buffer:
+        if rendered and len(equal_buffer) > context:
+            rendered.extend(f"= {item}" for item in equal_buffer[:context])
+            rendered.append("...")
+        else:
+            rendered.extend(f"= {item}" for item in equal_buffer)
+
+    return "\n".join(rendered)
 
 
 class _SimpleHighlighter(QSyntaxHighlighter):
@@ -148,6 +322,56 @@ class _SimpleHighlighter(QSyntaxHighlighter):
             while it.hasNext():
                 match = it.next()
                 self.setFormat(match.capturedStart(), match.capturedLength(), fmt)
+
+
+class _DiffHighlighter(QSyntaxHighlighter):
+    """Apply a compact visual style for diff previews."""
+
+    _EDITOR_BG = "#111111"
+
+    def __init__(self, doc: QTextDocument):
+        """Initialize line styles used by the diff view."""
+        super().__init__(doc)
+
+        self._insert_fmt = QTextCharFormat()
+        self._insert_fmt.setBackground(QColor("#123222"))
+
+        self._delete_fmt = QTextCharFormat()
+        self._delete_fmt.setBackground(QColor("#3a1717"))
+
+        self._hint_fmt = QTextCharFormat()
+        self._hint_fmt.setForeground(QColor("#8a8a8a"))
+        self._hint_fmt.setFontItalic(True)
+
+        self._equal_fmt = QTextCharFormat()
+        self._equal_fmt.setForeground(QColor("#d8d8d8"))
+
+        self._marker_fmt = QTextCharFormat()
+        self._marker_fmt.setForeground(QColor(self._EDITOR_BG))
+        self._marker_fmt.setBackground(QColor(self._EDITOR_BG))
+
+    @staticmethod
+    def _apply_content_format(
+        highlighter: "_DiffHighlighter", text: str, fmt: QTextCharFormat
+    ) -> None:
+        """Apply formatting to the visible content without the internal marker."""
+        if len(text) <= 2:
+            return
+        highlighter.setFormat(2, len(text) - 2, fmt)
+
+    def highlightBlock(self, text: str) -> None:
+        """Colorize insertions, deletions and skipped-context markers."""
+        if text.startswith("A "):
+            self._apply_content_format(self, text, self._insert_fmt)
+            self.setFormat(0, 2, self._marker_fmt)
+        elif text.startswith("D "):
+            self._apply_content_format(self, text, self._delete_fmt)
+            self.setFormat(0, 2, self._marker_fmt)
+        elif text.startswith("= "):
+            self._apply_content_format(self, text, self._equal_fmt)
+            self.setFormat(0, 2, self._marker_fmt)
+        elif text == "...":
+            self.setFormat(0, len(text), self._hint_fmt)
 
 
 class AdvancedConfigEditor(QDialog):
@@ -270,6 +494,10 @@ class AdvancedConfigEditor(QDialog):
         view.setReadOnly(True)
         view.setFont(QFont("Consolas", 10))
         view.setPlainText(diff)
+        view.setStyleSheet(
+            "QPlainTextEdit { background-color: #111111; color: #dddddd; }"
+        )
+        _DiffHighlighter(view.document())
         lay.addWidget(view)
         btn = QPushButton(self.gui.tr("Fermer", "Close"))
         btn.clicked.connect(dlg.close)
@@ -277,50 +505,8 @@ class AdvancedConfigEditor(QDialog):
         dlg.exec()
 
     def _compute_diff(self, before: str, after: str) -> str:
-        """Compute a git-like diff first, then fallback to Python unified diff."""
-        git = shutil.which("git")
-        if git:
-            try:
-                with tempfile.TemporaryDirectory(prefix="ark_diff_") as tmp:
-                    old_path = os.path.join(tmp, "before.txt")
-                    new_path = os.path.join(tmp, "after.txt")
-                    with open(old_path, "w", encoding="utf-8") as f_old:
-                        f_old.write(before)
-                    with open(new_path, "w", encoding="utf-8") as f_new:
-                        f_new.write(after)
-                    proc = subprocess.run(
-                        [
-                            git,
-                            "--no-pager",
-                            "diff",
-                            "--no-index",
-                            "--minimal",
-                            "--patience",
-                            "--",
-                            old_path,
-                            new_path,
-                        ],
-                        stdout=subprocess.PIPE,
-                        stderr=subprocess.PIPE,
-                        text=True,
-                        encoding="utf-8",
-                        errors="replace",
-                    )
-                    out = proc.stdout or ""
-                    # git diff returns 1 when changes are found; this is expected.
-                    if out.strip():
-                        return out
-            except Exception:
-                pass
-        return "\n".join(
-            difflib.unified_diff(
-                before.splitlines(),
-                after.splitlines(),
-                fromfile="original",
-                tofile="modified",
-                lineterm="",
-            )
-        )
+        """Compute a compact diff using the built-in ARK implementation."""
+        return _render_colored_diff(before, after)
 
     def _flatten_keys(self, data: Any, prefix: str = "") -> list[str]:
         """Execute _flatten_keys logic for this component."""

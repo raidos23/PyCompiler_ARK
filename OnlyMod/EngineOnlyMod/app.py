@@ -35,11 +35,9 @@ from __future__ import annotations
 
 import os
 import sys
-import json
 import logging
 import subprocess
 import platform
-from pathlib import Path
 from typing import Optional, Dict, Any, List
 from datetime import datetime
 from Core.process_security import secure_command, hardened_popen_kwargs
@@ -47,15 +45,12 @@ from Core.process_security import secure_command, hardened_popen_kwargs
 # Importations des modules engines_loader (réutilisation du code existant)
 from EngineLoader import (
     CompilerEngine,
-    registry,
-    unload_all,
     available_engines,
     get_engine,
     create as create_engine,
 )
 from EngineLoader.validator import (
     check_engine_compatibility,
-    validate_engines_compatibility,
 )
 from Core.allversion import get_core_version, get_engine_sdk_version
 

@@ -17,7 +17,6 @@
 Tests for Core.allversion module - Version tracking functionality
 """
 
-import pytest
 from Core.allversion import (
     VersionInfo,
     get_core_version,
@@ -86,7 +85,7 @@ class TestVersionGetters:
         version = get_bcasl_version()
         assert isinstance(version, str)
         assert len(version) > 0
-        assert version == "2.0.0"
+        assert version == "1.0.0"
 
     def test_get_system_version(self):
         """Test getting system version"""
@@ -175,7 +174,7 @@ class TestVersionConsistency:
             assert name in versions_dict
             assert versions_dict[name] == info.version
 
-    def test_bcasl_version_is_2_0_0(self):
-        """Test that BCASL version is 2.0.0"""
+    def test_bcasl_version_is_1_0_0(self):
+        """Test that BCASL version is 1.0.0"""
         bcasl_version = get_bcasl_version()
-        assert bcasl_version == "2.0.0"
+        assert bcasl_version == "1.0.0"

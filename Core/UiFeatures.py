@@ -29,7 +29,7 @@ import asyncio
 import json
 import os
 import platform
-from typing import Optional, Callable
+from typing import Callable
 
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QIcon, QPixmap
@@ -87,7 +87,6 @@ class UiFeatures:
 
     def select_nuitka_icon(self):
         """Open a file dialog to select a Nuitka icon (Windows only)."""
-        import platform
 
         if platform.system() != "Windows":
             return
