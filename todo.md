@@ -24,27 +24,28 @@
 
 ### Section de corectif avant release 1.0.0
 
-[ ] Refactorisation du code.
 
-[ ] Pour une indépendance, le ADVANCEDCONFIGEDITOR doit etre independant de git( Créér le sys de diff etc de facon independante de git (from scratch))
+[x] Refactorisation du code.
 
-[ ] le bouton de analyse de deps dans ide gui doit etre application i18n comme les autre boutons... pour s'aasurer de la i18n de ce bouton il faut voir le bouton du meme nom de classic gui et voir comment on li integre le i18n au niveau du tooltips.
+[x] Pour une indépendance, le ADVANCEDCONFIGEDITOR doit etre independant de git( Créér le sys de diff etc de facon independante de git (from scratch))
 
-[ ] Aligner la cli dedicated en fonction de la cli simple en vayant quil soit egaux au niveau des commandes (flags).
+[x] le bouton de analyse de deps dans ide gui doit etre application i18n comme les autre boutons... pour s'aasurer de la i18n de ce bouton il faut voir le bouton du meme nom de classic gui et voir comment on li integre le i18n au niveau du tooltips.
 
-[ ] Revoir le worflow github pour etre le plus correcte possible (Parametrer la release le ci etc). avant de suprr le ark self buil.yml  il faut fussionner son contenu avec celui de rekesase car la relesase doit ètre generer par release.yml .
+[x] Aligner la cli dedicated en fonction de la cli simple en vayant quil soit egaux au niveau des commandes (flags).
 
-[ ] Revoir les versions (__version__) de tout les systems internes de ARK y compris les sdks etc.
+[x] Revoir le worflow github pour etre le plus correcte possible (Parametrer la release le ci etc). avant de suprr le ark self buil.yml  il faut fussionner son contenu avec celui de rekesase car la relesase doit ètre generer par release.yml .
 
-[ ] Revoir le system de statistique de Compilation pour plus d'ergonomie???
+[x] Revoir les versions (__version__) de tout les systems internes de ARK y compris les sdks etc.
 
-[ ] on met a jour toutes les docs puis on fige les info de la version 1.O.0
+[x] Revoir le system de statistique de Compilation pour plus d'ergonomie???
 
-[ ] Le Core/Api.py retirer les gui.tr pour des msgbox en utilisant self.parent.tr (regarde comment il sont utilser dans le Core/Venv_Manager/Manager.py).
+[x] on met a jour toutes les docs puis on fige les info de la version 1.O.0
 
-[ ] tout les logs doivent utiliser le logging i18n_log (dans le pire des cas faire log_i18n + safe_log).
+[x] Le Core/Api.py retirer les gui.tr pour des msgbox en utilisant self.parent.tr (regarde comment il sont utilser dans le Core/Venv_Manager/Manager.py).
 
-[ ] le contributing.md doit etre mis a jour pour dire comment l'on doit coder ici et qul system de ark reutiliser dans tel ou tel chose pour ecrire le moins possible tout en respectant le philosohie de modularité et surtout i18n.
+[x] tout les logs doivent utiliser le logging i18n_log (dans le pire des cas faire log_i18n + safe_log).
+
+[x] le contributing.md doit etre mis a jour pour dire comment l'on doit coder ici et qul system de ark reutiliser dans tel ou tel chose pour ecrire le moins possible tout en respectant le philosohie de modularité et surtout i18n.
 
 
 ### Ideas pour Amelioration UX/UI
