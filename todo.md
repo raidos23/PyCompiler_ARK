@@ -51,3 +51,5 @@
 ### Ideas pour Amelioration UX/UI
 
 [ ] Utiliser le self.parent.tr pour quand lon doit afficher un msgbox quia besoin de i18n? l'tilser pour ameliorer  le systeme i18n destiné au plugin dans Plugins_SDK/GeneralContext/i18n.py pour quand on veut concevoir des msg box etc. il faut une method dédié.
+
+[ ] retirer les safe_log et log_append pou utiliser le i18n_log_level
