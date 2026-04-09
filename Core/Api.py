@@ -32,9 +32,10 @@ class Api:
                 "Voulez-vous continuer ?"
             )
             try:
-                if hasattr(gui, "tr"):
-                    title = gui.tr("Confirmation", "Confirmation")
-                    message = gui.tr(
+                parent = getattr(gui, "parent", None)
+                if parent and hasattr(parent, "tr"):
+                    title = parent.tr("Confirmation", "Confirmation")
+                    message = parent.tr(
                         f"Un plugin demande de changer le workspace vers :\n{folder}\n\n"
                         "Voulez-vous continuer ?",
                         f"A plugin requests changing the workspace to:\n{folder}\n\n"
