@@ -21,3 +21,32 @@
 [x] Améliorer le ADVANCEDCONFIGEDITOR...au niveau du system de diff ( il faut quil soit le plus proche possible e la technologie de git au niveau de perfectionnement ).
     - Fait: le diff utilise `git diff --no-index --minimal --patience` quand git est disponible.
     - Fallback: `difflib.unified_diff` si git n'est pas disponible.
+
+### Section de corectif avant release 1.0.0
+
+[ ] Refactorisation du code.
+
+[ ] Pour une indépendance, le ADVANCEDCONFIGEDITOR doit etre independant de git( Créér le sys de diff etc de facon independante de git (from scratch))
+
+[ ] le bouton de analyse de deps dans ide gui doit etre application i18n comme les autre boutons... pour s'aasurer de la i18n de ce bouton il faut voir le bouton du meme nom de classic gui et voir comment on li integre le i18n au niveau du tooltips.
+
+[ ] Aligner la cli dedicated en fonction de la cli simple en vayant quil soit egaux au niveau des commandes (flags).
+
+[ ] Revoir le worflow github pour etre le plus correcte possible (Parametrer la release le ci etc). avant de suprr le ark self buil.yml  il faut fussionner son contenu avec celui de rekesase car la relesase doit ètre generer par release.yml .
+
+[ ] Revoir les versions (__version__) de tout les systems internes de ARK y compris les sdks etc.
+
+[ ] Revoir le system de statistique de Compilation pour plus d'ergonomie???
+
+[ ] on met a jour toutes les docs puis on fige les info de la version 1.O.0
+
+[ ] Le Core/Api.py retirer les gui.tr pour des msgbox en utilisant self.parent.tr (regarde comment il sont utilser dans le Core/Venv_Manager/Manager.py).
+
+[ ] tout les logs doivent utiliser le logging i18n_log (dans le pire des cas faire log_i18n + safe_log).
+
+[ ] le contributing.md doit etre mis a jour pour dire comment l'on doit coder ici et qul system de ark reutiliser dans tel ou tel chose pour ecrire le moins possible tout en respectant le philosohie de modularité et surtout i18n.
+
+
+### Ideas pour Amelioration UX/UI
+
+[ ] Utiliser le self.parent.tr pour quand lon doit afficher un msgbox quia besoin de i18n? l'tilser pour ameliorer  le systeme i18n destiné au plugin dans Plugins_SDK/GeneralContext/i18n.py pour quand on veut concevoir des msg box etc. il faut une method dédié.
