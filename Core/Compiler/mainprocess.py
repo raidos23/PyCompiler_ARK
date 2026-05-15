@@ -23,7 +23,7 @@ Provides:
 - `MainProcess` class for compilation orchestration
 - Workspace management
 - User interface communication
-- ArkConfigManager integration for file exclusion rules
+- ArkConfig integration for file exclusion rules
 """
 
 from __future__ import annotations
@@ -43,8 +43,8 @@ from Core.Compiler.compiler import (
     CompilationStatus,
 )
 
-# Importations ArkConfigManager pour la gestion des exclusions
-from Core.ArkConfigManager import (
+# Importations ArkConfig pour la gestion des exclusions
+from Core.ArkConfig import (
     load_ark_config,
     should_exclude_file,
     DEFAULT_EXCLUSION_PATTERNS,
@@ -258,6 +258,15 @@ class MainProcess(QObject):
             self.log_message.emit("warning", "Compilation already in progress")
             return False
 
+        if not file_path:
+            self.log_message.emit("error", "Compilation requires an entrypoint file")
+            return False
+        if not os.path.isfile(file_path):
+            self.log_message.emit(
+                "error", f"Entrypoint missing or obsolete: {file_path}"
+            )
+            return False
+
         # Mettre à jour le workspace si fourni
         if workspace_dir and workspace_dir != self._workspace_dir:
             self._workspace_dir = workspace_dir
@@ -399,7 +408,7 @@ class MainProcess(QObject):
         self.log_message.emit("info", "Process reset")
 
     # =========================================================================
-    # FONCTIONS DE GESTION DES EXCLUSIONS (intégration ArkConfigManager)
+    # FONCTIONS DE GESTION DES EXCLUSIONS (intégration ArkConfig)
     # =========================================================================
 
     def get_exclusion_patterns(self) -> List[str]:
@@ -438,7 +447,7 @@ class MainProcess(QObject):
 # =========================================================================
 # Ces fonctions étaient dans command_helpers.py et sont maintenant
 # intégrées directement dans mainprocess.py pour supporter le processus
-# de compilation avec ArkConfigManager
+# de compilation avec ArkConfig
 # =========================================================================
 
 

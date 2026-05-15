@@ -4,53 +4,43 @@ This file customizes how a workspace is scanned and built. It lives at the
 workspace root and is created automatically when the workspace is first set
 in the GUI (if missing).
 
-The configuration is loaded by `Core/ArkConfigManager.py` and merged with
+The configuration is loaded by `Core/ArkConfig/` and merged with
 defaults.
 
 ## Location
 
-The loader checks, in order:
-- `ark.yaml`
-- `ark.yml`
-- `.ark.yaml`
-- `.ark.yml`
+The spec-first CLI requires `ark.yml` at the workspace root. The compatibility
+loader still accepts the older names used by the classic GUI path.
 
 ## Minimal Example
 
 ```yaml
-exclusion_patterns:
-  - "**/__pycache__/**"
-  - "**/*.pyc"
-  - "venv/**"
+project:
+  name: my_app
+  version: 1.0.0
+  entry: app.py
 
-inclusion_patterns:
-  - "**/*.py"
-
-dependencies:
-  auto_generate_from_imports: true
-
-environment_manager:
-  priority: ["poetry", "pipenv", "conda", "pdm", "uv", "pip"]
-  auto_detect: true
-  fallback_to_pip: true
-
-plugins:
-  bcasl_enabled: true
-  plugin_timeout: 0
+workspace:
+  exclude:
+    - "**/__pycache__/**"
+    - "**/*.pyc"
+    - "venv/**"
 
 build:
-  entrypoint: "app.py"
+  engine: pyinstaller
+  output: dist/
+  data: []
 ```
 
 ## Build Entrypoint
 
-`build.entrypoint` defines a single file to compile. It must be a path
+`project.entry` defines the single file to compile. It must be a path
 relative to the workspace root.
 
 Behavior:
 - If `entrypoint` is set and the file exists, only that file is compiled.
-- If it is missing or invalid, the build falls back to selected files
-  (or all files if none are selected).
+- If it is missing or invalid, compilation is blocked until a valid entrypoint
+  is selected.
 
 GUI shortcut:
 - Right‑click a file in the workspace list → **Set as entrypoint**.
@@ -60,7 +50,7 @@ GUI shortcut:
 ## Notes
 
 - Keep paths relative (ex: `"src/main.py"`).
-- Entrypoint is stored in `ark.yml` and can be edited manually.
+- Entrypoint is stored in `ark.yml` as `project.entry` and can be edited manually.
 - This file is separate from `bcasl.yml` (which remains the canonical BCASL plugin config file).
 - A small compatibility bridge also exists under `plugins.*` for workspace-level BCASL defaults such as:
   - `plugins.bcasl_enabled`

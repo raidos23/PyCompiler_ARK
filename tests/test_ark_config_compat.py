@@ -14,7 +14,7 @@
 # limitations under the License.
 
 """
-Tests for Core.ArkConfigManager - ark.yml handling
+Tests for Core.ArkConfig - ark.yml handling
 """
 
 import copy
@@ -22,7 +22,7 @@ from pathlib import Path
 
 import yaml
 
-from Core.ArkConfigManager import (
+from Core.ArkConfig import (
     DEFAULT_CONFIG,
     get_entrypoint,
     load_ark_config,

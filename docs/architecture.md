@@ -11,9 +11,9 @@ Main entrypoints:
 - `pycompiler_ark.py`
 - `Ui/Cli/entrypoint.py`
 - `Ui/Cli/app.py`
-- `cli/runtime.py`
-- `cli/lazy_ops.py`
-- `cli/headless_ops.py`
+- `Ui/Cli/runtime.py`
+- `Ui/Cli/launchers.py`
+- `Ui/Cli/discovery.py`
 
 Responsibilities:
 
@@ -48,7 +48,7 @@ Main files:
 
 - `Core/WorkSpaceManager/`
 - `Core/Venv_Manager/Manager.py`
-- `Core/ArkConfigManager.py`
+- `Core/ArkConfig/`
 
 Responsibilities:
 

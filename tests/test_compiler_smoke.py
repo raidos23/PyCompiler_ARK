@@ -21,7 +21,7 @@ import pytest
 
 pytest.importorskip("PySide6")
 
-from Core.ArkConfigManager import set_entrypoint
+from Core.ArkConfig import set_entrypoint
 import Core.Compiler as compiler_module
 from Core.Compiler.compiler import CompilationThread
 
@@ -55,17 +55,51 @@ class DummyGUI:
     def log_i18n(self, fr: str, en: str) -> None:
         self.log.append(fr)
 
+    def tr(self, fr: str, en: str) -> str:
+        return fr
+
     def set_controls_enabled(self, enabled: bool) -> None:
         self._controls_enabled = enabled
 
 
-def test_compile_all_no_files(tmp_path) -> None:
+def test_compile_all_requires_entrypoint(tmp_path, monkeypatch) -> None:
     gui = DummyGUI()
     gui.workspace_dir = str(tmp_path)
+    gui.python_files = [str(tmp_path / "main.py")]
+    gui.selected_files = [str(tmp_path / "main.py")]
+
+    prompted = {"shown": False}
+    monkeypatch.setattr(
+        compiler_module,
+        "_prompt_for_required_entrypoint",
+        lambda _self, **_kwargs: prompted.__setitem__("shown", True),
+    )
 
     compiler_module.compile_all(gui)
 
-    assert any("Aucun fichier" in msg for msg in gui.log)
+    assert prompted["shown"] is True
+    assert any("Point d'entrée requis" in msg for msg in gui.log)
+
+
+def test_compile_all_rejects_obsolete_entrypoint(test_workspace, monkeypatch) -> None:
+    assert set_entrypoint(str(test_workspace), "missing.py") is True
+
+    gui = DummyGUI()
+    gui.workspace_dir = str(test_workspace)
+
+    prompted: dict[str, str | None] = {"missing_path": None}
+    monkeypatch.setattr(
+        compiler_module,
+        "_prompt_for_required_entrypoint",
+        lambda _self, **kwargs: prompted.__setitem__(
+            "missing_path", kwargs.get("missing_path")
+        ),
+    )
+
+    compiler_module.compile_all(gui)
+
+    assert prompted["missing_path"] == "missing.py"
+    assert any("Point d'entrée introuvable" in msg for msg in gui.log)
 
 
 def test_compile_all_no_workspace(tmp_path) -> None:

@@ -19,7 +19,7 @@ from typing import Optional
 
 from PySide6.QtWidgets import QApplication, QFileDialog, QMessageBox
 
-from Core.ArkConfigManager import load_ark_config, should_exclude_file
+from Core.ArkConfig import load_ark_config, should_exclude_file
 from Core.Globals import _workspace_dir_lock
 from Core.WidgetsCreator import CompilationProcessDialog
 
@@ -417,7 +417,7 @@ class SetupWorkspace:
         # Étape 1: créer le fichier config si absent.
         if not os.path.exists(config_path):
             try:
-                from Core.ArkConfigManager import create_default_ark_config
+                from Core.ArkConfig import create_default_ark_config
 
                 if create_default_ark_config(workspace_dir):
                     gui_instance.log_i18n(

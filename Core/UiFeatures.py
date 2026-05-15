@@ -228,7 +228,7 @@ class UiFeatures:
         if not workspace_dir:
             return
         try:
-            from .ArkConfigManager import load_ark_config, get_entrypoint
+            from .ArkConfig import load_ark_config, get_entrypoint
 
             cfg = load_ark_config(workspace_dir)
             entry_rel = get_entrypoint(cfg)
@@ -263,7 +263,7 @@ class UiFeatures:
             )
             return
         try:
-            from .ArkConfigManager import set_entrypoint
+            from .ArkConfig import set_entrypoint
 
             # Étape 2: écrire la valeur d'entrypoint dans la config workspace.
             ok = set_entrypoint(workspace_dir, rel_path)
@@ -290,7 +290,7 @@ class UiFeatures:
         if not workspace_dir:
             return
         try:
-            from .ArkConfigManager import set_entrypoint
+            from .ArkConfig import set_entrypoint
 
             ok = set_entrypoint(workspace_dir, None)
         except Exception:
