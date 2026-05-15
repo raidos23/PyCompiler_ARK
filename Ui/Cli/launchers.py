@@ -1,0 +1,133 @@
+from __future__ import annotations
+
+import os
+import sys
+from pathlib import Path
+from typing import Optional
+
+from .icons import set_app_icon, set_window_icon
+from .output import error, warn
+from .runtime import ROOT_DIR, handle_fatal
+
+
+def _get_or_create_qapp():
+    from PySide6.QtWidgets import QApplication
+
+    app = QApplication.instance()
+    if app is None:
+        app = QApplication(sys.argv)
+    return app
+
+
+def _get_app_version() -> str:
+    try:
+        core_init = Path(ROOT_DIR) / "Core" / "__init__.py"
+        for line in core_init.read_text(encoding="utf-8").splitlines():
+            stripped = line.strip()
+            if stripped.startswith("__version__"):
+                _, value = stripped.split("=", 1)
+                return value.strip().strip("\"'")
+    except Exception:
+        pass
+    return "unknown"
+
+
+def _apply_small_screen_compaction(app, window) -> None:
+    try:
+        from PySide6.QtWidgets import QLayout
+
+        screen = app.primaryScreen()
+        geo = screen.availableGeometry() if screen is not None else None
+        if geo and (geo.width() < 1000 or geo.height() < 650):
+            try:
+                lays = window.ui.findChildren(QLayout) if hasattr(window, "ui") else []
+                for layout in lays:
+                    try:
+                        layout.setContentsMargins(6, 6, 6, 6)
+                        layout.setSpacing(6)
+                    except Exception:
+                        pass
+            except Exception:
+                pass
+    except Exception:
+        pass
+
+
+def launch_main_application(
+    no_splash: bool = False, ide_gui: bool = False, classic_gui: bool = False
+) -> int:
+    try:
+        from Core import PyCompilerArkGui
+        from PySide6.QtCore import Qt, QTimer
+        from PySide6.QtGui import QColor, QPixmap
+        from PySide6.QtWidgets import QSplashScreen
+
+        app = _get_or_create_qapp()
+        set_app_icon(app)
+        app_version = _get_app_version()
+        splash = None
+        if not no_splash:
+            try:
+                logo_dir = os.path.join(ROOT_DIR, "images")
+                safe_ver = "".join(
+                    c for c in app_version if c.isalnum() or c in (".", "-", "_")
+                )
+                names = [
+                    f"splash_v{safe_ver}.png",
+                    "splash.png",
+                    "splash.jpg",
+                    "splash.jpeg",
+                    "splash.bmp",
+                ]
+                for name in names:
+                    path = os.path.join(logo_dir, name)
+                    if os.path.isfile(path):
+                        pix = QPixmap(path)
+                        if not pix.isNull():
+                            splash = QSplashScreen(pix)
+                            splash.show()
+                            app.processEvents()
+                        break
+            except Exception:
+                splash = None
+
+        if splash is not None:
+            delay_ms = 4000
+            try:
+                delay_ms = int(os.environ.get("PYCOMPILER_SPLASH_DELAY_MS", "4000"))
+            except Exception:
+                delay_ms = 4000
+
+            def _launch_main():
+                try:
+                    if classic_gui:
+                        os.environ["PYCOMPILER_UI_VARIANT"] = "classic"
+                    elif ide_gui:
+                        os.environ["PYCOMPILER_UI_VARIANT"] = "ide2"
+                    window = PyCompilerArkGui()
+                    set_window_icon(window)
+                    window.show()
+                    _apply_small_screen_compaction(app, window)
+                    try:
+                        splash.finish(window)
+                    except Exception:
+                        pass
+                except Exception:
+                    handle_fatal(sys.exc_info())
+
+            QTimer.singleShot(max(0, delay_ms), _launch_main)
+        else:
+            if classic_gui:
+                os.environ["PYCOMPILER_UI_VARIANT"] = "classic"
+            elif ide_gui:
+                os.environ["PYCOMPILER_UI_VARIANT"] = "ide2"
+            window = PyCompilerArkGui()
+            set_window_icon(window)
+            window.show()
+            _apply_small_screen_compaction(app, window)
+
+        return app.exec()
+    except Exception as exc:
+        error(f"Failed to launch main application: {exc}")
+        return 1
+

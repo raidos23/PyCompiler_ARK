@@ -1,18 +1,15 @@
-# SPDX-License-Identifier: Apache-2.0
-# Copyright 2026 Ague Samuel Amen
-
 from __future__ import annotations
 
 import sys
 
 try:
     from rich.console import Console  # type: ignore
-except Exception:  # pragma: no cover - optional dependency
+except Exception:  # pragma: no cover
     Console = None
 
 try:
     import click  # type: ignore
-except Exception:  # pragma: no cover - optional dependency
+except Exception:  # pragma: no cover
     click = None
 
 _CONSOLE = Console() if Console is not None else None
@@ -63,3 +60,4 @@ def error(message: str) -> None:
 
 def success(message: str) -> None:
     log("SUCCESS", message, err=False)
+

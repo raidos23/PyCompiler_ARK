@@ -22,33 +22,25 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from cli.headless_ops import bcasl_doctor_payload, engine_list_payload
-from cli.runtime import should_enable_qt
 from Ui.Cli.app import build_cli
+from Ui.Cli.discovery import bcasl_doctor_payload, engine_list_payload
 from Ui.Cli.entrypoint import main as entrypoint_main
+from Ui.Cli.runtime import should_enable_qt
 
 
 def test_should_enable_qt_for_headless_commands() -> None:
     assert should_enable_qt(["--help"]) is False
     assert should_enable_qt(["--version"]) is False
-    assert should_enable_qt(["--info"]) is False
-    assert should_enable_qt(["--cli"]) is False
-    assert should_enable_qt(["--unload"]) is False
-    assert should_enable_qt(["engines", "--dry-run"]) is False
-    assert should_enable_qt(["engine", "list"]) is False
-    assert should_enable_qt(["bcasl", "list"]) is False
-    assert should_enable_qt(["check", "."]) is False
-    assert should_enable_qt(["init", "."]) is False
-    assert should_enable_qt(["config-auto", "."]) is False
+    assert should_enable_qt(["init", "--entry", "main.py"]) is False
+    assert should_enable_qt(["build"]) is False
+    assert should_enable_qt(["list", "engines"]) is False
+    assert should_enable_qt(["run", "bcasl"]) is False
 
 
 def test_should_enable_qt_for_gui_commands() -> None:
     assert should_enable_qt([]) is True
-    assert should_enable_qt(["main"]) is True
-    assert should_enable_qt(["gui", "main", "--ide"]) is True
-    assert should_enable_qt(["--ide-gui"]) is True
-    assert should_enable_qt(["engines"]) is True
-    assert should_enable_qt(["bcasl"]) is True
+    assert should_enable_qt(["gui"]) is True
+    assert should_enable_qt(["gui", "--legacy"]) is True
 
 
 def test_cli_modules_import_without_qt_bootstrap_side_effects() -> None:

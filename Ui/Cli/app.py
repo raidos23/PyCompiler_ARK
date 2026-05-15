@@ -5,16 +5,17 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from cli.runtime import install_runtime, should_enable_qt
+from .runtime import install_runtime, should_enable_qt
 
 from .spec_helpers import (
     CliSpecError,
-    build_context_from_ark_config,
-    build_context_from_lock,
+    build_context_object_from_ark_config,
+    build_context_object_from_lock,
     build_lock_payload,
     cache_rebuild_lock,
     compare_lock_payloads,
     default_lock_path,
+    engine_config_from_lock,
     init_workspace,
     launch_gui,
     list_engines_payload,
@@ -62,6 +63,17 @@ def _resolve_version() -> str:
     return "unknown"
 
 
+def _ensure_engine_known(engine_id: str) -> None:
+    payload = list_engines_payload()
+    known_ids = {
+        str(item.get("id") or "").strip()
+        for item in payload.get("engines", [])
+        if isinstance(item, dict)
+    }
+    if engine_id not in known_ids:
+        raise CliSpecError(f"build.engine: unknown engine '{engine_id}'")
+
+
 def _build_impl(
     *,
     workspace: Path,
@@ -78,19 +90,22 @@ def _build_impl(
         config = load_ark_config(workspace)
         validated = validate_ark_config(workspace, config)
         engine_id = engine_override or str(validated.config["build"]["engine"])
+        _ensure_engine_known(engine_id)
         lock_payload = build_lock_payload(workspace, validated.config, engine_id=engine_id)
         lock_paths = write_lock_files(workspace, lock_payload)
+        context = build_context_object_from_ark_config(validated.config)
         result = run_engine_compile(
             workspace=workspace,
             engine_id=engine_id,
-            entry_file=str(validated.config["project"]["entry"]),
+            context=context,
+            engine_config=engine_config_from_lock(lock_payload),
         )
         payload = {
             "mode": "build",
             "engine": engine_id,
             "warnings": validated.warnings,
             "lock": lock_paths,
-            "build_context": build_context_from_ark_config(validated.config),
+            "build_context": context.to_dict(),
             "result": result,
         }
         if as_json:
@@ -120,11 +135,18 @@ def _build_impl(
     entry_file = str(((lock_payload.get("project") or {}).get("entry")) or "").strip()
     if not engine_id or not entry_file:
         raise CliSpecError("Invalid lock file: missing engine.name or project.entry")
+    entry_path = workspace / Path(entry_file)
+    if not entry_path.is_file():
+        raise CliSpecError(
+            f"Invalid lock file: project.entry '{entry_file}' is missing or obsolete"
+        )
 
+    context = build_context_object_from_lock(lock_payload)
     result = run_engine_compile(
         workspace=workspace,
         engine_id=engine_id,
-        entry_file=entry_file,
+        context=context,
+        engine_config=engine_config_from_lock(lock_payload),
     )
 
     comparison = None
@@ -150,7 +172,7 @@ def _build_impl(
         "warnings": warnings,
         "comparison_ok": comparison,
         "comparison_lock": rebuild_cache,
-        "build_context": build_context_from_lock(lock_payload),
+        "build_context": context.to_dict(),
         "result": result,
     }
     if as_json:
@@ -374,4 +396,3 @@ def main(argv: list[str] | None = None) -> int:
             exc.show()
             return int(getattr(exc, "exit_code", 2))
         raise
-
