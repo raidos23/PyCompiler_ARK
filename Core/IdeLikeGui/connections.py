@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # Copyright 2026 Ague Samuel Amen
 
-"""Connections for `ui/ui_ide_design2.ui`.
+"""Connections for `Ui/Forms/ide_main_window.ui`.
 
 This module intentionally contains only UI loading, widget mapping and signal
 connections to existing methods on the main GUI object.
@@ -77,14 +77,10 @@ def _prime_expected_attrs(self) -> None:
 
 def _load_ide_like_ui(self) -> None:
     """Load the new ide-like UI file and set it as central widget."""
+    from Ui import ui_form_path
+
     loader = QUiLoader()
-    ui_path = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)),
-        "..",
-        "..",
-        "ui",
-        "ui_ide_design2.ui",
-    )
+    ui_path = ui_form_path("ide_main_window.ui")
     ui_file = QFile(os.path.abspath(ui_path))
     if not ui_file.open(QFile.ReadOnly):
         raise RuntimeError(f"Impossible d'ouvrir le fichier UI : {ui_path}")
@@ -93,7 +89,7 @@ def _load_ide_like_ui(self) -> None:
     if loaded is None:
         raise RuntimeError(f"Échec du chargement du fichier UI : {ui_path}")
 
-    # ui_ide_design2.ui uses QMainWindow as root. Reuse its central widget.
+    # ide_main_window.ui uses QMainWindow as root. Reuse its central widget.
     if isinstance(loaded, QMainWindow):
         _clear_inline_styles(loaded)
         # Preserve status bar authored in the .ui file when available.

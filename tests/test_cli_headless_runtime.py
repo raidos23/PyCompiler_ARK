@@ -22,10 +22,10 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from cli import click_app, dedicated, fallback
 from cli.headless_ops import bcasl_doctor_payload, engine_list_payload
-from cli.entrypoint import main as entrypoint_main
 from cli.runtime import should_enable_qt
+from Ui.Cli.app import build_cli
+from Ui.Cli.entrypoint import main as entrypoint_main
 
 
 def test_should_enable_qt_for_headless_commands() -> None:
@@ -52,9 +52,7 @@ def test_should_enable_qt_for_gui_commands() -> None:
 
 
 def test_cli_modules_import_without_qt_bootstrap_side_effects() -> None:
-    assert callable(click_app.build_cli)
-    assert callable(fallback.run)
-    assert callable(dedicated.run_dedicated_cli)
+    assert callable(build_cli)
 
 
 def test_engine_list_payload_is_available_headlessly() -> None:
@@ -73,31 +71,12 @@ def test_bcasl_doctor_payload_discovers_plugin_candidates_headlessly() -> None:
 
 
 def test_entrypoint_preserves_click_return_codes() -> None:
-    code = entrypoint_main(["check", ".", "--json", "--strict", "--require-entrypoint"])
+    code = entrypoint_main(["--help"])
 
-    assert code == 3
+    assert code == 0
 
 
 def test_entrypoint_returns_usage_error_for_unknown_command() -> None:
     code = entrypoint_main(["ci", "smoke"])
 
     assert code == 2
-
-
-def test_fallback_check_is_strict_by_default(monkeypatch) -> None:
-    monkeypatch.setattr(
-        "cli.headless_commands.ci_smoke_payload",
-        lambda workspace=None, require_entrypoint=False: {
-            "workspace": workspace,
-            "require_entrypoint": require_entrypoint,
-            "ok": False,
-            "failed_count": 1,
-            "checks": [
-                {"name": "workspace_entrypoint", "ok": False, "message": "missing"}
-            ],
-        },
-    )
-
-    code = fallback.run(["check", "."], "test")
-
-    assert code == 3

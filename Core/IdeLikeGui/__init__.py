@@ -3,7 +3,7 @@
 
 """Ide-like GUI wiring layer.
 
-This package only wires the new `ui_ide_design2.ui` to existing Core methods.
+This package only wires the new `Ui/Forms/ide_main_window.ui` to existing Core methods.
 No business logic is implemented here.
 """
 

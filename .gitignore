@@ -9,7 +9,7 @@ __pycache__/
 # Swap/backup files
 *.swp
 *.bak
-
+.codex
 # Distribution / packaging
 .Python
 build/
