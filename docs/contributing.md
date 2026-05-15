@@ -59,8 +59,8 @@ For publishing steps, follow [`docs/release_process.md`](./release_process.md).
 
 ## Where to make changes
 
-- CLI behavior: `cli/`
-- headless CLI operations and JSON payloads: `cli/headless_ops.py`
+- CLI behavior: `Ui/Cli/`
+- headless discovery and payload helpers: `Ui/Cli/discovery.py`
 - classic GUI wiring: `Core/UiConnection.py`
 - IDE-like GUI wiring: `Core/IdeLikeGui/`
 - compilation logic: `Core/Compiler/`

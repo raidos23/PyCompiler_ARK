@@ -1,9 +1,4 @@
-# SPDX-License-Identifier: Apache-2.0
-# Copyright 2026 Ague Samuel Amen
-
 from __future__ import annotations
-
-"""Runtime bootstrap utilities for CLI and GUI execution paths."""
 
 import faulthandler
 import logging
@@ -15,7 +10,7 @@ import traceback
 from pathlib import Path
 from typing import Optional
 
-ROOT_DIR = Path(__file__).resolve().parents[1]
+ROOT_DIR = Path(__file__).resolve().parents[2]
 
 IS_WINDOWS = os.name == "nt" or platform.system().lower().startswith("win")
 IS_DARWIN = platform.system().lower().startswith("darwin")
@@ -62,6 +57,8 @@ def configure_env() -> None:
 
     if IS_LINUX:
         os.environ.setdefault("QT_WAYLAND_DISABLE_FRACTIONAL_SCALE", "1")
+        if not os.environ.get("LC_ALL") and not os.environ.get("LANG"):
+            os.environ["LC_ALL"] = "C.UTF-8"
 
     if IS_DARWIN:
         os.environ.setdefault("QT_MAC_WANTS_LAYER", "1")
@@ -77,10 +74,6 @@ def configure_env() -> None:
                 )
         except Exception:
             pass
-
-    if IS_LINUX:
-        if not os.environ.get("LC_ALL") and not os.environ.get("LANG"):
-            os.environ["LC_ALL"] = "C.UTF-8"
 
 
 def _platform_log_dir() -> Path:
@@ -218,21 +211,11 @@ def handle_fatal(exc_info) -> None:
 
 
 def should_enable_qt(argv: list[str] | None) -> bool:
-    """Return True only when the requested command path really needs Qt startup."""
     args = list(argv or [])
     if not args:
         return True
 
-    if any(
-        flag in args
-        for flag in ("--help", "-h", "--version", "-v", "--info", "--cli", "--help-all")
-    ):
-        return False
-
-    if "--classic-gui" in args or "--ide-gui" in args:
-        return True
-
-    if "--unload" in args:
+    if any(flag in args for flag in ("--help", "-h", "--version", "-v")):
         return False
 
     cmd = None
@@ -244,36 +227,13 @@ def should_enable_qt(argv: list[str] | None) -> bool:
     if cmd is None:
         return True
 
-    headless_commands = {
-        "unload",
-        "version",
-        "help",
-        "info",
-        "engine",
-        "check",
-        "doctor",
-        "init",
-        "config-auto",
-        "cfg-auto",
-        "workspace",
-        "ws",
-        "scaffold",
-    }
-    gui_commands = {"gui", "main", "prog-engine"}
-    if cmd in gui_commands:
+    headless_commands = {"build", "init", "list", "set", "get", "unset", "scaffold"}
+    if cmd == "run":
+        return False
+    if cmd == "gui":
         return True
     if cmd in headless_commands:
         return False
-
-    if cmd == "engines":
-        return not any(flag in args for flag in ("--dry-run", "-d"))
-    if cmd == "bcasl":
-        for token in args[1:]:
-            if token.startswith("-"):
-                continue
-            # bcasl list/run/doctor are headless; otherwise GUI.
-            return token not in {"list", "run", "doctor"}
-        return True
     return False
 
 
@@ -286,3 +246,4 @@ def install_runtime(app_version: str, enable_qt: bool = True) -> None:
         install_qt_metadata(app_version)
         install_qt_handlers()
     install_signal_handlers()
+

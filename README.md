@@ -199,8 +199,7 @@ python -m OnlyMod.EngineOnlyMod --engine nuitka -f script.py --dry-run
 
 ## Project layout
 
-- `Ui/Cli/` — active ARK CLI entrypoints and command tree.
-- `cli/` — shared runtime and headless helper modules kept during the CLI migration.
+- `Ui/Cli/` — active ARK CLI entrypoints, runtime helpers, discovery, and command tree.
 - `Core/` — main UI logic.
 - `Core/IdeLikeGui/` — wiring layer for the IDE-like main GUI.
 - `ENGINES/` — built-in engines.
