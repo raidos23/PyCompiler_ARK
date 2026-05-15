@@ -666,7 +666,7 @@ class AdvancedConfigEditor(QDialog):
         """Build and return the default content structure."""
         if file_id == "ark":
             try:
-                from Core.ArkConfigManager import DEFAULT_CONFIG
+                from Core.ArkConfig import DEFAULT_CONFIG
 
                 return yaml.safe_dump(
                     DEFAULT_CONFIG, allow_unicode=True, sort_keys=False

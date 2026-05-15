@@ -39,7 +39,7 @@ from typing import Optional
 # IMPORTS TIERS (PySide6)
 # ============================================================================
 from PySide6.QtCore import QProcess
-from PySide6.QtWidgets import QApplication, QMessageBox
+from PySide6.QtWidgets import QApplication, QFileDialog, QMessageBox
 
 # ============================================================================
 # IMPORTS LOCAUX - Core.Compiler
@@ -132,6 +132,81 @@ def _resolve_default_engine_id() -> str:
     except Exception:
         pass
     return "engine"
+
+
+def _prompt_for_required_entrypoint(self, *, missing_path: str | None = None) -> None:
+    """Show a blocking dialog when compilation has no valid entrypoint."""
+
+    def _t(_key: str, fr: str, en: str) -> str:
+        try:
+            return self.tr(fr, en)
+        except Exception:
+            return en
+
+    workspace_dir = getattr(self, "workspace_dir", None)
+    try:
+        box = QMessageBox(self)
+        box.setIcon(QMessageBox.Warning)
+        box.setWindowTitle(
+            _t(
+                "msg_entrypoint_required_title",
+                "Point d'entrée requis",
+                "Entrypoint required",
+            )
+        )
+        if missing_path:
+            text_fr = (
+                "Le point d'entrée configuré est introuvable ou obsolète:\n"
+                f"{missing_path}\n\n"
+                "Sélectionnez un fichier Python valide avant de compiler."
+            )
+            text_en = (
+                "The configured entrypoint is missing or obsolete:\n"
+                f"{missing_path}\n\n"
+                "Select a valid Python file before compiling."
+            )
+        else:
+            text_fr = (
+                "La compilation nécessite un point d'entrée.\n\n"
+                "Sélectionnez le fichier Python principal avant de compiler."
+            )
+            text_en = (
+                "Compilation requires an entrypoint.\n\n"
+                "Select the main Python file before compiling."
+            )
+        box.setText(_t("msg_entrypoint_required_text", text_fr, text_en))
+        btn_select = box.addButton(
+            _t("action_select_entrypoint", "Choisir un fichier", "Choose file"),
+            QMessageBox.AcceptRole,
+        )
+        box.addButton(_t("action_cancel", "Annuler", "Cancel"), QMessageBox.RejectRole)
+        box.exec()
+        if box.clickedButton() != btn_select or not workspace_dir:
+            return
+        file_path, _ = QFileDialog.getOpenFileName(
+            self,
+            _t(
+                "dialog_select_entrypoint",
+                "Choisir le point d'entrée",
+                "Choose entrypoint",
+            ),
+            workspace_dir,
+            "Python Files (*.py)",
+        )
+        if not file_path:
+            return
+        try:
+            rel_path = os.path.relpath(
+                os.path.realpath(file_path), os.path.realpath(workspace_dir)
+            )
+        except Exception:
+            return
+        if rel_path.startswith(".."):
+            return
+        if hasattr(self, "set_entrypoint"):
+            self.set_entrypoint(rel_path)
+    except Exception:
+        pass
 
 
 __version__ = "1.0.0"
@@ -250,87 +325,13 @@ def compile_all(self) -> None:
         except Exception:
             return en
 
-    # Déterminer les fichiers à compiler (point d'entrée > sélection > tout)
-    files_to_compile = []
-    entrypoint_file = None
-    try:
-        from Core.ArkConfigManager import load_ark_config, get_entrypoint
-
-        if self.workspace_dir:
-            cfg = load_ark_config(self.workspace_dir)
-            entry_rel = get_entrypoint(cfg)
-            if entry_rel:
-                entrypoint_file = os.path.join(self.workspace_dir, entry_rel)
-                if not os.path.isfile(entrypoint_file):
-                    entrypoint_file = None
-    except Exception:
-        entrypoint_file = None
-
-    if entrypoint_file:
-        files_to_compile = [entrypoint_file]
-        log_i18n_level(
-            self,
-            "info",
-            f"Compilation du point d'entrée : {os.path.relpath(entrypoint_file, self.workspace_dir)}",
-            f"Compiling entrypoint: {os.path.relpath(entrypoint_file, self.workspace_dir)}",
-        )
-    else:
-        selected = getattr(self, "selected_files", None) or []
-        files_to_compile = selected if selected else self.python_files.copy()
-
-    if not files_to_compile:
-        log_i18n_level(
-            self,
-            "warning",
-            "Aucun fichier Python sélectionné.",
-            "No Python files selected.",
-        )
-        try:
-            box = QMessageBox(self)
-            box.setWindowTitle(
-                _t(
-                    "msg_no_files_title",
-                    "Aucun fichier à compiler",
-                    "No files to compile",
-                )
-            )
-            box.setText(
-                _t(
-                    "msg_no_files_text",
-                    "Ajoutez des fichiers ou choisissez un Workspace.",
-                    "Add files or choose a Workspace.",
-                )
-            )
-            btn_ws = box.addButton(
-                _t("action_select_workspace", "Choisir Workspace", "Select Workspace"),
-                QMessageBox.ActionRole,
-            )
-            btn_files = box.addButton(
-                _t("action_add_files", "Ajouter des fichiers", "Add files"),
-                QMessageBox.AcceptRole,
-            )
-            box.addButton(
-                _t("action_cancel", "Annuler", "Cancel"), QMessageBox.RejectRole
-            )
-            box.exec()
-            if box.clickedButton() == btn_ws:
-                try:
-                    self.select_workspace()
-                except Exception:
-                    pass
-            elif box.clickedButton() == btn_files:
-                try:
-                    self.select_files_manually()
-                except Exception:
-                    pass
-        except Exception:
-            pass
-        return
-
     # Vérifier le workspace
     if not self.workspace_dir:
         log_i18n_level(
-            self, "warning", "Aucun workspace sélectionné.", "No workspace selected."
+            self,
+            "warning",
+            "Aucun workspace sélectionné.",
+            "No workspace selected.",
         )
         try:
             box = QMessageBox(self)
@@ -360,6 +361,50 @@ def compile_all(self) -> None:
         except Exception:
             pass
         return
+
+    files_to_compile = []
+    entry_rel = None
+    entrypoint_file = None
+    try:
+        from Core.ArkConfig import load_ark_config, get_entrypoint
+
+        cfg = load_ark_config(self.workspace_dir)
+        entry_rel = get_entrypoint(cfg)
+    except Exception:
+        entry_rel = None
+
+    if not entry_rel:
+        log_i18n_level(
+            self,
+            "warning",
+            "Point d'entrée requis avant compilation.",
+            "Entrypoint required before compilation.",
+        )
+        _prompt_for_required_entrypoint(self)
+        return
+
+    entrypoint_file = os.path.join(self.workspace_dir, entry_rel)
+    if not os.path.isfile(entrypoint_file):
+        try:
+            missing_display = os.path.relpath(entrypoint_file, self.workspace_dir)
+        except Exception:
+            missing_display = entrypoint_file
+        log_i18n_level(
+            self,
+            "error",
+            f"Point d'entrée introuvable ou obsolète : {missing_display}",
+            f"Entrypoint missing or obsolete: {missing_display}",
+        )
+        _prompt_for_required_entrypoint(self, missing_path=missing_display)
+        return
+
+    files_to_compile = [entrypoint_file]
+    log_i18n_level(
+        self,
+        "info",
+        f"Compilation du point d'entrée : {os.path.relpath(entrypoint_file, self.workspace_dir)}",
+        f"Compiling entrypoint: {os.path.relpath(entrypoint_file, self.workspace_dir)}",
+    )
 
     _set_progress_indeterminate(self)
 
@@ -492,7 +537,7 @@ def _start_compilation_queue(self, engine, files_to_compile: list) -> None:
         )
         main_process._gui_connected = True
 
-    # Charger les patterns d'exclusion depuis ArkConfigManager
+    # Charger les patterns d'exclusion depuis ArkConfig
     exclusion_patterns = main_process.get_exclusion_patterns()
     excluded_count = 0
 

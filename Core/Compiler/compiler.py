@@ -458,6 +458,15 @@ class CompilerCore(QObject):
             self.log_message.emit("warning", "Compilation already in progress")
             return False
 
+        if not file_path:
+            self.log_message.emit("error", "Compilation requires an entrypoint file")
+            return False
+        if not os.path.isfile(file_path):
+            self.log_message.emit(
+                "error", f"Entrypoint missing or obsolete: {file_path}"
+            )
+            return False
+
         # Stocker les infos
         self._current_engine = engine_id
         self._current_file = file_path
