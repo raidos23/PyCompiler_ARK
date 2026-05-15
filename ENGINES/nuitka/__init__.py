@@ -27,6 +27,7 @@ import sys
 from typing import Optional
 
 from engine_sdk import (
+    BuildContext,
     CompilerEngine,
     add_icon_selector,
     add_output_dir,
@@ -70,6 +71,66 @@ class NuitkaEngine(CompilerEngine):
     def preflight(self, gui, file: str) -> bool:
         """Preflight check - dependencies are handled automatically by required_tools."""
         return True
+
+    def build_command_from_context(self, context: BuildContext) -> list[str]:
+        """Build a Nuitka command line from a normalized build context."""
+        cfg = getattr(self, "_config_overrides", {})
+        if not isinstance(cfg, dict):
+            cfg = {}
+
+        cmd = [sys.executable, "-m", "nuitka"]
+
+        standalone_enabled = bool(cfg.get("standalone", False))
+        if hasattr(self, "_nuitka_standalone"):
+            standalone_enabled = bool(self._nuitka_standalone.isChecked())
+        if standalone_enabled:
+            cmd.append("--standalone")
+
+        onefile_enabled = bool(cfg.get("onefile", False))
+        if hasattr(self, "_nuitka_onefile"):
+            onefile_enabled = bool(self._nuitka_onefile.isChecked())
+        if onefile_enabled:
+            cmd.append("--onefile")
+
+        disable_console = bool(cfg.get("disable_console", False))
+        if hasattr(self, "_nuitka_disable_console"):
+            disable_console = bool(self._nuitka_disable_console.isChecked())
+        if disable_console:
+            cmd.append("--windows-disable-console")
+
+        output_dir = str(context.output_dir or cfg.get("output_dir") or "").strip()
+        if output_dir:
+            cmd.append(f"--output-dir={output_dir}")
+
+        output_name = str(context.project_name or "").strip()
+        if output_name:
+            cmd.append(f"--output-filename={output_name}")
+
+        icon_path = str(context.icon or cfg.get("selected_icon") or "").strip()
+        if not icon_path:
+            icon_path = str(getattr(self, "_nuitka_selected_icon", "") or "").strip()
+        if icon_path:
+            cmd.append(f"--windows-icon-from-ico={icon_path}")
+
+        for pattern in context.exclude_patterns:
+            module = (
+                str(pattern)
+                .replace("/**/*", "")
+                .replace("**/*", "")
+                .replace("/**", "")
+                .strip("/")
+            )
+            if module and "*" not in module:
+                cmd.append(f"--nofollow-import-to={module.replace('/', '.')}")
+
+        for mapping in context.data_mappings:
+            source = str((mapping or {}).get("source") or "").strip()
+            destination = str((mapping or {}).get("destination") or "").strip()
+            if source and destination:
+                cmd.append(f"--include-data-dir={source}={destination}")
+
+        cmd.append(context.entry_point)
+        return cmd
 
     def build_command(self, gui, file: str) -> list[str]:
         """Build the Nuitka command line."""

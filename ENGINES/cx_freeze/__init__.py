@@ -28,6 +28,7 @@ import sys
 from typing import Optional
 
 from engine_sdk import (
+    BuildContext,
     CompilerEngine,
     add_form_checkbox,
     add_icon_selector,
@@ -64,6 +65,55 @@ class CXFreezeEngine(CompilerEngine):
     def preflight(self, gui, file: str) -> bool:
         """Preflight check - dependencies are handled automatically by required_tools."""
         return True
+
+    def build_command_from_context(self, context: BuildContext) -> list[str]:
+        """Build a cx_Freeze command line from a normalized build context."""
+        cfg = getattr(self, "_config_overrides", {})
+        if not isinstance(cfg, dict):
+            cfg = {}
+
+        cmd = [sys.executable, "-m", "cx_Freeze"]
+
+        windowed_enabled = bool(cfg.get("windowed", False))
+        if hasattr(self, "_cx_windowed") and self._cx_windowed is not None:
+            windowed_enabled = bool(self._cx_windowed.isChecked())
+        if windowed_enabled and platform.system() == "Windows":
+            cmd.extend(["--base", "Win32GUI"])
+
+        output_dir = str(context.output_dir or cfg.get("output_dir") or "").strip()
+        if output_dir:
+            cmd.extend(["--target-dir", output_dir])
+
+        icon_path = str(context.icon or cfg.get("selected_icon") or "").strip()
+        if not icon_path and hasattr(self, "_selected_icon") and self._selected_icon:
+            icon_path = str(self._selected_icon).strip()
+        if icon_path:
+            cmd.extend(["--icon", icon_path])
+
+        target_name = str(cfg.get("target_name") or context.project_name or "").strip()
+        if target_name:
+            cmd.extend(["--target-name", target_name])
+
+        debug_enabled = bool(cfg.get("debug", False))
+        if hasattr(self, "_cx_debug") and self._cx_debug is not None:
+            debug_enabled = bool(self._cx_debug.isChecked())
+        if debug_enabled:
+            cmd.append("--debug")
+
+        verbose_enabled = bool(cfg.get("verbose", False))
+        if hasattr(self, "_cx_verbose") and self._cx_verbose is not None:
+            verbose_enabled = bool(self._cx_verbose.isChecked())
+        if verbose_enabled:
+            cmd.append("--verbose")
+
+        for mapping in context.data_mappings:
+            source = str((mapping or {}).get("source") or "").strip()
+            destination = str((mapping or {}).get("destination") or "").strip()
+            if source and destination:
+                cmd.extend(["--include-files", f"{source}={destination}"])
+
+        cmd.extend(["--script", context.entry_point])
+        return cmd
 
     def build_command(self, gui, file: str) -> list[str]:
         """Build the CX_Freeze command line."""
