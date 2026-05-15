@@ -22,7 +22,7 @@ A PyCompiler_ARK engine is a Python package placed in `ENGINES/` and auto‑load
 from __future__ import annotations
 
 import sys
-from engine_sdk import CompilerEngine, engine_register
+from engine_sdk import BuildContext, CompilerEngine, engine_register
 
 
 @engine_register
@@ -37,8 +37,8 @@ class MyEngine(CompilerEngine):
     def required_tools(self):
         return {"python": ["mytool"], "system": []}
 
-    def build_command(self, gui, file):
-        return [sys.executable, "-m", "mytool", file]
+    def build_command_from_context(self, context: BuildContext):
+        return [sys.executable, "-m", "mytool", context.entry_point]
 ```
 
 ### **Lifecycle**
@@ -62,7 +62,8 @@ Required attributes.
 - `required_sdk_version`: minimal SDK version.
 
 Core methods.
-- `build_command(self, gui, file) -> list[str]`: full command, index 0 is the program.
+- `build_command_from_context(self, context) -> list[str]`: preferred API, full command, index 0 is the program.
+- `build_command(self, gui, file) -> list[str]`: legacy compatibility API.
 - `program_and_args(self, gui, file) -> (program, args) | None`: override if needed.
 - `preflight(self, gui, file) -> bool`: checks before compile, return False to abort.
 - `environment(self) -> dict[str, str] | None`: env vars to inject.

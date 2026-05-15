@@ -15,7 +15,10 @@
 
 from __future__ import annotations
 
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
+
+if TYPE_CHECKING:
+    from engine_sdk.build_context import BuildContext
 
 
 def log_i18n_level(gui, level: str, fr: str, en: str) -> None:
@@ -91,6 +94,18 @@ class CompilerEngine:
         """Return the full command list including the program at index 0."""
         raise NotImplementedError
 
+    def build_command_from_context(self, context: "BuildContext") -> list[str]:
+        """
+        Return the full command list for a normalized build context.
+
+        Engines can override this method to support the new BuildContext-based
+        contract without depending on GUI state or source files such as
+        `ark.yml`/lock files. The default implementation is intentionally not
+        provided because legacy `build_command(gui, file)` implementations may
+        require UI state and would otherwise silently produce incomplete builds.
+        """
+        raise NotImplementedError
+
     def program_and_args(self, gui, file: str) -> Optional[tuple[str, list[str]]]:
         """
         Resolve the program (executable path) and its arguments for QProcess.
@@ -98,6 +113,18 @@ class CompilerEngine:
         Return None to abort.
         """
         cmd = self.build_command(gui, file)
+        if not cmd:
+            return None
+        return cmd[0], cmd[1:]
+
+    def program_and_args_from_context(
+        self, context: "BuildContext"
+    ) -> Optional[tuple[str, list[str]]]:
+        """
+        Resolve the program and arguments for a normalized build context.
+        Default implementation splits `build_command_from_context`.
+        """
+        cmd = self.build_command_from_context(context)
         if not cmd:
             return None
         return cmd[0], cmd[1:]

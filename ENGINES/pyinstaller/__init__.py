@@ -28,6 +28,7 @@ import sys
 from typing import Optional
 
 from engine_sdk import (
+    BuildContext,
     CompilerEngine,
     add_form_checkbox,
     add_icon_selector,
@@ -66,6 +67,60 @@ class PyInstallerEngine(CompilerEngine):
         """Preflight check - dependencies are handled automatically by required_tools."""
         return True
 
+    def build_command_from_context(self, context: BuildContext) -> list[str]:
+        """Build a PyInstaller command line from a normalized build context."""
+        cfg = getattr(self, "_config_overrides", {})
+        if not isinstance(cfg, dict):
+            cfg = {}
+
+        cmd = [sys.executable, "-m", "PyInstaller", "--noconfirm"]
+
+        onefile_enabled = bool(cfg.get("onefile", False))
+        if hasattr(self, "_onefile") and self._onefile is not None:
+            onefile_enabled = bool(self._onefile.isChecked())
+        cmd.append("--onefile" if onefile_enabled else "--onedir")
+
+        windowed_enabled = bool(cfg.get("windowed", False))
+        if hasattr(self, "_windowed") and self._windowed is not None:
+            windowed_enabled = bool(self._windowed.isChecked())
+        if windowed_enabled and platform.system() in {"Windows", "Darwin"}:
+            cmd.append("--windowed")
+
+        output_dir = str(context.output_dir or cfg.get("output_dir") or "").strip()
+        if output_dir:
+            cmd.extend(["--distpath", output_dir])
+
+        icon_path = str(context.icon or cfg.get("selected_icon") or "").strip()
+        if not icon_path and hasattr(self, "_selected_icon") and self._selected_icon:
+            icon_path = str(self._selected_icon).strip()
+        if icon_path:
+            cmd.extend(["--icon", icon_path])
+
+        output_name = str(cfg.get("target_name") or context.project_name or "").strip()
+        if output_name:
+            cmd.extend(["--name", output_name])
+
+        for pattern in context.exclude_patterns:
+            module = (
+                str(pattern)
+                .replace("/**/*", "")
+                .replace("**/*", "")
+                .replace("/**", "")
+                .strip("/")
+            )
+            if module and "*" not in module:
+                cmd.extend(["--exclude-module", module.replace("/", ".")])
+
+        separator = ";" if platform.system() == "Windows" else ":"
+        for mapping in context.data_mappings:
+            source = str((mapping or {}).get("source") or "").strip()
+            destination = str((mapping or {}).get("destination") or "").strip()
+            if source and destination:
+                cmd.extend(["--add-data", f"{source}{separator}{destination}"])
+
+        cmd.append(context.entry_point)
+        return cmd
+
     def build_command(self, gui, file: str) -> list[str]:
         """Build the PyInstaller command line."""
         try:
@@ -85,7 +140,7 @@ class PyInstallerEngine(CompilerEngine):
                 python_path = sys.executable
 
             # Start with python -m PyInstaller
-            cmd = [python_path, "-m", "PyInstaller"]
+            cmd = [python_path, "-m", "PyInstaller", "--noconfirm"]
 
             # Get options from GUI - use dynamic widgets or fallback to UI widgets
             # Onefile vs Onedir

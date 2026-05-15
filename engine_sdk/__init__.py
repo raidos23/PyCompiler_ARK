@@ -17,6 +17,7 @@ from __future__ import annotations
 
 # Re-export the base interface used by the host
 from .base import CompilerEngine
+from .build_context import BuildContext
 from .utils import (
     atomic_write_text,
     clamp_text,
@@ -264,6 +265,7 @@ def check_engine_compatibility(engine_class, required_sdk_version: str = None) -
 from EngineLoader.registry import engine_register
 
 __all__ = [
+    "BuildContext",
     "CompilerEngine",
     "engine_register",
     "register",
