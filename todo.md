@@ -52,4 +52,11 @@
 
 [ ] Utiliser le self.parent.tr pour quand lon doit afficher un msgbox quia besoin de i18n? l'tilser pour ameliorer  le systeme i18n destiné au plugin dans Plugins_SDK/GeneralContext/i18n.py pour quand on veut concevoir des msg box etc. il faut une method dédié.
 
+
+#### Derniere trouve de bug avant release
 [ ] retirer les safe_log et log_append pou utiliser le i18n_log_level
+
+[ ] la detection automatique d'entry point est interdite en ci/cd comme en gui et cli.
+
+[ ] reparer le save de config dans prog-engine gui.
+[ ] Donner un access de i18n_log_level aux SDKs.
