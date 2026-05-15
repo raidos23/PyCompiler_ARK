@@ -25,7 +25,7 @@ ark-cli> main --ide-gui
 
 ## What This Mode Changes
 
-- Loads the IDE-like UI layout (`ui/ui_ide_design2.ui`).
+- Loads the IDE-like UI layout (`Ui/Forms/ide_main_window.ui`).
 - Keeps the same Core workflow as classic GUI:
   - workspace selection
   - compile/cancel flow

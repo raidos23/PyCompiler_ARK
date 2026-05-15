@@ -9,10 +9,8 @@ This document provides a high-level map of the main runtime layers in PyCompiler
 Main entrypoints:
 
 - `pycompiler_ark.py`
-- `cli/entrypoint.py`
-- `cli/click_app.py`
-- `cli/fallback.py`
-- `cli/dedicated.py`
+- `Ui/Cli/entrypoint.py`
+- `Ui/Cli/app.py`
 - `cli/runtime.py`
 - `cli/lazy_ops.py`
 - `cli/headless_ops.py`
@@ -20,11 +18,10 @@ Main entrypoints:
 Responsibilities:
 
 - parse top-level CLI options
-- choose between Click-based CLI and fallback mode
+- bootstrap the active CLI
 - avoid bootstrapping Qt on purely headless command paths
 - launch the main GUI, BCASL standalone, or Engines standalone
-- expose the dedicated interactive CLI
-- provide scriptable headless commands such as `engine`, `workspace`, `venv`, `init`, `config-auto`, `check`, `doctor`, and `scaffold`
+- provide scriptable helpers for the active CLI
 
 ### 2. Main GUI and UI wiring
 
@@ -34,8 +31,8 @@ Main files:
 - `Core/UiConnection.py`
 - `Core/UiFeatures.py`
 - `Core/IdeLikeGui/connections.py`
-- `ui/ui_design.ui`
-- `ui/ui_ide_design2.ui`
+- `Ui/Forms/classic_main_window.ui`
+- `Ui/Forms/ide_main_window.ui`
 
 Responsibilities:
 

@@ -154,10 +154,10 @@ def _detect_system_color_scheme() -> str:
 
 def _load_ui_file(self) -> None:
     """Load the classic `.ui` file and install its central widget."""
+    from Ui import ui_form_path
+
     loader = QUiLoader()
-    ui_path = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)), "..", "ui", "ui_design.ui"
-    )
+    ui_path = ui_form_path("classic_main_window.ui")
     ui_file = QFile(os.path.abspath(ui_path))
     if not ui_file.open(QFile.ReadOnly):
         raise RuntimeError(f"Impossible d'ouvrir le fichier UI : {ui_path}")

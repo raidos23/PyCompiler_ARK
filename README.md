@@ -199,7 +199,8 @@ python -m OnlyMod.EngineOnlyMod --engine nuitka -f script.py --dry-run
 
 ## Project layout
 
-- `cli/` — CLI entrypoints, headless operations, fallback mode, and dedicated shell.
+- `Ui/Cli/` — active ARK CLI entrypoints and command tree.
+- `cli/` — shared runtime and headless helper modules kept during the CLI migration.
 - `Core/` — main UI logic.
 - `Core/IdeLikeGui/` — wiring layer for the IDE-like main GUI.
 - `ENGINES/` — built-in engines.
@@ -208,9 +209,9 @@ python -m OnlyMod.EngineOnlyMod --engine nuitka -f script.py --dry-run
 - `Plugins_SDK/` — plugin SDK.
 - `bcasl/` — BCASL core.
 - `OnlyMod/` — standalone tools (BCASL and Engines).
-- `ui/` — Qt Designer UI.
-  - `ui/ui_design.ui` — default main layout
-  - `ui/ui_ide_design2.ui` — IDE-like layout
+- `Ui/Forms/` — Qt Designer UI forms.
+  - `Ui/Forms/classic_main_window.ui` — default main layout
+  - `Ui/Forms/ide_main_window.ui` — IDE-like layout
 - `languages/` — translations.
 - `themes/` — QSS themes.
 

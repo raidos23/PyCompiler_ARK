@@ -125,6 +125,6 @@ def onlymod_log(message: str, gui: Optional[object] = None) -> str:
 
 
 if __name__ == "__main__":
-    from cli.entrypoint import main
+    from Ui.Cli.entrypoint import main
 
     raise SystemExit(main())
