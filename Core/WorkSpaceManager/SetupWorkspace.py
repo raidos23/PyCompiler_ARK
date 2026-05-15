@@ -352,7 +352,7 @@ class SetupWorkspace:
                     ):
                         continue
 
-                    # Étape 3: appliquer les exclusions ARK_Main_Config.yml.
+                    # Étape 3: appliquer les exclusions ark.yml.
                     if should_exclude_file(
                         full_path, workspace_dir, exclusion_patterns
                     ):
@@ -379,8 +379,8 @@ class SetupWorkspace:
         # Étape 4: journaliser le résumé d'exclusion.
         if excluded_count > 0:
             gui_instance.log_i18n(
-                f"⏩ Exclusion appliquée : {excluded_count} fichier(s) exclu(s) selon ARK_Main_Config.yml",
-                f"⏩ Exclusion applied: {excluded_count} file(s) excluded according to ARK_Main_Config.yml",
+                f"⏩ Exclusion appliquée : {excluded_count} fichier(s) exclu(s) selon ark.yml",
+                f"⏩ Exclusion applied: {excluded_count} file(s) excluded according to ark.yml",
             )
 
         try:
@@ -394,7 +394,7 @@ class SetupWorkspace:
     @staticmethod
     def open_ark_config(gui_instance):
         """
-        Open `ARK_Main_Config.yml` with the system default editor.
+        Open `ark.yml` with the system default editor.
 
         Args:
           gui_instance: Main GUI instance.
@@ -412,7 +412,7 @@ class SetupWorkspace:
             )
             return
 
-        config_path = os.path.join(workspace_dir, "ARK_Main_Config.yml")
+        config_path = os.path.join(workspace_dir, "ark.yml")
 
         # Étape 1: créer le fichier config si absent.
         if not os.path.exists(config_path):
@@ -421,16 +421,16 @@ class SetupWorkspace:
 
                 if create_default_ark_config(workspace_dir):
                     gui_instance.log_i18n(
-                        "📋 Fichier ARK_Main_Config.yml créé.",
-                        "📋 ARK_Main_Config.yml file created.",
+                        "📋 Fichier ark.yml créé.",
+                        "📋 ark.yml file created.",
                     )
             except Exception as e:
                 QMessageBox.critical(
                     gui_instance,
                     gui_instance.tr("Erreur", "Error"),
                     gui_instance.tr(
-                        f"Impossible de créer ARK_Main_Config.yml: {e}",
-                        f"Failed to create ARK_Main_Config.yml: {e}",
+                        f"Impossible de créer ark.yml: {e}",
+                        f"Failed to create ark.yml: {e}",
                     ),
                 )
                 return

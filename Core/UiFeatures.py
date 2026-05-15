@@ -223,7 +223,7 @@ class UiFeatures:
                 item.setIcon(QIcon())
 
     def load_entrypoint_from_config(self) -> None:
-        """Load workspace entrypoint from `ARK_Main_Config.yml`."""
+        """Load workspace entrypoint from `ark.yml`."""
         workspace_dir = getattr(self, "workspace_dir", None)
         if not workspace_dir:
             return

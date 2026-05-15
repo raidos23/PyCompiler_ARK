@@ -49,9 +49,9 @@ class MyEngine(CompilerEngine):
 5. The process runs the command and calls `on_success` on success.
 
 ### **Workspace Entrypoint**
-The workspace can define a single build entrypoint in `ARK_Main_Config.yml`.
+The workspace can define a single build entrypoint in `ark.yml`.
 When `build.entrypoint` is set, the Core will compile only that file and pass it
-to your engine as the `file` argument. See `docs/ark_main_config.md`.
+to your engine as the `file` argument. See `docs/ark.md`.
 
 ### **Full API**
 Required attributes.

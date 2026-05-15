@@ -52,7 +52,7 @@ python -m pycompiler_ark --cli
 ```
 
 For reliable prechecks, point `check --strict` at a workspace that already
-defines an entrypoint in `ARK_Main_Config.yml`.
+defines an entrypoint in `ark.yml`.
 
 Release-oriented checks should follow the CLI examples in this guide and the README.
 For publishing steps, follow [`docs/release_process.md`](./release_process.md).

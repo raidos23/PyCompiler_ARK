@@ -1,4 +1,4 @@
-## **ARK_Main_Config.yml** — Workspace Configuration
+## **ark.yml** — Workspace Configuration
 
 This file customizes how a workspace is scanned and built. It lives at the
 workspace root and is created automatically when the workspace is first set
@@ -10,10 +10,10 @@ defaults.
 ## Location
 
 The loader checks, in order:
-- `ARK_Main_Config.yaml`
-- `ARK_Main_Config.yml`
-- `.ARK_Main_Config.yaml`
-- `.ARK_Main_Config.yml`
+- `ark.yaml`
+- `ark.yml`
+- `.ark.yaml`
+- `.ark.yml`
 
 ## Minimal Example
 
@@ -60,7 +60,7 @@ GUI shortcut:
 ## Notes
 
 - Keep paths relative (ex: `"src/main.py"`).
-- Entrypoint is stored in `ARK_Main_Config.yml` and can be edited manually.
+- Entrypoint is stored in `ark.yml` and can be edited manually.
 - This file is separate from `bcasl.yml` (which remains the canonical BCASL plugin config file).
 - A small compatibility bridge also exists under `plugins.*` for workspace-level BCASL defaults such as:
   - `plugins.bcasl_enabled`
@@ -70,7 +70,7 @@ GUI shortcut:
 
 The main GUI has a **Configurations avancées** button that opens a dedicated
 editor for:
-- `ARK_Main_Config.yml`
+- `ark.yml`
 - `bcasl.yml`
 - `.ark/pref.json` (workspace‑specific preferences)
 

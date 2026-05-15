@@ -117,10 +117,10 @@ def _read_version_from_init(rel_path: str) -> str:
 def _load_workspace_config(workspace_dir: str) -> dict[str, Any]:
     """Load workspace ARK config file with tolerant candidate fallback."""
     config_files = [
-        Path(workspace_dir) / "ARK_Main_Config.yaml",
-        Path(workspace_dir) / "ARK_Main_Config.yml",
-        Path(workspace_dir) / ".ARK_Main_Config.yaml",
-        Path(workspace_dir) / ".ARK_Main_Config.yml",
+        Path(workspace_dir) / "ark.yaml",
+        Path(workspace_dir) / "ark.yml",
+        Path(workspace_dir) / ".ark.yaml",
+        Path(workspace_dir) / ".ark.yml",
     ]
     for candidate in config_files:
         try:
@@ -235,10 +235,10 @@ def _workspace_config_candidates(workspace_dir: str) -> list[Path]:
     """Return candidate ARK config file paths for a workspace."""
     ws = Path(workspace_dir)
     return [
-        ws / "ARK_Main_Config.yaml",
-        ws / "ARK_Main_Config.yml",
-        ws / ".ARK_Main_Config.yaml",
-        ws / ".ARK_Main_Config.yml",
+        ws / "ark.yaml",
+        ws / "ark.yml",
+        ws / ".ark.yaml",
+        ws / ".ark.yml",
     ]
 
 
@@ -461,13 +461,13 @@ def workspace_init_payload(
         progress_cb,
         "ark_config",
         "running",
-        "Ensuring ARK_Main_Config.yml exists",
+        "Ensuring ark.yml exists",
         steps,
     )
     config_candidates = _workspace_config_candidates(str(ws_path))
     existing = [p for p in config_candidates if p.exists()]
     created_config = False
-    config_path = existing[0] if existing else ws_path / "ARK_Main_Config.yml"
+    config_path = existing[0] if existing else ws_path / "ark.yml"
     if not existing:
         try:
             from Core.ArkConfigManager import create_default_ark_config
@@ -701,7 +701,7 @@ def workspace_config_auto_payload(
         "python_file_count": len(python_files),
         "requirements_files_found": found_req_files,
         "requirements_files": merged_requirements_files,
-        "config_path": str(ws_path / "ARK_Main_Config.yml"),
+        "config_path": str(ws_path / "ark.yml"),
         "created_workspace": bool(init_payload.get("created_workspace")),
         "created_config": bool(init_payload.get("created_config")),
     }

@@ -571,8 +571,8 @@ def _start_compilation_queue(self, engine, files_to_compile: list) -> None:
         log_i18n_level(
             self,
             "info",
-            f"{excluded_count} fichier(s) exclu(s) selon les patterns de ARK_Main_Config.yml",
-            f"{excluded_count} file(s) excluded according to ARK_Main_Config.yml patterns",
+            f"{excluded_count} fichier(s) exclu(s) selon les patterns de ark.yml",
+            f"{excluded_count} file(s) excluded according to ark.yml patterns",
         )
 
 

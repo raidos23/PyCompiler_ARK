@@ -84,8 +84,8 @@ class WorkspaceAdvancedManipulation:
                 )
                 if excluded > 0:
                     gui_instance.log_i18n(
-                        f"⏩ Exclusion appliquée : {excluded} fichier(s) ignoré(s) (ARK_Main_Config.yml).",
-                        f"⏩ Exclusion applied: {excluded} file(s) ignored (ARK_Main_Config.yml).",
+                        f"⏩ Exclusion appliquée : {excluded} fichier(s) ignoré(s) (ark.yml).",
+                        f"⏩ Exclusion applied: {excluded} file(s) ignored (ark.yml).",
                     )
                 if hasattr(gui_instance, "update_command_preview"):
                     gui_instance.update_command_preview()
@@ -198,8 +198,8 @@ class WorkspaceAdvancedManipulation:
         )
         if excluded > 0:
             gui_instance.log_i18n(
-                f"⏩ Exclusion appliquée : {excluded} fichier(s) ignoré(s) (ARK_Main_Config.yml).",
-                f"⏩ Exclusion applied: {excluded} file(s) ignored (ARK_Main_Config.yml).",
+                f"⏩ Exclusion appliquée : {excluded} fichier(s) ignoré(s) (ark.yml).",
+                f"⏩ Exclusion applied: {excluded} file(s) ignored (ark.yml).",
             )
         try:
             if hasattr(gui_instance, "apply_file_filter"):

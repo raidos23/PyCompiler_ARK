@@ -50,7 +50,7 @@ def test_workspace_inspect_json(tmp_path) -> None:
     runner = CliRunner()
     cli = build_cli("test")
     (tmp_path / "main.py").write_text("print('ok')\n", encoding="utf-8")
-    (tmp_path / "ARK_Main_Config.yml").write_text(
+    (tmp_path / "ark.yml").write_text(
         "build:\n  entrypoint: main.py\n",
         encoding="utf-8",
     )
@@ -261,7 +261,7 @@ def test_init_command_creates_workspace_and_config(tmp_path) -> None:
     assert payload["created_config"] is True
     assert payload["created_bcasl_config"] is True
     assert payload["created_workspace_pref"] is True
-    assert (workspace / "ARK_Main_Config.yml").exists()
+    assert (workspace / "ark.yml").exists()
     assert (workspace / "bcasl.yml").exists()
     assert (workspace / ".ark" / "pref.json").exists()
 
@@ -306,7 +306,7 @@ def test_ws_init_alias_creates_workspace(tmp_path) -> None:
     assert result.exit_code == 0
     payload = json.loads(result.output)
     assert payload["ok"] is True
-    assert (workspace / "ARK_Main_Config.yml").exists()
+    assert (workspace / "ark.yml").exists()
     assert (workspace / "bcasl.yml").exists()
     assert (workspace / ".ark" / "pref.json").exists()
 
@@ -321,7 +321,7 @@ def test_init_with_venv_option_is_forwarded(monkeypatch, tmp_path) -> None:
         return {
             "ok": True,
             "workspace": workspace,
-            "config_path": str(tmp_path / "ARK_Main_Config.yml"),
+            "config_path": str(tmp_path / "ark.yml"),
             "bcasl_path": str(tmp_path / "bcasl.yml"),
             "workspace_pref_path": str(tmp_path / ".ark" / "pref.json"),
             "created_workspace": False,
@@ -349,7 +349,7 @@ def test_workspace_entrypoint_set_and_clear_json(tmp_path) -> None:
     runner = CliRunner()
     cli = build_cli("test")
     (tmp_path / "main.py").write_text("print('ok')\n", encoding="utf-8")
-    (tmp_path / "ARK_Main_Config.yml").write_text(
+    (tmp_path / "ark.yml").write_text(
         "build:\n  entrypoint: null\n", encoding="utf-8"
     )
 
