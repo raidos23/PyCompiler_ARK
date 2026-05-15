@@ -888,7 +888,7 @@ class EnginesStandaloneGui(QMainWindow):
             self._log(f"Error checking compatibility: {e}")
 
     def _load_entrypoint_from_workspace(self) -> None:
-        """Load entrypoint from ARK_Main_Config.yml for current workspace."""
+        """Load entrypoint from ark.yml for current workspace."""
         self._entrypoint_relpath = None
         self.entrypoint_file = None
         ws = (self.workspace_edit.text() or "").strip()

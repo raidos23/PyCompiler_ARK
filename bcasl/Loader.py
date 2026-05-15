@@ -23,7 +23,7 @@ Objectifs de simplification:
 - UI minimale pour activer/désactiver et réordonner (pas d'éditeur brut multi-format)
 - Async via QThread si QtCore dispo, sinon repli synchrone
 - Journalisation concise dans self.log si disponible
-- Activation/désactivation gérée par ARK_Main_Config.yml (plugins.bcasl_enabled)
+- Activation/désactivation gérée par ark.yml (plugins.bcasl_enabled)
 """
 
 from __future__ import annotations
@@ -420,7 +420,7 @@ def _build_plugin_item(
 def _load_workspace_config(workspace_root: Path) -> dict[str, Any]:
     """Load bcasl.yml si présent, sinon génère une config par défaut minimale et l'écrit.
 
-    Fusionne aussi avec ARK_Main_Config.yml si disponible pour les patterns et options plugins.
+    Fusionne aussi avec ark.yml si disponible pour les patterns et options plugins.
     YML ONLY - YAML and JSON files are NOT supported.
     """
 

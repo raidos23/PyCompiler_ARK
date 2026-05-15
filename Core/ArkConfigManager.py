@@ -17,7 +17,7 @@
 ARK configuration loading module
 
 Ce module est responsable de:
-- Loadr la configuration depuis le file ARK_Main_Config.yml à la racine du workspace
+- Loadr la configuration depuis le file ark.yml à la racine du workspace
 - Gérer les patterns d'inclusion/exclusion de files
 - Fournir des fonctions utilitaires pour accéder aux options de configuration
 - Créer un file de configuration par défaut si nécessaire
@@ -77,7 +77,7 @@ DEFAULT_EXCLUSION_PATTERNS = [
 # CONFIGURATION PAR DÉFAUT
 # =============================================================================
 # Cette configuration est utilisée comme base lorsque aucun fichier
-# ARK_Main_Config.yml n'est trouvé dans le workspace. Elle peut être
+# ark.yml n'est trouvé dans le workspace. Elle peut être
 # partiellement ou entièrement surchargée par la configuration utilisateur.
 
 DEFAULT_CONFIG = {
@@ -163,10 +163,10 @@ def load_ark_config(workspace_dir: str) -> dict[str, Any]:
     utilisateur avec les valeurs par défaut.
 
     Fichiers recherchés (ordre de priorité):
-    1. ARK_Main_Config.yaml
-    2. ARK_Main_Config.yml
-    3. .ARK_Main_Config.yaml
-    4. .ARK_Main_Config.yml
+    1. ark.yaml
+    2. ark.yml
+    3. .ark.yaml
+    4. .ark.yml
 
     Args:
      workspace_dir: Path absolu vers le directory du workspace
@@ -199,10 +199,10 @@ def load_ark_config(workspace_dir: str) -> dict[str, Any]:
 
     # Liste des candidats fichiers de configuration par ordre de priorité
     config_candidates = [
-        workspace_path / "ARK_Main_Config.yaml",
-        workspace_path / "ARK_Main_Config.yml",
-        workspace_path / ".ARK_Main_Config.yaml",
-        workspace_path / ".ARK_Main_Config.yml",
+        workspace_path / "ark.yaml",
+        workspace_path / "ark.yml",
+        workspace_path / ".ark.yaml",
+        workspace_path / ".ark.yml",
     ]
 
     # Rechercher le premier fichier de configuration existant
@@ -326,7 +326,7 @@ def get_entrypoint(config: dict[str, Any]) -> Optional[str]:
 
 def save_ark_config(workspace_dir: str, config: dict[str, Any]) -> bool:
     """
-    Save ARK configuration to ARK_Main_Config.yml.
+    Save ARK configuration to ark.yml.
 
     Args:
      workspace_dir: Path du workspace
@@ -339,7 +339,7 @@ def save_ark_config(workspace_dir: str, config: dict[str, Any]) -> bool:
         return False
     try:
         workspace_path = Path(workspace_dir)
-        config_file = workspace_path / "ARK_Main_Config.yml"
+        config_file = workspace_path / "ark.yml"
         with open(config_file, "w", encoding="utf-8") as f:
             yaml.safe_dump(
                 config,
@@ -355,7 +355,7 @@ def save_ark_config(workspace_dir: str, config: dict[str, Any]) -> bool:
 
 def set_entrypoint(workspace_dir: str, entrypoint: Optional[str]) -> bool:
     """
-    Update entry point in ARK_Main_Config.yml.
+    Update entry point in ark.yml.
 
     Args:
      workspace_dir: Path du workspace
@@ -481,7 +481,7 @@ def should_exclude_file(
 
 def create_default_ark_config(workspace_dir: str) -> bool:
     """
-    Create ARK_Main_Config.yml with default configuration.
+    Create ark.yml with default configuration.
 
     Cette fonction génère un file de configuration complet avec
     toutes les options disponibles et leurs valeurs par défaut.
@@ -498,7 +498,7 @@ def create_default_ark_config(workspace_dir: str) -> bool:
         return False
 
     workspace_path = Path(workspace_dir)
-    config_file = workspace_path / "ARK_Main_Config.yml"
+    config_file = workspace_path / "ark.yml"
 
     # Ne pas écraser un fichier existant
     if config_file.exists():
@@ -583,7 +583,7 @@ build:
             log_with_level(
                 None,
                 "warning",
-                f"Échec de la création de ARK_Main_Config.yml: {e}",
+                f"Échec de la création de ark.yml: {e}",
             )
         except Exception:
             pass

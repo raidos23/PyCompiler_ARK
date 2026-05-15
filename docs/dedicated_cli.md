@@ -105,6 +105,6 @@ ark-cli> exit
 - If Rich is installed, output is colorized. If not, the CLI still works in plain mode.
 - `engine compile` validates the target file path before running the engine command.
 - In Engines standalone GUI, file selection is temporary for the current build/session.
-- Engines standalone GUI may read workspace config (`ARK_Main_Config.yml`) but does not persist entrypoint changes.
+- Engines standalone GUI may read workspace config (`ark.yml`) but does not persist entrypoint changes.
 - To persist entrypoint in workspace config, use `workspace entrypoint-set`.
 - For automation, prefer the top-level commands documented in the README (`engine`, `workspace`, `doctor`, `scaffold`, `gui`).

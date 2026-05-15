@@ -14,7 +14,7 @@
 # limitations under the License.
 
 """
-Tests for Core.ArkConfigManager - ARK_Main_Config.yml handling
+Tests for Core.ArkConfigManager - ark.yml handling
 """
 
 import copy
@@ -45,7 +45,7 @@ def test_load_defaults_when_missing(tmp_path: Path) -> None:
 
 
 def test_set_entrypoint_writes_file(tmp_path: Path) -> None:
-    """Setting entrypoint should persist it to ARK_Main_Config.yml."""
+    """Setting entrypoint should persist it to ark.yml."""
     ok = set_entrypoint(str(tmp_path), "main.py")
     assert ok is True
     cfg = load_ark_config(str(tmp_path))
@@ -85,7 +85,7 @@ def test_load_config_strips_entrypoint(tmp_path: Path) -> None:
             "entrypoint": "  src/main.py  ",
         }
     }
-    cfg_path = Path(tmp_path) / "ARK_Main_Config.yml"
+    cfg_path = Path(tmp_path) / "ark.yml"
     with open(cfg_path, "w", encoding="utf-8") as f:
         yaml.safe_dump(raw, f, sort_keys=False, allow_unicode=True)
 

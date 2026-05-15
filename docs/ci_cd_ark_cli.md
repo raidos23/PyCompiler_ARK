@@ -97,14 +97,14 @@ $ARK_BIN workspace entrypoint-clear "$WORKSPACE_DIR" --json
 Important:
 
 - In Engines standalone GUI, selecting a file is a temporary build/session choice.
-- It can read `ARK_Main_Config.yml`, but it does not write entrypoint changes back to config files.
+- It can read `ark.yml`, but it does not write entrypoint changes back to config files.
 - For reproducible CI, persist entrypoint only with `workspace entrypoint-set`.
 
 ## Command Breakdown
 
 - `workspace apply --with-venv --strict`
   - applies full workspace setup in one command
-  - creates/reuses `ARK_Main_Config.yml`, `bcasl.yml`, `.ark/pref.json`
+  - creates/reuses `ark.yml`, `bcasl.yml`, `.ark/pref.json`
   - runs auto-config (unless disabled)
   - can fail with strict precheck semantics when entrypoint is required
 
@@ -326,7 +326,7 @@ This repository includes a workflow where ARK compiles itself using ARK CLI:
 ## Practical Tips
 
 - ARK consumes workspace configuration files during CI runs. For reproducible and correct builds, commit these files:
-  - `ARK_Main_Config.yml`
+  - `ark.yml`
   - `bcasl.yml`
   - `.ark/` (especially `.ark/pref.json` and `.ark/<engine_id>/config.json`)
 - `.ark/` stores engine command options used by ARK at build time; commit it to keep builds reproducible across local and CI environments.

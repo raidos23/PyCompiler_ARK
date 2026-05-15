@@ -168,7 +168,7 @@ config.yaml
 config.toml
 user_preferences.json
 bcasl.yml
-ARK_Main_Config.yml
+ark.yml
 clean_venv_duplicates.py
 force_clean_venv_files.py
 Licence_Injector.py

@@ -3424,13 +3424,13 @@ class VenvManager:
 
                 if create_default_ark_config(workspace_dir):
                     self._safe_log(
-                        "📋 Fichier ARK_Main_Config.yml créé dans le workspace.",
-                        "📋 ARK_Main_Config.yml file created in workspace.",
+                        "📋 Fichier ark.yml créé dans le workspace.",
+                        "📋 ark.yml file created in workspace.",
                     )
             except Exception as e:
                 self._safe_log(
-                    f"⚠️ Impossible de créer ARK_Main_Config.yml: {e}",
-                    f"⚠️ Failed to create ARK_Main_Config.yml: {e}",
+                    f"⚠️ Impossible de créer ark.yml: {e}",
+                    f"⚠️ Failed to create ark.yml: {e}",
                 )
 
             return True

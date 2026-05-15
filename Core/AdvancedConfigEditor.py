@@ -1101,8 +1101,8 @@ class AdvancedConfigEditor(QDialog):
         ws = self._workspace_dir()
         self._build_tab(
             "ark",
-            self.gui.tr("ARK_Main_Config.yml", "ARK_Main_Config.yml"),
-            lambda: os.path.join(ws, "ARK_Main_Config.yml") if ws else None,
+            self.gui.tr("ark.yml", "ark.yml"),
+            lambda: os.path.join(ws, "ark.yml") if ws else None,
             True,
             self.gui.tr("ARK Config", "ARK Config"),
         )

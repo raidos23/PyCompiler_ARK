@@ -244,7 +244,7 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
         WorkspaceAdvancedManipulation.select_files_manually(self)
 
     def open_ark_config(self):
-        """Open `ARK_Main_Config.yml` from the current workspace."""
+        """Open `ark.yml` from the current workspace."""
         SetupWorkspace.open_ark_config(self)
 
     def on_main_only_changed(self):

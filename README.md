@@ -106,7 +106,7 @@ python pycompiler_ark.py unload --json
 - `engine`: inspect engines, run compatibility checks, dry-run or compile
 - `bcasl`: BCASL GUI or delegated headless actions
 - `workspace`: inspect the current workspace and resolved entrypoint
-- `init`: initialize a workspace directory and base configs (`ARK_Main_Config.yml`, `bcasl.yml`, `.ark/pref.json`)
+- `init`: initialize a workspace directory and base configs (`ark.yml`, `bcasl.yml`, `.ark/pref.json`)
   - `--with-venv`: also create/reuse a local workspace venv and set it in `.ark/pref.json`
 - `config-auto`: auto-detect entrypoint and update workspace config
 - `cfg-auto`: short alias for `config-auto`
@@ -192,7 +192,7 @@ python -m OnlyMod.EngineOnlyMod --engine nuitka -f script.py --dry-run
 
 ## Configuration
 
-- **`ARK_Main_Config.yml`**: inclusion/exclusion patterns, build entrypoint, and a few workspace-level defaults consumed by BCASL bootstrap.
+- **`ark.yml`**: inclusion/exclusion patterns, build entrypoint, and a few workspace-level defaults consumed by BCASL bootstrap.
 - **`bcasl.yml`**: plugin enable/disable, order, and timeouts.
 
 ---
