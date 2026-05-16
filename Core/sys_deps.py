@@ -246,7 +246,7 @@ class SysDependencyManager:
         except Exception:
             pass
         try:
-            from .i18n import tr_fr_en
+            from Ui.i18n import tr_fr_en
 
             return tr_fr_en(getattr(self, "parent_widget", None), fr, en)
         except Exception:

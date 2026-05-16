@@ -13,7 +13,7 @@ from PySide6.QtCore import QProcess, QTimer
 from PySide6.QtWidgets import QApplication, QFileDialog, QMessageBox
 
 from ..WidgetsCreator import ProgressDialog
-from ..i18n import log_i18n_level, log_with_level
+from Ui.i18n import log_i18n_level, log_with_level
 
 
 class VenvManager:
