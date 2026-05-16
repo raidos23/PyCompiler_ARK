@@ -202,7 +202,7 @@ def compile_all(self) -> None:
     entry_rel = None
     entrypoint_file = None
     try:
-        from Core.ArkConfig import load_ark_config, get_entrypoint
+        from Core.Configs import load_ark_config, get_entrypoint
 
         cfg = load_ark_config(self.workspace_dir)
         entry_rel = get_entrypoint(cfg)

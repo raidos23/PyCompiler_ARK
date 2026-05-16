@@ -1090,7 +1090,7 @@ class VenvManager:
 
         # Rebuild patterns to prioritize
         try:
-            from Core.ArkConfig import load_ark_config, get_dependency_options
+            from Core.Configs import load_ark_config, get_dependency_options
 
             ark_config = load_ark_config(workspace_dir)
             dep_opts = get_dependency_options(ark_config)
@@ -2181,7 +2181,7 @@ class VenvManager:
 
             # Load ARK config to get requirements file preferences
             try:
-                from Core.ArkConfig import (
+                from Core.Configs import (
                     load_ark_config,
                     get_dependency_options,
                 )
@@ -2670,7 +2670,7 @@ class VenvManager:
 
             # Load ARK configuration to get manager priorities
             try:
-                from Core.ArkConfig import (
+                from Core.Configs import (
                     load_ark_config,
                     get_environment_manager_options,
                 )
@@ -3217,7 +3217,7 @@ class VenvManager:
 
             # Create ARK config if it doesn't exist
             try:
-                from Core.ArkConfig import create_default_ark_config
+                from Core.Configs import create_default_ark_config
 
                 if create_default_ark_config(workspace_dir):
                     self._safe_log(

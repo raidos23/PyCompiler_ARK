@@ -22,7 +22,7 @@ from pathlib import Path
 
 import yaml
 
-from Core.ArkConfig import (
+from Core.Configs import (
     DEFAULT_CONFIG,
     get_entrypoint,
     load_ark_config,

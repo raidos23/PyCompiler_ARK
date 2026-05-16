@@ -33,6 +33,7 @@ import sys
 import subprocess
 import shlex
 import re
+from pathlib import Path
 from typing import Optional, Dict, Any, List, Tuple
 from enum import Enum
 
@@ -44,11 +45,17 @@ from Core.Compiler.compiler import (
 )
 
 # Importations ArkConfig pour la gestion des exclusions
-from Core.ArkConfig import (
+from Core.Configs import (
     load_ark_config,
     should_exclude_file,
     DEFAULT_EXCLUSION_PATTERNS,
 )
+
+from Core.Compiler.engine_runner import (
+    resolve_engine_command,
+    EngineRunnerError,
+)
+from engine_sdk.build_context import BuildContext
 
 
 class ProcessState(Enum):
@@ -388,6 +395,49 @@ class MainProcess(QObject):
             "is_compiling": self.is_compiling,
             "duration": self.compiler.duration,
         }
+
+    def compile_from_context(
+        self,
+        workspace: Path | str,
+        engine_id: str,
+        context: BuildContext,
+        engine_config: Optional[Dict[str, Any]] = None,
+    ) -> bool:
+        """
+        Start an async compilation from a :class:`BuildContext`.
+
+        Resolves ``(program, args)`` via the engine, then delegates to
+        :class:`CompilerCore` (Qt thread) for non-blocking execution.
+
+        Args:
+            workspace:     Absolute path to the project workspace.
+            engine_id:     Registered engine identifier.
+            context:       BuildContext describing the project.
+            engine_config: Optional per-engine config overrides.
+
+        Returns:
+            ``True`` if the compilation thread started successfully.
+        """
+        workspace = Path(workspace)
+
+        # Resolve command via engine (pure-Python, no Qt)
+        try:
+            program, args = resolve_engine_command(engine_id, context, engine_config)
+        except EngineRunnerError as exc:
+            self.log_message.emit("error", str(exc))
+            return False
+
+        env = {"ARK_WORKSPACE": str(workspace)}
+        file_path = str(workspace / context.entry_point)
+
+        return self.compile(
+            program=program,
+            args=args,
+            env=env,
+            engine_id=engine_id,
+            file_path=file_path,
+            workspace_dir=str(workspace),
+        )
 
     def reset(self) -> None:
         """Reset process state for a new compilation."""

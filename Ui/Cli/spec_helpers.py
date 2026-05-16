@@ -1,14 +1,12 @@
 from __future__ import annotations
 
-import os
 import subprocess
 import venv
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from Core.process_security import hardened_popen_kwargs, secure_command
-from Core.ArkConfig import (
+from Core.Configs import (
     ArkConfigError,
     ArkConfigValidationResult,
     load_ark_config as _load_ark_config,
@@ -28,6 +26,18 @@ from Core.Locking import (
     load_yaml_file,
     write_lock_files as _write_lock_files,
 )
+from Core.Compiler.engine_runner import run_engine_compile as _core_run_engine_compile
+from Core.Configs import (
+    CONFIG_KEYS,
+    DEFAULT_USER_DIRS,
+    UserConfigError,
+    config_home as _config_home,
+    ensure_config_home as _ensure_config_home,
+    config_file_for as _config_file_for,
+    resolve_config_value,
+    set_config_value,
+    unset_config_value,
+)
 from .discovery import (
     bcasl_list_payload,
     engine_info_payload,
@@ -36,18 +46,6 @@ from .discovery import (
     scaffold_plugin,
 )
 from .launchers import launch_main_application
-
-CONFIG_KEYS = {
-    "user-engine-dir": "user_engine_dir",
-    "user-plugin-dir": "user_plugin_dir",
-    "dev-engine-dir": "dev_engine_dir",
-    "dev-plugin-dir": "dev_plugin_dir",
-}
-
-DEFAULT_USER_DIRS = {
-    "user-engine-dir": ("ark_user", "engines"),
-    "user-plugin-dir": ("ark_user", "plugins"),
-}
 
 
 class CliSpecError(RuntimeError):
@@ -60,58 +58,24 @@ class ArkValidationResult:
     warnings: list[str]
 
 
+# ── Thin CLI wrappers around Core.Configs (user config) ──────────────────────
+# resolve_config_value / set_config_value / unset_config_value are imported
+# directly from Core.Configs above and re-exported as-is.
+
 def config_home() -> Path:
-    override = os.environ.get("ARK_CONFIG_HOME")
-    if override:
-        return Path(override).expanduser()
-    return Path.home() / ".arkconf"
+    """Return the ARK user config root (delegates to Core.Configs)."""
+    return _config_home()
 
 
 def ensure_config_home(*, create: bool = True) -> Path:
-    root = config_home()
-    if create:
-        root.mkdir(parents=True, exist_ok=True)
-    return root
+    return _ensure_config_home(create=create)
 
 
 def config_file_for(key: str, *, create_root: bool = True) -> Path:
-    if key not in CONFIG_KEYS:
-        raise CliSpecError(f"Unknown config key: {key}")
-    return ensure_config_home(create=create_root) / CONFIG_KEYS[key]
-
-
-def resolve_config_value(key: str, *, create_default: bool = True) -> str | None:
-    path = config_file_for(key, create_root=False)
-    if path.exists():
-        value = path.read_text(encoding="utf-8").strip()
-        return value or None
-
-    default_parts = DEFAULT_USER_DIRS.get(key)
-    if not default_parts:
-        return None
-
-    default_path = Path.home().joinpath(*default_parts)
-    if create_default:
-        try:
-            default_path.mkdir(parents=True, exist_ok=True)
-        except OSError:
-            pass
-    return str(default_path)
-
-
-def set_config_value(key: str, value: str) -> str:
-    path = config_file_for(key, create_root=True)
-    target = str(Path(value).expanduser().resolve())
-    path.write_text(target + "\n", encoding="utf-8")
-    return target
-
-
-def unset_config_value(key: str) -> bool:
-    path = config_file_for(key)
-    if not path.exists():
-        return False
-    path.unlink()
-    return True
+    try:
+        return _config_file_for(key, create_root=create_root)
+    except UserConfigError as exc:
+        raise CliSpecError(str(exc)) from exc
 
 
 def relative_to_workspace(workspace: Path, target: Path) -> str:
@@ -297,70 +261,16 @@ def run_engine_compile(
     context: BuildContext,
     engine_config: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    import EngineLoader as engines_loader
+    """Delegate to :func:`Core.Compiler.engine_runner.run_engine_compile`.
 
-    entry_path = workspace / Path(context.entry_point)
-    if not context.entry_point or not entry_path.is_file():
-        return {
-            "success": False,
-            "error": f"Entrypoint missing or obsolete: {context.entry_point}",
-        }
-
-    try:
-        engine = engines_loader.create(engine_id)
-    except Exception as exc:
-        return {"success": False, "error": f"Unable to load engine '{engine_id}': {exc}"}
-
-    try:
-        setattr(engine, "_config_overrides", dict(engine_config or {}))
-    except Exception:
-        pass
-
-    try:
-        resolved = engine.program_and_args_from_context(context)
-    except NotImplementedError:
-        return {
-            "success": False,
-            "error": f"Engine '{engine_id}' does not support BuildContext builds",
-        }
-    except Exception as exc:
-        return {
-            "success": False,
-            "error": f"Engine '{engine_id}' failed to build command: {exc}",
-        }
-    if not resolved:
-        return {"success": False, "error": f"Engine '{engine_id}' returned no command"}
-
-    program, args = resolved
-    try:
-        safe_program, safe_args, safe_env = secure_command(
-            program,
-            args,
-            {"ARK_WORKSPACE": str(workspace)},
-        )
-    except Exception as exc:
-        return {"success": False, "error": f"Unsafe compile command blocked: {exc}"}
-
-    try:
-        completed = subprocess.run(
-            [safe_program] + safe_args,
-            cwd=str(workspace),
-            env=safe_env,
-            capture_output=True,
-            text=True,
-            **hardened_popen_kwargs(),
-        )
-    except Exception as exc:
-        return {"success": False, "error": f"Compilation failed to start: {exc}"}
-
-    return {
-        "success": completed.returncode == 0,
-        "return_code": completed.returncode,
-        "command": [safe_program] + safe_args,
-        "stdout": completed.stdout,
-        "stderr": completed.stderr,
-        "error": None if completed.returncode == 0 else (completed.stderr.strip() or "Build failed"),
-    }
+    The Core implementation is the single source of truth for compilation.
+    """
+    return _core_run_engine_compile(
+        workspace=workspace,
+        engine_id=engine_id,
+        context=context,
+        engine_config=engine_config,
+    )
 
 
 def engine_config_from_lock(lock_payload: dict[str, Any]) -> dict[str, Any]:

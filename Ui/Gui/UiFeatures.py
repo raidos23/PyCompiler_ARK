@@ -214,7 +214,7 @@ class UiFeatures:
         if not workspace_dir:
             return
         try:
-            from Core.ArkConfig import load_ark_config, get_entrypoint
+            from Core.Configs import load_ark_config, get_entrypoint
 
             cfg = load_ark_config(workspace_dir)
             entry_rel = get_entrypoint(cfg)
@@ -248,7 +248,7 @@ class UiFeatures:
             )
             return
         try:
-            from Core.ArkConfig import set_entrypoint
+            from Core.Configs import set_entrypoint
 
             ok = set_entrypoint(workspace_dir, rel_path)
         except Exception:
@@ -273,7 +273,7 @@ class UiFeatures:
         if not workspace_dir:
             return
         try:
-            from Core.ArkConfig import set_entrypoint
+            from Core.Configs import set_entrypoint
 
             ok = set_entrypoint(workspace_dir, None)
         except Exception:
