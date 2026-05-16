@@ -52,16 +52,6 @@ class CompilationStatus(Enum):
     FAILED = "failed"
 
 
-class CompilationSignals(QObject):
-    """Signals used to communicate with the user interface."""
-
-    output_ready = Signal(str)  # Signal pour stdout
-    error_ready = Signal(str)  # Signal pour stderr
-    finished = Signal(int)  # Code de retour
-    status_changed = Signal(CompilationStatus)  # Changement de statut
-    progress_update = Signal(int, str)  # Progression, message
-
-
 class CompilationThread(QThread):
     """
     Thread used to run compilation without blocking the UI.

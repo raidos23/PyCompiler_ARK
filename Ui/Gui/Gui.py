@@ -294,7 +294,7 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
     # COMPILATION (délégation à Core/Compiler)
     # =========================================================================
 
-    from Core.Compiler import (
+    from Ui.Gui.Dialogs.CompilerDialog import (
         cancel_all_compilations,
         handle_finished,
         handle_stderr,
