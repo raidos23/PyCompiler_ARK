@@ -84,7 +84,28 @@ def launch_main_application(
                     if os.path.isfile(path):
                         pix = QPixmap(path)
                         if not pix.isNull():
-                            splash = QSplashScreen(pix)
+                            # Ajustement du cadrage : limiter la taille à 80% de l'écran
+                            screen = app.primaryScreen()
+                            if screen:
+                                sgeo = screen.availableGeometry()
+                                max_w, max_h = int(sgeo.width() * 0.5), int(sgeo.height() * 0.5)
+                                if pix.width() > max_w or pix.height() > max_h:
+                                    pix = pix.scaled(
+                                        max_w, max_h,
+                                        Qt.KeepAspectRatio,
+                                        Qt.SmoothTransformation
+                                    )
+
+                            splash = QSplashScreen(pix, Qt.WindowStaysOnTopHint)
+                            
+                            # Centrage explicite
+                            if screen:
+                                sgeo = screen.availableGeometry()
+                                splash.move(
+                                    sgeo.x() + (sgeo.width() - pix.width()) // 2,
+                                    sgeo.y() + (sgeo.height() - pix.height()) // 2
+                                )
+                            
                             splash.show()
                             app.processEvents()
                         break
