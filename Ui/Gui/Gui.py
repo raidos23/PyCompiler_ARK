@@ -29,7 +29,7 @@ from PySide6.QtWidgets import QMainWindow, QMessageBox
 from Core.Globals import _latest_gui_instance, _workspace_dir_cache, _workspace_dir_lock
 from Core.Globals import _run_coro_async
 from Core.Venv_Manager import VenvManager
-from Core.i18n import (
+from Ui.i18n import (
     resolve_system_language,
     get_translations,
     tr_fr_en,

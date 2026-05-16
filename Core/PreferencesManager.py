@@ -149,7 +149,7 @@ def save_preferences(self):
             pass
     except Exception as e:
         try:
-            from .i18n import log_i18n_level
+            from Ui.i18n import log_i18n_level
 
             log_i18n_level(
                 self,
@@ -159,7 +159,7 @@ def save_preferences(self):
             )
         except Exception:
             try:
-                from .i18n import log_with_level
+                from Ui.i18n import log_with_level
 
                 log_with_level(
                     self, "warning", f"Impossible de sauvegarder les préférences : {e}"

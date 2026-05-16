@@ -175,7 +175,7 @@ def show_msgbox(
     """
     if QApplication.instance() is None or _is_noninteractive():
         try:
-            from Core.i18n import log_with_level
+            from Ui.i18n import log_with_level
 
             lvl = "warning" if kind in ("warning", "error") else "info"
             log_with_level(None, lvl, f"[MSGBOX:{kind}] {title}: {text}")
@@ -222,7 +222,7 @@ def show_msgbox(
                 return None
         except Exception:
             try:
-                from Core.i18n import log_with_level
+                from Ui.i18n import log_with_level
 
                 lvl = "warning" if kind in ("warning", "error") else "info"
                 log_with_level(None, lvl, f"[MSGBOX:{kind}] {title}: {text}")
@@ -245,7 +245,7 @@ def sys_msgbox_for_installing(
     """Interactive prompt for multi-OS installation authorization."""
     is_windows = platform.system().lower().startswith("win")
     try:
-        from Core.i18n import tr_fr_en, is_french_language
+        from Ui.i18n import tr_fr_en, is_french_language
 
         if title == "Installation requise":
             title = tr_fr_en(None, "Installation requise", "Installation required")
@@ -299,7 +299,7 @@ def sys_msgbox_for_installing(
             pass
     try:
         try:
-            from Core.i18n import log_with_level
+            from Ui.i18n import log_with_level
 
             log_with_level(None, "info", f"[INSTALL] {title}: {msg}")
         except Exception:

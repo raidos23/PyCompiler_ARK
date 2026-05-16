@@ -458,8 +458,8 @@ async def clear_translation_cache() -> None:
 def get_current_language_sync() -> str:
     """Return current language from user preferences (sync)."""
     try:
-        # Importer ici pour éviter les imports circulaires
-        from .PreferencesManager import PREFS_FILE
+        # Absolute import to avoid relative-import issues outside Core package
+        from Core.PreferencesManager import PREFS_FILE
 
         if os.path.isfile(PREFS_FILE):
             with open(PREFS_FILE, encoding="utf-8") as f:
@@ -838,7 +838,7 @@ def log_i18n_level(
 
 def apply_language(self, lang_display: str) -> None:
     """Apply selected language through centralized i18n flow."""
-    from .Globals import _run_coro_async
+    from Core.Globals import _run_coro_async
 
     async def _do():
         code = (
@@ -874,7 +874,7 @@ def apply_language(self, lang_display: str) -> None:
                     pass
             # Ensure IDE-like overflow menu labels update immediately (no restart required).
             try:
-                from Core.IdeLikeGui.connections import _retranslate_ide_like_actions
+                from Ui.Gui.IdeLikeGui.connections import _retranslate_ide_like_actions
 
                 _retranslate_ide_like_actions(self)
             except Exception:
