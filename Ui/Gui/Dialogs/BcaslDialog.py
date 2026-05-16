@@ -37,9 +37,11 @@ from PySide6.QtCore import Qt, Signal, QMimeData, QByteArray, QObject, QThread, 
 from PySide6.QtGui import QColor, QShortcut, QKeySequence, QPalette
 from PySide6.QtWidgets import (
     QAbstractItemView,
+    QApplication,
     QCheckBox,
     QDialog,
     QFrame,
+    QGroupBox,
     QHBoxLayout,
     QLabel,
     QListWidget,
@@ -55,6 +57,60 @@ from PySide6.QtWidgets import (
 )
 
 # ---------------------------------------------------------------------------
+# Helpers Thème
+# ---------------------------------------------------------------------------
+
+def _is_dark() -> bool:
+    """Détermine si le thème actuel est sombre."""
+    try:
+        from Ui.Gui.UiConnection import _is_qss_dark
+        app = QApplication.instance()
+        return _is_qss_dark(app.styleSheet() if app else "")
+    except Exception:
+        return False
+
+
+def _get_bcasl_colors() -> dict[str, str]:
+    """Retourne les couleurs adaptées au thème (soumis au thème)."""
+    app = QApplication.instance()
+    pal = app.palette() if app else QPalette()
+    
+    # Récupérer les couleurs système pour une intégration parfaite
+    # PlaceholderText est excellent pour les labels secondaires (gris dynamique)
+    secondary_text = pal.color(QPalette.PlaceholderText).name()
+    # AlternateBase est fait pour le contraste de fond dans les listes/groupes
+    alt_bg = pal.color(QPalette.AlternateBase).name()
+
+    if _is_dark():
+        return {
+            "warn_bg": "#504010",       # Ambre sombre mais distinct du fond ("noir")
+            "warn_border": "#D4A017",   # Orange/Or
+            "section_bg": alt_bg,
+            "section_label": secondary_text,
+        }
+    return {
+        "warn_bg": "#FFF3CD",      # Jaune pâle
+        "warn_border": "orange",
+        "section_bg": alt_bg,
+        "section_label": secondary_text,
+    }
+
+
+def _apply_themed_icon(widget: QPushButton, icon_name: str, size: int = 18) -> None:
+    """Applique une icône SVG thémée au widget."""
+    try:
+        from Ui.Gui.UiConnection import themed_svg_icon
+        from PySide6.QtCore import QSize
+        icon_path = str(Path(__file__).parent.parent.parent.parent / "icons" / icon_name)
+        icon = themed_svg_icon(icon_path, size=size)
+        if icon:
+            widget.setIcon(icon)
+            widget.setIconSize(QSize(size, size))
+    except Exception:
+        pass
+
+
+# ---------------------------------------------------------------------------
 # Constantes
 # ---------------------------------------------------------------------------
 
@@ -68,10 +124,6 @@ SECTION_PHASES: dict[int, tuple[str, int, int]] = {
     50:  ("Obfuscation",  50,  59),
     100: ("Défaut",       60,  199),
 }
-
-_WARN_BG   = "#FFF3CD"   # fond jaune pâle
-_WARN_BORDER = "orange"  # bordure spinbox hors-plage
-_SECTION_BG  = "#F5F5F5" # fond section (clair)
 
 # Tag → score de phase
 _TAG_PRIORITY_MAP: dict[str, int] = {}
@@ -209,15 +261,17 @@ class _PluginRow(QFrame):
         row.addWidget(self.spin)
 
         # Boutons ↑ ↓
-        self.btn_up = QPushButton("↑")
-        self.btn_up.setFixedWidth(28)
+        self.btn_up = QPushButton()
+        self.btn_up.setFixedWidth(32)
         self.btn_up.setToolTip("Monter dans la section")
+        _apply_themed_icon(self.btn_up, "chevron-up.svg", size=18)
         self.btn_up.clicked.connect(lambda: self.sig_move_up.emit(self.pid))
         row.addWidget(self.btn_up)
 
-        self.btn_down = QPushButton("↓")
-        self.btn_down.setFixedWidth(28)
+        self.btn_down = QPushButton()
+        self.btn_down.setFixedWidth(32)
         self.btn_down.setToolTip("Descendre dans la section")
+        _apply_themed_icon(self.btn_down, "chevron-down.svg", size=18)
         self.btn_down.clicked.connect(lambda: self.sig_move_down.emit(self.pid))
         row.addWidget(self.btn_down)
 
@@ -237,7 +291,8 @@ class _PluginRow(QFrame):
 
         if expert or not out_of_range:
             self.lbl_warn.setVisible(False)
-            self.setStyleSheet("")
+            # Utilise un fond transparent pour laisser voir le fond de la section
+            self.setStyleSheet("QFrame#PluginRow { background: transparent; border: none; }")
             self.spin.setStyleSheet("")
         else:
             self.lbl_warn.setVisible(True)
@@ -246,8 +301,9 @@ class _PluginRow(QFrame):
                 "L'ordre d'exécution peut être inattendu.\n"
                 "Utilisez le mode Expert pour désactiver les avertissements."
             )
-            self.setStyleSheet(f"QFrame#PluginRow {{ background: {_WARN_BG}; }}")
-            self.spin.setStyleSheet(f"QSpinBox {{ border: 2px solid {_WARN_BORDER}; }}")
+            colors = _get_bcasl_colors()
+            self.setStyleSheet(f"QFrame#PluginRow {{ background: {colors['warn_bg']}; border: 1px solid {colors['warn_border']}; border-radius: 4px; }}")
+            self.spin.setStyleSheet(f"QSpinBox {{ border: 2px solid {colors['warn_border']}; }}")
 
     def refresh_expert(self) -> None:
         """Appelé quand expert mode change."""
@@ -281,8 +337,8 @@ class _PluginRow(QFrame):
 # Widget : section collapsible
 # ---------------------------------------------------------------------------
 
-class _SectionWidget(QFrame):
-    """Section collapsible représentant une catégorie de plugins."""
+class _SectionWidget(QGroupBox):
+    """Section collapsible utilisant QGroupBox pour une meilleure intégration thématique."""
 
     sig_changed = Signal()
 
@@ -302,45 +358,27 @@ class _SectionWidget(QFrame):
         self._max = max_prio
         self._expert_ref = expert_ref
         self._rows: list[_PluginRow] = []
-        self._collapsed = False
 
-        self.setFrameShape(QFrame.StyledPanel)
-        self.setStyleSheet(f"QFrame {{ background: {_SECTION_BG}; border-radius: 4px; }}")
+        # Titre natif du GroupBox
+        self.setTitle(f"{name} ({min_prio}–{max_prio})")
+        
+        # Rendre le GroupBox collapsible via la checkbox native
+        self.setCheckable(True)
+        self.setChecked(True)
+        self.toggled.connect(self._on_toggled)
 
-        outer = QVBoxLayout(self)
-        outer.setContentsMargins(4, 4, 4, 4)
-        outer.setSpacing(2)
-
-        # En-tête
-        header = QFrame()
-        header_lay = QHBoxLayout(header)
-        header_lay.setContentsMargins(4, 2, 4, 2)
-
-        self._toggle_btn = QPushButton("▼")
-        self._toggle_btn.setFlat(True)
-        self._toggle_btn.setFixedWidth(24)
-        self._toggle_btn.clicked.connect(self._toggle_collapse)
-        header_lay.addWidget(self._toggle_btn)
-
-        self._title = QLabel(f"<b>{name}</b>  <small style='color:#888'>({min_prio}–{max_prio})</small>")
-        self._title.setTextFormat(Qt.RichText)
-        header_lay.addWidget(self._title)
-        header_lay.addStretch(1)
-        outer.addWidget(header)
-
-        # Zone de contenu (plugins)
-        self._content = QWidget()
-        self._content_lay = QVBoxLayout(self._content)
-        self._content_lay.setContentsMargins(8, 2, 4, 4)
+        self._content_lay = QVBoxLayout(self)
+        self._content_lay.setContentsMargins(8, 12, 8, 8)
         self._content_lay.setSpacing(3)
-        outer.addWidget(self._content)
 
     # ------------------------------------------------------------------
 
-    def _toggle_collapse(self) -> None:
-        self._collapsed = not self._collapsed
-        self._content.setVisible(not self._collapsed)
-        self._toggle_btn.setText("▶" if self._collapsed else "▼")
+    def _on_toggled(self, checked: bool) -> None:
+        """Cache/affiche les lignes de plugins quand on toggle le GroupBox."""
+        for i in range(self._content_lay.count()):
+            item = self._content_lay.itemAt(i)
+            if item and item.widget():
+                item.widget().setVisible(checked)
 
     def add_row(self, row: _PluginRow) -> None:
         self._rows.append(row)
@@ -349,6 +387,10 @@ class _SectionWidget(QFrame):
         row.sig_move_down.connect(self._on_move_down)
         row.sig_enabled.connect(lambda _pid, _v: self.sig_changed.emit())
         row.sig_priority.connect(lambda _pid, _v: self.sig_changed.emit())
+        # S'assurer que la visibilité suit l'état actuel du toggle
+        row.setVisible(self.isChecked())
+        # Mettre à jour l'état des boutons ↑/↓ pour toute la section
+        self._refresh_arrow_buttons()
 
     def _on_move_up(self, pid: str) -> None:
         idx = self._find_idx(pid)
@@ -479,9 +521,6 @@ class BcaslPipelineDialog(QDialog):
         lbl.setTextFormat(Qt.RichText)
         title_row.addWidget(lbl)
         title_row.addStretch(1)
-        btn_save_top = QPushButton(self._gui.tr("Enregistrer", "Save"))
-        btn_save_top.clicked.connect(self._do_save)
-        title_row.addWidget(btn_save_top)
         main.addLayout(title_row)
 
         # Tabs : Pipeline + onglets plugins
@@ -496,7 +535,12 @@ class BcaslPipelineDialog(QDialog):
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setFrameShape(QFrame.NoFrame)
+        scroll.setStyleSheet("QScrollArea { background: transparent; }")
+        
         container = QWidget()
+        container.setObjectName("PipelineContainer")
+        container.setStyleSheet("QWidget#PipelineContainer { background: transparent; }")
+        
         self._pipeline_lay = QVBoxLayout(container)
         self._pipeline_lay.setSpacing(8)
         self._pipeline_lay.setContentsMargins(4, 4, 4, 4)
@@ -521,10 +565,12 @@ class BcaslPipelineDialog(QDialog):
         bottom.addStretch(1)
 
         btn_cancel = QPushButton(self._gui.tr("Annuler", "Cancel"))
+        _apply_themed_icon(btn_cancel, "x-circle.svg")
         btn_cancel.clicked.connect(self.reject)
         bottom.addWidget(btn_cancel)
 
         btn_save = QPushButton(self._gui.tr("Enregistrer dans bcasl.yml", "Save to bcasl.yml"))
+        _apply_themed_icon(btn_save, "save.svg")
         btn_save.setDefault(True)
         btn_save.clicked.connect(self._do_save)
         bottom.addWidget(btn_save)
