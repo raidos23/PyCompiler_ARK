@@ -185,6 +185,8 @@ plugins:
     config: {}
 ``` 
 
+ce format doit etre ainsi obligatoire le bcasl true ou flase est gerer par le ark.yml , le bcasl.yml gere uniquement les cfg des plugins et leur ordre.
+
 --- 
 
 8. Raccourcis clavier 
