@@ -478,7 +478,7 @@ def _load_workspace_config(workspace_root: Path) -> dict[str, Any]:
         plugin_timeout = 0.0
 
         try:
-            from Core.ArkConfigManager import load_ark_config
+            from Core.ArkConfig import load_ark_config
 
             ark_config = load_ark_config(str(workspace_root))
 
