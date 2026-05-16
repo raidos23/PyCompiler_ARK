@@ -1,12 +1,12 @@
 # SPDX-License-Identifier: Apache-2.0
 # Copyright 2026 Ague Samuel Amen
 
-"""Ide-like GUI wiring layer.
+"""
+Shim de compatibilité ascendante.
 
-This package only wires the new `Ui/Forms/ide_main_window.ui` to existing Core methods.
-No business logic is implemented here.
+IdeLikeGui a été déplacé dans Ui/Gui/IdeLikeGui/.
 """
 
-from .connections import init_ide_like_ui
+from Ui.Gui.IdeLikeGui import init_ide_like_ui  # noqa: F401
 
 __all__ = ["init_ide_like_ui"]

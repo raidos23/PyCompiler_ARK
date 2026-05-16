@@ -99,8 +99,8 @@ from Core.allversion import (
     get_engine_sdk_version,
 )
 
-# Importations de Gui.py
-from Core.Gui import PyCompilerArkGui
+# Importations de Ui/Gui/Gui.py (couche Qt séparée)
+from Ui.Gui.Gui import PyCompilerArkGui
 
 __all__ = [
     "CompilationStatus",
