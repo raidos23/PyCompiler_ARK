@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from Core.ArkConfig import (
+from Core.Configs import (
     load_ark_config,
     new_workspace_config,
     validate_ark_config,

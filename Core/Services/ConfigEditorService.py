@@ -457,7 +457,7 @@ def make_default_content(file_id: str, is_yaml: bool, workspace_dir: str | None 
     """Construire le contenu par défaut pour un type de fichier donné."""
     if file_id == "ark":
         try:
-            from Core.ArkConfig import DEFAULT_CONFIG
+            from Core.Configs import DEFAULT_CONFIG
 
             return yaml.safe_dump(DEFAULT_CONFIG, allow_unicode=True, sort_keys=False)
         except Exception:

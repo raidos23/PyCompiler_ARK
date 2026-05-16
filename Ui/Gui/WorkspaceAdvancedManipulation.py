@@ -26,7 +26,7 @@ from PySide6.QtGui import QDropEvent
 from PySide6.QtWidgets import QFileDialog, QMessageBox
 
 from Core.Globals import _workspace_dir_lock
-from Core.ArkConfig import load_ark_config, should_exclude_file
+from Core.Configs import load_ark_config, should_exclude_file
 
 
 class WorkspaceAdvancedManipulation:

@@ -21,7 +21,7 @@ import pytest
 
 pytest.importorskip("PySide6")
 
-from Core.ArkConfig import set_entrypoint
+from Core.Configs import set_entrypoint
 import Core.Compiler as compiler_module
 from Core.Compiler.compiler import CompilationThread
 

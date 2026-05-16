@@ -62,6 +62,13 @@ from Core.Compiler.process_killer import (
     get_process_info,
 )
 
+from Core.Compiler.engine_runner import (
+    BuildContext,
+    EngineRunnerError,
+    resolve_engine_command,
+    run_engine_compile,
+)
+
 from EngineLoader.registry import get_engine, create
 
 __all__ = [
@@ -86,6 +93,11 @@ __all__ = [
     "kill_process",
     "kill_process_tree",
     "get_process_info",
+    # engine_runner.py — source of truth for compilation
+    "BuildContext",
+    "EngineRunnerError",
+    "resolve_engine_command",
+    "run_engine_compile",
     # Business orchestration helpers (used by Ui/Gui/Dialogs/CompilerDialog.py)
     "_get_main_process",
     "_resolve_default_engine_id",
