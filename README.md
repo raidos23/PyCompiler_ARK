@@ -23,6 +23,7 @@ Build Python apps with a predictable workflow, a configurable pre-compile pipeli
 - **Structured CLI**: explicit `gui`, `engine`, `workspace`, `doctor`, and `scaffold` commands, with JSON output on key headless paths.
 - **Standalone tools**: dedicated BCASL and Engines managers, plus CLI entry points and dry-run support.
 - **Extensible SDKs**: create new engines and BCASL plugins with the provided SDKs.
+- **Theme-aware dynamic colors and SVG icons**: 100% dynamic UI integration using QPalette and themed SVGs.
 - **Customizable**: theming and translations out of the box.
 
 ---
@@ -48,6 +49,8 @@ python pycompiler_ark.py
 # or
 python -m pycompiler_ark
 ```
+
+*Note: The application features a centered and auto-scaled splash screen for a professional startup experience.*
 
 ---
 
@@ -75,106 +78,56 @@ Compilation (PyInstaller / Nuitka / cx_Freeze)
 
 ---
 
-## CLI shortcuts
+## CLI Usage
+
+The ARK CLI provides a structured set of commands for workspace management, building, and developer tasks.
+
+### Core Commands
 
 ```bash
-python pycompiler_ark.py --help
-python pycompiler_ark.py --version
-python pycompiler_ark.py --info
-python pycompiler_ark.py --cli
-python pycompiler_ark.py gui main --ide
-python pycompiler_ark.py gui main --classic --no-splash
-python pycompiler_ark.py gui bcasl /path/to/workspace
-python pycompiler_ark.py gui engines /path/to/workspace
-python pycompiler_ark.py engine list --json
-python pycompiler_ark.py engine doctor nuitka src/main.py --json
-python pycompiler_ark.py workspace inspect . --json
-python pycompiler_ark.py doctor --json
-python pycompiler_ark.py init /path/to/workspace --json
-python pycompiler_ark.py init /path/to/workspace --with-venv --json
-python pycompiler_ark.py config-auto /path/to/workspace --json
-python pycompiler_ark.py cfg-auto /path/to/workspace --json
-python pycompiler_ark.py ws init /path/to/workspace --json
-python pycompiler_ark.py check /path/to/workspace --json
-python pycompiler_ark.py scaffold engine demo_engine --json
-python pycompiler_ark.py unload --json
+# Workspace Initialization
+python pycompiler_ark.py init --entry src/main.py [--icon icon.ico] [--with-venv]
+
+# Building
+python pycompiler_ark.py build                      # Build using ark.yml engine
+python pycompiler_ark.py build --engine nuitka      # Override engine
+python pycompiler_ark.py build --lock latest.lock   # Rebuild from lock file
+
+# Execution
+python pycompiler_ark.py run bcasl                  # Execute BCASL pipeline
+python pycompiler_ark.py run bcasl --timeout 30     # With custom timeout
+
+# GUI
+python pycompiler_ark.py gui                        # Launch modern IDE-like GUI
+python pycompiler_ark.py gui --legacy               # Launch classic GUI
 ```
 
-### CLI groups
-
-- `gui`: launch graphical entrypoints explicitly
-- `engine`: inspect engines, run compatibility checks, dry-run or compile
-- `bcasl`: BCASL GUI or delegated headless actions
-- `workspace`: inspect the current workspace and resolved entrypoint
-- `init`: initialize a workspace directory and base configs (`ark.yml`, `bcasl.yml`, `.ark/pref.json`)
-  - `--with-venv`: also create/reuse a local workspace venv and set it in `.ark/pref.json`
-- `config-auto`: auto-detect entrypoint and update workspace config
-- `cfg-auto`: short alias for `config-auto`
-- `ws`: short group alias for workspace bootstrap (`ws init`, `ws config-auto`)
-- `check`: strict CI/CD preflight shortcut
-- `doctor`: global diagnostics snapshot
-- `scaffold`: generate starter templates for engines and plugins
-
-### Headless note
-
-The CLI router no longer bootstraps the main Qt application for headless paths such as:
-
-- `--help`
-- `--version`
-- `--info`
-- `--cli`
-- `unload`
-- `workspace ...`
-
-Structured command groups such as `engine`, `bcasl`, `doctor`, and `scaffold`
-also avoid launching the main GUI entrypoint.
-
-This keeps scripting and CI workflows friendly on machines where no GUI window
-should be opened.
-
-### CI-friendly exit codes
-
-- `0`: success
-- `3`: precheck failure (`check --strict`)
-- `4`: invalid or missing workspace
-- `5`: engine not found
-
-These are the stable codes to key on in CI for the structured headless commands.
-
-### Dedicated CLI quick commands
-
-```text
-ark-cli> main
-ark-cli> main --ide-gui
-ark-cli> bcasl run ~/my_workspace --timeout 30
-ark-cli> engine dry-run pyinstaller src/main.py
-ark-cli> engine list
-ark-cli> unload
-```
-
-### GUI entrypoints
+### Developer Commands
 
 ```bash
-python pycompiler_ark.py gui main --ide
-python pycompiler_ark.py gui bcasl
-python pycompiler_ark.py gui engines
+# Discovery
+python pycompiler_ark.py list engines               # List available engines
+python pycompiler_ark.py list plugins               # List available BCASL plugins
+
+# Configuration (User Paths)
+python pycompiler_ark.py set user-engine-dir /path  # Set custom engine directory
+python pycompiler_ark.py get user-engine-dir        # Retrieve path
+
+# Scaffolding
+python pycompiler_ark.py scaffold engine demo       # Create a new engine template
+python pycompiler_ark.py scaffold plugin-bcasl demo # Create a new BCASL plugin template
 ```
 
-### Standalone modules
-
+### JSON Output
+For CI/CD and scripting, key commands support the `--json` flag to return machine-readable results:
 ```bash
-python -m OnlyMod.BcaslOnlyMod --gui
-python -m OnlyMod.BcaslOnlyMod --list-plugins
-python -m OnlyMod.BcaslOnlyMod --run --workspace /path/to/workspace
-python -m OnlyMod.EngineOnlyMod
-python -m OnlyMod.EngineOnlyMod --list-engines
-python -m OnlyMod.EngineOnlyMod --check-compat nuitka
-python -m OnlyMod.EngineOnlyMod --engine nuitka -f script.py --dry-run
+python pycompiler_ark.py build --json
+python pycompiler_ark.py init --entry main.py --json
 ```
 
 ---
 
-## Documentation
+## How it works
 
 - [Changelog](CHANGELOG.md)
 - [Release process](docs/release_process.md)
