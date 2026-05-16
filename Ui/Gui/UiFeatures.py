@@ -96,7 +96,7 @@ class UiFeatures:
     def show_help_dialog(self):
         """Show the localized help dialog."""
         try:
-            from Core.i18n import FALLBACK_EN, is_french_language
+            from Ui.i18n import FALLBACK_EN, is_french_language
 
             if is_french_language(self):
                 tr = getattr(self, "_tr", None)
@@ -302,7 +302,7 @@ class UiFeatures:
             if not file.endswith(".json"):
                 file += ".json"
             try:
-                from Core.i18n import normalize_lang_pref
+                from Ui.i18n import normalize_lang_pref
 
                 base_lang_pref = getattr(
                     self,
@@ -349,7 +349,7 @@ class UiFeatures:
                         "language_pref", prefs.get("language", None)
                     )
                     if lang_pref_in is not None:
-                        from Core.i18n import (
+                        from Ui.i18n import (
                             get_translations,
                             normalize_lang_pref,
                             resolve_system_language,
@@ -677,7 +677,7 @@ class UiFeatures:
 
     def apply_language(self, lang_display: str) -> None:
         """Apply the selected language."""
-        from Core.i18n import apply_language as _i18n_apply_language
+        from Ui.i18n import apply_language as _i18n_apply_language
 
         _i18n_apply_language(self, lang_display)
 
@@ -694,7 +694,7 @@ class UiFeatures:
     def log_i18n(self, fr: str, en: str) -> None:
         """Append a localized message to the log."""
         try:
-            from Core.i18n import log_i18n_level
+            from Ui.i18n import log_i18n_level
 
             lvl = "info"
             for emo, lv in (
@@ -723,7 +723,7 @@ class UiFeatures:
             except Exception:
                 msg = en
             try:
-                from Core.i18n import log_with_level
+                from Ui.i18n import log_with_level
 
                 log_with_level(self, "info", msg)
             except Exception:
@@ -731,13 +731,13 @@ class UiFeatures:
 
     def show_language_dialog(self) -> None:
         """Open language selection dialog."""
-        from Core.i18n import show_language_dialog as _i18n_show_dialog
+        from Ui.i18n import show_language_dialog as _i18n_show_dialog
 
         _i18n_show_dialog(self)
 
     def _apply_main_app_translations(self, tr: dict) -> None:
         """Apply translations to main UI elements."""
-        from Core.i18n import _apply_main_app_translations as _i18n_apply_translations
+        from Ui.i18n import _apply_main_app_translations as _i18n_apply_translations
 
         _i18n_apply_translations(self, tr)
 

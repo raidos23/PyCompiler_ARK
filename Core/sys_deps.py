@@ -208,21 +208,21 @@ class SysDependencyManager:
                         pw.logger.debug(line)
                     else:
                         try:
-                            from Core.i18n import log_with_level
+                            from Ui.i18n import log_with_level
 
                             log_with_level(pw, "state", line)
                         except Exception:
                             pass
                 except Exception:
                     try:
-                        from Core.i18n import log_with_level
+                        from Ui.i18n import log_with_level
 
                         log_with_level(pw, "state", line)
                     except Exception:
                         pass
             else:
                 try:
-                    from Core.i18n import log_with_level
+                    from Ui.i18n import log_with_level
 
                     log_with_level(None, "state", line)
                 except Exception:

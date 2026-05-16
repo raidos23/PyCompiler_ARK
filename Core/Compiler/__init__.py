@@ -80,7 +80,7 @@ from Core.Compiler.process_killer import (
 
 # Importations de EngineLoader
 from EngineLoader.registry import get_engine, create
-from Core.i18n import log_with_level, log_i18n_level
+from Ui.i18n import log_with_level, log_i18n_level
 
 __all__ = [
     # compiler.py

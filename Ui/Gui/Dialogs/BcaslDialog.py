@@ -33,7 +33,7 @@ from typing import Any, Optional
 
 import yaml
 
-from PySide6.QtCore import Qt, Signal, QMimeData, QByteArray
+from PySide6.QtCore import Qt, Signal, QMimeData, QByteArray, QObject, QThread, Slot
 from PySide6.QtGui import QColor, QShortcut, QKeySequence, QPalette
 from PySide6.QtWidgets import (
     QAbstractItemView,
@@ -770,6 +770,160 @@ class BcaslPipelineDialog(QDialog):
                     f"Failed to write bcasl.yml: {e}",
                 ),
             )
+
+
+# ---------------------------------------------------------------------------
+# Worker et bridge Qt (déplacés depuis bcasl/Loader.py)
+# ---------------------------------------------------------------------------
+
+
+class _BCASLWorker(QObject):
+    finished = Signal(object)  # report or None
+    log = Signal(str)
+
+    def __init__(
+        self,
+        workspace_root: "Path",
+        Plugins_dir: "Path",
+        cfg: "dict[str, Any]",
+        plugin_timeout: float,
+    ) -> None:
+        super().__init__()
+        self.workspace_root = workspace_root
+        self.Plugins_dir = Plugins_dir
+        self.cfg = cfg
+        self.plugin_timeout = plugin_timeout
+        self._cancel_requested = False
+
+    def request_cancel(self) -> None:
+        try:
+            self._cancel_requested = True
+        except Exception:
+            pass
+
+    @Slot()
+    def run(self) -> None:
+        try:
+            from bcasl.Loader import _run_bcasl_sync
+
+            report = _run_bcasl_sync(
+                self.workspace_root,
+                self.Plugins_dir,
+                self.cfg,
+                self.plugin_timeout,
+                log_cb=self.log.emit,
+                stop_requested=lambda: bool(self._cancel_requested),
+            )
+            self.finished.emit(report)
+        except Exception as e:
+            try:
+                self.log.emit(f"Erreur BCASL: {e}\n")
+            except Exception:
+                pass
+            self.finished.emit(None)
+
+
+class _BCASLUiBridge(QObject):
+    def __init__(self, gui, on_done, thread) -> None:
+        super().__init__()
+        self._gui = gui
+        self._on_done = on_done
+        self._thread = thread
+
+    @Slot(str)
+    def on_log(self, s: str) -> None:
+        try:
+            if hasattr(self._gui, "log") and self._gui.log:
+                self._gui.log.append(s)
+        except Exception:
+            pass
+
+    @Slot(object)
+    def on_finished(self, rep) -> None:
+        try:
+            if rep and hasattr(self._gui, "log") and self._gui.log is not None:
+                self._gui.log.append("BCASL - Rapport:\n")
+                for item in rep:
+                    try:
+                        state = (
+                            "OK"
+                            if getattr(item, "success", False)
+                            else f"FAIL: {getattr(item, 'error', '')}"
+                        )
+                        dur = getattr(item, "duration_ms", 0.0)
+                        pid = getattr(item, "plugin_id", "?")
+                        self._gui.log.append(f" - {pid}: {state} ({dur:.1f} ms)\n")
+                    except Exception:
+                        pass
+                try:
+                    self._gui.log.append(rep.summary() + "\n")
+                except Exception:
+                    pass
+            try:
+                if callable(self._on_done):
+                    self._on_done(rep)
+            except Exception:
+                pass
+        finally:
+            try:
+                self._thread.quit()
+            except Exception:
+                pass
+
+
+def _build_plugin_item(
+    pid: str,
+    meta: "dict[str, Any]",
+    plugins_cfg: "dict[str, Any]",
+    Qt,
+    QListWidgetItem,
+) -> Any:
+    """Construit un QListWidgetItem pour un plugin BCASL."""
+    from bcasl.tagging import get_tag_phase_name
+
+    label = meta.get("name") or pid
+    ver = meta.get("version") or ""
+    tags = meta.get("tags") or []
+
+    phase_name = get_tag_phase_name(tags[0]) if tags else ""
+    text = f"{label} ({pid})" + (f" v{ver}" if ver else "")
+    if phase_name:
+        text += f" [Phase: {phase_name}]"
+
+    item = QListWidgetItem(text)
+
+    try:
+        desc = meta.get("description") or ""
+        tooltip = desc
+        if tags:
+            tooltip += f"\n\nTags: {', '.join(tags)}"
+        reqs = meta.get("requirements", [])
+        if reqs:
+            tooltip += "\n\nRequirements:\n" + "\n".join(f"  • {req}" for req in reqs)
+        if tooltip:
+            item.setToolTip(tooltip)
+    except Exception:
+        pass
+
+    from bcasl.Loader import _plugin_enabled
+
+    enabled = _plugin_enabled(plugins_cfg, pid)
+    try:
+        item.setData(0x0100, pid)
+    except Exception:
+        pass
+    if Qt is not None:
+        item.setFlags(
+            item.flags()
+            | Qt.ItemIsUserCheckable
+            | Qt.ItemIsEnabled
+            | Qt.ItemIsSelectable
+            | Qt.ItemIsDragEnabled
+        )
+        item.setCheckState(
+            Qt.CheckState.Checked if enabled else Qt.CheckState.Unchecked
+        )
+    return item
 
 
 # ---------------------------------------------------------------------------

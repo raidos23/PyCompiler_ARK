@@ -28,7 +28,7 @@ from PySide6.QtCore import QProcess
 from PySide6.QtWidgets import QApplication, QMessageBox
 
 from Core.WidgetsCreator import ProgressDialog
-from Core.i18n import log_with_level
+from Ui.i18n import log_with_level
 
 
 def _log_append(gui, msg: str) -> None:

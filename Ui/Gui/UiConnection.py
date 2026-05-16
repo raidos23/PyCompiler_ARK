@@ -33,7 +33,7 @@ try:
 except Exception:
     QSvgRenderer = None  # type: ignore[assignment]
 
-from Core.i18n import show_language_dialog
+from Ui.i18n import show_language_dialog
 
 
 def _detect_system_color_scheme() -> str:
@@ -876,7 +876,7 @@ def apply_theme(self, pref: str) -> None:
             except Exception:
                 pass
         try:
-            from Core.i18n import log_i18n_level
+            from Ui.i18n import log_i18n_level
 
             if chosen_path:
                 log_i18n_level(
@@ -898,7 +898,7 @@ def apply_theme(self, pref: str) -> None:
         try:
             if hasattr(self, "log") and self.log:
                 try:
-                    from Core.i18n import log_i18n_level
+                    from Ui.i18n import log_i18n_level
 
                     log_i18n_level(
                         self,
@@ -907,7 +907,7 @@ def apply_theme(self, pref: str) -> None:
                         f"Failed to apply theme: {e}",
                     )
                 except Exception:
-                    from Core.i18n import log_with_level
+                    from Ui.i18n import log_with_level
 
                     log_with_level(
                         self, "warning", f"Échec d'application du thème: {e}"
@@ -940,7 +940,7 @@ def show_theme_dialog(self) -> None:
             pass
     else:
         try:
-            from Core.i18n import log_i18n_level
+            from Ui.i18n import log_i18n_level
 
             log_i18n_level(
                 self,
