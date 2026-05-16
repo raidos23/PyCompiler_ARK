@@ -690,25 +690,14 @@ def resolve_bcasl_timeout(self) -> float:
         return 0.0
 
 
-def open_bc_loader_dialog(self) -> None:  # UI minimale
-    """Fenêtre simple pour activer/désactiver et réordonner les plugins(BCASL).
-    Persiste dans <workspace>/bcasl.yml uniquement (YML).
+def open_bc_loader_dialog(self) -> None:
+    """Ouvre l'éditeur visuel du pipeline BCASL.
+
+    Délègue à Ui/Gui/Dialogs/BcaslDialog.BcaslPipelineDialog.
+    Persiste dans <workspace>/bcasl.yml (format liste YAML).
     """
-    try:  # Importer QtWidgets à la demande pour compatibilité headless
-        from PySide6.QtWidgets import (
-            QAbstractItemView,
-            QDialog,
-            QHBoxLayout,
-            QLabel,
-            QCheckBox,
-            QListWidget,
-            QListWidgetItem,
-            QMessageBox,
-            QPushButton,
-            QTabWidget,
-            QWidget,
-            QVBoxLayout,
-        )
+    try:
+        from PySide6.QtWidgets import QMessageBox
     except Exception:  # pragma: no cover
         return
 
@@ -723,8 +712,10 @@ def open_bc_loader_dialog(self) -> None:  # UI minimale
                 ),
             )
             return
+
         workspace_root = Path(self.workspace_dir).resolve()
         Plugins_dir = _get_plugins_dir()
+
         if not Plugins_dir.exists():
             QMessageBox.information(
                 self,
@@ -735,9 +726,9 @@ def open_bc_loader_dialog(self) -> None:  # UI minimale
                 ),
             )
             return
+
         meta_map = _discover_bcasl_meta(Plugins_dir)
-        plugin_ids = list(sorted(meta_map.keys()))
-        if not plugin_ids:
+        if not meta_map:
             QMessageBox.information(
                 self,
                 self.tr("Information", "Information"),
@@ -747,295 +738,17 @@ def open_bc_loader_dialog(self) -> None:  # UI minimale
                 ),
             )
             return
+
         cfg = _load_workspace_config(workspace_root)
-        plugins_cfg = cfg.get("plugins", {}) if isinstance(cfg, dict) else {}
         plugin_instances = _discover_bcasl_plugins(Plugins_dir, workspace_root, cfg)
-        plugin_ui_state: dict[str, dict[str, Any]] = {}
 
-        dlg = QDialog(self)
-        dlg.setWindowTitle(self.tr("BCASL LOADER", "BCASL LOADER"))
-        layout = QVBoxLayout(dlg)
-        tabs = QTabWidget(dlg)
-        layout.addWidget(tabs)
+        from Ui.Gui.Dialogs.BcaslDialog import open_bcasl_pipeline_dialog
+        open_bcasl_pipeline_dialog(self, workspace_root, meta_map, cfg, plugin_instances)
 
-        plugins_tab = QWidget(dlg)
-        plugins_layout = QVBoxLayout(plugins_tab)
-        info = QLabel(
-            self.tr(
-                "Activez/désactivez les plugins et définissez leur ordre d'exécution (haut = d'abord).",
-                "Enable/disable plugins and set their execution order (top = first).",
-            )
-        )
-        plugins_layout.addWidget(info)
-
-        # Global BCASL enable/disable
-        chk_enable = QCheckBox("Activer BCASL / Enable BCASL", plugins_tab)
-        try:
-            opt = cfg.get("options", {}) if isinstance(cfg, dict) else {}
-            bcasl_enabled_flag = (
-                bool(opt.get("enabled", True)) if isinstance(opt, dict) else True
-            )
-        except Exception:
-            bcasl_enabled_flag = True
-        chk_enable.setChecked(bcasl_enabled_flag)
-        plugins_layout.addWidget(chk_enable)
-
-        # Liste réordonnable avec cases à cocher
-        lst = QListWidget(plugins_tab)
-        lst.setSelectionMode(QAbstractItemView.SingleSelection)
-        lst.setDragDropMode(QAbstractItemView.InternalMove)
-
-        ordered_ids = _resolve_ordered_plugin_ids(plugin_ids, meta_map, cfg)
-        for pid in ordered_ids:
-            meta = meta_map.get(pid, {})
-            item = _build_plugin_item(pid, meta, plugins_cfg, Qt, QListWidgetItem)
-            lst.addItem(item)
-        plugins_layout.addWidget(lst)
-
-        # Boutons
-        btns = QHBoxLayout()
-        btn_up = QPushButton("⬆️")
-        btn_down = QPushButton("⬇️")
-        btn_save = QPushButton(self.tr("Enregistrer", "Save"))
-        btn_cancel = QPushButton(self.tr("Annuler", "Cancel"))
-
-        def _move_sel(delta: int):
-            row = lst.currentRow()
-            if row < 0:
-                return
-            new_row = max(0, min(lst.count() - 1, row + delta))
-            if new_row == row:
-                return
-            it = lst.takeItem(row)
-            lst.insertItem(new_row, it)
-            lst.setCurrentRow(new_row)
-
-        btn_up.clicked.connect(lambda: _move_sel(-1))
-        btn_down.clicked.connect(lambda: _move_sel(1))
-        btns.addWidget(btn_up)
-        btns.addWidget(btn_down)
-        btns.addStretch(1)
-        btns.addWidget(btn_cancel)
-        btns.addWidget(btn_save)
-        plugins_layout.addLayout(btns)
-        tabs.addTab(plugins_tab, self.tr("Configuration", "Configuration"))
-
-        # Plugin config tabs
-        try:
-            workspace_meta = _build_workspace_meta(workspace_root, cfg)
-            ctx = PreCompileContext(
-                workspace_root, config=cfg, workspace_metadata=workspace_meta
-            )
-        except Exception:
-            ctx = None
-
-        item_by_pid: dict[str, Any] = {}
-        for i in range(lst.count()):
-            try:
-                it = lst.item(i)
-                pid = it.data(0x0100) or it.text()
-                item_by_pid[str(pid)] = it
-            except Exception:
-                continue
-
-        plugin_tabs: dict[str, dict[str, Any]] = {}
-
-        def _is_enabled(pid: str) -> bool:
-            it = item_by_pid.get(pid)
-            if it is None:
-                return False
-            try:
-                return (
-                    it.checkState() == Qt.CheckState.Checked
-                    if Qt is not None
-                    else False
-                )
-            except Exception:
-                return False
-
-        def _sync_plugin_tabs():
-            for pid, tab in plugin_tabs.items():
-                widget = tab.get("widget")
-                title = tab.get("title")
-                if widget is None:
-                    continue
-                idx = tabs.indexOf(widget)
-                if _is_enabled(pid):
-                    if idx < 0:
-                        tabs.addTab(widget, str(title))
-                else:
-                    if idx >= 0:
-                        tabs.removeTab(idx)
-
-        for pid in ordered_ids:
-            plugin = plugin_instances.get(pid)
-            if plugin is None:
-                continue
-            if not hasattr(plugin, "build_config_tab"):
-                continue
-            try:
-                entry = (
-                    plugins_cfg.get(pid, {}) if isinstance(plugins_cfg, dict) else {}
-                )
-                base_cfg = {}
-                try:
-                    base_cfg = dict(entry.get("config", {}) or {})
-                except Exception:
-                    base_cfg = {}
-                tab_res = plugin.build_config_tab(tabs, ctx, base_cfg)
-                if tab_res is None:
-                    continue
-                title = None
-                widget = None
-                on_save = None
-                if isinstance(tab_res, dict):
-                    title = tab_res.get("title")
-                    widget = tab_res.get("widget")
-                    on_save = tab_res.get("on_save")
-                elif isinstance(tab_res, (list, tuple)):
-                    if len(tab_res) >= 2:
-                        title = tab_res[0]
-                        widget = tab_res[1]
-                        if len(tab_res) >= 3:
-                            on_save = tab_res[2]
-                    elif len(tab_res) == 1:
-                        widget = tab_res[0]
-                else:
-                    widget = tab_res
-                if widget is None:
-                    continue
-                if not title:
-                    try:
-                        title = getattr(plugin.meta, "name", None) or pid
-                    except Exception:
-                        title = pid
-                plugin_tabs[pid] = {"widget": widget, "title": title}
-                plugin_ui_state[pid] = {"config": base_cfg, "on_save": on_save}
-            except Exception:
-                continue
-
-        _sync_plugin_tabs()
-
-        # Enable/disable list and move buttons based on global toggle
-        def _apply_enabled_state():
-            en = chk_enable.isChecked()
-            try:
-                lst.setEnabled(en)
-                btn_up.setEnabled(en)
-                btn_down.setEnabled(en)
-            except Exception:
-                pass
-
-        try:
-            chk_enable.toggled.connect(lambda _=None: _apply_enabled_state())
-            _apply_enabled_state()
-        except Exception:
-            pass
-
-        try:
-            lst.itemChanged.connect(lambda _=None: _sync_plugin_tabs())
-        except Exception:
-            pass
-
-        def do_save():
-            # Collect plugin UI configs
-            plugin_configs: dict[str, dict[str, Any]] = {}
-            for pid, state in plugin_ui_state.items():
-                cfg_obj = state.get("config", {}) if isinstance(state, dict) else {}
-                on_save = state.get("on_save")
-                if callable(on_save):
-                    try:
-                        res = on_save(cfg_obj)
-                        if isinstance(res, dict):
-                            cfg_obj = res
-                    except Exception:
-                        pass
-                if isinstance(cfg_obj, dict):
-                    plugin_configs[pid] = cfg_obj
-
-            # Extraire ordre et états
-            new_plugins: dict[str, Any] = {}
-            order_ids: list[str] = []
-            for i in range(lst.count()):
-                it = lst.item(i)
-                pid = it.data(0x0100) or it.text()
-                en = (
-                    it.checkState() == Qt.CheckState.Checked
-                    if Qt is not None
-                    else False
-                )
-                base_entry = (
-                    dict(plugins_cfg.get(pid, {}))
-                    if isinstance(plugins_cfg, dict)
-                    else {}
-                )
-                base_entry["enabled"] = bool(en)
-                base_entry["priority"] = i
-                if str(pid) in plugin_configs:
-                    base_entry["config"] = plugin_configs[str(pid)]
-                new_plugins[str(pid)] = base_entry
-                order_ids.append(str(pid))
-            cfg_out: dict[str, Any] = dict(cfg) if isinstance(cfg, dict) else {}
-            cfg_out["plugins"] = new_plugins
-            cfg_out["plugin_order"] = order_ids
-
-            # Global enabled flag in options
-            try:
-                opts = (
-                    cfg_out.get("options", {})
-                    if isinstance(cfg_out.get("options"), dict)
-                    else {}
-                )
-                opts["enabled"] = bool(chk_enable.isChecked())
-                cfg_out["options"] = opts
-            except Exception:
-                pass
-
-            # Ecrire YML uniquement
-            target = workspace_root / "bcasl.yml"
-            try:
-                target.write_text(
-                    yaml.safe_dump(cfg_out, allow_unicode=True, sort_keys=False),
-                    encoding="utf-8",
-                )
-                if hasattr(self, "log") and self.log is not None:
-                    self.log.append(
-                        self.tr(
-                            "Plugins enregistrés dans bcasl.yml",
-                            "Plugins saved to bcasl.yml",
-                        )
-                    )
-                dlg.accept()
-            except Exception as e:
-                QMessageBox.critical(
-                    dlg,
-                    self.tr("Erreur", "Error"),
-                    self.tr(
-                        f"Impossible d'écrire bcasl.yml: {e}",
-                        f"Failed to write bcasl.yml: {e}",
-                    ),
-                )
-
-        btn_save.clicked.connect(do_save)
-        btn_cancel.clicked.connect(dlg.reject)
-        try:
-            dlg.setModal(False)
-        except Exception:
-            pass
-        try:
-            dlg.show()
-        except Exception:
-            try:
-                dlg.open()
-            except Exception:
-                try:
-                    dlg.exec()
-                except Exception:
-                    pass
     except Exception as e:
         try:
             if hasattr(self, "log") and self.log is not None:
-                self.log.append(f"Plugins Loader UI error: {e}")
+                self.log.append(f"BCASL Pipeline UI error: {e}")
         except Exception:
             pass
 
