@@ -40,7 +40,7 @@ Responsibilities:
 - map Qt widgets to Python attributes
 - connect UI actions to shared application logic
 - support both classic and IDE-like layouts
-- apply theme and translation behavior
+- apply 100% dynamic theme and translation behavior (QPalette + themed SVG icons)
 
 ### 3. Workspace and environment management
 

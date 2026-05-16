@@ -13,7 +13,8 @@ L'UI BCASL est un éditeur visuel du pipeline qui respecte les contraintes du sy
 · Lecture seule : la catégorie d'un plugin ne peut pas être changée
 · Ordre modifiable : à l'intérieur d'une section (même catégorie)
 · Guidage : plages de priorité recommandées
-· Sauvegarde : tout est écrit dans bcasl.yml 
+· Sauvegarde : tout est écrit dans bcasl.yml
+· Thème : 100% dynamique via QPalette et icônes SVG thémées 
 
 --- 
 
@@ -21,34 +22,28 @@ L'UI BCASL est un éditeur visuel du pipeline qui respecte les contraintes du sy
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
-│ BCASL Pipeline                                              [Save] │
+│ BCASL Pipeline                                                      │
 ├─────────────────────────────────────────────────────────────────────┤
 │                                                                     │
-│ ▼ Validation (10-19)                                               │
+│ [✓] Validation (10-19)         (QGroupBox collapsible)              │
 │   ┌─────────────────────────────────────────────────────────────┐  │
-│   │ ☑ syntax_checker               priority [12]  [↑] [↓] (drag)│  │
-│   │ ☑ type_checker                 priority [15]  [↑] [↓]       │  │
+│   │ ☑ syntax_checker               priority [12]  [˄] [˅] (svg) │  │
+│   │ ☑ type_checker                 priority [15]  [˄] [˅]       │  │
 │   └─────────────────────────────────────────────────────────────┘  │
 │                                                                     │
-│ ▼ Transformation (20-39)                                           │
+│ [✓] Transformation (20-39)                                          │
 │   ┌─────────────────────────────────────────────────────────────┐  │
-│   │ ☑ minifier                     priority [25]  [↑] [↓]       │  │
+│   │ ☑ minifier                     priority [25]  [˄] [˅]       │  │
 │   └─────────────────────────────────────────────────────────────┘  │
 │                                                                     │
-│ ▼ Obfuscation (40-59)                                              │
+│ [✓] Obfuscation (40-59)                                            │
 │   ┌─────────────────────────────────────────────────────────────┐  │
-│   │ ☐ pyobfus                      priority [45]  [↑] [↓]       │  │
-│   │ ⚠️ ☑ byteshift                  priority [22]  [↑] [↓]       │  │
+│   │ ☐ pyobfus                      priority [45]  [˄] [˅]       │  │
+│   │ ⚠️ ☑ byteshift                  priority [22]  [˄] [˅]       │  │
 │   │       ↑ hors plage (40-59)                                   │  │
 │   └─────────────────────────────────────────────────────────────┘  │
-│                                                                     │
-│ ▼ Preparation (60-79)                                              │
-│   ┌─────────────────────────────────────────────────────────────┐  │
-│   │ ☐ signer                       priority [70]  [↑] [↓]       │  │
-│   └─────────────────────────────────────────────────────────────┘  │
-│                                                                     │
 ├─────────────────────────────────────────────────────────────────────┤
-│                                        [Cancel]  [Save to bcasl.yml]│
+│ [ ] Expert mode                         [Cancel]  [Save to bcasl.yml]│
 └─────────────────────────────────────────────────────────────────────┘
 ``` 
 
@@ -59,9 +54,9 @@ L'UI BCASL est un éditeur visuel du pipeline qui respecte les contraintes du sy
 3.1 Section (catégorie) 
 
 Élément Rôle
-▼ Validation (10-19) Titre de section (collapsible)
+[✓] Titre (QGroupBox) Titre de section + toggle natif (collapsible)
 Plage de priorité Indique les bornes recommandées
-Background Léger (gris très clair) 
+Background Dynamique (QPalette.AlternateBase) 
 
 3.2 Ligne plugin 
 
@@ -69,8 +64,7 @@ Background Léger (gris très clair)
 ☑ Checkbox enabled
 Nom plugin.name
 priority [22] Label + champ de saisie (spinbox)
-[↑] [↓] Boutons pour réorganiser
-(drag) Poignée pour drag & drop
+[˄] [˅] (svg) Boutons SVG thémés pour réorganiser
 ⚠️ Warning si priorité hors plage 
 
 --- 
@@ -80,9 +74,9 @@ priority [22] Label + champ de saisie (spinbox)
 4.1 Réorganisation (même section) 
 
 Action Résultat
-Cliquer [↑] Échange avec plugin au-dessus (même section)
-Cliquer [↓] Échange avec plugin en-dessous
-Drag & drop Déplace dans la même section 
+Cliquer [˄] Échange avec plugin au-dessus (même section)
+Cliquer [˅] Échange avec plugin en-dessous
+Drag & drop Déplace dans la même section (logiciel) 
 
 → Si drop dans une autre section, opération annulée + message d'erreur. 
 
@@ -90,7 +84,7 @@ Drag & drop Déplace dans la même section
 
 Action Résultat
 Changer spinbox Met à jour la priorité
-Si hors plage Affiche ⚠️ + tooltip explicatif
+Si hors plage Affiche ⚠️ + tooltip explicatif + style warning
 Sauvegarde Écrit la priorité (même hors plage) 
 
 4.3 Activation/désactivation 
@@ -123,9 +117,9 @@ Use 'Expert mode' to disable warnings.
 
 5.3 Priorité hors plage (warning visuel) 
 
-· Fond de ligne : #FFF3CD (jaune pâle)
+· Fond de ligne : Dynamique (ex: ambre sombre en dark mode)
 · Icône ⚠️ devant le nom
-· Bordure orange sur le spinbox 
+· Bordure orange sur le spinbox (adaptée au thème)
 
 --- 
 
