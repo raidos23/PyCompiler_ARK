@@ -28,7 +28,7 @@ from PySide6.QtWidgets import QMainWindow, QMessageBox
 
 from Core.Globals import _latest_gui_instance, _workspace_dir_cache, _workspace_dir_lock
 from Core.Globals import _run_coro_async
-from Core.Venv_Manager import VenvManager
+from Ui.Gui.Dialogs.VenvDialog import VenvManagerUI
 from Ui.i18n import (
     resolve_system_language,
     get_translations,
@@ -92,7 +92,7 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
         self._language_refresh_callbacks = []
 
         # Étape 2: brancher les services partagés (venv manager).
-        self.venv_manager = VenvManager(self)
+        self.venv_manager = VenvManagerUI(self)
 
         # Étape 3: charger les préférences puis choisir la variante UI.
         self.load_preferences()

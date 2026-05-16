@@ -10,7 +10,7 @@ import sys
 import yaml
 
 from PySide6.QtCore import QProcess, QTimer
-from PySide6.QtWidgets import QApplication, QFileDialog, QMessageBox
+from PySide6.QtWidgets import QApplication
 
 from ..WidgetsCreator import ProgressDialog
 from Ui.i18n import log_i18n_level, log_with_level
@@ -64,6 +64,9 @@ class VenvManager:
         self.venv_check_progress = None
         self.progress_dialog = None
 
+        # UI delegate callbacks — registered by VenvManagerUI (Ui layer)
+        self._ui_callbacks: dict = {}
+
         # Internal timers to enforce timeouts on background processes
         self._proc_timers: list[QTimer] = []
 
@@ -84,6 +87,17 @@ class VenvManager:
         self._manager_venv_cache: dict[str, str | None] = {}
         # User-driven cancellation flag for long-running async flows
         self._cancel_requested = False
+
+    # ---------- UI delegate ----------
+    def _call_ui(self, method: str, *args, **kwargs):
+        """Invoke a registered UI callback by name. Returns None if no delegate registered."""
+        fn = self._ui_callbacks.get(method)
+        if callable(fn):
+            try:
+                return fn(*args, **kwargs)
+            except Exception:
+                pass
+        return None
 
     # ---------- Workspace pref (.ark/pref.json) ----------
     def _workspace_pref_path(self, workspace_dir: str) -> str:
@@ -162,19 +176,8 @@ class VenvManager:
                         setattr(self.parent, "venv_path", None)
                 except Exception:
                     pass
-                try:
-                    if hasattr(self.parent, "venv_label") and self.parent.venv_label:
-                        self.parent.venv_label.setText(self._pref_label_system())
-                except Exception:
-                    pass
-                try:
-                    if (
-                        hasattr(self.parent, "venv_path_edit")
-                        and self.parent.venv_path_edit
-                    ):
-                        self.parent.venv_path_edit.setText(self._pref_label_system())
-                except Exception:
-                    pass
+                self._call_ui("update_venv_label", self._pref_label_system())
+                self._call_ui("update_venv_path_edit", self._pref_label_system())
                 return True
             if mode == "venv" and isinstance(venv_path, str) and venv_path:
                 venv_path = os.path.abspath(venv_path)
@@ -193,24 +196,8 @@ class VenvManager:
                             setattr(self.parent, "venv_path", venv_path)
                     except Exception:
                         pass
-                    try:
-                        if (
-                            hasattr(self.parent, "venv_label")
-                            and self.parent.venv_label
-                        ):
-                            self.parent.venv_label.setText(
-                                f"Venv sélectionné : {venv_path}"
-                            )
-                    except Exception:
-                        pass
-                    try:
-                        if (
-                            hasattr(self.parent, "venv_path_edit")
-                            and self.parent.venv_path_edit
-                        ):
-                            self.parent.venv_path_edit.setText(venv_path)
-                    except Exception:
-                        pass
+                    self._call_ui("update_venv_label", f"Venv sélectionné : {venv_path}")
+                    self._call_ui("update_venv_path_edit", venv_path)
                     return True
                 self._clear_workspace_pref(workspace_dir)
             return False
@@ -877,58 +864,35 @@ class VenvManager:
             return False
 
     def _prompt_recreate_invalid_venv(self, venv_root: str, reason: str) -> bool:
-        """Show an English message box explaining the invalid venv and propose deletion/recreation.
-        Returns True if user accepted to recreate, False otherwise.
+        """Ask the UI delegate whether to delete and recreate an invalid venv.
+        If the user confirms, performs deletion then triggers recreation (business logic).
+        Returns True if recreation was initiated, False otherwise.
         """
-        try:
-            title = "Environnement virtuel invalide / Invalid virtual environment"
-            folder = os.path.basename(os.path.normpath(venv_root))
-            msg = (
-                "L'environnement virtuel du workspace est invalide :\n"
-                f"- {reason}\n\n"
-                f"Voulez-vous supprimer le dossier '{folder}' et le recréer ?\n\n"
-                "The workspace virtual environment is invalid:\n"
-                f"- {reason}\n\n"
-                f"Do you want to delete the '{folder}' folder and recreate it?"
-            )
-            reply = QMessageBox.question(
-                self.parent,
-                title,
-                msg,
-                QMessageBox.Yes | QMessageBox.No,
-                QMessageBox.No,
-            )
-            if reply == QMessageBox.Yes:
-                try:
-                    shutil.rmtree(venv_root)
-                    self._safe_log(f"🗑️ Deleted invalid venv: {venv_root}")
-                except Exception as e:
-                    try:
-                        QMessageBox.critical(
-                            self.parent,
-                            title,
-                            f"Échec suppression venv / Failed to delete venv: {e}",
-                        )
-                    except Exception:
-                        pass
-                    return False
-                # Recreate fresh venv under the workspace
-                try:
-                    workspace_dir = os.path.dirname(venv_root)
-                    self.create_venv_if_needed(workspace_dir)
-                    return True
-                except Exception as e:
-                    try:
-                        QMessageBox.critical(
-                            self.parent,
-                            title,
-                            f"Échec de recréation du venv / Failed to recreate venv: {e}",
-                        )
-                    except Exception:
-                        pass
-                    return False
+        confirmed = self._call_ui("ask_recreate_invalid_venv", venv_root, reason)
+        if not confirmed:
             return False
-        except Exception:
+        # Business logic: delete the bad venv
+        try:
+            shutil.rmtree(venv_root)
+            self._safe_log(f"🗑️ Deleted invalid venv: {venv_root}")
+        except Exception as e:
+            self._call_ui(
+                "show_error_dialog",
+                "Environnement virtuel invalide / Invalid virtual environment",
+                f"Échec suppression venv / Failed to delete venv: {e}",
+            )
+            return False
+        # Business logic: recreate
+        try:
+            workspace_dir = os.path.dirname(venv_root)
+            self.create_venv_if_needed(workspace_dir)
+            return True
+        except Exception as e:
+            self._call_ui(
+                "show_error_dialog",
+                "Environnement virtuel invalide / Invalid virtual environment",
+                f"Échec de recréation du venv / Failed to recreate venv: {e}",
+            )
             return False
 
     # ---------- Venv validation ----------
@@ -1248,28 +1212,7 @@ class VenvManager:
             self.parent.venv_path_manuel = None
         except Exception:
             pass
-        try:
-            if hasattr(self.parent, "venv_label") and self.parent.venv_label:
-                label = None
-                try:
-                    tr = (
-                        getattr(self.parent, "_tr", {})
-                        if hasattr(self.parent, "_tr")
-                        else {}
-                    )
-                    label = (
-                        tr.get("venv_label_system") if isinstance(tr, dict) else None
-                    )
-                except Exception:
-                    label = None
-                if not label:
-                    label = self.parent.tr(
-                        "Venv sélectionné : Python système",
-                        "Venv selected: System Python",
-                    )
-                self.parent.venv_label.setText(label)
-        except Exception:
-            pass
+        self._call_ui("update_venv_label", self._pref_label_system())
         try:
             self._safe_log("✅ Utilisation de Python système pour la compilation.")
         except Exception:
@@ -1279,148 +1222,6 @@ class VenvManager:
             self.save_workspace_pref(workspace_dir)
         except Exception:
             pass
-
-    # ---------- Manual selection ----------
-    def select_venv_manually(self):
-        """Execute select_venv_manually logic for this component."""
-        try:
-            ok_sys, missing, has_source = self._can_use_system_python()
-            if ok_sys:
-                title = self.parent.tr("Suggestion de venv", "Venv suggestion")
-                if has_source:
-                    msg = self.parent.tr(
-                        "Python système contient les dépendances nécessaires.\n"
-                        "Souhaitez-vous l'utiliser ?",
-                        "System Python has the required dependencies.\n"
-                        "Do you want to use it?",
-                    )
-                else:
-                    msg = self.parent.tr(
-                        "Aucun fichier de dépendances détecté.\n"
-                        "Souhaitez-vous utiliser Python système ?",
-                        "No dependency file detected.\n"
-                        "Do you want to use System Python?",
-                    )
-                reply = QMessageBox.question(
-                    self.parent, title, msg, QMessageBox.Yes | QMessageBox.No
-                )
-                if reply == QMessageBox.Yes:
-                    self._apply_system_python()
-                    return
-            else:
-                if missing:
-                    try:
-                        self._safe_log(
-                            "ℹ️ Python système incomplet: "
-                            + ", ".join(sorted(set(missing)))
-                        )
-                    except Exception:
-                        pass
-        except Exception:
-            pass
-
-        folder = QFileDialog.getExistingDirectory(
-            self.parent,
-            self.parent.tr("Choisir un dossier venv", "Choose a venv folder"),
-            "",
-        )
-        if folder:
-            path = os.path.abspath(folder)
-            ok, reason = self.validate_venv_strict(path)
-            if ok:
-                try:
-                    setattr(self.parent, "use_system_python", False)
-                except Exception:
-                    pass
-                self.parent.venv_path_manuel = path
-                if hasattr(self.parent, "venv_label") and self.parent.venv_label:
-                    self.parent.venv_label.setText(f"Venv sélectionné : {path}")
-                self._safe_log(f"✅ Venv valide sélectionné: {path}")
-                try:
-                    workspace_dir = getattr(self.parent, "workspace_dir", None)
-                    self.save_workspace_pref(workspace_dir)
-                except Exception:
-                    pass
-            else:
-                self._safe_log(f"❌ Venv refusé: {reason}")
-                self.parent.venv_path_manuel = None
-                try:
-                    setattr(self.parent, "use_system_python", False)
-                except Exception:
-                    pass
-                if hasattr(self.parent, "venv_label") and self.parent.venv_label:
-                    self.parent.venv_label.setText("Venv sélectionné : Aucun")
-                try:
-                    workspace_dir = getattr(self.parent, "workspace_dir", None)
-                    self.save_workspace_pref(workspace_dir)
-                except Exception:
-                    pass
-                # Message concis avec actions proposées
-                try:
-
-                    def _t(_key: str, fr: str, en: str) -> str:
-                        """Execute _t logic for this component."""
-                        try:
-                            return self.parent.tr(fr, en)
-                        except Exception:
-                            return en
-
-                    box = QMessageBox(self.parent)
-                    box.setWindowTitle(
-                        _t("msg_invalid_venv_title", "Venv invalide", "Invalid Venv")
-                    )
-                    box.setText(
-                        _t(
-                            "msg_invalid_venv_text",
-                            "Le dossier sélectionné n'est pas un venv valide. Réessayer ou créer un venv ?",
-                            "The selected folder is not a valid venv. Retry or create a venv?",
-                        )
-                    )
-                    if reason:
-                        try:
-                            box.setInformativeText(str(reason))
-                        except Exception:
-                            pass
-                    btn_retry = box.addButton(
-                        _t("action_retry", "Réessayer", "Retry"),
-                        QMessageBox.AcceptRole,
-                    )
-                    btn_create = None
-                    workspace_dir = getattr(self.parent, "workspace_dir", None)
-                    if workspace_dir:
-                        btn_create = box.addButton(
-                            _t("action_create_venv", "Créer un venv", "Create venv"),
-                            QMessageBox.ActionRole,
-                        )
-                    box.addButton(
-                        _t("action_cancel", "Annuler", "Cancel"),
-                        QMessageBox.RejectRole,
-                    )
-                    box.exec()
-                    if box.clickedButton() == btn_retry:
-                        self.select_venv_manually()
-                        return
-                    if btn_create and box.clickedButton() == btn_create:
-                        try:
-                            self.create_venv_if_needed(workspace_dir)
-                        except Exception:
-                            pass
-                        return
-                except Exception:
-                    pass
-        else:
-            self.parent.venv_path_manuel = None
-            try:
-                setattr(self.parent, "use_system_python", False)
-            except Exception:
-                pass
-            if hasattr(self.parent, "venv_label") and self.parent.venv_label:
-                self.parent.venv_label.setText("Venv sélectionné : Aucun")
-            try:
-                workspace_dir = getattr(self.parent, "workspace_dir", None)
-                self.save_workspace_pref(workspace_dir)
-            except Exception:
-                pass
 
     # ---------- Existing venv: check and install tools ----------
     def check_tools_in_venv(self, venv_path: str):
@@ -2072,13 +1873,9 @@ class VenvManager:
                 if not getattr(self.parent, "use_system_python", False):
                     if not getattr(self.parent, "venv_path_manuel", None):
                         self.parent.venv_path_manuel = venv_path
-                        if (
-                            hasattr(self.parent, "venv_label")
-                            and self.parent.venv_label
-                        ):
-                            self.parent.venv_label.setText(
-                                f"Venv sélectionné : {venv_path}"
-                            )
+                        self._call_ui(
+                            "update_venv_label", f"Venv sélectionné : {venv_path}"
+                        )
                 self.save_workspace_pref(os.path.dirname(venv_path))
             except Exception:
                 pass
