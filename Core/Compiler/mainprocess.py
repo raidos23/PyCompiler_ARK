@@ -62,17 +62,6 @@ class ProcessState(Enum):
     ERROR = "error"
 
 
-class MainProcessSignals(QObject):
-    """Signals used to communicate with the user interface."""
-
-    state_changed = Signal(ProcessState)
-    log_message = Signal(str, str)  # niveau, message
-    compilation_started = Signal(dict)  # infos de compilation
-    compilation_finished = Signal(int, dict)  # code retour, infos
-    engine_ready = Signal(str)  # engine_id
-    workspace_changed = Signal(str)  # workspace_path
-
-
 class MainProcess(QObject):
     """
     Main process class used to orchestrate compilation.

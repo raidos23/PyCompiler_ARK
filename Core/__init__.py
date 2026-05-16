@@ -52,7 +52,6 @@ def _get_main_process():
 # Importations de compiler.py
 from Core.Compiler.compiler import (
     CompilationStatus,
-    CompilationSignals,
     CompilationThread,
     CompilerCore,
 )
@@ -60,7 +59,6 @@ from Core.Compiler.compiler import (
 # Importations de mainprocess.py
 from Core.Compiler.mainprocess import (
     ProcessState,
-    MainProcessSignals,
     MainProcess,
 )
 
@@ -104,11 +102,9 @@ from Ui.Gui.Gui import PyCompilerArkGui
 
 __all__ = [
     "CompilationStatus",
-    "CompilationSignals",
     "CompilationThread",
     "CompilerCore",
     "ProcessState",
-    "MainProcessSignals",
     "MainProcess",
     "build_command",
     "validate_command",
@@ -124,6 +120,7 @@ __all__ = [
     "kill_process_tree",
     "get_process_info",
     "VenvManager",
+    # CompilationSignals / MainProcessSignals moved to Ui/Gui/Dialogs/CompilerDialog.py
     "get_core_version",
     "get_bcasl_version",
     "get_engine_sdk_version",
