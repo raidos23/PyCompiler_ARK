@@ -237,7 +237,7 @@ def compile_all(self) -> None:
 
     engine_id = None
     try:
-        import EngineLoader as engines_loader
+        import Loaders as engines_loader
 
         if hasattr(self, "compiler_tabs") and self.compiler_tabs:
             idx = self.compiler_tabs.currentIndex()
@@ -257,7 +257,7 @@ def compile_all(self) -> None:
 
     engine = None
     try:
-        import EngineLoader as engines_loader
+        import Loaders as engines_loader
 
         engine = engines_loader.registry.get_instance(engine_id)
     except Exception:
@@ -520,7 +520,7 @@ def start_compilation_process(self, engine_id: str, file_path: str) -> bool:
 
     engine = None
     try:
-        import EngineLoader as engines_loader
+        import Loaders as engines_loader
 
         engine = engines_loader.registry.get_instance(engine_id)
     except Exception:
@@ -641,7 +641,7 @@ def try_start_processes(self) -> bool:
 
     engine_id = None
     try:
-        import EngineLoader as engines_loader
+        import Loaders as engines_loader
 
         if hasattr(self, "compiler_tabs") and self.compiler_tabs:
             idx = self.compiler_tabs.currentIndex()

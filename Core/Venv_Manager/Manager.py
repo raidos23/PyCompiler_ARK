@@ -531,7 +531,7 @@ class VenvManager:
         """Discover python tools required by available engines dynamically."""
         tools: list[str] = []
         try:
-            import EngineLoader as engines_loader
+            import Loaders as engines_loader
 
             for engine_id in list(engines_loader.available_engines()):
                 try:
