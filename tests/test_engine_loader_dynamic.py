@@ -20,10 +20,10 @@ import sys
 
 os.environ.setdefault("ARK_ENGINES_AUTO_DISCOVER", "0")
 
-import EngineLoader.registry as engine_registry
+import Core.engine.registry as engine_registry
 import engine_sdk
-from EngineLoader.Loader import EngineLoader as engine_loader
-from EngineLoader.base import CompilerEngine
+from Loaders.EngineLoader import loader as engine_loader
+from Core.engine.base import CompilerEngine
 
 
 def _snapshot_registry_state():
@@ -55,7 +55,7 @@ def test_discovery_registers_namespaced_engine_classes(tmp_path, monkeypatch) ->
     (demo_pkg / "__init__.py").write_text(
         "\n".join(
             [
-                "from EngineLoader.base import CompilerEngine",
+                "from Core.engine.base import CompilerEngine",
                 "",
                 "class DemoEngine(CompilerEngine):",
                 "    id = 'demo_dynamic'",
@@ -67,7 +67,7 @@ def test_discovery_registers_namespaced_engine_classes(tmp_path, monkeypatch) ->
     (demo_pkg / "extra.py").write_text(
         "\n".join(
             [
-                "from EngineLoader.base import CompilerEngine",
+                "from Core.engine.base import CompilerEngine",
                 "",
                 "class ExtraEngine(CompilerEngine):",
                 "    id = 'demo_extra'",

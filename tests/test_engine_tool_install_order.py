@@ -15,7 +15,7 @@
 
 from __future__ import annotations
 
-from EngineLoader.base import CompilerEngine
+from Core.engine.base import CompilerEngine
 
 
 class DummyProcess:

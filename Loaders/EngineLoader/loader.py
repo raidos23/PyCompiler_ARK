@@ -23,8 +23,8 @@ import pkgutil
 import sys
 from types import ModuleType
 
-from EngineLoader.base import CompilerEngine
-from EngineLoader import registry as engine_registry
+from Core.engine.base import CompilerEngine
+from Core.engine import registry as engine_registry
 
 logger = logging.getLogger(__name__)
 
@@ -89,12 +89,12 @@ def _sync_engine_sdk_registry() -> None:
         engine_sdk.registry = engine_registry
     except Exception:
         logger.exception(
-            "Failed to synchronize engine_sdk.registry with EngineLoader.registry"
+            "Failed to synchronize engine_sdk.registry with Core.engine.registry"
         )
 
 
 def _discover_external_plugins(
-    base_path: str, namespace_package: str = "ENGINES"
+    base_path: str, namespace_package: str = "engines"
 ) -> None:
     """Import namespaced engine packages and register CompilerEngine classes dynamically."""
     try:
@@ -138,8 +138,8 @@ def _auto_discover() -> None:
     base_dir = os.path.dirname(__file__)
     try:
         project_root = os.path.abspath(os.path.join(base_dir, os.pardir, os.pardir))
-        external_dir = os.path.join(project_root, "ENGINES")
-        _discover_external_plugins(external_dir, namespace_package="ENGINES")
+        external_dir = os.path.join(project_root, "engines")
+        _discover_external_plugins(external_dir, namespace_package="engines")
     except Exception:
         logger.exception("Automatic engine discovery failed")
         _sync_engine_sdk_registry()

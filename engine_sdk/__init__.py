@@ -142,7 +142,7 @@ from .i18n import (
 
 # Re-export engines registry for self-registration from engine packages
 try:
-    from EngineLoader import registry as registry  # type: ignore
+    from Core.engine import registry as registry  # type: ignore
 except Exception:  # pragma: no cover
     registry = None  # type: ignore
 
@@ -151,7 +151,7 @@ def _sync_registry_reference():
     """Refresh engine_sdk.registry to match the active EngineLoader registry module."""
     global registry
     try:
-        from EngineLoader import registry as active_registry  # type: ignore
+        from Core.engine import registry as active_registry  # type: ignore
 
         registry = active_registry
     except Exception:
@@ -262,7 +262,7 @@ def check_engine_compatibility(engine_class, required_sdk_version: str = None) -
         return False
 
 
-from EngineLoader.registry import engine_register
+from Core.engine.registry import engine_register
 
 __all__ = [
     "BuildContext",

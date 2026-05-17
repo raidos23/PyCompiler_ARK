@@ -50,7 +50,7 @@ from PySide6.QtWidgets import (
     QSplitter,
 )
 
-from Core.Services.ConfigEditorService import (
+from Services.ConfigEditorService import (
     read_text,
     write_text,
     parse_text,
@@ -706,7 +706,7 @@ class AdvancedConfigEditor(QDialog):
 
         engine_ids: list[str] = []
         try:
-            import EngineLoader as engines_loader
+            import Loaders as engines_loader
 
             if hasattr(engines_loader, "available_engines"):
                 engine_ids = [str(e) for e in engines_loader.available_engines() if e]

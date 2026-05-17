@@ -69,7 +69,7 @@ from Core.Compiler.engine_runner import (
     run_engine_compile,
 )
 
-from EngineLoader.registry import get_engine, create
+from Core.engine.registry import get_engine, create
 
 __all__ = [
     # compiler.py
@@ -127,7 +127,7 @@ def _get_main_process() -> MainProcess:
 def _resolve_default_engine_id() -> str:
     """Resolve a default engine dynamically from the registered engines."""
     try:
-        import EngineLoader as engines_loader
+        import Loaders as engines_loader
 
         engine_ids = list(engines_loader.available_engines())
         if engine_ids:

@@ -16,7 +16,7 @@
 from __future__ import annotations
 
 # Stable i18n facade for engines
-from EngineLoader.registry import (
+from Core.engine.registry import (
     engine_translate,
     get_language_code,
     get_translations,
