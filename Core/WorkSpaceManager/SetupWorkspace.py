@@ -21,7 +21,7 @@ from PySide6.QtWidgets import QApplication, QFileDialog, QMessageBox
 
 from Core.Configs import load_ark_config, should_exclude_file
 from Core.Globals import _workspace_dir_lock
-from Core.WidgetsCreator import CompilationProcessDialog
+from Ui.Gui.WidgetsCreator import CompilationProcessDialog
 
 
 class SetupWorkspace:

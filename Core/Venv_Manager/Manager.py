@@ -12,7 +12,7 @@ import yaml
 from PySide6.QtCore import QProcess, QTimer
 from PySide6.QtWidgets import QApplication
 
-from ..WidgetsCreator import ProgressDialog
+from Ui.Gui.WidgetsCreator import ProgressDialog
 from Ui.i18n import log_i18n_level, log_with_level
 
 
@@ -1915,7 +1915,7 @@ class VenvManager:
 
         # Load ARK config to get requirements file patterns
         try:
-            from Core.ArkConfig import load_ark_config, get_dependency_options
+            from Core.Configs import load_ark_config, get_dependency_options
 
             if workspace_dir:
                 ark_config = load_ark_config(workspace_dir)

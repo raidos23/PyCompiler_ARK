@@ -24,7 +24,7 @@ class Api:
     @staticmethod
     def _confirm_workspace_change(gui, folder: str) -> bool:
         try:
-            from Core.WidgetsCreator import show_msgbox
+            from Ui.Gui.WidgetsCreator import show_msgbox
 
             title = "Confirmation"
             message = (

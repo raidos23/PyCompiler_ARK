@@ -98,7 +98,6 @@ from Core.allversion import (
 )
 
 # Importations de Ui/Gui/Gui.py (couche Qt séparée)
-from Ui.Gui.Gui import PyCompilerArkGui
 
 __all__ = [
     "CompilationStatus",
@@ -124,7 +123,6 @@ __all__ = [
     "get_core_version",
     "get_bcasl_version",
     "get_engine_sdk_version",
-    "PyCompilerArkGui",
 ]
 __version__ = "1.0.0"
 __author__ = "Ague Samuel Amen"

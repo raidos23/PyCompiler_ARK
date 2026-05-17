@@ -23,7 +23,7 @@ pytest.importorskip("PySide6")
 
 from PySide6.QtWidgets import QApplication
 
-from Core.Gui import PyCompilerArkGui
+from Ui.Gui.Gui import PyCompilerArkGui
 
 
 def test_ui_init_smoke() -> None:

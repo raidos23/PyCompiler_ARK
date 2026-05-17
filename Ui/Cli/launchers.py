@@ -57,7 +57,7 @@ def launch_main_application(
     no_splash: bool = False, ide_gui: bool = False, classic_gui: bool = False
 ) -> int:
     try:
-        from Core import PyCompilerArkGui
+        from Ui.Gui.Gui import PyCompilerArkGui
         from PySide6.QtCore import Qt, QTimer
         from PySide6.QtGui import QColor, QPixmap
         from PySide6.QtWidgets import QSplashScreen
