@@ -27,7 +27,7 @@ from importlib.metadata import distribution, PackageNotFoundError
 from PySide6.QtCore import QProcess
 from PySide6.QtWidgets import QApplication, QMessageBox
 
-from Core.WidgetsCreator import ProgressDialog
+from Ui.Gui.WidgetsCreator import ProgressDialog
 from Ui.i18n import log_with_level
 
 

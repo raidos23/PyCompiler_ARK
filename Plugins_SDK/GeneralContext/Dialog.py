@@ -23,7 +23,7 @@ from rich.console import Console
 from .i18n import translate
 
 # Import des classes et fonctions de Core.dialogs
-from Core.WidgetsCreator import (
+from Ui.Gui.WidgetsCreator import (
     show_msgbox,
     sys_msgbox_for_installing,
     ProgressDialog,
