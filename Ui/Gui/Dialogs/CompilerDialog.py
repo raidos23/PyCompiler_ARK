@@ -37,15 +37,15 @@ from PySide6.QtCore import QObject, Signal
 from PySide6.QtCore import QProcess
 from PySide6.QtWidgets import QApplication, QFileDialog, QMessageBox
 
-from Core.Compiler.compiler import CompilationStatus
-from Core.Compiler.mainprocess import ProcessState, MainProcess
-from Core.Compiler import (
-    _get_main_process,
-    _resolve_default_engine_id,
-    _run_bcasl_before_compile,
-    _bcasl_report_allows_compile,
-    create,
+from Ui.Gui.Compilation.compiler import CompilationStatus
+from Ui.Gui.Compilation.mainprocess import ProcessState, MainProcess
+from Ui.Gui.Compilation.helpers import (
+    get_main_process,
+    resolve_default_engine_id,
+    run_bcasl_before_compile,
+    bcasl_report_allows_compile,
 )
+from Core.Compiler import create
 from Ui.i18n import log_with_level, log_i18n_level
 
 
@@ -216,7 +216,7 @@ def compile_all(self) -> None:
         pass
 
     if not engine_id:
-        engine_id = _resolve_default_engine_id()
+        engine_id = resolve_default_engine_id()
 
     # Save GUI state to disk (persists tab settings)
     try:
@@ -225,7 +225,19 @@ def compile_all(self) -> None:
     except Exception:
         pass
 
-    # Retrieve engine instance and its current configuration
+    # Build lock payload (CLI-like behavior for reproducibility)
+    try:
+        from Core.Locking import build_lock_payload, write_lock_files
+        lock_payload = build_lock_payload(Path(self.workspace_dir), cfg, engine_id=engine_id)
+        write_lock_files(Path(self.workspace_dir), lock_payload)
+        
+        # Use engine config from lock (source of truth)
+        engine_config = lock_payload.get("engine", {}).get("config") or {}
+    except Exception as e:
+        log_i18n_level(self, "warning", f"Erreur locking (ignorée): {e}", f"Locking error (ignored): {e}")
+        engine_config = {}
+
+    # Retrieve engine instance
     engine = None
     try:
         import Core.engine as engines_loader
@@ -246,7 +258,9 @@ def compile_all(self) -> None:
     # Prepare context and config for EngineRunner
     try:
         context = build_context_from_ark_config(cfg)
-        engine_config = engine.get_config(self) if hasattr(engine, "get_config") else {}
+        # If no explicit engine_config was derived from lock, fallback to live GUI state
+        if not engine_config and hasattr(engine, "get_config"):
+            engine_config = engine.get_config(self)
     except Exception as e:
         log_i18n_level(self, "error", f"Erreur préparation contexte: {e}", f"Context prep error: {e}")
         return
@@ -261,7 +275,7 @@ def compile_all(self) -> None:
                 "Compilation cancelled before start (BCASL phase).",
             )
             return
-        if not _bcasl_report_allows_compile(self, _report):
+        if not bcasl_report_allows_compile(self, _report):
             self.set_controls_enabled(True)
             return
         
@@ -272,9 +286,9 @@ def compile_all(self) -> None:
             )
             
             # Start compilation using the EngineRunner path
-            main_process = _get_main_process()
+            main_process = get_main_process()
             
-            # Connection logic (moved here for clarity)
+            # Connection logic
             if not hasattr(main_process, "_gui_connected"):
                 main_process.output_ready.connect(lambda msg: _handle_output(self, msg))
                 main_process.error_ready.connect(lambda msg: _handle_error(self, msg))
@@ -285,7 +299,7 @@ def compile_all(self) -> None:
                 main_process.state_changed.connect(lambda state: _handle_state_changed(self, state))
                 main_process._gui_connected = True
 
-            # Ensure tools are installed via the engine's legacy but GUI-friendly method
+            # Ensure tools are installed
             if hasattr(engine, "ensure_tools_installed"):
                 if not engine.ensure_tools_installed(self):
                     log_i18n_level(self, "warning", "Outils manquants, compilation annulée.", "Missing tools, compilation cancelled.")
@@ -309,19 +323,31 @@ def compile_all(self) -> None:
                 f"Compilation start error: {e}",
             )
 
-    _run_bcasl_before_compile(self, _after_bcasl)
+    run_bcasl_before_compile(self, _after_bcasl)
 
 
 def start_compilation_process(self, engine_id: str, file_path: str) -> bool:
-    """Start a single compilation process using MainProcess and EngineRunner."""
+    """Start a single compilation process using MainProcess and EngineRunner with build locking."""
     try:
         from Core.Configs import load_ark_config
-        from Core.Locking import build_context_from_ark_config
+        from Core.Locking import build_context_from_ark_config, build_lock_payload, write_lock_files
         from Core.EngineConfigManager import save_engine_config_for_gui
 
         save_engine_config_for_gui(self, engine_id)
     except Exception:
         pass
+
+    # Build lock payload (CLI-like behavior for reproducibility)
+    try:
+        cfg = load_ark_config(self.workspace_dir)
+        lock_payload = build_lock_payload(Path(self.workspace_dir), cfg, engine_id=engine_id)
+        write_lock_files(Path(self.workspace_dir), lock_payload)
+        
+        # Use engine config from lock (source of truth)
+        engine_config = lock_payload.get("engine", {}).get("config") or {}
+    except Exception as e:
+        log_i18n_level(self, "warning", f"Erreur locking (ignorée): {e}", f"Locking error (ignored): {e}")
+        engine_config = {}
 
     # Resolve engine
     engine = None
@@ -341,9 +367,8 @@ def start_compilation_process(self, engine_id: str, file_path: str) -> bool:
             return False
 
     def _do_start() -> bool:
-        # Load project configuration
+        # Prepare context for EngineRunner
         try:
-            cfg = load_ark_config(self.workspace_dir)
             context = build_context_from_ark_config(cfg)
             
             # Use specific file_path as entry point
@@ -356,7 +381,9 @@ def start_compilation_process(self, engine_id: str, file_path: str) -> bool:
             except Exception:
                 context.entry_point = file_path
                 
-            engine_config = engine.get_config(self) if hasattr(engine, "get_config") else {}
+            # If no explicit engine_config was derived from lock, fallback to live GUI state
+            if not engine_config and hasattr(engine, "get_config"):
+                engine_config = engine.get_config(self)
         except Exception as e:
             log_i18n_level(self, "error", f"Erreur préparation contexte: {e}", f"Context prep error: {e}")
             return False
@@ -366,7 +393,7 @@ def start_compilation_process(self, engine_id: str, file_path: str) -> bool:
                 log_i18n_level(self, "warning", "Outils manquants, compilation annulée.", "Missing tools, compilation cancelled.")
                 return False
 
-        main_process = _get_main_process()
+        main_process = get_main_process()
         if not hasattr(main_process, "_gui_connected"):
             main_process.output_ready.connect(lambda msg: _handle_output(self, msg))
             main_process.error_ready.connect(lambda msg: _handle_error(self, msg))
@@ -411,7 +438,7 @@ def start_compilation_process(self, engine_id: str, file_path: str) -> bool:
             )
             result["value"] = False
             return
-        if not _bcasl_report_allows_compile(self, _report):
+        if not bcasl_report_allows_compile(self, _report):
             self.set_controls_enabled(True)
             result["value"] = False
             return
@@ -427,7 +454,10 @@ def start_compilation_process(self, engine_id: str, file_path: str) -> bool:
             self.set_controls_enabled(True)
         result["value"] = ok
 
-    _run_bcasl_before_compile(self, _after_bcasl)
+    run_bcasl_before_compile(self, _after_bcasl)
+    if result["value"] is not None:
+        return bool(result["value"])
+    return True
     if result["value"] is not None:
         return bool(result["value"])
     return True
@@ -457,6 +487,26 @@ def try_start_processes(self) -> bool:
 
 def _continue_compile_all(self) -> None:
     """Continue compilation of remaining files after one completes."""
+    pass
+
+
+def cancel_all_compilations(self) -> None:
+    """Cancel all running compilations."""
+    get_main_process().cancel()
+
+
+def handle_stdout(self, message: str) -> None:
+    """Handle standard output from the compilation process."""
+    _handle_output(self, message)
+
+
+def handle_stderr(self, message: str) -> None:
+    """Handle error output from the compilation process."""
+    _handle_error(self, message)
+
+
+def try_install_missing_modules(self, engine_id: str) -> None:
+    """Try to install missing modules for the specified engine."""
     pass
 
 
