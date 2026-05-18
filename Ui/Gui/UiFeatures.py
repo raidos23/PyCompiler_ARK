@@ -424,7 +424,7 @@ class UiFeatures:
             self.log_i18n("❌ Aucun workspace sélectionné.", "❌ No workspace selected.")
             return
         try:
-            import Loaders as engines_loader
+            import Core.engine as engines_loader
             from Core.EngineConfigManager import save_engine_config_for_gui
 
             engine_ids = list(engines_loader.available_engines())

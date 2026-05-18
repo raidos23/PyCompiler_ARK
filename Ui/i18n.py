@@ -880,7 +880,7 @@ def apply_language(self, lang_display: str) -> None:
             except Exception:
                 pass
             try:
-                import Loaders as engines_loader
+                import Core.engine as engines_loader
 
                 engines_loader.registry.apply_translations(self, tr)
             except Exception:
@@ -1268,7 +1268,7 @@ def show_language_dialog(self):
                 pass
             # Propagate translations to all engines so their UI matches the app language immediately
             try:
-                import Loaders as engines_loader
+                import Core.engine as engines_loader
 
                 engines_loader.registry.apply_translations(self, tr)
             except Exception:

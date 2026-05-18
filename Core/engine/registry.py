@@ -318,7 +318,7 @@ def bind_tabs(gui) -> None:
         # Ensure lazy discovery happened even when callers use `EngineLoader.registry.bind_tabs`
         # directly instead of the top-level `EngineLoader.bind_tabs` wrapper.
         try:
-            import Loaders as engines_loader
+            import Core.engine as engines_loader
 
             engines_loader.available_engines()
         except Exception:

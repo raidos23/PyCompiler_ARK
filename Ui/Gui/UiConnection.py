@@ -492,7 +492,7 @@ def _setup_compiler_tabs(self) -> None:
 
     if self.compiler_tabs:
         try:
-            import Loaders as engines_loader
+            import Core.engine as engines_loader
 
             engines_loader.bind_tabs(self)
         except Exception:
@@ -558,7 +558,7 @@ def _connect_signals(self) -> None:
         if not self.compiler_tabs:
             return
         try:
-            import Loaders as engines_loader
+            import Core.engine as engines_loader
 
             idx = self.compiler_tabs.currentIndex()
             engines_loader.registry.get_engine_for_tab(idx)

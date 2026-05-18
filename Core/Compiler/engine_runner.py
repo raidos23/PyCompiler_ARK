@@ -63,7 +63,7 @@ def resolve_engine_command(
                            BuildContext builds, or returns an empty command.
     """
     try:
-        import Loaders as engines_loader
+        import Core.engine as engines_loader
         engine = engines_loader.create(engine_id)
     except Exception as exc:
         raise EngineRunnerError(
