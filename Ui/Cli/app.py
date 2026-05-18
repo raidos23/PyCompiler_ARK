@@ -7,7 +7,7 @@ from typing import Any
 
 from .runtime import install_runtime, should_enable_qt
 
-from .spec_helpers import (
+from .helpers import (
     CliSpecError,
     build_context_object_from_ark_config,
     build_context_object_from_lock,

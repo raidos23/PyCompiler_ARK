@@ -8,7 +8,7 @@ from pathlib import Path
 
 from Core.Locking import compare_lock_payloads, included_workspace_files
 from engine_sdk import BuildContext
-from Ui.Cli import spec_helpers
+from Ui.Cli import helpers
 
 
 def test_run_engine_compile_uses_build_context(monkeypatch, tmp_path: Path) -> None:
@@ -27,7 +27,7 @@ def test_run_engine_compile_uses_build_context(monkeypatch, tmp_path: Path) -> N
         stderr = ""
 
     monkeypatch.setattr("EngineLoader.create", lambda _engine_id: FakeEngine())
-    monkeypatch.setattr(spec_helpers.subprocess, "run", lambda *_args, **_kwargs: Completed())
+    monkeypatch.setattr(helpers.subprocess, "run", lambda *_args, **_kwargs: Completed())
 
     context = BuildContext(
         project_name="demo",
@@ -38,7 +38,7 @@ def test_run_engine_compile_uses_build_context(monkeypatch, tmp_path: Path) -> N
         icon=None,
     )
 
-    result = spec_helpers.run_engine_compile(
+    result = helpers.run_engine_compile(
         workspace=tmp_path,
         engine_id="fake",
         context=context,
@@ -60,7 +60,7 @@ def test_run_engine_compile_rejects_obsolete_entrypoint(tmp_path: Path) -> None:
         icon=None,
     )
 
-    result = spec_helpers.run_engine_compile(
+    result = helpers.run_engine_compile(
         workspace=tmp_path,
         engine_id="fake",
         context=context,
