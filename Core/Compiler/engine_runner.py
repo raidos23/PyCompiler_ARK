@@ -187,9 +187,31 @@ def run_engine_compile_streaming(
 
     # ── 2. Resolve (program, args, env) from engine ──────────────────────────
     try:
+        import Core.engine as engines_loader
+        engine_instance = engines_loader.create(engine_id)
+        
+        # Ensure tools are installed (this may take time, so we do it in the thread)
+        # Note: In GUI, we'll need a way to log this back. engine_runner.py is Qt-free
+        # but callbacks on_stdout/on_stderr can be used.
+        def _log(fr, en):
+            if on_stdout:
+                on_stdout(f"[tools] {en}")
+
+        # We pass a dummy 'gui' object that supports log_i18n_level-like logging
+        class LogBridge:
+            def __init__(self, log_cb):
+                self.log_cb = log_cb
+            def tr(self, fr, en): return en # Simple fallback
+
+        if hasattr(engine_instance, "ensure_tools_installed"):
+            if not engine_instance.ensure_tools_installed(LogBridge(_log)):
+                return _failure(f"Engine tools installation failed for '{engine_id}'")
+
         program, args, engine_env = resolve_engine_command(engine_id, context, engine_config)
     except EngineRunnerError as exc:
         return _failure(str(exc))
+    except Exception as exc:
+        return _failure(f"Failed to prepare engine '{engine_id}': {exc}")
 
     # ── 3. Security hardening ────────────────────────────────────────────────
     try:
