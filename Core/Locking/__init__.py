@@ -42,7 +42,7 @@ def load_yaml_file(path: Path) -> dict[str, Any]:
 
 
 def engine_config_path(workspace: Path, engine_id: str) -> Path:
-    return workspace / ".ark" / "config" / engine_id / "config.json"
+    return workspace / ".ark" / engine_id / "config.json"
 
 
 def read_engine_config(workspace: Path, engine_id: str) -> dict[str, Any]:

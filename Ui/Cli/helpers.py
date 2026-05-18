@@ -295,9 +295,80 @@ def scaffold_plugin_payload(name: str, root_dir: str | None = None) -> dict[str,
     return scaffold_plugin(name, root_dir=root_dir)
 
 
+def run_bcasl_before_compile_sync(workspace: Path) -> bool:
+    """Run BCASL pre-compile stage synchronously for the CLI.
+
+    Returns:
+        True if compilation can proceed (success or BCASL disabled), False otherwise.
+    """
+    from .output import info, error, success, log
+    from bcasl.Loader import run_pre_compile
+
+    class CliBcaslHost:
+        def __init__(self, ws_dir: Path):
+            self.workspace_dir = str(ws_dir)
+            class Logger:
+                def append(self, msg: str):
+                    # Strip trailing newline as our log() adds one
+                    log("BCASL", msg.rstrip())
+            self.log = Logger()
+
+    host = CliBcaslHost(workspace)
+    info("Running BCASL pre-compile checks...")
+    try:
+        report = run_pre_compile(host)
+    except Exception as exc:
+        error(f"BCASL execution failed: {exc}")
+        return False
+
+    if report is None:
+        # report is None if BCASL is disabled or failed silently
+        return True
+
+    if hasattr(report, "ok"):
+        if not getattr(report, "ok"):
+            error("BCASL reported security or validation failures.")
+            return False
+        success("BCASL checks passed.")
+        return True
+
+    return True
+
+
 def run_bcasl_headless(args: list[str]) -> int:
-    # À Connecter à BCASL depuis bcasl/
-    return print("Pas encore implémenter en Cli")
+    """Run BCASL in headless mode for the current workspace."""
+    from .output import error, success
+    from bcasl.Loader import run_pre_compile
+
+    workspace = Path.cwd()
+    if "run" in args:
+        # If workspace path is provided in args, use it
+        for i, arg in enumerate(args):
+            if arg == "run" and i + 1 < len(args):
+                candidate = Path(args[i+1])
+                if candidate.is_dir():
+                    workspace = candidate.resolve()
+                break
+
+    class CliBcaslHost:
+        def __init__(self, ws_dir: Path):
+            self.workspace_dir = str(ws_dir)
+            class Logger:
+                def append(self, msg: str):
+                    print(msg, end="", flush=True)
+            self.log = Logger()
+
+    host = CliBcaslHost(workspace)
+    try:
+        report = run_pre_compile(host)
+        if report and hasattr(report, "ok") and not getattr(report, "ok"):
+            error("\nBCASL found issues.")
+            return 1
+        success("\nBCASL completed successfully.")
+        return 0
+    except Exception as exc:
+        error(f"BCASL failed: {exc}")
+        return 1
 
 def launch_gui(*, legacy: bool = False) -> int:
     return launch_main_application(

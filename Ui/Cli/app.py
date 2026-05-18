@@ -86,11 +86,17 @@ def _build_impl(
             "--engine cannot be used with --lock\nIf you need a different engine, create a new lock with: ark build --engine <engine_id>"
         )
 
+    # 1. BCASL Pre-compile check (Point 1 of mutation plan)
+    from .helpers import run_bcasl_before_compile_sync
+    if not run_bcasl_before_compile_sync(workspace):
+        return 1
+
     if lock_file is None:
         config = load_ark_config(workspace)
         validated = validate_ark_config(workspace, config)
         engine_id = engine_override or str(validated.config["build"]["engine"])
         _ensure_engine_known(engine_id)
+        # Point 3 alignment: build_lock_payload now correctly loads engine config via fixed path
         lock_payload = build_lock_payload(workspace, validated.config, engine_id=engine_id)
         lock_paths = write_lock_files(workspace, lock_payload)
         context = build_context_object_from_ark_config(validated.config)
