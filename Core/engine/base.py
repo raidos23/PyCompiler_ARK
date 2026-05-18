@@ -255,29 +255,31 @@ class CompilerEngine:
                                                 "Timeout during system tools installation",
                                             ),
                                         )
-                                        return False
+                                        system_install_ok = False
+                                        break
                                 
-                                if process.exitCode() == 0:
-                                    log_i18n_level(
-                                        gui,
-                                        "success",
-                                        *_tools_stage_message(
-                                            "system",
-                                            f"Outils système installés avec succès: {missing_system}",
-                                            f"System tools installed successfully: {missing_system}",
-                                        ),
-                                    )
-                                else:
-                                    log_i18n_level(
-                                        gui,
-                                        "error",
-                                        *_tools_stage_message(
-                                            "system",
-                                            f"Échec installation outils système: {missing_system} (code: {process.exitCode()})",
-                                            f"System tools installation failed: {missing_system} (code: {process.exitCode()})",
-                                        ),
-                                    )
-                                    system_install_ok = False
+                                if system_install_ok:
+                                    if process.exitCode() == 0:
+                                        log_i18n_level(
+                                            gui,
+                                            "success",
+                                            *_tools_stage_message(
+                                                "system",
+                                                f"Outils système installés avec succès: {missing_system}",
+                                                f"System tools installed successfully: {missing_system}",
+                                            ),
+                                        )
+                                    else:
+                                        log_i18n_level(
+                                            gui,
+                                            "error",
+                                            *_tools_stage_message(
+                                                "system",
+                                                f"Échec installation outils système: {missing_system} (code: {process.exitCode()})",
+                                                f"System tools installation failed: {missing_system} (code: {process.exitCode()})",
+                                            ),
+                                        )
+                                        system_install_ok = False
                             else:
                                 log_i18n_level(
                                     gui,
@@ -340,29 +342,31 @@ class CompilerEngine:
                                                     "Timeout during Windows installation",
                                                 ),
                                             )
-                                            return False
+                                            system_install_ok = False
+                                            break
 
-                                    if process.exitCode() == 0:
-                                        log_i18n_level(
-                                            gui,
-                                            "success",
-                                            *_tools_stage_message(
-                                                "system",
-                                                f"Outils Windows installés: {missing_system}",
-                                                f"Windows tools installed: {missing_system}",
-                                            ),
-                                        )
-                                    else:
-                                        log_i18n_level(
-                                            gui,
-                                            "error",
-                                            *_tools_stage_message(
-                                                "system",
-                                                f"Échec installation Windows: {missing_system}",
-                                                f"Windows installation failed: {missing_system}",
-                                            ),
-                                        )
-                                        system_install_ok = False
+                                    if system_install_ok:
+                                        if process.exitCode() == 0:
+                                            log_i18n_level(
+                                                gui,
+                                                "success",
+                                                *_tools_stage_message(
+                                                    "system",
+                                                    f"Outils Windows installés: {missing_system}",
+                                                    f"Windows tools installed: {missing_system}",
+                                                ),
+                                            )
+                                        else:
+                                            log_i18n_level(
+                                                gui,
+                                                "error",
+                                                *_tools_stage_message(
+                                                    "system",
+                                                    f"Échec installation Windows: {missing_system}",
+                                                    f"Windows installation failed: {missing_system}",
+                                                ),
+                                            )
+                                            system_install_ok = False
                                 else:
                                     log_i18n_level(
                                         gui,

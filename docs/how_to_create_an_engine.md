@@ -3,18 +3,18 @@
 Practical reference for building, packaging, and integrating custom compilation engines.
 
 ### **Overview**
-A PyCompiler_ARK engine is a Python package placed in `ENGINES/` and auto‑loaded at startup. It registers itself with `@engine_register` and provides a `CompilerEngine` that builds the compile command and, optionally, a dedicated UI tab.
+A PyCompiler_ARK engine is a Python package placed in `engines/` and auto‑loaded at startup. It registers itself with `@engine_register` and provides a `CompilerEngine` that builds the compile command and, optionally, a dedicated UI tab.
 
 ### **Discovery And Loading**
-- Engines are discovered only in `ENGINES/<engine_id>/`.
+- Engines are discovered only in `engines/<engine_id>/`.
 - The folder must contain an `__init__.py`.
-- At startup, `EngineLoader` scans `ENGINES/` and imports each package.
+- At startup, `EngineLoader` scans `engines/` and imports each package.
 - Auto discovery can be disabled with `ARK_ENGINES_AUTO_DISCOVER=0`.
 
 ### **Package Layout**
-- `ENGINES/<engine_id>/__init__.py`: engine code, registration, UI.
-- `ENGINES/<engine_id>/languages/<code>.json`: optional translations.
-- `ENGINES/<engine_id>/mapping.json`: optional mapping for the auto‑builder.
+- `engines/<engine_id>/__init__.py`: engine code, registration, UI.
+- `engines/<engine_id>/languages/<code>.json`: optional translations.
+- `engines/<engine_id>/mapping.json`: optional mapping for the auto‑builder.
 - Optional internal modules, assets, helpers.
 
 #### **Minimal Example**
@@ -42,7 +42,7 @@ class MyEngine(CompilerEngine):
 ```
 
 ### **Lifecycle**
-1. Package import from `ENGINES/<engine_id>`.
+1. Package import from `engines/<engine_id>`.
 2. `@engine_register` adds the class to the registry.
 3. The GUI calls `create_tab` if present to create a tab.
 4. When compile is triggered, the engine provides the command via `build_command`.
@@ -253,10 +253,10 @@ self._output_dir_input = add_output_dir(
   - simple mode with `engine_translate(...)` for direct key lookup
   - advanced mode with `apply_i18n(...)` for explicit widget refresh on language changes
 - The host keeps engine translations synchronized automatically when the language changes.
-- See `ENGINES/pyinstaller`, `ENGINES/nuitka`, `ENGINES/cx_freeze` for patterns.
+- See `engines/pyinstaller`, `engines/nuitka`, `engines/cx_freeze` for patterns.
 Concrete example (files + code).
 
-`ENGINES/my_engine/languages/en.json`
+`engines/my_engine/languages/en.json`
 ```json
 {
   "tab_title": "My Engine",
@@ -267,7 +267,7 @@ Concrete example (files + code).
 }
 ```
 
-`ENGINES/my_engine/languages/fr.json`
+`engines/my_engine/languages/fr.json`
 ```json
 {
   "tab_title": "Mon Moteur",
@@ -278,7 +278,7 @@ Concrete example (files + code).
 }
 ```
 
-`ENGINES/my_engine/__init__.py` (simple mode + live refresh).
+`engines/my_engine/__init__.py` (simple mode + live refresh).
 ```python
 from engine_sdk import CompilerEngine, engine_register, engine_translate
 
@@ -353,7 +353,7 @@ Key points.
 - Top‑level keys are package names.
 - Engine values accept `str`, `list[str]`, or `dict` with `args` or `flags`.
 - `"{import_name}"` is replaced by the actual import name.
-- For advanced logic, expose `AUTO_BUILDER` in `ENGINES/<engine_id>/auto_plugins.py`.
+- For advanced logic, expose `AUTO_BUILDER` in `engines/<engine_id>/auto_plugins.py`.
 
 **Deep Examples Catalog (40)**
 Each example includes context, intent, and a working pattern. Adjust IDs and labels to match your engine.
@@ -662,7 +662,7 @@ Notes.
 
 36. Auto builder plugin for advanced logic.
 ```python
-# ENGINES/my_engine/auto_plugins.py
+# engines/my_engine/auto_plugins.py
 
 def get_auto_builder():
     def builder(matched, pkg_to_import):

@@ -43,7 +43,7 @@ def test_select_icon_without_preview_smoke(monkeypatch: pytest.MonkeyPatch) -> N
     app = QApplication.instance() or QApplication([])
     gui = PyCompilerArkGui()
     monkeypatch.setattr(
-        "Core.UiFeatures.QFileDialog.getOpenFileName",
+        "Ui.Gui.UiFeatures.QFileDialog.getOpenFileName",
         lambda *_args, **_kwargs: ("", ""),
     )
     if hasattr(gui, "icon_preview"):
