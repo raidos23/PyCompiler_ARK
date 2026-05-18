@@ -35,7 +35,7 @@ from Core.process_security import hardened_popen_kwargs, secure_command
 
 # BuildContext lives in engine_sdk; imported here so callers of this module
 # only need to import from Core.Compiler.
-from engine_sdk.build_context import BuildContext
+from Core.engine.build_context import BuildContext
 
 
 class EngineRunnerError(RuntimeError):
