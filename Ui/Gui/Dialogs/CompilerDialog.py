@@ -299,13 +299,8 @@ def compile_all(self) -> None:
                 main_process.state_changed.connect(lambda state: _handle_state_changed(self, state))
                 main_process._gui_connected = True
 
-            # Ensure tools are installed
-            if hasattr(engine, "ensure_tools_installed"):
-                if not engine.ensure_tools_installed(self):
-                    log_i18n_level(self, "warning", "Outils manquants, compilation annulée.", "Missing tools, compilation cancelled.")
-                    self.set_controls_enabled(True)
-                    return
-
+            # The actual compilation call. We'll ensure tools inside the thread now
+            # to keep the GUI responsive.
             success = main_process.compile_from_context(
                 workspace=self.workspace_dir,
                 engine_id=engine_id,
@@ -388,11 +383,6 @@ def start_compilation_process(self, engine_id: str, file_path: str) -> bool:
             log_i18n_level(self, "error", f"Erreur préparation contexte: {e}", f"Context prep error: {e}")
             return False
 
-        if hasattr(engine, "ensure_tools_installed"):
-            if not engine.ensure_tools_installed(self):
-                log_i18n_level(self, "warning", "Outils manquants, compilation annulée.", "Missing tools, compilation cancelled.")
-                return False
-
         main_process = get_main_process()
         if not hasattr(main_process, "_gui_connected"):
             main_process.output_ready.connect(lambda msg: _handle_output(self, msg))
@@ -410,6 +400,9 @@ def start_compilation_process(self, engine_id: str, file_path: str) -> bool:
             context=context,
             engine_config=engine_config
         )
+
+        if not success:
+            self.set_controls_enabled(True)
 
         if success:
             log_i18n_level(self, "info",
