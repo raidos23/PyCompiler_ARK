@@ -299,7 +299,8 @@ def compile_all(self) -> None:
             "✅ BCASL phase completed successfully.",
         )
 
-        try:            log_i18n_level(self, "info",
+        try:
+            log_i18n_level(self, "info",
                 f"Démarrage de la compilation avec {engine.name}...",
                 f"Starting compilation with {engine.name}...",
             )

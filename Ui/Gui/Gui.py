@@ -39,8 +39,8 @@ from Ui.i18n import (
 )
 
 from Ui.Gui.UiFeatures import UiFeatures
-from Core.WorkSpaceManager.SetupWorkspace import SetupWorkspace
 from Ui.Gui.WorkspaceAdvancedManipulation import WorkspaceAdvancedManipulation
+from Ui.Gui.Dialogs.WorkspaceDialog import WorkspaceDialog
 
 
 def get_selected_workspace() -> Optional[str]:
@@ -206,17 +206,37 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
 
     def add_py_files_from_folder(self, folder):
         """Add Python files from a folder into the workspace list."""
-        return SetupWorkspace.add_py_files_from_folder(self, folder)
+        from Core.WorkSpaceManager.SetupWorkspace import SetupWorkspace
+        files = SetupWorkspace.list_python_files(folder)
+        
+        # Logique UI pour ajouter les fichiers
+        from Core.Configs import load_ark_config, should_exclude_file
+        ark_config = load_ark_config(self.workspace_dir) if self.workspace_dir else {}
+        exclusion_patterns = ark_config.get("exclusion_patterns", [])
+        
+        added = 0
+        for f in files:
+            if self.workspace_dir and not os.path.commonpath([f, self.workspace_dir]) == self.workspace_dir:
+                continue
+            if should_exclude_file(f, self.workspace_dir, exclusion_patterns):
+                continue
+            if f not in self.python_files:
+                self.python_files.append(f)
+                if hasattr(self, "file_list"):
+                    rel = os.path.relpath(f, self.workspace_dir) if self.workspace_dir else f
+                    self.file_list.addItem(rel)
+                added += 1
+        return added
 
     def select_workspace(self):
         """Open a dialog to select the workspace directory."""
-        folder = SetupWorkspace.select_workspace(self)
+        folder = WorkspaceDialog.select_workspace(self)
         if folder:
             self.apply_workspace_selection(folder, source="ui")
 
     def apply_workspace_selection(self, folder: str, source: str = "ui") -> bool:
         """Apply workspace selection and refresh GUI state."""
-        return SetupWorkspace.apply_workspace_selection(self, folder, source)
+        return WorkspaceDialog.apply_workspace_selection(self, folder, source)
 
     def select_venv_manually(self):
         """Open manual virtual environment selection."""
@@ -236,7 +256,7 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
 
     def open_ark_config(self):
         """Open `ark.yml` from the current workspace."""
-        SetupWorkspace.open_ark_config(self)
+        WorkspaceDialog.open_ark_config(self)
 
     def on_main_only_changed(self):
         """Handle the `main-only` option toggle."""
