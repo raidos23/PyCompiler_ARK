@@ -33,6 +33,7 @@ from pathlib import Path
 from typing import Any, Optional
 import yaml
 
+from Core.Configs import load_ark_config
 from .executor import BCASL
 
 from .Base import BcPluginBase, PreCompileContext
@@ -228,11 +229,11 @@ def _resolve_plugin_timeout(cfg: dict[str, Any]) -> float:
     return float(plugin_timeout) if plugin_timeout and plugin_timeout > 0 else 0.0
 
 
-def _is_bcasl_enabled(cfg: dict[str, Any]) -> bool:
-    """Return True si BCASL est activé dans la config."""
+def _is_bcasl_enabled(workspace_root: Path) -> bool:
+    """Consulte ark.yml pour savoir si le BCASL est activé globalement."""
     try:
-        opt = cfg.get("options", {}) if isinstance(cfg, dict) else {}
-        return bool(opt.get("enabled", True)) if isinstance(opt, dict) else True
+        ark_cfg = load_ark_config(workspace_root)
+        return bool(ark_cfg.get("plugins", {}).get("bcasl_enabled", True))
     except Exception:
         return True
 
@@ -420,7 +421,6 @@ def _load_workspace_config(workspace_root: Path) -> dict[str, Any]:
             "venv/**",
             ".venv/**",
         ]
-        bcasl_enabled = True
         plugin_timeout = 0.0
 
         try:
@@ -435,8 +435,6 @@ def _load_workspace_config(workspace_root: Path) -> dict[str, Any]:
                 exclude_patterns = ark_config["exclusion_patterns"]
 
             plugin_opts = ark_config.get("plugins", {})
-            if "bcasl_enabled" in plugin_opts:
-                bcasl_enabled = plugin_opts["bcasl_enabled"]
             if "plugin_timeout" in plugin_opts:
                 plugin_timeout = float(plugin_opts["plugin_timeout"])
         except Exception:
@@ -446,7 +444,6 @@ def _load_workspace_config(workspace_root: Path) -> dict[str, Any]:
             "file_patterns": file_patterns,
             "exclude_patterns": exclude_patterns,
             "options": {
-                "enabled": bcasl_enabled,
                 "plugin_timeout_s": plugin_timeout,
                 "sandbox": True,
                 "plugin_parallelism": 0,
@@ -623,15 +620,14 @@ def run_pre_compile_async(self, on_done: Optional[callable] = None) -> None:
         cfg = _load_workspace_config(workspace_root)
         plugin_timeout = _resolve_plugin_timeout(cfg)
 
-        # Respect global enabled flag: skip BCASL when disabled
-        bcasl_enabled = _is_bcasl_enabled(cfg)
-        if not bcasl_enabled:
+        # Vérifier si BCASL est activé globalement via ark.yml
+        if not _is_bcasl_enabled(workspace_root):
             try:
                 if hasattr(self, "log") and self.log is not None:
                     self.log.append(
                         self.tr(
-                            "BCASL désactivé dans la configuration. Exécution ignorée\n",
-                            "BCASL disabled in configuration. Skipping execution\n",
+                            "BCASL désactivé dans ark.yml. Exécution ignorée\n",
+                            "BCASL disabled in ark.yml. Skipping execution\n",
                         )
                     )
             except Exception:
@@ -717,13 +713,12 @@ def run_pre_compile(self) -> Optional[object]:
         cfg = _load_workspace_config(workspace_root)
         plugin_timeout = _resolve_plugin_timeout(cfg)
 
-        # Respect global enabled flag: skip BCASL when disabled
-        bcasl_enabled = _is_bcasl_enabled(cfg)
-        if not bcasl_enabled:
+        # Vérifier si BCASL est activé globalement via ark.yml
+        if not _is_bcasl_enabled(workspace_root):
             try:
                 if hasattr(self, "log") and self.log is not None:
                     self.log.append(
-                        "BCASL désactivé dans la configuration. Exécution ignorée\n"
+                        "BCASL désactivé dans ark.yml. Exécution ignorée\n"
                     )
             except Exception:
                 pass
