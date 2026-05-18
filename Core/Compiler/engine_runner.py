@@ -46,9 +46,9 @@ def resolve_engine_command(
     engine_id: str,
     context: BuildContext,
     engine_config: dict[str, Any] | None = None,
-) -> tuple[str, list[str]]:
+) -> tuple[str, list[str], dict[str, str]]:
     """
-    Load *engine_id* and derive the (program, args) pair for *context*.
+    Load *engine_id* and derive (program, args, env) for *context*.
 
     Args:
         engine_id:     Registered engine identifier (e.g. ``"pyinstaller"``).
@@ -56,7 +56,7 @@ def resolve_engine_command(
         engine_config: Optional per-engine config overrides.
 
     Returns:
-        A ``(program, args)`` tuple ready to be passed to subprocess.
+        A ``(program, args, env)`` tuple ready to be passed to subprocess.
 
     Raises:
         EngineRunnerError: When the engine cannot be loaded, does not support
@@ -76,11 +76,11 @@ def resolve_engine_command(
         pass
 
     try:
-        resolved = engine.program_and_args_from_context(context)
-    except NotImplementedError as exc:
+        resolved = engine.program_and_args(context)
+    except NotImplementedError:
         raise EngineRunnerError(
-            f"Engine '{engine_id}' does not support BuildContext builds"
-        ) from exc
+            f"Engine '{engine_id}' does not implement build_command"
+        )
     except Exception as exc:
         raise EngineRunnerError(
             f"Engine '{engine_id}' failed to build command: {exc}"
@@ -90,7 +90,16 @@ def resolve_engine_command(
         raise EngineRunnerError(f"Engine '{engine_id}' returned no command")
 
     program, args = resolved
-    return str(program), list(args)
+    
+    # Retrieve engine-specific environment
+    try:
+        env = engine.environment() if hasattr(engine, "environment") else {}
+        if env is None:
+            env = {}
+    except Exception:
+        env = {}
+
+    return str(program), list(args), dict(env)
 
 
 def run_engine_compile(
@@ -138,16 +147,20 @@ def run_engine_compile(
             f"Entrypoint missing or obsolete: {context.entry_point}"
         )
 
-    # ── 2. Resolve (program, args) from engine ───────────────────────────────
+    # ── 2. Resolve (program, args, env) from engine ──────────────────────────
     try:
-        program, args = resolve_engine_command(engine_id, context, engine_config)
+        program, args, engine_env = resolve_engine_command(engine_id, context, engine_config)
     except EngineRunnerError as exc:
         return _failure(str(exc))
 
     # ── 3. Security hardening ────────────────────────────────────────────────
     try:
+        # Merge engine env with mandatory ARK variables
+        full_env = dict(engine_env)
+        full_env["ARK_WORKSPACE"] = str(workspace)
+        
         safe_program, safe_args, safe_env = secure_command(
-            program, args, {"ARK_WORKSPACE": str(workspace)}
+            program, args, full_env
         )
     except Exception as exc:
         return _failure(f"Unsafe compile command blocked: {exc}")
