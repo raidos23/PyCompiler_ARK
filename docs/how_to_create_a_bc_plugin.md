@@ -101,7 +101,6 @@ exclude_patterns:
 - "**/__pycache__/**"
 - "**/*.pyc"
 options:
-  enabled: true
   sandbox: true
   plugin_timeout_s: 5
   plugin_parallelism: 0
@@ -120,6 +119,7 @@ plugin_order:
 ```
 
 Important notes.
+- Global BCASL activation is managed by **`ark.yml`** (`plugins.bcasl_enabled`).
 - Keys in `plugins` are the `PluginMeta.id` values.
 - `plugin_order` forces ordering and adjusts priority.
 - If `bcasl.yml` is missing, a default file is generated.

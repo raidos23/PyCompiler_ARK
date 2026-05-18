@@ -33,6 +33,8 @@ from typing import Any, Optional
 
 import yaml
 
+from Core.Configs import load_ark_config, save_ark_config
+
 from PySide6.QtCore import Qt, Signal, QMimeData, QByteArray, QObject, QThread, Slot
 from PySide6.QtGui import QColor, QShortcut, QKeySequence, QPalette
 from PySide6.QtWidgets import (
@@ -488,6 +490,12 @@ class BcaslPipelineDialog(QDialog):
         self._cfg = cfg
         self._plugin_instances = plugin_instances
 
+        # Charger la configuration ark.yml pour l'état d'activation global
+        try:
+            self._ark_cfg = load_ark_config(workspace_root)
+        except Exception:
+            self._ark_cfg = {}
+
         # Expert mode : liste mutable partagée avec les rows
         self._expert: list[bool] = [False]
 
@@ -521,6 +529,15 @@ class BcaslPipelineDialog(QDialog):
         lbl.setTextFormat(Qt.RichText)
         title_row.addWidget(lbl)
         title_row.addStretch(1)
+
+        # Case à cocher pour l'activation globale (gérée par ark.yml)
+        self._chk_bcasl_enabled = QCheckBox(self._gui.tr("Activer BCASL", "Enable BCASL"))
+        self._chk_bcasl_enabled.setStyleSheet("font-weight: bold;")
+        bcasl_active = self._ark_cfg.get("plugins", {}).get("bcasl_enabled", True)
+        self._chk_bcasl_enabled.setChecked(bool(bcasl_active))
+        self._chk_bcasl_enabled.toggled.connect(self._on_bcasl_enabled_toggled)
+        title_row.addWidget(self._chk_bcasl_enabled)
+
         main.addLayout(title_row)
 
         # Tabs : Pipeline + onglets plugins
@@ -576,6 +593,17 @@ class BcaslPipelineDialog(QDialog):
         bottom.addWidget(btn_save)
 
         main.addLayout(bottom)
+
+        # Initialiser l'état des onglets en fonction de l'activation
+        self._on_bcasl_enabled_toggled(self._chk_bcasl_enabled.isChecked())
+
+    def _on_bcasl_enabled_toggled(self, checked: bool) -> None:
+        """Active ou désactive les onglets de configuration selon l'état global."""
+        self._tabs.setEnabled(checked)
+        if not checked:
+            self._tabs.setToolTip(self._gui.tr("BCASL est désactivé dans ark.yml", "BCASL is disabled in ark.yml"))
+        else:
+            self._tabs.setToolTip("")
 
     def _populate_sections(self) -> None:
         """Grouper les plugins par section et les insérer."""
@@ -772,7 +800,20 @@ class BcaslPipelineDialog(QDialog):
     def _do_save(self) -> None:
         plugin_configs = self._collect_plugin_configs()
 
-        # Construire la liste ordonnée de plugins
+        # 1) Sauvegarder l'état d'activation global dans ark.yml
+        try:
+            if "plugins" not in self._ark_cfg:
+                self._ark_cfg["plugins"] = {}
+            self._ark_cfg["plugins"]["bcasl_enabled"] = self._chk_bcasl_enabled.isChecked()
+            save_ark_config(str(self._workspace_root), self._ark_cfg)
+        except Exception as e:
+            QMessageBox.warning(
+                self,
+                self._gui.tr("Avertissement", "Warning"),
+                f"Impossible de mettre à jour ark.yml: {e}"
+            )
+
+        # 2) Construire la liste ordonnée de plugins pour bcasl.yml
         ordered: list[dict[str, Any]] = []
         for section in self._sections:
             for row in section.rows:
@@ -784,11 +825,15 @@ class BcaslPipelineDialog(QDialog):
                     "config": cfg_for_row,
                 })
 
-        # Construire la config de sortie
+        # Construire la config de sortie pour bcasl.yml
         cfg_out: dict[str, Any] = dict(self._cfg) if isinstance(self._cfg, dict) else {}
         cfg_out["plugins"] = _plugins_list_to_yaml(ordered)
         # plugin_order maintient la compatibilité avec l'ancien loader
         cfg_out["plugin_order"] = [e["name"] for e in ordered]
+        
+        # S'assurer que 'enabled' ne pollue plus bcasl.yml
+        if "options" in cfg_out and isinstance(cfg_out["options"], dict):
+            cfg_out["options"].pop("enabled", None)
 
         target = self._workspace_root / "bcasl.yml"
         try:

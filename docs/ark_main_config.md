@@ -54,6 +54,17 @@ The fields in `ark.yml` are mapped directly to the `BuildContext` data structure
 | `build.data` | `data_mappings` |
 | `build.icon` | `icon` |
 
+## Plugins Configuration
+
+`ark.yml` controls the global activation of the **BCASL** (Before-Compilation Actions System) pipeline.
+
+```yaml
+plugins:
+  bcasl_enabled: true  # Global toggle for the BCASL pipeline
+```
+
+If `bcasl_enabled` is set to `false`, the entire pipeline is skipped during compilation. This setting is also manageable via the **BCASL Pipeline** dialog in the GUI.
+
 ## Advanced Config Editor (GUI)
 
 The main GUI has a **Configurations avancées** button that opens a dedicated editor for `ark.yml`, `bcasl.yml`, and other configuration files.
