@@ -181,7 +181,7 @@ class CompilerEngine:
         """
         return {"python": [], "system": []}
 
-    def ensure_tools_installed(self, gui) -> bool:
+    def ensure_tools_installed(self, gui, stop_signal: Optional[Callable[[], bool]] = None) -> bool:
         """
         Check if all required tools are installed, and install missing ones.
         Uses direct SysDependencyManager integration for system packages with full GUI support.
@@ -234,37 +234,47 @@ class CompilerEngine:
                             # Use Linux package installation with progress dialog
                             process = sys_manager.install_packages_linux(missing_system)
                             if process:
-                                # Wait for completion with timeout
-                                if process.waitForFinished(600000):  # 10 minutes
-                                    if process.exitCode() == 0:
+                                # Wait for completion with timeout, but check stop_signal
+                                timeout_total = 600000 # 10 minutes
+                                elapsed = 0
+                                interval = 500 # 0.5s
+                                while not process.waitForFinished(interval):
+                                    if stop_signal and stop_signal():
+                                        process.terminate()
+                                        process.waitForFinished(1000)
+                                        process.kill()
+                                        return False
+                                    elapsed += interval
+                                    if elapsed >= timeout_total:
                                         log_i18n_level(
                                             gui,
-                                            "success",
+                                            "warning",
                                             *_tools_stage_message(
                                                 "system",
-                                                f"Outils système installés avec succès: {missing_system}",
-                                                f"System tools installed successfully: {missing_system}",
+                                                "Timeout lors de l'installation des outils système",
+                                                "Timeout during system tools installation",
                                             ),
                                         )
-                                    else:
-                                        log_i18n_level(
-                                            gui,
-                                            "error",
-                                            *_tools_stage_message(
-                                                "system",
-                                                f"Échec installation outils système: {missing_system} (code: {process.exitCode()})",
-                                                f"System tools installation failed: {missing_system} (code: {process.exitCode()})",
-                                            ),
-                                        )
-                                        system_install_ok = False
+                                        return False
+                                
+                                if process.exitCode() == 0:
+                                    log_i18n_level(
+                                        gui,
+                                        "success",
+                                        *_tools_stage_message(
+                                            "system",
+                                            f"Outils système installés avec succès: {missing_system}",
+                                            f"System tools installed successfully: {missing_system}",
+                                        ),
+                                    )
                                 else:
                                     log_i18n_level(
                                         gui,
-                                        "warning",
+                                        "error",
                                         *_tools_stage_message(
                                             "system",
-                                            "Timeout lors de l'installation des outils système",
-                                            "Timeout during system tools installation",
+                                            f"Échec installation outils système: {missing_system} (code: {process.exitCode()})",
+                                            f"System tools installation failed: {missing_system} (code: {process.exitCode()})",
                                         ),
                                     )
                                     system_install_ok = False
@@ -310,36 +320,46 @@ class CompilerEngine:
                                     winget_packages
                                 )
                                 if process:
-                                    if process.waitForFinished(600000):  # 10 minutes
-                                        if process.exitCode() == 0:
+                                    timeout_total = 600000 # 10 minutes
+                                    elapsed = 0
+                                    interval = 500 # 0.5s
+                                    while not process.waitForFinished(interval):
+                                        if stop_signal and stop_signal():
+                                            process.terminate()
+                                            process.waitForFinished(1000)
+                                            process.kill()
+                                            return False
+                                        elapsed += interval
+                                        if elapsed >= timeout_total:
                                             log_i18n_level(
                                                 gui,
-                                                "success",
+                                                "warning",
                                                 *_tools_stage_message(
                                                     "system",
-                                                    f"Outils Windows installés: {missing_system}",
-                                                    f"Windows tools installed: {missing_system}",
+                                                    "Timeout lors de l'installation Windows",
+                                                    "Timeout during Windows installation",
                                                 ),
                                             )
-                                        else:
-                                            log_i18n_level(
-                                                gui,
-                                                "error",
-                                                *_tools_stage_message(
-                                                    "system",
-                                                    f"Échec installation Windows: {missing_system}",
-                                                    f"Windows installation failed: {missing_system}",
-                                                ),
-                                            )
-                                            system_install_ok = False
+                                            return False
+
+                                    if process.exitCode() == 0:
+                                        log_i18n_level(
+                                            gui,
+                                            "success",
+                                            *_tools_stage_message(
+                                                "system",
+                                                f"Outils Windows installés: {missing_system}",
+                                                f"Windows tools installed: {missing_system}",
+                                            ),
+                                        )
                                     else:
                                         log_i18n_level(
                                             gui,
-                                            "warning",
+                                            "error",
                                             *_tools_stage_message(
                                                 "system",
-                                                "Timeout lors de l'installation Windows",
-                                                "Timeout during Windows installation",
+                                                f"Échec installation Windows: {missing_system}",
+                                                f"Windows installation failed: {missing_system}",
                                             ),
                                         )
                                         system_install_ok = False
@@ -404,6 +424,9 @@ class CompilerEngine:
                     )
                     system_install_ok = False
 
+            if stop_signal and stop_signal():
+                return False
+
             # Check Python tools after the system phase, even if the system phase failed.
             if hasattr(gui, "venv_manager") and gui.venv_manager and python_tools:
                 use_system = bool(getattr(gui, "use_system_python", False))
@@ -444,7 +467,7 @@ class CompilerEngine:
                                 venv_path, missing_python
                             )
 
-            return system_install_ok
+            return system_install_ok and not (stop_signal and stop_signal())
         except Exception as e:
             log_i18n_level(
                 gui,
