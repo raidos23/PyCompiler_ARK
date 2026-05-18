@@ -15,15 +15,14 @@ Build Python apps with a predictable workflow, a configurable pre-compile pipeli
 ## Core capabilities
 
 - **BCASL pre-compile pipeline**: validation, preparation, transformation before the build, with timeouts and safety controls.
-- **Multi-engine builds**: switch between PyInstaller, Nuitka, and cx_Freeze without changing your workflow.
-- **Extensible engines**: create your own engine and add it to ARK++ when needed.
+- **Unified EngineRunner architecture**: a single source of truth for both CLI and GUI compilation, ensuring identical build results across all interfaces.
+- **BuildContext-driven builds**: engines receive a normalized project context, abstracting away the source of configuration (YAML vs. Lock files).
+- **Multi-engine support**: switch between PyInstaller, Nuitka, and cx_Freeze seamlessly.
+- **Extensible SDKs**: create new engines and BCASL plugins using simplified, consolidated APIs.
 - **Auto-detection for tricky dependencies**: engine-specific auto-args based on requirements or import scanning.
 - **Workspace-first UI**: filter files, manage exclusions, and follow progress and logs in one place.
 - **Venv-aware execution**: engines can use the project virtual environment automatically.
-- **Structured CLI**: 
-- **Extensible SDKs**: create new engines and BCASL plugins with the provided SDKs.
-- **Theme-aware dynamic colors and SVG icons**: 100% dynamic UI integration using QPalette and themed SVGs.
-- **Customizable**: theming and translations out of the box.
+- **Theme-aware dynamic UI**: 100% dynamic integration using QPalette and themed SVGs.
 
 ---
 
@@ -143,19 +142,15 @@ python pycompiler_ark.py init --entry main.py --json
 
 ## Project layout
 
-- `Ui/Cli/` — active ARK CLI entrypoints, runtime helpers, discovery, and command tree.
-- `Core/` — main UI logic.
-- `Core/IdeLikeGui/` — wiring layer for the IDE-like main GUI.
-- `ENGINES/` — built-in engines.
-- `EngineLoader/` — discovery and registry.
-- `Plugins/` — BCASL plugins.
-- `Plugins_SDK/` — plugin SDK.
-- `bcasl/` — BCASL core.
-- `Ui/Forms/` — Qt Designer UI forms.
-  - `Ui/Forms/classic_main_window.ui` — default main layout
-  - `Ui/Forms/ide_main_window.ui` — IDE-like layout
-- `languages/` — translations.
-- `themes/` — QSS themes.
+- `Ui/Cli/`: Command-line interface implementation and entry points.
+- `Core/`: Core business logic for compilation, workspace management, and settings.
+- `Core/Compiler/`: The **EngineRunner** and **MainProcess** (single source of truth for builds).
+- `engines/`: Built-in compilation engines (PyInstaller, Nuitka, cx_Freeze).
+- `bcasl/`: BCASL core engine and plugin loader.
+- `Plugins/`: Pre-compile pipeline plugins.
+- `engine_sdk/` & `Plugins_SDK/`: Developer kits for extending ARK.
+- `Ui/Forms/`: Qt Designer `.ui` files for the IDE-like and Classic layouts.
+- `languages/` & `themes/`: Application-wide translations and QSS themes.
 
 ---
 

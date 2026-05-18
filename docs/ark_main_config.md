@@ -1,16 +1,8 @@
 ## **ark.yml** — Workspace Configuration
 
-This file customizes how a workspace is scanned and built. It lives at the
-workspace root and is created automatically when the workspace is first set
-in the GUI (if missing).
+This file defines the project settings used to build the normalized **BuildContext**. It lives at the workspace root and is created automatically when the workspace is first set in the GUI (if missing).
 
-The configuration is loaded by `Core/Configs/` and merged with
-defaults.
-
-## Location
-
-The spec-first CLI requires `ark.yml` at the workspace root. The compatibility
-loader still accepts the older names used by the classic GUI path.
+The configuration is loaded by `Core/Configs/` and serves as the primary source of truth for project metadata.
 
 ## Minimal Example
 
@@ -29,61 +21,39 @@ workspace:
 build:
   engine: pyinstaller
   output: dist/
-  data: []
+  icon: assets/icon.ico
+  data:
+    - source: assets/
+      destination: assets/
 ```
 
 ## Build Entrypoint
 
-`project.entry` defines the single file to compile. It must be a path
-relative to the workspace root.
+`project.entry` defines the primary script to compile. It must be a path relative to the workspace root.
 
 Behavior:
-- If `entrypoint` is set and the file exists, only that file is compiled.
-- If it is missing or invalid, compilation is blocked until a valid entrypoint
-  is selected.
+- When a build is triggered (CLI or GUI), this entrypoint is used to populate the `BuildContext`.
+- In the GUI, you can select any file to compile, but the `project.entry` remains the default configuration.
+- If it is missing or invalid, compilation is blocked until a valid entrypoint is selected.
 
-GUI shortcut:
+GUI shortcuts:
 - Right‑click a file in the workspace list → **Set as entrypoint**.
 - Right‑click again → **Clear entrypoint**.
 - The entrypoint is marked with an icon in the list.
 
-## Notes
+## Relationship to BuildContext
 
-- Keep paths relative (ex: `"src/main.py"`).
-- Entrypoint is stored in `ark.yml` as `project.entry` and can be edited manually.
-- This file is separate from `bcasl.yml` (which remains the canonical BCASL plugin config file).
-- A small compatibility bridge also exists under `plugins.*` for workspace-level BCASL defaults such as:
-  - `plugins.bcasl_enabled`
-  - `plugins.plugin_timeout`
+The fields in `ark.yml` are mapped directly to the `BuildContext` data structure passed to engines:
+
+| ark.yml field | BuildContext field |
+| :--- | :--- |
+| `project.name` | `project_name` |
+| `project.entry` | `entry_point` |
+| `workspace.exclude` | `exclude_patterns` |
+| `build.output` | `output_dir` |
+| `build.data` | `data_mappings` |
+| `build.icon` | `icon` |
 
 ## Advanced Config Editor (GUI)
 
-The main GUI has a **Configurations avancées** button that opens a dedicated
-editor for:
-- `ark.yml`
-- `bcasl.yml`
-- `.ark/pref.json` (workspace‑specific preferences)
-
-Features:
-- Monospace editor
-- Simple YAML/JSON syntax highlighting
-- Diff view before saving
-- Basic validation on save (YAML/JSON)
-
-## Workspace Prefs (.ark/pref.json)
-
-Per‑workspace preferences are stored in:
-```
-<workspace>/.ark/pref.json
-```
-
-Currently used keys:
-```json
-{
-  "venv_mode": "venv" | "system",
-  "venv_path": "/abs/path/to/venv" | null
-}
-```
-
-These values are updated when you select a venv or System Python, and are
-re‑applied automatically when the workspace is loaded.
+The main GUI has a **Configurations avancées** button that opens a dedicated editor for `ark.yml`, `bcasl.yml`, and other configuration files.
