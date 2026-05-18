@@ -204,8 +204,13 @@ def run_engine_compile_streaming(
             def tr(self, fr, en): return en # Simple fallback
 
         if hasattr(engine_instance, "ensure_tools_installed"):
-            if not engine_instance.ensure_tools_installed(LogBridge(_log)):
+            if not engine_instance.ensure_tools_installed(LogBridge(_log), stop_signal=stop_signal):
+                if stop_signal and stop_signal():
+                    return _failure("Compilation cancelled")
                 return _failure(f"Engine tools installation failed for '{engine_id}'")
+
+        if stop_signal and stop_signal():
+            return _failure("Compilation cancelled")
 
         program, args, engine_env = resolve_engine_command(engine_id, context, engine_config)
     except EngineRunnerError as exc:

@@ -484,8 +484,21 @@ def _continue_compile_all(self) -> None:
 
 
 def cancel_all_compilations(self) -> None:
-    """Cancel all running compilations."""
+    """Cancel all running compilations, including pre-compilation (BCASL)."""
+    # 1. Handle pre-compilation (BCASL) cancellation
+    self._cancel_requested_during_precompile = True
+    try:
+        from bcasl.Loader import ensure_bcasl_thread_stopped
+        ensure_bcasl_thread_stopped(self)
+    except Exception:
+        pass
+
+    # 2. Handle main process cancellation
     get_main_process().cancel()
+    
+    # 3. Enable controls
+    self.set_controls_enabled(True)
+    log_i18n_level(self, "info", "Annulation demandée.", "Cancellation requested.")
 
 
 def handle_stdout(self, message: str) -> None:
