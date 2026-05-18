@@ -16,7 +16,7 @@ def test_run_engine_compile_uses_build_context(monkeypatch, tmp_path: Path) -> N
     captured: dict[str, object] = {}
 
     class FakeEngine:
-        def program_and_args_from_context(self, context: BuildContext):
+        def program_and_args(self, context: BuildContext):
             captured["context"] = context
             captured["config"] = getattr(self, "_config_overrides", {})
             return sys.executable, ["-c", "print('built')"]

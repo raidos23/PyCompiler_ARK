@@ -66,13 +66,22 @@ class CXFreezeEngine(CompilerEngine):
         """Preflight check - dependencies are handled automatically by required_tools."""
         return True
 
-    def build_command_from_context(self, context: BuildContext) -> list[str]:
+    def build_command(self, context: BuildContext) -> list[str]:
         """Build a cx_Freeze command line from a normalized build context."""
         cfg = getattr(self, "_config_overrides", {})
         if not isinstance(cfg, dict):
             cfg = {}
 
-        cmd = [sys.executable, "-m", "cx_Freeze"]
+        # Resolve executable (prefer venv if available)
+        python_exe = sys.executable
+        if hasattr(self, "_gui") and self._gui:
+            venv_manager = getattr(self._gui, "venv_manager", None)
+            if venv_manager:
+                venv_path = venv_manager.resolve_project_venv()
+                if venv_path:
+                    python_exe = venv_manager.python_path(venv_path)
+
+        cmd = [python_exe, "-m", "cx_Freeze"]
 
         windowed_enabled = bool(cfg.get("windowed", False))
         if hasattr(self, "_cx_windowed") and self._cx_windowed is not None:
@@ -112,107 +121,17 @@ class CXFreezeEngine(CompilerEngine):
             if source and destination:
                 cmd.extend(["--include-files", f"{source}={destination}"])
 
-        cmd.extend(["--script", context.entry_point])
-        return cmd
-
-    def build_command(self, gui, file: str) -> list[str]:
-        """Build the CX_Freeze command line."""
-        try:
-            cfg = getattr(self, "_config_overrides", {})
-            if not isinstance(cfg, dict):
-                cfg = {}
-            venv_manager = getattr(gui, "venv_manager", None)
-
-            # Resolve venv python
-            if venv_manager:
-                venv_path = venv_manager.resolve_project_venv()
-                if venv_path:
-                    python_path = venv_manager.python_path(venv_path)
-                else:
-                    python_path = sys.executable
-            else:
-                python_path = sys.executable
-
-            # Start with python -m cx_Freeze
-            cmd = [python_path, "-m", "cx_Freeze"]
-
-            # Add options from UI
-            # Windowed mode (Windows only)
-            windowed = self._get_opt("windowed")
-            windowed_enabled = bool(cfg.get("windowed", False))
-            if windowed is not None:
-                windowed_enabled = bool(windowed.isChecked())
-            if windowed_enabled and platform.system() == "Windows":
-                cmd.extend(["--base", "Win32GUI"])
-
-            # Output directory
-            output_dir = self._get_input("output_dir")
-            output_dir_value = str(cfg.get("output_dir") or "").strip()
-            if output_dir and output_dir.text().strip():
-                output_dir_value = output_dir.text().strip()
-            if output_dir_value:
-                cmd.extend(["--target-dir", output_dir_value])
-
-            # Icon
-            selected_icon = ""
-            if hasattr(self, "_selected_icon") and self._selected_icon:
-                selected_icon = str(self._selected_icon).strip()
-            if not selected_icon:
-                selected_icon = str(cfg.get("selected_icon") or "").strip()
-            if selected_icon:
-                cmd.extend(["--icon", selected_icon])
-
-            # Target name
-            target_name = self._get_input("target_name")
-            target_name_value = str(cfg.get("target_name") or "").strip()
-            if target_name and target_name.text().strip():
-                target_name_value = target_name.text().strip()
-            if target_name_value:
-                cmd.extend(["--target-name", target_name_value])
-
-            # Debug / verbose
-            debug = self._get_opt("debug")
-            debug_enabled = bool(cfg.get("debug", False))
-            if debug is not None:
-                debug_enabled = bool(debug.isChecked())
-            if debug_enabled:
-                cmd.append("--debug")
-            verbose = self._get_opt("verbose")
-            verbose_enabled = bool(cfg.get("verbose", False))
-            if verbose is not None:
-                verbose_enabled = bool(verbose.isChecked())
-            if verbose_enabled:
-                cmd.append("--verbose")
-
-            # Auto-mapping args (mapping.json / auto builder)
+        # Auto-mapping args (mapping.json / auto builder)
+        if hasattr(self, "_gui") and self._gui:
             try:
-                auto_args = compute_auto_for_engine(gui, self.id)
+                auto_args = compute_auto_for_engine(self._gui, self.id)
                 if auto_args:
                     cmd.extend(auto_args)
             except Exception:
                 pass
 
-            # Add the target script
-            cmd.extend(["--script", file])
-
-            return cmd
-
-        except Exception as e:
-            try:
-                if hasattr(gui, "log"):
-                    log_with_level(
-                        gui, "error", f"Erreur construction commande CX_Freeze: {e}"
-                    )
-            except Exception:
-                pass
-            return []
-
-    def program_and_args(self, gui, file: str) -> Optional[tuple[str, list[str]]]:
-        """Return the program and args for QProcess."""
-        cmd = self.build_command(gui, file)
-        if not cmd:
-            return None
-        return cmd[0], cmd[1:]
+        cmd.extend(["--script", context.entry_point])
+        return cmd
 
     def environment(self) -> Optional[dict[str, str]]:
         """Return environment variables for the compilation process."""

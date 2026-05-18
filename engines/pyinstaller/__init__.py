@@ -67,22 +67,31 @@ class PyInstallerEngine(CompilerEngine):
         """Preflight check - dependencies are handled automatically by required_tools."""
         return True
 
-    def build_command_from_context(self, context: BuildContext) -> list[str]:
+    def build_command(self, context: BuildContext) -> list[str]:
         """Build a PyInstaller command line from a normalized build context."""
         cfg = getattr(self, "_config_overrides", {})
         if not isinstance(cfg, dict):
             cfg = {}
 
-        cmd = [sys.executable, "-m", "PyInstaller", "--noconfirm"]
+        # Resolve executable (prefer venv if available)
+        python_exe = sys.executable
+        if hasattr(self, "_gui") and self._gui:
+            venv_manager = getattr(self._gui, "venv_manager", None)
+            if venv_manager:
+                venv_path = venv_manager.resolve_project_venv()
+                if venv_path:
+                    python_exe = venv_manager.python_path(venv_path)
+
+        cmd = [python_exe, "-m", "PyInstaller", "--noconfirm"]
 
         onefile_enabled = bool(cfg.get("onefile", False))
-        if hasattr(self, "_onefile") and self._onefile is not None:
-            onefile_enabled = bool(self._onefile.isChecked())
+        if hasattr(self, "_opt_onefile") and self._opt_onefile is not None:
+            onefile_enabled = bool(self._opt_onefile.isChecked())
         cmd.append("--onefile" if onefile_enabled else "--onedir")
 
         windowed_enabled = bool(cfg.get("windowed", False))
-        if hasattr(self, "_windowed") and self._windowed is not None:
-            windowed_enabled = bool(self._windowed.isChecked())
+        if hasattr(self, "_opt_windowed") and self._opt_windowed is not None:
+            windowed_enabled = bool(self._opt_windowed.isChecked())
         if windowed_enabled and platform.system() in {"Windows", "Darwin"}:
             cmd.append("--windowed")
 
@@ -118,107 +127,17 @@ class PyInstallerEngine(CompilerEngine):
             if source and destination:
                 cmd.extend(["--add-data", f"{source}{separator}{destination}"])
 
-        cmd.append(context.entry_point)
-        return cmd
-
-    def build_command(self, gui, file: str) -> list[str]:
-        """Build the PyInstaller command line."""
-        try:
-            cfg = getattr(self, "_config_overrides", {})
-            if not isinstance(cfg, dict):
-                cfg = {}
-            venv_manager = getattr(gui, "venv_manager", None)
-
-            # Resolve venv python
-            if venv_manager:
-                venv_path = venv_manager.resolve_project_venv()
-                if venv_path:
-                    python_path = venv_manager.python_path(venv_path)
-                else:
-                    python_path = sys.executable
-            else:
-                python_path = sys.executable
-
-            # Start with python -m PyInstaller
-            cmd = [python_path, "-m", "PyInstaller", "--noconfirm"]
-
-            # Get options from GUI - use dynamic widgets or fallback to UI widgets
-            # Onefile vs Onedir
-            onefile = self._get_opt("onefile")
-            onefile_enabled = bool(cfg.get("onefile", False))
-            if onefile and onefile.isChecked():
-                onefile_enabled = True
-            elif onefile is not None:
-                onefile_enabled = False
-            if onefile_enabled:
-                cmd.append("--onefile")
-            else:
-                cmd.append("--onedir")
-
-            # Windowed (no console) - only on Windows/macOS
-            windowed = self._get_opt("windowed")
-            windowed_enabled = bool(cfg.get("windowed", False))
-            if windowed and windowed.isChecked():
-                windowed_enabled = True
-            elif windowed is not None:
-                windowed_enabled = False
-            if windowed_enabled:
-                if platform.system() == "Windows":
-                    cmd.append("--windowed")
-                elif platform.system() == "Darwin":
-                    cmd.append("--windowed")
-
-            # Output directory
-            output_dir = self._get_input("output_dir_input")
-            output_dir_value = str(cfg.get("output_dir") or "").strip()
-            if output_dir and output_dir.text().strip():
-                output_dir_value = output_dir.text().strip()
-            if output_dir_value:
-                cmd.extend(["--distpath", output_dir_value])
-
-            # Icon
-            selected_icon = ""
-            if hasattr(self, "_selected_icon") and self._selected_icon:
-                selected_icon = str(self._selected_icon).strip()
-            if not selected_icon:
-                selected_icon = str(cfg.get("selected_icon") or "").strip()
-            if selected_icon:
-                cmd.extend(["--icon", selected_icon])
-
-            # Name
-            name_input = self._get_input("output_name_input")
-            if name_input and name_input.text().strip():
-                cmd.extend(["--name", name_input.text().strip()])
-
-            # Auto-mapping args (mapping.json / auto builder)
+        # Auto-mapping args (mapping.json / auto builder)
+        if hasattr(self, "_gui") and self._gui:
             try:
-                auto_args = compute_auto_for_engine(gui, self.id)
+                auto_args = compute_auto_for_engine(self._gui, self.id)
                 if auto_args:
                     cmd.extend(auto_args)
             except Exception:
                 pass
 
-            # Add the target file
-            cmd.append(file)
-
-            return cmd
-
-        except Exception as e:
-            try:
-                if hasattr(gui, "log"):
-                    log_with_level(
-                        gui, "error", f"Erreur construction commande PyInstaller: {e}"
-                    )
-            except Exception:
-                pass
-            return []
-
-    def program_and_args(self, gui, file: str) -> Optional[tuple[str, list[str]]]:
-        """Return the program and args for QProcess."""
-        cmd = self.build_command(gui, file)
-        if not cmd:
-            return None
-        return cmd[0], cmd[1:]
+        cmd.append(context.entry_point)
+        return cmd
 
     def environment(self) -> Optional[dict[str, str]]:
         """Return environment variables for the compilation process."""

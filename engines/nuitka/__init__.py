@@ -72,28 +72,37 @@ class NuitkaEngine(CompilerEngine):
         """Preflight check - dependencies are handled automatically by required_tools."""
         return True
 
-    def build_command_from_context(self, context: BuildContext) -> list[str]:
+    def build_command(self, context: BuildContext) -> list[str]:
         """Build a Nuitka command line from a normalized build context."""
         cfg = getattr(self, "_config_overrides", {})
         if not isinstance(cfg, dict):
             cfg = {}
 
-        cmd = [sys.executable, "-m", "nuitka"]
+        # Resolve executable (prefer venv if available)
+        python_exe = sys.executable
+        if hasattr(self, "_gui") and self._gui:
+            venv_manager = getattr(self._gui, "venv_manager", None)
+            if venv_manager:
+                venv_path = venv_manager.resolve_project_venv()
+                if venv_path:
+                    python_exe = venv_manager.python_path(venv_path)
+
+        cmd = [python_exe, "-m", "nuitka"]
 
         standalone_enabled = bool(cfg.get("standalone", False))
-        if hasattr(self, "_nuitka_standalone"):
+        if hasattr(self, "_nuitka_standalone") and self._nuitka_standalone is not None:
             standalone_enabled = bool(self._nuitka_standalone.isChecked())
         if standalone_enabled:
             cmd.append("--standalone")
 
         onefile_enabled = bool(cfg.get("onefile", False))
-        if hasattr(self, "_nuitka_onefile"):
+        if hasattr(self, "_nuitka_onefile") and self._nuitka_onefile is not None:
             onefile_enabled = bool(self._nuitka_onefile.isChecked())
         if onefile_enabled:
             cmd.append("--onefile")
 
         disable_console = bool(cfg.get("disable_console", False))
-        if hasattr(self, "_nuitka_disable_console"):
+        if hasattr(self, "_nuitka_disable_console") and self._nuitka_disable_console is not None:
             disable_console = bool(self._nuitka_disable_console.isChecked())
         if disable_console:
             cmd.append("--windows-disable-console")
@@ -107,8 +116,8 @@ class NuitkaEngine(CompilerEngine):
             cmd.append(f"--output-filename={output_name}")
 
         icon_path = str(context.icon or cfg.get("selected_icon") or "").strip()
-        if not icon_path:
-            icon_path = str(getattr(self, "_nuitka_selected_icon", "") or "").strip()
+        if not icon_path and hasattr(self, "_nuitka_selected_icon") and self._nuitka_selected_icon:
+            icon_path = str(self._nuitka_selected_icon).strip()
         if icon_path:
             cmd.append(f"--windows-icon-from-ico={icon_path}")
 
@@ -129,98 +138,17 @@ class NuitkaEngine(CompilerEngine):
             if source and destination:
                 cmd.append(f"--include-data-dir={source}={destination}")
 
-        cmd.append(context.entry_point)
-        return cmd
-
-    def build_command(self, gui, file: str) -> list[str]:
-        """Build the Nuitka command line."""
-        try:
-            cfg = getattr(self, "_config_overrides", {})
-            if not isinstance(cfg, dict):
-                cfg = {}
-
-            venv_manager = getattr(gui, "venv_manager", None)
-
-            # Resolve venv python
-            if venv_manager:
-                venv_path = venv_manager.resolve_project_venv()
-                if venv_path:
-                    python_path = venv_manager.python_path(venv_path)
-                else:
-                    python_path = sys.executable
-            else:
-                python_path = sys.executable
-
-            # Start with python -m nuitka
-            cmd = [python_path, "-m", "nuitka"]
-
-            # Standalone mode
-            standalone_enabled = bool(cfg.get("standalone", False))
-            if hasattr(self, "_nuitka_standalone"):
-                standalone_enabled = bool(self._nuitka_standalone.isChecked())
-            if standalone_enabled:
-                cmd.append("--standalone")
-
-            # Onefile mode
-            onefile_enabled = bool(cfg.get("onefile", False))
-            if hasattr(self, "_nuitka_onefile"):
-                onefile_enabled = bool(self._nuitka_onefile.isChecked())
-            if onefile_enabled:
-                cmd.append("--onefile")
-
-            # Windowed (no console)
-            disable_console = bool(cfg.get("disable_console", False))
-            if hasattr(self, "_nuitka_disable_console"):
-                disable_console = bool(self._nuitka_disable_console.isChecked())
-            if disable_console:
-                cmd.append("--windows-disable-console")
-
-            # Output directory
-            output_dir_value = str(cfg.get("output_dir") or "").strip()
-            if (
-                hasattr(self, "_nuitka_output_dir")
-                and self._nuitka_output_dir.text().strip()
-            ):
-                output_dir_value = self._nuitka_output_dir.text().strip()
-            if output_dir_value:
-                cmd.append(f"--output-dir={output_dir_value}")
-
-            # Icon
-            selected_icon = getattr(self, "_nuitka_selected_icon", None)
-            if not selected_icon:
-                selected_icon = cfg.get("selected_icon")
-            if selected_icon:
-                cmd.extend(["--windows-icon", selected_icon])
-
-            # Auto-mapping args (mapping.json / auto builder)
+        # Auto-mapping args (mapping.json / auto builder)
+        if hasattr(self, "_gui") and self._gui:
             try:
-                auto_args = compute_auto_for_engine(gui, self.id)
+                auto_args = compute_auto_for_engine(self._gui, self.id)
                 if auto_args:
                     cmd.extend(auto_args)
             except Exception:
                 pass
 
-            # Add the target file
-            cmd.append(file)
-
-            return cmd
-
-        except Exception as e:
-            try:
-                if hasattr(gui, "log"):
-                    log_with_level(
-                        gui, "error", f"Erreur construction commande Nuitka: {e}"
-                    )
-            except Exception:
-                pass
-            return []
-
-    def program_and_args(self, gui, file: str) -> Optional[tuple[str, list[str]]]:
-        """Return the program and args for QProcess."""
-        cmd = self.build_command(gui, file)
-        if not cmd:
-            return None
-        return cmd[0], cmd[1:]
+        cmd.append(context.entry_point)
+        return cmd
 
     def environment(self) -> Optional[dict[str, str]]:
         """Return environment variables for the compilation process."""

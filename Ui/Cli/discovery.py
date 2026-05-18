@@ -255,7 +255,7 @@ def scaffold_engine(target_name: str, root_dir: str | None = None) -> dict[str, 
                 '    required_core_version = "1.0.0"',
                 '    required_sdk_version = "1.0.0"',
                 "",
-                "    def build_command_from_context(self, context: BuildContext) -> list[str]:",
+                "    def build_command(self, context: BuildContext) -> list[str]:",
                 "        return [sys.executable, context.entry_point]",
             ]
         )
