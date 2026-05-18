@@ -4,7 +4,7 @@ This file customizes how a workspace is scanned and built. It lives at the
 workspace root and is created automatically when the workspace is first set
 in the GUI (if missing).
 
-The configuration is loaded by `Core/ArkConfig/` and merged with
+The configuration is loaded by `Core/Configs/` and merged with
 defaults.
 
 ## Location

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import subprocess
 import venv
 from dataclasses import dataclass
@@ -295,94 +296,8 @@ def scaffold_plugin_payload(name: str, root_dir: str | None = None) -> dict[str,
 
 
 def run_bcasl_headless(args: list[str]) -> int:
-    if not args or args[0] in ("help", "-h", "--help"):
-        print("Usage: ark run bcasl [--timeout SECONDS] [--list-plugins]")
-        return 0
-
-    sub = str(args[0]).lower()
-    if sub == "list":
-        payload = list_plugins_payload()
-        plugins = list(payload.get("plugins", []))
-        print(f"Available BCASL plugins ({len(plugins)}):")
-        for plugin in plugins:
-            print(f"  - {plugin['id']} ({plugin['name']}) v{plugin['version']}")
-        return 0
-
-    if sub != "run":
-        print(f"Unknown BCASL subcommand: {sub}")
-        return 2
-
-    workspace: str | None = None
-    timeout = 0.0
-    i = 1
-    while i < len(args):
-        tok = args[i]
-        if tok in ("-w", "--workspace"):
-            if i + 1 >= len(args):
-                print("Missing workspace path after --workspace")
-                return 2
-            workspace = str(Path(args[i + 1]).expanduser())
-            i += 2
-            continue
-        if tok == "--timeout":
-            if i + 1 >= len(args):
-                print("Missing value after --timeout")
-                return 2
-            try:
-                timeout = float(args[i + 1])
-            except ValueError:
-                print("Timeout must be a number.")
-                return 2
-            i += 2
-            continue
-        if workspace is None and not tok.startswith("-"):
-            workspace = str(Path(tok).expanduser())
-            i += 1
-            continue
-        print(f"Unknown option for bcasl run: {tok}")
-        return 2
-
-    if not workspace:
-        print("Usage: bcasl run <workspace> [--timeout SECONDS]")
-        return 2
-
-    ws_path = Path(workspace)
-    if not ws_path.exists() or not ws_path.is_dir():
-        print(f"Invalid workspace: {workspace}")
-        return 1
-
-    try:
-        from OnlyMod.BcaslOnlyMod.app import BcaslOnlyModApp
-    except Exception as exc:
-        print(f"Unable to load BCASL module: {exc}")
-        return 1
-
-    try:
-        app = BcaslOnlyModApp(
-            workspace_dir=str(ws_path),
-            language="en",
-            theme="dark",
-            headless=True,
-        )
-    except Exception as exc:
-        print(f"Failed to initialize BCASL mode: {exc}")
-        return 1
-
-    report = app.run_plugins(
-        workspace_dir=str(ws_path),
-        timeout=timeout,
-        log_callback=lambda msg: print(f"[BCASL] {msg}"),
-    )
-    if report is None:
-        print("BCASL execution failed to start.")
-        return 1
-    if report.ok:
-        print("BCASL run completed successfully.")
-        return 0
-    failed = sum(1 for item in report if not item.success)
-    print(f"BCASL run finished with failures: {failed} plugin(s) failed.")
-    return 1
-
+    # À Connecter à BCASL depuis bcasl/
+    return print("Pas encore implémenter en Cli")
 
 def launch_gui(*, legacy: bool = False) -> int:
     return launch_main_application(

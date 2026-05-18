@@ -20,8 +20,7 @@ Build Python apps with a predictable workflow, a configurable pre-compile pipeli
 - **Auto-detection for tricky dependencies**: engine-specific auto-args based on requirements or import scanning.
 - **Workspace-first UI**: filter files, manage exclusions, and follow progress and logs in one place.
 - **Venv-aware execution**: engines can use the project virtual environment automatically.
-- **Structured CLI**: explicit `gui`, `engine`, `workspace`, `doctor`, and `scaffold` commands, with JSON output on key headless paths.
-- **Standalone tools**: dedicated BCASL and Engines managers, plus CLI entry points and dry-run support.
+- **Structured CLI**: 
 - **Extensible SDKs**: create new engines and BCASL plugins with the provided SDKs.
 - **Theme-aware dynamic colors and SVG icons**: 100% dynamic UI integration using QPalette and themed SVGs.
 - **Customizable**: theming and translations out of the box.
@@ -129,17 +128,9 @@ python pycompiler_ark.py init --entry main.py --json
 
 ## How it works
 
-- [Changelog](CHANGELOG.md)
-- [Release process](docs/release_process.md)
-- [Release notes v1.0.0](docs/releases/v1.0.0.md)
-- [Architecture overview](docs/architecture.md)
 - [Contributing guide](docs/contributing.md)
-- [CI/CD with ARK CLI](docs/ci_cd_ark_cli.md)
-- [Dependency analyzer](docs/dependency_analyzer.md)
 - [How to create an engine](docs/how_to_create_an_engine.md)
 - [How to create a BC plugin](docs/how_to_create_a_bc_plugin.md)
-- [Dedicated interactive CLI (`--cli`)](docs/dedicated_cli.md)
-- [IDE-like main GUI (`gui main --ide`)](docs/ide_like_gui.md)
 
 ---
 
@@ -160,7 +151,6 @@ python pycompiler_ark.py init --entry main.py --json
 - `Plugins/` — BCASL plugins.
 - `Plugins_SDK/` — plugin SDK.
 - `bcasl/` — BCASL core.
-- `OnlyMod/` — standalone tools (BCASL and Engines).
 - `Ui/Forms/` — Qt Designer UI forms.
   - `Ui/Forms/classic_main_window.ui` — default main layout
   - `Ui/Forms/ide_main_window.ui` — IDE-like layout
