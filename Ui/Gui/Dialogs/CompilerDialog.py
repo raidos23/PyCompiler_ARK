@@ -227,6 +227,7 @@ def compile_all(self) -> None:
 
     # Build lock payload (CLI-like behavior for reproducibility)
     try:
+        log_i18n_level(self, "info", "🔒 Génération du verrou de compilation (lock file)...", "🔒 Generating build lock file...")
         from Core.Locking import build_lock_payload, write_lock_files
         lock_payload = build_lock_payload(Path(self.workspace_dir), cfg, engine_id=engine_id)
         write_lock_files(Path(self.workspace_dir), lock_payload)
@@ -352,6 +353,7 @@ def start_compilation_process(self, engine_id: str, file_path: str) -> bool:
 
     # Build lock payload (CLI-like behavior for reproducibility)
     try:
+        log_i18n_level(self, "info", "🔒 Génération du verrou de compilation (lock file)...", "🔒 Generating build lock file...")
         cfg = load_ark_config(self.workspace_dir)
         lock_payload = build_lock_payload(Path(self.workspace_dir), cfg, engine_id=engine_id)
         write_lock_files(Path(self.workspace_dir), lock_payload)
