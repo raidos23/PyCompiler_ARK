@@ -142,7 +142,19 @@ class WorkspaceAdvancedManipulation:
         for url in urls:
             path = url.toLocalFile()
             if os.path.isdir(path):
-                added += SetupWorkspace.add_py_files_from_folder(gui_instance, path)
+                files = SetupWorkspace.list_python_files(path)
+                for f in files:
+                    if workspace_dir and not os.path.commonpath([f, workspace_dir]) == workspace_dir:
+                        continue
+                    if should_exclude_file(f, workspace_dir, exclusion_patterns):
+                        excluded += 1
+                        continue
+                    if f not in gui_instance.python_files:
+                        gui_instance.python_files.append(f)
+                        rel = os.path.relpath(f, workspace_dir) if workspace_dir else f
+                        if hasattr(gui_instance, "file_list"):
+                            gui_instance.file_list.addItem(rel)
+                        added += 1
             elif path.endswith(".py"):
                 if (
                     workspace_dir
