@@ -17,55 +17,14 @@
 PyCompiler ARK - Compiler Core Module
 
 Main compiler core module for PyCompiler ARK.
-Handles compilation process execution with threading support and
-real-time communication with the user interface.
-
-Main classes:
-- CompilerCore: Main compiler class
-- CompilationThread: Non-blocking execution thread
-- MainProcess: Main compilation process
-- ProcessKiller: Process management helpers
-
-Functions:
-- compile_all: Compile all selected files
-- cancel_all_compilations: Cancel all running compilations
-- kill_process: Terminate one process
-- kill_process_tree: Terminate one process and its children
-- build_command: Build a compilation command
-- validate_command: Validate a compilation command
+This module now exposes only pure business-logic types and helpers.
+Qt-dependent classes have been moved to Ui/Gui/Compilation/.
 """
 
 from __future__ import annotations
 
-# Instance globale du MainProcess (pour compatibilité avec l'UI)
-_global_main_process = None
-
-
-def _get_main_process():
-    """Return the global `MainProcess` instance."""
-    global _global_main_process
-    if _global_main_process is None:
-        _global_main_process = MainProcess()
-    return _global_main_process
-
-
-# Importations de compiler.py
-from Core.Compiler.compiler import (
-    CompilationStatus,
-    CompilationThread,
-    CompilerCore,
-)
-
-# Importations de mainprocess.py
-from Core.Compiler.mainprocess import (
-    ProcessState,
-    MainProcess,
-)
-
-# Importations de mainprocess.py (fonctions intégrées depuis command_helpers.py)
-# Note: command_helpers.py a été supprimé et ses fonctions ont été
-# intégrées dans mainprocess.py avec la gestion ArkConfig
-from Core.Compiler.mainprocess import (
+# Importations de utils.py
+from Core.Compiler.utils import (
     build_command,
     validate_command,
     escape_arguments,
@@ -97,14 +56,7 @@ from Core.allversion import (
     get_engine_sdk_version,
 )
 
-# Importations de Ui/Gui/Gui.py (couche Qt séparée)
-
 __all__ = [
-    "CompilationStatus",
-    "CompilationThread",
-    "CompilerCore",
-    "ProcessState",
-    "MainProcess",
     "build_command",
     "validate_command",
     "escape_arguments",
@@ -119,10 +71,9 @@ __all__ = [
     "kill_process_tree",
     "get_process_info",
     "VenvManager",
-    # CompilationSignals / MainProcessSignals moved to Ui/Gui/Dialogs/CompilerDialog.py
     "get_core_version",
     "get_bcasl_version",
     "get_engine_sdk_version",
 ]
-__version__ = "1.0.0"
+__version__ = "1.1.0"
 __author__ = "Ague Samuel Amen"

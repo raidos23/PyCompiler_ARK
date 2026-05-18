@@ -28,8 +28,10 @@ Provides:
 from __future__ import annotations
 
 import subprocess
+import threading
+import time
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable, Optional
 
 from Core.process_security import hardened_popen_kwargs, secure_command
 
@@ -124,28 +126,64 @@ def run_engine_compile(
                        ``engine._config_overrides``).
 
     Returns:
-        A result dict with the following keys:
+        A result dict with success status, return code, command, stdout, stderr, and error message.
+    """
+    captured_stdout = []
+    captured_stderr = []
 
-        ``success`` (bool)
-            Whether ``returncode == 0``.
-        ``return_code`` (int | None)
-            Process return code, or ``None`` when the process never started.
-        ``command`` (list[str] | None)
-            The resolved, security-hardened command list, or ``None`` on early
-            failure.
-        ``stdout`` (str | None)
-            Captured standard output.
-        ``stderr`` (str | None)
-            Captured standard error.
-        ``error`` (str | None)
-            Human-readable error message, or ``None`` on success.
+    def _on_stdout(line: str):
+        captured_stdout.append(line)
+
+    def _on_stderr(line: str):
+        captured_stderr.append(line)
+
+    result = run_engine_compile_streaming(
+        workspace=workspace,
+        engine_id=engine_id,
+        context=context,
+        engine_config=engine_config,
+        on_stdout=_on_stdout,
+        on_stderr=_on_stderr,
+    )
+
+    result["stdout"] = "\n".join(captured_stdout)
+    result["stderr"] = "\n".join(captured_stderr)
+    
+    if not result["success"] and not result.get("error"):
+        result["error"] = result["stderr"].strip() or "Build failed"
+    
+    return result
+
+
+def run_engine_compile_streaming(
+    *,
+    workspace: Path,
+    engine_id: str,
+    context: BuildContext,
+    engine_config: dict[str, Any] | None = None,
+    on_stdout: Optional[Callable[[str], None]] = None,
+    on_stderr: Optional[Callable[[str], None]] = None,
+    stop_signal: Optional[Callable[[], bool]] = None,
+) -> dict[str, Any]:
+    """
+    Execute a compilation with real-time output streaming.
+
+    Args:
+        workspace:     Absolute path to the project workspace.
+        engine_id:     Registered engine identifier.
+        context:       BuildContext describing the project.
+        engine_config: Optional per-engine config overrides.
+        on_stdout:     Callback for each line of stdout.
+        on_stderr:     Callback for each line of stderr.
+        stop_signal:   Optional callback that returns True if cancellation is requested.
+
+    Returns:
+        A result dict.
     """
     # ── 1. Validate entry point ──────────────────────────────────────────────
     entry_path = workspace / Path(context.entry_point)
     if not context.entry_point or not entry_path.is_file():
-        return _failure(
-            f"Entrypoint missing or obsolete: {context.entry_point}"
-        )
+        return _failure(f"Entrypoint missing or obsolete: {context.entry_point}")
 
     # ── 2. Resolve (program, args, env) from engine ──────────────────────────
     try:
@@ -155,25 +193,23 @@ def run_engine_compile(
 
     # ── 3. Security hardening ────────────────────────────────────────────────
     try:
-        # Merge engine env with mandatory ARK variables
         full_env = dict(engine_env)
         full_env["ARK_WORKSPACE"] = str(workspace)
-        
-        safe_program, safe_args, safe_env = secure_command(
-            program, args, full_env
-        )
+        safe_program, safe_args, safe_env = secure_command(program, args, full_env)
     except Exception as exc:
         return _failure(f"Unsafe compile command blocked: {exc}")
 
-    # ── 4. Run ───────────────────────────────────────────────────────────────
+    # ── 4. Run with streaming ────────────────────────────────────────────────
     command = [safe_program] + safe_args
     try:
-        completed = subprocess.run(
+        process = subprocess.Popen(
             command,
             cwd=str(workspace),
             env=safe_env,
-            capture_output=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
             text=True,
+            bufsize=1,
             **hardened_popen_kwargs(),
         )
     except Exception as exc:
@@ -181,23 +217,41 @@ def run_engine_compile(
             "success": False,
             "return_code": None,
             "command": command,
-            "stdout": None,
-            "stderr": None,
             "error": f"Compilation failed to start: {exc}",
         }
 
+    def _read_stream(stream, callback):
+        if not stream or not callback:
+            return
+        for line in iter(stream.readline, ""):
+            callback(line.rstrip())
+        stream.close()
+
+    stdout_thread = threading.Thread(target=_read_stream, args=(process.stdout, on_stdout))
+    stderr_thread = threading.Thread(target=_read_stream, args=(process.stderr, on_stderr))
+    
+    stdout_thread.start()
+    stderr_thread.start()
+
+    try:
+        while process.poll() is None:
+            if stop_signal and stop_signal():
+                from Core.Compiler.process_killer import kill_process_tree
+                kill_process_tree(process.pid)
+                break
+            time.sleep(0.05)
+    finally:
+        process.wait()
+        stdout_thread.join()
+        stderr_thread.join()
+
     return {
-        "success": completed.returncode == 0,
-        "return_code": completed.returncode,
+        "success": process.returncode == 0,
+        "return_code": process.returncode,
         "command": command,
-        "stdout": completed.stdout,
-        "stderr": completed.stderr,
-        "error": (
-            None
-            if completed.returncode == 0
-            else (completed.stderr.strip() or "Build failed")
-        ),
+        "error": None if process.returncode == 0 else "Build failed",
     }
+
 
 
 # ── helpers ──────────────────────────────────────────────────────────────────
@@ -218,4 +272,5 @@ __all__ = [
     "EngineRunnerError",
     "resolve_engine_command",
     "run_engine_compile",
+    "run_engine_compile_streaming",
 ]
