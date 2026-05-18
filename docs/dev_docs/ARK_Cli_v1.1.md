@@ -1,43 +1,37 @@
+# **ARK CLI Specification v1.0**
 
+This document defines the final, streamlined specification for the ARK Command Line Interface.
 
+---
 
-Voici la SPEC CLI ARK 1.0 finale, version définitive et épurée. 
+### **1. Philosophy**
 
---- 
+The CLI is designed to be simple, predictable, and headless-friendly.
 
-SPEC CLI ARK 1.0 
+- **Unified Binary**: Use `ark` (or `python pycompiler_ark.py`).
+- **Explicit Commands**: No hidden magic; every action requires an explicit command.
+- **CLI-First**: All features accessible via GUI are also available via CLI.
+- **Predictable**: No dangerous auto-detection; reproducibility through locking.
 
---- 
+---
 
-1. Philosophie 
-
-La CLI est simple, prévisible, headless‑friendly. 
-
-· Une seule binaire : ark
-· Commandes explicites
-· Pas de GUI spécialisée (tout est accessible en CLI)
-· Pas de détection automatique dangereuse
-· Reproductibilité stricte (verrous intégrés) 
-
---- 
-
-2. Commandes finales 
+### **2. Final Commands**
 
 ```bash
-# Workspace (utilisateur)
+# Workspace (User)
 ark init --entry <path> [--icon <path>] [--with-venv] [--install-requirements] [--generate-requirements]
 ark build
 ark build --engine <id>
 ark build --lock [file] 
 
-# Exécution
+# Execution
 ark run bcasl 
 
 # GUI
 ark gui
 ark gui --legacy 
 
-# Configuration (développeur)
+# Configuration (Developer)
 ark set user-engine-dir <path>
 ark set user-plugin-dir <path>
 ark set dev-engine-dir <path>
@@ -53,289 +47,110 @@ ark unset user-plugin-dir
 ark unset dev-engine-dir
 ark unset dev-plugin-dir 
 
-# Découverte
+# Discovery
 ark list engines
 ark list plugins 
 
 # Scaffolding
 ark scaffold engine <name> [--path <dir>]
 ark scaffold plugin-bcasl <name> [--path <dir>]
-``` 
-
---- 
-
-3. Ce qui est supprimé 
-
-Suppression Raison
-gui --bcasl, gui --engines, gui --classic, gui --ide Remplacé
-config-auto, cfg-auto Dangereux
-engine list, engine doctor Inutiles
-workspace inspect, check, doctor, --info, --cli, unload Inutiles
-ws init, ws config-auto Alias
-BCASL GUI / Engines GUI Remplacées par CLI
-ARK_Main_Config.yml Non supporté
-.ark/pref.json Déplacé
-ark init --create-main Projet existe déjà
-ark init <path> Dossier courant uniquement
---entry pointant vers un dossier Doit être fichier
-Création auto de dossier Dossier doit exister
---force Inutile
---yes Plus de questions interactives
-Interaction dans --install-requirements Comportement déterministe 
-
---- 
-
-4. GUI restantes 
-
-GUI Commande Statut
-IDE‑like GUI ark gui Active
-Classic GUI ark gui --legacy Figée 
-
-Message --legacy : 
-
 ```
-⚠️ LIMITATION: The classic GUI does not support full UI feature integration.
-For full functionality, use 'ark gui'.
-``` 
 
---- 
+---
 
-5. Dossiers d'engines et plugins 
+### **3. GUI Status**
 
-Dossier Rôle Emplacement
-Core engines Engines fournis avec ARK ENGINES/
-User engines Installés par l'utilisateur ~/ark_user/engines/ (défaut)
-User plugins Installés par l'utilisateur ~/ark_user/plugins/ (défaut)
-Dev engines En développement Optionnel (set dev-engine-dir)
-Dev plugins En développement Optionnel (set dev-plugin-dir) 
+| GUI Mode | Command | Status |
+| :--- | :--- | :--- |
+| **IDE-like GUI** | `ark gui` | **Active** (Modern, full feature set) |
+| **Classic GUI** | `ark gui --legacy` | **Frozen** (Legacy maintenance only) |
 
-Priorité de chargement : dev > user > core 
+---
 
---- 
+### **4. Engine and Plugin Discovery**
 
-6. Configuration utilisateur (~/.arkconf/) 
+ARK loads components from multiple locations in order of priority:
 
-```
-~/.arkconf/
-├── pref.json
-├── user_engine_dir        # optionnel
-├── user_plugin_dir        # optionnel
-├── dev_engine_dir         # optionnel
-└── dev_plugin_dir         # optionnel
-``` 
+| Tier | Role | Default Location |
+| :--- | :--- | :--- |
+| **Dev** | Development | Optional (set via `ark set dev-*`) |
+| **User** | User-installed | `~/ark_user/` (created automatically) |
+| **Core** | Built-in engines | `ENGINES/` folder in installation root |
 
-Défauts : user-engine-dir = ~/ark_user/engines/ (créé auto)
-Défauts : user-plugin-dir = ~/ark_user/plugins/ (créé auto) 
+**Priority**: `Dev > User > Core`
 
---- 
+---
 
-7. Dossier .ark/ dans un workspace 
+### **5. Configuration (~/.arkconf/)**
 
-```
-.ark/
-├── lock/
-├── cache/
-├── build/
-└── logs/
-``` 
+Global user settings are stored in text files under `~/.arkconf/`:
 
---- 
+- `pref.json`: Global GUI and runtime preferences.
+- `user_engine_dir`: Path to user-installed engines.
+- `user_plugin_dir`: Path to user-installed BCASL plugins.
+- `dev_engine_dir`: Path to active engine development.
+- `dev_plugin_dir`: Path to active plugin development.
 
-8. Fichier ark.yml 
+---
+
+### **6. Workspace Structure (.ark/)**
+
+A initialized workspace contains a hidden `.ark/` directory:
+
+- `lock/`: Immutable build snapshots and `latest.lock.yml`.
+- `cache/`: Internal build cache and rebuild comparison data.
+- `build/`: Temporary engine build artifacts.
+- `logs/`: Compilation and pipeline execution logs.
+
+---
+
+### **7. Configuration (ark.yml)**
+
+The project configuration file:
 
 ```yaml
 project:
-  name: mon_app
-  version: 1.0.0
-  entry: src/main.py 
+  name: my_app
+  version: 1.0.0
+  entry: src/main.py 
 
 workspace:
-  exclude:
-    - tests/**/*
-    - __pycache__/**/* 
+  exclude:
+    - "tests/**/*"
+    - "**/__pycache__/**" 
 
 build:
-  engine: nuitka
-  output: dist/
-  data:
-    - source: plugins/
-      destination: plugins/
-  icon: assets/icon.ico   # optionnel
-``` 
-
---- 
-
-9. Validation de ark.yml avant build 
-
-Champ Validation Niveau
-project.name Présent, non vide Erreur
-project.version Présent, format X.Y.Z Erreur
-project.entry Présent, fichier existe Erreur
-build.engine Présent, engine connu Erreur
-build.output Présent, chemin valide Erreur
-build.icon Optionnel, fichier existe si présent Warning
-workspace.exclude Optionnel Ignoré
-build.data Optionnel Ignoré 
-
-Messages : 
-
-```bash
-# Erreur
-ERROR: Invalid ark.yml
-- project.name is required
-- project.entry: file 'src/main.py' not found 
-
-# Warning (non bloquant)
-⚠️ Warning: Icon file 'assets/icon.ico' not found (ignored)
-``` 
-
---- 
-
-10. Détail des commandes 
-
-ark init --entry <path> [options] 
-
-Initialise le dossier courant. 
-
-Prérequis : 
-
-· Dossier courant existe
-· --entry obligatoire, fichier existant (pas dossier) 
-
-Options : 
-
-Option Action
---entry <path> Définit project.entry
---icon <path> Définit build.icon (vérifie existence)
---with-venv Crée .ark/venv/
---generate-requirements Génère requirements.txt (erreur si existe)
---install-requirements Installe depuis requirements.txt (erreur si absent) 
-
-Erreurs : 
-
+  engine: nuitka
+  output: dist/
+  data:
+    - source: plugins/
+      destination: plugins/
+  icon: assets/icon.ico
 ```
-ERROR: Current directory does not exist.
-ERROR: Entry point must be a file, not a directory.
-ERROR: Entry file 'src/main.py' not found.
-ERROR: Icon file 'assets/icon.ico' not found.
-ERROR: requirements.txt already exists. (--generate-requirements)
-ERROR: requirements.txt not found. Run 'ark init --generate-requirements' first. (--install-requirements)
-``` 
 
---- 
+---
 
-ark build 
+### **8. Detailed Command Behavior**
 
-Commande Comportement
-ark build Valide + build avec engine par défaut
-ark build --engine <id> Valide + build avec engine temporaire
-ark build --lock [file] Rebuild strict (défaut: .ark/lock/latest.lock) 
+#### **`ark init --entry <path>`**
+Initializes the current directory as a workspace.
+- **Requirement**: The directory must already exist.
+- **Validation**: `--entry` must point to a file, not a directory.
 
-Interdit : ark build --lock --engine <id> 
+#### **`ark build`**
+- **Default**: Validates `ark.yml` and builds using the configured engine.
+- **Engine Override**: `--engine <id>` uses a temporary engine without modifying `ark.yml`.
+- **Reproducible Rebuild**: `--lock [file]` rebuilds strictly from a lock file (default: `.ark/lock/latest.lock.yml`).
+- **Constraint**: `--engine` and `--lock` cannot be used together.
 
-Message : 
+---
 
-```
-ERROR: --engine cannot be used with --lock
-If you need a different engine, create a new lock with: ark build --engine <engine_id>
-``` 
+### **9. Summary Rules**
 
---- 
+- **CLI1**: No interactive questions; behavior is strictly deterministic.
+- **CLI2**: `ark init` only operates on the current working directory.
+- **CLI3**: All build artifacts and metadata stay inside the workspace `.ark/` folder.
+- **CLI4**: Engines and plugins follow a clear `dev > user > core` priority.
 
-ark run bcasl 
-
-Options : --timeout, --parallel, --list-plugins 
-
---- 
-
-ark gui 
-
-· ark gui → IDE‑like GUI
-· ark gui --legacy → Classic GUI (figée) 
-
---- 
-
-ark set / get / unset 
-
-```bash
-ark set user-engine-dir <path>
-ark set user-plugin-dir <path>
-ark set dev-engine-dir <path>
-ark set dev-plugin-dir <path> 
-
-ark get <dir>
-ark unset <dir>
-``` 
-
---- 
-
-ark list engines et ark list plugins 
-
-Affiche dev > user > core. 
-
---- 
-
-ark scaffold engine <name> [--path <dir>] 
-
---path Destination
-Oui --path/<name>/
-Non et dev-engine-dir défini dev-engine-dir/<name>/
-Non et dev-engine-dir non défini Erreur 
-
-Idem pour scaffold plugin-bcasl avec dev-plugin-dir. 
-
---- 
-
-11. Aide 
-
-ark --help 
-
-```bash
-Usage: ark <command> [options] 
-
-Workspace:
-  init --entry <path>     Initialize current directory
-  build                   Build with engine from ark.yml
-  build --engine <id>     Build with temporary engine
-  build --lock [file]     Rebuild from lock 
-
-Execution:
-  run bcasl               Execute BCASL pipeline 
-
-GUI:
-  gui                     Launch IDE-like GUI
-  gui --legacy            Launch classic GUI 
-
-Options:
-  --help, --version
-``` 
-
-ark --help-dev 
-
-```bash
-Developer commands:
-  set/get/unset user-engine-dir, user-plugin-dir, dev-engine-dir, dev-plugin-dir
-  list engines, list plugins
-  scaffold engine <name> [--path <dir>]
-  scaffold plugin-bcasl <name> [--path <dir>]
-``` 
-
---- 
-
-12. Règles finales 
-
-ID Règle
-CLI1-3 Pas de détection auto, 2 GUIs max
-CLI4-5 --help et --help-dev séparés
-CLI6-9 Scaffold, engine override, priorité dev>user>core
-CLI10-11 Config dans ~/.arkconf/ fichiers texte
-CLI12-13 .ark/ contient lock/cache/build/logs
-CLI14-16 ark init exige --entry, fichier entry existant, ark.yml seul
-CLI17-19 Init : dossier courant, --entry fichier, --icon vérifié
-CLI20-22 --generate-requirements génère, --install-requirements installe, pas d'interaction
-CLI23-24 Validation ark.yml avant build
-CLI25-26 Icone optionnelle (warning), erreurs bloquantes (entry/engine) 
-
---- 
-
-SPEC CLI ARK 1.0 — TERMINÉE ✅
+---
+*End of Specification v1.0*

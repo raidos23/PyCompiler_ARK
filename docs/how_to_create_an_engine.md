@@ -37,7 +37,7 @@ class MyEngine(CompilerEngine):
     def required_tools(self):
         return {"python": ["mytool"], "system": []}
 
-    def build_command_from_context(self, context: BuildContext):
+    def build_command(self, context: BuildContext):
         return [sys.executable, "-m", "mytool", context.entry_point]
 ```
 
@@ -51,7 +51,7 @@ class MyEngine(CompilerEngine):
 ### **Workspace Entrypoint**
 The workspace can define a single build entrypoint in `ark.yml`.
 When `build.entrypoint` is set, the Core will compile only that file and pass it
-to your engine as the `file` argument. See `docs/ark.md`.
+to your engine as the `entry_point` in the `BuildContext`. See `docs/ark.md`.
 
 ### **Full API**
 Required attributes.
@@ -62,9 +62,8 @@ Required attributes.
 - `required_sdk_version`: minimal SDK version.
 
 Core methods.
-- `build_command_from_context(self, context) -> list[str]`: preferred API, full command, index 0 is the program.
-- `build_command(self, gui, file) -> list[str]`: legacy compatibility API.
-- `program_and_args(self, gui, file) -> (program, args) | None`: override if needed.
+- `build_command(self, context: BuildContext) -> list[str]`: Primary API, full command, index 0 is the program.
+- `program_and_args(self, context: BuildContext) -> (program, args) | None`: override if needed.
 - `preflight(self, gui, file) -> bool`: checks before compile, return False to abort.
 - `environment(self) -> dict[str, str] | None`: env vars to inject.
 - `on_success(self, gui, file) -> None`: post‑build hook.
@@ -187,7 +186,7 @@ from PySide6.QtWidgets import (
     QLineEdit,
     QPushButton,
 )
-from engine_sdk import CompilerEngine, engine_register
+from engine_sdk import BuildContext, CompilerEngine, engine_register
 
 
 @engine_register
@@ -198,70 +197,30 @@ class MonolithicEngine(CompilerEngine):
     required_core_version = "1.0.0"
     required_sdk_version = "1.0.0"
 
-    def build_command(self, gui, file):
+    def build_command(self, context: BuildContext):
+        # Use settings from _config_overrides (populated from get_config or saved JSON)
+        cfg = getattr(self, "_config_overrides", {})
+        
         cmd = [sys.executable, "-m", "mytool"]
-        if getattr(self, "_opt_fast", None) and self._opt_fast.isChecked():
+        if cfg.get("fast"):
             cmd.append("--fast")
-        if getattr(self, "_opt_safe", None) and self._opt_safe.isChecked():
+        if cfg.get("safe"):
             cmd.append("--safe")
-        if getattr(self, "_opt_verbose", None) and self._opt_verbose.isChecked():
+        if cfg.get("verbose"):
             cmd.append("--verbose")
-        output = getattr(self, "_output_dir", None)
-        if output and output.text().strip():
-            cmd.extend(["--output", output.text().strip()])
-        cmd.append(file)
+        
+        output = str(context.output_dir or cfg.get("output_dir") or "").strip()
+        if output:
+            cmd.extend(["--output", output])
+            
+        cmd.append(context.entry_point)
         return cmd
 
     def create_tab(self, gui):
         root = QWidget()
         root_layout = QVBoxLayout(root)
-
-        content = QWidget()
-        root_layout.addWidget(content)
-        content_layout = QVBoxLayout(content)
-
-        # Section 1: basic options
-        basic = QFormLayout()
-        self._opt_fast = QCheckBox("Fast mode")
-        self._opt_safe = QCheckBox("Safe mode")
-        self._opt_verbose = QCheckBox("Verbose logs")
-        basic.addRow("Fast:", self._opt_fast)
-        basic.addRow("Safe:", self._opt_safe)
-        basic.addRow("Verbose:", self._opt_verbose)
-        content_layout.addLayout(basic)
-
-        # Section 2: output settings
-        output = QFormLayout()
-        self._output_dir = QLineEdit()
-        self._output_dir.setPlaceholderText("Output directory")
-        output.addRow("Output:", self._output_dir)
-        content_layout.addLayout(output)
-
-        # Section 3: extra controls (simulate large UI)
-        extras = QFormLayout()
-        self._opt_a = QCheckBox("Feature A")
-        self._opt_b = QCheckBox("Feature B")
-        self._opt_c = QCheckBox("Feature C")
-        extras.addRow("Feature A:", self._opt_a)
-        extras.addRow("Feature B:", self._opt_b)
-        extras.addRow("Feature C:", self._opt_c)
-        content_layout.addLayout(extras)
-
-        # Section 4: actions
-        btn = QPushButton("Reset to defaults")
-        btn.clicked.connect(self._reset_defaults)
-        content_layout.addWidget(btn)
-        content_layout.addStretch()
-
+        # ... (GUI setup omitted for brevity, see SDK helpers)
         return root, "Monolithic"
-
-    def _reset_defaults(self):
-        for attr in ("_opt_fast", "_opt_safe", "_opt_verbose", "_opt_a", "_opt_b", "_opt_c"):
-            w = getattr(self, attr, None)
-            if w:
-                w.setChecked(False)
-        if getattr(self, "_output_dir", None):
-            self._output_dir.setText("")
 ```
 
 **SDK UI Helpers**
@@ -370,9 +329,10 @@ Recommended usage (inside `build_command`).
 from engine_sdk import compute_auto_for_engine
 
 # ...
-auto_args = compute_auto_for_engine(gui, self.id)
-if auto_args:
-    cmd.extend(auto_args)
+if hasattr(self, "_gui") and self._gui:
+    auto_args = compute_auto_for_engine(self._gui, self.id)
+    if auto_args:
+        cmd.extend(auto_args)
 ```
 
 #### **Minimal example.**
@@ -403,8 +363,8 @@ Each example includes context, intent, and a working pattern. Adjust IDs and lab
 class MinimalToolEngine(CompilerEngine):
     id = "minimal"
     name = "Minimal"
-    def build_command(self, gui, file):
-        return [sys.executable, "-m", "mytool", file]
+    def build_command(self, context: BuildContext):
+        return [sys.executable, "-m", "mytool", context.entry_point]
 ```
 Notes.
 - Best for CLI wrappers.
@@ -412,10 +372,15 @@ Notes.
 
 2. Engine using venv python with fallback.
 ```python
-def build_command(self, gui, file):
-    venv = gui.venv_manager.resolve_project_venv() if gui.venv_manager else None
-    py = gui.venv_manager.python_path(venv) if venv else sys.executable
-    return [py, "-m", "mytool", file]
+def build_command(self, context: BuildContext):
+    python_exe = sys.executable
+    if hasattr(self, "_gui") and self._gui:
+        venv_manager = getattr(self._gui, "venv_manager", None)
+        if venv_manager:
+            venv_path = venv_manager.resolve_project_venv()
+            if venv_path:
+                python_exe = venv_manager.python_path(venv_path)
+    return [python_exe, "-m", "mytool", context.entry_point]
 ```
 Notes.
 - Keeps isolation inside the project venv.
@@ -425,10 +390,7 @@ Notes.
 ```python
 def preflight(self, gui, file):
     if not os.path.isfile(file):
-        gui.log.append("File not found")
-        return False
-    if not file.endswith(".py"):
-        gui.log.append("Not a Python file")
+        log_i18n_level(gui, "error", "Fichier non trouvé", "File not found")
         return False
     return True
 ```
@@ -445,9 +407,9 @@ Notes.
 
 5. Override program_and_args for a non‑Python tool.
 ```python
-def program_and_args(self, gui, file):
+def program_and_args(self, context: BuildContext):
     exe = "/usr/local/bin/some_tool"
-    args = ["--input", file]
+    args = ["--input", context.entry_point]
     return exe, args
 ```
 Notes.
@@ -467,16 +429,17 @@ Notes.
 def on_success(self, gui, file):
     out = getattr(self, "_output_dir", None)
     if out and out.text().strip():
-        gui.log.append(f"Output: {out.text().strip()}")
+        log_i18n_level(gui, "success", f"Sortie: {out.text()}", f"Output: {out.text()}")
 ```
 Notes.
 - Keep logs short and actionable.
 
 8. Auto‑mapping in build_command.
 ```python
-auto_args = compute_auto_for_engine(gui, self.id)
-if auto_args:
-    cmd.extend(auto_args)
+if hasattr(self, "_gui") and self._gui:
+    auto_args = compute_auto_for_engine(self._gui, self.id)
+    if auto_args:
+        cmd.extend(auto_args)
 ```
 Notes.
 - Zero hardcoded package list.
