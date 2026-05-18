@@ -18,7 +18,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Optional
 
 if TYPE_CHECKING:
-    from engine_sdk.build_context import BuildContext
+    from Core.engine.build_context import BuildContext
 
 
 def log_i18n_level(gui, level: str, fr: str, en: str) -> None:

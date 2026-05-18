@@ -55,7 +55,7 @@ from Core.Compiler.engine_runner import (
     resolve_engine_command,
     EngineRunnerError,
 )
-from engine_sdk.build_context import BuildContext
+from Core.engine.build_context import BuildContext
 
 
 class ProcessState(Enum):

@@ -17,7 +17,7 @@ from __future__ import annotations
 
 # Re-export the base interface used by the host
 from .base import CompilerEngine
-from .build_context import BuildContext
+from ..Core.engine.build_context import BuildContext
 from .utils import (
     atomic_write_text,
     clamp_text,

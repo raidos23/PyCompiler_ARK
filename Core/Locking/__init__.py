@@ -15,7 +15,7 @@ from typing import Any
 
 import yaml
 from Core.Configs import normalize_ark_config
-from engine_sdk.build_context import BuildContext
+from Core.engine.build_context import BuildContext
 
 
 class LockingError(RuntimeError):
