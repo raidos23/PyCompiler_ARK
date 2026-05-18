@@ -266,6 +266,12 @@ def compile_all(self) -> None:
         return
 
     self.set_controls_enabled(False)
+    log_i18n_level(
+        self,
+        "info",
+        "🔍 Lancement de la phase de pré-compilation (BCASL)...",
+        "🔍 Starting pre-compilation phase (BCASL)...",
+    )
 
     def _after_bcasl(_report=None) -> None:
         if getattr(self, "_cancel_requested_during_precompile", False):
@@ -276,11 +282,23 @@ def compile_all(self) -> None:
             )
             return
         if not bcasl_report_allows_compile(self, _report):
+            log_i18n_level(
+                self,
+                "error",
+                "❌ Échec de la validation BCASL. La compilation ne peut pas continuer.",
+                "❌ BCASL validation failed. Compilation cannot continue.",
+            )
             self.set_controls_enabled(True)
             return
-        
-        try:
-            log_i18n_level(self, "info",
+
+        log_i18n_level(
+            self,
+            "success",
+            "✅ Phase BCASL terminée avec succès.",
+            "✅ BCASL phase completed successfully.",
+        )
+
+        try:            log_i18n_level(self, "info",
                 f"Démarrage de la compilation avec {engine.name}...",
                 f"Starting compilation with {engine.name}...",
             )
@@ -419,6 +437,12 @@ def start_compilation_process(self, engine_id: str, file_path: str) -> bool:
 
     self.set_controls_enabled(False)
     _set_progress_indeterminate(self)
+    log_i18n_level(
+        self,
+        "info",
+        "🔍 Lancement de la phase de pré-compilation (BCASL)...",
+        "🔍 Starting pre-compilation phase (BCASL)...",
+    )
 
     result = {"value": None}
 
@@ -432,9 +456,23 @@ def start_compilation_process(self, engine_id: str, file_path: str) -> bool:
             result["value"] = False
             return
         if not bcasl_report_allows_compile(self, _report):
+            log_i18n_level(
+                self,
+                "error",
+                "❌ Échec de la validation BCASL. La compilation ne peut pas continuer.",
+                "❌ BCASL validation failed. Compilation cannot continue.",
+            )
             self.set_controls_enabled(True)
             result["value"] = False
             return
+        
+        log_i18n_level(
+            self,
+            "success",
+            "✅ Phase BCASL terminée avec succès.",
+            "✅ BCASL phase completed successfully.",
+        )
+        
         ok = False
         try:
             ok = _do_start()

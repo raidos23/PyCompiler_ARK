@@ -187,15 +187,16 @@ def run_engine_compile_streaming(
 
     # ── 2. Resolve (program, args, env) from engine ──────────────────────────
     try:
+        if on_stdout:
+            on_stdout("🔨 Étape 1/3 : Vérification et installation des outils requis...")
+            
         import Core.engine as engines_loader
         engine_instance = engines_loader.create(engine_id)
         
         # Ensure tools are installed (this may take time, so we do it in the thread)
-        # Note: In GUI, we'll need a way to log this back. engine_runner.py is Qt-free
-        # but callbacks on_stdout/on_stderr can be used.
         def _log(fr, en):
             if on_stdout:
-                on_stdout(f"[tools] {en}")
+                on_stdout(f"  ➡️ {en}")
 
         # We pass a dummy 'gui' object that supports log_i18n_level-like logging
         class LogBridge:
@@ -206,17 +207,23 @@ def run_engine_compile_streaming(
         if hasattr(engine_instance, "ensure_tools_installed"):
             if not engine_instance.ensure_tools_installed(LogBridge(_log), stop_signal=stop_signal):
                 if stop_signal and stop_signal():
-                    return _failure("Compilation cancelled")
-                return _failure(f"Engine tools installation failed for '{engine_id}'")
+                    return _failure("Compilation annulée par l'utilisateur.")
+                return _failure(f"Échec de l'installation des outils pour '{engine_id}'")
 
         if stop_signal and stop_signal():
-            return _failure("Compilation cancelled")
+            return _failure("Compilation annulée.")
+
+        if on_stdout:
+            on_stdout("⚙️ Étape 2/3 : Génération de la commande de compilation...")
 
         program, args, engine_env = resolve_engine_command(engine_id, context, engine_config)
     except EngineRunnerError as exc:
         return _failure(str(exc))
     except Exception as exc:
-        return _failure(f"Failed to prepare engine '{engine_id}': {exc}")
+        return _failure(f"Échec de la préparation de l'engine '{engine_id}': {exc}")
+
+    if stop_signal and stop_signal():
+        return _failure("Compilation annulée.")
 
     # ── 3. Security hardening ────────────────────────────────────────────────
     try:
@@ -224,10 +231,16 @@ def run_engine_compile_streaming(
         full_env["ARK_WORKSPACE"] = str(workspace)
         safe_program, safe_args, safe_env = secure_command(program, args, full_env)
     except Exception as exc:
-        return _failure(f"Unsafe compile command blocked: {exc}")
+        return _failure(f"Commande de compilation non sécurisée bloquée : {exc}")
 
     # ── 4. Run with streaming ────────────────────────────────────────────────
     command = [safe_program] + safe_args
+    
+    if on_stdout:
+        on_stdout(f"🚀 Étape 3/3 : Exécution du processus de compilation...")
+        on_stdout(f"  💻 Commande : {' '.join(command)}")
+        on_stdout("-" * 40)
+
     try:
         process = subprocess.Popen(
             command,
