@@ -406,7 +406,7 @@ class MainProcess(QObject):
         """
         Start an async compilation from a :class:`BuildContext`.
 
-        Resolves ``(program, args)`` via the engine, then delegates to
+        Resolves ``(program, args, env)`` via the engine, then delegates to
         :class:`CompilerCore` (Qt thread) for non-blocking execution.
 
         Args:
@@ -422,18 +422,21 @@ class MainProcess(QObject):
 
         # Resolve command via engine (pure-Python, no Qt)
         try:
-            program, args = resolve_engine_command(engine_id, context, engine_config)
+            program, args, engine_env = resolve_engine_command(engine_id, context, engine_config)
         except EngineRunnerError as exc:
             self.log_message.emit("error", str(exc))
             return False
 
-        env = {"ARK_WORKSPACE": str(workspace)}
+        # Merge engine env with mandatory ARK variables
+        full_env = dict(engine_env)
+        full_env["ARK_WORKSPACE"] = str(workspace)
+        
         file_path = str(workspace / context.entry_point)
 
         return self.compile(
             program=program,
             args=args,
-            env=env,
+            env=full_env,
             engine_id=engine_id,
             file_path=file_path,
             workspace_dir=str(workspace),

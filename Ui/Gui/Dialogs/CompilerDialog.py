@@ -30,7 +30,8 @@ from __future__ import annotations
 
 import os
 import time
-from typing import Optional
+from pathlib import Path
+from typing import Optional, Any
 
 from PySide6.QtCore import QObject, Signal
 from PySide6.QtCore import QProcess
@@ -46,32 +47,6 @@ from Core.Compiler import (
     create,
 )
 from Ui.i18n import log_with_level, log_i18n_level
-
-
-# ============================================================================
-# SIGNAL CARRIER CLASSES (moved from Core — UI communication objects)
-# ============================================================================
-
-
-class CompilationSignals(QObject):
-    """Signals used to communicate compilation events to the user interface."""
-
-    output_ready = Signal(str)
-    error_ready = Signal(str)
-    finished = Signal(int)
-    status_changed = Signal(CompilationStatus)
-    progress_update = Signal(int, str)
-
-
-class MainProcessSignals(QObject):
-    """Signals used to communicate MainProcess state to the user interface."""
-
-    state_changed = Signal(ProcessState)
-    log_message = Signal(str, str)
-    compilation_started = Signal(dict)
-    compilation_finished = Signal(int, dict)
-    engine_ready = Signal(str)
-    workspace_changed = Signal(str)
 
 
 # ============================================================================
@@ -173,7 +148,7 @@ def _set_progress_indeterminate(self) -> None:
 
 
 def compile_all(self) -> None:
-    """Slot connected to the compile button.  Starts compilation for all selected files."""
+    """Slot connected to the compile button. Starts compilation using EngineRunner as source of truth."""
 
     def _t(fr: str, en: str) -> str:
         try:
@@ -199,15 +174,16 @@ def compile_all(self) -> None:
             pass
         return
 
-    entry_rel = None
-    entrypoint_file = None
+    # Load project configuration
     try:
         from Core.Configs import load_ark_config, get_entrypoint
+        from Core.Locking import build_context_from_ark_config
 
         cfg = load_ark_config(self.workspace_dir)
         entry_rel = get_entrypoint(cfg)
-    except Exception:
-        entry_rel = None
+    except Exception as e:
+        log_i18n_level(self, "error", f"Erreur config: {e}", f"Config error: {e}")
+        return
 
     if not entry_rel:
         log_i18n_level(self, "warning", "Point d'entrée requis avant compilation.", "Entrypoint required before compilation.")
@@ -227,41 +203,36 @@ def compile_all(self) -> None:
         _prompt_for_required_entrypoint(self, missing_path=missing_display)
         return
 
-    files_to_compile = [entrypoint_file]
-    log_i18n_level(self, "info",
-        f"Compilation du point d'entrée : {os.path.relpath(entrypoint_file, self.workspace_dir)}",
-        f"Compiling entrypoint: {os.path.relpath(entrypoint_file, self.workspace_dir)}",
-    )
-
     _set_progress_indeterminate(self)
 
+    # Resolve engine
     engine_id = None
     try:
         import Core.engine as engines_loader
-
         if hasattr(self, "compiler_tabs") and self.compiler_tabs:
             idx = self.compiler_tabs.currentIndex()
             engine_id = engines_loader.registry.get_engine_for_tab(idx)
-    except Exception as e:
-        log_i18n_level(self, "warning", f"Erreur détection moteur: {e}", f"Engine detection error: {e}")
+    except Exception:
+        pass
 
     if not engine_id:
         engine_id = _resolve_default_engine_id()
 
+    # Save GUI state to disk (persists tab settings)
     try:
         from Core.EngineConfigManager import save_engine_config_for_gui
-
         save_engine_config_for_gui(self, engine_id)
     except Exception:
         pass
 
+    # Retrieve engine instance and its current configuration
     engine = None
     try:
         import Core.engine as engines_loader
-
         engine = engines_loader.registry.get_instance(engine_id)
     except Exception:
         engine = None
+    
     if engine is None:
         try:
             engine = create(engine_id)
@@ -271,26 +242,19 @@ def compile_all(self) -> None:
                 f"Engine creation error '{engine_id}': {e}",
             )
             return
-    else:
-        try:
-            if not getattr(engine, "_gui", None):
-                engine._gui = self
-        except Exception:
-            pass
 
+    # Prepare context and config for EngineRunner
     try:
-        self._cancel_requested_during_precompile = False
-    except Exception:
-        pass
+        context = build_context_from_ark_config(cfg)
+        engine_config = engine.get_config(self) if hasattr(engine, "get_config") else {}
+    except Exception as e:
+        log_i18n_level(self, "error", f"Erreur préparation contexte: {e}", f"Context prep error: {e}")
+        return
 
     self.set_controls_enabled(False)
 
     def _after_bcasl(_report=None) -> None:
         if getattr(self, "_cancel_requested_during_precompile", False):
-            try:
-                self._cancel_requested_during_precompile = False
-            except Exception:
-                pass
             self.set_controls_enabled(True)
             log_i18n_level(self, "info",
                 "Compilation annulée avant le démarrage (phase BCASL).",
@@ -300,15 +264,44 @@ def compile_all(self) -> None:
         if not _bcasl_report_allows_compile(self, _report):
             self.set_controls_enabled(True)
             return
+        
         try:
             log_i18n_level(self, "info",
                 f"Démarrage de la compilation avec {engine.name}...",
                 f"Starting compilation with {engine.name}...",
             )
+            
+            # Start compilation using the EngineRunner path
             main_process = _get_main_process()
-            main_process.set_workspace(self.workspace_dir)
-            main_process.set_engine(engine_id)
-            _start_compilation_queue(self, engine, files_to_compile)
+            
+            # Connection logic (moved here for clarity)
+            if not hasattr(main_process, "_gui_connected"):
+                main_process.output_ready.connect(lambda msg: _handle_output(self, msg))
+                main_process.error_ready.connect(lambda msg: _handle_error(self, msg))
+                main_process.progress_update.connect(lambda pct, msg: _handle_progress(self, pct, msg))
+                main_process.log_message.connect(lambda level, msg: _handle_log(self, level, msg))
+                main_process.compilation_started.connect(lambda info: _handle_compilation_started(self, info))
+                main_process.compilation_finished.connect(lambda code, info: handle_finished(self, code, info))
+                main_process.state_changed.connect(lambda state: _handle_state_changed(self, state))
+                main_process._gui_connected = True
+
+            # Ensure tools are installed via the engine's legacy but GUI-friendly method
+            if hasattr(engine, "ensure_tools_installed"):
+                if not engine.ensure_tools_installed(self):
+                    log_i18n_level(self, "warning", "Outils manquants, compilation annulée.", "Missing tools, compilation cancelled.")
+                    self.set_controls_enabled(True)
+                    return
+
+            success = main_process.compile_from_context(
+                workspace=self.workspace_dir,
+                engine_id=engine_id,
+                context=context,
+                engine_config=engine_config
+            )
+            
+            if not success:
+                self.set_controls_enabled(True)
+                
         except Exception as e:
             self.set_controls_enabled(True)
             log_i18n_level(self, "error",
@@ -319,209 +312,21 @@ def compile_all(self) -> None:
     _run_bcasl_before_compile(self, _after_bcasl)
 
 
-def _start_compilation_queue(self, engine, files_to_compile: list) -> None:
-    """Start compilation of a queue of files."""
-    main_process = _get_main_process()
-
-    if not hasattr(main_process, "_gui_connected"):
-        main_process.output_ready.connect(lambda msg: _handle_output(self, msg))
-        main_process.error_ready.connect(lambda msg: _handle_error(self, msg))
-        main_process.progress_update.connect(lambda pct, msg: _handle_progress(self, pct, msg))
-        main_process.log_message.connect(lambda level, msg: _handle_log(self, level, msg))
-        main_process.compilation_started.connect(lambda info: _handle_compilation_started(self, info))
-        main_process.compilation_finished.connect(lambda code, info: handle_finished(self, code, info))
-        main_process.state_changed.connect(lambda state: _handle_state_changed(self, state))
-        main_process._gui_connected = True
-
-    excluded_count = 0
-    for file_path in files_to_compile:
-        if main_process.should_exclude(file_path):
-            log_i18n_level(self, "info",
-                f"Fichier exclu: {os.path.basename(file_path)}",
-                f"File excluded: {os.path.basename(file_path)}",
-            )
-            excluded_count += 1
-            continue
-
-        if not os.path.exists(file_path):
-            log_i18n_level(self, "warning", f"Fichier non trouvé: {file_path}", f"File not found: {file_path}")
-            continue
-
-        if hasattr(engine, "ensure_tools_installed"):
-            if not engine.ensure_tools_installed(self):
-                log_i18n_level(self, "warning", "Outils manquants, compilation annulée.", "Missing tools, compilation cancelled.")
-                self.set_controls_enabled(True)
-                return
-
-        cmd = engine.build_command(self, file_path)
-        if not cmd:
-            log_i18n_level(self, "error",
-                f"Erreur construction commande pour {file_path}",
-                f"Command build error for {file_path}",
-            )
-            continue
-
-        env = engine.environment() if hasattr(engine, "environment") else None
-        program = cmd[0]
-        args = cmd[1:]
-
-        main_process.compile(
-            program=program,
-            args=args,
-            env=env,
-            engine_id=engine.id,
-            file_path=file_path,
-            workspace_dir=self.workspace_dir,
-        )
-
-        log_i18n_level(self, "info",
-            f"Compilation de {os.path.basename(file_path)}...",
-            f"Compiling {os.path.basename(file_path)}...",
-        )
-
-    if excluded_count > 0:
-        log_i18n_level(self, "info",
-            f"{excluded_count} fichier(s) exclu(s) selon les patterns de ark.yml",
-            f"{excluded_count} file(s) excluded according to ark.yml patterns",
-        )
-
-
-# ============================================================================
-# CANCEL SLOT — connected to cancel button
-# ============================================================================
-
-
-def cancel_all_compilations(self) -> bool:
-    """Slot connected to the cancel button. Cancels all ongoing compilations."""
-    main_process = _get_main_process()
-
-    try:
-        self._cancel_requested_during_precompile = True
-    except Exception:
-        pass
-
-    cancelled = False
-
-    try:
-        if main_process.is_compiling:
-            cancelled = bool(main_process.cancel()) or cancelled
-    except Exception:
-        pass
-
-    bcasl_was_running = False
-    try:
-        bcasl_thread = getattr(self, "_bcasl_thread", None)
-        bcasl_was_running = bool(
-            bcasl_thread is not None
-            and hasattr(bcasl_thread, "isRunning")
-            and bcasl_thread.isRunning()
-        )
-    except Exception:
-        bcasl_was_running = False
-    try:
-        from bcasl.Loader import ensure_bcasl_thread_stopped
-
-        ensure_bcasl_thread_stopped(self, timeout_ms=200)
-        if bcasl_was_running:
-            cancelled = True
-    except Exception:
-        pass
-    try:
-        from bcasl.executor import kill_active_workers
-
-        if kill_active_workers() > 0:
-            cancelled = True
-    except Exception:
-        pass
-
-    try:
-        self.set_controls_enabled(True)
-    except Exception:
-        pass
-
-    if cancelled:
-        log_i18n_level(self, "info",
-            "Annulation forcée demandée (compilation + BCASL).",
-            "Forced cancellation requested (compilation + BCASL).",
-        )
-        return True
-
-    log_i18n_level(self, "info", "Aucune compilation en cours.", "No compilation in progress.")
-    return False
-
-
-# ============================================================================
-# LEGACY QPROCESS HANDLERS
-# ============================================================================
-
-
-def handle_stdout(self, proc: QProcess) -> None:
-    """Handle stdout from a QProcess (legacy method)."""
-    data = proc.readAllStandardOutput()
-    if data.isEmpty():
-        return
-    try:
-        text = bytes(data).decode("utf-8", errors="replace").strip()
-        if text:
-            log_with_level(self, "info", text)
-    except Exception:
-        pass
-
-
-def handle_stderr(self, proc: QProcess) -> None:
-    """Handle stderr from a QProcess (legacy method)."""
-    data = proc.readAllStandardError()
-    if data.isEmpty():
-        return
-    try:
-        text = bytes(data).decode("utf-8", errors="replace").strip()
-        if text:
-            log_with_level(self, "error", text)
-    except Exception:
-        pass
-
-
-# ============================================================================
-# MODULE INSTALL HELPER
-# ============================================================================
-
-
-def try_install_missing_modules(self, modules: list) -> bool:
-    """Try to install missing Python modules via the venv manager."""
-    if not modules:
-        return True
-
-    log_i18n_level(self, "info",
-        f"Installation des modules manquants: {modules}",
-        f"Installing missing modules: {modules}",
-    )
-
-    if hasattr(self, "venv_manager") and self.venv_manager:
-        venv_path = self.venv_manager.resolve_project_venv()
-        if venv_path:
-            return self.venv_manager.ensure_tools_installed(venv_path, modules)
-
-    return False
-
-
-# ============================================================================
-# SINGLE-FILE COMPILATION
-# ============================================================================
-
-
 def start_compilation_process(self, engine_id: str, file_path: str) -> bool:
-    """Start a single compilation process using MainProcess."""
+    """Start a single compilation process using MainProcess and EngineRunner."""
     try:
+        from Core.Configs import load_ark_config
+        from Core.Locking import build_context_from_ark_config
         from Core.EngineConfigManager import save_engine_config_for_gui
 
         save_engine_config_for_gui(self, engine_id)
     except Exception:
         pass
 
+    # Resolve engine
     engine = None
     try:
         import Core.engine as engines_loader
-
         engine = engines_loader.registry.get_instance(engine_id)
     except Exception:
         engine = None
@@ -534,30 +339,34 @@ def start_compilation_process(self, engine_id: str, file_path: str) -> bool:
                 f"Engine creation error '{engine_id}': {e}",
             )
             return False
-    else:
-        try:
-            if not getattr(engine, "_gui", None):
-                engine._gui = self
-        except Exception:
-            pass
 
     def _do_start() -> bool:
-        if not engine.ensure_tools_installed(self):
+        # Load project configuration
+        try:
+            cfg = load_ark_config(self.workspace_dir)
+            context = build_context_from_ark_config(cfg)
+            
+            # Use specific file_path as entry point
+            try:
+                rel_path = os.path.relpath(file_path, self.workspace_dir)
+                if not rel_path.startswith(".."):
+                    context.entry_point = rel_path
+                else:
+                    context.entry_point = file_path
+            except Exception:
+                context.entry_point = file_path
+                
+            engine_config = engine.get_config(self) if hasattr(engine, "get_config") else {}
+        except Exception as e:
+            log_i18n_level(self, "error", f"Erreur préparation contexte: {e}", f"Context prep error: {e}")
             return False
 
-        cmd = engine.build_command(self, file_path)
-        if not cmd:
-            log_i18n_level(self, "error",
-                f"Erreur construction commande pour {file_path}",
-                f"Command build error for {file_path}",
-            )
-            return False
+        if hasattr(engine, "ensure_tools_installed"):
+            if not engine.ensure_tools_installed(self):
+                log_i18n_level(self, "warning", "Outils manquants, compilation annulée.", "Missing tools, compilation cancelled.")
+                return False
 
-        env = engine.environment() if hasattr(engine, "environment") else None
         main_process = _get_main_process()
-        main_process.set_workspace(self.workspace_dir)
-        main_process.set_engine(engine_id)
-
         if not hasattr(main_process, "_gui_connected"):
             main_process.output_ready.connect(lambda msg: _handle_output(self, msg))
             main_process.error_ready.connect(lambda msg: _handle_error(self, msg))
@@ -568,16 +377,11 @@ def start_compilation_process(self, engine_id: str, file_path: str) -> bool:
             main_process.state_changed.connect(lambda state: _handle_state_changed(self, state))
             main_process._gui_connected = True
 
-        program = cmd[0]
-        args = cmd[1:]
-
-        success = main_process.compile(
-            program=program,
-            args=args,
-            env=env,
+        success = main_process.compile_from_context(
+            workspace=self.workspace_dir,
             engine_id=engine_id,
-            file_path=file_path,
-            workspace_dir=self.workspace_dir,
+            context=context,
+            engine_config=engine_config
         )
 
         if success:
@@ -600,10 +404,6 @@ def start_compilation_process(self, engine_id: str, file_path: str) -> bool:
 
     def _after_bcasl(_report=None) -> None:
         if getattr(self, "_cancel_requested_during_precompile", False):
-            try:
-                self._cancel_requested_during_precompile = False
-            except Exception:
-                pass
             self.set_controls_enabled(True)
             log_i18n_level(self, "info",
                 "Compilation annulée avant le démarrage (phase BCASL).",
