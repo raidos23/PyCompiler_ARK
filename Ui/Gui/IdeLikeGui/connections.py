@@ -222,7 +222,7 @@ def _setup_ide_like_compiler_tabs(self) -> None:
     if tabs is None:
         return
     try:
-        import Loaders as engines_loader
+        import Core.engine as engines_loader
 
         engines_loader.bind_tabs(self)
     except Exception:

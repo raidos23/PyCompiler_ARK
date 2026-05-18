@@ -706,7 +706,7 @@ class AdvancedConfigEditor(QDialog):
 
         engine_ids: list[str] = []
         try:
-            import Loaders as engines_loader
+            import Core.engine as engines_loader
 
             if hasattr(engines_loader, "available_engines"):
                 engine_ids = [str(e) for e in engines_loader.available_engines() if e]

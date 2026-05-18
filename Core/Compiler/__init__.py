@@ -127,7 +127,7 @@ def _get_main_process() -> MainProcess:
 def _resolve_default_engine_id() -> str:
     """Resolve a default engine dynamically from the registered engines."""
     try:
-        import Loaders as engines_loader
+        import Core.engine as engines_loader
 
         engine_ids = list(engines_loader.available_engines())
         if engine_ids:
