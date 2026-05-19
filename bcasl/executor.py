@@ -295,35 +295,12 @@ def _resolve_reliability_options(config: dict[str, Any]) -> tuple[bool, bool]:
 
 def _resolve_exec_options(
     config: dict[str, Any], default_sandbox: bool
-) -> tuple[bool, int]:
+) -> bool:
     try:
         opts = dict(config or {}).get("options", {}) if isinstance(config, dict) else {}
     except Exception:
         opts = {}
-    eff_sandbox = bool(opts.get("sandbox", default_sandbox))
-    try:
-        par_env = int(os.environ.get("PYCOMPILER_BCASL_PARALLELISM", "0"))
-    except Exception:
-        par_env = 0
-    try:
-        par_opt = int(opts.get("plugin_parallelism", 0))
-    except Exception:
-        par_opt = 0
-    try:
-        cpu_def = max(1, (mp.cpu_count() or 2) - 1)
-    except Exception:
-        cpu_def = 2
-    parallelism = par_env or par_opt or cpu_def
-    if parallelism < 1:
-        parallelism = 1
-    try:
-        # Hard ceiling to avoid unstable oversubscription on large machines/configs.
-        cap = max(1, int((mp.cpu_count() or 2) * 2))
-    except Exception:
-        cap = 8
-    if parallelism > cap:
-        parallelism = cap
-    return eff_sandbox, parallelism
+    return bool(opts.get("sandbox", default_sandbox))
 
 
 def _build_dependency_graph(
@@ -474,145 +451,6 @@ def _run_plugin_sequential(
                 error=str(exc),
             )
             return False
-
-
-def _run_parallel_sandbox(
-    report: ExecutionReport,
-    active_items: dict[str, _PluginRecord],
-    children: dict[str, list[str]],
-    indeg: dict[str, int],
-    ready: list[tuple[int, int, str]],
-    ctx: PreCompileContext,
-    project_root: Path,
-    timeout_s: float,
-    parallelism: int,
-    skip_dependents_on_failure: bool,
-    fail_fast: bool,
-    stop_requested=None,
-) -> None:
-    _ctx = mp.get_context("spawn")
-    running: dict[str, tuple[mp.Process, mp.Queue, float]] = {}
-    failed: set[str] = set()
-    while ready or running:
-        if callable(stop_requested):
-            try:
-                if bool(stop_requested()):
-                    for _pid, (proc, q, _st) in list(running.items()):
-                        _stop_process(proc, join_s=0.5)
-                        _cleanup_queue(q)
-                        _add_report_item(
-                            report,
-                            plugin_id=str(_pid),
-                            name=(
-                                active_items.get(_pid).plugin.meta.name
-                                if active_items.get(_pid)
-                                else str(_pid)
-                            ),
-                            success=False,
-                            duration_ms=0.0,
-                            error="annulé par l'utilisateur",
-                        )
-                        _unregister_worker_pid(proc.pid)
-                    running.clear()
-                    kill_active_workers()
-                    return
-            except Exception:
-                pass
-        if fail_fast and failed:
-            # Stop scheduling new plugins and terminate running workers quickly.
-            for _pid, (proc, q, _st) in list(running.items()):
-                _stop_process(proc, join_s=0.5)
-                _cleanup_queue(q)
-            running.clear()
-            break
-
-        while ready and len(running) < parallelism:
-            _, _, pid = heapq.heappop(ready)
-            rec = active_items[pid]
-            if skip_dependents_on_failure:
-                failed_dep = next((d for d in rec.requires if d in failed), None)
-                if failed_dep is not None:
-                    _record_dependency_blocked(
-                        report,
-                        plugin_id=pid,
-                        name=rec.plugin.meta.name,
-                        failed_dep=str(failed_dep),
-                    )
-                    failed.add(pid)
-                    for ch in children[pid]:
-                        indeg[ch] -= 1
-                        if indeg[ch] == 0:
-                            rch = active_items[ch]
-                            heapq.heappush(ready, (rch.priority, rch.insert_idx, ch))
-                    continue
-            q = _ctx.Queue()
-            p = _ctx.Process(
-                target=_plugin_worker,
-                args=(
-                    str(rec.module_path),
-                    pid,
-                    str(project_root),
-                    ctx.config,
-                    q,
-                ),
-            )
-            p.start()
-            _register_worker_pid(p.pid)
-            running[pid] = (p, q, time.perf_counter())
-
-        to_remove: list[str] = []
-        for pid, (proc, q, start_t) in list(running.items()):
-            alive = proc.is_alive()
-            timed_out = False
-            if timeout_s and timeout_s > 0 and alive:
-                if (time.perf_counter() - start_t) >= timeout_s:
-                    timed_out = True
-                    _stop_process(proc, join_s=1.0)
-            if not alive or timed_out:
-                rec = active_items[pid]
-                plg = rec.plugin
-                ok = False
-                if not timed_out:
-                    ok = _record_worker_result(
-                        report,
-                        plugin_id=pid,
-                        name=plg.meta.name,
-                        start_t=start_t,
-                        q=q,
-                    )
-                else:
-                    _record_timeout(
-                        report,
-                        plugin_id=pid,
-                        name=plg.meta.name,
-                        start_t=start_t,
-                        timeout_s=timeout_s,
-                    )
-                if not ok:
-                    failed.add(pid)
-                for ch in children[pid]:
-                    indeg[ch] -= 1
-                    if indeg[ch] == 0:
-                        rch = active_items[ch]
-                        heapq.heappush(ready, (rch.priority, rch.insert_idx, ch))
-                to_remove.append(pid)
-                _cleanup_queue(q)
-                _unregister_worker_pid(proc.pid)
-
-        for pid in to_remove:
-            try:
-                proc, _q, _t = running.pop(pid)
-                if proc.is_alive():
-                    try:
-                        proc.join(0.1)
-                    except Exception:
-                        pass
-                _unregister_worker_pid(proc.pid)
-            except Exception:
-                pass
-
-        if running and not ready:
-            time.sleep(0.01)
 
 
 def _configure_worker_env(config: dict[str, Any]) -> None:
@@ -812,6 +650,18 @@ def _load_plugin_instance(
     return plg
 
 
+# phase_score -> (display_name, min_priority, max_priority)
+PHASES: dict[int, tuple[str, int, int]] = {
+    0: ("Nettoyage", 0, 9),
+    10: ("Validation", 10, 19),
+    20: ("Préparation", 20, 29),
+    30: ("Conformité", 30, 39),
+    40: ("Linting", 40, 49),
+    50: ("Obfuscation", 50, 59),
+    100: ("Défaut", 60, 199),
+}
+
+
 class BCASL:
     """Gestionnaire main des plugins et de leur exécution avant compilation."""
 
@@ -963,14 +813,6 @@ class BCASL:
                             # Enregistrer le plugin
                             pid = plugin_instance.meta.id
                             if pid not in self._registry:
-                                # Appliquer la priorité basée sur les tags si pas déjà définie
-                                # et si la priorité par défaut (100) est utilisée
-                                if plugin_instance.priority == 100:
-                                    tag_priority = _tag_priority_from_tags(
-                                        getattr(plugin_instance.meta, "tags", ())
-                                    )
-                                    if tag_priority != _tag_priority_from_tags([]):
-                                        plugin_instance.priority = tag_priority
                                 self.add_plugin(plugin_instance)
                                 new_ids.append(pid)
                                 is_decorator_plugin = True
@@ -1004,166 +846,16 @@ class BCASL:
                 _logger.error("%s: %s", pkg_dir.name, msg)
         return count, errors
 
-    # Ordonnancement et exécution
-    def _resolve_order_with_tags(self) -> list[str]:
-        """Résout l'ordre d'exécution en respectant dependencies, priorités et tags.
-
-        Utilise le système de tagging pour determiner la priorité d'exécution:
-        - Phase 0: Nettoyage (clean, cleanup, sanitize)
-        - Phase 1: Validation (check, requirements, verify)
-        - Phase 2: Préparation (prepare, generate, install, configure)
-        - Phase 3: Conformité (license, header, normalize, inject)
-        - Phase 4: Linting (lint, format, typecheck, style)
-        - Phase 5: Obfuscation (obfuscate, transpile, protect, encrypt)
-        - Phase 100: Défaut (none tag reconnu)
-        """
-        active_items = {pid: rec for pid, rec in self._registry.items() if rec.active}
-        if not active_items:
-            return []
-
-        # Calculer la priorité basée sur les tags pour chaque plugin
-        tag_priority: dict[str, int] = {}
-        for pid, rec in active_items.items():
-            try:
-                tag_priority[pid] = _tag_priority_from_tags(
-                    getattr(rec.plugin.meta, "tags", ())
-                )
-            except Exception:
-                tag_priority[pid] = _tag_priority_from_tags([])
-
-        default_tag_priority = _tag_priority_from_tags([])
-
-        def _order_key(pid: str) -> tuple[int, int, int, str]:
-            rec = active_items[pid]
-            return (
-                tag_priority.get(pid, default_tag_priority),
-                rec.priority,
-                rec.insert_idx,
-                pid,
-            )
-
-        # Construire graphe des dépendances
-        indeg: dict[str, int] = {pid: 0 for pid in active_items}
-        children: dict[str, list[str]] = {pid: [] for pid in active_items}
-
-        for pid, rec in active_items.items():
-            for dep in rec.requires:
-                if dep not in active_items:
-                    _logger.warning(
-                        "Dépendance manquante pour %s: '%s' (ignorée)", pid, dep
-                    )
-                    continue
-                indeg[pid] += 1
-                children[dep].append(pid)
-
-        # File de départ triée par (tag_priority, priority, insert_idx, id)
-        roots = sorted([pid for pid, d in indeg.items() if d == 0], key=_order_key)
-        order: list[str] = []
-
-        heap: list[tuple[int, int, int, str]] = []
-        for pid in roots:
-            rec = active_items[pid]
-            tag_prio = tag_priority.get(pid, default_tag_priority)
-            heapq.heappush(heap, (tag_prio, rec.priority, rec.insert_idx, pid))
-
-        while heap:
-            _, _, _, pid = heapq.heappop(heap)
-            order.append(pid)
-            for ch in children[pid]:
-                indeg[ch] -= 1
-                if indeg[ch] == 0:
-                    rch = active_items[ch]
-                    tag_prio = tag_priority.get(ch, default_tag_priority)
-                    heapq.heappush(heap, (tag_prio, rch.priority, rch.insert_idx, ch))
-
-        if len(order) != len(active_items):
-            # Cycle détecté; insérer les restants par priorité
-            remaining = [pid for pid in active_items if pid not in order]
-            _logger.error("Cycle de dépendances détecté: %s", ", ".join(remaining))
-            remaining.sort(key=_order_key)
-            order.extend(remaining)
-
-        # Logging lisible des phases d'exécution
-        try:
-            _logger.info("=== Ordre d'exécution des plugins BCASL ===")
-            for i, pid in enumerate(order, 1):
-                rec = active_items[pid]
-                tags = getattr(rec.plugin.meta, "tags", ()) or ()
-                tag_prio = tag_priority.get(pid, default_tag_priority)
-                _logger.info(
-                    "%d. %s (priorité=%d, tag_phase=%d)", i, pid, rec.priority, tag_prio
-                )
-        except Exception:
-            pass
-
-        return order
-
-    def _resolve_order(self) -> list[str]:
-        """Résout l'ordre d'exécution en respectant dependencies et priorités.
-
-        - Filtre les plugins inactifs
-        - Ignore les dependencies inconnues (log warning)
-        - Kahn + file de priorité (priority, insert_idx) pour stabilité
-        - En cas de cycle, journalise et insère les restants par priorité
-        """
-        active_items = {pid: rec for pid, rec in self._registry.items() if rec.active}
-        if not active_items:
-            return []
-
-        # Construire graphe
-        indeg: dict[str, int] = {pid: 0 for pid in active_items}
-        children: dict[str, list[str]] = {pid: [] for pid in active_items}
-
-        for pid, rec in active_items.items():
-            for dep in rec.requires:
-                if dep not in active_items:
-                    _logger.warning(
-                        "Dépendance manquante pour %s: '%s' (ignorée)", pid, dep
-                    )
-                    continue
-                indeg[pid] += 1
-                children[dep].append(pid)
-
-        # File de départ (indeg=0) triée par priorité puis ordre d'insertion
-        roots = sorted(
-            [pid for pid, d in indeg.items() if d == 0],
-            key=lambda x: (active_items[x].priority, active_items[x].insert_idx, x),
-        )
-        order: list[str] = []
-
-        heap: list[tuple[int, int, str]] = []
-        for pid in roots:
-            rec = active_items[pid]
-            heapq.heappush(heap, (rec.priority, rec.insert_idx, pid))
-
-        while heap:
-            _, _, pid = heapq.heappop(heap)
-            order.append(pid)
-            for ch in children[pid]:
-                indeg[ch] -= 1
-                if indeg[ch] == 0:
-                    rch = active_items[ch]
-                    heapq.heappush(heap, (rch.priority, rch.insert_idx, ch))
-
-        if len(order) != len(active_items):
-            # Cycle détecté; insérer les restants par priorité pour ne pas bloquer
-            remaining = [pid for pid in active_items if pid not in order]
-            _logger.error("Cycle de dépendances détecté: %s", ", ".join(remaining))
-            remaining.sort(
-                key=lambda x: (active_items[x].priority, active_items[x].insert_idx, x)
-            )
-            order.extend(remaining)
-        return order
-
     def run_pre_compile(
         self, ctx: Optional[PreCompileContext] = None, stop_requested=None
     ) -> ExecutionReport:
         """Execute le hook 'on_pre_compile' de tous les plugins actifs.
 
-        Optimisations de performance:
-        - Exécution parallèle des plugins sandboxés en respectant dependencies/priorités
-        - Cache optionnel des itérations de files (voir PreCompileContext.iter_files)
-        - Paramètres via options.sandbox, options.plugin_parallelism et env PYCOMPILER_BCASL_PARALLELISM
+        Logic:
+        1. Groupes par phase (tags -> phase score)
+        2. Vérifie si la phase est activée (via self.config["phases"])
+        3. Exécution séquentielle par phase
+        4. Dans chaque phase, exécution parallèle possible si sandbox activée
         """
         if ctx is None:
             ctx = PreCompileContext(self.project_root, self.config)
@@ -1177,74 +869,65 @@ class BCASL:
             self.config
         )
 
-        # Construire graphe des dépendances des plugins actifs
+        # 1. Identifier les plugins actifs
         active_items = {pid: rec for pid, rec in self._registry.items() if rec.active}
         if not active_items:
             _logger.info("Aucun plugin Bcasl actif")
             return report
-        indeg, children = _build_dependency_graph(active_items)
 
-        # File d'attente initiale (indeg=0) triée par (priority, insert_idx, pid)
+        # 2. Groupe par phase
+        phase_groups: dict[int, list[str]] = {}
+        for pid, rec in active_items.items():
+            tags = getattr(rec.plugin.meta, "tags", ())
+            score = _tag_priority_from_tags(tags)
+            phase_groups.setdefault(score, []).append(pid)
 
-        ready = _build_ready_queue(active_items, indeg)
+        # 3. Charger l'état d'activation des phases
+        phases_cfg = self.config.get("phases", {})
+        if not isinstance(phases_cfg, dict):
+            phases_cfg = {}
 
-        # Fallback: si pas de sandbox ou parallélisme=1, revient au mode séquentiel
-        if not eff_sandbox or parallelism <= 1:
-            indeg_seq = dict(indeg)
-            order = _compute_sequential_order(ready, children, indeg_seq, active_items)
+        # 4. Exécuter phases une par une
+        for score in sorted(PHASES.keys()):
+            pname, _, _ = PHASES[score]
+            # Vérifier si la phase est explicitement désactivée
+            if not phases_cfg.get(pname, True):
+                _logger.info("Phase '%s' désactivée par configuration", pname)
+                continue
+
+            p_ids = phase_groups.get(score, [])
+            if not p_ids:
+                continue
+
+            _logger.info("--- Phase: %s ---", pname)
+            
+            # Sous-ensemble d'items pour cette phase
+            p_items = {pid: active_items[pid] for pid in p_ids}
+            indeg, children = _build_dependency_graph(p_items)
+            ready = _build_ready_queue(p_items, indeg)
+
+            # Exécution strictement séquentielle (le parallélisme est interdit)
+            order = _compute_sequential_order(ready, children, indeg, p_items)
             failed_seq: set[str] = set()
-            # Séquentiel sandbox/non-sandbox
             for pid in order:
-                rec = active_items[pid]
+                rec = p_items[pid]
                 if skip_dependents_on_failure:
-                    failed_dep = next(
-                        (d for d in rec.requires if d in failed_seq), None
-                    )
-                    if failed_dep is not None:
-                        _record_dependency_blocked(
-                            report,
-                            plugin_id=pid,
-                            name=rec.plugin.meta.name,
-                            failed_dep=str(failed_dep),
-                        )
+                    failed_dep = next((d for d in rec.requires if d in failed_seq), None)
+                    if failed_dep:
+                        _record_dependency_blocked(report, plugin_id=pid, name=rec.plugin.meta.name, failed_dep=str(failed_dep))
                         failed_seq.add(pid)
-                        if fail_fast:
-                            break
                         continue
-                ok = _run_plugin_sequential(
-                    report,
-                    rec,
-                    ctx,
-                    self.project_root,
-                    self.plugin_timeout_s,
-                    eff_sandbox,
-                    stop_requested=stop_requested,
-                )
+                
+                # Note: On respecte toujours le mode sandbox (processus isolé) si activé, 
+                # mais on lance les plugins l'un après l'autre.
+                ok = _run_plugin_sequential(report, rec, ctx, self.project_root, self.plugin_timeout_s, eff_sandbox, stop_requested)
                 if not ok:
                     failed_seq.add(pid)
-                    if fail_fast:
-                        break
-            _logger.info(report.summary())
-            return report
+                    if fail_fast: return report
 
-        # Exécution parallèle (sandbox True)
-        indeg_par = dict(indeg)
-        _run_parallel_sandbox(
-            report,
-            active_items,
-            children,
-            indeg_par,
-            ready,
-            ctx,
-            self.project_root,
-            self.plugin_timeout_s,
-            parallelism,
-            skip_dependents_on_failure,
-            fail_fast,
-            stop_requested,
-        )
         _logger.info(report.summary())
         return report
+
 
 
 def _plugin_worker(

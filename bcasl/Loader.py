@@ -440,6 +440,17 @@ def _load_workspace_config(workspace_root: Path) -> dict[str, Any]:
         except Exception:
             pass
 
+        # Phases par défaut (toutes activées)
+        default_phases = {
+            "Nettoyage": True,
+            "Validation": True,
+            "Préparation": True,
+            "Conformité": True,
+            "Linting": True,
+            "Obfuscation": True,
+            "Défaut": True,
+        }
+
         default_cfg = {
             "file_patterns": file_patterns,
             "exclude_patterns": exclude_patterns,
@@ -449,6 +460,7 @@ def _load_workspace_config(workspace_root: Path) -> dict[str, Any]:
                 "plugin_parallelism": 0,
                 "iter_files_cache": True,
             },
+            "phases": default_phases,
             "plugins": detected_plugins,
             "plugin_order": plugin_order,
         }

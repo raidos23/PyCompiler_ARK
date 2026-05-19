@@ -116,15 +116,15 @@ def _apply_themed_icon(widget: QPushButton, icon_name: str, size: int = 18) -> N
 # Constantes
 # ---------------------------------------------------------------------------
 
-# phase_score → (display_name, min_priority, max_priority)
-SECTION_PHASES: dict[int, tuple[str, int, int]] = {
-    0:   ("Nettoyage",    0,   9),
-    10:  ("Validation",   10,  19),
-    20:  ("Préparation",  20,  29),
-    30:  ("Conformité",   30,  39),
-    40:  ("Linting",      40,  49),
-    50:  ("Obfuscation",  50,  59),
-    100: ("Défaut",       60,  199),
+# phase_score → (display_name, description)
+SECTION_PHASES: dict[int, tuple[str, str]] = {
+    0:   ("Nettoyage",    "Nettoyage et hygiène du workspace"),
+    10:  ("Validation",   "Validation et vérification des prérequis"),
+    20:  ("Préparation",  "Préparation et génération des ressources"),
+    30:  ("Conformité",   "Conformité et injection de headers"),
+    40:  ("Linting",      "Linting, formatage et vérification de type"),
+    50:  ("Obfuscation",  "Obfuscation, protection et transpilation"),
+    100: ("Défaut",       "Autres actions (phase par défaut)"),
 }
 
 # Tag → score de phase
@@ -141,16 +141,16 @@ def _phase_score_for_tags(tags: list[str]) -> int:
     return min(scores) if scores else 100
 
 
-def _section_for_phase(score: int) -> tuple[int, str, int, int]:
-    """Retourne (key, name, min_prio, max_prio) pour un score de phase."""
+def _section_for_phase(score: int) -> tuple[int, str]:
+    """Retourne (key, name) pour un score de phase."""
     # Trouver la section dont le score correspond
     for key in sorted(SECTION_PHASES):
         if score == key:
-            name, lo, hi = SECTION_PHASES[key]
-            return key, name, lo, hi
+            name, _ = SECTION_PHASES[key]
+            return key, name
     # Section par défaut
-    name, lo, hi = SECTION_PHASES[100]
-    return 100, name, lo, hi
+    name, _ = SECTION_PHASES[100]
+    return 100, name
 
 
 # ---------------------------------------------------------------------------
@@ -204,25 +204,17 @@ class _PluginRow(QFrame):
     sig_move_up   = Signal(str)   # plugin_id
     sig_move_down  = Signal(str)
     sig_enabled    = Signal(str, bool)
-    sig_priority   = Signal(str, int)
 
     def __init__(
         self,
         pid: str,
         name: str,
-        priority: int,
         enabled: bool,
-        min_prio: int,
-        max_prio: int,
-        expert_ref: "list[bool]",
         config: Optional[dict] = None,
         parent: Optional[QWidget] = None,
     ) -> None:
         super().__init__(parent)
         self.pid = pid
-        self._min = min_prio
-        self._max = max_prio
-        self._expert_ref = expert_ref   # [bool] mutable reference
         self.config: dict[str, Any] = dict(config or {})
         self._on_save_cb = None
 
@@ -240,27 +232,10 @@ class _PluginRow(QFrame):
         self.chk.toggled.connect(lambda v: self.sig_enabled.emit(self.pid, v))
         row.addWidget(self.chk)
 
-        # Icône warning
-        self.lbl_warn = QLabel("⚠️")
-        self.lbl_warn.setFixedWidth(24)
-        self.lbl_warn.setVisible(False)
-        row.addWidget(self.lbl_warn)
-
         # Nom plugin
         self.lbl_name = QLabel(name or pid)
         self.lbl_name.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
         row.addWidget(self.lbl_name)
-
-        # Label "priority"
-        row.addWidget(QLabel("priority"))
-
-        # Spinbox priorité
-        self.spin = QSpinBox()
-        self.spin.setRange(0, 999)
-        self.spin.setValue(priority)
-        self.spin.setFixedWidth(70)
-        self.spin.valueChanged.connect(self._on_priority_changed)
-        row.addWidget(self.spin)
 
         # Boutons ↑ ↓
         self.btn_up = QPushButton()
@@ -277,44 +252,9 @@ class _PluginRow(QFrame):
         self.btn_down.clicked.connect(lambda: self.sig_move_down.emit(self.pid))
         row.addWidget(self.btn_down)
 
-        self._refresh_warning()
+        self.setStyleSheet("QFrame#PluginRow { background: transparent; border: none; }")
 
     # ------------------------------------------------------------------
-
-    def _on_priority_changed(self, val: int) -> None:
-        self._refresh_warning()
-        self.sig_priority.emit(self.pid, val)
-
-    def _refresh_warning(self) -> None:
-        """Met à jour l'indicateur ⚠️ et les styles selon expert mode et valeur."""
-        expert = bool(self._expert_ref[0]) if self._expert_ref else False
-        val = self.spin.value()
-        out_of_range = not (self._min <= val <= self._max)
-
-        if expert or not out_of_range:
-            self.lbl_warn.setVisible(False)
-            # Utilise un fond transparent pour laisser voir le fond de la section
-            self.setStyleSheet("QFrame#PluginRow { background: transparent; border: none; }")
-            self.spin.setStyleSheet("")
-        else:
-            self.lbl_warn.setVisible(True)
-            self.lbl_warn.setToolTip(
-                f"⚠️ Priorité {val} hors de la plage recommandée ({self._min}-{self._max}).\n"
-                "L'ordre d'exécution peut être inattendu.\n"
-                "Utilisez le mode Expert pour désactiver les avertissements."
-            )
-            colors = _get_bcasl_colors()
-            self.setStyleSheet(f"QFrame#PluginRow {{ background: {colors['warn_bg']}; border: 1px solid {colors['warn_border']}; border-radius: 4px; }}")
-            self.spin.setStyleSheet(f"QSpinBox {{ border: 2px solid {colors['warn_border']}; }}")
-
-    def refresh_expert(self) -> None:
-        """Appelé quand expert mode change."""
-        expert = bool(self._expert_ref[0]) if self._expert_ref else False
-        if expert:
-            self.spin.setRange(0, 999)
-        else:
-            self.spin.setRange(0, 999)  # toujours libre en saisie, warning géré visuellement
-        self._refresh_warning()
 
     # ------------------------------------------------------------------
     # Accesseurs
@@ -323,16 +263,11 @@ class _PluginRow(QFrame):
     def is_enabled(self) -> bool:
         return self.chk.isChecked()
 
-    @property
-    def priority_value(self) -> int:
-        return self.spin.value()
-
     def snapshot(self) -> dict[str, Any]:
-        return {"pid": self.pid, "enabled": self.is_enabled, "priority": self.priority_value}
+        return {"pid": self.pid, "enabled": self.is_enabled}
 
     def restore(self, snap: dict[str, Any]) -> None:
         self.chk.setChecked(bool(snap.get("enabled", True)))
-        self.spin.setValue(int(snap.get("priority", 0)))
 
 
 # ---------------------------------------------------------------------------
@@ -348,21 +283,15 @@ class _SectionWidget(QGroupBox):
         self,
         phase_key: int,
         name: str,
-        min_prio: int,
-        max_prio: int,
-        expert_ref: "list[bool]",
         parent: Optional[QWidget] = None,
     ) -> None:
         super().__init__(parent)
         self.phase_key = phase_key
         self._name = name
-        self._min = min_prio
-        self._max = max_prio
-        self._expert_ref = expert_ref
         self._rows: list[_PluginRow] = []
 
         # Titre natif du GroupBox
-        self.setTitle(f"{name} ({min_prio}–{max_prio})")
+        self.setTitle(name)
         
         # Rendre le GroupBox collapsible via la checkbox native
         self.setCheckable(True)
@@ -388,7 +317,6 @@ class _SectionWidget(QGroupBox):
         row.sig_move_up.connect(self._on_move_up)
         row.sig_move_down.connect(self._on_move_down)
         row.sig_enabled.connect(lambda _pid, _v: self.sig_changed.emit())
-        row.sig_priority.connect(lambda _pid, _v: self.sig_changed.emit())
         # S'assurer que la visibilité suit l'état actuel du toggle
         row.setVisible(self.isChecked())
         # Mettre à jour l'état des boutons ↑/↓ pour toute la section
@@ -496,9 +424,6 @@ class BcaslPipelineDialog(QDialog):
         except Exception:
             self._ark_cfg = {}
 
-        # Expert mode : liste mutable partagée avec les rows
-        self._expert: list[bool] = [False]
-
         # Undo / Redo stacks
         self._undo_stack: list[Any] = []
         self._redo_stack: list[Any] = []
@@ -575,10 +500,6 @@ class BcaslPipelineDialog(QDialog):
 
         # Barre du bas
         bottom = QHBoxLayout()
-        self._chk_expert = QCheckBox(self._gui.tr("Mode Expert (priorités libres)", "Expert mode (any priority)"))
-        self._chk_expert.setChecked(False)
-        self._chk_expert.toggled.connect(self._on_expert_toggled)
-        bottom.addWidget(self._chk_expert)
         bottom.addStretch(1)
 
         btn_cancel = QPushButton(self._gui.tr("Annuler", "Cancel"))
@@ -610,6 +531,11 @@ class BcaslPipelineDialog(QDialog):
         plugins_raw = self._cfg.get("plugins", {}) if isinstance(self._cfg, dict) else {}
         plugin_list = _read_plugin_list(plugins_raw)
 
+        # Charger l'état des phases
+        phases_cfg = self._cfg.get("phases", {})
+        if not isinstance(phases_cfg, dict):
+            phases_cfg = {}
+
         # Construire un mapping pid → entry
         pid_entry: dict[str, dict[str, Any]] = {}
         for entry in plugin_list:
@@ -629,7 +555,7 @@ class BcaslPipelineDialog(QDialog):
             score = _phase_score_for_tags(list(tags))
             phase_groups.setdefault(score, []).append((pid, entry))
 
-        # Trier chaque groupe par priorité
+        # Trier chaque groupe par priorité (ordre initial)
         for score in phase_groups:
             phase_groups[score].sort(key=lambda x: int(x[1].get("priority", 0)))
 
@@ -640,9 +566,14 @@ class BcaslPipelineDialog(QDialog):
         for score in sorted(SECTION_PHASES.keys()):
             if score not in phase_groups:
                 continue
-            key_name, lo, hi = SECTION_PHASES[score]
-            section = _SectionWidget(score, key_name, lo, hi, self._expert)
+            key_name, desc = SECTION_PHASES[score]
+            section = _SectionWidget(score, key_name)
+            section.setToolTip(desc)
             section.sig_changed.connect(self._on_any_change)
+
+            # Appliquer l'état d'activation de la phase
+            if key_name in phases_cfg:
+                section.setChecked(bool(phases_cfg[key_name]))
 
             for pid, entry in phase_groups[score]:
                 meta = self._meta_map.get(pid, {})
@@ -652,11 +583,7 @@ class BcaslPipelineDialog(QDialog):
                 row = _PluginRow(
                     pid=pid,
                     name=label,
-                    priority=int(entry.get("priority", 0)),
                     enabled=bool(entry.get("enabled", True)),
-                    min_prio=lo,
-                    max_prio=hi,
-                    expert_ref=self._expert,
                     config=dict(entry.get("config", {})),
                 )
                 section.add_row(row)
@@ -813,21 +740,30 @@ class BcaslPipelineDialog(QDialog):
                 f"Impossible de mettre à jour ark.yml: {e}"
             )
 
-        # 2) Construire la liste ordonnée de plugins pour bcasl.yml
+        # 2) Construire la liste ordonnée de plugins pour bcasl.yml et l'état des phases
         ordered: list[dict[str, Any]] = []
+        phases_state: dict[str, bool] = {}
+        
+        # Le backend utilise rec.priority pour ordonner dans une phase.
+        # On assigne un index global incrémental pour refléter l'ordre visuel.
+        current_prio = 0
+        
         for section in self._sections:
+            phases_state[section._name] = section.isChecked()
             for row in section.rows:
                 cfg_for_row = plugin_configs.get(row.pid, row.config or {})
                 ordered.append({
                     "name": row.pid,
                     "enabled": row.is_enabled,
-                    "priority": row.priority_value,
+                    "priority": current_prio,
                     "config": cfg_for_row,
                 })
+                current_prio += 1
 
         # Construire la config de sortie pour bcasl.yml
         cfg_out: dict[str, Any] = dict(self._cfg) if isinstance(self._cfg, dict) else {}
         cfg_out["plugins"] = _plugins_list_to_yaml(ordered)
+        cfg_out["phases"] = phases_state
         # plugin_order maintient la compatibilité avec l'ancien loader
         cfg_out["plugin_order"] = [e["name"] for e in ordered]
         
