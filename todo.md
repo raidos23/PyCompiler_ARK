@@ -50,6 +50,6 @@ inclusion_patterns:
 
   dans Core/Configs il faut eviter la retro compatibilité et revoir
 
-## VenvManager []
+## VenvManager [x]
 
 dans venvmanager les logique comme celle de la generation de la reuirments etc ne doit normalement pas être dedans mais plutot gerer par le depsanalyser qui dispose de tout la technologie de pointe pour une fiablité .  pour reduire le niveau de complexité inutile n'est rtil pas mieux que venvmanager ne gere que pip comme gestionnaiaire ?? si oui fait un plan
