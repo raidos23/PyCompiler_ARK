@@ -181,9 +181,17 @@ class WorkspaceDialog:
             # Filtrer et ajouter à l'UI
             from Core.Configs import load_ark_config, should_exclude_file
             ark_config = load_ark_config(folder)
-            exclusion_patterns = ark_config.get("exclusion_patterns", [])
-            
-            added_count = 0
+
+            workspace_cfg = ark_config.get("workspace", {})
+            exclusion_patterns = []
+            if isinstance(workspace_cfg, dict):
+                exclusion_patterns = workspace_cfg.get("exclude", [])
+
+            # Suppression de la rétro-compatibilité avec exclusion_patterns racine
+            # exclusion_patterns = ark_config.get("exclusion_patterns", [])
+
+            for f in files:
+
             excluded_count = 0
             
             import time

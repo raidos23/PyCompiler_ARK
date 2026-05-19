@@ -7,36 +7,12 @@ Pour la priorité l'on ne va plus utiliser la logique de priorité ...l'executio
  ## Cli 
  les options de run bcasl ne sont pas encore fonctionnelle il faut les corriger. il faut que bcasl ne fasse pus de paralellism cest interdit.
  
- 
+
 
 le bcasl.yml ne doit plus contenir :
 
-file_patterns:
-- '**/*.py'
-exclude_patterns:
-- .ark/**
-- '**/__pycache__/**'
-- '**/*.pyc'
-- '**/*.pyo'
-- '**/*.pyd'
-- .git/**
-- .svn/**
-- .hg/**
-- venv/**
-- .venv/**
-- env/**
-- .env/**
-- node_modules/**
-- build/**
-- dist/**
-- '*.spec'
-- '*.egg-info/**'
-- .pytest_cache/**
-- .mypy_cache/**
-- .tox/**
-- site-packages/**
 
-## ark.yml []
+## ark.yml [x]
 
 ark.yml ne doit plus contenir :
 

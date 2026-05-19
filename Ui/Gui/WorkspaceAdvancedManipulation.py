@@ -56,7 +56,10 @@ class WorkspaceAdvancedManipulation:
         )
         if files:
             ark_config = load_ark_config(workspace_dir) if workspace_dir else {}
-            exclusion_patterns = ark_config.get("exclusion_patterns", [])
+            workspace_cfg = ark_config.get("workspace", {})
+            exclusion_patterns = []
+            if isinstance(workspace_cfg, dict):
+                exclusion_patterns = workspace_cfg.get("exclude", [])
             valid_files = []
             excluded = 0
             for f in files:
@@ -137,7 +140,10 @@ class WorkspaceAdvancedManipulation:
         excluded = 0
         workspace_dir = getattr(gui_instance, "workspace_dir", None)
         ark_config = load_ark_config(workspace_dir) if workspace_dir else {}
-        exclusion_patterns = ark_config.get("exclusion_patterns", [])
+        workspace_cfg = ark_config.get("workspace", {})
+        exclusion_patterns = []
+        if isinstance(workspace_cfg, dict):
+            exclusion_patterns = workspace_cfg.get("exclude", [])
 
         for url in urls:
             path = url.toLocalFile()

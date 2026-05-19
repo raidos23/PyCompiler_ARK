@@ -331,8 +331,8 @@ def validate_payload(file_id: str, data: Any) -> tuple[list[str], list[str]]:
 
     if file_id == "ark":
         allowed_top = {
-            "exclusion_patterns",
-            "inclusion_patterns",
+            "project",
+            "workspace",
             "dependencies",
             "environment_manager",
             "build",
@@ -342,13 +342,29 @@ def validate_payload(file_id: str, data: Any) -> tuple[list[str], list[str]]:
         if unknown:
             warns.append("Unknown top-level keys: " + ", ".join(unknown))
 
-        for key in ("exclusion_patterns", "inclusion_patterns"):
-            v = data.get(key)
-            if v is not None and (
-                not isinstance(v, list)
-                or not all(isinstance(item, str) for item in v)
-            ):
-                errs.append(f"{key} must be a list of strings.")
+        # Validation de 'project'
+        project = data.get("project")
+        if project is not None:
+            if not isinstance(project, dict):
+                errs.append("project must be an object.")
+            else:
+                for k in ("name", "version", "entry"):
+                    v = project.get(k)
+                    if v is not None and not isinstance(v, str):
+                        errs.append(f"project.{k} must be a string.")
+
+        # Validation de 'workspace'
+        workspace_cfg = data.get("workspace")
+        if workspace_cfg is not None:
+            if not isinstance(workspace_cfg, dict):
+                errs.append("workspace must be an object.")
+            else:
+                exclude = workspace_cfg.get("exclude")
+                if exclude is not None and (
+                    not isinstance(exclude, list)
+                    or not all(isinstance(item, str) for item in exclude)
+                ):
+                    errs.append("workspace.exclude must be a list of strings.")
 
         build = data.get("build")
         if build is not None and not isinstance(build, dict):
