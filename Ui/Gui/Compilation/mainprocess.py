@@ -48,7 +48,7 @@ from Ui.Gui.Compilation.compiler import (
 from Core.Configs import (
     load_ark_config,
     should_exclude_file,
-    DEFAULT_EXCLUSION_PATTERNS,
+    DEFAULT_EXCLUDE_PATTERNS,
 )
 
 from Core.Compiler.engine_runner import (
@@ -462,10 +462,13 @@ class MainProcess(QObject):
         if self._workspace_dir:
             try:
                 config = load_ark_config(self._workspace_dir)
-                return config.get("exclusion_patterns", DEFAULT_EXCLUSION_PATTERNS)
+                # On utilise la nouvelle structure workspace: exclude
+                workspace_cfg = config.get("workspace", {})
+                if isinstance(workspace_cfg, dict):
+                    return workspace_cfg.get("exclude", DEFAULT_EXCLUDE_PATTERNS)
             except Exception:
                 pass
-        return DEFAULT_EXCLUSION_PATTERNS
+        return DEFAULT_EXCLUDE_PATTERNS
 
     def should_exclude(self, file_path: str) -> bool:
         """

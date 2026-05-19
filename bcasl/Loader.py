@@ -428,11 +428,12 @@ def _load_workspace_config(workspace_root: Path) -> dict[str, Any]:
 
             ark_config = load_ark_config(str(workspace_root))
 
-            if "inclusion_patterns" in ark_config:
-                file_patterns = ark_config["inclusion_patterns"]
+            # exclusion_patterns est désormais dans workspace: exclude
+            workspace_cfg = ark_config.get("workspace", {})
+            if isinstance(workspace_cfg, dict):
+                exclude_patterns = workspace_cfg.get("exclude", exclude_patterns)
 
-            if "exclusion_patterns" in ark_config:
-                exclude_patterns = ark_config["exclusion_patterns"]
+            # inclusion_patterns n'est plus supporté (l'exclusion suffit)
 
             plugin_opts = ark_config.get("plugins", {})
             if "plugin_timeout" in plugin_opts:

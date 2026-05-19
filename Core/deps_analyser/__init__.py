@@ -38,6 +38,8 @@ from .analyser import (
     _on_dep_pip_finished,
     _on_dep_pip_output,
     suggest_missing_dependencies,
+    collect_project_dependencies,
+    write_requirements_txt,
 )
 
 __all__ = [
@@ -47,4 +49,6 @@ __all__ = [
     "_on_dep_pip_finished",
     "suggest_missing_dependencies",
     "_on_dep_pip_output",
+    "collect_project_dependencies",
+    "write_requirements_txt",
 ]

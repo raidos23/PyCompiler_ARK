@@ -130,13 +130,8 @@ DEFAULT_ENVIRONMENT_MANAGER_OPTIONS: dict[str, Any] = {
     "fallback_to_pip": True,
 }
 
-# Alias kept for backward compatibility
-DEFAULT_EXCLUSION_PATTERNS = DEFAULT_EXCLUDE_PATTERNS
-
 DEFAULT_CONFIG: dict[str, Any] = {
     **deepcopy(DEFAULT_ARK_CONFIG),
-    "exclusion_patterns": list(DEFAULT_EXCLUDE_PATTERNS),
-    "inclusion_patterns": ["**/*.py"],
     "dependencies": deepcopy(DEFAULT_DEPENDENCY_OPTIONS),
     "environment_manager": deepcopy(DEFAULT_ENVIRONMENT_MANAGER_OPTIONS),
     "build": {
@@ -209,12 +204,6 @@ def _looks_like_semver(value: str) -> bool:
 def _compatibility_view(config: dict[str, Any]) -> dict[str, Any]:
     normalized = normalize_ark_config(config)
     view = deepcopy(normalized)
-    workspace_cfg = view.get("workspace")
-    if not isinstance(workspace_cfg, dict):
-        workspace_cfg = {}
-    excludes = list(workspace_cfg.get("exclude") or DEFAULT_EXCLUDE_PATTERNS)
-    view["exclusion_patterns"] = excludes
-    view["inclusion_patterns"] = list(config.get("inclusion_patterns") or ["**/*.py"])
     view["dependencies"] = _deep_merge_dict(
         DEFAULT_DEPENDENCY_OPTIONS,
         config.get("dependencies") if isinstance(config.get("dependencies"), dict) else {},
@@ -235,24 +224,43 @@ def _compatibility_view(config: dict[str, Any]) -> dict[str, Any]:
 # ── Public API — workspace config ─────────────────────────────────────────────
 
 def normalize_ark_config(config: dict[str, Any]) -> dict[str, Any]:
-    merged = _deep_merge_dict(DEFAULT_ARK_CONFIG, config or {})
+    """Normalise une configuration brute en un dictionnaire canonique.
 
+    Cette version ne gère plus la rétro-compatibilité avec 'exclusion_patterns'
+    et 'inclusion_patterns' au niveau racine. Ces réglages doivent désormais
+    être exclusivement gérés dans 'workspace: exclude'.
+    """
+    if not isinstance(config, dict):
+        config = {}
+
+    # Fusion avec les valeurs par défaut
+    merged = _deep_merge_dict(DEFAULT_ARK_CONFIG, config)
+
+    # Nettoyage explicite des clés obsolètes si présentes
+    merged.pop("exclusion_patterns", None)
+    merged.pop("inclusion_patterns", None)
+
+    # Normalisation de la section 'project'
     project = merged.get("project")
     if not isinstance(project, dict):
         project = {}
     project_name = str(project.get("name") or "").strip()
     project_version = str(project.get("version") or "").strip() or "1.0.0"
+    
+    # Récupération de l'entrypoint (support build.entrypoint comme legacy interne)
     build_for_entry = merged.get("build")
     if not isinstance(build_for_entry, dict):
         build_for_entry = {}
     legacy_entry = build_for_entry.get("entrypoint")
     project_entry = str(project.get("entry") or legacy_entry or "").strip()
+    
     merged["project"] = {
         "name": project_name,
         "version": project_version,
         "entry": project_entry,
     }
 
+    # Normalisation de la section 'workspace'
     workspace_cfg = merged.get("workspace")
     if not isinstance(workspace_cfg, dict):
         workspace_cfg = {}
@@ -260,6 +268,7 @@ def normalize_ark_config(config: dict[str, Any]) -> dict[str, Any]:
         "exclude": _normalize_workspace_exclude(workspace_cfg.get("exclude")),
     }
 
+    # Normalisation de la section 'build'
     build = merged.get("build")
     if not isinstance(build, dict):
         build = {}
@@ -272,6 +281,7 @@ def normalize_ark_config(config: dict[str, Any]) -> dict[str, Any]:
     if isinstance(icon_value, str) and icon_value.strip():
         normalized_build["icon"] = icon_value.strip()
     merged["build"] = normalized_build
+
     return merged
 
 
@@ -608,7 +618,6 @@ __all__ = [
     "DEFAULT_ARK_CONFIG",
     "DEFAULT_CONFIG",
     "DEFAULT_EXCLUDE_PATTERNS",
-    "DEFAULT_EXCLUSION_PATTERNS",
     "DEFAULT_DEPENDENCY_OPTIONS",
     "DEFAULT_ENVIRONMENT_MANAGER_OPTIONS",
     "create_default_ark_config",

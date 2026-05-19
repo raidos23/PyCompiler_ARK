@@ -21,6 +21,7 @@ import os
 import platform
 import re
 import subprocess
+import sys
 import yaml
 from importlib.metadata import distribution, PackageNotFoundError
 
@@ -707,6 +708,145 @@ def _find_pip_executable(venv_path: str = None, workspace_dir: str = None) -> tu
 
     # Fallback ultime
     return (sys.executable, ["-m", "pip"])
+
+
+# --- Project-wide Dependency Collection & Requirements Generation ---
+
+def collect_project_dependencies(workspace_dir: str, include_dev: bool = False) -> set[str]:
+    """
+    Collect all third-party dependencies by scanning project files and imports.
+    This is the core logic to replace VenvManager's fragmented detection.
+    """
+    workspace_dir = _normalize_realpath(workspace_dir)
+    if not workspace_dir or not os.path.isdir(workspace_dir):
+        return set()
+
+    all_deps: set[str] = set()
+
+    # 1. Scan configuration files (high priority, more accurate than imports)
+    
+    # pyproject.toml
+    pyproject_path = os.path.join(workspace_dir, "pyproject.toml")
+    if os.path.isfile(pyproject_path):
+        data = _load_toml_file(pyproject_path)
+        # Standard [project] dependencies
+        project = data.get("project", {})
+        if isinstance(project, dict):
+            deps = project.get("dependencies", [])
+            if isinstance(deps, list):
+                for d in deps:
+                    name = re.split(r"[<>=!~\s]", str(d))[0].strip()
+                    if name:
+                        all_deps.add(name)
+            if include_dev:
+                opt_deps = project.get("optional-dependencies", {})
+                if isinstance(opt_deps, dict):
+                    for group in opt_deps.values():
+                        if isinstance(group, list):
+                            for d in group:
+                                name = re.split(r"[<>=!~\s]", str(d))[0].strip()
+                                if name:
+                                    all_deps.add(name)
+
+        # Poetry [tool.poetry.dependencies]
+        tool = data.get("tool", {})
+        if isinstance(tool, dict):
+            poetry = tool.get("poetry", {})
+            if isinstance(poetry, dict):
+                p_deps = poetry.get("dependencies", {})
+                if isinstance(p_deps, dict):
+                    for name in p_deps.keys():
+                        if name.lower() != "python":
+                            all_deps.add(name)
+                if include_dev:
+                    d_deps = poetry.get("group", {}).get("dev", {}).get("dependencies", {})
+                    if isinstance(d_deps, dict):
+                        for name in d_deps.keys():
+                            all_deps.add(name)
+                    # Legacy poetry dev-dependencies
+                    legacy_dev = poetry.get("dev-dependencies", {})
+                    if isinstance(legacy_dev, dict):
+                        for name in legacy_dev.keys():
+                            all_deps.add(name)
+
+    # setup.py (very basic regex as we shouldn't execute it)
+    setup_py = os.path.join(workspace_dir, "setup.py")
+    if os.path.isfile(setup_py):
+        try:
+            with open(setup_py, "r", encoding="utf-8", errors="ignore") as f:
+                content = f.read()
+            # Simple match for install_requires=[...]
+            matches = re.findall(r"install_requires\s*=\s*\[(.*?)\]", content, re.DOTALL)
+            for m in matches:
+                for line in m.split(","):
+                    line = line.strip().strip("\"'")
+                    if line:
+                        name = re.split(r"[<>=!~\s]", line)[0].strip()
+                        if name:
+                            all_deps.add(name)
+        except Exception:
+            pass
+
+    # Pipfile
+    pipfile_path = os.path.join(workspace_dir, "Pipfile")
+    if os.path.isfile(pipfile_path):
+        try:
+            with open(pipfile_path, "r", encoding="utf-8", errors="ignore") as f:
+                content = f.read()
+            match = re.search(r"\[packages\](.*?)(?=\[|$)", content, re.DOTALL)
+            if match:
+                for line in match.group(1).splitlines():
+                    line = line.strip()
+                    if line and not line.startswith("#") and "=" in line:
+                        name = line.split("=")[0].strip().strip("\"'")
+                        if name:
+                            all_deps.add(name)
+        except Exception:
+            pass
+
+    # 2. Scan imports in all Python files (fallback/validation)
+    modules_from_imports = set()
+    for root, dirs, files in os.walk(workspace_dir):
+        # Skip common non-source directories
+        dirs[:] = [d for d in dirs if d not in (".venv", "venv", ".env", "env", "__pycache__", ".git", "build", "dist")]
+        for file in files:
+            if file.endswith(".py"):
+                file_path = os.path.join(root, file)
+                try:
+                    modules_from_imports.update(_extract_imported_modules_from_file(file_path, workspace_dir))
+                except Exception:
+                    pass
+    
+    # Filter and classify modules from imports
+    for m in modules_from_imports:
+        origin = _classify_module_origin(m, workspace_dir)
+        if origin in ("third_party", "unknown"):
+            all_deps.add(m)
+
+    return all_deps
+
+def write_requirements_txt(workspace_dir: str, output_path: str | None = None, include_dev: bool = False) -> str | None:
+    """
+    Generate a requirements.txt file based on project analysis.
+    Returns the path to the written file, or None on failure.
+    """
+    try:
+        deps = collect_project_dependencies(workspace_dir, include_dev=include_dev)
+        if not deps:
+            return None
+            
+        if not output_path:
+            output_path = os.path.join(workspace_dir, "requirements.txt")
+            
+        with open(output_path, "w", encoding="utf-8") as f:
+            f.write("# Auto-generated by PyCompiler ARK DepsAnalyser\n")
+            f.write("# Generated from project imports and configuration files\n\n")
+            for dep in sorted(deps):
+                f.write(f"{dep}\n")
+        
+        return output_path
+    except Exception:
+        return None
 
 
 def suggest_missing_dependencies(self):

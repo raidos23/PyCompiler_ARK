@@ -212,7 +212,11 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
         # Logique UI pour ajouter les fichiers
         from Core.Configs import load_ark_config, should_exclude_file
         ark_config = load_ark_config(self.workspace_dir) if self.workspace_dir else {}
-        exclusion_patterns = ark_config.get("exclusion_patterns", [])
+        
+        workspace_cfg = ark_config.get("workspace", {})
+        exclusion_patterns = []
+        if isinstance(workspace_cfg, dict):
+            exclusion_patterns = workspace_cfg.get("exclude", [])
         
         added = 0
         for f in files:
