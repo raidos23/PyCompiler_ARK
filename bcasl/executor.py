@@ -295,12 +295,14 @@ def _resolve_reliability_options(config: dict[str, Any]) -> tuple[bool, bool]:
 
 def _resolve_exec_options(
     config: dict[str, Any], default_sandbox: bool
-) -> bool:
+) -> tuple[bool, int]:
     try:
         opts = dict(config or {}).get("options", {}) if isinstance(config, dict) else {}
     except Exception:
         opts = {}
-    return bool(opts.get("sandbox", default_sandbox))
+    sandbox = bool(opts.get("sandbox", default_sandbox))
+    parallelism = int(opts.get("plugin_parallelism", 0))
+    return sandbox, parallelism
 
 
 def _build_dependency_graph(
