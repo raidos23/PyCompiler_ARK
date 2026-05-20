@@ -23,6 +23,6 @@ Ce module manage toutes les opérations liées au workspace:
 """
 
 from .SetupWorkspace import SetupWorkspace
-from .WorkspaceAdvancedManipulation import get_workspace_status
+from .WorkspaceManipulation import get_workspace_status
 
 __all__ = ["SetupWorkspace", "get_workspace_status"]

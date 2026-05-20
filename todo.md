@@ -56,5 +56,10 @@ dans venvmanager les logique comme celle de la generation de la reuirments etc n
 
 ## refactor: Séparation Core(logique métier) et Ui(interface utilisateur ou de pilotage) []
 
-Core/SysDependencyManager.py doit purement contenir de la logique metier et son usage gui sera dans Ui/Gui/Dialogs/.
-Services/AdvancedAuth.py doit purement contenir la logique service et son usage gui sera dans Ui/Gui/Dialogs/.
+[] Core/SysDependencyManager.py doit purement contenir de la logique metier et son usage   gui sera dans Ui/Gui/Dialogs/.
+
+[] Services/AdvancedAuth.py doit purement contenir la logique service et son usage gui sera dans Ui/Gui/Dialogs/.
+
+[] Mettre la logique metier de Ui/Gui/WorkspaceManipulation.py dans Core/WorkspaceManager/WorkspaceManipulation.py.
+
+[] pour Core/VenvManager/Manager.py ,garder la logique metier dans Core et déplacer la logique gui dans Ui/Gui/Dialogs/VenvDialog.py .
