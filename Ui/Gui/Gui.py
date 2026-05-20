@@ -39,7 +39,7 @@ from Ui.i18n import (
 )
 
 from Ui.Gui.UiFeatures import UiFeatures
-from Ui.Gui.WorkspaceAdvancedManipulation import WorkspaceAdvancedManipulation
+from Ui.Gui.WorkspaceManipulation import WorkspaceAdvancedManipulation
 from Ui.Gui.Dialogs.WorkspaceDialog import WorkspaceDialog
 
 
