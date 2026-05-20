@@ -459,7 +459,7 @@ def get_current_language_sync() -> str:
     """Return current language from user preferences (sync)."""
     try:
         # Absolute import to avoid relative-import issues outside Core package
-        from Core.PreferencesManager import PREFS_FILE
+        from Ui.PreferencesManager import PREFS_FILE
 
         if os.path.isfile(PREFS_FILE):
             with open(PREFS_FILE, encoding="utf-8") as f:

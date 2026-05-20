@@ -84,35 +84,13 @@ def load_preferences(self):
                 # Dernier recours: fichier à la racine du cwd
                 with open(PREFS_BASENAME, encoding="utf-8") as f:
                     prefs = json.load(f)
-        self.icon_path = prefs.get("icon_path", None)
-        self.opt_onefile_state = prefs.get("opt_onefile", False)
-        self.opt_windowed_state = prefs.get("opt_windowed", False)
-        self.opt_noconfirm_state = prefs.get("opt_noconfirm", False)
-        self.opt_clean_state = prefs.get("opt_clean", False)
-        self.opt_noupx_state = prefs.get("opt_noupx", False)
-        self.opt_main_only_state = prefs.get("opt_main_only", False)
-        self.opt_debug_state = prefs.get("opt_debug", False)
-        self.opt_auto_install_state = prefs.get("auto_install", True)
-        # self.custom_args_text supprimé (widget supprimé)
-        self.output_dir = prefs.get("output_dir", "")
-        # Préférence de langue (conserve "System" si choisi)
+        
         self.language_pref = prefs.get("language_pref", prefs.get("language", "System"))
         # Compat: conserver self.language utilisé ailleurs
         self.language = self.language_pref
         # Thème UI
         self.theme = prefs.get("theme", "System")
     except Exception:
-        self.icon_path = None
-        self.opt_onefile_state = False
-        self.opt_windowed_state = False
-        self.opt_noconfirm_state = False
-        self.opt_clean_state = False
-        self.opt_noupx_state = False
-        self.opt_main_only_state = False
-        self.opt_debug_state = False
-        self.opt_auto_install_state = True
-        # self.custom_args_text supprimé (widget supprimé)
-        self.output_dir = ""
         # Préférence de langue par défaut
         self.language_pref = "System"
         self.language = "System"

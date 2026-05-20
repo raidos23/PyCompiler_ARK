@@ -197,7 +197,7 @@ class CompilerEngine:
             if system_tools:
                 try:
                     # Import and use SysDependencyManager directly for full GUI support
-                    from Core.sys_deps import (
+                    from Core.SysDependencyManager import (
                         SysDependencyManager,
                         check_system_packages,
                     )

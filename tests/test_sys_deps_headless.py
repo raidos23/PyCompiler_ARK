@@ -22,7 +22,7 @@ def test_install_system_packages_headless_linux_uses_noninteractive_sudo(
     monkeypatch,
 ) -> None:
     """Headless mode should run package install commands without Qt widgets."""
-    import Core.sys_deps as sys_deps
+    import Core.SysDependencyManager as SysDependencyManager
 
     executed: list[list[str]] = []
 
@@ -34,17 +34,17 @@ def test_install_system_packages_headless_linux_uses_noninteractive_sudo(
 
     monkeypatch.setattr("platform.system", lambda: "Linux")
     monkeypatch.setattr(
-        sys_deps.shutil, "which", lambda name: "/usr/bin/apt" if name == "apt" else None
+        SysDependencyManager.shutil, "which", lambda name: "/usr/bin/apt" if name == "apt" else None
     )
-    monkeypatch.setattr(sys_deps.os, "geteuid", lambda: 1000, raising=False)
+    monkeypatch.setattr(SysDependencyManager.os, "geteuid", lambda: 1000, raising=False)
 
     def _fake_run(cmd, **_kwargs):
         executed.append(list(cmd))
         return _Result(0)
 
-    monkeypatch.setattr(sys_deps.subprocess, "run", _fake_run)
+    monkeypatch.setattr(SysDependencyManager.subprocess, "run", _fake_run)
 
-    assert sys_deps.install_system_packages(["cloc"], gui=None) is True
+    assert SysDependencyManager.install_system_packages(["cloc"], gui=None) is True
     assert executed == [
         ["sudo", "-n", "apt-get", "-o", "Acquire::Retries=3", "update"],
         [
@@ -67,15 +67,15 @@ def test_install_system_packages_headless_linux_uses_noninteractive_sudo(
 
 def test_install_system_packages_headless_does_not_use_qt_manager(monkeypatch) -> None:
     """Headless mode must bypass the Qt-based SysDependencyManager path."""
-    import Core.sys_deps as sys_deps
+    import Core.SysDependencyManager as SysDependencyManager
 
     monkeypatch.setattr("platform.system", lambda: "Linux")
     monkeypatch.setattr(
-        sys_deps.shutil, "which", lambda name: "/usr/bin/dnf" if name == "dnf" else None
+        SysDependencyManager.shutil, "which", lambda name: "/usr/bin/dnf" if name == "dnf" else None
     )
-    monkeypatch.setattr(sys_deps.os, "geteuid", lambda: 0, raising=False)
+    monkeypatch.setattr(SysDependencyManager.os, "geteuid", lambda: 0, raising=False)
     monkeypatch.setattr(
-        sys_deps,
+        SysDependencyManager,
         "SysDependencyManager",
         lambda _gui: (_ for _ in ()).throw(
             AssertionError("Qt manager should not be used in headless mode")
@@ -88,16 +88,16 @@ def test_install_system_packages_headless_does_not_use_qt_manager(monkeypatch) -
             self.stdout = ""
             self.stderr = ""
 
-    monkeypatch.setattr(sys_deps.subprocess, "run", lambda *_a, **_k: _Result(0))
+    monkeypatch.setattr(SysDependencyManager.subprocess, "run", lambda *_a, **_k: _Result(0))
 
-    assert sys_deps.install_system_packages(["cloc"], gui=None) is True
+    assert SysDependencyManager.install_system_packages(["cloc"], gui=None) is True
 
 
 def test_install_system_packages_headless_retries_transient_failures(
     monkeypatch,
 ) -> None:
     """Headless install should retry command steps before failing."""
-    import Core.sys_deps as sys_deps
+    import Core.SysDependencyManager as SysDependencyManager
 
     attempts = {"count": 0}
 
@@ -109,12 +109,12 @@ def test_install_system_packages_headless_retries_transient_failures(
 
     monkeypatch.setattr("platform.system", lambda: "Linux")
     monkeypatch.setattr(
-        sys_deps.shutil,
+        SysDependencyManager.shutil,
         "which",
         lambda name: "/usr/bin/dnf" if name == "dnf" else None,
     )
-    monkeypatch.setattr(sys_deps.os, "geteuid", lambda: 0, raising=False)
-    monkeypatch.setattr(sys_deps.time, "sleep", lambda *_a, **_k: None)
+    monkeypatch.setattr(SysDependencyManager.os, "geteuid", lambda: 0, raising=False)
+    monkeypatch.setattr(SysDependencyManager.time, "sleep", lambda *_a, **_k: None)
 
     def _fake_run(_cmd, **_kwargs):
         attempts["count"] += 1
@@ -122,7 +122,7 @@ def test_install_system_packages_headless_retries_transient_failures(
             return _Result(1)
         return _Result(0)
 
-    monkeypatch.setattr(sys_deps.subprocess, "run", _fake_run)
+    monkeypatch.setattr(SysDependencyManager.subprocess, "run", _fake_run)
 
-    assert sys_deps.install_system_packages(["cloc"], gui=None) is True
+    assert SysDependencyManager.install_system_packages(["cloc"], gui=None) is True
     assert attempts["count"] == 2
