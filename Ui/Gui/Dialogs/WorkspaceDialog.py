@@ -143,7 +143,7 @@ class WorkspaceDialog:
             # Étape 5: synchroniser le cache global thread-safe.
             try:
                 from Core.Globals import _workspace_dir_cache
-                global _workspace_dir_cache
+                
                 with _workspace_dir_lock:
                     _workspace_dir_cache = folder
             except Exception:
@@ -191,8 +191,7 @@ class WorkspaceDialog:
             # exclusion_patterns = ark_config.get("exclusion_patterns", [])
 
             for f in files:
-
-            excluded_count = 0
+                excluded_count = 0
             
             import time
             last_pump = time.monotonic()
