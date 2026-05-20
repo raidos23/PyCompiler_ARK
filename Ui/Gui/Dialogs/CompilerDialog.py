@@ -220,7 +220,7 @@ def compile_all(self) -> None:
 
     # Save GUI state to disk (persists tab settings)
     try:
-        from Core.EngineConfigManager import save_engine_config_for_gui
+        from Core.engine.ConfigManager import save_engine_config_for_gui
         save_engine_config_for_gui(self, engine_id)
     except Exception:
         pass
@@ -346,7 +346,7 @@ def start_compilation_process(self, engine_id: str, file_path: str) -> bool:
     try:
         from Core.Configs import load_ark_config
         from Core.Locking import build_context_from_ark_config, build_lock_payload, write_lock_files
-        from Core.EngineConfigManager import save_engine_config_for_gui
+        from Core.engine.ConfigManager import save_engine_config_for_gui
 
         save_engine_config_for_gui(self, engine_id)
     except Exception:

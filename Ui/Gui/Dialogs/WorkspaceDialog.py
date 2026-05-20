@@ -256,7 +256,7 @@ class WorkspaceDialog:
 
             # Étape 8: recharger les configs engines
             try:
-                from Core.EngineConfigManager import apply_engine_configs_for_workspace
+                from Core.engine.ConfigManager import apply_engine_configs_for_workspace
                 apply_engine_configs_for_workspace(gui_instance, folder)
             except Exception:
                 pass
