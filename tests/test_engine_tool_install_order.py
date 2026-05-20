@@ -75,11 +75,11 @@ def test_ensure_tools_installed_runs_system_before_python(monkeypatch) -> None:
     events: list[str] = []
     process = DummyProcess(wait_result=True, exit_code=0)
 
-    import Core.sys_deps as sys_deps
+    import Core.SysDependencyManager as SysDependencyManager
 
-    monkeypatch.setattr(sys_deps, "check_system_packages", lambda _packages: False)
+    monkeypatch.setattr(SysDependencyManager, "check_system_packages", lambda _packages: False)
     monkeypatch.setattr(
-        sys_deps,
+        SysDependencyManager,
         "SysDependencyManager",
         lambda gui: DummySysDepsManager(events, process),
     )
@@ -101,11 +101,11 @@ def test_ensure_tools_installed_continues_python_after_system_timeout(
     events: list[str] = []
     process = DummyProcess(wait_result=False, exit_code=1)
 
-    import Core.sys_deps as sys_deps
+    import Core.SysDependencyManager as SysDependencyManager
 
-    monkeypatch.setattr(sys_deps, "check_system_packages", lambda _packages: False)
+    monkeypatch.setattr(SysDependencyManager, "check_system_packages", lambda _packages: False)
     monkeypatch.setattr(
-        sys_deps,
+        SysDependencyManager,
         "SysDependencyManager",
         lambda gui: DummySysDepsManager(events, process),
     )

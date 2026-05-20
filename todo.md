@@ -48,8 +48,13 @@ inclusion_patterns:
 
   et aussi  les pattern dinclusion ne sont plus necesaire car l'exclusion est suffisante.
 
-  dans Core/Configs il faut eviter la retro compatibilité et revoir
+  dans Core/Configs il faut eviter la retro compatibilité et revoir.
 
 ## VenvManager [x]
 
-dans venvmanager les logique comme celle de la generation de la reuirments etc ne doit normalement pas être dedans mais plutot gerer par le depsanalyser qui dispose de tout la technologie de pointe pour une fiablité .  pour reduire le niveau de complexité inutile n'est rtil pas mieux que venvmanager ne gere que pip comme gestionnaiaire ?? si oui fait un plan
+dans venvmanager les logique comme celle de la generation de la reuirments etc ne doit normalement pas être dedans mais plutot gerer par le depsanalyser qui dispose de tout la technologie de pointe pour une fiablité .  pour reduire le niveau de complexité inutile n'est rtil pas mieux que venvmanager ne gere que pip comme gestionnaiaire ?? si oui fait un plan.
+
+## refactor: Séparation Core(logique métier) et Ui(interface utilisateur ou de pilotage) []
+
+Core/SysDependencyManager.py doit purement contenir de la logique metier et son usage gui sera dans Ui/Gui/Dialogs/.
+Services/AdvancedAuth.py doit purement contenir la logique service et son usage gui sera dans Ui/Gui/Dialogs/.

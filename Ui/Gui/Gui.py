@@ -335,7 +335,7 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
     # PRÉFÉRENCES (délégation à Core/PreferencesManager)
     # =========================================================================
 
-    from Core.PreferencesManager import load_preferences, save_preferences
+    from Ui.PreferencesManager import load_preferences, save_preferences
 
     # =========================================================================
     # DÉPENDANCES (délégation à Core/deps_analyser)
