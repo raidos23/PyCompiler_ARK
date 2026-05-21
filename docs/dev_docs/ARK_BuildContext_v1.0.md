@@ -5,7 +5,9 @@ This document defines the data contract between ARK core and compilation engines
 ---
 
 ### **1. Definition**
-The `BuildContext` is a normalized data structure passed by ARK to an engine's `build_command` method.
+The `BuildContext` is a normalized data structure passed by ARK to:
+1.  An engine's `build_command` method.
+2.  BC (Before-Compilation) plugins via the `PreCompileContext`.
 
 - **Source Agnostic**: Engines do not read source files (`ark.yml`, lock files, etc.). They rely exclusively on this context.
 - **Reproducibility**: The context contains all project-level metadata required to generate a consistent build command, regardless of whether it was triggered from a live configuration or a lock file.

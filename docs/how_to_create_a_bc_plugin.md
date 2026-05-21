@@ -129,9 +129,21 @@ Key properties and methods.
 - `root`: Path object pointant vers la racine du workspace.
 - `name`: Nom du dossier workspace.
 - `config`: Dictionnaire complet de configuration (`bcasl.yml`).
+- `build_context`: Objet `BuildContext` contenant les paramètres de compilation (si disponible).
 - `file_patterns`: Patterns d'inclusion définis.
 - `exclude_patterns`: Patterns d'exclusion définis.
 - `iter_files(include, exclude)`: Itérateur optimisé (respecte les exclusions par défaut).
+
+Usage du BuildContext :
+```python
+def on_pre_compile(self, ctx: PreCompileContext) -> None:
+    if ctx.build_context:
+        # Accès au dossier de sortie défini dans ark.yml ou le verrou
+        output_dir = ctx.build_context.output_dir
+        ...
+```
+
+*Exemple concret : Le plugin **OutputCleaner** utilise `ctx.build_context.output_dir` pour vider le dossier de sortie avant la compilation.*
 
 Usage simplifié :
 ```python
