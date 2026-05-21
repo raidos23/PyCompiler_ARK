@@ -7,38 +7,36 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from Core.Configs import (
-    ArkConfigError,
-    ArkConfigValidationResult,
-    load_ark_config as _load_ark_config,
-    new_workspace_config,
-    validate_ark_config as _validate_ark_config,
-    write_ark_config,
-)
-from Core.Locking import (
-    BuildContext,
-    build_context_from_ark_config as _build_context_from_ark_config,
-    build_context_from_lock as _build_context_from_lock,
-    build_lock_payload as _build_lock_payload,
-    cache_rebuild_lock as _cache_rebuild_lock,
-    compare_lock_payloads as _compare_lock_payloads,
-    default_lock_path as _default_lock_path,
-    ensure_workspace_layout,
-    load_yaml_file,
-    write_lock_files as _write_lock_files,
-)
 from Core.Compiler.engine_runner import run_engine_compile as _core_run_engine_compile
 from Core.Configs import (
     CONFIG_KEYS,
     DEFAULT_USER_DIRS,
+    ArkConfigError,
+    ArkConfigValidationResult,
     UserConfigError,
-    config_home as _config_home,
-    ensure_config_home as _ensure_config_home,
-    config_file_for as _config_file_for,
+)
+from Core.Configs import config_file_for as _config_file_for
+from Core.Configs import config_home as _config_home
+from Core.Configs import ensure_config_home as _ensure_config_home
+from Core.Configs import load_ark_config as _load_ark_config
+from Core.Configs import (
+    new_workspace_config,
     resolve_config_value,
     set_config_value,
     unset_config_value,
 )
+from Core.Configs import validate_ark_config as _validate_ark_config
+from Core.Configs import write_ark_config
+from Core.Locking import BuildContext
+from Core.Locking import build_context_from_ark_config as _build_context_from_ark_config
+from Core.Locking import build_context_from_lock as _build_context_from_lock
+from Core.Locking import build_lock_payload as _build_lock_payload
+from Core.Locking import cache_rebuild_lock as _cache_rebuild_lock
+from Core.Locking import compare_lock_payloads as _compare_lock_payloads
+from Core.Locking import default_lock_path as _default_lock_path
+from Core.Locking import ensure_workspace_layout, load_yaml_file
+from Core.Locking import write_lock_files as _write_lock_files
+
 from .discovery import (
     bcasl_list_payload,
     engine_info_payload,
@@ -62,6 +60,7 @@ class ArkValidationResult:
 # ── Thin CLI wrappers around Core.Configs (user config) ──────────────────────
 # resolve_config_value / set_config_value / unset_config_value are imported
 # directly from Core.Configs above and re-exported as-is.
+
 
 def config_home() -> Path:
     """Return the ARK user config root (delegates to Core.Configs)."""
@@ -162,7 +161,9 @@ def init_workspace(
             text=True,
         )
         if result.returncode != 0:
-            raise CliSpecError(result.stderr.strip() or "requirements installation failed")
+            raise CliSpecError(
+                result.stderr.strip() or "requirements installation failed"
+            )
 
     return {
         "workspace": str(workspace),
@@ -204,7 +205,12 @@ def validate_ark_config(workspace: Path, config: dict[str, Any]) -> ArkValidatio
 def engine_version(engine_id: str) -> str:
     try:
         payload = engine_info_payload(engine_id)
-        return str(((payload.get("engine") or {}) if payload.get("found") else {}).get("version") or "unknown")
+        return str(
+            ((payload.get("engine") or {}) if payload.get("found") else {}).get(
+                "version"
+            )
+            or "unknown"
+        )
     except Exception:
         return "unknown"
 
@@ -301,16 +307,19 @@ def run_bcasl_before_compile_sync(workspace: Path) -> bool:
     Returns:
         True if compilation can proceed (success or BCASL disabled), False otherwise.
     """
-    from .output import info, error, success, log
     from bcasl.Loader import run_pre_compile
+
+    from .output import error, info, log, success
 
     class CliBcaslHost:
         def __init__(self, ws_dir: Path):
             self.workspace_dir = str(ws_dir)
+
             class Logger:
                 def append(self, msg: str):
                     # Strip trailing newline as our log() adds one
                     log("BCASL", msg.rstrip())
+
             self.log = Logger()
 
     host = CliBcaslHost(workspace)
@@ -337,15 +346,16 @@ def run_bcasl_before_compile_sync(workspace: Path) -> bool:
 
 def run_bcasl_headless(args: list[str]) -> int:
     """Run BCASL in headless mode for the current workspace."""
-    from .output import error, success
     from bcasl.Loader import run_pre_compile
+
+    from .output import error, success
 
     workspace = Path.cwd()
     if "run" in args:
         # If workspace path is provided in args, use it
         for i, arg in enumerate(args):
             if arg == "run" and i + 1 < len(args):
-                candidate = Path(args[i+1])
+                candidate = Path(args[i + 1])
                 if candidate.is_dir():
                     workspace = candidate.resolve()
                 break
@@ -353,9 +363,11 @@ def run_bcasl_headless(args: list[str]) -> int:
     class CliBcaslHost:
         def __init__(self, ws_dir: Path):
             self.workspace_dir = str(ws_dir)
+
             class Logger:
                 def append(self, msg: str):
                     print(msg, end="", flush=True)
+
             self.log = Logger()
 
     host = CliBcaslHost(workspace)
@@ -369,6 +381,7 @@ def run_bcasl_headless(args: list[str]) -> int:
     except Exception as exc:
         error(f"BCASL failed: {exc}")
         return 1
+
 
 def launch_gui(*, legacy: bool = False) -> int:
     return launch_main_application(

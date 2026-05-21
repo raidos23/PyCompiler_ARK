@@ -23,14 +23,14 @@ by delegating to Core.Compiler.
 from __future__ import annotations
 
 import os
-from pathlib import Path
-from typing import Optional, Dict, List, Any
 from datetime import datetime
 from enum import Enum
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
-from PySide6.QtCore import QThread, Signal, QObject
+from PySide6.QtCore import QObject, QThread, Signal
 
-from Core.Compiler.engine_runner import run_engine_compile_streaming, BuildContext
+from Core.Compiler.engine_runner import BuildContext, run_engine_compile_streaming
 
 
 class CompilationStatus(Enum):
@@ -103,7 +103,7 @@ class CompilationThread(QThread):
             return_code = result.get("return_code", 1)
             if self.cancel_requested:
                 return_code = -1
-            
+
             self.finished.emit(return_code)
         except Exception as e:
             self.error_ready.emit(f"Error: {str(e)}")
@@ -119,6 +119,7 @@ class CompilationThread(QThread):
         ]
 
         import re
+
         for pattern in progress_patterns:
             match = re.search(pattern, line)
             if match:
@@ -200,10 +201,12 @@ class CompilerCore(QObject):
         """
         Legacy compile method. Use compile_from_context instead.
         """
-        self.log_message.emit("warning", "Legacy compile() called. Use compile_from_context() instead.")
+        self.log_message.emit(
+            "warning", "Legacy compile() called. Use compile_from_context() instead."
+        )
         if not file_path:
             return False
-        
+
         ctx = BuildContext(
             entry_point=os.path.basename(file_path),
             output_dir="dist/",
@@ -211,7 +214,7 @@ class CompilerCore(QObject):
         return self.compile_from_context(
             workspace=Path(workspace_dir or os.getcwd()),
             engine_id=engine_id or "unknown",
-            context=ctx
+            context=ctx,
         )
 
     def compile_from_context(
@@ -247,9 +250,7 @@ class CompilerCore(QObject):
 
         # Changer le statut
         self._set_status(CompilationStatus.RUNNING)
-        self.log_message.emit(
-            "info", f"Starting compilation with {engine_id}"
-        )
+        self.log_message.emit("info", f"Starting compilation with {engine_id}")
 
         # Démarrer le thread
         self._thread.start()

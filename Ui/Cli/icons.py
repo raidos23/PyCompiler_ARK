@@ -36,4 +36,3 @@ def set_window_icon(target) -> None:
             target.setWindowIcon(QIcon(icon_path))
     except Exception:
         pass
-

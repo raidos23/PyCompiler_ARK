@@ -15,17 +15,17 @@
 
 import os
 
-from PySide6.QtCore import QFile, Qt, QSize, QByteArray, QRectF
-from PySide6.QtGui import QIcon, QPixmap, QPainter
+from PySide6.QtCore import QByteArray, QFile, QRectF, QSize, Qt
+from PySide6.QtGui import QIcon, QPainter, QPixmap
 from PySide6.QtUiTools import QUiLoader
 from PySide6.QtWidgets import (
+    QFrame,
     QLabel,
     QLineEdit,
     QListWidget,
     QProgressBar,
     QPushButton,
     QTextEdit,
-    QFrame,
 )
 
 try:

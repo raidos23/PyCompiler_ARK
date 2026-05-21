@@ -246,4 +246,3 @@ def install_runtime(app_version: str, enable_qt: bool = True) -> None:
         install_qt_metadata(app_version)
         install_qt_handlers()
     install_signal_handlers()
-

@@ -60,4 +60,3 @@ def error(message: str) -> None:
 
 def success(message: str) -> None:
     log("SUCCESS", message, err=False)
-

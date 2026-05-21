@@ -5,8 +5,6 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from .runtime import install_runtime, should_enable_qt
-
 from .helpers import (
     CliSpecError,
     build_context_object_from_ark_config,
@@ -32,6 +30,7 @@ from .helpers import (
     validate_ark_config,
     write_lock_files,
 )
+from .runtime import install_runtime, should_enable_qt
 
 try:
     import click  # type: ignore
@@ -88,6 +87,7 @@ def _build_impl(
 
     # 1. BCASL Pre-compile check (Point 1 of mutation plan)
     from .helpers import run_bcasl_before_compile_sync
+
     if not run_bcasl_before_compile_sync(workspace):
         return 1
 
@@ -97,7 +97,9 @@ def _build_impl(
         engine_id = engine_override or str(validated.config["build"]["engine"])
         _ensure_engine_known(engine_id)
         # Point 3 alignment: build_lock_payload now correctly loads engine config via fixed path
-        lock_payload = build_lock_payload(workspace, validated.config, engine_id=engine_id)
+        lock_payload = build_lock_payload(
+            workspace, validated.config, engine_id=engine_id
+        )
         lock_paths = write_lock_files(workspace, lock_payload)
         context = build_context_object_from_ark_config(validated.config)
         result = run_engine_compile(
@@ -162,7 +164,9 @@ def _build_impl(
         current_config = load_ark_config(workspace)
         validated = validate_ark_config(workspace, current_config)
         regenerated = build_lock_payload(
-            workspace, validated.config, engine_id=str(validated.config["build"]["engine"])
+            workspace,
+            validated.config,
+            engine_id=str(validated.config["build"]["engine"]),
         )
         rebuild_cache = cache_rebuild_lock(workspace, regenerated)
         comparison = compare_lock_payloads(lock_payload, regenerated)
@@ -212,7 +216,9 @@ def build_cli():
     @click.option("--install-requirements", is_flag=True)
     @click.option("--generate-requirements", is_flag=True)
     @click.option("--json", "as_json", is_flag=True)
-    def init_cmd(entry, icon, with_venv, install_requirements, generate_requirements, as_json):
+    def init_cmd(
+        entry, icon, with_venv, install_requirements, generate_requirements, as_json
+    ):
         """Initialize the current directory as an ARK workspace."""
         try:
             payload = init_workspace(
@@ -249,7 +255,9 @@ def build_cli():
     @click.option("--json", "as_json", is_flag=True)
     def build_cmd(engine_override, lock_file, lock_arg, as_json):
         """Build from ark.yml or rebuild from a lock file."""
-        effective_lock = lock_arg if lock_arg and lock_file == "__default__" else lock_file
+        effective_lock = (
+            lock_arg if lock_arg and lock_file == "__default__" else lock_file
+        )
         try:
             code = _build_impl(
                 workspace=Path.cwd(),
@@ -309,6 +317,7 @@ def build_cli():
         "dev-engine-dir",
         "dev-plugin-dir",
     ):
+
         def _make_set(spec_key: str):
             @set_group.command(spec_key)
             @click.argument("path")
@@ -369,7 +378,9 @@ def build_cli():
             _echo_json(payload)
             return
         if not payload.get("created"):
-            raise click.ClickException(payload.get("reason", "Unable to create scaffold"))
+            raise click.ClickException(
+                payload.get("reason", "Unable to create scaffold")
+            )
         click.echo(payload["path"])
 
     @scaffold_group.command("plugin-bcasl")
@@ -382,7 +393,9 @@ def build_cli():
             _echo_json(payload)
             return
         if not payload.get("created"):
-            raise click.ClickException(payload.get("reason", "Unable to create scaffold"))
+            raise click.ClickException(
+                payload.get("reason", "Unable to create scaffold")
+            )
         click.echo(payload["path"])
 
     return cli

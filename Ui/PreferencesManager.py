@@ -84,7 +84,7 @@ def load_preferences(self):
                 # Dernier recours: fichier à la racine du cwd
                 with open(PREFS_BASENAME, encoding="utf-8") as f:
                     prefs = json.load(f)
-        
+
         self.language_pref = prefs.get("language_pref", prefs.get("language", "System"))
         # Compat: conserver self.language utilisé ailleurs
         self.language = self.language_pref

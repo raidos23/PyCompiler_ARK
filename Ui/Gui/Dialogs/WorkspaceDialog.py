@@ -28,13 +28,44 @@ from typing import Optional
 
 from PySide6.QtWidgets import QApplication, QFileDialog, QMessageBox
 
-from Core.WorkSpaceManager.SetupWorkspace import SetupWorkspace
 from Core.Globals import _workspace_dir_lock
+from Core.WorkSpaceManager.SetupWorkspace import SetupWorkspace
 from Ui.Gui.WidgetsCreator import CompilationProcessDialog
 
 
 class WorkspaceDialog:
     """Gestion Qt du workspace (sélection, application, initialisation)."""
+
+    @staticmethod
+    def confirm_workspace_change(gui, folder: str) -> bool:
+        """
+        Confirm workspace change with the user.
+        """
+        try:
+            from Ui.Gui.WidgetsCreator import show_msgbox
+
+            title = "Confirmation"
+            message = (
+                f"Un plugin demande de changer le workspace vers :\n{folder}\n\n"
+                "Voulez-vous continuer ?"
+            )
+            try:
+                if gui and hasattr(gui, "tr"):
+                    title = gui.tr("Confirmation", "Confirmation")
+                    message = gui.tr(
+                        f"Un plugin demande de changer le workspace vers :\n{folder}\n\n"
+                        "Voulez-vous continuer ?",
+                        f"A plugin requests changing the workspace to:\n{folder}\n\n"
+                        "Do you want to continue?",
+                    )
+            except Exception:
+                pass
+
+            res = show_msgbox("question", title, message, parent=gui, default="Yes")
+            return bool(res)
+        except Exception:
+            # If confirmation UI fails, accept by contract
+            return True
 
     @staticmethod
     def select_workspace(gui_instance) -> Optional[str]:
@@ -143,7 +174,7 @@ class WorkspaceDialog:
             # Étape 5: synchroniser le cache global thread-safe.
             try:
                 from Core.Globals import _workspace_dir_cache
-                
+
                 with _workspace_dir_lock:
                     _workspace_dir_cache = folder
             except Exception:
@@ -160,13 +191,17 @@ class WorkspaceDialog:
                 try:
                     tr_map = getattr(gui_instance, "_tr", None)
                     if isinstance(tr_map, dict):
-                        tmpl = tr_map.get("label_workspace_status") or "Workspace: {path}"
+                        tmpl = (
+                            tr_map.get("label_workspace_status") or "Workspace: {path}"
+                        )
                         gui_instance.label_workspace_status.setText(
                             str(tmpl).replace("{path}", str(folder))
                         )
                     else:
                         gui_instance.label_workspace_status.setText(
-                            gui_instance.tr(f"Workspace : {folder}", f"Workspace: {folder}")
+                            gui_instance.tr(
+                                f"Workspace : {folder}", f"Workspace: {folder}"
+                            )
                         )
                 except Exception:
                     pass
@@ -177,9 +212,10 @@ class WorkspaceDialog:
 
             # Scanner les fichiers (via Core)
             files = SetupWorkspace.list_python_files(folder)
-            
+
             # Filtrer et ajouter à l'UI
             from Core.Configs import load_ark_config, should_exclude_file
+
             ark_config = load_ark_config(folder)
 
             workspace_cfg = ark_config.get("workspace", {})
@@ -192,20 +228,21 @@ class WorkspaceDialog:
 
             for f in files:
                 excluded_count = 0
-            
+
             import time
+
             last_pump = time.monotonic()
-            
+
             for full_path in files:
                 if should_exclude_file(full_path, folder, exclusion_patterns):
                     excluded_count += 1
                     continue
-                    
+
                 gui_instance.python_files.append(full_path)
                 if hasattr(gui_instance, "file_list"):
                     relative_path = os.path.relpath(full_path, folder)
                     gui_instance.file_list.addItem(relative_path)
-                
+
                 added_count += 1
                 if added_count % 200 == 0:
                     if time.monotonic() - last_pump > 0.05:
@@ -237,26 +274,38 @@ class WorkspaceDialog:
                 else:
                     if not gui_instance.venv_manager.apply_workspace_pref(folder):
                         # Proposer création ou sélection
-                        def _t(fr, en): return gui_instance.tr(fr, en)
+                        def _t(fr, en):
+                            return gui_instance.tr(fr, en)
+
                         title = _t("Configuration du Venv", "Venv setup")
-                        msg = _t("Créer un venv automatiquement ou sélectionner un venv (Python système inclus).",
-                                 "Create a venv automatically or select a venv (System Python included).")
+                        msg = _t(
+                            "Créer un venv automatiquement ou sélectionner un venv (Python système inclus).",
+                            "Create a venv automatically or select a venv (System Python included).",
+                        )
                         box = QMessageBox(gui_instance)
                         box.setWindowTitle(title)
                         box.setText(msg)
-                        btn_auto = box.addButton(_t("Créer un venv", "Create venv"), QMessageBox.AcceptRole)
-                        btn_manual = box.addButton(_t("Sélectionner un Venv", "Select Venv"), QMessageBox.ActionRole)
+                        btn_auto = box.addButton(
+                            _t("Créer un venv", "Create venv"), QMessageBox.AcceptRole
+                        )
+                        btn_manual = box.addButton(
+                            _t("Sélectionner un Venv", "Select Venv"),
+                            QMessageBox.ActionRole,
+                        )
                         box.setDefaultButton(btn_auto)
                         box.exec()
 
                         if box.clickedButton() == btn_manual:
                             gui_instance.venv_manager.select_venv_manually()
                         else:
-                            gui_instance.venv_manager.setup_workspace(folder, check_tools=False)
+                            gui_instance.venv_manager.setup_workspace(
+                                folder, check_tools=False
+                            )
 
             # Étape 8: recharger les configs engines
             try:
                 from Core.engine.ConfigManager import apply_engine_configs_for_workspace
+
                 apply_engine_configs_for_workspace(gui_instance, folder)
             except Exception:
                 pass
@@ -267,7 +316,10 @@ class WorkspaceDialog:
             return True
 
         except Exception as e:
-            gui_instance.log_i18n(f"❌ Échec application workspace: {e}", f"❌ Failed to apply workspace: {e}")
+            gui_instance.log_i18n(
+                f"❌ Échec application workspace: {e}",
+                f"❌ Failed to apply workspace: {e}",
+            )
             if loading_dialog:
                 loading_dialog.close()
             return False
@@ -279,9 +331,14 @@ class WorkspaceDialog:
         """
         workspace_dir = getattr(gui_instance, "workspace_dir", None)
         if not workspace_dir:
-            QMessageBox.warning(gui_instance, gui_instance.tr("Attention", "Warning"),
-                                gui_instance.tr("Veuillez d'abord sélectionner un dossier workspace.",
-                                              "Please select a workspace folder first."))
+            QMessageBox.warning(
+                gui_instance,
+                gui_instance.tr("Attention", "Warning"),
+                gui_instance.tr(
+                    "Veuillez d'abord sélectionner un dossier workspace.",
+                    "Please select a workspace folder first.",
+                ),
+            )
             return
 
         config_path = os.path.join(workspace_dir, "ark.yml")
@@ -289,19 +346,28 @@ class WorkspaceDialog:
         if not os.path.exists(config_path):
             try:
                 from Core.Configs import create_default_ark_config
+
                 if create_default_ark_config(workspace_dir):
-                    gui_instance.log_i18n("📋 Fichier ark.yml créé.", "📋 ark.yml file created.")
+                    gui_instance.log_i18n(
+                        "📋 Fichier ark.yml créé.", "📋 ark.yml file created."
+                    )
             except Exception as e:
-                QMessageBox.critical(gui_instance, gui_instance.tr("Erreur", "Error"),
-                                     gui_instance.tr(f"Impossible de créer ark.yml: {e}",
-                                                   f"Failed to create ark.yml: {e}"))
+                QMessageBox.critical(
+                    gui_instance,
+                    gui_instance.tr("Erreur", "Error"),
+                    gui_instance.tr(
+                        f"Impossible de créer ark.yml: {e}",
+                        f"Failed to create ark.yml: {e}",
+                    ),
+                )
                 return
 
-        # Logique d'ouverture système (pure logic déléguée à Core si possible, 
+        # Logique d'ouverture système (pure logic déléguée à Core si possible,
         # mais ici c'est du shell-out donc acceptable en UI helper)
         try:
             import platform
             import subprocess
+
             system = platform.system()
             if system == "Windows":
                 os.startfile(config_path)
@@ -309,8 +375,14 @@ class WorkspaceDialog:
                 subprocess.run(["open", config_path])
             else:
                 subprocess.run(["xdg-open", config_path])
-            gui_instance.log_i18n(f"📝 Ouverture de {config_path}", f"📝 Opening {config_path}")
+            gui_instance.log_i18n(
+                f"📝 Ouverture de {config_path}", f"📝 Opening {config_path}"
+            )
         except Exception as e:
-            QMessageBox.warning(gui_instance, gui_instance.tr("Attention", "Warning"),
-                                gui_instance.tr(f"Impossible d'ouvrir le fichier: {e}",
-                                              f"Failed to open file: {e}"))
+            QMessageBox.warning(
+                gui_instance,
+                gui_instance.tr("Attention", "Warning"),
+                gui_instance.tr(
+                    f"Impossible d'ouvrir le fichier: {e}", f"Failed to open file: {e}"
+                ),
+            )
