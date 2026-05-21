@@ -484,7 +484,7 @@ def run_bcasl_before_compile_sync(workspace: Path, verbose: bool = False) -> boo
     console = get_console()
     status = None
     if not verbose and console:
-        status = console.status("[cyan]Verification BCASL...[/cyan]", spinner="dots")
+        status = console.status("[cyan]Exécution de BCASL...[/cyan]", spinner="dots")
         status.start()
 
     class CliBcaslHost:
@@ -503,15 +503,23 @@ def run_bcasl_before_compile_sync(workspace: Path, verbose: bool = False) -> boo
                     elif self.host_ptr.status_obj:
                         clean = msg.strip()
                         if clean and not clean.startswith("["):
-                            if len(clean) < 100:
-                                self.host_ptr.status_obj.update(f"[cyan]BCASL: {clean}[/cyan]")
+                            display = clean
+                            if clean.startswith("Plugin: "):
+                                # Utilisation de markup Rich au lieu d'icônes
+                                plugin_name = clean[8:].strip()
+                                display = f"Plugin: [bold white]{plugin_name}[/bold white]"
+                            elif clean.startswith("Phase: "):
+                                phase_name = clean[7:].strip()
+                                display = f"Phase: [bold yellow]{phase_name}[/bold yellow]"
+                            
+                            if len(display) < 120:
+                                self.host_ptr.status_obj.update(f"[cyan]BCASL[/cyan] [white]»[/white] {display}")
 
             self.log = Logger(self)
 
     host = CliBcaslHost(workspace, status)
     
-    if verbose:
-        info("Running BCASL pre-compile checks...")
+    info("Running BCASL pre-compile checks...")
         
     # Register SIGINT handler
     _CLI_CANCEL_EVENT.clear()
@@ -570,7 +578,7 @@ def run_bcasl_headless(args: list[str], verbose: bool = False) -> int:
     console = get_console()
     status = None
     if not verbose and console:
-        status = console.status("[cyan]Verification BCASL (headless)...[/cyan]", spinner="dots")
+        status = console.status("[cyan]Exécution de BCASL (headless)...[/cyan]", spinner="dots")
         status.start()
 
     class CliBcaslHost:
@@ -588,15 +596,23 @@ def run_bcasl_headless(args: list[str], verbose: bool = False) -> int:
                     elif self.host_ptr.status_obj:
                         clean = msg.strip()
                         if clean and not clean.startswith("["):
-                            if len(clean) < 100:
-                                self.host_ptr.status_obj.update(f"[cyan]BCASL: {clean}[/cyan]")
+                            display = clean
+                            if clean.startswith("Plugin: "):
+                                # Utilisation de markup Rich au lieu d'icônes
+                                plugin_name = clean[8:].strip()
+                                display = f"Plugin: [bold white]{plugin_name}[/bold white]"
+                            elif clean.startswith("Phase: "):
+                                phase_name = clean[7:].strip()
+                                display = f"Phase: [bold yellow]{phase_name}[/bold yellow]"
+                            
+                            if len(display) < 120:
+                                self.host_ptr.status_obj.update(f"[cyan]BCASL[/cyan] [white]»[/white] {display}")
 
             self.log = Logger(self)
 
     host = CliBcaslHost(workspace, status)
         
-    if verbose:
-        info(f"Running BCASL headless in {workspace}...")
+    info(f"Running BCASL headless in {workspace}...")
         
     # Register SIGINT handler
     _CLI_CANCEL_EVENT.clear()
