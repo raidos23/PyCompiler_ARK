@@ -27,7 +27,9 @@ def test_run_engine_compile_uses_build_context(monkeypatch, tmp_path: Path) -> N
         stderr = ""
 
     monkeypatch.setattr("Core.engine.create", lambda _engine_id: FakeEngine())
-    monkeypatch.setattr(helpers.subprocess, "run", lambda *_args, **_kwargs: Completed())
+    monkeypatch.setattr(
+        helpers.subprocess, "run", lambda *_args, **_kwargs: Completed()
+    )
 
     context = BuildContext(
         project_name="demo",

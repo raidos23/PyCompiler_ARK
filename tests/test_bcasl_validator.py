@@ -16,8 +16,8 @@
 """Tests for BCASL plugin compatibility validator."""
 
 from bcasl.validator import (
-    parse_version,
     check_plugin_compatibility,
+    parse_version,
     validate_plugins_compatibility,
 )
 

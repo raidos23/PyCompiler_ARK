@@ -34,7 +34,9 @@ def test_install_system_packages_headless_linux_uses_noninteractive_sudo(
 
     monkeypatch.setattr("platform.system", lambda: "Linux")
     monkeypatch.setattr(
-        SysDependencyManager.shutil, "which", lambda name: "/usr/bin/apt" if name == "apt" else None
+        SysDependencyManager.shutil,
+        "which",
+        lambda name: "/usr/bin/apt" if name == "apt" else None,
     )
     monkeypatch.setattr(SysDependencyManager.os, "geteuid", lambda: 1000, raising=False)
 
@@ -71,7 +73,9 @@ def test_install_system_packages_headless_does_not_use_qt_manager(monkeypatch) -
 
     monkeypatch.setattr("platform.system", lambda: "Linux")
     monkeypatch.setattr(
-        SysDependencyManager.shutil, "which", lambda name: "/usr/bin/dnf" if name == "dnf" else None
+        SysDependencyManager.shutil,
+        "which",
+        lambda name: "/usr/bin/dnf" if name == "dnf" else None,
     )
     monkeypatch.setattr(SysDependencyManager.os, "geteuid", lambda: 0, raising=False)
     monkeypatch.setattr(
@@ -88,7 +92,9 @@ def test_install_system_packages_headless_does_not_use_qt_manager(monkeypatch) -
             self.stdout = ""
             self.stderr = ""
 
-    monkeypatch.setattr(SysDependencyManager.subprocess, "run", lambda *_a, **_k: _Result(0))
+    monkeypatch.setattr(
+        SysDependencyManager.subprocess, "run", lambda *_a, **_k: _Result(0)
+    )
 
     assert SysDependencyManager.install_system_packages(["cloc"], gui=None) is True
 
