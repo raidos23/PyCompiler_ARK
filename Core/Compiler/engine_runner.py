@@ -14,15 +14,15 @@
 # limitations under the License.
 
 """
-Engine Runner — pure-Python, Qt-free compilation executor.
+Engine Runner - pure-Python, Qt-free compilation executor.
 
 Source of truth for how ARK loads an engine and runs a compilation
 against a BuildContext.  Both the CLI (Ui/Cli/spec_helpers.py) and the
 Qt async path (MainProcess.compile_from_context) delegate to this module.
 
 Provides:
-- `resolve_engine_command` — load an engine and derive (program, args)
-- `run_engine_compile`     — full synchronous compilation pipeline
+- `resolve_engine_command` - load an engine and derive (program, args)
+- `run_engine_compile`     - full synchronous compilation pipeline
 """
 
 from __future__ import annotations
@@ -178,16 +178,16 @@ def run_engine_compile_streaming(
     Returns:
         A result dict.
     """
-    # ── 1. Validate entry point ──────────────────────────────────────────────
+    # -- 1. Validate entry point ----------------------------------------------
     entry_path = workspace / Path(context.entry_point)
     if not context.entry_point or not entry_path.is_file():
         return _failure(f"Entrypoint missing or obsolete: {context.entry_point}")
 
-    # ── 2. Resolve (program, args, env) from engine ──────────────────────────
+    # -- 2. Resolve (program, args, env) from engine --------------------------
     try:
         if on_stdout:
             on_stdout(
-                "🔨 Étape 1/3 : Vérification et installation des outils requis..."
+                "Etape 1/3 : Verification et installation des outils requis..."
             )
 
         import Core.engine as engines_loader
@@ -197,31 +197,64 @@ def run_engine_compile_streaming(
         # Ensure tools are installed (this may take time, so we do it in the thread)
         def _log(fr, en):
             if on_stdout:
-                on_stdout(f"  ➡️ {en}")
+                on_stdout(f"  -> {en}")
 
         # We pass a dummy 'gui' object that supports log_i18n_level-like logging
         class LogBridge:
-            def __init__(self, log_cb):
+            def __init__(self, log_cb, workspace_path: Path):
                 self.log_cb = log_cb
+                self.workspace_dir = str(workspace_path)
+                self.log = self  # So gui.log.append works
+                self.use_system_python = False  # Default for CLI
+                self.venv_path_manuel = None
+                self._venv_manager = None
+                self._sys_deps_manager = None
+
+            def append(self, message: str):
+                # message is already formatted by log_i18n_level
+                self.log_cb("", message)
 
             def tr(self, fr, en):
                 return en  # Simple fallback
 
+            @property
+            def venv_manager(self):
+                if self._venv_manager is None:
+                    from Core.Venv_Manager.Manager import VenvManager
+
+                    self._venv_manager = VenvManager(self)
+                return self._venv_manager
+
+            @property
+            def sys_deps_manager(self):
+                if self._sys_deps_manager is None:
+                    from Core.SysDependencyManager import SysDependencyManager
+
+                    self._sys_deps_manager = SysDependencyManager(self)
+                return self._sys_deps_manager
+
+        bridge = LogBridge(_log, workspace)
+        # Link bridge to engine for venv/tool resolution in build_command
+        try:
+            engine_instance._gui = bridge
+        except Exception:
+            pass
+
         if hasattr(engine_instance, "ensure_tools_installed"):
             if not engine_instance.ensure_tools_installed(
-                LogBridge(_log), stop_signal=stop_signal
+                bridge, stop_signal=stop_signal
             ):
                 if stop_signal and stop_signal():
-                    return _failure("Compilation annulée par l'utilisateur.")
+                    return _failure("Compilation annulee par l'utilisateur.")
                 return _failure(
-                    f"Échec de l'installation des outils pour '{engine_id}'"
+                    f"Echec de l'installation des outils pour '{engine_id}'"
                 )
 
         if stop_signal and stop_signal():
-            return _failure("Compilation annulée.")
+            return _failure("Compilation annulee.")
 
         if on_stdout:
-            on_stdout("⚙️ Étape 2/3 : Génération de la commande de compilation...")
+            on_stdout("Etape 2/3 : Generation de la commande de compilation...")
 
         program, args, engine_env = resolve_engine_command(
             engine_id, context, engine_config
@@ -229,25 +262,25 @@ def run_engine_compile_streaming(
     except EngineRunnerError as exc:
         return _failure(str(exc))
     except Exception as exc:
-        return _failure(f"Échec de la préparation de l'engine '{engine_id}': {exc}")
+        return _failure(f"Echec de la preparation de l'engine '{engine_id}': {exc}")
 
     if stop_signal and stop_signal():
-        return _failure("Compilation annulée.")
+        return _failure("Compilation annulee.")
 
-    # ── 3. Security hardening ────────────────────────────────────────────────
+    # -- 3. Security hardening ------------------------------------------------
     try:
         full_env = dict(engine_env)
         full_env["ARK_WORKSPACE"] = str(workspace)
         safe_program, safe_args, safe_env = secure_command(program, args, full_env)
     except Exception as exc:
-        return _failure(f"Commande de compilation non sécurisée bloquée : {exc}")
+        return _failure(f"Commande de compilation non securisee bloquee : {exc}")
 
-    # ── 4. Run with streaming ────────────────────────────────────────────────
+    # -- 4. Run with streaming ------------------------------------------------
     command = [safe_program] + safe_args
 
     if on_stdout:
-        on_stdout(f"🚀 Étape 3/3 : Exécution du processus de compilation...")
-        on_stdout(f"  💻 Commande : {' '.join(command)}")
+        on_stdout(f"Etape 3/3 : Execution du processus de compilation...")
+        on_stdout(f"  Commande : {' '.join(command)}")
         on_stdout("-" * 40)
 
     try:
@@ -307,7 +340,7 @@ def run_engine_compile_streaming(
     }
 
 
-# ── helpers ──────────────────────────────────────────────────────────────────
+# -- helpers ------------------------------------------------------------------
 
 
 def _failure(error: str) -> dict[str, Any]:

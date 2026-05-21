@@ -362,20 +362,20 @@ class VenvManager:
             self._call_ui(
                 "show_progress",
                 "tools_check",
-                "Vérification du venv",
-                "Vérification du venv",
+                "Verification du venv",
+                "Verification du venv",
             )
-            self._bind_cancel_for_progress("tools_check", "vérification des outils")
+            self._bind_cancel_for_progress("tools_check", "verification des outils")
             self._call_ui(
                 "update_progress_message",
                 "tools_check",
-                f"Vérification de {tools[0]}...",
+                f"Verification de {tools[0]}...",
             )
             self._call_ui("update_progress_progress", "tools_check", 0, len(tools))
             self._check_next_venv_pkg()
         except Exception as e:
             self._safe_log(
-                f"❌ {self._tools_stage_prefix()}Erreur ensure_tools_installed: {e}"
+                f"[ERROR] {self._tools_stage_prefix()}Erreur ensure_tools_installed: {e}"
             )
 
     def ensure_tools_installed_system(self, tools: list[str]) -> None:
@@ -393,22 +393,22 @@ class VenvManager:
             self._call_ui(
                 "show_progress",
                 "tools_check",
-                "Vérification du Python système",
-                "Vérification du Python système",
+                "Verification du Python systeme",
+                "Verification du Python systeme",
             )
             self._bind_cancel_for_progress(
-                "tools_check", "vérification des outils système"
+                "tools_check", "verification des outils systeme"
             )
             self._call_ui(
                 "update_progress_message",
                 "tools_check",
-                f"Vérification de {tools[0]}...",
+                f"Verification de {tools[0]}...",
             )
             self._call_ui("update_progress_progress", "tools_check", 0, len(tools))
             self._check_next_venv_pkg()
         except Exception as e:
             self._safe_log(
-                f"❌ {self._tools_stage_prefix()}Erreur ensure_tools_installed_system: {e}"
+                f"[ERROR] {self._tools_stage_prefix()}Erreur ensure_tools_installed_system: {e}"
             )
 
     # ---------- Utility ----------
@@ -436,21 +436,22 @@ class VenvManager:
         if not s:
             return "info"
         emoji_levels = {
-            "❌": "error",
-            "⚠️": "warning",
-            "✅": "success",
-            "ℹ️": "info",
-            "📝": "state",
-            "📋": "state",
-            "🔍": "state",
-            "🔧": "state",
-            "🔨": "state",
-            "➡️": "state",
-            "📦": "state",
-            "🗑️": "state",
+            "[ERROR]": "error",
+            "[WARNING]": "warning",
+            "[OK]": "success",
+            "[SUCCESS]": "success",
+            "[INFO]": "info",
+            "[STATE]": "state",
+            "[SEARCH]": "state",
+            "[CONFIG]": "state",
+            "[BUILD]": "state",
+            "[INSTALL]": "state",
+            "[DELETE]": "state",
+            "[CANCEL]": "state",
+            "[TIMEOUT]": "error",
         }
-        for emoji, lvl in emoji_levels.items():
-            if s.startswith(emoji):
+        for tag, lvl in emoji_levels.items():
+            if s.startswith(tag):
                 return lvl
         low = s.lower()
         if any(
@@ -458,7 +459,6 @@ class VenvManager:
             for tok in (
                 "error",
                 "erreur",
-                "échec",
                 "echec",
                 "failed",
                 "invalid",
@@ -468,9 +468,9 @@ class VenvManager:
             return "error"
         if any(tok in low for tok in ("warning", "avert", "warn", "attention")):
             return "warning"
-        if any(tok in low for tok in ("success", "succès", "reussi", "réussi")):
+        if any(tok in low for tok in ("success", "succes", "reussi")):
             return "success"
-        if any(tok in low for tok in ("state", "status", "état", "etat")):
+        if any(tok in low for tok in ("state", "status", "etat")):
             return "state"
         return "info"
 
@@ -521,8 +521,8 @@ class VenvManager:
         self._cancel_requested = True
         suffix = f" ({action_label})" if action_label else ""
         self._safe_log(
-            f"🛑 Annulation demandée par l'utilisateur{suffix}.",
-            f"🛑 Cancellation requested by user{suffix}.",
+            f"[CANCEL] Annulation demandee par l'utilisateur{suffix}.",
+            f"[CANCEL] Cancellation requested by user{suffix}.",
             level="warning",
         )
         self.terminate_tasks()
@@ -551,7 +551,7 @@ class VenvManager:
                         pass
                 else:
                     self._safe_log(
-                        f"⚠️ Failed to remove {path} after {max_retries} attempts: {e}"
+                        f"[WARNING] Failed to remove {path} after {max_retries} attempts: {e}"
                     )
                     return False
         return False
@@ -562,7 +562,7 @@ class VenvManager:
             os.makedirs(path, exist_ok=True)
             return True
         except Exception as e:
-            self._safe_log(f"⚠️ Failed to create directory {path}: {e}")
+            self._safe_log(f"[WARNING] Failed to create directory {path}: {e}")
             return False
 
     def _prompt_recreate_invalid_venv(self, venv_root: str, reason: str) -> bool:
@@ -576,12 +576,12 @@ class VenvManager:
         # Business logic: delete the bad venv
         try:
             shutil.rmtree(venv_root)
-            self._safe_log(f"🗑️ Deleted invalid venv: {venv_root}")
+            self._safe_log(f"[DELETE] Deleted invalid venv: {venv_root}")
         except Exception as e:
             self._call_ui(
                 "show_error_dialog",
                 "Environnement virtuel invalide / Invalid virtual environment",
-                f"Échec suppression venv / Failed to delete venv: {e}",
+                f"Echec suppression venv / Failed to delete venv: {e}",
             )
             return False
         # Business logic: recreate
@@ -593,7 +593,7 @@ class VenvManager:
             self._call_ui(
                 "show_error_dialog",
                 "Environnement virtuel invalide / Invalid virtual environment",
-                f"Échec de recréation du venv / Failed to recreate venv: {e}",
+                f"Echec de recreation du venv / Failed to recreate venv: {e}",
             )
             return False
 
@@ -742,17 +742,17 @@ class VenvManager:
             self._reset_cancel_state()
             ok, reason = self.validate_venv_strict(venv_path)
             if not ok:
-                self._safe_log(f"❌ Invalid venv: {reason}")
+                self._safe_log(f"[ERROR] Invalid venv: {reason}")
                 # Offer to delete and recreate
                 self._prompt_recreate_invalid_venv(venv_path, reason)
                 return
 
-            # Vérification asynchrone de la liaison python/pip → venv
+            # Verification asynchrone de la liaison python/pip -> venv
             def _after_binding(ok_bind: bool):
                 """Execute _after_binding logic for this component."""
                 if not ok_bind:
                     self._safe_log(
-                        "❌ Invalid venv binding: python/pip do not point to the selected venv."
+                        "[ERROR] Invalid venv binding: python/pip do not point to the selected venv."
                     )
                     self._prompt_recreate_invalid_venv(
                         venv_path, "Python/pip do not point to the selected venv"
@@ -766,8 +766,8 @@ class VenvManager:
                 self._venv_check_pkgs = self._discover_engine_required_python_tools()
                 if not self._venv_check_pkgs:
                     self._safe_log(
-                        "ℹ️ Aucun outil Python requis détecté depuis les engines.",
-                        "ℹ️ No required Python tools detected from engines.",
+                        "[INFO] Aucun outil Python requis detecte depuis les engines.",
+                        "[INFO] No required Python tools detected from engines.",
                     )
                     return
                 self._venv_check_index = 0
@@ -778,16 +778,16 @@ class VenvManager:
                 self._call_ui(
                     "show_progress",
                     "tools_check",
-                    "Vérification du venv",
-                    "Vérification du venv",
+                    "Verification du venv",
+                    "Verification du venv",
                 )
                 self._bind_cancel_for_progress(
-                    "tools_check", "vérification des outils du venv"
+                    "tools_check", "verification des outils du venv"
                 )
                 self._call_ui(
                     "update_progress_message",
                     "tools_check",
-                    f"Vérification de {self._venv_check_pkgs[0]}...",
+                    f"Verification de {self._venv_check_pkgs[0]}...",
                 )
                 self._call_ui(
                     "update_progress_progress",
@@ -799,7 +799,7 @@ class VenvManager:
 
             self._verify_venv_binding_async(venv_path, _after_binding)
         except Exception as e:
-            self._safe_log(f"❌ Erreur lors de la vérification du venv: {e}")
+            self._safe_log(f"[ERROR] Erreur lors de la verification du venv: {e}")
 
     def _check_next_venv_pkg(self):
         """Execute _check_next_venv_pkg logic for this component."""
@@ -808,7 +808,7 @@ class VenvManager:
             return
         if self._venv_check_index >= len(self._venv_check_pkgs):
             self._call_ui(
-                "update_progress_message", "tools_check", "Vérification terminée."
+                "update_progress_message", "tools_check", "Verification terminee."
             )
             total = (
                 len(self._venv_check_pkgs)
@@ -818,7 +818,7 @@ class VenvManager:
             self._call_ui("update_progress_progress", "tools_check", total, total)
             self._call_ui("close_progress", "tools_check")
 
-            # Installer les dépendances du projet si un requirements.txt est présent
+            # Installer les dependances du projet si un requirements.txt est present
             try:
                 if getattr(self.parent, "workspace_dir", None):
                     self.install_requirements_if_needed(self.parent.workspace_dir)
@@ -850,11 +850,11 @@ class VenvManager:
         if code == 0:
             if self._venv_check_use_python:
                 self._safe_log(
-                    f"✅ {self._tools_stage_prefix()}{pkg} déjà installé (Python système)."
+                    f"[OK] {self._tools_stage_prefix()}{pkg} deja installe (Python systeme)."
                 )
             else:
                 self._safe_log(
-                    f"✅ {self._tools_stage_prefix()}{pkg} déjà installé dans le venv."
+                    f"[OK] {self._tools_stage_prefix()}{pkg} deja installe dans le venv."
                 )
             self._venv_check_index += 1
             next_label = (
@@ -865,7 +865,7 @@ class VenvManager:
             self._call_ui(
                 "update_progress_message",
                 "tools_check",
-                f"Vérification de {next_label}...",
+                f"Verification de {next_label}...",
             )
             self._call_ui(
                 "update_progress_progress",
@@ -876,7 +876,7 @@ class VenvManager:
             self._check_next_venv_pkg()
         else:
             self._safe_log(
-                f"📦 {self._tools_stage_prefix()}Installation automatique de {pkg}..."
+                f"[INSTALL] {self._tools_stage_prefix()}Installation automatique de {pkg}..."
             )
             self._call_ui(
                 "update_progress_message", "tools_check", f"Installation de {pkg}..."
@@ -1040,7 +1040,7 @@ class VenvManager:
                     try:
                         if process.state() != QProcess.NotRunning:
                             self._safe_log(
-                                f"⏱️ Timeout exceeded for {label} ({timeout_ms} ms). Killing process…"
+                                f"[TIMEOUT] Timeout exceeded for {label} ({timeout_ms} ms). Killing process..."
                             )
                             process.kill()
                     except Exception:
@@ -1168,16 +1168,16 @@ class VenvManager:
             venvs = self._find_all_venvs_in(workspace_dir)
 
             if not venvs:
-                self._safe_log("ℹ️ Aucun venv valide trouvé dans le workspace.")
+                self._safe_log("[INFO] Aucun venv valide trouve dans le workspace.")
                 return None
 
             if len(venvs) == 1:
-                self._safe_log(f"✅ Un seul venv trouvé: {venvs[0]}")
+                self._safe_log(f"[OK] Un seul venv trouve: {venvs[0]}")
                 return venvs[0]
 
             # Multiple venvs found - score and select the best
             self._safe_log(
-                f"ℹ️ {len(venvs)} venv(s) trouvé(s), sélection du meilleur..."
+                f"[INFO] {len(venvs)} venv(s) trouve(s), selection du meilleur..."
             )
 
             scored_venvs = []
@@ -1194,15 +1194,15 @@ class VenvManager:
             best_score, best_venv, best_reason = scored_venvs[0]
 
             if best_score == 0:
-                self._safe_log("❌ Aucun venv valide avec une bonne liaison.")
+                self._safe_log("[ERROR] Aucun venv valide avec une bonne liaison.")
                 return None
 
             self._safe_log(
-                f"✅ Meilleur venv sélectionné: {os.path.basename(best_venv)} (score={best_score})"
+                f"[OK] Meilleur venv selectionne: {os.path.basename(best_venv)} (score={best_score})"
             )
             return best_venv
         except Exception as e:
-            self._safe_log(f"⚠️ Erreur lors de la sélection du meilleur venv: {e}")
+            self._safe_log(f"[WARNING] Erreur lors de la selection du meilleur venv: {e}")
             return None
 
     def _on_venv_pkg_installed(self, process, code, status, pkg):
@@ -1212,9 +1212,9 @@ class VenvManager:
         if self._is_cancel_requested():
             return
         if code == 0:
-            self._safe_log(f"✅ {pkg} installé dans le venv.")
+            self._safe_log(f"[OK] {pkg} installe dans le venv.")
         else:
-            self._safe_log(f"❌ Erreur installation {pkg} (code {code})")
+            self._safe_log(f"[ERROR] Erreur installation {pkg} (code {code})")
         self._venv_check_index += 1
         self._call_ui(
             "update_progress_progress",
@@ -1233,17 +1233,17 @@ class VenvManager:
             # Validate existing venv; if invalid, propose deletion/recreation
             ok, reason = self.validate_venv_strict(venv_path)
             if not ok:
-                self._safe_log(f"❌ Invalid venv detected: {reason}")
+                self._safe_log(f"[ERROR] Invalid venv detected: {reason}")
                 recreated = self._prompt_recreate_invalid_venv(venv_path, reason)
                 if not recreated:
                     return
             else:
                 return
 
-        self._safe_log("🔧 Aucun venv trouvé, création automatique...")
+        self._safe_log("[CONFIG] Aucun venv trouve, creation automatique...")
         try:
             self._reset_cancel_state()
-            # Recherche d'un python embarqué à côté de l'exécutable
+            # Recherche d'un python embarque a cote de l'executable
             python_candidate = None
             exe_dir = os.path.dirname(sys.executable)
             # Windows: python.exe, Linux/Mac: python3 ou python
@@ -1255,7 +1255,7 @@ class VenvManager:
                 os.path.join(exe_dir, "python_embedded", "python3"),
                 os.path.join(exe_dir, "python_embedded", "python"),
             ]
-            # Recherche également les interpréteurs système disponibles dans le PATH
+            # Recherche egalement les interpreteurs systeme disponibles dans le PATH
             path_candidates = []
             try:
                 if platform.system() == "Windows":
@@ -1277,33 +1277,33 @@ class VenvManager:
                     break
             if not python_candidate:
                 python_candidate = sys.executable
-            # Journalisation du type d'interpréteur détecté
+            # Journalisation du type d'interpreteur detecte
             base = os.path.basename(python_candidate).lower()
             if (
                 python_candidate.startswith(exe_dir)
                 or "python_embedded" in python_candidate
             ):
                 self._safe_log(
-                    f"➡️ Utilisation de l'interpréteur Python embarqué : {python_candidate}"
+                    f"[STATE] Utilisation de l'interpreteur Python embarque : {python_candidate}"
                 )
             elif base in ("py", "py.exe") or shutil.which(base):
                 self._safe_log(
-                    f"➡️ Utilisation de l'interpréteur système : {python_candidate}"
+                    f"[STATE] Utilisation de l'interpreteur systeme : {python_candidate}"
                 )
             else:
-                self._safe_log(f"➡️ Utilisation de sys.executable : {python_candidate}")
+                self._safe_log(f"[STATE] Utilisation de sys.executable : {python_candidate}")
 
             self._call_ui(
                 "show_progress",
                 "venv_creation",
-                "Création de l'environnement virtuel",
-                "création de l'environnement virtuel",
+                "Creation de l'environnement virtuel",
+                "creation de l'environnement virtuel",
             )
             self._bind_cancel_for_progress(
-                "venv_creation", "création de l'environnement virtuel"
+                "venv_creation", "creation de l'environnement virtuel"
             )
             self._call_ui(
-                "update_progress_message", "venv_creation", "Création du venv..."
+                "update_progress_message", "venv_creation", "Creation du venv..."
             )
 
             process = QProcess(self.parent)
@@ -1332,7 +1332,7 @@ class VenvManager:
             self._arm_process_timeout(process, 600_000, "venv creation")
         except Exception as e:
             self._safe_log(
-                f"❌ Échec de création du venv ou installation des outils : {e}"
+                f"[ERROR] Echec de creation du venv ou installation des outils : {e}"
             )
 
     def _on_venv_output(self, process, error=False):
@@ -1363,25 +1363,25 @@ class VenvManager:
         if getattr(self.parent, "_closing", False):
             return
         if self._is_cancel_requested():
-            self._safe_log("ℹ️ Création du venv annulée.")
+            self._safe_log("[INFO] Creation du venv annulee.")
             self._call_ui("close_progress", "venv_creation")
             return
         if code == 0:
-            self._safe_log("✅ Environnement virtuel créé avec succès.")
-            self._call_ui("update_progress_message", "venv_creation", "Venv créé.")
+            self._safe_log("[OK] Environnement virtuel cree avec succes.")
+            self._call_ui("update_progress_message", "venv_creation", "Venv cree.")
             self._call_ui("close_progress", "venv_creation")
 
-            # Installer les dépendances du projet à partir de requirements.txt si présent
+            # Installer les dependances du projet a partir de requirements.txt si present
             try:
                 self.install_requirements_if_needed(os.path.dirname(venv_path))
             except Exception:
                 pass
         else:
-            self._safe_log(f"❌ Échec de création du venv (code {code})")
+            self._safe_log(f"[ERROR] Echec de creation du venv (code {code})")
             self._call_ui(
                 "update_progress_message",
                 "venv_creation",
-                "Erreur lors de la création du venv.",
+                "Erreur lors de la creation du venv.",
             )
             self._call_ui("close_progress", "venv_creation")
 
@@ -1432,15 +1432,15 @@ class VenvManager:
                 return others[0]
 
             # 3. Use DepsAnalyser to generate requirements.txt from project analysis
-            self._safe_log("🔍 Analyse des dépendances du projet via DepsAnalyser...")
+            self._safe_log("[SEARCH] Analyse des dependances du projet via DepsAnalyser...")
             generated = deps_analyser.write_requirements_txt(workspace_dir)
             if generated and os.path.isfile(generated):
-                self._safe_log("✅ requirements.txt généré via DepsAnalyser.")
+                self._safe_log("[OK] requirements.txt genere via DepsAnalyser.")
                 return generated
 
             return None
         except Exception as e:
-            self._safe_log(f"⚠️ Erreur lors de la détection des requirements: {e}")
+            self._safe_log(f"[WARNING] Erreur lors de la detection des requirements: {e}")
             return None
 
     # ---------- Install requirements.txt ----------
@@ -1449,7 +1449,7 @@ class VenvManager:
         # Get or generate requirements file
         req_path = self._get_requirements_file(path)
         if not req_path:
-            self._safe_log("ℹ️ Aucun fichier de dépendances trouvé ou généré.")
+            self._safe_log("[INFO] Aucun fichier de dependances trouve ou genere.")
             return
 
         if self._using_system_python():
@@ -1471,19 +1471,19 @@ class VenvManager:
                 venv_root = existing2 or venv_root
         ok, reason = self.validate_venv_strict(venv_root)
         if not ok:
-            self._safe_log(f"⚠️ Invalid venv for requirements: {reason}")
+            self._safe_log(f"[WARNING] Invalid venv for requirements: {reason}")
             # Offer to delete and recreate, then retry installation
             if self._prompt_recreate_invalid_venv(venv_root, reason):
                 # if recreated, try install again
                 self._start_requirements_install(path, venv_root, req_path)
             return
 
-        # Vérifier la liaison de manière asynchrone, puis démarrer l'installation
+        # Verifier la liaison de maniere asynchrone, puis demarrer l'installation
         def _after_binding(ok_bind: bool):
             """Execute _after_binding logic for this component."""
             if not ok_bind:
                 self._safe_log(
-                    "⚠️ Liaison venv invalide (python/pip ne pointent pas vers le venv); installation ignorée."
+                    "[WARNING] Liaison venv invalide (python/pip ne pointent pas vers le venv); installation ignoree."
                 )
                 return
             self._start_requirements_install(path, venv_root, req_path)
@@ -1502,7 +1502,7 @@ class VenvManager:
         py_exe = sys.executable if use_system_python else self.python_path(venv_root)
         if not os.path.isfile(py_exe):
             self._safe_log(
-                "⚠️ python introuvable dans le venv; installation requirements ignorée."
+                "[WARNING] python introuvable dans le venv; installation requirements ignoree."
             )
             return
         # Compute checksum and skip install if unchanged
@@ -1512,7 +1512,7 @@ class VenvManager:
             req_hash = hashlib.sha256(data).hexdigest()
         except Exception as e:
             self._safe_log(
-                f"⚠️ Impossible de calculer le hash de requirements.txt: {e}"
+                f"[WARNING] Impossible de calculer le hash de requirements.txt: {e}"
             )
             req_hash = None
         marker_base = venv_root
@@ -1529,13 +1529,13 @@ class VenvManager:
                     current = mf.read().strip()
                 if current == req_hash:
                     self._safe_log(
-                        "✅ requirements.txt déjà installé (aucun changement détecté)."
+                        "[OK] requirements.txt deja installe (aucun changement detecte)."
                     )
                     return
             except Exception:
                 pass
         self._safe_log(
-            "📦 Installation des dépendances à partir de requirements.txt..."
+            "[INSTALL] Installation des dependances a partir de requirements.txt..."
         )
         try:
             # remember marker info to write after success
@@ -1549,11 +1549,11 @@ class VenvManager:
             self._call_ui(
                 "show_progress",
                 "reqs_install",
-                "Installation des dépendances",
-                "installation des dépendances",
+                "Installation des dependances",
+                "installation des dependances",
             )
             self._bind_cancel_for_progress(
-                "reqs_install", "installation des dépendances"
+                "reqs_install", "installation des dependances"
             )
             self._call_ui(
                 "update_progress_message",
@@ -1580,7 +1580,7 @@ class VenvManager:
             # Safety timeout for ensurepip (3 min)
             self._arm_process_timeout(process, 180_000, "ensurepip")
         except Exception as e:
-            self._safe_log(f"❌ Échec installation requirements.txt : {e}")
+            self._safe_log(f"[ERROR] Echec installation requirements.txt : {e}")
 
     def _on_pip_output(self, process, error=False):
         """Handle the related event callback."""
@@ -1609,7 +1609,7 @@ class VenvManager:
         if getattr(self.parent, "_closing", False):
             return
         if self._is_cancel_requested():
-            self._safe_log("ℹ️ Installation des dépendances annulée.")
+            self._safe_log("[INFO] Installation des dependances annulee.")
             self._call_ui("close_progress", "reqs_install")
             return
         phase = self._pip_phase
@@ -1618,7 +1618,7 @@ class VenvManager:
             self._call_ui(
                 "update_progress_message",
                 "reqs_install",
-                "Mise à niveau de pip/setuptools/wheel...",
+                "Mise a niveau de pip/setuptools/wheel...",
             )
             p2 = QProcess(self.parent)
             self._req_install_process = p2
@@ -1658,7 +1658,7 @@ class VenvManager:
                 self._call_ui(
                     "update_progress_message",
                     "reqs_install",
-                    "Installation des dépendances (requirements.txt)...",
+                    "Installation des dependances (requirements.txt)...",
                 )
                 p2 = QProcess(self.parent)
                 self._req_install_process = p2
@@ -1688,16 +1688,16 @@ class VenvManager:
                 return
             else:
                 self._safe_log(
-                    f"❌ Échec mise à niveau pip/setuptools/wheel (code {code})"
+                    f"[ERROR] Echec mise a niveau pip/setuptools/wheel (code {code})"
                 )
                 self._call_ui(
                     "update_progress_message",
                     "reqs_install",
-                    "Échec upgrade pip/setuptools/wheel.",
+                    "Echec upgrade pip/setuptools/wheel.",
                 )
         else:
             if code == 0:
-                self._safe_log("✅ requirements.txt installé.")
+                self._safe_log("[OK] requirements.txt installe.")
                 # Write/update marker if we computed it
                 try:
                     if getattr(self, "_req_marker_path", None) and getattr(
@@ -1711,10 +1711,10 @@ class VenvManager:
                     self._req_marker_path = None
                     self._req_marker_hash = None
                 self._call_ui(
-                    "update_progress_message", "reqs_install", "Installation terminée."
+                    "update_progress_message", "reqs_install", "Installation terminee."
                 )
             else:
-                self._safe_log(f"❌ Échec installation requirements.txt (code {code})")
+                self._safe_log(f"[ERROR] Echec installation requirements.txt (code {code})")
                 self._call_ui(
                     "update_progress_message",
                     "reqs_install",
@@ -1752,8 +1752,8 @@ class VenvManager:
 
         if had_active:
             self._safe_log(
-                "🛑 Opérations venv interrompues.",
-                "🛑 Venv operations interrupted.",
+                "[CANCEL] Operations venv interrompues.",
+                "[CANCEL] Venv operations interrupted.",
                 level="warning",
             )
 
@@ -1796,7 +1796,7 @@ class VenvManager:
             if not existing_env:
                 self.create_venv_if_needed(workspace_dir)
             else:
-                self._safe_log(f"✅ Venv existant détecté: {existing_env}")
+                self._safe_log(f"[OK] Venv existant detecte: {existing_env}")
 
             # Check and install tools if requested
             if check_tools:
@@ -1808,18 +1808,18 @@ class VenvManager:
                         def _after_binding(ok_bind: bool):
                             if ok_bind:
                                 self._safe_log(
-                                    "🔍 Vérification des outils de compilation..."
+                                    "[SEARCH] Verification des outils de compilation..."
                                 )
                                 self.check_tools_in_venv(existing_check)
                             else:
                                 self._safe_log(
-                                    "⚠️ Liaison venv invalide, vérification des outils ignorée."
+                                    "[WARNING] Liaison venv invalide, verification des outils ignoree."
                                 )
 
                         self._verify_venv_binding_async(existing_check, _after_binding)
                     else:
                         self._safe_log(
-                            f"⚠️ Venv invalide, vérification des outils ignorée: {reason}"
+                            f"[WARNING] Venv invalide, verification des outils ignoree: {reason}"
                         )
 
             # Create ARK config if it doesn't exist
@@ -1827,13 +1827,13 @@ class VenvManager:
                 from Core.Configs import create_default_ark_config
 
                 if create_default_ark_config(workspace_dir):
-                    self._safe_log("📋 Fichier ark.yml créé dans le workspace.")
+                    self._safe_log("[STATE] Fichier ark.yml cree dans le workspace.")
             except Exception as e:
-                self._safe_log(f"⚠️ Impossible de créer ark.yml: {e}")
+                self._safe_log(f"[WARNING] Impossible de creer ark.yml: {e}")
 
             return True
         except Exception as e:
-            self._safe_log(f"❌ Erreur lors de la configuration du workspace: {e}")
+            self._safe_log(f"[ERROR] Erreur lors de la configuration du workspace: {e}")
             return False
 
     def get_manager_info(self, workspace_dir: str) -> dict:

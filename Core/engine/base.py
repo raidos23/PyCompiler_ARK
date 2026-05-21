@@ -15,6 +15,7 @@
 
 from __future__ import annotations
 
+import time
 from typing import TYPE_CHECKING, Callable, Optional
 
 if TYPE_CHECKING:
@@ -224,7 +225,7 @@ class CompilerEngine:
                             "info",
                             *_tools_stage_message(
                                 "system",
-                                f"Installation des outils système manquants: {missing_system}",
+                                f"Installation des outils systeme manquants: {missing_system}",
                                 f"Installing missing system tools: {missing_system}",
                             ),
                         )
@@ -255,7 +256,7 @@ class CompilerEngine:
                                             "warning",
                                             *_tools_stage_message(
                                                 "system",
-                                                "Timeout lors de l'installation des outils système",
+                                                "Timeout lors de l'installation des outils systeme",
                                                 "Timeout during system tools installation",
                                             ),
                                         )
@@ -269,7 +270,7 @@ class CompilerEngine:
                                             "success",
                                             *_tools_stage_message(
                                                 "system",
-                                                f"Outils système installés avec succès: {missing_system}",
+                                                f"Outils systeme installes avec succes: {missing_system}",
                                                 f"System tools installed successfully: {missing_system}",
                                             ),
                                         )
@@ -279,22 +280,47 @@ class CompilerEngine:
                                             "error",
                                             *_tools_stage_message(
                                                 "system",
-                                                f"Échec installation outils système: {missing_system} (code: {process.exitCode()})",
+                                                f"Echec installation outils systeme: {missing_system} (code: {process.exitCode()})",
                                                 f"System tools installation failed: {missing_system} (code: {process.exitCode()})",
                                             ),
                                         )
                                         system_install_ok = False
                             else:
+                                # Fallback to headless installation for CLI/CI
+                                from Core.SysDependencyManager import (
+                                    install_system_packages,
+                                )
+
                                 log_i18n_level(
                                     gui,
-                                    "error",
+                                    "info",
                                     *_tools_stage_message(
                                         "system",
-                                        "Impossible de démarrer l'installation des outils système",
-                                        "Unable to start system tools installation",
+                                        "Tentative d'installation systeme en mode headless...",
+                                        "Attempting headless system installation...",
                                     ),
                                 )
-                                system_install_ok = False
+                                if install_system_packages(missing_system):
+                                    log_i18n_level(
+                                        gui,
+                                        "success",
+                                        *_tools_stage_message(
+                                            "system",
+                                            "Installation systeme headless reussie.",
+                                            "Headless system installation successful.",
+                                        ),
+                                    )
+                                else:
+                                    log_i18n_level(
+                                        gui,
+                                        "error",
+                                        *_tools_stage_message(
+                                            "system",
+                                            "Echec de l'installation systeme headless.",
+                                            "Headless system installation failed.",
+                                        ),
+                                    )
+                                    system_install_ok = False
 
                         elif system == "windows":
                             # Convert package names to winget format for Windows
@@ -356,7 +382,7 @@ class CompilerEngine:
                                                 "success",
                                                 *_tools_stage_message(
                                                     "system",
-                                                    f"Outils Windows installés: {missing_system}",
+                                                    f"Outils Windows installes: {missing_system}",
                                                     f"Windows tools installed: {missing_system}",
                                                 ),
                                             )
@@ -366,7 +392,7 @@ class CompilerEngine:
                                                 "error",
                                                 *_tools_stage_message(
                                                     "system",
-                                                    f"Échec installation Windows: {missing_system}",
+                                                    f"Echec installation Windows: {missing_system}",
                                                     f"Windows installation failed: {missing_system}",
                                                 ),
                                             )
@@ -394,7 +420,7 @@ class CompilerEngine:
                                     "warning",
                                     *_tools_stage_message(
                                         "system",
-                                        f"Aucun équivalent Windows pour: {missing_system}",
+                                        f"Aucun equivalent Windows pour: {missing_system}",
                                         f"No Windows equivalent for: {missing_system}",
                                     ),
                                 )
@@ -404,7 +430,7 @@ class CompilerEngine:
                                 "warning",
                                 *_tools_stage_message(
                                     "system",
-                                    "Plateforme non supportée pour l'installation automatique",
+                                    "Plateforme non supportee pour l'installation automatique",
                                     "Platform not supported for automatic installation",
                                 ),
                             )
@@ -415,7 +441,7 @@ class CompilerEngine:
                             "success",
                             *_tools_stage_message(
                                 "system",
-                                f"Tous les outils système sont déjà installés: {system_tools}",
+                                f"Tous les outils systeme sont deja installes: {system_tools}",
                                 f"All system tools are already installed: {system_tools}",
                             ),
                         )
@@ -426,7 +452,7 @@ class CompilerEngine:
                         "warning",
                         *_tools_stage_message(
                             "system",
-                            f"Erreur lors de la vérification/installation des outils système: {e}",
+                            f"Erreur lors de la verification/installation des outils systeme: {e}",
                             f"Error checking/installing system tools: {e}",
                         ),
                     )
@@ -454,6 +480,38 @@ class CompilerEngine:
                             ),
                         )
                         gui.venv_manager.ensure_tools_installed_system(missing_python)
+
+                        # Wait for Python tools to be installed on system
+                        timeout_total = 600000  # 10 minutes
+                        elapsed = 0
+                        interval = 1000  # 1s
+                        while elapsed < timeout_total:
+                            if stop_signal and stop_signal():
+                                return False
+
+                            # Check if all are installed
+                            all_done = True
+                            for tool in missing_python:
+                                if not gui.venv_manager.is_tool_installed_system(tool):
+                                    all_done = False
+                                    break
+                            if all_done:
+                                break
+
+                            time.sleep(interval / 1000.0)
+                            elapsed += interval
+
+                        if not all_done:
+                            log_i18n_level(
+                                gui,
+                                "warning",
+                                *_tools_stage_message(
+                                    "python",
+                                    "Timeout ou echec de l'installation des outils Python (systeme)",
+                                    "Timeout or failure installing system Python tools",
+                                ),
+                            )
+                            return all_done
                 else:
                     venv_path = gui.venv_manager.resolve_project_venv()
                     if venv_path:
@@ -474,6 +532,42 @@ class CompilerEngine:
                             gui.venv_manager.ensure_tools_installed(
                                 venv_path, missing_python
                             )
+
+                            # Wait for Python tools to be installed
+                            timeout_total = 600000  # 10 minutes
+                            elapsed = 0
+                            interval = 1000  # 1s
+                            while elapsed < timeout_total:
+                                if stop_signal and stop_signal():
+                                    return False
+
+                                # Check if all are installed
+                                all_done = True
+                                for tool in missing_python:
+                                    if not gui.venv_manager.is_tool_installed(
+                                        venv_path, tool
+                                    ):
+                                        all_done = False
+                                        break
+                                if all_done:
+                                    break
+
+                                time.sleep(interval / 1000.0)
+                                elapsed += interval
+
+                            if not all_done:
+                                log_i18n_level(
+                                    gui,
+                                    "warning",
+                                    *_tools_stage_message(
+                                        "python",
+                                        "Timeout ou echec de l'installation des outils Python",
+                                        "Timeout or failure installing Python tools",
+                                    ),
+                                )
+                                # We don't necessarily return False here if some tools might have been installed
+                                # but it's safer to return True only if all_done.
+                                return all_done
 
             return system_install_ok and not (stop_signal and stop_signal())
         except Exception as e:

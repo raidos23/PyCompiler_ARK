@@ -1,13 +1,99 @@
 from __future__ import annotations
 
 import os
+import signal
 import subprocess
+import threading
 import venv
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from Core.Compiler.engine_runner import run_engine_compile as _core_run_engine_compile
+# Global event for CLI cancellation
+_CLI_CANCEL_EVENT = threading.Event()
+
+
+def _cli_sigint_handler(signum, frame):
+    """Handle SIGINT (Ctrl+C) by setting the cancellation event."""
+    _CLI_CANCEL_EVENT.set()
+
+
+def run_engine_compile(
+    *,
+    workspace: Path,
+    engine_id: str,
+    context: BuildContext,
+    engine_config: dict[str, Any] | None = None,
+    verbose: bool = False,
+) -> dict[str, Any]:
+    """Execute a compilation with real-time output streaming to the CLI."""
+    from Core.Compiler.engine_runner import run_engine_compile_streaming
+    from .output import plain, get_console, error
+
+    captured_stdout = []
+    captured_stderr = []
+
+    console = get_console()
+    status = None
+    if not verbose and console:
+        status = console.status("[cyan]Initialisation de la compilation...[/cyan]", spinner="dots")
+        status.start()
+
+    def _on_stdout(line: str):
+        captured_stdout.append(line)
+        if verbose:
+            plain(line)
+        elif status:
+            clean = line.strip()
+            if clean:
+                # Update status message if it's a high-level step or important progress
+                if any(x in clean for x in ("Etape", "->", "Execution", "Commande")):
+                    status.update(f"[cyan]{clean}[/cyan]")
+
+    def _on_stderr(line: str):
+        captured_stderr.append(line)
+        if verbose:
+            plain(line, err=True)
+        # In non-verbose mode, we keep stderr for the final result if it fails
+
+    # Register SIGINT handler
+    _CLI_CANCEL_EVENT.clear()
+    old_handler = signal.signal(signal.SIGINT, _cli_sigint_handler)
+    
+    try:
+        result = run_engine_compile_streaming(
+            workspace=workspace,
+            engine_id=engine_id,
+            context=context,
+            engine_config=engine_config,
+            on_stdout=_on_stdout,
+            on_stderr=_on_stderr,
+            stop_signal=lambda: _CLI_CANCEL_EVENT.is_set(),
+        )
+    except Exception as exc:
+        result = {
+            "success": False,
+            "return_code": None,
+            "error": f"Internal error during compilation: {exc}",
+        }
+    finally:
+        # Restore old handler
+        signal.signal(signal.SIGINT, old_handler)
+        if status:
+            status.stop()
+
+    if _CLI_CANCEL_EVENT.is_set():
+        error("Compilation annulee par l'utilisateur (Ctrl+C).")
+        result["success"] = False
+        result["error"] = "Annule par l'utilisateur"
+
+    result["stdout"] = "\n".join(captured_stdout)
+    result["stderr"] = "\n".join(captured_stderr)
+
+    if not result["success"] and not result.get("error"):
+        result["error"] = result["stderr"].strip() or "Build failed"
+
+    return result
 from Core.Configs import (
     CONFIG_KEYS,
     DEFAULT_USER_DIRS,
@@ -267,17 +353,58 @@ def run_engine_compile(
     engine_id: str,
     context: BuildContext,
     engine_config: dict[str, Any] | None = None,
+    verbose: bool = False,
 ) -> dict[str, Any]:
-    """Delegate to :func:`Core.Compiler.engine_runner.run_engine_compile`.
+    """Execute a compilation with real-time output streaming to the CLI."""
+    from Core.Compiler.engine_runner import run_engine_compile_streaming
+    from .output import plain, get_console
 
-    The Core implementation is the single source of truth for compilation.
-    """
-    return _core_run_engine_compile(
-        workspace=workspace,
-        engine_id=engine_id,
-        context=context,
-        engine_config=engine_config,
-    )
+    captured_stdout = []
+    captured_stderr = []
+
+    console = get_console()
+    status = None
+    if not verbose and console:
+        status = console.status("[cyan]Initialisation de la compilation...[/cyan]", spinner="dots")
+        status.start()
+
+    def _on_stdout(line: str):
+        captured_stdout.append(line)
+        if verbose:
+            plain(line)
+        elif status:
+            clean = line.strip()
+            if clean:
+                # Update status message if it's a high-level step or important progress
+                if any(x in clean for x in ("Étape", "➡️", "🚀", "⚙️", "🔨", "📦", "✅")):
+                    status.update(f"[cyan]{clean}[/cyan]")
+
+    def _on_stderr(line: str):
+        captured_stderr.append(line)
+        if verbose:
+            plain(line, err=True)
+        # In non-verbose mode, we keep stderr for the final result if it fails
+
+    try:
+        result = run_engine_compile_streaming(
+            workspace=workspace,
+            engine_id=engine_id,
+            context=context,
+            engine_config=engine_config,
+            on_stdout=_on_stdout,
+            on_stderr=_on_stderr,
+        )
+    finally:
+        if status:
+            status.stop()
+
+    result["stdout"] = "\n".join(captured_stdout)
+    result["stderr"] = "\n".join(captured_stderr)
+
+    if not result["success"] and not result.get("error"):
+        result["error"] = result["stderr"].strip() or "Build failed"
+
+    return result
 
 
 def engine_config_from_lock(lock_payload: dict[str, Any]) -> dict[str, Any]:
@@ -301,7 +428,7 @@ def scaffold_plugin_payload(name: str, root_dir: str | None = None) -> dict[str,
     return scaffold_plugin(name, root_dir=root_dir)
 
 
-def run_bcasl_before_compile_sync(workspace: Path) -> bool:
+def run_bcasl_before_compile_sync(workspace: Path, verbose: bool = False) -> bool:
     """Run BCASL pre-compile stage synchronously for the CLI.
 
     Returns:
@@ -309,7 +436,7 @@ def run_bcasl_before_compile_sync(workspace: Path) -> bool:
     """
     from bcasl.Loader import run_pre_compile
 
-    from .output import error, info, log, success
+    from .output import error, info, log, success, get_console
 
     class CliBcaslHost:
         def __init__(self, ws_dir: Path):
@@ -317,17 +444,42 @@ def run_bcasl_before_compile_sync(workspace: Path) -> bool:
 
             class Logger:
                 def append(self, msg: str):
-                    # Strip trailing newline as our log() adds one
-                    log("BCASL", msg.rstrip())
+                    if verbose:
+                        # Strip trailing newline as our log() adds one
+                        log("BCASL", msg.rstrip())
 
             self.log = Logger()
 
     host = CliBcaslHost(workspace)
-    info("Running BCASL pre-compile checks...")
+    
+    console = get_console()
+    status = None
+    if not verbose and console:
+        status = console.status("[cyan]Verification BCASL...[/cyan]", spinner="dots")
+        status.start()
+    
+    if verbose:
+        info("Running BCASL pre-compile checks...")
+        
+    # Register SIGINT handler
+    _CLI_CANCEL_EVENT.clear()
+    old_handler = signal.signal(signal.SIGINT, _cli_sigint_handler)
+
     try:
         report = run_pre_compile(host)
     except Exception as exc:
+        if status:
+            status.stop()
         error(f"BCASL execution failed: {exc}")
+        return False
+    finally:
+        # Restore old handler
+        signal.signal(signal.SIGINT, old_handler)
+        if status:
+            status.stop()
+
+    if _CLI_CANCEL_EVENT.is_set():
+        error("BCASL annule par l'utilisateur (Ctrl+C).")
         return False
 
     if report is None:
@@ -338,7 +490,8 @@ def run_bcasl_before_compile_sync(workspace: Path) -> bool:
         if not getattr(report, "ok"):
             error("BCASL reported security or validation failures.")
             return False
-        success("BCASL checks passed.")
+        if verbose:
+            success("BCASL checks passed.")
         return True
 
     return True
