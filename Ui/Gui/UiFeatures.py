@@ -290,132 +290,8 @@ class UiFeatures:
             )
 
     # =========================================================================
-    # EXPORT/IMPORT CONFIGURATION
+    # STATISTICS
     # =========================================================================
-
-    def export_config(self):
-        """Export minimal GUI preferences to a JSON file."""
-        file, _ = QFileDialog.getSaveFileName(
-            self, "Exporter la configuration", "", "JSON Files (*.json)"
-        )
-        if file:
-            if not file.endswith(".json"):
-                file += ".json"
-            try:
-                from Ui.i18n import normalize_lang_pref
-
-                base_lang_pref = getattr(
-                    self,
-                    "language_pref",
-                    getattr(
-                        self, "language", getattr(self, "current_language", "System")
-                    ),
-                )
-                lang_pref_out = (
-                    base_lang_pref
-                    if base_lang_pref == "System"
-                    else asyncio.run(normalize_lang_pref(base_lang_pref))
-                )
-            except Exception:
-                lang_pref_out = getattr(self, "language_pref", "System")
-            prefs = {
-                "language_pref": lang_pref_out,
-                "theme": getattr(self, "theme", "System"),
-            }
-            try:
-                with open(file, "w", encoding="utf-8") as f:
-                    json.dump(prefs, f, indent=4)
-                self.log_i18n(
-                    f"✅ Configuration exportée : {file}",
-                    f"✅ Configuration exported: {file}",
-                )
-            except Exception as e:
-                self.log_i18n(
-                    f"❌ Erreur export configuration : {e}",
-                    f"❌ Error exporting configuration: {e}",
-                )
-
-    def import_config(self):
-        """Import GUI preferences from a JSON file."""
-        file, _ = QFileDialog.getOpenFileName(
-            self, "Importer la configuration", "", "JSON Files (*.json)"
-        )
-        if file:
-            try:
-                with open(file, encoding="utf-8") as f:
-                    prefs = json.load(f)
-                try:
-                    lang_pref_in = prefs.get(
-                        "language_pref", prefs.get("language", None)
-                    )
-                    if lang_pref_in is not None:
-                        from Ui.i18n import (
-                            get_translations,
-                            normalize_lang_pref,
-                            resolve_system_language,
-                        )
-
-                        if lang_pref_in == "System":
-                            self.language_pref = "System"
-                            self.apply_language("System")
-                            if getattr(self, "select_lang", None):
-
-                                async def _fetch_sys():
-                                    code = await resolve_system_language()
-                                    return await get_translations(code)
-
-                                from Core.Globals import _run_coro_async
-
-                                _run_coro_async(
-                                    _fetch_sys(),
-                                    lambda tr: self.select_lang.setText(
-                                        tr.get("choose_language_system_button")
-                                        or tr.get("select_lang")
-                                        or ""
-                                    ),
-                                    ui_owner=self,
-                                )
-                        else:
-                            code = asyncio.run(normalize_lang_pref(lang_pref_in))
-                            self.language_pref = code
-                            self.apply_language(code)
-                            if getattr(self, "select_lang", None):
-                                from Core.Globals import _run_coro_async
-
-                                _run_coro_async(
-                                    get_translations(code),
-                                    lambda tr2: self.select_lang.setText(
-                                        tr2.get("choose_language_button")
-                                        or tr2.get("select_lang")
-                                        or ""
-                                    ),
-                                    ui_owner=self,
-                                )
-                except Exception:
-                    pass
-                try:
-                    theme_pref = prefs.get("theme", None)
-                    if theme_pref is not None:
-                        from Ui.Gui.UiConnection import apply_theme
-
-                        self.theme = theme_pref
-                        apply_theme(self, theme_pref)
-                except Exception:
-                    pass
-                self.log_i18n(
-                    f"✅ Configuration importée : {file}",
-                    f"✅ Configuration imported: {file}",
-                )
-                self.update_command_preview()
-                try:
-                    self.save_preferences()
-                except Exception:
-                    pass
-            except Exception as e:
-                self.log_i18n(
-                    f"❌ Erreur import configuration : {e}",
-                    f"❌ Error importing configuration: {e}",
-                )
 
     def save_all_engine_configs(self) -> None:
         """Save configuration for all registered engines in one click."""
@@ -485,8 +361,6 @@ class UiFeatures:
         self.btn_remove_file.setEnabled(enabled)
 
         for attr in (
-            "btn_export_config",
-            "btn_import_config",
             "btn_suggest_deps",
             "btn_bc_loader",
             "select_lang",
@@ -514,10 +388,9 @@ class UiFeatures:
                     "btn_select_folder",
                     "btn_select_files",
                     "btn_remove_file",
-                    "btn_export_config",
-                    "btn_import_config",
                     "btn_bc_loader",
                     "btn_suggest_deps",
+
                     "select_lang",
                     "select_theme",
                     "btn_show_stats",
