@@ -26,8 +26,8 @@ This module provides utilities to validate plugin compatibility with:
 
 from __future__ import annotations
 
-from typing import Tuple, List
 from dataclasses import dataclass
+from typing import List, Tuple
 
 
 @dataclass

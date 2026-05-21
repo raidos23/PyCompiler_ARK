@@ -15,9 +15,9 @@
 
 from __future__ import annotations
 
-from typing import Any, Optional, Callable
-import os
 import json
+import os
+from typing import Any, Callable, Optional
 
 _GLOBAL_TR: dict[str, Any] = {}
 _GLOBAL_LANG: str = "en"

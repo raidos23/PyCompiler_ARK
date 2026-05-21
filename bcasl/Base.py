@@ -800,7 +800,7 @@ def bc_register(
 
             # Appliquer la priorité basée sur les tags si pas explicitement définie
             if priority is None and plugin_instance is not None:
-                from .tagging import TAG_PRIORITY_MAP, DEFAULT_TAG_PRIORITY
+                from .tagging import DEFAULT_TAG_PRIORITY, TAG_PRIORITY_MAP
 
                 tags = getattr(plugin_instance.meta, "tags", ()) or ()
                 if tags:

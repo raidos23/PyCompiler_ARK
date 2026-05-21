@@ -23,8 +23,8 @@ import pkgutil
 import sys
 from types import ModuleType
 
-from Core.engine.base import CompilerEngine
 from Core.engine import registry as engine_registry
+from Core.engine.base import CompilerEngine
 
 logger = logging.getLogger(__name__)
 

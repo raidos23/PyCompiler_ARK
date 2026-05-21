@@ -18,18 +18,20 @@ from __future__ import annotations
 import inspect
 from pathlib import Path
 from typing import Optional
+
 import colorama
 from rich.console import Console
-from .i18n import translate
 
 # Import des classes et fonctions de Core.dialogs
 from Ui.Gui.WidgetsCreator import (
+    InstallAuth,
+    ProgressDialog,
+    _redact_secrets,
     show_msgbox,
     sys_msgbox_for_installing,
-    ProgressDialog,
-    InstallAuth,
-    _redact_secrets,
 )
+
+from .i18n import translate
 
 
 class Dialog:

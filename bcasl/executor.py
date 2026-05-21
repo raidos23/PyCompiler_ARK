@@ -13,21 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .Base import (
-    BCASL_PLUGIN_REGISTER_FUNC,
-    _PluginRecord,
-    BcPluginBase,
-    ExecutionItem,
-    ExecutionReport,
-    PluginMeta,
-    PreCompileContext,
-    _logger,
-)
-
 import heapq
 import importlib.util
-import multiprocessing as mp
 import math
+import multiprocessing as mp
 import os
 import signal
 import subprocess
@@ -36,6 +25,17 @@ import threading
 import time
 from pathlib import Path
 from typing import Any, Optional
+
+from .Base import (
+    BCASL_PLUGIN_REGISTER_FUNC,
+    BcPluginBase,
+    ExecutionItem,
+    ExecutionReport,
+    PluginMeta,
+    PreCompileContext,
+    _logger,
+    _PluginRecord,
+)
 
 _ACTIVE_WORKER_PIDS: set[int] = set()
 _ACTIVE_WORKER_LOCK = threading.Lock()
@@ -121,7 +121,7 @@ def _normalize_tags(tags: Any) -> list[str]:
 def _tag_priority_from_tags(tags: Any) -> int:
     """Calcule la priorité basée sur les tags."""
     try:
-        from .tagging import TAG_PRIORITY_MAP, DEFAULT_TAG_PRIORITY
+        from .tagging import DEFAULT_TAG_PRIORITY, TAG_PRIORITY_MAP
 
         norm = _normalize_tags(tags)
         if not norm:
@@ -902,7 +902,7 @@ class BCASL:
                 continue
 
             _logger.info("--- Phase: %s ---", pname)
-            
+
             # Sous-ensemble d'items pour cette phase
             p_items = {pid: active_items[pid] for pid in p_ids}
             indeg, children = _build_dependency_graph(p_items)
@@ -914,22 +914,37 @@ class BCASL:
             for pid in order:
                 rec = p_items[pid]
                 if skip_dependents_on_failure:
-                    failed_dep = next((d for d in rec.requires if d in failed_seq), None)
+                    failed_dep = next(
+                        (d for d in rec.requires if d in failed_seq), None
+                    )
                     if failed_dep:
-                        _record_dependency_blocked(report, plugin_id=pid, name=rec.plugin.meta.name, failed_dep=str(failed_dep))
+                        _record_dependency_blocked(
+                            report,
+                            plugin_id=pid,
+                            name=rec.plugin.meta.name,
+                            failed_dep=str(failed_dep),
+                        )
                         failed_seq.add(pid)
                         continue
-                
-                # Note: On respecte toujours le mode sandbox (processus isolé) si activé, 
+
+                # Note: On respecte toujours le mode sandbox (processus isolé) si activé,
                 # mais on lance les plugins l'un après l'autre.
-                ok = _run_plugin_sequential(report, rec, ctx, self.project_root, self.plugin_timeout_s, eff_sandbox, stop_requested)
+                ok = _run_plugin_sequential(
+                    report,
+                    rec,
+                    ctx,
+                    self.project_root,
+                    self.plugin_timeout_s,
+                    eff_sandbox,
+                    stop_requested,
+                )
                 if not ok:
                     failed_seq.add(pid)
-                    if fail_fast: return report
+                    if fail_fast:
+                        return report
 
         _logger.info(report.summary())
         return report
-
 
 
 def _plugin_worker(

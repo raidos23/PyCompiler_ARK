@@ -29,18 +29,17 @@ Point d'entrée du package: expose l'Plugins publique minimale et stable.
 
 from __future__ import annotations
 
-from .executor import BCASL
-
 # Coeur BCASL (moteur de plugins et contexte)
 from .Base import (
-    ExecutionReport,
+    BCASL_PLUGIN_REGISTER_FUNC,
     BcPluginBase,
+    ExecutionReport,
     PluginMeta,
     PreCompileContext,
     bc_register,
     register_plugin,
-    BCASL_PLUGIN_REGISTER_FUNC,
 )
+from .executor import BCASL
 
 # Chargeur (exécution asynchrone, UI, annulation, configuration)
 from .Loader import (
@@ -55,8 +54,8 @@ from .Loader import (
 from .validator import (
     CompatibilityCheckResult,
     check_plugin_compatibility,
-    validate_plugins_compatibility,
     print_compatibility_report,
+    validate_plugins_compatibility,
 )
 
 __version__ = "1.0.0"

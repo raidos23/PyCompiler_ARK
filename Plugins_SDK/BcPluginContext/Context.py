@@ -30,36 +30,22 @@ import urllib.parse
 import urllib.request
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import (
-    Any,
-    Optional,
-    Union,
-    List,
-    Iterator,
-    Dict,
-    Set,
-    Tuple,
-    Pattern,
-)
+from typing import Any, Dict, Iterator, List, Optional, Pattern, Set, Tuple, Union
 
 # -----------------------------
 # Plugin base (BCASL) and decorator
 # -----------------------------
 # Reuse BCASL types to guarantee compatibility with the host
 try:  # noqa: E402
-    from bcasl import (
-        BCASL as BCASL,
-        ExecutionReport as ExecutionReport,
-        BcPluginBase as BcPluginBase,
-        PluginMeta as PluginMeta,
-        PreCompileContext as PreCompileContext,
-    )
+    from bcasl import BCASL as BCASL
+    from bcasl import BcPluginBase as BcPluginBase
+    from bcasl import ExecutionReport as ExecutionReport
+    from bcasl import PluginMeta as PluginMeta
+    from bcasl import PreCompileContext as PreCompileContext
 
     try:
-        from bcasl import (
-            BCASL_PLUGIN_REGISTER_FUNC as BCASL_PLUGIN_REGISTER_FUNC,
-            register_plugin as register_plugin,
-        )
+        from bcasl import BCASL_PLUGIN_REGISTER_FUNC as BCASL_PLUGIN_REGISTER_FUNC
+        from bcasl import register_plugin as register_plugin
     except Exception:  # pragma: no cover
 
         def register_plugin(cls: Any) -> Any:  # type: ignore
@@ -288,7 +274,9 @@ def set_selected_workspace(path: Pathish) -> bool:
         pass
     # Try to inform the GUI when running with UI; ignore result and accept by contract
     try:
-        from Services.AdvancedAuth import request_workspace_change_from_BcPlugin  # type: ignore
+        from Services.AdvancedAuth import (
+            request_workspace_change_from_BcPlugin,
+        )  # type: ignore
 
         try:
             request_workspace_change_from_BcPlugin(str(path))

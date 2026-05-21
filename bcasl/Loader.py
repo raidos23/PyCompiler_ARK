@@ -31,17 +31,18 @@ from __future__ import annotations
 import os
 from pathlib import Path
 from typing import Any, Optional
+
 import yaml
 
 from Core.Configs import load_ark_config
-from .executor import BCASL
 
 from .Base import BcPluginBase, PreCompileContext
+from .executor import BCASL
 from .tagging import compute_tag_order
 
 # Qt (facultatif). Ne pas importer QtWidgets au niveau module pour compatibilité headless.
 try:  # pragma: no cover
-    from PySide6.QtCore import QObject, QThread, Signal, Slot, Qt
+    from PySide6.QtCore import QObject, Qt, QThread, Signal, Slot
 except Exception:  # pragma: no cover
     QObject = None  # type: ignore
     QThread = None  # type: ignore
@@ -602,7 +603,10 @@ def open_bc_loader_dialog(self) -> None:
         plugin_instances = _discover_bcasl_plugins(Plugins_dir, workspace_root, cfg)
 
         from Ui.Gui.Dialogs.BcaslDialog import open_bcasl_pipeline_dialog
-        open_bcasl_pipeline_dialog(self, workspace_root, meta_map, cfg, plugin_instances)
+
+        open_bcasl_pipeline_dialog(
+            self, workspace_root, meta_map, cfg, plugin_instances
+        )
 
     except Exception as e:
         try:
@@ -653,7 +657,7 @@ def run_pre_compile_async(self, on_done: Optional[callable] = None) -> None:
             return
 
         if QThread is not None and QObject is not None and Signal is not None:
-            from Ui.Gui.Dialogs.BcaslDialog import _BCASLWorker, _BCASLUiBridge
+            from Ui.Gui.Dialogs.BcaslDialog import _BCASLUiBridge, _BCASLWorker
 
             thread = QThread()
             worker = _BCASLWorker(workspace_root, Plugins_dir, cfg, plugin_timeout)
@@ -730,9 +734,7 @@ def run_pre_compile(self) -> Optional[object]:
         if not _is_bcasl_enabled(workspace_root):
             try:
                 if hasattr(self, "log") and self.log is not None:
-                    self.log.append(
-                        "BCASL désactivé dans ark.yml. Exécution ignorée\n"
-                    )
+                    self.log.append("BCASL désactivé dans ark.yml. Exécution ignorée\n")
             except Exception:
                 pass
             return None
