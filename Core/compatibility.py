@@ -22,9 +22,9 @@ with the current version of PyCompiler ARK.
 
 from __future__ import annotations
 
-from typing import Dict, List, Tuple
-from dataclasses import dataclass
 import importlib
+from dataclasses import dataclass
+from typing import Dict, List, Tuple
 
 
 @dataclass

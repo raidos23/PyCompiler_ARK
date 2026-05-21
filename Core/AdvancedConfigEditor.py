@@ -30,7 +30,6 @@ from typing import Any
 
 import yaml
 
-
 # ---------------------------------------------------------------------------
 # Lecture / écriture de fichiers
 # ---------------------------------------------------------------------------
@@ -385,7 +384,9 @@ def validate_payload(file_id: str, data: Any) -> tuple[list[str], list[str]]:
                 not isinstance(req_files, list)
                 or not all(isinstance(item, str) for item in req_files)
             ):
-                errs.append("dependencies.requirements_files must be a list of strings.")
+                errs.append(
+                    "dependencies.requirements_files must be a list of strings."
+                )
             autogen = deps.get("auto_generate_from_imports")
             if autogen is not None and not isinstance(autogen, bool):
                 errs.append(
@@ -469,7 +470,9 @@ def validate_payload(file_id: str, data: Any) -> tuple[list[str], list[str]]:
     return errs, warns
 
 
-def make_default_content(file_id: str, is_yaml: bool, workspace_dir: str | None = None) -> str:
+def make_default_content(
+    file_id: str, is_yaml: bool, workspace_dir: str | None = None
+) -> str:
     """Construire le contenu par défaut pour un type de fichier donné."""
     if file_id == "ark":
         try:
@@ -506,5 +509,3 @@ def make_default_content(file_id: str, is_yaml: bool, workspace_dir: str | None 
         return yaml.safe_dump(payload, allow_unicode=True, sort_keys=False)
 
     return "" if is_yaml else "{}\n"
-
-

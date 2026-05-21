@@ -1,8 +1,6 @@
 from .auto_build import (
     _default_builder_for_engine,
     _detect_modules_preferring_requirements,
-    compute_auto_for_engine,
-    compute_for_all,
     _is_stdlib_module,
     _load_engine_package_mapping,
     _load_mapping,
@@ -13,12 +11,14 @@ from .auto_build import (
     _parse_requirements,
     _read_json_file,
     _scan_imports,
-    _write_report_if_enabled,
-    register_package_import_name,
-    register_import_alias,
-    register_auto_builder,
-    register_aliases,
     _tr,
+    _write_report_if_enabled,
+    compute_auto_for_engine,
+    compute_for_all,
+    register_aliases,
+    register_auto_builder,
+    register_import_alias,
+    register_package_import_name,
 )
 
 __all__ = [

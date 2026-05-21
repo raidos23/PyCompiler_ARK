@@ -23,11 +23,11 @@ These functions do not depend on Qt and are safe to use in CLI.
 from __future__ import annotations
 
 import os
-import sys
-import subprocess
-import shlex
 import re
-from typing import Optional, Dict, Any, List, Tuple
+import shlex
+import subprocess
+import sys
+from typing import Any, Dict, List, Optional, Tuple
 
 
 def build_command(

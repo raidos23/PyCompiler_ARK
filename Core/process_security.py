@@ -19,7 +19,7 @@ import os
 import re
 import shutil
 import subprocess
-from typing import Optional, Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 
 _ENV_KEY_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 

@@ -15,7 +15,8 @@
 
 import asyncio
 import threading
-from PySide6.QtCore import QObject, QTimer, Qt, Signal
+
+from PySide6.QtCore import QObject, Qt, QTimer, Signal
 
 
 class _UiInvoker(QObject):

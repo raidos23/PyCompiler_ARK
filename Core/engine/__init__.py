@@ -21,11 +21,11 @@ from Loaders.EngineLoader.loader import _auto_discover
 
 from . import registry as registry  # re-export registry module
 from .base import CompilerEngine  # re-export base type
-from .registry import unload_all as _registry_unload_all
-from .registry import get_engine as _registry_get_engine
-from.registry import available_engines as _registry_available_engines
-from .registry import create as _registry_create
+from .registry import available_engines as _registry_available_engines
 from .registry import bind_tabs as _registry_bind_tabs
+from .registry import create as _registry_create
+from .registry import get_engine as _registry_get_engine
+from .registry import unload_all as _registry_unload_all
 
 __version__ = "1.0.0"
 
