@@ -43,7 +43,7 @@ GUI shortcuts:
 
 ## Relationship to BuildContext
 
-The fields in `ark.yml` are mapped directly to the `BuildContext` data structure passed to engines:
+The fields in `ark.yml` are mapped directly to the `BuildContext` data structure passed to engines and BC plugins:
 
 | ark.yml field | BuildContext field |
 | :--- | :--- |
