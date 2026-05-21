@@ -325,6 +325,7 @@ def _run_bcasl_sync(
             workspace_root, config=cfg, workspace_metadata=workspace_meta
         ),
         stop_requested=stop_requested,
+        log_cb=log_cb,
     )
 
 

@@ -849,7 +849,10 @@ class BCASL:
         return count, errors
 
     def run_pre_compile(
-        self, ctx: Optional[PreCompileContext] = None, stop_requested=None
+        self,
+        ctx: Optional[PreCompileContext] = None,
+        stop_requested: Optional[callable] = None,
+        log_cb: Optional[callable] = None,
     ) -> ExecutionReport:
         """Execute le hook 'on_pre_compile' de tous les plugins actifs.
 
@@ -874,6 +877,11 @@ class BCASL:
         # 1. Identifier les plugins actifs
         active_items = {pid: rec for pid, rec in self._registry.items() if rec.active}
         if not active_items:
+            if log_cb:
+                try:
+                    log_cb("Aucun plugin BCASL actif")
+                except Exception:
+                    pass
             _logger.info("Aucun plugin Bcasl actif")
             return report
 
@@ -902,6 +910,11 @@ class BCASL:
                 continue
 
             _logger.info("--- Phase: %s ---", pname)
+            if log_cb:
+                try:
+                    log_cb(f"Phase: {pname}")
+                except Exception:
+                    pass
 
             # Sous-ensemble d'items pour cette phase
             p_items = {pid: active_items[pid] for pid in p_ids}
@@ -913,6 +926,12 @@ class BCASL:
             failed_seq: set[str] = set()
             for pid in order:
                 rec = p_items[pid]
+                if log_cb:
+                    try:
+                        log_cb(f"Plugin: {rec.plugin.meta.name}")
+                    except Exception:
+                        pass
+
                 if skip_dependents_on_failure:
                     failed_dep = next(
                         (d for d in rec.requires if d in failed_seq), None
