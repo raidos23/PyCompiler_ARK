@@ -1,16 +1,53 @@
 from __future__ import annotations
 
+import logging
 import os
 import signal
 import subprocess
+import sys
 import threading
 import venv
+from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
 # Global event for CLI cancellation
 _CLI_CANCEL_EVENT = threading.Event()
+
+
+@contextmanager
+def _redirect_output(enabled: bool):
+    """Redirect stdout and stderr to devnull if enabled is True."""
+    if not enabled:
+        yield
+        return
+
+    # Set env var for child processes (e.g. BCASL sandbox workers)
+    os.environ["PYCOMPILER_QUIET"] = "1"
+    
+    # Silence 'bcasl' logger
+    bcasl_logger = logging.getLogger("bcasl")
+    old_level = bcasl_logger.level
+    # If not verbose, only show CRITICAL/ERROR if they happen during compilation
+    # but the user wants it really clean, so let's go with ERROR.
+    bcasl_logger.setLevel(logging.ERROR)
+    
+    # Some handlers might be bound to the original sys.stderr/stdout.
+    # We don't remove them to avoid side effects, but setting the level should be enough.
+
+    with open(os.devnull, "w") as fnull:
+        old_stdout = sys.stdout
+        old_stderr = sys.stderr
+        try:
+            sys.stdout = fnull
+            sys.stderr = fnull
+            yield
+        finally:
+            sys.stdout = old_stdout
+            sys.stderr = old_stderr
+            bcasl_logger.setLevel(old_level)
+            os.environ.pop("PYCOMPILER_QUIET", None)
 
 
 def _cli_sigint_handler(signum, frame):
@@ -42,12 +79,16 @@ def run_engine_compile(
     def _on_stdout(line: str):
         captured_stdout.append(line)
         if verbose:
+            # We are inside the redirection if verbose is False, 
+            # but here verbose is False so we don't print.
+            # If verbose is True, we are NOT redirected.
             plain(line)
         elif status:
             clean = line.strip()
             if clean:
                 # Update status message if it's a high-level step or important progress
                 if any(x in clean for x in ("Etape", "->", "Execution", "Commande")):
+                    # We must use console.print or status.update which bypasses sys.stdout if rich is used
                     status.update(f"[cyan]{clean}[/cyan]")
 
     def _on_stderr(line: str):
@@ -61,15 +102,17 @@ def run_engine_compile(
     old_handler = signal.signal(signal.SIGINT, _cli_sigint_handler)
     
     try:
-        result = run_engine_compile_streaming(
-            workspace=workspace,
-            engine_id=engine_id,
-            context=context,
-            engine_config=engine_config,
-            on_stdout=_on_stdout,
-            on_stderr=_on_stderr,
-            stop_signal=lambda: _CLI_CANCEL_EVENT.is_set(),
-        )
+        # Use redirection to catch any direct print() calls from engines or their dependencies
+        with _redirect_output(not verbose):
+            result = run_engine_compile_streaming(
+                workspace=workspace,
+                engine_id=engine_id,
+                context=context,
+                engine_config=engine_config,
+                on_stdout=_on_stdout,
+                on_stderr=_on_stderr,
+                stop_signal=lambda: _CLI_CANCEL_EVENT.is_set(),
+            )
     except Exception as exc:
         result = {
             "success": False,
@@ -466,7 +509,9 @@ def run_bcasl_before_compile_sync(workspace: Path, verbose: bool = False) -> boo
     old_handler = signal.signal(signal.SIGINT, _cli_sigint_handler)
 
     try:
-        report = run_pre_compile(host)
+        # Catch direct prints from BCASL plugins or loader
+        with _redirect_output(not verbose):
+            report = run_pre_compile(host)
     except Exception as exc:
         if status:
             status.stop()
@@ -497,11 +542,11 @@ def run_bcasl_before_compile_sync(workspace: Path, verbose: bool = False) -> boo
     return True
 
 
-def run_bcasl_headless(args: list[str]) -> int:
+def run_bcasl_headless(args: list[str], verbose: bool = False) -> int:
     """Run BCASL in headless mode for the current workspace."""
     from bcasl.Loader import run_pre_compile
 
-    from .output import error, success
+    from .output import error, success, log, info, get_console
 
     workspace = Path.cwd()
     if "run" in args:
@@ -519,21 +564,55 @@ def run_bcasl_headless(args: list[str]) -> int:
 
             class Logger:
                 def append(self, msg: str):
-                    print(msg, end="", flush=True)
+                    if verbose:
+                        log("BCASL", msg.rstrip())
 
             self.log = Logger()
 
     host = CliBcaslHost(workspace)
+    
+    console = get_console()
+    status = None
+    if not verbose and console:
+        status = console.status("[cyan]Verification BCASL (headless)...[/cyan]", spinner="dots")
+        status.start()
+        
+    if verbose:
+        info(f"Running BCASL headless in {workspace}...")
+        
+    # Register SIGINT handler
+    _CLI_CANCEL_EVENT.clear()
+    old_handler = signal.signal(signal.SIGINT, _cli_sigint_handler)
+
     try:
-        report = run_pre_compile(host)
+        with _redirect_output(not verbose):
+            report = run_pre_compile(host)
+        
+        if _CLI_CANCEL_EVENT.is_set():
+            if status:
+                status.stop()
+            error("BCASL annule par l'utilisateur (Ctrl+C).")
+            return 1
+            
         if report and hasattr(report, "ok") and not getattr(report, "ok"):
+            if status:
+                status.stop()
             error("\nBCASL found issues.")
             return 1
+            
+        if status:
+            status.stop()
         success("\nBCASL completed successfully.")
         return 0
     except Exception as exc:
+        if status:
+            status.stop()
         error(f"BCASL failed: {exc}")
         return 1
+    finally:
+        signal.signal(signal.SIGINT, old_handler)
+        if status:
+            status.stop()
 
 
 def launch_gui(*, legacy: bool = False) -> int:
