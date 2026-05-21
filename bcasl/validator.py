@@ -14,14 +14,7 @@
 # limitations under the License.
 
 """
-Plugin Compatibility Validator - Validates plugin compatibility with system components
-
-This module provides utilities to validate plugin compatibility with:
-- BCASL version
-- Core version
-- Plugins SDK version
-- BcPluginContext version
-- GeneralContext version
+Plugin Compatibility Validator - Validates plugin compatibility with system components.
 """
 
 from __future__ import annotations
@@ -42,28 +35,12 @@ class CompatibilityCheckResult:
 
 
 def parse_version(version_string: str) -> Tuple[int, int, int]:
-    """
-    Parse a version string into (major, minor, patch).
-
-    Supports formats:
-    - "1.0.0" -> (1, 0, 0)
-    - "1.0.0+" -> (1, 0, 0) [+ means "or higher"]
-    - "1.0.0-beta" -> (1, 0, 0)
-    - "1.0.0+build123" -> (1, 0, 0)
-    """
+    """Parse a version string into (major, minor, patch)."""
     try:
-        # Remove leading/trailing whitespace
         s = version_string.strip()
-
-        # Handle "1.0.0+" format (+ at the end means "or higher")
-        # We just strip it since our comparison logic already uses >= semantics
         if s.endswith("+"):
             s = s[:-1].strip()
-
-        # Remove build metadata and pre-release identifiers
         s = s.split("+")[0].split("-")[0]
-
-        # Parse major.minor.patch
         parts = s.split(".")
         major = int(parts[0]) if len(parts) > 0 else 0
         minor = int(parts[1]) if len(parts) > 1 else 0
@@ -81,56 +58,23 @@ def check_plugin_compatibility(
     bc_plugin_context_version: str,
     general_context_version: str,
 ) -> CompatibilityCheckResult:
-    """
-    Check if a plugin is compatible with the current system versions.
-
-    Args:
-        plugin: BcPluginBase instance
-        bcasl_version: Current BCASL version
-        core_version: Current Core version
-        plugins_sdk_version: Current Plugins SDK version
-        bc_plugin_context_version: Current BcPluginContext version
-        general_context_version: Current GeneralContext version
-
-    Returns:
-        CompatibilityCheckResult with compatibility information
-    """
-    plugin_id = plugin.meta.id
-    plugin_name = plugin.meta.name
+    """Check if a plugin is compatible with the current system versions."""
+    meta = plugin.meta
+    plugin_id = meta.id
+    plugin_name = meta.name
     missing_requirements = []
 
-    # Check BCASL compatibility
-    if not plugin.is_compatible_with_bcasl(bcasl_version):
-        missing_requirements.append(
-            f"BCASL >= {plugin.meta.required_bcasl_version} (current: {bcasl_version})"
-        )
+    def _check(label, current, required):
+        if parse_version(current) < parse_version(required):
+            missing_requirements.append(f"{label} >= {required} (current: {current})")
 
-    # Check Core compatibility
-    if not plugin.is_compatible_with_core(core_version):
-        missing_requirements.append(
-            f"Core >= {plugin.meta.required_core_version} (current: {core_version})"
-        )
-
-    # Check Plugins SDK compatibility
-    if not plugin.is_compatible_with_plugins_sdk(plugins_sdk_version):
-        missing_requirements.append(
-            f"Plugins SDK >= {plugin.meta.required_plugins_sdk_version} (current: {plugins_sdk_version})"
-        )
-
-    # Check BcPluginContext compatibility
-    if not plugin.is_compatible_with_bc_plugin_context(bc_plugin_context_version):
-        missing_requirements.append(
-            f"BcPluginContext >= {plugin.meta.required_bc_plugin_context_version} (current: {bc_plugin_context_version})"
-        )
-
-    # Check GeneralContext compatibility
-    if not plugin.is_compatible_with_general_context(general_context_version):
-        missing_requirements.append(
-            f"GeneralContext >= {plugin.meta.required_general_context_version} (current: {general_context_version})"
-        )
+    _check("BCASL", bcasl_version, meta.required_bcasl_version)
+    _check("Core", core_version, meta.required_core_version)
+    _check("Plugins SDK", plugins_sdk_version, meta.required_plugins_sdk_version)
+    _check("BcPluginContext", bc_plugin_context_version, meta.required_bc_plugin_context_version)
+    _check("GeneralContext", general_context_version, meta.required_general_context_version)
 
     is_compatible = len(missing_requirements) == 0
-
     error_message = ""
     if not is_compatible:
         error_message = f"Plugin '{plugin_name}' ({plugin_id}) is incompatible. Missing: {', '.join(missing_requirements)}"
@@ -153,61 +97,38 @@ def validate_plugins_compatibility(
     general_context_version: str,
     strict_mode: bool = True,
 ) -> Tuple[List, List]:
-    """
-    Validate a list of plugins for compatibility.
-
-    Args:
-        plugins: List of BcPluginBase instances
-        bcasl_version: Current BCASL version
-        core_version: Current Core version
-        plugins_sdk_version: Current Plugins SDK version
-        bc_plugin_context_version: Current BcPluginContext version
-        general_context_version: Current GeneralContext version
-        strict_mode: If True, reject plugins without explicit version requirements
-
-    Returns:
-        Tuple of (compatible_plugins, incompatible_results)
-    """
+    """Validate a list of plugins for compatibility."""
     compatible_plugins = []
     incompatible_results = []
 
     for plugin in plugins:
         try:
-            # In strict mode, reject plugins that don't specify requirements
+            meta = plugin.meta
             if strict_mode:
-                has_explicit_requirements = (
-                    plugin.meta.required_bcasl_version != "1.0.0"
-                    or plugin.meta.required_core_version != "1.0.0"
-                    or plugin.meta.required_plugins_sdk_version != "1.0.0"
-                    or plugin.meta.required_bc_plugin_context_version != "1.0.0"
-                    or plugin.meta.required_general_context_version != "1.0.0"
+                has_explicit = any(
+                    v != "1.0.0" for v in [
+                        meta.required_bcasl_version,
+                        meta.required_core_version,
+                        meta.required_plugins_sdk_version,
+                        meta.required_bc_plugin_context_version,
+                        meta.required_general_context_version
+                    ]
                 )
 
-                if not has_explicit_requirements:
+                if not has_explicit:
                     result = CompatibilityCheckResult(
-                        plugin_id=plugin.meta.id,
-                        plugin_name=plugin.meta.name,
+                        plugin_id=meta.id,
+                        plugin_name=meta.name,
                         is_compatible=False,
-                        missing_requirements=[
-                            "No explicit version requirements specified"
-                        ],
-                        error_message=(
-                            "No explicit version requirements specified. "
-                            f"Plugin '{plugin.meta.name}' ({plugin.meta.id}) does not specify version requirements. "
-                            "Please add required_*_version fields to PluginMeta."
-                        ),
+                        missing_requirements=["No explicit version requirements specified"],
+                        error_message=f"No explicit version requirements specified. Plugin '{meta.name}' ({meta.id}) does not specify version requirements.",
                     )
                     incompatible_results.append(result)
                     continue
 
-            # Check compatibility
             result = check_plugin_compatibility(
-                plugin,
-                bcasl_version,
-                core_version,
-                plugins_sdk_version,
-                bc_plugin_context_version,
-                general_context_version,
+                plugin, bcasl_version, core_version, plugins_sdk_version,
+                bc_plugin_context_version, general_context_version,
             )
 
             if result.is_compatible:
@@ -216,22 +137,13 @@ def validate_plugins_compatibility(
                 incompatible_results.append(result)
 
         except Exception as e:
-            result = CompatibilityCheckResult(
-                plugin_id=(
-                    getattr(plugin, "meta", {}).id
-                    if hasattr(plugin, "meta")
-                    else "unknown"
-                ),
-                plugin_name=(
-                    getattr(plugin, "meta", {}).name
-                    if hasattr(plugin, "meta")
-                    else "Unknown"
-                ),
+            incompatible_results.append(CompatibilityCheckResult(
+                plugin_id=getattr(getattr(plugin, "meta", None), "id", "unknown"),
+                plugin_name=getattr(getattr(plugin, "meta", None), "name", "Unknown"),
                 is_compatible=False,
                 missing_requirements=[],
                 error_message=f"Error validating plugin: {str(e)}",
-            )
-            incompatible_results.append(result)
+            ))
 
     return compatible_plugins, incompatible_results
 
@@ -244,20 +156,16 @@ def print_compatibility_report(
     print("=" * 70)
     print("Plugin Compatibility Report")
     print("=" * 70)
-
     print(f"\n✓ Compatible: {len(compatible_plugins)}")
     for plugin in compatible_plugins:
         print(f"  - {plugin.meta.name} ({plugin.meta.id}) v{plugin.meta.version}")
-
     print(f"\n✗ Incompatible: {len(incompatible_results)}")
     for result in incompatible_results:
         print(f"  - {result.plugin_name} ({result.plugin_id})")
-        if result.missing_requirements:
-            for req in result.missing_requirements:
-                print(f"    • {req}")
+        for req in result.missing_requirements:
+            print(f"    • {req}")
         if result.error_message:
             print(f"    Error: {result.error_message}")
-
     print("\n" + "=" * 70)
 
 
