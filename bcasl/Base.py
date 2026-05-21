@@ -91,6 +91,7 @@ class PreCompileContext:
     root: Path
     config: dict[str, Any] = field(default_factory=dict)
     metadata: dict[str, Any] = field(default_factory=dict)
+    build_context: Optional[Any] = None
     _iter_cache: dict[tuple[tuple[str, ...], tuple[str, ...]], list[Path]] = field(
         default_factory=dict, repr=False, compare=False
     )

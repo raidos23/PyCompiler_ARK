@@ -391,7 +391,7 @@ def compile_all(self) -> None:
                 f"Compilation start error: {e}",
             )
 
-    run_bcasl_before_compile(self, _after_bcasl)
+    run_bcasl_before_compile(self, _after_bcasl, build_context=context)
 
 
 def rebuild_from_lock(self, lock_path: Path) -> None:
@@ -679,7 +679,7 @@ def start_compilation_process(self, engine_id: str, file_path: str) -> bool:
             self.set_controls_enabled(True)
         result["value"] = ok
 
-    run_bcasl_before_compile(self, _after_bcasl)
+    run_bcasl_before_compile(self, _after_bcasl, build_context=context)
     if result["value"] is not None:
         return bool(result["value"])
     return True

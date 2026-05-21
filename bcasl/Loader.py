@@ -309,9 +309,15 @@ def _run_bcasl_sync(
     plugin_timeout: float,
     log_cb: Optional[callable] = None,
     stop_requested: Optional[callable] = None,
+    build_context: Optional[Any] = None,
 ):
     """Execute BCASL en mode synchrone et return le rapport."""
-    manager = BCASL(workspace_root, config=cfg, plugin_timeout_s=plugin_timeout)
+    manager = BCASL(
+        workspace_root,
+        config=cfg,
+        plugin_timeout_s=plugin_timeout,
+        build_context=build_context,
+    )
     loaded, errors = manager.load_plugins_from_directory(plugins_dir)
     _emit_log(log_cb, f"BCASL: {loaded} package(s) chargé(s) depuis Plugins/\n")
     for mod, msg in errors or []:
@@ -322,7 +328,10 @@ def _run_bcasl_sync(
     workspace_meta = _build_workspace_meta(workspace_root, cfg)
     return manager.run_pre_compile(
         PreCompileContext(
-            root=workspace_root, config=cfg, metadata=workspace_meta
+            root=workspace_root,
+            config=cfg,
+            metadata=workspace_meta,
+            build_context=build_context,
         ),
         stop_requested=stop_requested,
         log_cb=log_cb,
@@ -620,7 +629,9 @@ def open_bc_loader_dialog(self) -> None:
 # Plugins
 
 
-def run_pre_compile_async(self, on_done: Optional[callable] = None) -> None:
+def run_pre_compile_async(
+    self, on_done: Optional[callable] = None, build_context: Optional[Any] = None
+) -> None:
     """Lance BCASL en arrière-plan si QtCore est dispo; sinon, exécution bloquante rPluginsde.
     on_done(report) appelé à la fin si fourni.
     """
@@ -661,7 +672,13 @@ def run_pre_compile_async(self, on_done: Optional[callable] = None) -> None:
             from Ui.Gui.Dialogs.BcaslDialog import _BCASLUiBridge, _BCASLWorker
 
             thread = QThread()
-            worker = _BCASLWorker(workspace_root, Plugins_dir, cfg, plugin_timeout)
+            worker = _BCASLWorker(
+                workspace_root,
+                Plugins_dir,
+                cfg,
+                plugin_timeout,
+                build_context=build_context,
+            )
             try:
                 self._bcasl_thread = thread
                 self._bcasl_worker = worker
@@ -694,6 +711,7 @@ def run_pre_compile_async(self, on_done: Optional[callable] = None) -> None:
                 cfg,
                 plugin_timeout,
                 log_cb=log_cb,
+                build_context=build_context,
             )
         except Exception as _e:
             report = None
@@ -720,7 +738,7 @@ def run_pre_compile_async(self, on_done: Optional[callable] = None) -> None:
             pass
 
 
-def run_pre_compile(self) -> Optional[object]:
+def run_pre_compile(self, build_context: Optional[Any] = None) -> Optional[object]:
     """Execute la phase BCASL de pre-compilation (path synchrone, simple)."""
     try:
         if not getattr(self, "workspace_dir", None):
@@ -749,6 +767,7 @@ def run_pre_compile(self) -> Optional[object]:
             cfg,
             plugin_timeout,
             log_cb=log_cb,
+            build_context=build_context,
         )
         if hasattr(self, "log") and self.log is not None:
             self.log.append("BCASL - Rapport:\n")
