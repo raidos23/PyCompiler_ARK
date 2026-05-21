@@ -29,34 +29,32 @@ Provides:
 from __future__ import annotations
 
 import os
-import sys
-import subprocess
-import shlex
 import re
-from pathlib import Path
-from typing import Optional, Dict, Any, List, Tuple
+import shlex
+import subprocess
+import sys
 from enum import Enum
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
 
 from PySide6.QtCore import QObject, Signal
 
-from Ui.Gui.Compilation.compiler import (
-    CompilerCore,
-    CompilationStatus,
+from Core.Compiler.engine_runner import EngineRunnerError, resolve_engine_command
+from Core.Compiler.utils import (
+    CommandBuilder,
+    build_command,
+    check_module_available,
+    detect_python_executable,
+    escape_arguments,
+    get_interpreter_version,
+    sanitize_path,
+    validate_command,
 )
 
 # Importations ArkConfig pour la gestion des exclusions
-from Core.Configs import (
-    load_ark_config,
-    should_exclude_file,
-    DEFAULT_EXCLUDE_PATTERNS,
-)
-
-from Core.Compiler.engine_runner import (
-    resolve_engine_command,
-    EngineRunnerError,
-)
+from Core.Configs import DEFAULT_EXCLUDE_PATTERNS, load_ark_config, should_exclude_file
 from Core.engine.build_context import BuildContext
-from Core.Compiler.utils import build_command, validate_command, escape_arguments, sanitize_path, CommandBuilder, detect_python_executable, get_interpreter_version, check_module_available
+from Ui.Gui.Compilation.compiler import CompilationStatus, CompilerCore
 
 
 class ProcessState(Enum):
@@ -419,7 +417,7 @@ class MainProcess(QObject):
             ``True`` if the compilation thread started successfully.
         """
         workspace = Path(workspace)
-        
+
         # Mettre à jour le workspace
         self._workspace_dir = str(workspace)
         self._current_engine = engine_id

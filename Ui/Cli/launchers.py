@@ -57,10 +57,11 @@ def launch_main_application(
     no_splash: bool = False, ide_gui: bool = False, classic_gui: bool = False
 ) -> int:
     try:
-        from Ui.Gui.Gui import PyCompilerArkGui
         from PySide6.QtCore import Qt, QTimer
         from PySide6.QtGui import QColor, QPixmap
         from PySide6.QtWidgets import QSplashScreen
+
+        from Ui.Gui.Gui import PyCompilerArkGui
 
         app = _get_or_create_qapp()
         set_app_icon(app)
@@ -88,24 +89,27 @@ def launch_main_application(
                             screen = app.primaryScreen()
                             if screen:
                                 sgeo = screen.availableGeometry()
-                                max_w, max_h = int(sgeo.width() * 0.5), int(sgeo.height() * 0.5)
+                                max_w, max_h = int(sgeo.width() * 0.5), int(
+                                    sgeo.height() * 0.5
+                                )
                                 if pix.width() > max_w or pix.height() > max_h:
                                     pix = pix.scaled(
-                                        max_w, max_h,
+                                        max_w,
+                                        max_h,
                                         Qt.KeepAspectRatio,
-                                        Qt.SmoothTransformation
+                                        Qt.SmoothTransformation,
                                     )
 
                             splash = QSplashScreen(pix, Qt.WindowStaysOnTopHint)
-                            
+
                             # Centrage explicite
                             if screen:
                                 sgeo = screen.availableGeometry()
                                 splash.move(
                                     sgeo.x() + (sgeo.width() - pix.width()) // 2,
-                                    sgeo.y() + (sgeo.height() - pix.height()) // 2
+                                    sgeo.y() + (sgeo.height() - pix.height()) // 2,
                                 )
-                            
+
                             splash.show()
                             app.processEvents()
                         break
@@ -151,4 +155,3 @@ def launch_main_application(
     except Exception as exc:
         error(f"Failed to launch main application: {exc}")
         return 1
-

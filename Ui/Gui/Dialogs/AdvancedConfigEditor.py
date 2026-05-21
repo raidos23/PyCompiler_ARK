@@ -36,31 +36,30 @@ from PySide6.QtGui import (
 )
 from PySide6.QtWidgets import (
     QDialog,
-    QTabWidget,
-    QVBoxLayout,
+    QFileDialog,
     QHBoxLayout,
     QLabel,
-    QPushButton,
-    QPlainTextEdit,
-    QFileDialog,
-    QMessageBox,
     QLineEdit,
     QListWidget,
     QListWidgetItem,
+    QMessageBox,
+    QPlainTextEdit,
+    QPushButton,
     QSplitter,
+    QTabWidget,
+    QVBoxLayout,
 )
 
 from Services.ConfigEditorService import (
-    read_text,
-    write_text,
-    parse_text,
-    format_text,
-    render_colored_diff,
     flatten_keys,
-    validate_payload,
+    format_text,
     make_default_content,
+    parse_text,
+    read_text,
+    render_colored_diff,
+    validate_payload,
+    write_text,
 )
-
 
 # ---------------------------------------------------------------------------
 # Highlighters Qt

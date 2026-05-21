@@ -27,7 +27,7 @@ from typing import Callable
 
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QIcon, QPixmap
-from PySide6.QtWidgets import QApplication, QFileDialog, QMessageBox, QMenu
+from PySide6.QtWidgets import QApplication, QFileDialog, QMenu, QMessageBox
 
 
 class UiFeatures:
@@ -214,7 +214,7 @@ class UiFeatures:
         if not workspace_dir:
             return
         try:
-            from Core.Configs import load_ark_config, get_entrypoint
+            from Core.Configs import get_entrypoint, load_ark_config
 
             cfg = load_ark_config(workspace_dir)
             entry_rel = get_entrypoint(cfg)
@@ -421,7 +421,9 @@ class UiFeatures:
         """Save configuration for all registered engines in one click."""
         workspace_dir = getattr(self, "workspace_dir", None)
         if not workspace_dir:
-            self.log_i18n("❌ Aucun workspace sélectionné.", "❌ No workspace selected.")
+            self.log_i18n(
+                "❌ Aucun workspace sélectionné.", "❌ No workspace selected."
+            )
             return
         try:
             import Core.engine as engines_loader

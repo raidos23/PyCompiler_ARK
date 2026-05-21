@@ -15,20 +15,20 @@ from PySide6.QtCore import QFile, QTimer
 from PySide6.QtGui import QAction
 from PySide6.QtUiTools import QUiLoader
 from PySide6.QtWidgets import (
+    QApplication,
     QLabel,
     QLineEdit,
     QListWidget,
-    QApplication,
     QMainWindow,
+    QMenu,
     QProgressBar,
     QPushButton,
-    QMenu,
+    QSplitter,
+    QStatusBar,
     QTabWidget,
     QTextEdit,
     QToolButton,
-    QStatusBar,
     QWidget,
-    QSplitter,
 )
 
 from Ui.Gui.UiConnection import (
@@ -36,25 +36,52 @@ from Ui.Gui.UiConnection import (
     _apply_initial_theme,
     _auto_resize_for_screen,
     _connect_dialogs_to_app,
-    _refresh_log_palette,
+)
+from Ui.Gui.UiConnection import _connect_signals as _connect_classic_signals
+from Ui.Gui.UiConnection import (
     _is_qss_dark,
-    themed_svg_icon,
+    _refresh_log_palette,
     show_theme_dialog,
-    _connect_signals as _connect_classic_signals,
+    themed_svg_icon,
 )
 
 
 def _prime_expected_attrs(self) -> None:
     """Create expected UI attributes with safe defaults."""
     names = [
-        "btn_select_folder", "venv_button", "venv_label", "label_folder",
-        "label_workspace_status", "label_workspace_section", "label_files_section",
-        "label_tools", "label_options_section", "label_logs_section", "label_progress",
-        "file_list", "file_filter_input", "btn_select_files", "btn_remove_file",
-        "btn_clear_workspace", "compile_btn", "cancel_btn", "btn_help",
-        "btn_suggest_deps", "activity_btn_deps", "btn_bc_loader", "btn_acasl_loader",
-        "progress", "log", "btn_export_config", "btn_import_config", "btn_show_stats",
-        "advanced_cfg_btn", "select_lang", "select_theme", "compiler_tabs", "tab_hello",
+        "btn_select_folder",
+        "venv_button",
+        "venv_label",
+        "label_folder",
+        "label_workspace_status",
+        "label_workspace_section",
+        "label_files_section",
+        "label_tools",
+        "label_options_section",
+        "label_logs_section",
+        "label_progress",
+        "file_list",
+        "file_filter_input",
+        "btn_select_files",
+        "btn_remove_file",
+        "btn_clear_workspace",
+        "compile_btn",
+        "cancel_btn",
+        "btn_help",
+        "btn_suggest_deps",
+        "activity_btn_deps",
+        "btn_bc_loader",
+        "btn_acasl_loader",
+        "progress",
+        "log",
+        "btn_export_config",
+        "btn_import_config",
+        "btn_show_stats",
+        "advanced_cfg_btn",
+        "select_lang",
+        "select_theme",
+        "compiler_tabs",
+        "tab_hello",
         "toolButton_more",
     ]
     for name in names:
@@ -387,9 +414,18 @@ def _setup_more_tools_menu(self) -> None:
     _apply_activity_buttons_theme(self)
 
     for attr in (
-        "btn_select_folder", "venv_button", "btn_select_files", "btn_clear_workspace",
-        "btn_show_stats", "select_lang", "select_theme", "advanced_cfg_btn",
-        "btn_export_config", "btn_import_config", "btn_help", "btn_suggest_deps",
+        "btn_select_folder",
+        "venv_button",
+        "btn_select_files",
+        "btn_clear_workspace",
+        "btn_show_stats",
+        "select_lang",
+        "select_theme",
+        "advanced_cfg_btn",
+        "btn_export_config",
+        "btn_import_config",
+        "btn_help",
+        "btn_suggest_deps",
     ):
         widget = getattr(self, attr, None)
         if widget is None:
@@ -445,7 +481,9 @@ def _apply_activity_buttons_theme(self) -> None:
     )
 
     try:
-        base_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
+        base_path = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), "..", "..", "..")
+        )
         icons_dir = os.path.join(base_path, "icons")
 
         more_btn = getattr(self, "toolButton_more", None)
@@ -586,7 +624,9 @@ def _retranslate_ide_like_actions(self) -> None:
                 def _refresh_menu_i18n() -> None:
                     _retranslate_ide_like_actions(self)
                     try:
-                        QTimer.singleShot(0, lambda: _retranslate_ide_like_actions(self))
+                        QTimer.singleShot(
+                            0, lambda: _retranslate_ide_like_actions(self)
+                        )
                     except Exception:
                         pass
 
@@ -684,8 +724,13 @@ def _bind_status_updates(self) -> None:
     _queue_update()
 
     for attr in (
-        "btn_select_folder", "btn_select_files", "btn_remove_file",
-        "btn_clear_workspace", "venv_button", "compile_btn", "cancel_btn",
+        "btn_select_folder",
+        "btn_select_files",
+        "btn_remove_file",
+        "btn_clear_workspace",
+        "venv_button",
+        "compile_btn",
+        "cancel_btn",
     ):
         btn = getattr(self, attr, None)
         if btn is None:

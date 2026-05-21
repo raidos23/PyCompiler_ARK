@@ -26,7 +26,6 @@ from PySide6.QtGui import QDropEvent
 from PySide6.QtWidgets import QFileDialog, QMessageBox
 
 from Core.Globals import _workspace_dir_lock
-from Core.Configs import load_ark_config, should_exclude_file
 
 
 class WorkspaceAdvancedManipulation:
@@ -55,43 +54,47 @@ class WorkspaceAdvancedManipulation:
             gui_instance.tr("Fichiers Python (*.py)", "Python Files (*.py)"),
         )
         if files:
-            ark_config = load_ark_config(workspace_dir) if workspace_dir else {}
-            workspace_cfg = ark_config.get("workspace", {})
-            exclusion_patterns = []
-            if isinstance(workspace_cfg, dict):
-                exclusion_patterns = workspace_cfg.get("exclude", [])
-            valid_files = []
-            excluded = 0
+            from Core.WorkSpaceManager.WorkspaceManipulation import add_files
+
+            added, excluded = add_files(gui_instance, files)
+
+            # Warning for files outside workspace
             for f in files:
-                if os.path.commonpath([f, workspace_dir]) == workspace_dir:
-                    if workspace_dir and should_exclude_file(
-                        f, workspace_dir, exclusion_patterns
-                    ):
-                        excluded += 1
-                        continue
-                    valid_files.append(f)
-                else:
-                    QMessageBox.warning(
-                        gui_instance,
-                        gui_instance.tr(
-                            "Fichier hors workspace", "File outside workspace"
-                        ),
-                        gui_instance.tr(
-                            f"Le fichier {f} est en dehors du workspace et sera ignoré.",
-                            f"The file {f} is outside the workspace and will be ignored.",
-                        ),
-                    )
-            if valid_files:
-                gui_instance.selected_files = valid_files
+                try:
+                    if os.path.commonpath([f, workspace_dir]) != workspace_dir:
+                        QMessageBox.warning(
+                            gui_instance,
+                            gui_instance.tr(
+                                "Fichier hors workspace", "File outside workspace"
+                            ),
+                            gui_instance.tr(
+                                f"Le fichier {f} est en dehors du workspace et sera ignoré.",
+                                f"The file {f} is outside the workspace and will be ignored.",
+                            ),
+                        )
+                except Exception:
+                    pass
+
+            if added > 0:
                 gui_instance.log_i18n(
-                    f"✅ {len(valid_files)} fichier(s) sélectionné(s) manuellement.\n",
-                    f"✅ {len(valid_files)} file(s) selected manually.\n",
+                    f"✅ {added} fichier(s) sélectionné(s) manuellement.\n",
+                    f"✅ {added} file(s) selected manually.\n",
                 )
                 if excluded > 0:
                     gui_instance.log_i18n(
                         f"⏩ Exclusion appliquée : {excluded} fichier(s) ignoré(s) (ark.yml).",
                         f"⏩ Exclusion applied: {excluded} file(s) ignored (ark.yml).",
                     )
+
+                # Update UI list widget
+                if hasattr(gui_instance, "refresh_file_list"):
+                    gui_instance.refresh_file_list()
+                elif hasattr(gui_instance, "file_list"):
+                    gui_instance.file_list.clear()
+                    for f in gui_instance.python_files:
+                        rel = os.path.relpath(f, workspace_dir) if workspace_dir else f
+                        gui_instance.file_list.addItem(rel)
+
                 if hasattr(gui_instance, "update_command_preview"):
                     gui_instance.update_command_preview()
                 try:
@@ -107,17 +110,23 @@ class WorkspaceAdvancedManipulation:
             return
 
         selected_items = gui_instance.file_list.selectedItems()
+        if not selected_items:
+            return
+
+        from Core.WorkSpaceManager.WorkspaceManipulation import remove_files
+
+        workspace_dir = getattr(gui_instance, "workspace_dir", None)
+        abs_paths_to_remove = []
+
         for item in selected_items:
             rel_path = item.text()
-            workspace_dir = getattr(gui_instance, "workspace_dir", None)
             abs_path = (
                 os.path.join(workspace_dir, rel_path) if workspace_dir else rel_path
             )
-            if abs_path in gui_instance.python_files:
-                gui_instance.python_files.remove(abs_path)
-            if abs_path in gui_instance.selected_files:
-                gui_instance.selected_files.remove(abs_path)
+            abs_paths_to_remove.append(abs_path)
             gui_instance.file_list.takeItem(gui_instance.file_list.row(item))
+
+        remove_files(gui_instance, abs_paths_to_remove)
 
         if hasattr(gui_instance, "update_command_preview"):
             gui_instance.update_command_preview()
@@ -133,57 +142,41 @@ class WorkspaceAdvancedManipulation:
     @staticmethod
     def handle_drop_event(gui_instance, event: QDropEvent):
         """Traiter l'événement drop et ajouter les fichiers/dossiers Python déposés."""
-        from Core.WorkSpaceManager.SetupWorkspace import SetupWorkspace
+        from Core.WorkSpaceManager.WorkspaceManipulation import (
+            add_files,
+            resolve_dropped_files,
+        )
 
-        urls = event.mimeData().urls()
-        added = 0
-        excluded = 0
+        paths = [url.toLocalFile() for url in event.mimeData().urls()]
         workspace_dir = getattr(gui_instance, "workspace_dir", None)
-        ark_config = load_ark_config(workspace_dir) if workspace_dir else {}
-        workspace_cfg = ark_config.get("workspace", {})
-        exclusion_patterns = []
-        if isinstance(workspace_cfg, dict):
-            exclusion_patterns = workspace_cfg.get("exclude", [])
 
-        for url in urls:
-            path = url.toLocalFile()
-            if os.path.isdir(path):
-                files = SetupWorkspace.list_python_files(path)
-                for f in files:
-                    if workspace_dir and not os.path.commonpath([f, workspace_dir]) == workspace_dir:
-                        continue
-                    if should_exclude_file(f, workspace_dir, exclusion_patterns):
-                        excluded += 1
-                        continue
-                    if f not in gui_instance.python_files:
-                        gui_instance.python_files.append(f)
-                        rel = os.path.relpath(f, workspace_dir) if workspace_dir else f
-                        if hasattr(gui_instance, "file_list"):
-                            gui_instance.file_list.addItem(rel)
-                        added += 1
-            elif path.endswith(".py"):
+        all_dropped_files = resolve_dropped_files(paths)
+
+        added, excluded = add_files(gui_instance, all_dropped_files)
+
+        # Update UI list widget
+        if added > 0:
+            if hasattr(gui_instance, "refresh_file_list"):
+                gui_instance.refresh_file_list()
+            elif hasattr(gui_instance, "file_list"):
+                gui_instance.file_list.clear()
+                for f in gui_instance.python_files:
+                    rel = os.path.relpath(f, workspace_dir) if workspace_dir else f
+                    gui_instance.file_list.addItem(rel)
+
+        # Log ignored files outside workspace
+        for f in all_dropped_files:
+            try:
                 if (
                     workspace_dir
-                    and not os.path.commonpath([path, workspace_dir]) == workspace_dir
+                    and os.path.commonpath([f, workspace_dir]) != workspace_dir
                 ):
                     gui_instance.log_i18n(
-                        f"⚠️ Ignoré (hors workspace): {path}",
-                        f"⚠️ Ignored (outside workspace): {path}",
+                        f"⚠️ Ignoré (hors workspace): {f}",
+                        f"⚠️ Ignored (outside workspace): {f}",
                     )
-                    continue
-                if workspace_dir and should_exclude_file(
-                    path, workspace_dir, exclusion_patterns
-                ):
-                    excluded += 1
-                    continue
-                if path not in gui_instance.python_files:
-                    gui_instance.python_files.append(path)
-                    relative_path = (
-                        os.path.relpath(path, workspace_dir) if workspace_dir else path
-                    )
-                    if hasattr(gui_instance, "file_list"):
-                        gui_instance.file_list.addItem(relative_path)
-                    added += 1
+            except Exception:
+                pass
 
         gui_instance.log_i18n(
             f"✅ {added} fichier(s) ajouté(s) via drag & drop.",
@@ -209,11 +202,14 @@ class WorkspaceAdvancedManipulation:
     def clear_workspace(gui_instance, keep_dir: bool = True) -> bool:
         """Vider l'état courant du workspace."""
         try:
+            from Core.WorkSpaceManager.WorkspaceManipulation import clear_workspace_data
+
             workspace_dir = getattr(gui_instance, "workspace_dir", None)
 
-            gui_instance.python_files.clear()
-            gui_instance.selected_files.clear()
+            # Business logic to clear internal state
+            clear_workspace_data(gui_instance, keep_dir=keep_dir)
 
+            # UI logic to clear widgets
             if hasattr(gui_instance, "file_list"):
                 gui_instance.file_list.clear()
 
@@ -255,15 +251,6 @@ class WorkspaceAdvancedManipulation:
                             )
                 except Exception:
                     pass
-
-            gui_instance.workspace_dir = None if not keep_dir else workspace_dir
-
-            try:
-                global _workspace_dir_cache
-                with _workspace_dir_lock:
-                    _workspace_dir_cache = None
-            except Exception:
-                pass
 
             if hasattr(gui_instance, "update_command_preview"):
                 gui_instance.update_command_preview()

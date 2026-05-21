@@ -31,23 +31,21 @@ from __future__ import annotations
 import os
 import time
 from pathlib import Path
-from typing import Optional, Any
+from typing import Any, Optional
 
-from PySide6.QtCore import QObject, Signal
-from PySide6.QtCore import QProcess
+from PySide6.QtCore import QObject, QProcess, Signal
 from PySide6.QtWidgets import QApplication, QFileDialog, QMessageBox
 
+from Core.Compiler import create
 from Ui.Gui.Compilation.compiler import CompilationStatus
-from Ui.Gui.Compilation.mainprocess import ProcessState, MainProcess
 from Ui.Gui.Compilation.helpers import (
+    bcasl_report_allows_compile,
     get_main_process,
     resolve_default_engine_id,
     run_bcasl_before_compile,
-    bcasl_report_allows_compile,
 )
-from Core.Compiler import create
-from Ui.i18n import log_with_level, log_i18n_level
-
+from Ui.Gui.Compilation.mainprocess import MainProcess, ProcessState
+from Ui.i18n import log_i18n_level, log_with_level
 
 # ============================================================================
 # DIALOG HELPERS
@@ -157,12 +155,21 @@ def compile_all(self) -> None:
             return en
 
     if not self.workspace_dir:
-        log_i18n_level(self, "warning", "Aucun workspace sélectionné.", "No workspace selected.")
+        log_i18n_level(
+            self, "warning", "Aucun workspace sélectionné.", "No workspace selected."
+        )
         try:
             box = QMessageBox(self)
             box.setWindowTitle(_t("Workspace manquant", "Workspace missing"))
-            box.setText(_t("Sélectionnez un Workspace pour continuer.", "Select a Workspace to continue."))
-            btn_ws = box.addButton(_t("Choisir Workspace", "Select Workspace"), QMessageBox.AcceptRole)
+            box.setText(
+                _t(
+                    "Sélectionnez un Workspace pour continuer.",
+                    "Select a Workspace to continue.",
+                )
+            )
+            btn_ws = box.addButton(
+                _t("Choisir Workspace", "Select Workspace"), QMessageBox.AcceptRole
+            )
             box.addButton(_t("Annuler", "Cancel"), QMessageBox.RejectRole)
             box.exec()
             if box.clickedButton() == btn_ws:
@@ -176,7 +183,7 @@ def compile_all(self) -> None:
 
     # Load project configuration
     try:
-        from Core.Configs import load_ark_config, get_entrypoint
+        from Core.Configs import get_entrypoint, load_ark_config
         from Core.Locking import build_context_from_ark_config
 
         cfg = load_ark_config(self.workspace_dir)
@@ -186,7 +193,12 @@ def compile_all(self) -> None:
         return
 
     if not entry_rel:
-        log_i18n_level(self, "warning", "Point d'entrée requis avant compilation.", "Entrypoint required before compilation.")
+        log_i18n_level(
+            self,
+            "warning",
+            "Point d'entrée requis avant compilation.",
+            "Entrypoint required before compilation.",
+        )
         _prompt_for_required_entrypoint(self)
         return
 
@@ -196,7 +208,9 @@ def compile_all(self) -> None:
             missing_display = os.path.relpath(entrypoint_file, self.workspace_dir)
         except Exception:
             missing_display = entrypoint_file
-        log_i18n_level(self, "error",
+        log_i18n_level(
+            self,
+            "error",
             f"Point d'entrée introuvable ou obsolète : {missing_display}",
             f"Entrypoint missing or obsolete: {missing_display}",
         )
@@ -209,6 +223,7 @@ def compile_all(self) -> None:
     engine_id = None
     try:
         import Core.engine as engines_loader
+
         if hasattr(self, "compiler_tabs") and self.compiler_tabs:
             idx = self.compiler_tabs.currentIndex()
             engine_id = engines_loader.registry.get_engine_for_tab(idx)
@@ -221,36 +236,53 @@ def compile_all(self) -> None:
     # Save GUI state to disk (persists tab settings)
     try:
         from Core.engine.ConfigManager import save_engine_config_for_gui
+
         save_engine_config_for_gui(self, engine_id)
     except Exception:
         pass
 
     # Build lock payload (CLI-like behavior for reproducibility)
     try:
-        log_i18n_level(self, "info", "🔒 Génération du verrou de compilation (lock file)...", "🔒 Generating build lock file...")
+        log_i18n_level(
+            self,
+            "info",
+            "🔒 Génération du verrou de compilation (lock file)...",
+            "🔒 Generating build lock file...",
+        )
         from Core.Locking import build_lock_payload, write_lock_files
-        lock_payload = build_lock_payload(Path(self.workspace_dir), cfg, engine_id=engine_id)
+
+        lock_payload = build_lock_payload(
+            Path(self.workspace_dir), cfg, engine_id=engine_id
+        )
         write_lock_files(Path(self.workspace_dir), lock_payload)
-        
+
         # Use engine config from lock (source of truth)
         engine_config = lock_payload.get("engine", {}).get("config") or {}
     except Exception as e:
-        log_i18n_level(self, "warning", f"Erreur locking (ignorée): {e}", f"Locking error (ignored): {e}")
+        log_i18n_level(
+            self,
+            "warning",
+            f"Erreur locking (ignorée): {e}",
+            f"Locking error (ignored): {e}",
+        )
         engine_config = {}
 
     # Retrieve engine instance
     engine = None
     try:
         import Core.engine as engines_loader
+
         engine = engines_loader.registry.get_instance(engine_id)
     except Exception:
         engine = None
-    
+
     if engine is None:
         try:
             engine = create(engine_id)
         except Exception as e:
-            log_i18n_level(self, "error",
+            log_i18n_level(
+                self,
+                "error",
                 f"Erreur création moteur '{engine_id}': {e}",
                 f"Engine creation error '{engine_id}': {e}",
             )
@@ -263,7 +295,12 @@ def compile_all(self) -> None:
         if not engine_config and hasattr(engine, "get_config"):
             engine_config = engine.get_config(self)
     except Exception as e:
-        log_i18n_level(self, "error", f"Erreur préparation contexte: {e}", f"Context prep error: {e}")
+        log_i18n_level(
+            self,
+            "error",
+            f"Erreur préparation contexte: {e}",
+            f"Context prep error: {e}",
+        )
         return
 
     self.set_controls_enabled(False)
@@ -277,7 +314,9 @@ def compile_all(self) -> None:
     def _after_bcasl(_report=None) -> None:
         if getattr(self, "_cancel_requested_during_precompile", False):
             self.set_controls_enabled(True)
-            log_i18n_level(self, "info",
+            log_i18n_level(
+                self,
+                "info",
                 "Compilation annulée avant le démarrage (phase BCASL).",
                 "Compilation cancelled before start (BCASL phase).",
             )
@@ -300,23 +339,35 @@ def compile_all(self) -> None:
         )
 
         try:
-            log_i18n_level(self, "info",
+            log_i18n_level(
+                self,
+                "info",
                 f"Démarrage de la compilation avec {engine.name}...",
                 f"Starting compilation with {engine.name}...",
             )
-            
+
             # Start compilation using the EngineRunner path
             main_process = get_main_process()
-            
+
             # Connection logic
             if not hasattr(main_process, "_gui_connected"):
                 main_process.output_ready.connect(lambda msg: _handle_output(self, msg))
                 main_process.error_ready.connect(lambda msg: _handle_error(self, msg))
-                main_process.progress_update.connect(lambda pct, msg: _handle_progress(self, pct, msg))
-                main_process.log_message.connect(lambda level, msg: _handle_log(self, level, msg))
-                main_process.compilation_started.connect(lambda info: _handle_compilation_started(self, info))
-                main_process.compilation_finished.connect(lambda code, info: handle_finished(self, code, info))
-                main_process.state_changed.connect(lambda state: _handle_state_changed(self, state))
+                main_process.progress_update.connect(
+                    lambda pct, msg: _handle_progress(self, pct, msg)
+                )
+                main_process.log_message.connect(
+                    lambda level, msg: _handle_log(self, level, msg)
+                )
+                main_process.compilation_started.connect(
+                    lambda info: _handle_compilation_started(self, info)
+                )
+                main_process.compilation_finished.connect(
+                    lambda code, info: handle_finished(self, code, info)
+                )
+                main_process.state_changed.connect(
+                    lambda state: _handle_state_changed(self, state)
+                )
                 main_process._gui_connected = True
 
             # The actual compilation call. We'll ensure tools inside the thread now
@@ -325,15 +376,17 @@ def compile_all(self) -> None:
                 workspace=self.workspace_dir,
                 engine_id=engine_id,
                 context=context,
-                engine_config=engine_config
+                engine_config=engine_config,
             )
-            
+
             if not success:
                 self.set_controls_enabled(True)
-                
+
         except Exception as e:
             self.set_controls_enabled(True)
-            log_i18n_level(self, "error",
+            log_i18n_level(
+                self,
+                "error",
                 f"Erreur démarrage compilation : {e}",
                 f"Compilation start error: {e}",
             )
@@ -345,8 +398,12 @@ def start_compilation_process(self, engine_id: str, file_path: str) -> bool:
     """Start a single compilation process using MainProcess and EngineRunner with build locking."""
     try:
         from Core.Configs import load_ark_config
-        from Core.Locking import build_context_from_ark_config, build_lock_payload, write_lock_files
         from Core.engine.ConfigManager import save_engine_config_for_gui
+        from Core.Locking import (
+            build_context_from_ark_config,
+            build_lock_payload,
+            write_lock_files,
+        )
 
         save_engine_config_for_gui(self, engine_id)
     except Exception:
@@ -354,21 +411,34 @@ def start_compilation_process(self, engine_id: str, file_path: str) -> bool:
 
     # Build lock payload (CLI-like behavior for reproducibility)
     try:
-        log_i18n_level(self, "info", "🔒 Génération du verrou de compilation (lock file)...", "🔒 Generating build lock file...")
+        log_i18n_level(
+            self,
+            "info",
+            "🔒 Génération du verrou de compilation (lock file)...",
+            "🔒 Generating build lock file...",
+        )
         cfg = load_ark_config(self.workspace_dir)
-        lock_payload = build_lock_payload(Path(self.workspace_dir), cfg, engine_id=engine_id)
+        lock_payload = build_lock_payload(
+            Path(self.workspace_dir), cfg, engine_id=engine_id
+        )
         write_lock_files(Path(self.workspace_dir), lock_payload)
-        
+
         # Use engine config from lock (source of truth)
         engine_config = lock_payload.get("engine", {}).get("config") or {}
     except Exception as e:
-        log_i18n_level(self, "warning", f"Erreur locking (ignorée): {e}", f"Locking error (ignored): {e}")
+        log_i18n_level(
+            self,
+            "warning",
+            f"Erreur locking (ignorée): {e}",
+            f"Locking error (ignored): {e}",
+        )
         engine_config = {}
 
     # Resolve engine
     engine = None
     try:
         import Core.engine as engines_loader
+
         engine = engines_loader.registry.get_instance(engine_id)
     except Exception:
         engine = None
@@ -376,7 +446,9 @@ def start_compilation_process(self, engine_id: str, file_path: str) -> bool:
         try:
             engine = create(engine_id)
         except Exception as e:
-            log_i18n_level(self, "error",
+            log_i18n_level(
+                self,
+                "error",
                 f"Erreur création moteur '{engine_id}': {e}",
                 f"Engine creation error '{engine_id}': {e}",
             )
@@ -386,7 +458,7 @@ def start_compilation_process(self, engine_id: str, file_path: str) -> bool:
         # Prepare context for EngineRunner
         try:
             context = build_context_from_ark_config(cfg)
-            
+
             # Use specific file_path as entry point
             try:
                 rel_path = os.path.relpath(file_path, self.workspace_dir)
@@ -396,37 +468,54 @@ def start_compilation_process(self, engine_id: str, file_path: str) -> bool:
                     context.entry_point = file_path
             except Exception:
                 context.entry_point = file_path
-                
+
             # If no explicit engine_config was derived from lock, fallback to live GUI state
             if not engine_config and hasattr(engine, "get_config"):
                 engine_config = engine.get_config(self)
         except Exception as e:
-            log_i18n_level(self, "error", f"Erreur préparation contexte: {e}", f"Context prep error: {e}")
+            log_i18n_level(
+                self,
+                "error",
+                f"Erreur préparation contexte: {e}",
+                f"Context prep error: {e}",
+            )
             return False
 
         main_process = get_main_process()
         if not hasattr(main_process, "_gui_connected"):
             main_process.output_ready.connect(lambda msg: _handle_output(self, msg))
             main_process.error_ready.connect(lambda msg: _handle_error(self, msg))
-            main_process.progress_update.connect(lambda pct, msg: _handle_progress(self, pct, msg))
-            main_process.log_message.connect(lambda level, msg: _handle_log(self, level, msg))
-            main_process.compilation_started.connect(lambda info: _handle_compilation_started(self, info))
-            main_process.compilation_finished.connect(lambda code, info: handle_finished(self, code, info))
-            main_process.state_changed.connect(lambda state: _handle_state_changed(self, state))
+            main_process.progress_update.connect(
+                lambda pct, msg: _handle_progress(self, pct, msg)
+            )
+            main_process.log_message.connect(
+                lambda level, msg: _handle_log(self, level, msg)
+            )
+            main_process.compilation_started.connect(
+                lambda info: _handle_compilation_started(self, info)
+            )
+            main_process.compilation_finished.connect(
+                lambda code, info: handle_finished(self, code, info)
+            )
+            main_process.state_changed.connect(
+                lambda state: _handle_state_changed(self, state)
+            )
             main_process._gui_connected = True
 
         success = main_process.compile_from_context(
             workspace=self.workspace_dir,
             engine_id=engine_id,
             context=context,
-            engine_config=engine_config
+            engine_config=engine_config,
         )
 
         if not success:
             self.set_controls_enabled(True)
 
         if success:
-            log_i18n_level(self, "info",
+            log_i18n_level(
+                self,
+                "info",
                 f"Démarrage {engine.name} pour {os.path.basename(file_path)}...",
                 f"Starting {engine.name} for {os.path.basename(file_path)}...",
             )
@@ -452,7 +541,9 @@ def start_compilation_process(self, engine_id: str, file_path: str) -> bool:
     def _after_bcasl(_report=None) -> None:
         if getattr(self, "_cancel_requested_during_precompile", False):
             self.set_controls_enabled(True)
-            log_i18n_level(self, "info",
+            log_i18n_level(
+                self,
+                "info",
                 "Compilation annulée avant le démarrage (phase BCASL).",
                 "Compilation cancelled before start (BCASL phase).",
             )
@@ -468,19 +559,21 @@ def start_compilation_process(self, engine_id: str, file_path: str) -> bool:
             self.set_controls_enabled(True)
             result["value"] = False
             return
-        
+
         log_i18n_level(
             self,
             "success",
             "✅ Phase BCASL terminée avec succès.",
             "✅ BCASL phase completed successfully.",
         )
-        
+
         ok = False
         try:
             ok = _do_start()
         except Exception as e:
-            log_i18n_level(self, "error",
+            log_i18n_level(
+                self,
+                "error",
                 f"Erreur démarrage compilation : {e}",
                 f"Compilation start error: {e}",
             )
@@ -500,7 +593,9 @@ def start_compilation_process(self, engine_id: str, file_path: str) -> bool:
 def try_start_processes(self) -> bool:
     """Try to start compilation for all selected files."""
     if not self.python_files:
-        log_i18n_level(self, "warning", "Aucun fichier à compiler.", "No files to compile.")
+        log_i18n_level(
+            self, "warning", "Aucun fichier à compiler.", "No files to compile."
+        )
         return False
 
     engine_id = None
@@ -530,13 +625,14 @@ def cancel_all_compilations(self) -> None:
     self._cancel_requested_during_precompile = True
     try:
         from bcasl.Loader import ensure_bcasl_thread_stopped
+
         ensure_bcasl_thread_stopped(self)
     except Exception:
         pass
 
     # 2. Handle main process cancellation
     get_main_process().cancel()
-    
+
     # 3. Enable controls
     self.set_controls_enabled(True)
     log_i18n_level(self, "info", "Annulation demandée.", "Cancellation requested.")
@@ -597,7 +693,9 @@ def _handle_compilation_started(self, info: dict) -> None:
     except Exception:
         pass
     if file_path and engine:
-        log_i18n_level(self, "info",
+        log_i18n_level(
+            self,
+            "info",
             f"Démarrage compilation: {os.path.basename(file_path)} avec {engine}",
             f"Starting compilation: {os.path.basename(file_path)} with {engine}",
         )
@@ -611,10 +709,19 @@ def handle_finished(self, return_code: int, info: dict) -> None:
             getattr(self, "_compilation_stats", None), dict
         ):
             self._compilation_stats = {
-                "files": {}, "engines": {}, "total_time": 0.0,
-                "total_count": 0, "success": 0, "failed": 0, "canceled": 0,
-                "min_time": None, "max_time": None, "last_file": None,
-                "last_duration": None, "last_status": None, "last_timestamp": None,
+                "files": {},
+                "engines": {},
+                "total_time": 0.0,
+                "total_count": 0,
+                "success": 0,
+                "failed": 0,
+                "canceled": 0,
+                "min_time": None,
+                "max_time": None,
+                "last_file": None,
+                "last_duration": None,
+                "last_status": None,
+                "last_timestamp": None,
             }
 
         file_path = info.get("file")
@@ -639,8 +746,16 @@ def handle_finished(self, return_code: int, info: dict) -> None:
         stats["total_time"] = float(stats.get("total_time", 0.0)) + float(duration)
         min_time = stats.get("min_time")
         max_time = stats.get("max_time")
-        stats["min_time"] = float(duration) if min_time is None else min(float(min_time), float(duration))
-        stats["max_time"] = float(duration) if max_time is None else max(float(max_time), float(duration))
+        stats["min_time"] = (
+            float(duration)
+            if min_time is None
+            else min(float(min_time), float(duration))
+        )
+        stats["max_time"] = (
+            float(duration)
+            if max_time is None
+            else max(float(max_time), float(duration))
+        )
 
         if return_code == 0:
             stats["success"] = int(stats.get("success", 0)) + 1
@@ -652,9 +767,17 @@ def handle_finished(self, return_code: int, info: dict) -> None:
         if engine_id:
             eng_stats = stats["engines"].get(engine_id)
             if not isinstance(eng_stats, dict):
-                eng_stats = {"count": 0, "total_time": 0.0, "success": 0, "failed": 0, "canceled": 0}
+                eng_stats = {
+                    "count": 0,
+                    "total_time": 0.0,
+                    "success": 0,
+                    "failed": 0,
+                    "canceled": 0,
+                }
             eng_stats["count"] = int(eng_stats.get("count", 0)) + 1
-            eng_stats["total_time"] = float(eng_stats.get("total_time", 0.0)) + float(duration)
+            eng_stats["total_time"] = float(eng_stats.get("total_time", 0.0)) + float(
+                duration
+            )
             if return_code == 0:
                 eng_stats["success"] = int(eng_stats.get("success", 0)) + 1
             elif return_code == -1:
@@ -666,14 +789,26 @@ def handle_finished(self, return_code: int, info: dict) -> None:
         if file_path:
             fstats = stats["files"].get(file_path)
             if not isinstance(fstats, dict):
-                fstats = {"count": 0, "total_time": 0.0, "min_time": None, "max_time": None, "last_time": 0.0}
+                fstats = {
+                    "count": 0,
+                    "total_time": 0.0,
+                    "min_time": None,
+                    "max_time": None,
+                    "last_time": 0.0,
+                }
             fstats["count"] = int(fstats.get("count", 0)) + 1
-            fstats["total_time"] = float(fstats.get("total_time", 0.0)) + float(duration)
+            fstats["total_time"] = float(fstats.get("total_time", 0.0)) + float(
+                duration
+            )
             fstats["last_time"] = float(duration)
             min_t = fstats.get("min_time")
             max_t = fstats.get("max_time")
-            fstats["min_time"] = float(duration) if min_t is None else min(float(min_t), float(duration))
-            fstats["max_time"] = float(duration) if max_t is None else max(float(max_t), float(duration))
+            fstats["min_time"] = (
+                float(duration) if min_t is None else min(float(min_t), float(duration))
+            )
+            fstats["max_time"] = (
+                float(duration) if max_t is None else max(float(max_t), float(duration))
+            )
             stats["files"][file_path] = fstats
 
         stats["last_file"] = file_path
@@ -682,7 +817,9 @@ def handle_finished(self, return_code: int, info: dict) -> None:
         stats["last_timestamp"] = time.time()
 
         try:
-            self._compilation_times = {f: fs.get("last_time", 0.0) for f, fs in stats["files"].items()}
+            self._compilation_times = {
+                f: fs.get("last_time", 0.0) for f, fs in stats["files"].items()
+            }
         except Exception:
             pass
     except Exception:
@@ -699,7 +836,12 @@ def handle_finished(self, return_code: int, info: dict) -> None:
             pass
 
     if return_code == 0:
-        log_i18n_level(self, "success", "Compilation terminée avec succès!", "Compilation completed successfully!")
+        log_i18n_level(
+            self,
+            "success",
+            "Compilation terminée avec succès!",
+            "Compilation completed successfully!",
+        )
 
         engine_id = info.get("engine")
         if engine_id:
@@ -713,13 +855,20 @@ def handle_finished(self, return_code: int, info: dict) -> None:
                     try:
                         engine.on_success(self, fp)
                     except Exception as e:
-                        log_i18n_level(self, "warning", f"Erreur on_success: {e}", f"on_success error: {e}")
+                        log_i18n_level(
+                            self,
+                            "warning",
+                            f"Erreur on_success: {e}",
+                            f"on_success error: {e}",
+                        )
 
         _continue_compile_all(self)
     elif return_code == -1:
         log_i18n_level(self, "info", "Compilation annulée.", "Compilation cancelled.")
     else:
-        log_i18n_level(self, "error",
+        log_i18n_level(
+            self,
+            "error",
             f"Compilation échouée (code: {return_code})",
             f"Compilation failed (code: {return_code})",
         )

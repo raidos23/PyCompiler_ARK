@@ -24,24 +24,24 @@ via le système d'invoker de Plugins_SDK.GeneralContext.Dialog pour assurer:
 - La sécurité des threads
 """
 
-import re
-import platform
 import getpass
-from typing import Optional, NamedTuple
+import platform
+import re
+from typing import NamedTuple, Optional
 
+from PySide6 import QtCore as _QtC
 from PySide6.QtWidgets import (
     QApplication,
     QDialog,
     QHBoxLayout,
+    QInputDialog,
     QLabel,
+    QLineEdit,
+    QMessageBox,
     QProgressBar,
     QPushButton,
     QVBoxLayout,
-    QMessageBox,
-    QInputDialog,
-    QLineEdit,
 )
-from PySide6 import QtCore as _QtC
 
 
 def _get_linux_display_server() -> str:
@@ -245,7 +245,7 @@ def sys_msgbox_for_installing(
     """Interactive prompt for multi-OS installation authorization."""
     is_windows = platform.system().lower().startswith("win")
     try:
-        from Ui.i18n import tr_fr_en, is_french_language
+        from Ui.i18n import is_french_language, tr_fr_en
 
         if title == "Installation requise":
             title = tr_fr_en(None, "Installation requise", "Installation required")

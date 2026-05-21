@@ -23,9 +23,8 @@ from __future__ import annotations
 
 from typing import Optional
 
-from Ui.i18n import log_i18n_level
 from Ui.Gui.Compilation.mainprocess import MainProcess
-
+from Ui.i18n import log_i18n_level
 
 # Singleton MainProcess (initialised on first use)
 _main_process: Optional[MainProcess] = None

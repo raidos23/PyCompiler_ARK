@@ -32,11 +32,8 @@ from pathlib import Path
 from typing import Any, Optional
 
 import yaml
-
-from Core.Configs import load_ark_config, save_ark_config
-
-from PySide6.QtCore import Qt, Signal, QMimeData, QByteArray, QObject, QThread, Slot
-from PySide6.QtGui import QColor, QShortcut, QKeySequence, QPalette
+from PySide6.QtCore import QByteArray, QMimeData, QObject, Qt, QThread, Signal, Slot
+from PySide6.QtGui import QColor, QKeySequence, QPalette, QShortcut
 from PySide6.QtWidgets import (
     QAbstractItemView,
     QApplication,
@@ -58,14 +55,18 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from Core.Configs import load_ark_config, save_ark_config
+
 # ---------------------------------------------------------------------------
 # Helpers Thème
 # ---------------------------------------------------------------------------
+
 
 def _is_dark() -> bool:
     """Détermine si le thème actuel est sombre."""
     try:
         from Ui.Gui.UiConnection import _is_qss_dark
+
         app = QApplication.instance()
         return _is_qss_dark(app.styleSheet() if app else "")
     except Exception:
@@ -76,7 +77,7 @@ def _get_bcasl_colors() -> dict[str, str]:
     """Retourne les couleurs adaptées au thème (soumis au thème)."""
     app = QApplication.instance()
     pal = app.palette() if app else QPalette()
-    
+
     # Récupérer les couleurs système pour une intégration parfaite
     # PlaceholderText est excellent pour les labels secondaires (gris dynamique)
     secondary_text = pal.color(QPalette.PlaceholderText).name()
@@ -85,13 +86,13 @@ def _get_bcasl_colors() -> dict[str, str]:
 
     if _is_dark():
         return {
-            "warn_bg": "#504010",       # Ambre sombre mais distinct du fond ("noir")
-            "warn_border": "#D4A017",   # Orange/Or
+            "warn_bg": "#504010",  # Ambre sombre mais distinct du fond ("noir")
+            "warn_border": "#D4A017",  # Orange/Or
             "section_bg": alt_bg,
             "section_label": secondary_text,
         }
     return {
-        "warn_bg": "#FFF3CD",      # Jaune pâle
+        "warn_bg": "#FFF3CD",  # Jaune pâle
         "warn_border": "orange",
         "section_bg": alt_bg,
         "section_label": secondary_text,
@@ -101,9 +102,13 @@ def _get_bcasl_colors() -> dict[str, str]:
 def _apply_themed_icon(widget: QPushButton, icon_name: str, size: int = 18) -> None:
     """Applique une icône SVG thémée au widget."""
     try:
-        from Ui.Gui.UiConnection import themed_svg_icon
         from PySide6.QtCore import QSize
-        icon_path = str(Path(__file__).parent.parent.parent.parent / "icons" / icon_name)
+
+        from Ui.Gui.UiConnection import themed_svg_icon
+
+        icon_path = str(
+            Path(__file__).parent.parent.parent.parent / "icons" / icon_name
+        )
         icon = themed_svg_icon(icon_path, size=size)
         if icon:
             widget.setIcon(icon)
@@ -118,13 +123,13 @@ def _apply_themed_icon(widget: QPushButton, icon_name: str, size: int = 18) -> N
 
 # phase_score → (display_name, description)
 SECTION_PHASES: dict[int, tuple[str, str]] = {
-    0:   ("Nettoyage",    "Nettoyage et hygiène du workspace"),
-    10:  ("Validation",   "Validation et vérification des prérequis"),
-    20:  ("Préparation",  "Préparation et génération des ressources"),
-    30:  ("Conformité",   "Conformité et injection de headers"),
-    40:  ("Linting",      "Linting, formatage et vérification de type"),
-    50:  ("Obfuscation",  "Obfuscation, protection et transpilation"),
-    100: ("Défaut",       "Autres actions (phase par défaut)"),
+    0: ("Nettoyage", "Nettoyage et hygiène du workspace"),
+    10: ("Validation", "Validation et vérification des prérequis"),
+    20: ("Préparation", "Préparation et génération des ressources"),
+    30: ("Conformité", "Conformité et injection de headers"),
+    40: ("Linting", "Linting, formatage et vérification de type"),
+    50: ("Obfuscation", "Obfuscation, protection et transpilation"),
+    100: ("Défaut", "Autres actions (phase par défaut)"),
 }
 
 # Tag → score de phase
@@ -157,6 +162,7 @@ def _section_for_phase(score: int) -> tuple[int, str]:
 # Helpers lecture/écriture plugins
 # ---------------------------------------------------------------------------
 
+
 def _read_plugin_list(plugins_raw: Any) -> list[dict[str, Any]]:
     """Normalise plugins (liste ou dict) → liste [{name, enabled, priority, config}]."""
     if isinstance(plugins_raw, list):
@@ -169,14 +175,18 @@ def _read_plugin_list(plugins_raw: Any) -> list[dict[str, Any]]:
         result = []
         for name, val in plugins_raw.items():
             if isinstance(val, bool):
-                result.append({"name": name, "enabled": val, "priority": 0, "config": {}})
+                result.append(
+                    {"name": name, "enabled": val, "priority": 0, "config": {}}
+                )
             elif isinstance(val, dict):
-                result.append({
-                    "name": name,
-                    "enabled": bool(val.get("enabled", True)),
-                    "priority": int(val.get("priority", 0)),
-                    "config": dict(val.get("config", {})),
-                })
+                result.append(
+                    {
+                        "name": name,
+                        "enabled": bool(val.get("enabled", True)),
+                        "priority": int(val.get("priority", 0)),
+                        "config": dict(val.get("config", {})),
+                    }
+                )
         return result
     return []
 
@@ -185,12 +195,14 @@ def _plugins_list_to_yaml(plugin_rows: list[dict[str, Any]]) -> list[dict[str, A
     """Retourne la liste dans le format bcasl.yml officiel."""
     result = []
     for row in plugin_rows:
-        result.append({
-            "name": row["name"],
-            "enabled": bool(row.get("enabled", True)),
-            "priority": int(row.get("priority", 0)),
-            "config": dict(row.get("config", {})),
-        })
+        result.append(
+            {
+                "name": row["name"],
+                "enabled": bool(row.get("enabled", True)),
+                "priority": int(row.get("priority", 0)),
+                "config": dict(row.get("config", {})),
+            }
+        )
     return result
 
 
@@ -198,12 +210,13 @@ def _plugins_list_to_yaml(plugin_rows: list[dict[str, Any]]) -> list[dict[str, A
 # Widget : ligne de plugin
 # ---------------------------------------------------------------------------
 
+
 class _PluginRow(QFrame):
     """Widget représentant un seul plugin dans le pipeline."""
 
-    sig_move_up   = Signal(str)   # plugin_id
-    sig_move_down  = Signal(str)
-    sig_enabled    = Signal(str, bool)
+    sig_move_up = Signal(str)  # plugin_id
+    sig_move_down = Signal(str)
+    sig_enabled = Signal(str, bool)
 
     def __init__(
         self,
@@ -252,7 +265,9 @@ class _PluginRow(QFrame):
         self.btn_down.clicked.connect(lambda: self.sig_move_down.emit(self.pid))
         row.addWidget(self.btn_down)
 
-        self.setStyleSheet("QFrame#PluginRow { background: transparent; border: none; }")
+        self.setStyleSheet(
+            "QFrame#PluginRow { background: transparent; border: none; }"
+        )
 
     # ------------------------------------------------------------------
 
@@ -274,6 +289,7 @@ class _PluginRow(QFrame):
 # Widget : section collapsible
 # ---------------------------------------------------------------------------
 
+
 class _SectionWidget(QGroupBox):
     """Section collapsible utilisant QGroupBox pour une meilleure intégration thématique."""
 
@@ -292,7 +308,7 @@ class _SectionWidget(QGroupBox):
 
         # Titre natif du GroupBox
         self.setTitle(name)
-        
+
         # Rendre le GroupBox collapsible via la checkbox native
         self.setCheckable(True)
         self.setChecked(True)
@@ -397,6 +413,7 @@ class _SectionWidget(QGroupBox):
 # Dialog principal
 # ---------------------------------------------------------------------------
 
+
 class BcaslPipelineDialog(QDialog):
     """Éditeur visuel du pipeline BCASL."""
 
@@ -456,7 +473,9 @@ class BcaslPipelineDialog(QDialog):
         title_row.addStretch(1)
 
         # Case à cocher pour l'activation globale (gérée par ark.yml)
-        self._chk_bcasl_enabled = QCheckBox(self._gui.tr("Activer BCASL", "Enable BCASL"))
+        self._chk_bcasl_enabled = QCheckBox(
+            self._gui.tr("Activer BCASL", "Enable BCASL")
+        )
         self._chk_bcasl_enabled.setStyleSheet("font-weight: bold;")
         bcasl_active = self._ark_cfg.get("plugins", {}).get("bcasl_enabled", True)
         self._chk_bcasl_enabled.setChecked(bool(bcasl_active))
@@ -478,11 +497,13 @@ class BcaslPipelineDialog(QDialog):
         scroll.setWidgetResizable(True)
         scroll.setFrameShape(QFrame.NoFrame)
         scroll.setStyleSheet("QScrollArea { background: transparent; }")
-        
+
         container = QWidget()
         container.setObjectName("PipelineContainer")
-        container.setStyleSheet("QWidget#PipelineContainer { background: transparent; }")
-        
+        container.setStyleSheet(
+            "QWidget#PipelineContainer { background: transparent; }"
+        )
+
         self._pipeline_lay = QVBoxLayout(container)
         self._pipeline_lay.setSpacing(8)
         self._pipeline_lay.setContentsMargins(4, 4, 4, 4)
@@ -507,7 +528,9 @@ class BcaslPipelineDialog(QDialog):
         btn_cancel.clicked.connect(self.reject)
         bottom.addWidget(btn_cancel)
 
-        btn_save = QPushButton(self._gui.tr("Enregistrer dans bcasl.yml", "Save to bcasl.yml"))
+        btn_save = QPushButton(
+            self._gui.tr("Enregistrer dans bcasl.yml", "Save to bcasl.yml")
+        )
         _apply_themed_icon(btn_save, "save.svg")
         btn_save.setDefault(True)
         btn_save.clicked.connect(self._do_save)
@@ -522,13 +545,19 @@ class BcaslPipelineDialog(QDialog):
         """Active ou désactive les onglets de configuration selon l'état global."""
         self._tabs.setEnabled(checked)
         if not checked:
-            self._tabs.setToolTip(self._gui.tr("BCASL est désactivé dans ark.yml", "BCASL is disabled in ark.yml"))
+            self._tabs.setToolTip(
+                self._gui.tr(
+                    "BCASL est désactivé dans ark.yml", "BCASL is disabled in ark.yml"
+                )
+            )
         else:
             self._tabs.setToolTip("")
 
     def _populate_sections(self) -> None:
         """Grouper les plugins par section et les insérer."""
-        plugins_raw = self._cfg.get("plugins", {}) if isinstance(self._cfg, dict) else {}
+        plugins_raw = (
+            self._cfg.get("plugins", {}) if isinstance(self._cfg, dict) else {}
+        )
         plugin_list = _read_plugin_list(plugins_raw)
 
         # Charger l'état des phases
@@ -546,7 +575,12 @@ class BcaslPipelineDialog(QDialog):
         # Pour les plugins découverts non présents dans la config, créer une entrée par défaut
         for pid in self._meta_map:
             if pid not in pid_entry:
-                pid_entry[pid] = {"name": pid, "enabled": True, "priority": 0, "config": {}}
+                pid_entry[pid] = {
+                    "name": pid,
+                    "enabled": True,
+                    "priority": 0,
+                    "config": {},
+                }
 
         # Grouper par phase
         phase_groups: dict[int, list[tuple[str, dict[str, Any]]]] = {}
@@ -601,7 +635,9 @@ class BcaslPipelineDialog(QDialog):
 
             workspace_meta = _build_workspace_meta(self._workspace_root, self._cfg)
             ctx = PreCompileContext(
-                self._workspace_root, config=self._cfg, workspace_metadata=workspace_meta
+                self._workspace_root,
+                config=self._cfg,
+                workspace_metadata=workspace_meta,
             )
         except Exception:
             ctx = None
@@ -668,10 +704,12 @@ class BcaslPipelineDialog(QDialog):
         """Prend un instantané de l'état complet du pipeline."""
         state = []
         for section in self._sections:
-            state.append({
-                "phase_key": section.phase_key,
-                "rows": section.snapshot(),
-            })
+            state.append(
+                {
+                    "phase_key": section.phase_key,
+                    "rows": section.snapshot(),
+                }
+            )
         return copy.deepcopy(state)
 
     def _push_undo(self) -> None:
@@ -731,33 +769,37 @@ class BcaslPipelineDialog(QDialog):
         try:
             if "plugins" not in self._ark_cfg:
                 self._ark_cfg["plugins"] = {}
-            self._ark_cfg["plugins"]["bcasl_enabled"] = self._chk_bcasl_enabled.isChecked()
+            self._ark_cfg["plugins"][
+                "bcasl_enabled"
+            ] = self._chk_bcasl_enabled.isChecked()
             save_ark_config(str(self._workspace_root), self._ark_cfg)
         except Exception as e:
             QMessageBox.warning(
                 self,
                 self._gui.tr("Avertissement", "Warning"),
-                f"Impossible de mettre à jour ark.yml: {e}"
+                f"Impossible de mettre à jour ark.yml: {e}",
             )
 
         # 2) Construire la liste ordonnée de plugins pour bcasl.yml et l'état des phases
         ordered: list[dict[str, Any]] = []
         phases_state: dict[str, bool] = {}
-        
+
         # Le backend utilise rec.priority pour ordonner dans une phase.
         # On assigne un index global incrémental pour refléter l'ordre visuel.
         current_prio = 0
-        
+
         for section in self._sections:
             phases_state[section._name] = section.isChecked()
             for row in section.rows:
                 cfg_for_row = plugin_configs.get(row.pid, row.config or {})
-                ordered.append({
-                    "name": row.pid,
-                    "enabled": row.is_enabled,
-                    "priority": current_prio,
-                    "config": cfg_for_row,
-                })
+                ordered.append(
+                    {
+                        "name": row.pid,
+                        "enabled": row.is_enabled,
+                        "priority": current_prio,
+                        "config": cfg_for_row,
+                    }
+                )
                 current_prio += 1
 
         # Construire la config de sortie pour bcasl.yml
@@ -766,7 +808,7 @@ class BcaslPipelineDialog(QDialog):
         cfg_out["phases"] = phases_state
         # plugin_order maintient la compatibilité avec l'ancien loader
         cfg_out["plugin_order"] = [e["name"] for e in ordered]
-        
+
         # S'assurer que 'enabled' ne pollue plus bcasl.yml
         if "options" in cfg_out and isinstance(cfg_out["options"], dict):
             cfg_out["options"].pop("enabled", None)
@@ -956,6 +998,7 @@ def _build_plugin_item(
 # ---------------------------------------------------------------------------
 # Point d'entrée (appelé depuis bcasl/Loader.py)
 # ---------------------------------------------------------------------------
+
 
 def open_bcasl_pipeline_dialog(
     gui,
