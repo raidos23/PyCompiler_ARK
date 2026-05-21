@@ -118,8 +118,8 @@ def get_general_context_version() -> str:
 
 def get_system_version() -> str:
     """Get the system information (Python version and platform)."""
-    import sys
     import platform
+    import sys
 
     python_version = (
         f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"

@@ -15,7 +15,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Callable, Optional
 
 if TYPE_CHECKING:
     from Core.engine.build_context import BuildContext
@@ -100,7 +100,9 @@ class CompilerEngine:
         """
         raise NotImplementedError
 
-    def program_and_args(self, context: "BuildContext") -> Optional[tuple[str, list[str]]]:
+    def program_and_args(
+        self, context: "BuildContext"
+    ) -> Optional[tuple[str, list[str]]]:
         """
         Resolve the program and arguments for a normalized build context.
         Default implementation splits `build_command`.
@@ -181,7 +183,9 @@ class CompilerEngine:
         """
         return {"python": [], "system": []}
 
-    def ensure_tools_installed(self, gui, stop_signal: Optional[Callable[[], bool]] = None) -> bool:
+    def ensure_tools_installed(
+        self, gui, stop_signal: Optional[Callable[[], bool]] = None
+    ) -> bool:
         """
         Check if all required tools are installed, and install missing ones.
         Uses direct SysDependencyManager integration for system packages with full GUI support.
@@ -235,9 +239,9 @@ class CompilerEngine:
                             process = sys_manager.install_packages_linux(missing_system)
                             if process:
                                 # Wait for completion with timeout, but check stop_signal
-                                timeout_total = 600000 # 10 minutes
+                                timeout_total = 600000  # 10 minutes
                                 elapsed = 0
-                                interval = 500 # 0.5s
+                                interval = 500  # 0.5s
                                 while not process.waitForFinished(interval):
                                     if stop_signal and stop_signal():
                                         process.terminate()
@@ -257,7 +261,7 @@ class CompilerEngine:
                                         )
                                         system_install_ok = False
                                         break
-                                
+
                                 if system_install_ok:
                                     if process.exitCode() == 0:
                                         log_i18n_level(
@@ -322,9 +326,9 @@ class CompilerEngine:
                                     winget_packages
                                 )
                                 if process:
-                                    timeout_total = 600000 # 10 minutes
+                                    timeout_total = 600000  # 10 minutes
                                     elapsed = 0
-                                    interval = 500 # 0.5s
+                                    interval = 500  # 0.5s
                                     while not process.waitForFinished(interval):
                                         if stop_signal and stop_signal():
                                             process.terminate()

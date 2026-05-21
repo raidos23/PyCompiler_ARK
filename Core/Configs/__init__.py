@@ -51,10 +51,6 @@ User-level config (previously Core.UserConfig)
 
 from __future__ import annotations
 
-# =============================================================================
-# WORKSPACE / PROJECT CONFIGURATION  (was Core.ArkConfig)
-# =============================================================================
-
 import fnmatch
 import os
 from copy import deepcopy
@@ -63,6 +59,10 @@ from pathlib import Path
 from typing import Any, Optional
 
 import yaml
+
+# =============================================================================
+# WORKSPACE / PROJECT CONFIGURATION  (was Core.ArkConfig)
+# =============================================================================
 
 
 # ── Defaults ──────────────────────────────────────────────────────────────────
@@ -143,6 +143,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
 
 # ── Errors ────────────────────────────────────────────────────────────────────
 
+
 class ArkConfigError(RuntimeError):
     """Raised when an ARK workspace config is missing or malformed."""
 
@@ -159,6 +160,7 @@ class ArkConfigValidationResult:
 
 
 # ── Internal helpers ──────────────────────────────────────────────────────────
+
 
 def _deep_merge_dict(base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any]:
     result = deepcopy(base)
@@ -206,11 +208,19 @@ def _compatibility_view(config: dict[str, Any]) -> dict[str, Any]:
     view = deepcopy(normalized)
     view["dependencies"] = _deep_merge_dict(
         DEFAULT_DEPENDENCY_OPTIONS,
-        config.get("dependencies") if isinstance(config.get("dependencies"), dict) else {},
+        (
+            config.get("dependencies")
+            if isinstance(config.get("dependencies"), dict)
+            else {}
+        ),
     )
     view["environment_manager"] = _deep_merge_dict(
         DEFAULT_ENVIRONMENT_MANAGER_OPTIONS,
-        config.get("environment_manager") if isinstance(config.get("environment_manager"), dict) else {},
+        (
+            config.get("environment_manager")
+            if isinstance(config.get("environment_manager"), dict)
+            else {}
+        ),
     )
     build = view.get("build")
     if not isinstance(build, dict):
@@ -222,6 +232,7 @@ def _compatibility_view(config: dict[str, Any]) -> dict[str, Any]:
 
 
 # ── Public API — workspace config ─────────────────────────────────────────────
+
 
 def normalize_ark_config(config: dict[str, Any]) -> dict[str, Any]:
     """Normalise une configuration brute en un dictionnaire canonique.
@@ -246,14 +257,14 @@ def normalize_ark_config(config: dict[str, Any]) -> dict[str, Any]:
         project = {}
     project_name = str(project.get("name") or "").strip()
     project_version = str(project.get("version") or "").strip() or "1.0.0"
-    
+
     # Récupération de l'entrypoint (support build.entrypoint comme legacy interne)
     build_for_entry = merged.get("build")
     if not isinstance(build_for_entry, dict):
         build_for_entry = {}
     legacy_entry = build_for_entry.get("entrypoint")
     project_entry = str(project.get("entry") or legacy_entry or "").strip()
-    
+
     merged["project"] = {
         "name": project_name,
         "version": project_version,
@@ -275,7 +286,11 @@ def normalize_ark_config(config: dict[str, Any]) -> dict[str, Any]:
     normalized_build: dict[str, Any] = {
         "engine": str(build.get("engine") or "").strip() or "pyinstaller",
         "output": str(build.get("output") or "").strip() or "dist/",
-        "data": [item for item in _normalize_list(build.get("data")) if isinstance(item, dict)],
+        "data": [
+            item
+            for item in _normalize_list(build.get("data"))
+            if isinstance(item, dict)
+        ],
     }
     icon_value = build.get("icon")
     if isinstance(icon_value, str) and icon_value.strip():
@@ -285,11 +300,11 @@ def normalize_ark_config(config: dict[str, Any]) -> dict[str, Any]:
     return merged
 
 
-def load_ark_config(workspace: Path | str, *, require_exists: bool = False) -> dict[str, Any]:
+def load_ark_config(
+    workspace: Path | str, *, require_exists: bool = False
+) -> dict[str, Any]:
     workspace_path = Path(workspace)
-    path = next(
-        (c for c in _config_candidates(workspace_path) if c.is_file()), None
-    )
+    path = next((c for c in _config_candidates(workspace_path) if c.is_file()), None)
     if path is None:
         if require_exists:
             raise ArkConfigError("ark.yml not found in current directory.")
@@ -303,7 +318,9 @@ def load_ark_config(workspace: Path | str, *, require_exists: bool = False) -> d
     return _compatibility_view(data)
 
 
-def validate_ark_config(workspace: Path, config: dict[str, Any]) -> ArkConfigValidationResult:
+def validate_ark_config(
+    workspace: Path, config: dict[str, Any]
+) -> ArkConfigValidationResult:
     normalized = normalize_ark_config(config)
     warnings: list[str] = []
     errors: list[str] = []
@@ -352,7 +369,9 @@ def validate_ark_config(workspace: Path, config: dict[str, Any]) -> ArkConfigVal
     if not isinstance(exclude_patterns, list):
         errors.append("workspace.exclude must be a list")
 
-    return ArkConfigValidationResult(config=normalized, warnings=warnings, errors=errors)
+    return ArkConfigValidationResult(
+        config=normalized, warnings=warnings, errors=errors
+    )
 
 
 def write_ark_config(workspace: Path | str, config: dict[str, Any]) -> Path:
@@ -446,12 +465,20 @@ def get_build_options(config: dict[str, Any]) -> dict[str, Any]:
 
 def get_dependency_options(config: dict[str, Any]) -> dict[str, Any]:
     options = config.get("dependencies")
-    return dict(options) if isinstance(options, dict) else deepcopy(DEFAULT_DEPENDENCY_OPTIONS)
+    return (
+        dict(options)
+        if isinstance(options, dict)
+        else deepcopy(DEFAULT_DEPENDENCY_OPTIONS)
+    )
 
 
 def get_environment_manager_options(config: dict[str, Any]) -> dict[str, Any]:
     options = config.get("environment_manager")
-    return dict(options) if isinstance(options, dict) else deepcopy(DEFAULT_ENVIRONMENT_MANAGER_OPTIONS)
+    return (
+        dict(options)
+        if isinstance(options, dict)
+        else deepcopy(DEFAULT_ENVIRONMENT_MANAGER_OPTIONS)
+    )
 
 
 def _normalize_exclusion_pattern(pattern: str) -> str:
@@ -518,8 +545,8 @@ def create_default_ark_config(workspace_dir: str) -> bool:
 CONFIG_KEYS: dict[str, str] = {
     "user-engine-dir": "user_engine_dir",
     "user-plugin-dir": "user_plugin_dir",
-    "dev-engine-dir":  "dev_engine_dir",
-    "dev-plugin-dir":  "dev_plugin_dir",
+    "dev-engine-dir": "dev_engine_dir",
+    "dev-plugin-dir": "dev_plugin_dir",
 }
 
 #: Default sub-directory paths (relative to ``Path.home()``) created on first

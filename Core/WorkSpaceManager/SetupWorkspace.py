@@ -46,7 +46,7 @@ class SetupWorkspace:
             for f in files:
                 if f.endswith(".py"):
                     py_files.append(os.path.join(root, f))
-        
+
         return sorted(py_files)
 
     @staticmethod

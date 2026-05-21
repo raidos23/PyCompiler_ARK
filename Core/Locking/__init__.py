@@ -3,10 +3,10 @@
 
 from __future__ import annotations
 
+import fnmatch
 import json
 import platform
 import sys
-import fnmatch
 from datetime import datetime
 from hashlib import sha256
 from importlib.metadata import distributions
@@ -14,6 +14,7 @@ from pathlib import Path
 from typing import Any
 
 import yaml
+
 from Core.Configs import normalize_ark_config
 from Core.engine.build_context import BuildContext
 
@@ -69,7 +70,9 @@ def installed_distributions_snapshot() -> dict[str, str]:
     return dict(sorted(items.items()))
 
 
-def included_workspace_files(workspace: Path, exclude_patterns: list[str]) -> list[Path]:
+def included_workspace_files(
+    workspace: Path, exclude_patterns: list[str]
+) -> list[Path]:
     included: list[Path] = []
     for path in sorted(workspace.rglob("*")):
         if not path.is_file():

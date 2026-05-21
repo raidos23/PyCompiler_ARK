@@ -23,38 +23,32 @@ Qt-dependent classes have been moved to Ui/Gui/Compilation/.
 
 from __future__ import annotations
 
-# Importations de utils.py
-from Core.Compiler.utils import (
-    build_command,
-    validate_command,
-    escape_arguments,
-    sanitize_path,
-    CommandBuilder,
-    detect_python_executable,
-    get_interpreter_version,
-    check_module_available,
-)
+# Importations de allversion.py
+from Core.allversion import get_bcasl_version, get_core_version, get_engine_sdk_version
 
 # Importations de process_killer.py
 from Core.Compiler.process_killer import (
     ProcessInfo,
     ProcessKiller,
+    get_process_info,
     kill_process,
     kill_process_tree,
-    get_process_info,
+)
+
+# Importations de utils.py
+from Core.Compiler.utils import (
+    CommandBuilder,
+    build_command,
+    check_module_available,
+    detect_python_executable,
+    escape_arguments,
+    get_interpreter_version,
+    sanitize_path,
+    validate_command,
 )
 
 # Importations de Venv_Manager/Manager.py
-from Core.Venv_Manager.Manager import (
-    VenvManager,
-)
-
-# Importations de allversion.py
-from Core.allversion import (
-    get_core_version,
-    get_bcasl_version,
-    get_engine_sdk_version,
-)
+from Core.Venv_Manager.Manager import VenvManager
 
 __all__ = [
     "build_command",

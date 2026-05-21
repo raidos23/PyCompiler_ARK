@@ -33,11 +33,10 @@ import time
 from pathlib import Path
 from typing import Any, Callable, Optional
 
-from Core.process_security import hardened_popen_kwargs, secure_command
-
 # BuildContext lives in engine_sdk; imported here so callers of this module
 # only need to import from Core.Compiler.
 from Core.engine.build_context import BuildContext
+from Core.process_security import hardened_popen_kwargs, secure_command
 
 
 class EngineRunnerError(RuntimeError):
@@ -66,11 +65,10 @@ def resolve_engine_command(
     """
     try:
         import Core.engine as engines_loader
+
         engine = engines_loader.create(engine_id)
     except Exception as exc:
-        raise EngineRunnerError(
-            f"Unable to load engine '{engine_id}': {exc}"
-        ) from exc
+        raise EngineRunnerError(f"Unable to load engine '{engine_id}': {exc}") from exc
 
     try:
         setattr(engine, "_config_overrides", dict(engine_config or {}))
@@ -92,7 +90,7 @@ def resolve_engine_command(
         raise EngineRunnerError(f"Engine '{engine_id}' returned no command")
 
     program, args = resolved
-    
+
     # Retrieve engine-specific environment
     try:
         env = engine.environment() if hasattr(engine, "environment") else {}
@@ -148,10 +146,10 @@ def run_engine_compile(
 
     result["stdout"] = "\n".join(captured_stdout)
     result["stderr"] = "\n".join(captured_stderr)
-    
+
     if not result["success"] and not result.get("error"):
         result["error"] = result["stderr"].strip() or "Build failed"
-    
+
     return result
 
 
@@ -188,11 +186,14 @@ def run_engine_compile_streaming(
     # ── 2. Resolve (program, args, env) from engine ──────────────────────────
     try:
         if on_stdout:
-            on_stdout("🔨 Étape 1/3 : Vérification et installation des outils requis...")
-            
+            on_stdout(
+                "🔨 Étape 1/3 : Vérification et installation des outils requis..."
+            )
+
         import Core.engine as engines_loader
+
         engine_instance = engines_loader.create(engine_id)
-        
+
         # Ensure tools are installed (this may take time, so we do it in the thread)
         def _log(fr, en):
             if on_stdout:
@@ -202,13 +203,19 @@ def run_engine_compile_streaming(
         class LogBridge:
             def __init__(self, log_cb):
                 self.log_cb = log_cb
-            def tr(self, fr, en): return en # Simple fallback
+
+            def tr(self, fr, en):
+                return en  # Simple fallback
 
         if hasattr(engine_instance, "ensure_tools_installed"):
-            if not engine_instance.ensure_tools_installed(LogBridge(_log), stop_signal=stop_signal):
+            if not engine_instance.ensure_tools_installed(
+                LogBridge(_log), stop_signal=stop_signal
+            ):
                 if stop_signal and stop_signal():
                     return _failure("Compilation annulée par l'utilisateur.")
-                return _failure(f"Échec de l'installation des outils pour '{engine_id}'")
+                return _failure(
+                    f"Échec de l'installation des outils pour '{engine_id}'"
+                )
 
         if stop_signal and stop_signal():
             return _failure("Compilation annulée.")
@@ -216,7 +223,9 @@ def run_engine_compile_streaming(
         if on_stdout:
             on_stdout("⚙️ Étape 2/3 : Génération de la commande de compilation...")
 
-        program, args, engine_env = resolve_engine_command(engine_id, context, engine_config)
+        program, args, engine_env = resolve_engine_command(
+            engine_id, context, engine_config
+        )
     except EngineRunnerError as exc:
         return _failure(str(exc))
     except Exception as exc:
@@ -235,7 +244,7 @@ def run_engine_compile_streaming(
 
     # ── 4. Run with streaming ────────────────────────────────────────────────
     command = [safe_program] + safe_args
-    
+
     if on_stdout:
         on_stdout(f"🚀 Étape 3/3 : Exécution du processus de compilation...")
         on_stdout(f"  💻 Commande : {' '.join(command)}")
@@ -267,9 +276,13 @@ def run_engine_compile_streaming(
             callback(line.rstrip())
         stream.close()
 
-    stdout_thread = threading.Thread(target=_read_stream, args=(process.stdout, on_stdout))
-    stderr_thread = threading.Thread(target=_read_stream, args=(process.stderr, on_stderr))
-    
+    stdout_thread = threading.Thread(
+        target=_read_stream, args=(process.stdout, on_stdout)
+    )
+    stderr_thread = threading.Thread(
+        target=_read_stream, args=(process.stderr, on_stderr)
+    )
+
     stdout_thread.start()
     stderr_thread.start()
 
@@ -277,6 +290,7 @@ def run_engine_compile_streaming(
         while process.poll() is None:
             if stop_signal and stop_signal():
                 from Core.Compiler.process_killer import kill_process_tree
+
                 kill_process_tree(process.pid)
                 break
             time.sleep(0.05)
@@ -293,8 +307,8 @@ def run_engine_compile_streaming(
     }
 
 
-
 # ── helpers ──────────────────────────────────────────────────────────────────
+
 
 def _failure(error: str) -> dict[str, Any]:
     return {

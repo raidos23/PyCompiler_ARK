@@ -31,14 +31,15 @@ sont conservées.
 """
 
 from __future__ import annotations
+
 from .analyser import (
-    _install_next_dependency,
     _check_module_installed,
+    _install_next_dependency,
     _is_stdlib_module,
     _on_dep_pip_finished,
     _on_dep_pip_output,
-    suggest_missing_dependencies,
     collect_project_dependencies,
+    suggest_missing_dependencies,
     write_requirements_txt,
 )
 

@@ -23,29 +23,6 @@ Qt-dependent classes have been moved to Ui/Gui/Compilation/.
 
 from __future__ import annotations
 
-# ============================================================================
-# IMPORTS LOCAUX - Core.Compiler
-# ============================================================================
-
-from Core.Compiler.utils import (
-    build_command,
-    validate_command,
-    escape_arguments,
-    sanitize_path,
-    CommandBuilder,
-    detect_python_executable,
-    get_interpreter_version,
-    check_module_available,
-)
-
-from Core.Compiler.process_killer import (
-    ProcessInfo,
-    ProcessKiller,
-    kill_process,
-    kill_process_tree,
-    get_process_info,
-)
-
 from Core.Compiler.engine_runner import (
     BuildContext,
     EngineRunnerError,
@@ -53,8 +30,29 @@ from Core.Compiler.engine_runner import (
     run_engine_compile,
     run_engine_compile_streaming,
 )
+from Core.Compiler.process_killer import (
+    ProcessInfo,
+    ProcessKiller,
+    get_process_info,
+    kill_process,
+    kill_process_tree,
+)
+from Core.Compiler.utils import (
+    CommandBuilder,
+    build_command,
+    check_module_available,
+    detect_python_executable,
+    escape_arguments,
+    get_interpreter_version,
+    sanitize_path,
+    validate_command,
+)
+from Core.engine.registry import create, get_engine
 
-from Core.engine.registry import get_engine, create
+# ============================================================================
+# IMPORTS LOCAUX - Core.Compiler
+# ============================================================================
+
 
 __all__ = [
     # utils.py

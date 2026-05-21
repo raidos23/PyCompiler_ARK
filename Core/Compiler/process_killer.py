@@ -30,13 +30,13 @@ Provides:
 from __future__ import annotations
 
 import os
-import sys
 import signal
 import subprocess
+import sys
 import time
-from pathlib import Path
-from typing import Optional, List, Dict, Any
 from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 # Platform detection
 _IS_WINDOWS = sys.platform == "win32"
