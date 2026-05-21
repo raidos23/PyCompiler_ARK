@@ -954,22 +954,47 @@ def _plugin_worker(
 
     Renvoie un dict via la queue: {ok: bool, error: str, duration_ms: float}
     """
+    import logging as _logging
+    import os as _os
+    import sys as _sys
     import time as _time
     import traceback as _tb
     from pathlib import Path as _Path
 
-    _configure_worker_env(config)
-    _maybe_init_qt_app(config)
-    _enforce_sdk_progress()
-    _apply_resource_limits(config)
-    try:
-        from bcasl import PreCompileContext as _PCC
+    # Handle quiet mode for sandbox processes
+    _quiet = _os.environ.get("PYCOMPILER_QUIET") == "1"
+    _fnull = None
+    _old_stdout = None
+    _old_stderr = None
+    
+    if _quiet:
+        _fnull = open(_os.devnull, "w")
+        _old_stdout = _sys.stdout
+        _old_stderr = _sys.stderr
+        _sys.stdout = _fnull
+        _sys.stderr = _fnull
+        # Also silence 'bcasl' logger in the child process
+        _logging.getLogger("bcasl").setLevel(_logging.ERROR)
 
-        plg = _load_plugin_instance(module_path, plugin_id, project_root, config)
-        ctx = _PCC(_Path(project_root), config=dict(config or {}))
-        t0 = _time.perf_counter()
-        plg.on_pre_compile(ctx)
-        dur = (_time.perf_counter() - t0) * 1000.0
-        q.put({"ok": True, "error": "", "duration_ms": dur})
-    except Exception:
-        q.put({"ok": False, "error": _tb.format_exc(), "duration_ms": 0.0})
+    try:
+        _configure_worker_env(config)
+        _maybe_init_qt_app(config)
+        _enforce_sdk_progress()
+        _apply_resource_limits(config)
+        try:
+            from bcasl import PreCompileContext as _PCC
+
+            plg = _load_plugin_instance(module_path, plugin_id, project_root, config)
+            ctx = _PCC(_Path(project_root), config=dict(config or {}))
+            t0 = _time.perf_counter()
+            plg.on_pre_compile(ctx)
+            dur = (_time.perf_counter() - t0) * 1000.0
+            q.put({"ok": True, "error": "", "duration_ms": dur})
+        except Exception:
+            q.put({"ok": False, "error": _tb.format_exc(), "duration_ms": 0.0})
+    finally:
+        if _quiet:
+            _sys.stdout = _old_stdout
+            _sys.stderr = _old_stderr
+            if _fnull:
+                _fnull.close()
