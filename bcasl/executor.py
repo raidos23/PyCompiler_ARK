@@ -511,7 +511,7 @@ def _maybe_init_qt_app(config: dict[str, Any]) -> None:
                 from PySide6.QtWidgets import QApplication as _QApp  # type: ignore
             except Exception:
                 try:
-                    from PyQt5.QtWidgets import QApplication as _QApp  # type: ignore
+                    from PySide6.QtWidgets import QApplication as _QApp  # type: ignore
                 except Exception:
                     _QApp = None  # type: ignore
             if _QApp is not None:
@@ -544,7 +544,7 @@ def _enforce_sdk_progress() -> None:
             pass
     except Exception:
         try:
-            from PyQt5 import QtWidgets as _QtW2  # type: ignore
+            from PySide6 import QtWidgets as _QtW2  # type: ignore
 
             class _NoDirectProgressDialog:  # type: ignore
                 def __init__(self, *args, **kwargs) -> None:
