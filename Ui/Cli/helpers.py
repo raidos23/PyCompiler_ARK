@@ -10,7 +10,7 @@ import venv
 from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 # Global event for CLI cancellation
 _CLI_CANCEL_EVENT = threading.Event()
@@ -471,7 +471,9 @@ def scaffold_plugin_payload(name: str, root_dir: str | None = None) -> dict[str,
     return scaffold_plugin(name, root_dir=root_dir)
 
 
-def run_bcasl_before_compile_sync(workspace: Path, verbose: bool = False) -> bool:
+def run_bcasl_before_compile_sync(
+    workspace: Path, verbose: bool = False, build_context: Optional[Any] = None
+) -> bool:
     """Run BCASL pre-compile stage synchronously for the CLI.
 
     Returns:
@@ -528,7 +530,7 @@ def run_bcasl_before_compile_sync(workspace: Path, verbose: bool = False) -> boo
     try:
         # Catch direct prints from BCASL plugins or loader
         with _redirect_output(not verbose):
-            report = run_pre_compile(host)
+            report = run_pre_compile(host, build_context=build_context)
     except Exception as exc:
         if status:
             status.stop()

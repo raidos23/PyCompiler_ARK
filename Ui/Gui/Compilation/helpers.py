@@ -21,7 +21,7 @@ Qt-coupled orchestration helpers for the compilation pipeline.
 
 from __future__ import annotations
 
-from typing import Optional
+from typing import Any, Optional
 
 from Ui.Gui.Compilation.mainprocess import MainProcess
 from Ui.i18n import log_i18n_level
@@ -51,7 +51,9 @@ def resolve_default_engine_id() -> str:
     return "engine"
 
 
-def run_bcasl_before_compile(gui_instance, on_done) -> None:
+def run_bcasl_before_compile(
+    gui_instance, on_done, build_context: Optional[Any] = None
+) -> None:
     """Run BCASL pre-compile stage, then invoke `on_done(report)`."""
     try:
         from bcasl import run_pre_compile_async
@@ -72,7 +74,7 @@ def run_bcasl_before_compile(gui_instance, on_done) -> None:
     except Exception:
         pass
     try:
-        run_pre_compile_async(gui_instance, on_done)
+        run_pre_compile_async(gui_instance, on_done, build_context=build_context)
     except Exception:
         if callable(on_done):
             try:

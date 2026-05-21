@@ -374,6 +374,7 @@ def _run_plugin_sequential(
                 str(project_root),
                 ctx.config,
                 q,
+                ctx.build_context,
             ),
         )
         p.start()
@@ -674,11 +675,13 @@ class BCASL:
         *,
         sandbox: bool = True,
         plugin_timeout_s: float = 3.0,
+        build_context: Optional[Any] = None,
     ) -> None:
         self.project_root = Path(project_root).resolve()
         self.config = dict(config or {})
         self._registry: dict[str, _PluginRecord] = {}
         self._insert_counter = 0
+        self.build_context = build_context
         # Sandbox settings
         self.sandbox = bool(sandbox)
         # Timeout settings
@@ -862,10 +865,16 @@ class BCASL:
         3. Exécution séquentielle par phase
         """
         if ctx is None:
-            ctx = PreCompileContext(root=self.project_root, config=self.config)
+            ctx = PreCompileContext(
+                root=self.project_root,
+                config=self.config,
+                build_context=self.build_context,
+            )
         else:
             ctx.root = Path(ctx.root).resolve()
             ctx.config = dict(self.config) | dict(ctx.config or {})
+            if ctx.build_context is None:
+                ctx.build_context = self.build_context
 
         report = ExecutionReport()
         eff_sandbox, _ = _resolve_exec_options(self.config, self.sandbox)
@@ -963,7 +972,12 @@ class BCASL:
 
 
 def _plugin_worker(
-    module_path: str, plugin_id: str, project_root: str, config: dict[str, Any], q
+    module_path: str,
+    plugin_id: str,
+    project_root: str,
+    config: dict[str, Any],
+    q,
+    build_context: Optional[Any] = None,
 ) -> None:
     """Load un module de plugin depuis son path et execute on_pre_compile dans un process isolé."""
     import logging as _logging
@@ -996,7 +1010,11 @@ def _plugin_worker(
             from bcasl import PreCompileContext as _PCC
 
             plg = _load_plugin_instance(module_path, plugin_id, project_root, config)
-            ctx = _PCC(root=_Path(project_root), config=dict(config or {}))
+            ctx = _PCC(
+                root=_Path(project_root),
+                config=dict(config or {}),
+                build_context=build_context,
+            )
             t0 = _time.perf_counter()
             plg.on_pre_compile(ctx)
             dur = (_time.perf_counter() - t0) * 1000.0

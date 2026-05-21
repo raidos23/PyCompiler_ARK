@@ -61,8 +61,12 @@ except Exception:  # pragma: no cover — dev fallback when BCASL is not importa
     class PluginMeta:  # type: ignore
         pass
 
+    @dataclass
     class PreCompileContext:
-        pass
+        root: Path
+        config: dict[str, Any] = field(default_factory=dict)
+        metadata: dict[str, Any] = field(default_factory=dict)
+        build_context: Optional[Any] = None
 
 
 def register_plugin(cls: Any) -> Any:  # type: ignore

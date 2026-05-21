@@ -90,12 +90,6 @@ def _build_impl(
     if not as_json and verbose:
         info(f"Workspace: {workspace}")
 
-    # 1. BCASL Pre-compile check (Point 1 of mutation plan)
-    from .helpers import run_bcasl_before_compile_sync
-
-    if not run_bcasl_before_compile_sync(workspace, verbose=verbose):
-        return 1
-
     if lock_file is None:
         if not as_json and verbose:
             info("Loading ark.yml...")
@@ -117,6 +111,11 @@ def _build_impl(
         lock_paths = write_lock_files(workspace, lock_payload)
         context = build_context_object_from_ark_config(validated.config)
         
+        # 1. BCASL Pre-compile check (Point 1 of mutation plan)
+        from .helpers import run_bcasl_before_compile_sync
+        if not run_bcasl_before_compile_sync(workspace, verbose=verbose, build_context=context):
+            return 1
+
         if not as_json and verbose:
             info("Starting engine compilation...")
         result = run_engine_compile(
@@ -173,6 +172,12 @@ def _build_impl(
     if not as_json and verbose:
         info(f"Building from lock with engine '{engine_id}'...")
     context = build_context_object_from_lock(lock_payload)
+
+    # BCASL Pre-compile check for lock branch
+    from .helpers import run_bcasl_before_compile_sync
+    if not run_bcasl_before_compile_sync(workspace, verbose=verbose, build_context=context):
+        return 1
+
     result = run_engine_compile(
         workspace=workspace,
         engine_id=engine_id,
