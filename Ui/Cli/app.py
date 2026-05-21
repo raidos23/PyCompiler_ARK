@@ -30,6 +30,7 @@ from .helpers import (
     validate_ark_config,
     write_lock_files,
 )
+from .output import info, success
 from .runtime import install_runtime, should_enable_qt
 
 try:
@@ -79,34 +80,51 @@ def _build_impl(
     engine_override: str | None,
     lock_file: str | None,
     as_json: bool,
+    verbose: bool = False,
 ) -> int:
     if lock_file and engine_override:
         raise CliSpecError(
             "--engine cannot be used with --lock\nIf you need a different engine, create a new lock with: ark build --engine <engine_id>"
         )
 
+    if not as_json and verbose:
+        info(f"Workspace: {workspace}")
+
     # 1. BCASL Pre-compile check (Point 1 of mutation plan)
     from .helpers import run_bcasl_before_compile_sync
 
-    if not run_bcasl_before_compile_sync(workspace):
+    if not run_bcasl_before_compile_sync(workspace, verbose=verbose):
         return 1
 
     if lock_file is None:
+        if not as_json and verbose:
+            info("Loading ark.yml...")
         config = load_ark_config(workspace)
+        if not as_json and verbose:
+            info("Validating configuration...")
         validated = validate_ark_config(workspace, config)
         engine_id = engine_override or str(validated.config["build"]["engine"])
         _ensure_engine_known(engine_id)
+        
+        if not as_json and verbose:
+            info(f"Generating lock payload for engine '{engine_id}'...")
         # Point 3 alignment: build_lock_payload now correctly loads engine config via fixed path
         lock_payload = build_lock_payload(
             workspace, validated.config, engine_id=engine_id
         )
+        if not as_json and verbose:
+            info("Writing lock files...")
         lock_paths = write_lock_files(workspace, lock_payload)
         context = build_context_object_from_ark_config(validated.config)
+        
+        if not as_json and verbose:
+            info("Starting engine compilation...")
         result = run_engine_compile(
             workspace=workspace,
             engine_id=engine_id,
             context=context,
             engine_config=engine_config_from_lock(lock_payload),
+            verbose=verbose,
         )
         payload = {
             "mode": "build",
@@ -121,14 +139,17 @@ def _build_impl(
         else:
             for warning in validated.warnings:
                 click.echo(_format_warning(warning))
-            click.echo(f"Engine: {engine_id}")
-            click.echo(f"Lock: {lock_paths['lock']}")
+            if verbose:
+                click.echo(f"Engine: {engine_id}")
+                click.echo(f"Lock: {lock_paths['lock']}")
             if result.get("success"):
-                click.echo("Build completed.")
+                success("Build completed successfully.")
             else:
                 raise CliSpecError(result.get("error") or "Build failed")
         return 0 if result.get("success") else 1
 
+    if not as_json and verbose:
+        info(f"Loading lock file: {lock_file}")
     lock_path = Path(lock_file).expanduser()
     if not lock_path.is_absolute():
         lock_path = workspace / lock_path
@@ -149,18 +170,23 @@ def _build_impl(
             f"Invalid lock file: project.entry '{entry_file}' is missing or obsolete"
         )
 
+    if not as_json and verbose:
+        info(f"Building from lock with engine '{engine_id}'...")
     context = build_context_object_from_lock(lock_payload)
     result = run_engine_compile(
         workspace=workspace,
         engine_id=engine_id,
         context=context,
         engine_config=engine_config_from_lock(lock_payload),
+        verbose=verbose,
     )
 
     comparison = None
     rebuild_cache = None
     warnings: list[str] = []
     try:
+        if not as_json and verbose:
+            info("Performing lock integrity check...")
         current_config = load_ark_config(workspace)
         validated = validate_ark_config(workspace, current_config)
         regenerated = build_lock_payload(
@@ -190,11 +216,12 @@ def _build_impl(
     else:
         for warning in warnings:
             click.echo(_format_warning(warning))
-        click.echo(f"Lock: {lock_path}")
-        if rebuild_cache:
-            click.echo(f"Comparison lock: {rebuild_cache}")
+        if verbose:
+            click.echo(f"Lock: {lock_path}")
+            if rebuild_cache:
+                click.echo(f"Comparison lock: {rebuild_cache}")
         if result.get("success"):
-            click.echo("Rebuild completed.")
+            success("Rebuild completed successfully.")
         else:
             raise CliSpecError(result.get("error") or "Build failed")
     return 0 if result.get("success") else 1
@@ -253,7 +280,8 @@ def build_cli():
     )
     @click.argument("lock_arg", required=False)
     @click.option("--json", "as_json", is_flag=True)
-    def build_cmd(engine_override, lock_file, lock_arg, as_json):
+    @click.option("--verbose", "-v", is_flag=True)
+    def build_cmd(engine_override, lock_file, lock_arg, as_json, verbose):
         """Build from ark.yml or rebuild from a lock file."""
         effective_lock = (
             lock_arg if lock_arg and lock_file == "__default__" else lock_file
@@ -264,6 +292,7 @@ def build_cli():
                 engine_override=engine_override,
                 lock_file=effective_lock,
                 as_json=as_json,
+                verbose=verbose,
             )
         except CliSpecError as exc:
             raise click.ClickException(str(exc))

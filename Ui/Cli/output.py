@@ -16,6 +16,10 @@ _CONSOLE = Console() if Console is not None else None
 _CONSOLE_ERR = Console(stderr=True) if Console is not None else None
 
 
+def get_console() -> Optional[Console]:
+    return _CONSOLE
+
+
 def _emit(message: str, err: bool = False, style: str | None = None) -> None:
     if _CONSOLE is not None:
         console = _CONSOLE_ERR if err else _CONSOLE
