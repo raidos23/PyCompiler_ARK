@@ -362,6 +362,12 @@ def _setup_more_tools_menu(self) -> None:
         )
         menu.addAction(act_advanced)
 
+        act_lock = QAction(menu)
+        act_lock.triggered.connect(
+            lambda: getattr(self, "open_lock_dialog", lambda: None)()
+        )
+        menu.addAction(act_lock)
+
         act_export = QAction(menu)
         act_export.triggered.connect(
             lambda: getattr(self, "export_config", lambda: None)()
@@ -395,6 +401,7 @@ def _setup_more_tools_menu(self) -> None:
             "language": act_language,
             "theme": act_theme,
             "advanced": act_advanced,
+            "lock": act_lock,
             "export": act_export,
             "import": act_import,
             "save_engines": act_save_engines,
@@ -590,6 +597,7 @@ def _retranslate_ide_like_actions(self) -> None:
         "theme": _widget_text("select_theme") or _label(theme_key, "Theme", "Theme"),
         "advanced": _widget_text("advanced_cfg_btn")
         or _label("advanced_config", "Configurations avancees", "Advanced config"),
+        "lock": _label("lock_manager", "Gestion des verrous (Locks)", "Lock management"),
         "export": _widget_text("btn_export_config")
         or _label("export_config", "Exporter config", "Export config"),
         "import": _widget_text("btn_import_config")
