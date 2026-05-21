@@ -13,93 +13,35 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from Core.Globals import _UiInvoker, _latest_gui_instance
-from PySide6.QtCore import QEventLoop as _QEventLoop
-from PySide6.QtWidgets import QApplication
+"""
+AdvancedAuth Service — Core service for handling authentication and workspace transitions.
+"""
 
 
 class Api:
     """API bridge helpers for Core integrations."""
 
-    @staticmethod
-    def _confirm_workspace_change(gui, folder: str) -> bool:
+    _workspace_change_handler = None
+
+    @classmethod
+    def register_workspace_change_handler(cls, handler) -> None:
+        """Register a handler for workspace change requests (typically from UI layer)."""
+        cls._workspace_change_handler = handler
+
+    @classmethod
+    def request_workspace_change_from_BcPlugin(cls, folder: str) -> bool:
+        """
+        Request a workspace change. This method delegates to a registered
+        handler (UI) to handle user confirmation and application.
+        """
         try:
-            from Ui.Gui.WidgetsCreator import show_msgbox
+            # If a handler is registered (UI layer), delegate to it.
+            if cls._workspace_change_handler:
+                return bool(cls._workspace_change_handler(str(folder)))
 
-            title = "Confirmation"
-            message = (
-                f"Un plugin demande de changer le workspace vers :\n{folder}\n\n"
-                "Voulez-vous continuer ?"
-            )
-            try:
-                parent = getattr(gui, "parent", None)
-                if parent and hasattr(parent, "tr"):
-                    title = parent.tr("Confirmation", "Confirmation")
-                    message = parent.tr(
-                        f"Un plugin demande de changer le workspace vers :\n{folder}\n\n"
-                        "Voulez-vous continuer ?",
-                        f"A plugin requests changing the workspace to:\n{folder}\n\n"
-                        "Do you want to continue?",
-                    )
-            except Exception:
-                pass
-
-            res = show_msgbox("question", title, message, parent=gui, default="Yes")
-            return bool(res)
-        except Exception:
-            # If confirmation UI fails, accept by contract
+            # Logic for when no explicit handler is registered (Service logic)
+            # In headless mode or when no UI is registered, we accept the request by contract.
             return True
-
-    @staticmethod
-    def request_workspace_change_from_BcPlugin(folder: str) -> bool:
-        try:
-            gui = _latest_gui_instance
-            if gui is None:
-                # Try active window
-                app = QApplication.instance()
-                w = app.activeWindow() if app else None
-                if w and hasattr(w, "apply_workspace_selection"):
-                    gui = w
-            if gui is None:
-                # No GUI instance: accept request by contract
-                return True
-            invoker = getattr(gui, "_ui_invoker", None)
-            if invoker is None or not isinstance(invoker, _UiInvoker):
-                invoker = _UiInvoker(gui)
-                setattr(gui, "_ui_invoker", invoker)
-            result_holder = {"ok": False}
-            loop = _QEventLoop()
-
-            def _do():
-                try:
-                    if not Api._confirm_workspace_change(gui, str(folder)):
-                        result_holder["ok"] = False
-                        return
-                    result_holder["ok"] = bool(
-                        gui.apply_workspace_selection(str(folder), source="plugin")
-                    )
-                except Exception:
-                    result_holder["ok"] = False
-                finally:
-                    try:
-                        loop.quit()
-                    except Exception:
-                        pass
-
-            try:
-                invoker.post(_do)
-            except Exception:
-                # Fallback: direct call in case invoker posting fails
-                try:
-                    if not Api._confirm_workspace_change(gui, str(folder)):
-                        return False
-                    return bool(
-                        gui.apply_workspace_selection(str(folder), source="plugin")
-                    )
-                except Exception:
-                    return False
-            loop.exec()
-            return bool(result_holder.get("ok", False))
         except Exception:
             # Accept by contract even on unexpected errors
             return True
