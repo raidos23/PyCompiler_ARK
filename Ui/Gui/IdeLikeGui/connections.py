@@ -74,8 +74,6 @@ def _prime_expected_attrs(self) -> None:
         "btn_acasl_loader",
         "progress",
         "log",
-        "btn_export_config",
-        "btn_import_config",
         "btn_show_stats",
         "advanced_cfg_btn",
         "select_lang",
@@ -188,8 +186,6 @@ def _map_ide_like_widgets(self) -> None:
     self.btn_bc_loader = _find(QPushButton, "btn_bc_loader")
     self.btn_acasl_loader = _find(QPushButton, "btn_acasl_loader")
     self.btn_show_stats = _find(QPushButton, "btn_show_stats")
-    self.btn_export_config = _find(QPushButton, "btn_export_config")
-    self.btn_import_config = _find(QPushButton, "btn_import_config")
     self.select_lang = _find(QPushButton, "select_lang")
     self.select_theme = _find(QPushButton, "select_theme")
     self.advanced_cfg_btn = _find(QPushButton, "advanced_cfg_btn")
@@ -368,18 +364,6 @@ def _setup_more_tools_menu(self) -> None:
         )
         menu.addAction(act_lock)
 
-        act_export = QAction(menu)
-        act_export.triggered.connect(
-            lambda: getattr(self, "export_config", lambda: None)()
-        )
-        menu.addAction(act_export)
-
-        act_import = QAction(menu)
-        act_import.triggered.connect(
-            lambda: getattr(self, "import_config", lambda: None)()
-        )
-        menu.addAction(act_import)
-
         act_save_engines = QAction(menu)
         act_save_engines.triggered.connect(
             lambda: getattr(self, "save_all_engine_configs", lambda: None)()
@@ -402,8 +386,6 @@ def _setup_more_tools_menu(self) -> None:
             "theme": act_theme,
             "advanced": act_advanced,
             "lock": act_lock,
-            "export": act_export,
-            "import": act_import,
             "save_engines": act_save_engines,
             "help": act_help,
         }
@@ -429,8 +411,6 @@ def _setup_more_tools_menu(self) -> None:
         "select_lang",
         "select_theme",
         "advanced_cfg_btn",
-        "btn_export_config",
-        "btn_import_config",
         "btn_help",
         "btn_suggest_deps",
     ):
@@ -598,10 +578,6 @@ def _retranslate_ide_like_actions(self) -> None:
         "advanced": _widget_text("advanced_cfg_btn")
         or _label("advanced_config", "Configurations avancees", "Advanced config"),
         "lock": _label("lock_manager", "Gestion des verrous (Locks)", "Lock management"),
-        "export": _widget_text("btn_export_config")
-        or _label("export_config", "Exporter config", "Export config"),
-        "import": _widget_text("btn_import_config")
-        or _label("import_config", "Importer config", "Import config"),
         "save_engines": _label(
             "save_engine_configs",
             "Enregistrer les configs engines",

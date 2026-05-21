@@ -400,8 +400,6 @@ def _apply_button_icons(self) -> None:
     _set(getattr(self, "btn_show_stats", None), "bar-chart-2.svg")
     _set(getattr(self, "btn_help", None), "help-circle.svg")
 
-    _set(getattr(self, "btn_export_config", None), "upload-cloud.svg")
-    _set(getattr(self, "btn_import_config", None), "download-cloud.svg")
     _set(getattr(self, "btn_select_icon", None), "image.svg")
     _set(getattr(self, "btn_nuitka_icon", None), "image.svg")
 
@@ -444,8 +442,6 @@ def _setup_widgets(self) -> None:
 
     self.progress = _find(QProgressBar, "progress")
     self.log = _find(QTextEdit, "log")
-    self.btn_export_config = _find(QPushButton, "btn_export_config")
-    self.btn_import_config = _find(QPushButton, "btn_import_config")
     self.btn_show_stats = _find(QPushButton, "btn_show_stats")
     self.advanced_cfg_btn = _find(QPushButton, "advanced_cfg_btn")
     self.select_lang = _find(QPushButton, "select_lang")
