@@ -190,8 +190,8 @@ class PyInstallerEngine(CompilerEngine):
             from PySide6.QtWidgets import (
                 QCheckBox,
                 QFormLayout,
-                QLabel,
                 QGroupBox,
+                QLabel,
                 QSizePolicy,
                 QVBoxLayout,
                 QWidget,

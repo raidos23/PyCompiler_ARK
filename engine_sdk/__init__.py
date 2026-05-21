@@ -15,9 +15,11 @@
 
 from __future__ import annotations
 
+from Core.engine.build_context import BuildContext
+
 # Re-export the base interface used by the host
 from .base import CompilerEngine
-from Core.engine.build_context import BuildContext
+from .utils import resolve_executable  # executable resolution helper (SDK)
 from .utils import (
     atomic_write_text,
     clamp_text,
@@ -26,7 +28,6 @@ from .utils import (
     open_dir_candidates,
     open_path,
     redact_secrets,
-    resolve_executable,  # executable resolution helper (SDK)
     safe_join,
     safe_log,
     tr,
@@ -106,12 +107,7 @@ def _do_lazy_imports():
         _lazy_imports_done = True
     except ImportError:
         # Fallback: keep original imports if mainprocess.py is not available
-        from .utils import (
-            pip_executable,
-            pip_install,
-            pip_show,
-            resolve_project_venv,
-        )
+        from .utils import pip_executable, pip_install, pip_show, resolve_project_venv
 
         _lazy_mainprocess_imports = {
             "pip_executable": pip_executable,
@@ -124,7 +120,9 @@ def _do_lazy_imports():
 
 try:
     # Optional alias to host-level executable resolver for advanced cases
-    from .utils import resolve_executable_path as host_resolve_executable_path  # type: ignore
+    from .utils import (
+        resolve_executable_path as host_resolve_executable_path,
+    )  # type: ignore
 except Exception:  # pragma: no cover
     host_resolve_executable_path = None  # type: ignore
 
@@ -135,9 +133,9 @@ from .i18n import (
     engine_translate,
     get_language_code,
     get_translations,
+    load_engine_language_file,
     register_engine_translations,
     resolve_language_code,
-    load_engine_language_file,
 )
 
 # Re-export engines registry for self-registration from engine packages

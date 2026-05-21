@@ -102,7 +102,10 @@ class NuitkaEngine(CompilerEngine):
             cmd.append("--onefile")
 
         disable_console = bool(cfg.get("disable_console", False))
-        if hasattr(self, "_nuitka_disable_console") and self._nuitka_disable_console is not None:
+        if (
+            hasattr(self, "_nuitka_disable_console")
+            and self._nuitka_disable_console is not None
+        ):
             disable_console = bool(self._nuitka_disable_console.isChecked())
         if disable_console:
             cmd.append("--windows-disable-console")
@@ -116,7 +119,11 @@ class NuitkaEngine(CompilerEngine):
             cmd.append(f"--output-filename={output_name}")
 
         icon_path = str(context.icon or cfg.get("selected_icon") or "").strip()
-        if not icon_path and hasattr(self, "_nuitka_selected_icon") and self._nuitka_selected_icon:
+        if (
+            not icon_path
+            and hasattr(self, "_nuitka_selected_icon")
+            and self._nuitka_selected_icon
+        ):
             icon_path = str(self._nuitka_selected_icon).strip()
         if icon_path:
             cmd.append(f"--windows-icon-from-ico={icon_path}")
@@ -197,8 +204,8 @@ class NuitkaEngine(CompilerEngine):
             from PySide6.QtWidgets import (
                 QCheckBox,
                 QFormLayout,
-                QLabel,
                 QGroupBox,
+                QLabel,
                 QSizePolicy,
                 QVBoxLayout,
                 QWidget,

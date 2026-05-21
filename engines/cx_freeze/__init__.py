@@ -182,8 +182,8 @@ class CXFreezeEngine(CompilerEngine):
             from PySide6.QtWidgets import (
                 QCheckBox,
                 QFormLayout,
-                QLabel,
                 QGroupBox,
+                QLabel,
                 QSizePolicy,
                 QVBoxLayout,
                 QWidget,

@@ -14,8 +14,8 @@
 # limitations under the License.
 
 import os
-from pathlib import Path
 import shutil
+from pathlib import Path
 from typing import Optional
 
 from bcasl import bc_register
@@ -24,8 +24,8 @@ from Plugins_SDK.GeneralContext import (
     Dialog,
     get_language_code,
     load_plugin_language_file,
-    register_plugin_translations,
     register_i18n_handler,
+    register_plugin_translations,
     translate,
 )
 
@@ -103,14 +103,14 @@ class Cleaner(BcPluginBase):
     def build_config_tab(self, parent, ctx: PreCompileContext, config: dict):
         try:
             from PySide6.QtWidgets import (
-                QWidget,
-                QVBoxLayout,
                 QCheckBox,
-                QGroupBox,
                 QFormLayout,
+                QGroupBox,
                 QHBoxLayout,
                 QLabel,
                 QSizePolicy,
+                QVBoxLayout,
+                QWidget,
             )
         except Exception:
             return None
