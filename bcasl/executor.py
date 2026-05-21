@@ -860,16 +860,15 @@ class BCASL:
         1. Groupes par phase (tags -> phase score)
         2. Vérifie si la phase est activée (via self.config["phases"])
         3. Exécution séquentielle par phase
-        4. Dans chaque phase, exécution parallèle possible si sandbox activée
         """
         if ctx is None:
-            ctx = PreCompileContext(self.project_root, self.config)
+            ctx = PreCompileContext(root=self.project_root, config=self.config)
         else:
-            ctx.project_root = Path(ctx.project_root).resolve()
+            ctx.root = Path(ctx.root).resolve()
             ctx.config = dict(self.config) | dict(ctx.config or {})
 
         report = ExecutionReport()
-        eff_sandbox, parallelism = _resolve_exec_options(self.config, self.sandbox)
+        eff_sandbox, _ = _resolve_exec_options(self.config, self.sandbox)
         skip_dependents_on_failure, fail_fast = _resolve_reliability_options(
             self.config
         )
@@ -900,7 +899,6 @@ class BCASL:
         # 4. Exécuter phases une par une
         for score in sorted(PHASES.keys()):
             pname, _, _ = PHASES[score]
-            # Vérifier si la phase est explicitement désactivée
             if not phases_cfg.get(pname, True):
                 _logger.info("Phase '%s' désactivée par configuration", pname)
                 continue
@@ -921,7 +919,7 @@ class BCASL:
             indeg, children = _build_dependency_graph(p_items)
             ready = _build_ready_queue(p_items, indeg)
 
-            # Exécution strictement séquentielle (le parallélisme est interdit)
+            # Exécution strictement séquentielle
             order = _compute_sequential_order(ready, children, indeg, p_items)
             failed_seq: set[str] = set()
             for pid in order:
@@ -946,13 +944,11 @@ class BCASL:
                         failed_seq.add(pid)
                         continue
 
-                # Note: On respecte toujours le mode sandbox (processus isolé) si activé,
-                # mais on lance les plugins l'un après l'autre.
                 ok = _run_plugin_sequential(
                     report,
                     rec,
                     ctx,
-                    self.project_root,
+                    ctx.root,
                     self.plugin_timeout_s,
                     eff_sandbox,
                     stop_requested,
@@ -969,10 +965,7 @@ class BCASL:
 def _plugin_worker(
     module_path: str, plugin_id: str, project_root: str, config: dict[str, Any], q
 ) -> None:
-    """Load un module de plugin depuis son path et execute on_pre_compile dans un process isolé.
-
-    Renvoie un dict via la queue: {ok: bool, error: str, duration_ms: float}
-    """
+    """Load un module de plugin depuis son path et execute on_pre_compile dans un process isolé."""
     import logging as _logging
     import os as _os
     import sys as _sys
@@ -992,7 +985,6 @@ def _plugin_worker(
         _old_stderr = _sys.stderr
         _sys.stdout = _fnull
         _sys.stderr = _fnull
-        # Also silence 'bcasl' logger in the child process
         _logging.getLogger("bcasl").setLevel(_logging.ERROR)
 
     try:
@@ -1004,7 +996,7 @@ def _plugin_worker(
             from bcasl import PreCompileContext as _PCC
 
             plg = _load_plugin_instance(module_path, plugin_id, project_root, config)
-            ctx = _PCC(_Path(project_root), config=dict(config or {}))
+            ctx = _PCC(root=_Path(project_root), config=dict(config or {}))
             t0 = _time.perf_counter()
             plg.on_pre_compile(ctx)
             dur = (_time.perf_counter() - t0) * 1000.0

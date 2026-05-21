@@ -47,10 +47,9 @@ class ExampleClean(BcPluginBase):
         super().__init__(META)
 
     def on_pre_compile(self, ctx: PreCompileContext) -> None:
-        if not ctx.is_workspace_valid():
-            log.log_warn("Workspace not valid or bcasl.yml missing")
-            return
-        for pyc in ctx.iter_files(["**/*.pyc"], ctx.get_exclude_patterns()):
+        # ctx.root est un objet Path pointant vers la racine du workspace
+        # iter_files() utilise par défaut les patterns d'inclusion/exclusion du projet
+        for pyc in ctx.iter_files(["**/*.pyc"]):
             try:
                 pyc.unlink()
             except Exception as exc:
@@ -126,16 +125,22 @@ Important notes.
 - In plugin code, assume `bcasl.yml` lives at the workspace root.
 
 **Execution Context (PreCompileContext)**
-Key methods.
-- `get_workspace_root()` and `get_workspace_name()`.
-- `get_workspace_config()` and `get_workspace_metadata()`.
-- `get_file_patterns()` and `get_exclude_patterns()`.
-- `iter_files(include, exclude)` with optional cache.
-- `is_workspace_valid()` checks presence of `bcasl.yml`.
+Key properties and methods.
+- `root`: Path object pointant vers la racine du workspace.
+- `name`: Nom du dossier workspace.
+- `config`: Dictionnaire complet de configuration (`bcasl.yml`).
+- `file_patterns`: Patterns d'inclusion définis.
+- `exclude_patterns`: Patterns d'exclusion définis.
+- `iter_files(include, exclude)`: Itérateur optimisé (respecte les exclusions par défaut).
 
-Pattern usage example.
+Usage simplifié :
 ```python
-for path in ctx.iter_files(ctx.get_file_patterns(), ctx.get_exclude_patterns()):
+# Parcourt tous les fichiers du projet selon la config bcasl.yml
+for path in ctx.iter_files():
+    ...
+
+# Recherche spécifique tout en respectant les exclusions globales
+for path in ctx.iter_files(["**/*.json"]):
     ...
 ```
 
