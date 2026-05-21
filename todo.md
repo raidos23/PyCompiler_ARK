@@ -69,3 +69,10 @@ Qualité du code améliorée avec ruff et pylint (score pylint: 9.56/10 sur les 
 - Suppression des imports inutilisés.
 - Ajout de docstrings manquantes.
 - Validation des conventions de nommage.
+
+## BuildContext []
+- l'exclusion pour build doit etre dans la section build du ark.yml et celui de workspace est exsclusif pour le workspace. soit les exxclusion de compialtion doivent etre dans build et la sous section exclude.
+
+## UI []
+- l-annulation par ctrl + c doi tetre pour la cli et elle doit etre robuste et toujours fonctionnel...elledit tuer tout les processus prorperemt et imediatemnt sans freeze.
+- l-annulation de la gui doit etre robuste et elle doit tuer tout les processus et les processus enfant aussi pour eviter les procesuss zombie.
