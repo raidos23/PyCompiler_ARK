@@ -22,8 +22,8 @@ os.environ.setdefault("ARK_ENGINES_AUTO_DISCOVER", "0")
 
 import Core.engine.registry as engine_registry
 import engine_sdk
-from Loaders.EngineLoader import loader as engine_loader
 from Core.engine.base import CompilerEngine
+from Loaders.EngineLoader import loader as engine_loader
 
 
 def _snapshot_registry_state():

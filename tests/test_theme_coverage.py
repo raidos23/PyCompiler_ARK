@@ -25,7 +25,7 @@ pytest.importorskip("PySide6")
 
 from PySide6.QtWidgets import QApplication
 
-from Ui.Gui.UiConnection import apply_theme, _list_available_themes
+from Ui.Gui.UiConnection import _list_available_themes, apply_theme
 
 REQUIRED_SELECTORS = [
     "QToolButton",

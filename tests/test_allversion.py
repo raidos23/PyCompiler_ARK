@@ -19,13 +19,13 @@ Tests for Core.allversion module - Version tracking functionality
 
 from Core.allversion import (
     VersionInfo,
+    get_all_versions,
+    get_bcasl_version,
     get_core_version,
     get_engine_sdk_version,
-    get_bcasl_version,
     get_system_version,
-    get_all_versions,
-    get_versions_dict,
     get_version_string,
+    get_versions_dict,
 )
 
 
