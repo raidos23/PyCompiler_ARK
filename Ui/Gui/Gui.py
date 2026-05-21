@@ -195,8 +195,7 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
     select_icon = UiFeatures.select_icon
     select_nuitka_icon = UiFeatures.select_nuitka_icon
     show_help_dialog = UiFeatures.show_help_dialog
-    export_config = UiFeatures.export_config
-    import_config = UiFeatures.import_config
+   
     update_command_preview = UiFeatures.update_command_preview
     set_controls_enabled = UiFeatures.set_controls_enabled
     set_compilation_ui_enabled = UiFeatures.set_compilation_ui_enabled
