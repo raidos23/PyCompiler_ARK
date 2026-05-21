@@ -226,8 +226,8 @@ class WorkspaceDialog:
             # Suppression de la rétro-compatibilité avec exclusion_patterns racine
             # exclusion_patterns = ark_config.get("exclusion_patterns", [])
 
-            for f in files:
-                excluded_count = 0
+            added_count = 0
+            excluded_count = 0
 
             import time
 

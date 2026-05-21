@@ -396,6 +396,7 @@ def _apply_button_icons(self) -> None:
     _set(getattr(self, "btn_remove_file", None), "minus-circle.svg")
     _set(getattr(self, "btn_suggest_deps", None), "search.svg")
     _set(getattr(self, "btn_bc_loader", None), "sliders.svg")
+    _set(getattr(self, "btn_lock_manager", None), "lock.svg")
     _set(getattr(self, "btn_show_stats", None), "bar-chart-2.svg")
     _set(getattr(self, "btn_help", None), "help-circle.svg")
 
@@ -439,6 +440,7 @@ def _setup_widgets(self) -> None:
     self.btn_suggest_deps = _find(QPushButton, "btn_suggest_deps")
     self.btn_bc_loader = _find(QPushButton, "btn_bc_loader")
     self.btn_acasl_loader = _find(QPushButton, "btn_acasl_loader")
+    self.btn_lock_manager = _find(QPushButton, "btn_lock_manager")
 
     self.progress = _find(QProgressBar, "progress")
     self.log = _find(QTextEdit, "log")
@@ -538,6 +540,9 @@ def _connect_signals(self) -> None:
             self.btn_bc_loader.clicked.connect(lambda: open_bc_loader_dialog(self))
         except Exception:
             pass
+
+    if self.btn_lock_manager:
+        _connect_clicked(self.btn_lock_manager, self.open_lock_dialog)
 
     _connect_clicked(self.btn_help, self.show_help_dialog)
 

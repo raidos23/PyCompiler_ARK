@@ -356,6 +356,11 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
         _on_dep_pip_output,
         suggest_missing_dependencies,
     )
+    def open_lock_dialog(self):
+        """Open the build lock management dialog."""
+        from Ui.Gui.Dialogs.LockDialog import open_lock_dialog
+        open_lock_dialog(self)
+
     from Ui.Gui.Dialogs.CompilerDialog import (
         _continue_compile_all,
         cancel_all_compilations,
@@ -363,6 +368,7 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
         handle_finished,
         handle_stderr,
         handle_stdout,
+        rebuild_from_lock,
         show_error_dialog,
         start_compilation_process,
         try_install_missing_modules,

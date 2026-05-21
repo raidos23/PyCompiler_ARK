@@ -394,6 +394,104 @@ def compile_all(self) -> None:
     run_bcasl_before_compile(self, _after_bcasl)
 
 
+def rebuild_from_lock(self, lock_path: Path) -> None:
+    """Rebuild the project using a specific lock file."""
+    try:
+        from Core.Locking import (
+            build_context_from_lock,
+            load_yaml_file,
+        )
+
+        log_i18n_level(
+            self,
+            "info",
+            f"🔒 Chargement du verrou: {lock_path.name}",
+            f"🔒 Loading lock file: {lock_path.name}",
+        )
+        lock_payload = load_yaml_file(lock_path)
+        engine_id = str(((lock_payload.get("engine") or {}).get("name")) or "").strip()
+        
+        if not engine_id:
+            raise ValueError("Invalid lock file: missing engine name")
+
+        # Context from lock
+        context = build_context_from_lock(lock_payload)
+        
+        # Engine config from lock
+        engine_config = ((lock_payload.get("engine") or {}).get("config")) or {}
+        engine_config = dict(engine_config) if isinstance(engine_config, dict) else {}
+
+        # Retrieve engine instance
+        engine = None
+        try:
+            import Core.engine as engines_loader
+            engine = engines_loader.registry.get_instance(engine_id)
+        except Exception:
+            engine = None
+
+        if engine is None:
+            try:
+                engine = create(engine_id)
+            except Exception as e:
+                log_i18n_level(
+                    self,
+                    "error",
+                    f"Erreur création moteur '{engine_id}': {e}",
+                    f"Engine creation error '{engine_id}': {e}",
+                )
+                return
+
+        self.set_controls_enabled(False)
+        _set_progress_indeterminate(self)
+
+        log_i18n_level(
+            self,
+            "info",
+            f"Démarrage de la reconstruction avec {engine.name}...",
+            f"Starting rebuild with {engine.name}...",
+        )
+
+        main_process = get_main_process()
+        if not hasattr(main_process, "_gui_connected"):
+            main_process.output_ready.connect(lambda msg: _handle_output(self, msg))
+            main_process.error_ready.connect(lambda msg: _handle_error(self, msg))
+            main_process.progress_update.connect(
+                lambda pct, msg: _handle_progress(self, pct, msg)
+            )
+            main_process.log_message.connect(
+                lambda level, msg: _handle_log(self, level, msg)
+            )
+            main_process.compilation_started.connect(
+                lambda info: _handle_compilation_started(self, info)
+            )
+            main_process.compilation_finished.connect(
+                lambda code, info: handle_finished(self, code, info)
+            )
+            main_process.state_changed.connect(
+                lambda state: _handle_state_changed(self, state)
+            )
+            main_process._gui_connected = True
+
+        success = main_process.compile_from_context(
+            workspace=self.workspace_dir,
+            engine_id=engine_id,
+            context=context,
+            engine_config=engine_config,
+        )
+
+        if not success:
+            self.set_controls_enabled(True)
+
+    except Exception as e:
+        log_i18n_level(
+            self,
+            "error",
+            f"Erreur lors de la reconstruction: {e}",
+            f"Rebuild error: {e}",
+        )
+        self.set_controls_enabled(True)
+
+
 def start_compilation_process(self, engine_id: str, file_path: str) -> bool:
     """Start a single compilation process using MainProcess and EngineRunner with build locking."""
     try:
