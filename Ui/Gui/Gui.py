@@ -26,21 +26,24 @@ from typing import Optional
 from PySide6.QtGui import QDropEvent
 from PySide6.QtWidgets import QMainWindow, QMessageBox
 
-from Core.Globals import _latest_gui_instance, _workspace_dir_cache, _workspace_dir_lock
-from Core.Globals import _run_coro_async
-from Ui.Gui.Dialogs.VenvDialog import VenvManagerUI
-from Ui.i18n import (
-    resolve_system_language,
-    get_translations,
-    tr_fr_en,
-    is_french_language,
-    log_with_level,
-    log_i18n_level,
+from Core.Globals import (
+    _latest_gui_instance,
+    _run_coro_async,
+    _workspace_dir_cache,
+    _workspace_dir_lock,
 )
-
+from Ui.Gui.Dialogs.VenvDialog import VenvManagerUI
+from Ui.Gui.Dialogs.WorkspaceDialog import WorkspaceDialog
 from Ui.Gui.UiFeatures import UiFeatures
 from Ui.Gui.WorkspaceManipulation import WorkspaceAdvancedManipulation
-from Ui.Gui.Dialogs.WorkspaceDialog import WorkspaceDialog
+from Ui.i18n import (
+    get_translations,
+    is_french_language,
+    log_i18n_level,
+    log_with_level,
+    resolve_system_language,
+    tr_fr_en,
+)
 
 
 def get_selected_workspace() -> Optional[str]:
@@ -91,8 +94,27 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
         self._closing = False
         self._language_refresh_callbacks = []
 
-        # Étape 2: brancher les services partagés (venv manager).
+        # Étape 2: brancher les services partagés (venv manager, sys deps).
         self.venv_manager = VenvManagerUI(self)
+        try:
+            from Ui.Gui.Dialogs.SysDependencyUI import SysDependencyUI
+
+            self.sys_deps_manager = SysDependencyUI(self)
+        except Exception:
+            self.sys_deps_manager = None
+
+        # Enregistrement du handler AdvancedAuth pour les requêtes de plugins
+        try:
+            from Services.AdvancedAuth import Api as AuthApi
+            from Ui.Gui.Dialogs.AdvancedAuthUI import AdvancedAuthUI
+
+            AuthApi.register_workspace_change_handler(
+                lambda folder: AdvancedAuthUI.handle_workspace_change_request(
+                    self, folder
+                )
+            )
+        except Exception:
+            pass
 
         # Étape 3: charger les préférences puis choisir la variante UI.
         self.load_preferences()
@@ -189,8 +211,8 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
     # INITIALISATION UI
     # =========================================================================
 
-    from Ui.Gui.UiConnection import init_ui
     from Ui.Gui.IdeLikeGui import init_ide_like_ui
+    from Ui.Gui.UiConnection import init_ui
 
     # =========================================================================
     # GESTION DU WORKSPACE
@@ -207,27 +229,37 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
     def add_py_files_from_folder(self, folder):
         """Add Python files from a folder into the workspace list."""
         from Core.WorkSpaceManager.SetupWorkspace import SetupWorkspace
+
         files = SetupWorkspace.list_python_files(folder)
-        
+
         # Logique UI pour ajouter les fichiers
         from Core.Configs import load_ark_config, should_exclude_file
+
         ark_config = load_ark_config(self.workspace_dir) if self.workspace_dir else {}
-        
+
         workspace_cfg = ark_config.get("workspace", {})
         exclusion_patterns = []
         if isinstance(workspace_cfg, dict):
             exclusion_patterns = workspace_cfg.get("exclude", [])
-        
+
         added = 0
         for f in files:
-            if self.workspace_dir and not os.path.commonpath([f, self.workspace_dir]) == self.workspace_dir:
+            if (
+                self.workspace_dir
+                and not os.path.commonpath([f, self.workspace_dir])
+                == self.workspace_dir
+            ):
                 continue
             if should_exclude_file(f, self.workspace_dir, exclusion_patterns):
                 continue
             if f not in self.python_files:
                 self.python_files.append(f)
                 if hasattr(self, "file_list"):
-                    rel = os.path.relpath(f, self.workspace_dir) if self.workspace_dir else f
+                    rel = (
+                        os.path.relpath(f, self.workspace_dir)
+                        if self.workspace_dir
+                        else f
+                    )
                     self.file_list.addItem(rel)
                 added += 1
         return added
@@ -318,35 +350,33 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
     # COMPILATION (délégation à Ui/Gui/Compilation)
     # =========================================================================
 
-    from Ui.Gui.Dialogs.CompilerDialog import (
-        cancel_all_compilations,
-        handle_finished,
-        handle_stderr,
-        handle_stdout,
-        show_error_dialog,
-        try_install_missing_modules,
-        try_start_processes,
-        compile_all,
-        start_compilation_process,
-        _continue_compile_all,
-    )
-
-    # =========================================================================
-    # PRÉFÉRENCES (délégation à Core/PreferencesManager)
-    # =========================================================================
-
-    from Ui.PreferencesManager import load_preferences, save_preferences
-
-    # =========================================================================
-    # DÉPENDANCES (délégation à Core/deps_analyser)
-    # =========================================================================
-
     from Core.deps_analyser import (
         _install_next_dependency,
         _on_dep_pip_finished,
         _on_dep_pip_output,
         suggest_missing_dependencies,
     )
+    from Ui.Gui.Dialogs.CompilerDialog import (
+        _continue_compile_all,
+        cancel_all_compilations,
+        compile_all,
+        handle_finished,
+        handle_stderr,
+        handle_stdout,
+        show_error_dialog,
+        start_compilation_process,
+        try_install_missing_modules,
+        try_start_processes,
+    )
+    from Ui.PreferencesManager import load_preferences, save_preferences
+
+    # =========================================================================
+    # PRÉFÉRENCES (délégation à Core/PreferencesManager)
+    # =========================================================================
+
+    # =========================================================================
+    # DÉPENDANCES (délégation à Core/deps_analyser)
+    # =========================================================================
 
     # =========================================================================
     # INTERNATIONALISATION
@@ -370,15 +400,35 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
         if not s:
             return "info"
         emoji_levels = {
-            "❌": "error", "⚠️": "warning", "✅": "success", "ℹ️": "info",
-            "📝": "state", "📋": "state", "🔍": "state", "🔧": "state",
-            "🔨": "state", "➡️": "state", "📦": "state", "🗑️": "state",
+            "❌": "error",
+            "⚠️": "warning",
+            "✅": "success",
+            "ℹ️": "info",
+            "📝": "state",
+            "📋": "state",
+            "🔍": "state",
+            "🔧": "state",
+            "🔨": "state",
+            "➡️": "state",
+            "📦": "state",
+            "🗑️": "state",
         }
         for emoji, lvl in emoji_levels.items():
             if s.startswith(emoji):
                 return lvl
         low = s.lower()
-        if any(tok in low for tok in ("error", "erreur", "échec", "echec", "failed", "invalid", "refus")):
+        if any(
+            tok in low
+            for tok in (
+                "error",
+                "erreur",
+                "échec",
+                "echec",
+                "failed",
+                "invalid",
+                "refus",
+            )
+        ):
             return "error"
         if any(tok in low for tok in ("warning", "avert", "warn", "attention")):
             return "warning"
