@@ -481,25 +481,34 @@ def run_bcasl_before_compile_sync(workspace: Path, verbose: bool = False) -> boo
 
     from .output import error, info, log, success, get_console
 
-    class CliBcaslHost:
-        def __init__(self, ws_dir: Path):
-            self.workspace_dir = str(ws_dir)
-
-            class Logger:
-                def append(self, msg: str):
-                    if verbose:
-                        # Strip trailing newline as our log() adds one
-                        log("BCASL", msg.rstrip())
-
-            self.log = Logger()
-
-    host = CliBcaslHost(workspace)
-    
     console = get_console()
     status = None
     if not verbose and console:
         status = console.status("[cyan]Verification BCASL...[/cyan]", spinner="dots")
         status.start()
+
+    class CliBcaslHost:
+        def __init__(self, ws_dir: Path, status_obj):
+            self.workspace_dir = str(ws_dir)
+            self.status_obj = status_obj
+
+            class Logger:
+                def __init__(self, host_ptr):
+                    self.host_ptr = host_ptr
+
+                def append(self, msg: str):
+                    if verbose:
+                        # Strip trailing newline as our log() adds one
+                        log("BCASL", msg.rstrip())
+                    elif self.host_ptr.status_obj:
+                        clean = msg.strip()
+                        if clean and not clean.startswith("["):
+                            if len(clean) < 100:
+                                self.host_ptr.status_obj.update(f"[cyan]BCASL: {clean}[/cyan]")
+
+            self.log = Logger(self)
+
+    host = CliBcaslHost(workspace, status)
     
     if verbose:
         info("Running BCASL pre-compile checks...")
@@ -558,24 +567,33 @@ def run_bcasl_headless(args: list[str], verbose: bool = False) -> int:
                     workspace = candidate.resolve()
                 break
 
-    class CliBcaslHost:
-        def __init__(self, ws_dir: Path):
-            self.workspace_dir = str(ws_dir)
-
-            class Logger:
-                def append(self, msg: str):
-                    if verbose:
-                        log("BCASL", msg.rstrip())
-
-            self.log = Logger()
-
-    host = CliBcaslHost(workspace)
-    
     console = get_console()
     status = None
     if not verbose and console:
         status = console.status("[cyan]Verification BCASL (headless)...[/cyan]", spinner="dots")
         status.start()
+
+    class CliBcaslHost:
+        def __init__(self, ws_dir: Path, status_obj):
+            self.workspace_dir = str(ws_dir)
+            self.status_obj = status_obj
+
+            class Logger:
+                def __init__(self, host_ptr):
+                    self.host_ptr = host_ptr
+
+                def append(self, msg: str):
+                    if verbose:
+                        log("BCASL", msg.rstrip())
+                    elif self.host_ptr.status_obj:
+                        clean = msg.strip()
+                        if clean and not clean.startswith("["):
+                            if len(clean) < 100:
+                                self.host_ptr.status_obj.update(f"[cyan]BCASL: {clean}[/cyan]")
+
+            self.log = Logger(self)
+
+    host = CliBcaslHost(workspace, status)
         
     if verbose:
         info(f"Running BCASL headless in {workspace}...")
