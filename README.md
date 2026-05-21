@@ -84,43 +84,43 @@ The ARK CLI provides a structured set of commands for workspace management, buil
 
 ```bash
 # Workspace Initialization
-python pycompiler_ark.py init --entry src/main.py [--icon icon.ico] [--with-venv]
+python3 pycompiler_ark.py init --entry src/main.py [--icon icon.ico] [--with-venv]
 
 # Building
-python pycompiler_ark.py build                      # Build using ark.yml engine
-python pycompiler_ark.py build --engine nuitka      # Override engine
-python pycompiler_ark.py build --lock latest.lock   # Rebuild from lock file
+python3 pycompiler_ark.py build                      # Build using ark.yml engine
+python3 pycompiler_ark.py build --engine nuitka      # Override engine
+python3 pycompiler_ark.py build --lock latest.lock   # Rebuild from lock file
 
 # Execution
-python pycompiler_ark.py run bcasl                  # Execute BCASL pipeline
-python pycompiler_ark.py run bcasl --timeout 30     # With custom timeout
+python3 pycompiler_ark.py run bcasl                  # Execute BCASL pipeline
+python3 pycompiler_ark.py run bcasl --timeout 30     # With custom timeout
 
 # GUI
-python pycompiler_ark.py gui                        # Launch modern IDE-like GUI
-python pycompiler_ark.py gui --legacy               # Launch classic GUI
+python3 pycompiler_ark.py gui                        # Launch modern IDE-like GUI
+python3 pycompiler_ark.py gui --legacy               # Launch classic GUI
 ```
 
 ### Developer Commands
 
 ```bash
 # Discovery
-python pycompiler_ark.py list engines               # List available engines
-python pycompiler_ark.py list plugins               # List available BCASL plugins
+python3 pycompiler_ark.py list engines               # List available engines
+python3 pycompiler_ark.py list plugins               # List available BCASL plugins
 
 # Configuration (User Paths)
-python pycompiler_ark.py set user-engine-dir /path  # Set custom engine directory
-python pycompiler_ark.py get user-engine-dir        # Retrieve path
+python3 pycompiler_ark.py set user-engine-dir /path  # Set custom engine directory
+python3 pycompiler_ark.py get user-engine-dir        # Retrieve path
 
 # Scaffolding
-python pycompiler_ark.py scaffold engine demo       # Create a new engine template
-python pycompiler_ark.py scaffold plugin-bcasl demo # Create a new BCASL plugin template
+python3 pycompiler_ark.py scaffold engine demo       # Create a new engine template
+python3 pycompiler_ark.py scaffold plugin-bcasl demo # Create a new BCASL plugin template
 ```
 
 ### JSON Output
 For CI/CD and scripting, key commands support the `--json` flag to return machine-readable results:
 ```bash
-python pycompiler_ark.py build --json
-python pycompiler_ark.py init --entry main.py --json
+python3 pycompiler_ark.py build --json
+python3 pycompiler_ark.py init --entry main.py --json
 ```
 
 ---
@@ -157,16 +157,14 @@ python pycompiler_ark.py init --entry main.py --json
 ## Development
 
 ```bash
+# Linting and testing
 ruff check .
-black --check .
 pytest -q tests
-python -m py_compile pycompiler_ark.py
-python -m pycompiler_ark --help
-python -m pycompiler_ark workspace inspect . --json
-python -m pycompiler_ark engine list --json
-python -m pycompiler_ark init /path/to/workspace --json
-python -m pycompiler_ark cfg-auto /path/to/workspace --json
-python -m pycompiler_ark check /path/to/workspace --json
+
+# Help discovery
+python3 pycompiler_ark.py --help
+python3 pycompiler_ark.py run bcasl --help
+python3 pycompiler_ark.py build --help
 ```
 
 Quality status:
