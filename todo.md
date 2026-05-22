@@ -60,9 +60,9 @@ dans venvmanager les logique comme celle de la generation de la reuirments etc n
 
 [x] Services/AdvancedAuth.py doit purement contenir la logique service et son usage gui sera dans Ui/Gui/Dialogs/.
 
-[] Mettre la logique metier de Ui/Gui/WorkspaceManipulation.py dans Core/WorkspaceManager/WorkspaceManipulation.py.
+[x] Mettre la logique metier de Ui/Gui/WorkspaceManipulation.py dans Core/WorkspaceManager/WorkspaceManipulation.py.
 
-[] pour Core/VenvManager/Manager.py ,garder la logique metier dans Core et déplacer la logique gui dans Ui/Gui/Dialogs/VenvDialog.py .
+[x] pour Core/VenvManager/Manager.py ,garder la logique metier dans Core et déplacer la logique gui dans Ui/Gui/Dialogs/VenvDialog.py .
 
 ## linting [x]
 Qualité du code améliorée avec ruff et pylint (score pylint: 9.56/10 sur les fichiers modifiés).
@@ -76,3 +76,6 @@ Qualité du code améliorée avec ruff et pylint (score pylint: 9.56/10 sur les 
 ## UI []
 - l-annulation par ctrl + c doi tetre pour la cli et elle doit etre robuste et toujours fonctionnel...elledit tuer tout les processus prorperemt et imediatemnt sans freeze.
 - l-annulation de la gui doit etre robuste et elle doit tuer tout les processus et les processus enfant aussi pour eviter les procesuss zombie.
+
+## bcasl []
+- retirer le timeout et le parralelism.... et revoir la cli en fonction de cela.
