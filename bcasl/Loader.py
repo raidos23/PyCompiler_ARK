@@ -432,9 +432,6 @@ def _load_workspace_config(workspace_root: Path) -> dict[str, Any]:
 
             # inclusion_patterns n'est plus supporté (l'exclusion suffit)
 
-            plugin_opts = ark_config.get("plugins", {})
-            if "plugin_timeout" in plugin_opts:
-                plugin_timeout = float(plugin_opts["plugin_timeout"])
         except Exception:
             pass
 
