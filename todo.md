@@ -4,7 +4,7 @@
 faire que la logique bcasl soit parfaitement aligner avec les capacités presumé de la guibcasl dans Ui/Gui/Dialogs/BcaslDialog.py . en exemple : la gui permet de desactiver toute une section de plugin donc le system bcasl doit prendre en charge que quadn une section est desactiver on la lance passe etc. et lon doit faire de mem pour toute les capacité de l'ui bcasl pas encore totalement pris en charge par bcasl.
 Pour la priorité l'on ne va plus utiliser la logique de priorité ...l'execution devra etre desormais sequentielle par lancement par section donc la priorité devient inutile.
 
- ## Cli 
+ ## Cli [x]
  les options de run bcasl ne sont pas encore fonctionnelle il faut les corriger. il faut que bcasl ne fasse pus de paralellism cest interdit.
  
 
@@ -77,5 +77,5 @@ Qualité du code améliorée avec ruff et pylint (score pylint: 9.56/10 sur les 
 - l-annulation par ctrl + c doi tetre pour la cli et elle doit etre robuste et toujours fonctionnel...elledit tuer tout les processus prorperemt et imediatemnt sans freeze.
 - l-annulation de la gui doit etre robuste et elle doit tuer tout les processus et les processus enfant aussi pour eviter les procesuss zombie.
 
-## bcasl []
+## bcasl [x]
 - retirer le timeout et le parralelism.... et revoir la cli en fonction de cela.

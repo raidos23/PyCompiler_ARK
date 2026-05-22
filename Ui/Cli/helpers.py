@@ -507,6 +507,12 @@ def run_bcasl_headless(args: list[str], verbose: bool = False) -> int:
 
     from .output import error, success, log, info, get_console
 
+    if "list" in args:
+        payload = list_plugins_payload()
+        for plugin in payload.get("plugins", []):
+            print(f"{plugin['id']} {plugin['version']} {plugin['name']}")
+        return 0
+
     workspace = Path.cwd()
     if "run" in args:
         # If workspace path is provided in args, use it
