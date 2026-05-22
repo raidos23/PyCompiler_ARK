@@ -245,8 +245,7 @@ class VenvManagerUI(VenvManager):
                 if missing:
                     try:
                         self._safe_log(
-                            "ℹ️ Python système incomplet: "
-                            + ", ".join(sorted(set(missing)))
+                            f"ℹ️ Python système incomplet (dépendances manquantes: {', '.join(sorted(set(missing)))})"
                         )
                     except Exception:
                         pass
