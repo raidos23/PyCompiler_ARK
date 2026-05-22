@@ -1,12 +1,10 @@
 """Provide core utilities and workflows for this module."""
 
 import hashlib
-import json
 import os
 import platform
 import shutil
 import sys
-from typing import Any
 
 from PySide6.QtCore import QProcess, QTimer
 
@@ -49,6 +47,7 @@ class VenvManager:
         self._venv_check_pkgs = []
         self._venv_check_index = 0
         self._venv_check_pip_exe = None
+        self._venv_check_pip_args = []
         self._venv_check_path = None
         self._venv_check_use_python = False
 
@@ -312,14 +311,6 @@ class VenvManager:
         """
         return self.has_tool_binary(venv_root, tool)
 
-    def is_tool_installed_system(self, tool: str) -> bool:
-        """Return whether the related condition is satisfied."""
-        try:
-            missing = self._missing_in_system_python([tool])
-            return len(missing) == 0
-        except Exception:
-            return False
-
     def is_tool_installed_async(self, venv_root: str, tool: str, callback) -> None:
         """Asynchronous check using 'pip show <tool>' via QProcess, then callback(bool).
         Safe for UI: does not block. On any error, returns False.
@@ -355,7 +346,10 @@ class VenvManager:
             self._reset_cancel_state()
             self._venv_check_pkgs = list(tools)
             self._venv_check_index = 0
-            self._venv_check_pip_exe = self.pip_path(venv_root)
+            
+            pip_exe, pip_args = deps_analyser._find_pip_executable(venv_path=venv_root)
+            self._venv_check_pip_exe = pip_exe
+            self._venv_check_pip_args = pip_args
             self._venv_check_path = venv_root
             self._venv_check_use_python = False
 
@@ -384,7 +378,10 @@ class VenvManager:
             self._reset_cancel_state()
             self._venv_check_pkgs = list(tools)
             self._venv_check_index = 0
-            self._venv_check_pip_exe = sys.executable
+            
+            pip_exe, pip_args = deps_analyser._find_pip_executable(venv_path=None, workspace_dir=None)
+            self._venv_check_pip_exe = pip_exe
+            self._venv_check_pip_args = pip_args
             self._venv_check_path = (
                 getattr(self.parent, "workspace_dir", None) or os.getcwd()
             )
@@ -668,13 +665,6 @@ class VenvManager:
         return ok
 
     # ---------- System Python suggestion ----------
-    def _normalize_dist_name(self, name: str) -> str:
-        """Execute _normalize_dist_name logic for this component."""
-        try:
-            return name.strip().lower().replace("_", "-")
-        except Exception:
-            return str(name).strip().lower()
-
     def _collect_declared_dependencies(
         self, workspace_dir: str
     ) -> tuple[list[str], bool]:
@@ -688,40 +678,17 @@ class VenvManager:
             return [], False
 
     def _missing_in_system_python(self, packages: list[str]) -> list[str]:
-        """Execute _missing_in_system_python logic for this component."""
-        try:
-            from importlib.metadata import PackageNotFoundError, distribution
-
-            missing = []
-            for pkg in packages:
-                if not pkg:
-                    continue
-                name = str(pkg).strip()
-                if not name:
-                    continue
-                normalized = self._normalize_dist_name(name)
-                try:
-                    distribution(name)
-                    continue
-                except PackageNotFoundError:
-                    pass
-                except Exception:
-                    pass
-                if normalized != name:
-                    try:
-                        distribution(normalized)
-                        continue
-                    except PackageNotFoundError:
-                        pass
-                    except Exception:
-                        pass
-                missing.append(name)
-            return missing
-        except Exception:
-            return packages
+        """Check for missing packages in system Python using deps_analyser."""
+        missing = []
+        for pkg in packages:
+            if not pkg:
+                continue
+            if not deps_analyser._check_module_installed(str(pkg)):
+                missing.append(str(pkg))
+        return missing
 
     def _can_use_system_python(self) -> tuple[bool, list[str], bool]:
-        """Return whether this operation can run safely."""
+        """Return whether this operation can run safely using system Python."""
         workspace_dir = getattr(self.parent, "workspace_dir", None)
         if not workspace_dir:
             return False, [], False
@@ -734,8 +701,9 @@ class VenvManager:
         missing = self._missing_in_system_python(sorted(set(deps)))
         return (len(missing) == 0), missing, has_source
 
-
-    # ---------- Existing venv: check and install tools ----------
+    def is_tool_installed_system(self, tool: str) -> bool:
+        """Check if a tool is installed in system Python via deps_analyser."""
+        return deps_analyser._check_module_installed(tool)
     def check_tools_in_venv(self, venv_path: str):
         """Execute check_tools_in_venv logic for this component."""
         try:
@@ -758,11 +726,8 @@ class VenvManager:
                         venv_path, "Python/pip do not point to the selected venv"
                     )
                     return
-                pip_exe = os.path.join(
-                    venv_path,
-                    "Scripts" if platform.system() == "Windows" else "bin",
-                    "pip",
-                )
+                
+                pip_exe, pip_args = deps_analyser._find_pip_executable(venv_path=venv_path)
                 self._venv_check_pkgs = self._discover_engine_required_python_tools()
                 if not self._venv_check_pkgs:
                     self._safe_log(
@@ -772,6 +737,7 @@ class VenvManager:
                     return
                 self._venv_check_index = 0
                 self._venv_check_pip_exe = pip_exe
+                self._venv_check_pip_args = pip_args
                 self._venv_check_path = venv_path
                 self._venv_check_use_python = False
 
@@ -829,10 +795,9 @@ class VenvManager:
         process = QProcess(self.parent)
         self._venv_check_process = process
         process.setProgram(self._venv_check_pip_exe)
-        if self._venv_check_use_python:
-            process.setArguments(["-m", "pip", "show", pkg])
-        else:
-            process.setArguments(["show", pkg])
+        # Use stored pip args (e.g. ['-m', 'pip']) if available
+        args = list(getattr(self, "_venv_check_pip_args", []))
+        process.setArguments(args + ["show", pkg])
         process.setWorkingDirectory(self._venv_check_path)
         process.finished.connect(
             lambda code, status: self._on_venv_pkg_checked(process, code, status, pkg)
@@ -899,14 +864,13 @@ class VenvManager:
             process2 = QProcess(self.parent)
             self._venv_check_install_process = process2
             process2.setProgram(self._venv_check_pip_exe)
-            if self._venv_check_use_python:
-                process2.setArguments(
-                    ["-m", "pip", "install"] + self._pip_break_system_args() + [pkg]
-                )
-            else:
-                process2.setArguments(
-                    ["install"] + self._pip_break_system_args() + [pkg]
-                )
+            
+            # Use stored pip args (e.g. ['-m', 'pip']) if available
+            args = list(getattr(self, "_venv_check_pip_args", []))
+            process2.setArguments(
+                args + ["install"] + self._pip_break_system_args() + [pkg]
+            )
+            
             process2.setWorkingDirectory(self._venv_check_path)
             process2.readyReadStandardOutput.connect(
                 lambda: self._on_venv_check_output(process2)
