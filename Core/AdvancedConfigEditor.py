@@ -374,6 +374,12 @@ def validate_payload(file_id: str, data: Any) -> tuple[list[str], list[str]]:
                 errs.append("build.entrypoint must be a string or null.")
             if isinstance(ep, str) and not ep.strip():
                 warns.append("build.entrypoint is empty.")
+            exclude = build.get("exclude")
+            if exclude is not None and (
+                not isinstance(exclude, list)
+                or not all(isinstance(item, str) for item in exclude)
+            ):
+                errs.append("build.exclude must be a list of strings.")
 
         deps = data.get("dependencies")
         if deps is not None and not isinstance(deps, dict):
@@ -428,14 +434,6 @@ def validate_payload(file_id: str, data: Any) -> tuple[list[str], list[str]]:
         if isinstance(options, dict):
             if "enabled" in options and not isinstance(options.get("enabled"), bool):
                 errs.append("options.enabled must be a boolean.")
-            if "plugin_timeout_s" in options and not isinstance(
-                options.get("plugin_timeout_s"), (int, float)
-            ):
-                errs.append("options.plugin_timeout_s must be numeric.")
-            if "plugin_parallelism" in options and not isinstance(
-                options.get("plugin_parallelism"), int
-            ):
-                errs.append("options.plugin_parallelism must be an integer.")
 
         plugins = data.get("plugins")
         if plugins is not None and not isinstance(plugins, dict):
@@ -498,9 +496,7 @@ def make_default_content(
             "exclude_patterns": ["**/__pycache__/**", ".venv/**", "venv/**"],
             "options": {
                 "enabled": True,
-                "plugin_timeout_s": 0.0,
                 "sandbox": True,
-                "plugin_parallelism": 0,
                 "iter_files_cache": True,
             },
             "plugins": {},

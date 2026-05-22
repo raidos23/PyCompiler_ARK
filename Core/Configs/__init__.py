@@ -104,6 +104,7 @@ DEFAULT_ARK_CONFIG: dict[str, Any] = {
         "engine": "pyinstaller",
         "output": "dist/",
         "data": [],
+        "exclude": [],
     },
 }
 
@@ -176,6 +177,10 @@ def _normalize_list(values: Any) -> list[Any]:
     if not isinstance(values, list):
         return []
     return [item for item in values if item is not None and str(item).strip()]
+
+
+def _normalize_build_exclude(values: Any) -> list[str]:
+    return list(dict.fromkeys(pattern for pattern in _normalize_list(values) if pattern))
 
 
 def _normalize_workspace_exclude(values: Any) -> list[str]:
@@ -291,6 +296,7 @@ def normalize_ark_config(config: dict[str, Any]) -> dict[str, Any]:
             for item in _normalize_list(build.get("data"))
             if isinstance(item, dict)
         ],
+        "exclude": _normalize_build_exclude(build.get("exclude")),
     }
     icon_value = build.get("icon")
     if isinstance(icon_value, str) and icon_value.strip():
@@ -368,6 +374,10 @@ def validate_ark_config(
     exclude_patterns = workspace_cfg.get("exclude")
     if not isinstance(exclude_patterns, list):
         errors.append("workspace.exclude must be a list")
+
+    build_exclude_patterns = build.get("exclude")
+    if not isinstance(build_exclude_patterns, list):
+        errors.append("build.exclude must be a list")
 
     return ArkConfigValidationResult(
         config=normalized, warnings=warnings, errors=errors

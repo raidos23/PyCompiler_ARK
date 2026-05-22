@@ -221,44 +221,14 @@ class PyInstallerEngine(CompilerEngine):
             )
             build_group.setLayout(build_layout)
 
-            assets_group = QGroupBox("Assets", tab)
-            assets_layout = QVBoxLayout()
-            assets_layout.setSpacing(6)
-
-            # Icon button + path input
-            self._btn_select_icon, self._icon_path_input = add_icon_selector(
-                assets_layout,
-                "🎨 Choisir une icône (.ico)",
-                self.select_icon,
-                "btn_select_icon_dynamic",
-                "pyinstaller_icon_path_input_dynamic",
-            )
-            if self._icon_path_input is not None:
-                self._icon_path_input.textChanged.connect(self._on_icon_path_changed)
-            assets_group.setLayout(assets_layout)
-
-            output_group = QGroupBox("Output", tab)
-            output_layout = QVBoxLayout()
-            output_layout.setSpacing(6)
-
-            # Output directory
-            self._output_dir_input = add_output_dir(
-                output_layout,
-                "Dossier de sortie (--distpath). Laisser vide pour ./dist",
-                "output_dir_input_dynamic",
-            )
-            output_group.setLayout(output_layout)
-
             hint = QLabel(
-                "Tip: choose one packaging mode, then optionally add an icon and custom dist path.",
+                "Tip: choose one packaging mode and console visibility. Global icon and output are managed in ark.yml.",
                 tab,
             )
             hint.setStyleSheet("color: #888; font-size: 11px;")
             hint.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
 
             layout.addWidget(build_group)
-            layout.addWidget(assets_group)
-            layout.addWidget(output_group)
             layout.addWidget(hint)
             layout.addStretch()
 
@@ -285,23 +255,6 @@ class PyInstallerEngine(CompilerEngine):
                 cfg["onefile"] = bool(self._opt_onefile.isChecked())
             if hasattr(self, "_opt_windowed") and self._opt_windowed is not None:
                 cfg["windowed"] = bool(self._opt_windowed.isChecked())
-            if (
-                hasattr(self, "_output_dir_input")
-                and self._output_dir_input is not None
-            ):
-                cfg["output_dir"] = self._output_dir_input.text().strip()
-            icon_path = ""
-            if hasattr(self, "_icon_path_input") and self._icon_path_input is not None:
-                icon_path = self._icon_path_input.text().strip()
-            if (
-                not icon_path
-                and hasattr(self, "_selected_icon")
-                and self._selected_icon
-            ):
-                icon_path = str(self._selected_icon).strip()
-            if icon_path:
-                self._selected_icon = icon_path
-                cfg["selected_icon"] = icon_path
             return cfg
         except Exception:
             return {}
@@ -327,21 +280,6 @@ class PyInstallerEngine(CompilerEngine):
                 and "windowed" in cfg
             ):
                 self._opt_windowed.setChecked(bool(cfg.get("windowed")))
-            if (
-                hasattr(self, "_output_dir_input")
-                and self._output_dir_input is not None
-                and "output_dir" in cfg
-            ):
-                val = cfg.get("output_dir") or ""
-                self._output_dir_input.setText(str(val))
-            if "selected_icon" in cfg:
-                icon = cfg.get("selected_icon") or ""
-                self._selected_icon = icon or None
-                if (
-                    hasattr(self, "_icon_path_input")
-                    and self._icon_path_input is not None
-                ):
-                    self._icon_path_input.setText(str(icon))
         except Exception:
             pass
 
@@ -374,46 +312,10 @@ class PyInstallerEngine(CompilerEngine):
                 self._opt_windowed.setText(
                     self.engine_translate("windowed_checkbox", "Windowed")
                 )
-            if hasattr(self, "_btn_select_icon"):
-                self._btn_select_icon.setText(
-                    self.engine_translate("icon_button", "Select icon")
-                )
-            if hasattr(self, "_output_dir_input"):
-                self._output_dir_input.setPlaceholderText(
-                    self.engine_translate("output_placeholder", "Output directory")
-                )
         except Exception:
             pass
 
-    def _on_icon_path_changed(self, text: str) -> None:
-        """Keep the selected icon path in sync with manual edits."""
-        icon = text.strip()
-        self._selected_icon = icon or None
-
     def select_icon(self) -> None:
-        """Select an icon file for the executable."""
-        try:
-            from PySide6.QtWidgets import QFileDialog
+        """Legacy select_icon method. Global icon is now managed in ark.yml."""
+        pass
 
-            file_path, _ = QFileDialog.getOpenFileName(
-                self._gui,
-                "Sélectionner une icône",
-                "",
-                "Fichiers icône (*.ico);;Tous les fichiers (*)",
-            )
-            if file_path:
-                self._selected_icon = file_path
-                if (
-                    hasattr(self, "_icon_path_input")
-                    and self._icon_path_input is not None
-                ):
-                    self._icon_path_input.setText(file_path)
-                if hasattr(self._gui, "log"):
-                    self._gui.log.append(
-                        f"Icône sélectionnée pour PyInstaller : {file_path}"
-                    )
-        except Exception as e:
-            if hasattr(self._gui, "log"):
-                log_with_level(
-                    self._gui, "error", f"Erreur lors de la sélection de l'icône : {e}"
-                )

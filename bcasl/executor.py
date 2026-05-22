@@ -200,27 +200,6 @@ def _record_worker_result(
     return ok
 
 
-def _record_timeout(
-    report: ExecutionReport,
-    *,
-    plugin_id: str,
-    name: str,
-    start_t: float,
-    timeout_s: float,
-) -> bool:
-    duration_ms = (time.perf_counter() - start_t) * 1000.0
-    _add_report_item(
-        report,
-        plugin_id=plugin_id,
-        name=name,
-        success=False,
-        duration_ms=duration_ms,
-        error=f"timeout après {timeout_s:.1f}s",
-    )
-    _logger.error("Plugin %s timeout après %.1fs", plugin_id, timeout_s)
-    return False
-
-
 def _record_dependency_blocked(
     report: ExecutionReport,
     *,
@@ -295,14 +274,13 @@ def _resolve_reliability_options(config: dict[str, Any]) -> tuple[bool, bool]:
 
 def _resolve_exec_options(
     config: dict[str, Any], default_sandbox: bool
-) -> tuple[bool, int]:
+) -> bool:
     try:
         opts = dict(config or {}).get("options", {}) if isinstance(config, dict) else {}
     except Exception:
         opts = {}
     sandbox = bool(opts.get("sandbox", default_sandbox))
-    parallelism = int(opts.get("plugin_parallelism", 0))
-    return sandbox, parallelism
+    return sandbox
 
 
 def _build_dependency_graph(
@@ -357,7 +335,6 @@ def _run_plugin_sequential(
     rec: _PluginRecord,
     ctx: PreCompileContext,
     project_root: Path,
-    timeout_s: float,
     eff_sandbox: bool,
     stop_requested=None,
 ) -> bool:
@@ -380,7 +357,6 @@ def _run_plugin_sequential(
         p.start()
         _register_worker_pid(p.pid)
         cancelled = False
-        timed_out = False
         try:
             while p.is_alive():
                 if callable(stop_requested):
@@ -391,11 +367,6 @@ def _run_plugin_sequential(
                             break
                     except Exception:
                         pass
-                if timeout_s and timeout_s > 0:
-                    if (time.perf_counter() - start) >= timeout_s:
-                        timed_out = True
-                        _stop_process(p, join_s=1.0)
-                        break
                 try:
                     p.join(0.05)
                 except Exception:
@@ -411,15 +382,7 @@ def _run_plugin_sequential(
                     error="annulé par l'utilisateur",
                 )
                 return False
-            if timed_out or p.is_alive():
-                _record_timeout(
-                    report,
-                    plugin_id=plg.meta.id,
-                    name=plg.meta.name,
-                    start_t=start,
-                    timeout_s=timeout_s,
-                )
-                return False
+
             ok = _record_worker_result(
                 report,
                 plugin_id=plg.meta.id,
@@ -674,7 +637,6 @@ class BCASL:
         config: Optional[dict[str, Any]] = None,
         *,
         sandbox: bool = True,
-        plugin_timeout_s: float = 3.0,
         build_context: Optional[Any] = None,
     ) -> None:
         self.project_root = Path(project_root).resolve()
@@ -684,14 +646,6 @@ class BCASL:
         self.build_context = build_context
         # Sandbox settings
         self.sandbox = bool(sandbox)
-        # Timeout settings
-        try:
-            timeout = float(plugin_timeout_s)
-            if not math.isfinite(timeout) or timeout < 0:
-                timeout = 0.0
-        except Exception:
-            timeout = 0.0
-        self.plugin_timeout_s = timeout
 
     # Plugins publique
     def add_plugin(self, plugin: BcPluginBase) -> None:
@@ -877,7 +831,7 @@ class BCASL:
                 ctx.build_context = self.build_context
 
         report = ExecutionReport()
-        eff_sandbox, _ = _resolve_exec_options(self.config, self.sandbox)
+        eff_sandbox = _resolve_exec_options(self.config, self.sandbox)
         skip_dependents_on_failure, fail_fast = _resolve_reliability_options(
             self.config
         )
@@ -958,7 +912,6 @@ class BCASL:
                     rec,
                     ctx,
                     ctx.root,
-                    self.plugin_timeout_s,
                     eff_sandbox,
                     stop_requested,
                 )

@@ -87,7 +87,7 @@ Tools and dependencies.
 - Avoid heavy work in `__init__` to keep loading fast.
 - Wire signals locally and use `gui.log.append(...)` for logs.
 - No need to wrap your tab in a scroll area: the UI handles large tabs automatically when needed.
-- Prefer shared UI helpers from the SDK for common patterns (icon selector, output dir, checkbox rows).
+- **IMPORTANT**: Do not include UI components for **Icon** selection or **Output directory** in your engine tab. These are globally managed in `ark.yml` and passed to your engine via the `BuildContext`. Focus only on engine‑specific flags and options.
 - Prefer grouping options with `QGroupBox` sections and compact hints, following the built-in engines layout style.
 - Keep widget attribute names stable once they are used by config persistence or compilation logic.
 
@@ -106,14 +106,14 @@ class MyEngine(CompilerEngine):
     # ...
     def create_tab(self, gui):
         self._opt_fast = QCheckBox("Fast")
-        self._output_dir = QLineEdit()
+        # Global icon and output are handled by ark.yml
+        # No need for widgets for those.
         # ...
         return tab, "My Engine"
 
     def get_config(self, gui) -> dict:
         return {
             "fast": bool(self._opt_fast.isChecked()) if self._opt_fast else False,
-            "output_dir": self._output_dir.text().strip() if self._output_dir else "",
         }
 
     def set_config(self, gui, cfg: dict) -> None:
@@ -121,8 +121,6 @@ class MyEngine(CompilerEngine):
             return
         if self._opt_fast and "fast" in cfg:
             self._opt_fast.setChecked(bool(cfg.get("fast")))
-        if self._output_dir and "output_dir" in cfg:
-            self._output_dir.setText(str(cfg.get("output_dir") or ""))
 ```
 
 Notes.

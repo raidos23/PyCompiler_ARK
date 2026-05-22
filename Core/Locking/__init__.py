@@ -133,8 +133,8 @@ def build_lock_payload(
     dependencies: dict[str, str] | None = None,
 ) -> dict[str, Any]:
     config = normalize_ark_config(config)
-    exclude_patterns = list(((config.get("workspace") or {}).get("exclude")) or [])
     build = config.get("build") or {}
+    exclude_patterns = list(build.get("exclude") or [])
     project = config.get("project") or {}
     ensure_workspace_layout(workspace)
     lock_dir = workspace / ".ark" / "lock"
@@ -150,6 +150,7 @@ def build_lock_payload(
         "build": {
             "output": build.get("output"),
             "data": list(build.get("data") or []),
+            "exclude": exclude_patterns,
             **({"icon": build.get("icon")} if build.get("icon") else {}),
         },
         "engine": {
@@ -207,12 +208,11 @@ def build_context_from_ark_config(config: dict[str, Any]) -> BuildContext:
     config = normalize_ark_config(config)
     project = config.get("project") or {}
     build = config.get("build") or {}
-    workspace_cfg = config.get("workspace") or {}
     return BuildContext(
         project_name=str(project.get("name") or ""),
         entry_point=str(project.get("entry") or ""),
         output_dir=str(build.get("output") or ""),
-        exclude_patterns=list(workspace_cfg.get("exclude") or []),
+        exclude_patterns=list(build.get("exclude") or []),
         data_mappings=list(build.get("data") or []),
         icon=str(build.get("icon")) if build.get("icon") else None,
     )
@@ -222,11 +222,17 @@ def build_context_from_lock(lock_payload: dict[str, Any]) -> BuildContext:
     project = lock_payload.get("project") or {}
     build = lock_payload.get("build") or {}
     workspace_cfg = lock_payload.get("workspace") or {}
+    
+    # Check build.exclude (new) then workspace.exclude_patterns (legacy)
+    exclude_patterns = list(build.get("exclude") or [])
+    if not exclude_patterns:
+        exclude_patterns = list(workspace_cfg.get("exclude_patterns") or [])
+
     return BuildContext(
         project_name=str(project.get("name") or ""),
         entry_point=str(project.get("entry") or ""),
         output_dir=str(build.get("output") or ""),
-        exclude_patterns=list(workspace_cfg.get("exclude_patterns") or []),
+        exclude_patterns=exclude_patterns,
         data_mappings=list(build.get("data") or []),
         icon=str(build.get("icon")) if build.get("icon") else None,
     )

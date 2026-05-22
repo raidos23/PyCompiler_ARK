@@ -241,24 +241,8 @@ class CXFreezeEngine(CompilerEngine):
             )
             output_group.setLayout(output_layout)
 
-            assets_group = QGroupBox("Assets", tab)
-            assets_layout = QVBoxLayout()
-            assets_layout.setSpacing(6)
-
-            # Icon button + path input
-            self._cx_btn_select_icon, self._cx_icon_path_input = add_icon_selector(
-                assets_layout,
-                "Choisir une icône (.ico)",
-                self.select_icon,
-                "cx_btn_select_icon_dynamic",
-                "cx_icon_path_input_dynamic",
-            )
-            if self._cx_icon_path_input is not None:
-                self._cx_icon_path_input.textChanged.connect(self._on_icon_path_changed)
-            assets_group.setLayout(assets_layout)
-
             hint = QLabel(
-                "Tip: use target name for the executable label, and keep debug or verbose only when diagnosing builds.",
+                "Tip: use target name for the executable label. Global icon and output are managed in ark.yml.",
                 tab,
             )
             hint.setStyleSheet("color: #888; font-size: 11px;")
@@ -267,7 +251,6 @@ class CXFreezeEngine(CompilerEngine):
             layout.addWidget(build_group)
             layout.addWidget(diagnostics_group)
             layout.addWidget(output_group)
-            layout.addWidget(assets_group)
             layout.addWidget(hint)
             layout.addStretch()
 
@@ -300,21 +283,6 @@ class CXFreezeEngine(CompilerEngine):
                 cfg["debug"] = bool(self._cx_debug.isChecked())
             if hasattr(self, "_cx_verbose") and self._cx_verbose is not None:
                 cfg["verbose"] = bool(self._cx_verbose.isChecked())
-            icon_path = ""
-            if (
-                hasattr(self, "_cx_icon_path_input")
-                and self._cx_icon_path_input is not None
-            ):
-                icon_path = self._cx_icon_path_input.text().strip()
-            if (
-                not icon_path
-                and hasattr(self, "_selected_icon")
-                and self._selected_icon
-            ):
-                icon_path = str(self._selected_icon).strip()
-            if icon_path:
-                self._selected_icon = icon_path
-                cfg["selected_icon"] = icon_path
             return cfg
         except Exception:
             return {}
@@ -360,14 +328,6 @@ class CXFreezeEngine(CompilerEngine):
                 and "verbose" in cfg
             ):
                 self._cx_verbose.setChecked(bool(cfg.get("verbose")))
-            if "selected_icon" in cfg:
-                icon = cfg.get("selected_icon") or ""
-                self._selected_icon = icon or None
-                if (
-                    hasattr(self, "_cx_icon_path_input")
-                    and self._cx_icon_path_input is not None
-                ):
-                    self._cx_icon_path_input.setText(str(icon))
         except Exception:
             pass
 
@@ -406,10 +366,6 @@ class CXFreezeEngine(CompilerEngine):
                 )
             if hasattr(self, "_cx_windowed"):
                 self._cx_windowed.setToolTip(self.engine_translate("tt_windowed", ""))
-            if hasattr(self, "_cx_btn_select_icon"):
-                self._cx_btn_select_icon.setText(
-                    self.engine_translate("icon_button", "Select icon")
-                )
             if hasattr(self, "_cx_debug"):
                 self._cx_debug.setText(
                     self.engine_translate("debug_checkbox", "Debug mode")
@@ -435,35 +391,7 @@ class CXFreezeEngine(CompilerEngine):
         except Exception:
             pass
 
-    def _on_icon_path_changed(self, text: str) -> None:
-        """Keep the selected icon path in sync with manual edits."""
-        icon = text.strip()
-        self._selected_icon = icon or None
-
     def select_icon(self) -> None:
-        """Select an icon file for the executable."""
-        try:
-            from PySide6.QtWidgets import QFileDialog
+        """Legacy select_icon method. Global icon is now managed in ark.yml."""
+        pass
 
-            file_path, _ = QFileDialog.getOpenFileName(
-                self._gui,
-                "Sélectionner une icône",
-                "",
-                "Fichiers icône (*.ico);;Tous les fichiers (*)",
-            )
-            if file_path:
-                self._selected_icon = file_path
-                if (
-                    hasattr(self, "_cx_icon_path_input")
-                    and self._cx_icon_path_input is not None
-                ):
-                    self._cx_icon_path_input.setText(file_path)
-                if hasattr(self._gui, "log"):
-                    self._gui.log.append(
-                        f"Icône sélectionnée pour Cx_Freeze : {file_path}"
-                    )
-        except Exception as e:
-            if hasattr(self._gui, "log"):
-                log_with_level(
-                    self._gui, "error", f"Erreur lors de la sélection de l'icône : {e}"
-                )

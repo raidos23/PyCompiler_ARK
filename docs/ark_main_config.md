@@ -14,14 +14,15 @@ project:
 
 workspace:
   exclude:
-    - "**/__pycache__/**"
-    - "**/*.pyc"
+    - ".git/**"
     - "venv/**"
 
 build:
   engine: pyinstaller
   output: dist/
   icon: assets/icon.ico
+  exclude:
+    - "tests/**"
   data:
     - source: assets/
       destination: assets/
@@ -49,10 +50,12 @@ The fields in `ark.yml` are mapped directly to the `BuildContext` data structure
 | :--- | :--- |
 | `project.name` | `project_name` |
 | `project.entry` | `entry_point` |
-| `workspace.exclude` | `exclude_patterns` |
+| `build.exclude` | `exclude_patterns` |
 | `build.output` | `output_dir` |
 | `build.data` | `data_mappings` |
 | `build.icon` | `icon` |
+
+> **Note**: `workspace.exclude` is exclusive to the GUI workspace view filtering. `build.exclude` is what determines which files are ignored during the actual compilation and BCASL phases.
 
 ## Plugins Configuration
 

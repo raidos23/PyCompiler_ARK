@@ -243,46 +243,14 @@ class NuitkaEngine(CompilerEngine):
             build_layout.addRow("Console:", self._nuitka_disable_console)
             build_group.setLayout(build_layout)
 
-            output_group = QGroupBox("Output", tab)
-            output_layout = QVBoxLayout()
-            output_layout.setSpacing(6)
-
-            # Output directory
-            self._nuitka_output_dir = add_output_dir(
-                output_layout,
-                "Dossier de sortie (--output-dir)",
-                "nuitka_output_dir_dynamic",
-            )
-            output_group.setLayout(output_layout)
-
-            assets_group = QGroupBox("Assets", tab)
-            assets_layout = QVBoxLayout()
-            assets_layout.setSpacing(6)
-
-            # Icon button + path input
-            self._btn_nuitka_icon, self._nuitka_icon_path_input = add_icon_selector(
-                assets_layout,
-                "🎨 Choisir une icône (.ico) Nuitka",
-                self.select_icon,
-                "btn_nuitka_icon_dynamic",
-                "nuitka_icon_path_input_dynamic",
-            )
-            if self._nuitka_icon_path_input is not None:
-                self._nuitka_icon_path_input.textChanged.connect(
-                    self._on_icon_path_changed
-                )
-            assets_group.setLayout(assets_layout)
-
             hint = QLabel(
-                "Tip: combine standalone or onefile modes carefully, then tune console visibility for desktop apps.",
+                "Tip: combine standalone or onefile modes carefully. Global icon and output are managed in ark.yml.",
                 tab,
             )
             hint.setStyleSheet("color: #888; font-size: 11px;")
             hint.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
 
             layout.addWidget(build_group)
-            layout.addWidget(output_group)
-            layout.addWidget(assets_group)
             layout.addWidget(hint)
             layout.addStretch()
 
@@ -315,33 +283,6 @@ class NuitkaEngine(CompilerEngine):
                 and self._nuitka_disable_console is not None
             ):
                 cfg["disable_console"] = bool(self._nuitka_disable_console.isChecked())
-            if (
-                hasattr(self, "_nuitka_output_dir")
-                and self._nuitka_output_dir is not None
-            ):
-                cfg["output_dir"] = self._nuitka_output_dir.text().strip()
-            icon_path = ""
-            if (
-                hasattr(self, "_nuitka_icon_path_input")
-                and self._nuitka_icon_path_input is not None
-            ):
-                icon_path = self._nuitka_icon_path_input.text().strip()
-            if (
-                not icon_path
-                and hasattr(self, "_nuitka_selected_icon")
-                and self._nuitka_selected_icon
-            ):
-                icon_path = str(self._nuitka_selected_icon).strip()
-            if (
-                not icon_path
-                and hasattr(self, "_selected_icon")
-                and self._selected_icon
-            ):
-                icon_path = str(self._selected_icon).strip()
-            if icon_path:
-                self._nuitka_selected_icon = icon_path
-                self._selected_icon = icon_path
-                cfg["selected_icon"] = icon_path
             return cfg
         except Exception:
             return {}
@@ -375,22 +316,6 @@ class NuitkaEngine(CompilerEngine):
                 self._nuitka_disable_console.setChecked(
                     bool(cfg.get("disable_console"))
                 )
-            if (
-                hasattr(self, "_nuitka_output_dir")
-                and self._nuitka_output_dir is not None
-                and "output_dir" in cfg
-            ):
-                val = cfg.get("output_dir") or ""
-                self._nuitka_output_dir.setText(str(val))
-            if "selected_icon" in cfg:
-                icon = cfg.get("selected_icon") or ""
-                self._nuitka_selected_icon = icon or None
-                self._selected_icon = icon or None
-                if (
-                    hasattr(self, "_nuitka_icon_path_input")
-                    and self._nuitka_icon_path_input is not None
-                ):
-                    self._nuitka_icon_path_input.setText(str(icon))
         except Exception:
             pass
 
@@ -423,48 +348,10 @@ class NuitkaEngine(CompilerEngine):
                 self._nuitka_disable_console.setToolTip(
                     self.engine_translate("tt_disable_console", "")
                 )
-            if hasattr(self, "_nuitka_output_dir"):
-                self._nuitka_output_dir.setPlaceholderText(
-                    self.engine_translate("output_placeholder", "Output directory")
-                )
-            if hasattr(self, "_btn_nuitka_icon"):
-                self._btn_nuitka_icon.setText(
-                    self.engine_translate("icon_button", "Select icon")
-                )
         except Exception:
             pass
 
-    def _on_icon_path_changed(self, text: str) -> None:
-        """Keep the selected icon path in sync with manual edits."""
-        icon = text.strip()
-        self._nuitka_selected_icon = icon or None
-        self._selected_icon = icon or None
-
     def select_icon(self) -> None:
-        """Select an icon file for the executable."""
-        try:
-            from PySide6.QtWidgets import QFileDialog
+        """Legacy select_icon method. Global icon is now managed in ark.yml."""
+        pass
 
-            file_path, _ = QFileDialog.getOpenFileName(
-                self._gui,
-                "Sélectionner une icône",
-                "",
-                "Fichiers icône (*.ico);;Tous les fichiers (*)",
-            )
-            if file_path:
-                self._selected_icon = file_path
-                self._nuitka_selected_icon = file_path
-                if (
-                    hasattr(self, "_nuitka_icon_path_input")
-                    and self._nuitka_icon_path_input is not None
-                ):
-                    self._nuitka_icon_path_input.setText(file_path)
-                if hasattr(self._gui, "log"):
-                    self._gui.log.append(
-                        f"Icône sélectionnée pour Nuitka : {file_path}"
-                    )
-        except Exception as e:
-            if hasattr(self._gui, "log"):
-                log_with_level(
-                    self._gui, "error", f"Erreur lors de la sélection de l'icône : {e}"
-                )
