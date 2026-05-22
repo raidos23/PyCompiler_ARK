@@ -597,16 +597,24 @@ def _classify_module_origin(module_name: str, workspace_dir: str) -> str:
 
 def _check_module_installed(module: str) -> bool:
     """
-    Check whether module is installed via importlib.metadata (more reliable than subprocess pip show).
+    Check whether module is installed.
+    Tries importlib.metadata (package name) and then importlib.util.find_spec (module name).
     """
     try:
         distribution(module)
         return True
-    except PackageNotFoundError:
-        return False
+    except (PackageNotFoundError, Exception):
+        pass
+
+    try:
+        import importlib.util
+
+        if importlib.util.find_spec(module) is not None:
+            return True
     except Exception:
-        # Fallback: considérer comme non installé en cas d'erreur
-        return False
+        pass
+
+    return False
 
 
 def _find_pip_executable(venv_path: str = None, workspace_dir: str = None) -> tuple:
@@ -786,6 +794,7 @@ def collect_project_dependencies(
 
     # 2. Scan imports in all Python files (fallback/validation)
     modules_from_imports = set()
+    workspace_python_files = []
     for root, dirs, files in os.walk(workspace_dir):
         # Skip common non-source directories
         dirs[:] = [
@@ -806,6 +815,7 @@ def collect_project_dependencies(
         for file in files:
             if file.endswith(".py"):
                 file_path = os.path.join(root, file)
+                workspace_python_files.append(file_path)
                 try:
                     modules_from_imports.update(
                         _extract_imported_modules_from_file(file_path, workspace_dir)
@@ -813,8 +823,13 @@ def collect_project_dependencies(
                 except Exception:
                     pass
 
+    # Identify internal module roots to avoid misclassifying them as third-party
+    internal_roots = _collect_workspace_module_roots(workspace_python_files, workspace_dir)
+
     # Filter and classify modules from imports
     for m in modules_from_imports:
+        if m in internal_roots:
+            continue
         origin = _classify_module_origin(m, workspace_dir)
         if origin in ("third_party", "unknown"):
             all_deps.add(m)
