@@ -9,6 +9,7 @@ import sys
 from PySide6.QtCore import QProcess, QTimer
 
 import Core.deps_analyser.analyser as deps_analyser
+import Core.SysDependencyManager as sys_deps
 
 
 class VenvManager:
@@ -45,6 +46,7 @@ class VenvManager:
 
         # For tool check/installation
         self._venv_check_pkgs = []
+        self._venv_check_sys_pkgs = []
         self._venv_check_index = 0
         self._venv_check_pip_exe = None
         self._venv_check_pip_args = []
@@ -199,20 +201,21 @@ class VenvManager:
         return None
 
     def pip_path(self, venv_root: str) -> str:
-        """Execute pip_path logic for this component."""
-        return os.path.join(
-            venv_root, "Scripts" if platform.system() == "Windows" else "bin", "pip"
-        )
+        """Get the absolute path to the pip executable using deps_analyser."""
+        pip_exe, _ = deps_analyser._find_pip_executable(venv_path=venv_root)
+        return pip_exe
 
     def python_path(self, venv_root: str) -> str:
-        """Execute python_path logic for this component."""
+        """Get the absolute path to the python executable using deps_analyser."""
+        pip_exe, pip_args = deps_analyser._find_pip_executable(venv_path=venv_root)
+        if "-m" in pip_args and "pip" in pip_args:
+            return pip_exe
+        # Fallback to internal detection if pip_exe is directly the pip binary
         base = os.path.join(
             venv_root, "Scripts" if platform.system() == "Windows" else "bin"
         )
         if platform.system() == "Windows":
-            cand = os.path.join(base, "python.exe")
-            return cand
-        # Linux/macOS: prefer 'python', fallback to 'python3'
+            return os.path.join(base, "python.exe")
         cand1 = os.path.join(base, "python")
         cand2 = os.path.join(base, "python3")
         return cand1 if os.path.isfile(cand1) else cand2
@@ -271,9 +274,10 @@ class VenvManager:
         except Exception:
             return False
 
-    def _discover_engine_required_python_tools(self) -> list[str]:
-        """Discover python tools required by available engines dynamically."""
-        tools: list[str] = []
+    def _discover_engine_requirements(self) -> dict[str, list[str]]:
+        """Discover tools required by available engines dynamically."""
+        python_tools: list[str] = []
+        system_tools: list[str] = []
         try:
             import Core.engine as engines_loader
 
@@ -290,19 +294,22 @@ class VenvManager:
                 for item in req.get("python", []) or []:
                     name = str(item or "").strip()
                     if name:
-                        tools.append(name)
+                        python_tools.append(name)
+                for item in req.get("system", []) or []:
+                    name = str(item or "").strip()
+                    if name:
+                        system_tools.append(name)
         except Exception:
             pass
 
-        unique: list[str] = []
-        seen: set[str] = set()
-        for tool in tools:
-            key = tool.lower()
-            if key in seen:
-                continue
-            seen.add(key)
-            unique.append(tool)
-        return unique
+        return {
+            "python": sorted(set(python_tools), key=str.lower),
+            "system": sorted(set(system_tools), key=str.lower),
+        }
+
+    def _discover_engine_required_python_tools(self) -> list[str]:
+        """Discover python tools required by available engines dynamically (legacy helper)."""
+        return self._discover_engine_requirements().get("python", [])
 
     def is_tool_installed(self, venv_root: str, tool: str) -> bool:
         """Non-blocking check for tool presence in venv.
@@ -316,7 +323,7 @@ class VenvManager:
         Safe for UI: does not block. On any error, returns False.
         """
         try:
-            pip_exe = self.pip_path(venv_root)
+            pip_exe, pip_args = deps_analyser._find_pip_executable(venv_path=venv_root)
             if not pip_exe or not os.path.isfile(pip_exe):
                 callback(False)
                 return
@@ -331,7 +338,7 @@ class VenvManager:
 
             proc.finished.connect(_done)
             proc.setProgram(pip_exe)
-            proc.setArguments(["show", tool])
+            proc.setArguments(pip_args + ["show", tool])
             proc.setWorkingDirectory(venv_root)
             proc.start()
         except Exception:
@@ -705,7 +712,7 @@ class VenvManager:
         """Check if a tool is installed in system Python via deps_analyser."""
         return deps_analyser._check_module_installed(tool)
     def check_tools_in_venv(self, venv_path: str):
-        """Execute check_tools_in_venv logic for this component."""
+        """Check both python and system requirements for the current workspace."""
         try:
             self._reset_cancel_state()
             ok, reason = self.validate_venv_strict(venv_path)
@@ -727,14 +734,33 @@ class VenvManager:
                     )
                     return
                 
-                pip_exe, pip_args = deps_analyser._find_pip_executable(venv_path=venv_path)
-                self._venv_check_pkgs = self._discover_engine_required_python_tools()
-                if not self._venv_check_pkgs:
+                reqs = self._discover_engine_requirements()
+                python_tools = reqs.get("python", [])
+                system_tools = reqs.get("system", [])
+
+                # 1. Check system tools first (fast, usually non-blocking)
+                if system_tools:
+                    missing_sys = [t for t in system_tools if not sys_deps.check_system_packages([t])]
+                    if missing_sys:
+                        self._safe_log(
+                            f"[WARNING] Outils systeme manquants : {', '.join(missing_sys)}",
+                            f"[WARNING] Missing system tools: {', '.join(missing_sys)}",
+                        )
+                        # On pourrait proposer l'installation, mais on laisse les engines gérer 
+                        # ou on affiche juste l'avertissement.
+                    else:
+                        self._safe_log("[OK] Outils systeme verifies.")
+
+                # 2. Proceed with python tools in venv
+                if not python_tools:
                     self._safe_log(
                         "[INFO] Aucun outil Python requis detecte depuis les engines.",
                         "[INFO] No required Python tools detected from engines.",
                     )
                     return
+                
+                pip_exe, pip_args = deps_analyser._find_pip_executable(venv_path=venv_path)
+                self._venv_check_pkgs = python_tools
                 self._venv_check_index = 0
                 self._venv_check_pip_exe = pip_exe
                 self._venv_check_pip_args = pip_args
