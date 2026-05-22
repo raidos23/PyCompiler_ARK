@@ -22,8 +22,8 @@ import os
 import sys
 import subprocess
 
-from PySide6.QtCore import QProcess, QApplication
-from PySide6.QtWidgets import QMessageBox
+from PySide6.QtCore import QProcess
+from PySide6.QtWidgets import QMessageBox, QApplication
 
 from Core.deps_analyser.analyser import (
     _normalize_realpath,
