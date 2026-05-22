@@ -20,8 +20,6 @@ import sys
 
 import pytest
 
-pytest.importorskip("PySide6")
-
 from Core.deps_analyser.analyser import (
     _classify_module_origin,
     _collect_workspace_module_roots,
