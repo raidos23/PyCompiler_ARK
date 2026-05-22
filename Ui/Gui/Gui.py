@@ -349,7 +349,7 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
     # COMPILATION (délégation à Ui/Gui/Compilation)
     # =========================================================================
 
-    from Core.deps_analyser import (
+    from Ui.Gui.Dialogs.DepsAnalyserUI import (
         _install_next_dependency,
         _on_dep_pip_finished,
         _on_dep_pip_output,

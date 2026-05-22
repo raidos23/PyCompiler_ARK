@@ -26,30 +26,22 @@ Optimisations appliquées:
 Statut: module utilisable pour une sugmanagement/installation basique. Les
 fonctions d'auto-analysis avancée mentionnées dans la feuille de route ne sont
 pas nécessaires à l'exécution et sont désactivées/neutralisées pour éviter tout
-impact en production. Les entrées publiques référencées par l'UI (suggest_missing_dependencies)
-sont conservées.
+impact en production. La logique UI (suggest_missing_dependencies) a été déplacée
+vers la couche UI.
 """
 
 from __future__ import annotations
 
 from .analyser import (
     _check_module_installed,
-    _install_next_dependency,
     _is_stdlib_module,
-    _on_dep_pip_finished,
-    _on_dep_pip_output,
     collect_project_dependencies,
-    suggest_missing_dependencies,
     write_requirements_txt,
 )
 
 __all__ = [
-    "_install_next_dependency",
     "_check_module_installed",
     "_is_stdlib_module",
-    "_on_dep_pip_finished",
-    "suggest_missing_dependencies",
-    "_on_dep_pip_output",
     "collect_project_dependencies",
     "write_requirements_txt",
 ]
