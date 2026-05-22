@@ -14,7 +14,7 @@ Build Python apps with a predictable workflow, a configurable pre-compile pipeli
 
 ## Core capabilities
 
-- **BCASL pre-compile pipeline**: validation, preparation, transformation before the build, with timeouts and safety controls.
+- **BCASL pre-compile pipeline**: validation, preparation, transformation before the build, with safety controls.
 - **Unified EngineRunner architecture**: a single source of truth for both CLI and GUI compilation, ensuring identical build results across all interfaces.
 - **BuildContext-driven builds**: engines receive a normalized project context, abstracting away the source of configuration (YAML vs. Lock files).
 - **Multi-engine support**: switch between PyInstaller, Nuitka, and cx_Freeze seamlessly.
@@ -67,8 +67,7 @@ Workspace
   |-- Load bcasl.yml
   |-- Discover plugins (Plugins/)
   |-- Enable / order / priorities
-  |-- Sandboxed execution (timeouts,  
-  |   optional parallelism)
+  |-- Sandboxed execution (optional)
   |  
   v
 Compilation (PyInstaller / Nuitka / cx_Freeze)
@@ -93,8 +92,8 @@ python3 pycompiler_ark.py build --lock latest.lock   # Rebuild from lock file
 
 # Execution
 python3 pycompiler_ark.py run bcasl                  # Execute BCASL pipeline
-python3 pycompiler_ark.py run bcasl --timeout 30     # With custom timeout
-
+python3 pycompiler_ark.py run bcasl --list-plugins   # List active plugins
+```
 # GUI
 python3 pycompiler_ark.py gui                        # Launch modern IDE-like GUI
 python3 pycompiler_ark.py gui --legacy               # Launch classic GUI
@@ -135,7 +134,7 @@ python3 pycompiler_ark.py init --entry main.py --json
 
 ## Configuration
 
-- **`ark.yml`**: inclusion/exclusion patterns, build entrypoint, and a few workspace-level defaults consumed by BCASL bootstrap.
+- **`ark.yml`**: workspace/build exclusion patterns, build entrypoint, and a few workspace-level defaults consumed by BCASL bootstrap.
 - **`bcasl.yml`**: plugin enable/disable, order, and timeouts.
 
 ---

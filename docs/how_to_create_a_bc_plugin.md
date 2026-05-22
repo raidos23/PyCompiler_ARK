@@ -101,8 +101,6 @@ exclude_patterns:
 - "**/*.pyc"
 options:
   sandbox: true
-  plugin_timeout_s: 5
-  plugin_parallelism: 0
   iter_files_cache: true
   plugin_limits:
     mem_mb: 0
@@ -226,11 +224,10 @@ Notes.
 - The SDK also accepts the plugin folder name as ID (case‑insensitive).
 - If a key is missing, `translate()` falls back to the default you pass in.
 
-**Sandbox, Timeout, Parallelism**
+**Sandbox and Resource Limits**
 - If `options.sandbox` is `true`, plugins can run in isolated processes.
-- Timeout via `options.plugin_timeout_s` or `PYCOMPILER_BCASL_PLUGIN_TIMEOUT`.
-- Parallelism via `options.plugin_parallelism` or `PYCOMPILER_BCASL_PARALLELISM`.
 - Resource limits via `options.plugin_limits` (mem, cpu, files, size).
+- Note: Global timeout and parallelism are no longer supported to ensure sequential stability.
 
 **Plugins_SDK Utilities**
 The SDK provides many helpers.

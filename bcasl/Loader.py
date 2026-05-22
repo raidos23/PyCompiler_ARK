@@ -88,7 +88,7 @@ def _discover_bcasl_meta(Plugins_dir: Path) -> dict[str, dict[str, Any]]:
                 spec.loader.exec_module(module)  # type: ignore[attr-defined]
 
                 # Utilise un gestionnaire temporaire pour enregistrer et lire les métadonnées
-                mgr = BCASL(Plugins_dir, config={}, sandbox=False, plugin_timeout_s=0.0)  # type: ignore[call-arg]
+                mgr = BCASL(Plugins_dir, config={}, sandbox=False)  # type: ignore[call-arg]
 
                 # Méthode 1: chercher fonction bcasl_register
                 reg = getattr(module, "bcasl_register", None)
@@ -185,7 +185,7 @@ def _discover_bcasl_plugins(
     """Load les plugins et return un mapping plugin_id -> instance."""
     plugins: dict[str, BcPluginBase] = {}
     try:
-        mgr = BCASL(workspace_root, config=cfg, sandbox=False, plugin_timeout_s=0.0)
+        mgr = BCASL(workspace_root, config=cfg, sandbox=False)
         mgr.load_plugins_from_directory(Plugins_dir)
         for pid, rec in getattr(mgr, "_registry", {}).items():
             try:
@@ -211,23 +211,6 @@ def _emit_log(log_cb: Optional[callable], message: str) -> None:
             log_cb(message)
     except Exception:
         pass
-
-
-def _resolve_plugin_timeout(cfg: dict[str, Any]) -> float:
-    """Résout le timeout effectif (config > env), <= 0 => illimité."""
-    try:
-        env_timeout = float(os.environ.get("PYCOMPILER_BCASL_PLUGIN_TIMEOUT", "0"))
-    except Exception:
-        env_timeout = 0.0
-    try:
-        opt = cfg.get("options", {}) if isinstance(cfg, dict) else {}
-        cfg_timeout = (
-            float(opt.get("plugin_timeout_s", 0.0)) if isinstance(opt, dict) else 0.0
-        )
-    except Exception:
-        cfg_timeout = 0.0
-    plugin_timeout = cfg_timeout if cfg_timeout != 0.0 else env_timeout
-    return float(plugin_timeout) if plugin_timeout and plugin_timeout > 0 else 0.0
 
 
 def _is_bcasl_enabled(workspace_root: Path) -> bool:
@@ -306,7 +289,6 @@ def _run_bcasl_sync(
     workspace_root: Path,
     plugins_dir: Path,
     cfg: dict[str, Any],
-    plugin_timeout: float,
     log_cb: Optional[callable] = None,
     stop_requested: Optional[callable] = None,
     build_context: Optional[Any] = None,
@@ -315,7 +297,6 @@ def _run_bcasl_sync(
     manager = BCASL(
         workspace_root,
         config=cfg,
-        plugin_timeout_s=plugin_timeout,
         build_context=build_context,
     )
     loaded, errors = manager.load_plugins_from_directory(plugins_dir)
@@ -439,10 +420,15 @@ def _load_workspace_config(workspace_root: Path) -> dict[str, Any]:
 
             ark_config = load_ark_config(str(workspace_root))
 
-            # exclusion_patterns est désormais dans workspace: exclude
-            workspace_cfg = ark_config.get("workspace", {})
-            if isinstance(workspace_cfg, dict):
-                exclude_patterns = workspace_cfg.get("exclude", exclude_patterns)
+            # On privilégie build: exclude pour les actions pré-compilation
+            build_cfg = ark_config.get("build", {})
+            if isinstance(build_cfg, dict) and "exclude" in build_cfg:
+                exclude_patterns = build_cfg.get("exclude", exclude_patterns)
+            else:
+                # Fallback legacy ou si build: exclude est absent (peu probable avec normalization)
+                workspace_cfg = ark_config.get("workspace", {})
+                if isinstance(workspace_cfg, dict):
+                    exclude_patterns = workspace_cfg.get("exclude", exclude_patterns)
 
             # inclusion_patterns n'est plus supporté (l'exclusion suffit)
 
@@ -467,9 +453,7 @@ def _load_workspace_config(workspace_root: Path) -> dict[str, Any]:
             "file_patterns": file_patterns,
             "exclude_patterns": exclude_patterns,
             "options": {
-                "plugin_timeout_s": plugin_timeout,
                 "sandbox": True,
-                "plugin_parallelism": 0,
                 "iter_files_cache": True,
             },
             "phases": default_phases,
@@ -547,17 +531,8 @@ def ensure_bcasl_thread_stopped(self, timeout_ms: int = 5000) -> None:
 
 
 def resolve_bcasl_timeout(self) -> float:
-    """Résout le timeout effectif des plugins à partir de la config et de l'env.
-    <= 0 => illimité (0.0 renvoyé)
-    """
-    try:
-        if not getattr(self, "workspace_dir", None):
-            return 0.0
-        workspace_root = Path(self.workspace_dir).resolve()
-        cfg = _load_workspace_config(workspace_root)
-        return _resolve_plugin_timeout(cfg)
-    except Exception:
-        return 0.0
+    """Legacy resolve_bcasl_timeout - returns 0.0 (no timeout)."""
+    return 0.0
 
 
 def open_bc_loader_dialog(self) -> None:
@@ -647,7 +622,6 @@ def run_pre_compile_async(
         Plugins_dir = _get_plugins_dir()
 
         cfg = _load_workspace_config(workspace_root)
-        plugin_timeout = _resolve_plugin_timeout(cfg)
 
         # Vérifier si BCASL est activé globalement via ark.yml
         if not _is_bcasl_enabled(workspace_root):
@@ -676,7 +650,6 @@ def run_pre_compile_async(
                 workspace_root,
                 Plugins_dir,
                 cfg,
-                plugin_timeout,
                 build_context=build_context,
             )
             try:
@@ -709,7 +682,6 @@ def run_pre_compile_async(
                 workspace_root,
                 Plugins_dir,
                 cfg,
-                plugin_timeout,
                 log_cb=log_cb,
                 build_context=build_context,
             )
@@ -747,7 +719,6 @@ def run_pre_compile(self, build_context: Optional[Any] = None) -> Optional[objec
         Plugins_dir = _get_plugins_dir()
 
         cfg = _load_workspace_config(workspace_root)
-        plugin_timeout = _resolve_plugin_timeout(cfg)
 
         # Vérifier si BCASL est activé globalement via ark.yml
         if not _is_bcasl_enabled(workspace_root):
@@ -765,7 +736,6 @@ def run_pre_compile(self, build_context: Optional[Any] = None) -> Optional[objec
             workspace_root,
             Plugins_dir,
             cfg,
-            plugin_timeout,
             log_cb=log_cb,
             build_context=build_context,
         )

@@ -308,20 +308,15 @@ def build_cli():
         """Run developer-facing commands."""
 
     @run_group.command("bcasl")
-    @click.option("--timeout", type=float)
-    @click.option("--parallel", type=int)
     @click.option("--list-plugins", is_flag=True)
     @click.option("--verbose", "-v", is_flag=True)
-    def run_bcasl_cmd(timeout, parallel, list_plugins, verbose):
+    def run_bcasl_cmd(list_plugins, verbose):
         """Run BCASL in headless mode for the current workspace."""
         args: list[str]
         if list_plugins:
             args = ["list"]
         else:
             args = ["run", str(Path.cwd())]
-            if timeout is not None:
-                args.extend(["--timeout", str(timeout)])
-        del parallel
         raise click.exceptions.Exit(run_bcasl_headless(args, verbose=verbose))
 
     @cli.command("gui")

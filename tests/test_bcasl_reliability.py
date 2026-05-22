@@ -80,8 +80,3 @@ def test_fail_fast_stops_remaining_plugins(tmp_path: Path) -> None:
 
     assert ids == ["fail"]
     assert ok_marker["ran"] is False
-
-
-def test_invalid_timeout_is_normalized(tmp_path: Path) -> None:
-    mgr = BCASL(tmp_path, config={}, sandbox=False, plugin_timeout_s=float("nan"))
-    assert mgr.plugin_timeout_s == 0.0
