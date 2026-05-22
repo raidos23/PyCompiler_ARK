@@ -496,7 +496,8 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
                 dlg = task.get("dialog") if isinstance(task, dict) else None
                 try:
                     if proc is not None and proc.state() != proc.NotRunning:
-                        proc.kill()
+                        from Core.process_killer import kill_process_tree
+                        kill_process_tree(proc.processId())
                 except Exception:
                     pass
                 try:

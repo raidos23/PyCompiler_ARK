@@ -470,3 +470,24 @@ def check_module_available(module_name: str, python_path: Optional[str] = None) 
             return True
     except Exception:
         return False
+
+def check_internet_connection(timeout: float = 3.0) -> bool:
+    """
+    Check if internet connection is available by trying to connect to a reliable host.
+    
+    Args:
+        timeout: Timeout in seconds for the connection attempt.
+        
+    Returns:
+        True if internet is available, False otherwise.
+    """
+    import socket
+    hosts = [("8.8.8.8", 53), ("1.1.1.1", 53), ("www.google.com", 80)]
+    for host, port in hosts:
+        try:
+            socket.setdefaulttimeout(timeout)
+            socket.socket(socket.AF_INET, socket.SOCK_STREAM).connect((host, port))
+            return True
+        except (socket.timeout, socket.error):
+            continue
+    return False

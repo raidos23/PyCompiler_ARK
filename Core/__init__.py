@@ -27,7 +27,7 @@ from __future__ import annotations
 from Core.allversion import get_bcasl_version, get_core_version, get_engine_sdk_version
 
 # Importations de process_killer.py
-from Core.Compiler.process_killer import (
+from Core.process_killer import (
     ProcessInfo,
     ProcessKiller,
     get_process_info,

@@ -875,6 +875,17 @@ class VenvManager:
             )
             self._check_next_venv_pkg()
         else:
+            from Core.Compiler.utils import check_internet_connection
+
+            if not check_internet_connection():
+                self._safe_log(
+                    f"🛑 [ERROR] Pas de connexion internet. Impossible d'installer {pkg}.",
+                    f"🛑 [ERROR] No internet connection. Unable to install {pkg}.",
+                    level="error",
+                )
+                self._call_ui("close_progress", "tools_check")
+                return
+
             self._safe_log(
                 f"[INSTALL] {self._tools_stage_prefix()}Installation automatique de {pkg}..."
             )
@@ -1042,7 +1053,8 @@ class VenvManager:
                             self._safe_log(
                                 f"[TIMEOUT] Timeout exceeded for {label} ({timeout_ms} ms). Killing process..."
                             )
-                            process.kill()
+                            from Core.process_killer import kill_process_tree
+                            kill_process_tree(process.processId())
                     except Exception:
                         pass
 
@@ -1498,6 +1510,16 @@ class VenvManager:
         use_system_python: bool = False,
     ):
         """Start the related asynchronous operation."""
+        from Core.Compiler.utils import check_internet_connection
+
+        if not check_internet_connection():
+            self._safe_log(
+                "🛑 [ERROR] Pas de connexion internet. Installation des dépendances annulée.",
+                "🛑 [ERROR] No internet connection. Dependencies installation cancelled.",
+                level="error",
+            )
+            return
+
         self._reset_cancel_state()
         py_exe = sys.executable if use_system_python else self.python_path(venv_root)
         if not os.path.isfile(py_exe):
@@ -1746,7 +1768,8 @@ class VenvManager:
             proc = getattr(self, attr, None)
             try:
                 if proc:
-                    proc.kill()
+                    from Core.process_killer import kill_process_tree
+                    kill_process_tree(proc.processId())
             except Exception:
                 pass
 

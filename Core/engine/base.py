@@ -245,9 +245,8 @@ class CompilerEngine:
                                 interval = 500  # 0.5s
                                 while not process.waitForFinished(interval):
                                     if stop_signal and stop_signal():
-                                        process.terminate()
-                                        process.waitForFinished(1000)
-                                        process.kill()
+                                        from Core.process_killer import kill_process_tree
+                                        kill_process_tree(process.processId())
                                         return False
                                     elapsed += interval
                                     if elapsed >= timeout_total:
@@ -357,9 +356,8 @@ class CompilerEngine:
                                     interval = 500  # 0.5s
                                     while not process.waitForFinished(interval):
                                         if stop_signal and stop_signal():
-                                            process.terminate()
-                                            process.waitForFinished(1000)
-                                            process.kill()
+                                            from Core.process_killer import kill_process_tree
+                                            kill_process_tree(process.processId())
                                             return False
                                         elapsed += interval
                                         if elapsed >= timeout_total:

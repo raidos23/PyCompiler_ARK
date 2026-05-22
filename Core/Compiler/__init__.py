@@ -30,7 +30,7 @@ from Core.Compiler.engine_runner import (
     run_engine_compile,
     run_engine_compile_streaming,
 )
-from Core.Compiler.process_killer import (
+from Core.process_killer import (
     ProcessInfo,
     ProcessKiller,
     get_process_info,

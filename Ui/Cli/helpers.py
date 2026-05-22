@@ -87,7 +87,7 @@ def run_engine_compile(
             clean = line.strip()
             if clean:
                 # Update status message if it's a high-level step or important progress
-                if any(x in clean for x in ("Etape", "->", "Execution", "Commande")):
+                if any(x in clean for x in ("Etape", "Étape", "->", "Execution", "Commande", "➡️", "🚀", "⚙️", "🔨", "📦", "✅")):
                     # We must use console.print or status.update which bypasses sys.stdout if rich is used
                     status.update(f"[cyan]{clean}[/cyan]")
 
@@ -388,66 +388,6 @@ def build_context_object_from_ark_config(config: dict[str, Any]) -> BuildContext
 
 def build_context_object_from_lock(lock_payload: dict[str, Any]) -> BuildContext:
     return _build_context_from_lock(lock_payload)
-
-
-def run_engine_compile(
-    *,
-    workspace: Path,
-    engine_id: str,
-    context: BuildContext,
-    engine_config: dict[str, Any] | None = None,
-    verbose: bool = False,
-) -> dict[str, Any]:
-    """Execute a compilation with real-time output streaming to the CLI."""
-    from Core.Compiler.engine_runner import run_engine_compile_streaming
-    from .output import plain, get_console
-
-    captured_stdout = []
-    captured_stderr = []
-
-    console = get_console()
-    status = None
-    if not verbose and console:
-        status = console.status("[cyan]Initialisation de la compilation...[/cyan]", spinner="dots")
-        status.start()
-
-    def _on_stdout(line: str):
-        captured_stdout.append(line)
-        if verbose:
-            plain(line)
-        elif status:
-            clean = line.strip()
-            if clean:
-                # Update status message if it's a high-level step or important progress
-                if any(x in clean for x in ("Étape", "➡️", "🚀", "⚙️", "🔨", "📦", "✅")):
-                    status.update(f"[cyan]{clean}[/cyan]")
-
-    def _on_stderr(line: str):
-        captured_stderr.append(line)
-        if verbose:
-            plain(line, err=True)
-        # In non-verbose mode, we keep stderr for the final result if it fails
-
-    try:
-        result = run_engine_compile_streaming(
-            workspace=workspace,
-            engine_id=engine_id,
-            context=context,
-            engine_config=engine_config,
-            on_stdout=_on_stdout,
-            on_stderr=_on_stderr,
-        )
-    finally:
-        if status:
-            status.stop()
-
-    result["stdout"] = "\n".join(captured_stdout)
-    result["stderr"] = "\n".join(captured_stderr)
-
-    if not result["success"] and not result.get("error"):
-        result["error"] = result["stderr"].strip() or "Build failed"
-
-    return result
 
 
 def engine_config_from_lock(lock_payload: dict[str, Any]) -> dict[str, Any]:
