@@ -322,7 +322,7 @@ def run_engine_compile_streaming(
     try:
         while process.poll() is None:
             if stop_signal and stop_signal():
-                from Core.Compiler.process_killer import kill_process_tree
+                from Core.process_killer import kill_process_tree
 
                 kill_process_tree(process.pid)
                 break

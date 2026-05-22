@@ -264,6 +264,17 @@ class SysDependencyUI(SysDependencyManager):
         Install Windows packages via winget with a progress dialog.
         """
         try:
+            from Core.Compiler.utils import check_internet_connection
+
+            if not check_internet_connection():
+                self.msg_error(
+                    "Pas de connexion internet",
+                    "No internet connection",
+                    "Une connexion internet est requise pour installer des dépendances Windows via winget.",
+                    "An internet connection is required to install Windows dependencies via winget.",
+                )
+                return None
+
             if platform.system() != "Windows":
                 self.msg_error(
                     "Plateforme non supportée",
@@ -583,20 +594,21 @@ class SysDependencyUI(SysDependencyManager):
                 proc, dlg, "installation des dépendances", "dependencies installation"
             )
 
+            def _on_timeout():
+                try:
+                    self._dbg(f"sudo shell (progress) timeout after {timeout_s}s; killing")
+                    from Core.process_killer import kill_process_tree
+                    kill_process_tree(proc.processId())
+                    dlg.set_message(self.tr("Délai dépassé", "Timed out"))
+                except Exception:
+                    pass
+
             # Optional timeout to enforce robustness
             if timeout_s and int(timeout_s) > 0:
                 try:
                     timer = QTimer(self.parent_widget)
                     timer.setSingleShot(True)
-                    timer.timeout.connect(
-                        lambda: (
-                            self._dbg(
-                                f"sudo shell (progress) timeout after {timeout_s}s; killing"
-                            ),
-                            proc.kill(),
-                            dlg.set_message(self.tr("Délai dépassé", "Timed out")),
-                        )
-                    )
+                    timer.timeout.connect(_on_timeout)
                     timer.start(int(timeout_s) * 1000)
                     proc.finished.connect(lambda *_: timer.stop())
                     self._last_timer = timer
@@ -631,6 +643,17 @@ class SysDependencyUI(SysDependencyManager):
         GUI version of linux package installation with progress dialog.
         """
         try:
+            from Core.Compiler.utils import check_internet_connection
+
+            if not check_internet_connection():
+                self.msg_error(
+                    "Pas de connexion internet",
+                    "No internet connection",
+                    "Une connexion internet est requise pour installer des dépendances système.",
+                    "An internet connection is required to install system dependencies.",
+                )
+                return None
+
             if platform.system() != "Linux":
                 self.msg_error(
                     "Plateforme non supportée",

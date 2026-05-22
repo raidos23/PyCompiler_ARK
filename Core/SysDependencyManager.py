@@ -115,7 +115,8 @@ class SysDependencyManager:
         )
         try:
             if proc is not None and proc.state() != QProcess.NotRunning:
-                proc.kill()
+                from Core.process_killer import kill_process_tree
+                kill_process_tree(proc.processId())
         except Exception:
             pass
         self._call_ui("close_dialog", dlg)
@@ -378,19 +379,20 @@ class SysDependencyManager:
             except Exception:
                 pass
 
+            def _on_timeout():
+                try:
+                    self._dbg(f"sudo shell timeout after {timeout_s}s; killing")
+                    from Core.process_killer import kill_process_tree
+                    kill_process_tree(proc.processId())
+                except Exception:
+                    pass
+
             # Optional timeout to enforce robustness
             if timeout_s and int(timeout_s) > 0:
                 try:
                     timer = QTimer(self.parent_widget)
                     timer.setSingleShot(True)
-                    timer.timeout.connect(
-                        lambda: (
-                            self._dbg(
-                                f"sudo shell timeout after {timeout_s}s; killing"
-                            ),
-                            proc.kill(),
-                        )
-                    )
+                    timer.timeout.connect(_on_timeout)
                     timer.start(int(timeout_s) * 1000)
                     proc.finished.connect(lambda *_: timer.stop())
                     self._last_timer = timer
@@ -447,6 +449,9 @@ class SysDependencyManager:
     # ------------- GUI logic moved to SysDependencyUI -------------
 
 
+from Core.Compiler.utils import check_internet_connection
+
+
 def check_system_packages(packages: list[str]) -> bool:
     """
     Check if system packages/tools are installed.
@@ -476,6 +481,9 @@ def install_system_packages(packages: list[str], gui=None) -> bool:
 def _install_system_packages_logic(packages: list[str]) -> bool:
     """Install system packages without Qt UI for CLI/CI contexts."""
     try:
+        if not check_internet_connection():
+            return False
+
         pkgs = [str(p).strip() for p in (packages or []) if str(p).strip()]
         if not pkgs:
             return True

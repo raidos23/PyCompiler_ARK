@@ -58,38 +58,8 @@ def _unregister_worker_pid(pid: int) -> None:
 
 
 def _kill_pid_tree(pid: int) -> None:
-    try:
-        if os.name == "nt":
-            subprocess.run(
-                ["taskkill", "/PID", str(int(pid)), "/T", "/F"],
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-                check=False,
-            )
-            return
-    except Exception:
-        pass
-    try:
-        import psutil  # type: ignore
-
-        p = psutil.Process(int(pid))
-        children = p.children(recursive=True)
-        for ch in reversed(children):
-            try:
-                ch.kill()
-            except Exception:
-                pass
-        try:
-            p.kill()
-        except Exception:
-            pass
-        return
-    except Exception:
-        pass
-    try:
-        os.kill(int(pid), signal.SIGKILL)
-    except Exception:
-        pass
+    from Core.process_killer import kill_process_tree
+    kill_process_tree(pid)
 
 
 def kill_active_workers() -> int:
@@ -240,26 +210,23 @@ def _stop_process(proc, join_s: float = 1.0) -> None:
             return
     except Exception:
         return
+    
+    from Core.process_killer import kill_process_tree
     try:
-        proc.terminate()
-    except Exception:
-        pass
-    try:
-        proc.join(join_s)
-    except Exception:
-        pass
-    try:
-        if proc.is_alive():
-            try:
+        pid = getattr(proc, "pid", None)
+        if pid:
+            kill_process_tree(pid)
+        else:
+            proc.terminate()
+            proc.join(join_s)
+            if proc.is_alive():
                 proc.kill()
-            except Exception:
-                pass
-            try:
-                proc.join(max(0.2, join_s))
-            except Exception:
-                pass
     except Exception:
-        pass
+        try:
+            proc.terminate()
+            proc.join(join_s)
+        except Exception:
+            pass
 
 
 def _resolve_reliability_options(config: dict[str, Any]) -> tuple[bool, bool]:
