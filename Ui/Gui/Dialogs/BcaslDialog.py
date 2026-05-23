@@ -855,14 +855,14 @@ class _BCASLWorker(QObject):
         workspace_root: "Path",
         Plugins_dir: "Path",
         cfg: "dict[str, Any]",
-        plugin_timeout: float,
+        
         build_context: Optional[Any] = None,
     ) -> None:
         super().__init__()
         self.workspace_root = workspace_root
         self.Plugins_dir = Plugins_dir
         self.cfg = cfg
-        self.plugin_timeout = plugin_timeout
+        
         self.build_context = build_context
         self._cancel_requested = False
 
@@ -881,7 +881,7 @@ class _BCASLWorker(QObject):
                 self.workspace_root,
                 self.Plugins_dir,
                 self.cfg,
-                self.plugin_timeout,
+                
                 log_cb=self.log.emit,
                 stop_requested=lambda: bool(self._cancel_requested),
                 build_context=self.build_context,

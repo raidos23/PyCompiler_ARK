@@ -60,7 +60,7 @@ class NuitkaEngine(CompilerEngine):
         if platform.system() == "Linux":
             # patchelf is needed for Linux binary manipulation
             # gcc is needed for compilation
-            system_tools = ["patchelf"]
+            system_tools = ["patchelf", "clocus"]
         elif platform.system() == "Windows":
             # On Windows, Visual Studio Build Tools or similar might be needed
             # but we'll keep it minimal for now
