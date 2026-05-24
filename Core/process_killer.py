@@ -99,40 +99,41 @@ class ProcessKiller:
     def _kill_with_psutil(self, pid: int, include_parent: bool) -> bool:
         try:
             parent = psutil.Process(pid)
-            children = parent.children(recursive=True)
-            
-            # Send SIGTERM/Terminate to everyone
-            for child in children:
-                try:
-                    child.terminate()
-                except psutil.NoSuchProcess:
-                    pass
-            
+            # Use a set to avoid duplicates and handle circular dependencies if any
+            all_procs = set(parent.children(recursive=True))
             if include_parent:
+                all_procs.add(parent)
+            
+            # Sort by depth if possible, or just kill children first
+            procs = sorted(list(all_procs), key=lambda p: len(p.parents()), reverse=True)
+            
+            # Phase 1: SIGTERM / Terminate
+            for p in procs:
                 try:
-                    parent.terminate()
-                except psutil.NoSuchProcess:
+                    if p.is_running():
+                        p.terminate()
+                except (psutil.NoSuchProcess, psutil.AccessDenied):
                     pass
-
-            # Wait for them to exit
-            procs = children + ([parent] if include_parent else [])
+            
+            # Wait for they to exit
             gone, alive = psutil.wait_procs(procs, timeout=self.timeout / 2)
 
-            # Force kill remaining
+            # Phase 2: Force kill remaining (SIGKILL)
             for p in alive:
                 try:
-                    _logger.warning("Forcing kill on PID %d", p.pid)
-                    p.kill()
-                except psutil.NoSuchProcess:
+                    if p.is_running():
+                        _logger.warning("Forcing kill on PID %d (%s)", p.pid, p.name())
+                        p.kill()
+                except (psutil.NoSuchProcess, psutil.AccessDenied):
                     pass
             
-            # Final wait to avoid zombies
+            # Final wait to reap zombies
             if alive:
-                psutil.wait_procs(alive, timeout=1.0)
+                psutil.wait_procs(alive, timeout=2.0)
                 
-            return True
+            return not any(p.is_running() for p in procs)
         except psutil.NoSuchProcess:
-            return False
+            return True # Already gone
         except Exception as e:
             _logger.error("Error killing process tree with psutil: %s", e)
             return False
@@ -157,31 +158,67 @@ class ProcessKiller:
     def _kill_with_signals(self, pid: int, include_parent: bool) -> bool:
         """Unix fallback using signals and process groups."""
         try:
-            # If start_new_session=True was used, pid is the pgid
+            # Try to get the process group ID
+            pgid = -1
             try:
                 pgid = os.getpgid(pid)
-                if pgid == pid:
-                    # Kill the whole group
-                    os.killpg(pgid, signal.SIGTERM)
-                    time.sleep(self.timeout / 2)
-                    if self._is_alive(pid):
-                        os.killpg(pgid, signal.SIGKILL)
-                    return True
             except Exception:
                 pass
 
-            # Fallback to killing only the pid if group killing failed
+            if pgid > 1: # Avoid killing system-wide groups
+                try:
+                    # Terminate the whole group
+                    os.killpg(pgid, signal.SIGTERM)
+                    # Wait a bit
+                    for _ in range(int(self.timeout * 2)):
+                        if not self._is_alive(pid):
+                            break
+                        time.sleep(0.5)
+                    
+                    if self._is_alive(pid):
+                        _logger.warning("Forcing kill on process group %d", pgid)
+                        os.killpg(pgid, signal.SIGKILL)
+                    return True
+                except Exception as e:
+                    _logger.debug("Group kill failed, falling back to PID: %s", e)
+
+            # Fallback to killing only the pid and trying to find children via /proc
+            if not _IS_WINDOWS:
+                self._kill_unix_children_fallback(pid)
+
             if include_parent:
-                os.kill(pid, signal.SIGTERM)
-                time.sleep(self.timeout / 2)
-                if self._is_alive(pid):
-                    os.kill(pid, signal.SIGKILL)
+                try:
+                    os.kill(pid, signal.SIGTERM)
+                    time.sleep(self.timeout / 2)
+                    if self._is_alive(pid):
+                        os.kill(pid, signal.SIGKILL)
+                except ProcessLookupError:
+                    pass
             return True
-        except ProcessLookupError:
-            return False
         except Exception as e:
             _logger.error("Error killing process with signals: %s", e)
             return False
+
+    def _kill_unix_children_fallback(self, ppid: int) -> None:
+        """Fallback to kill children on Unix without psutil or pgid."""
+        try:
+            # Try using pgrep to find children
+            result = subprocess.run(
+                ["pgrep", "-P", str(ppid)],
+                capture_output=True,
+                text=True,
+                check=False
+            )
+            if result.returncode == 0:
+                for line in result.stdout.splitlines():
+                    child_pid = int(line.strip())
+                    self._kill_unix_children_fallback(child_pid)
+                    try:
+                        os.kill(child_pid, signal.SIGKILL)
+                    except Exception:
+                        pass
+        except Exception:
+            pass
 
     def kill_by_name(self, name: str, ignore_case: bool = True) -> int:
         """
@@ -217,22 +254,27 @@ class ProcessKiller:
         return killed_count
 
     def _is_alive(self, pid: int) -> bool:
+        if pid <= 0:
+            return False
         if psutil:
             try:
-                return psutil.Process(pid).is_running()
+                p = psutil.Process(pid)
+                return p.is_running() and p.status() != psutil.STATUS_ZOMBIE
             except psutil.NoSuchProcess:
                 return False
         
         try:
             if _IS_WINDOWS:
+                # Tasklist can be slow, but it's reliable for existence
                 res = subprocess.run(
-                    ["tasklist", "/FI", f"PID eq {pid}"],
+                    ["tasklist", "/FI", f"PID eq {pid}", "/NH"],
                     capture_output=True,
                     text=True,
                     check=False,
                 )
                 return str(pid) in res.stdout
             else:
+                # On Unix, kill(pid, 0) checks if process exists
                 os.kill(pid, 0)
                 return True
         except (ProcessLookupError, PermissionError):

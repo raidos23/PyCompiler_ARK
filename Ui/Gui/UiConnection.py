@@ -603,6 +603,10 @@ def init_ui(self) -> None:
     except Exception:
         pass
     _show_initial_help_message(self)
+    try:
+        self.set_controls_enabled(True)
+    except Exception:
+        pass
 
 
 # =========================================================================

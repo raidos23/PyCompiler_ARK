@@ -471,23 +471,52 @@ def check_module_available(module_name: str, python_path: Optional[str] = None) 
     except Exception:
         return False
 
-def check_internet_connection(timeout: float = 3.0) -> bool:
+def check_internet_connection(timeout: float = 3.0, retries: int = 1) -> bool:
     """
-    Check if internet connection is available by trying to connect to a reliable host.
+    Check if internet connection is available with high certainty.
+    Uses a multi-tiered approach: DNS, socket connection, and optional HTTP.
     
     Args:
-        timeout: Timeout in seconds for the connection attempt.
+        timeout: Timeout in seconds for each attempt.
+        retries: Number of retries before giving up.
         
     Returns:
         True if internet is available, False otherwise.
     """
     import socket
-    hosts = [("8.8.8.8", 53), ("1.1.1.1", 53), ("www.google.com", 80)]
-    for host, port in hosts:
-        try:
-            socket.setdefaulttimeout(timeout)
-            socket.socket(socket.AF_INET, socket.SOCK_STREAM).connect((host, port))
-            return True
-        except (socket.timeout, socket.error):
-            continue
+    import http.client
+
+    # Tier 1: Fast DNS check (Public DNS)
+    # Using 8.8.8.8 (Google) and 1.1.1.1 (Cloudflare)
+    dns_hosts = [("8.8.8.8", 53), ("1.1.1.1", 53), ("8.8.4.4", 53)]
+    
+    for attempt in range(retries + 1):
+        for host, port in dns_hosts:
+            try:
+                socket.setdefaulttimeout(timeout)
+                # Try to establish a socket connection (TCP)
+                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                s.connect((host, port))
+                s.close()
+                return True
+            except (socket.timeout, socket.error):
+                continue
+        
+        # Tier 2: HTTP check (if Tier 1 fails, to handle captive portals or DNS blocks)
+        http_hosts = ["www.google.com", "www.bing.com", "www.github.com"]
+        for host in http_hosts:
+            try:
+                conn = http.client.HTTPSConnection(host, timeout=timeout)
+                conn.request("HEAD", "/")
+                res = conn.getresponse()
+                conn.close()
+                if res.status < 400:
+                    return True
+            except Exception:
+                continue
+                
+        if attempt < retries:
+            import time
+            time.sleep(1.0) # Wait before retry
+
     return False
