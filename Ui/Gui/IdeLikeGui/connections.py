@@ -656,6 +656,10 @@ def init_ide_like_ui(self) -> None:
     except Exception:
         pass
     _schedule_ide_like_async_init(self)
+    try:
+        self.set_controls_enabled(True)
+    except Exception:
+        pass
 
 
 def _setup_status_bar(self) -> None:

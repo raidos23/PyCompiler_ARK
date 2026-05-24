@@ -347,26 +347,40 @@ class UiFeatures:
 
     def set_controls_enabled(self, enabled: bool) -> None:
         """Enable or disable primary UI controls."""
-        self.compile_btn.setEnabled(enabled)
-        try:
-            if self.compile_btn and hasattr(self.compile_btn, "style"):
-                self.compile_btn.style().unpolish(self.compile_btn)
-                self.compile_btn.style().polish(self.compile_btn)
-                self.compile_btn.update()
-        except Exception:
-            pass
-        self.cancel_btn.setEnabled(not enabled)
-        self.btn_select_folder.setEnabled(enabled)
-        self.btn_select_files.setEnabled(enabled)
-        self.btn_remove_file.setEnabled(enabled)
+        if hasattr(self, "compile_btn") and self.compile_btn:
+            self.compile_btn.setEnabled(enabled)
+            try:
+                if hasattr(self.compile_btn, "style"):
+                    self.compile_btn.style().unpolish(self.compile_btn)
+                    self.compile_btn.style().polish(self.compile_btn)
+                    self.compile_btn.update()
+            except Exception:
+                pass
+
+        if hasattr(self, "cancel_btn") and self.cancel_btn:
+            self.cancel_btn.setEnabled(not enabled)
+
+        if hasattr(self, "btn_select_folder") and self.btn_select_folder:
+            self.btn_select_folder.setEnabled(enabled)
+        if hasattr(self, "btn_select_files") and self.btn_select_files:
+            self.btn_select_files.setEnabled(enabled)
+        if hasattr(self, "btn_remove_file") and self.btn_remove_file:
+            self.btn_remove_file.setEnabled(enabled)
 
         for attr in (
             "btn_suggest_deps",
             "btn_bc_loader",
+            "btn_acasl_loader",
             "select_lang",
             "select_theme",
             "btn_show_stats",
             "btn_clear_workspace",
+            "btn_help",
+            "btn_lock_manager",
+            "activity_btn_deps",
+            "advanced_cfg_btn",
+            "toolButton_more",
+            "compiler_tabs",
         ):
             try:
                 w = getattr(self, attr, None)
@@ -375,42 +389,49 @@ class UiFeatures:
             except Exception:
                 pass
 
-        self.venv_button.setEnabled(enabled)
+        if hasattr(self, "venv_button") and self.venv_button:
+            self.venv_button.setEnabled(enabled)
+
         self._refresh_grey_targets()
 
     def _refresh_grey_targets(self) -> None:
         """Refresh visual state of controls."""
         try:
-            grey_targets = [
-                getattr(self, attr, None)
-                for attr in (
-                    "compile_btn",
-                    "btn_select_folder",
-                    "btn_select_files",
-                    "btn_remove_file",
-                    "btn_bc_loader",
-                    "btn_suggest_deps",
-
-                    "select_lang",
-                    "select_theme",
-                    "btn_show_stats",
-                    "btn_clear_workspace",
-                    "venv_button",
-                )
-            ]
-            for w in grey_targets:
+            target_names = (
+                "compile_btn",
+                "btn_select_folder",
+                "btn_select_files",
+                "btn_remove_file",
+                "btn_bc_loader",
+                "btn_acasl_loader",
+                "btn_suggest_deps",
+                "select_lang",
+                "select_theme",
+                "btn_show_stats",
+                "btn_clear_workspace",
+                "venv_button",
+                "btn_help",
+                "btn_lock_manager",
+                "activity_btn_deps",
+                "advanced_cfg_btn",
+                "toolButton_more",
+            )
+            for attr in target_names:
                 try:
+                    w = getattr(self, attr, None)
                     if w and hasattr(w, "style"):
                         w.style().unpolish(w)
                         w.style().polish(w)
                         w.update()
                 except Exception:
                     pass
+
             if hasattr(self, "cancel_btn") and self.cancel_btn:
                 try:
-                    self.cancel_btn.style().unpolish(self.cancel_btn)
-                    self.cancel_btn.style().polish(self.cancel_btn)
-                    self.cancel_btn.update()
+                    if hasattr(self.cancel_btn, "style"):
+                        self.cancel_btn.style().unpolish(self.cancel_btn)
+                        self.cancel_btn.style().polish(self.cancel_btn)
+                        self.cancel_btn.update()
                 except Exception:
                     pass
         except Exception:
