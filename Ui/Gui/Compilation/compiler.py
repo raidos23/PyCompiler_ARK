@@ -235,6 +235,16 @@ class CompilerCore(QObject):
         self._current_file = context.entry_point
         self._workspace_dir = str(workspace)
 
+        # Disconnect old thread if it exists to avoid side effects from lingering processes
+        if self._thread is not None:
+            try:
+                self._thread.output_ready.disconnect()
+                self._thread.error_ready.disconnect()
+                self._thread.finished.disconnect()
+                self._thread.progress_update.disconnect()
+            except Exception:
+                pass
+
         self._thread = CompilationThread(
             workspace=workspace,
             engine_id=engine_id,
