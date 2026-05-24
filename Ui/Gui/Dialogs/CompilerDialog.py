@@ -192,7 +192,14 @@ def compile_all(self) -> None:
             pass
         return
 
-    # 1. Load and Validate (Aligned with CLI)
+    # 1. Reset state for a new build
+    try:
+        self._cancel_requested_during_precompile = False
+        get_main_process().reset()
+    except Exception:
+        pass
+
+    # 2. Load and Validate (Aligned with CLI)
     try:
         config = load_ark_config(Path(self.workspace_dir))
         validated = validate_ark_config(Path(self.workspace_dir), config)
@@ -202,7 +209,7 @@ def compile_all(self) -> None:
 
     _set_progress_indeterminate(self)
 
-    # 2. Resolve engine (GUI: Prefer selected tab, then config)
+    # 3. Resolve engine (GUI: Prefer selected tab, then config)
     engine_id = None
     try:
         import Core.engine as engines_loader
@@ -224,7 +231,7 @@ def compile_all(self) -> None:
     except Exception:
         pass
 
-    # 3. Generate Lock and Context (Exact CLI Code)
+    # 4. Generate Lock and Context (Exact CLI Code)
     try:
         log_i18n_level(
             self,
@@ -272,6 +279,10 @@ def compile_all(self) -> None:
     )
 
     def _after_bcasl(_report=None) -> None:
+        # Ensure we only process the callback for the current active build
+        if _after_bcasl != getattr(self, "_active_bcasl_callback", None):
+            return
+
         if getattr(self, "_cancel_requested_during_precompile", False):
             self.set_controls_enabled(True)
             log_i18n_level(
@@ -281,6 +292,7 @@ def compile_all(self) -> None:
                 "Compilation cancelled before start (BCASL phase).",
             )
             return
+
         if not bcasl_report_allows_compile(self, _report):
             log_i18n_level(
                 self,
@@ -350,11 +362,19 @@ def compile_all(self) -> None:
                 f"Compilation start error: {e}",
             )
 
+    self._active_bcasl_callback = _after_bcasl
     run_bcasl_before_compile(self, _after_bcasl, build_context=context)
 
 
 def rebuild_from_lock(self, lock_path: Path) -> None:
     """Rebuild the project using a specific lock file, following CLI logic."""
+    try:
+        # Reset state for a new build
+        self._cancel_requested_during_precompile = False
+        get_main_process().reset()
+    except Exception:
+        pass
+
     try:
         from Core.Locking import load_yaml_file
 
@@ -400,6 +420,10 @@ def rebuild_from_lock(self, lock_path: Path) -> None:
         )
 
         def _after_bcasl(_report=None) -> None:
+            # Ensure we only process the callback for the current active build
+            if _after_bcasl != getattr(self, "_active_bcasl_callback", None):
+                return
+
             if not bcasl_report_allows_compile(self, _report):
                 self.set_controls_enabled(True)
                 return
@@ -442,6 +466,7 @@ def rebuild_from_lock(self, lock_path: Path) -> None:
             if not success:
                 self.set_controls_enabled(True)
 
+        self._active_bcasl_callback = _after_bcasl
         run_bcasl_before_compile(self, _after_bcasl, build_context=context)
 
     except Exception as e:
@@ -456,6 +481,13 @@ def rebuild_from_lock(self, lock_path: Path) -> None:
 
 def start_compilation_process(self, engine_id: str, file_path: str) -> bool:
     """Start a single compilation process using shared logic aligned with CLI."""
+    # 0. Reset state for a new build
+    try:
+        self._cancel_requested_during_precompile = False
+        get_main_process().reset()
+    except Exception:
+        pass
+
     # 1. Load and Validate (Aligned with CLI)
     try:
         cfg = load_ark_config(Path(self.workspace_dir))
@@ -534,6 +566,10 @@ def start_compilation_process(self, engine_id: str, file_path: str) -> bool:
     )
 
     def _after_bcasl(_report=None) -> None:
+        # Ensure we only process the callback for the current active build
+        if _after_bcasl != getattr(self, "_active_bcasl_callback", None):
+            return
+
         if getattr(self, "_cancel_requested_during_precompile", False):
             self.set_controls_enabled(True)
             log_i18n_level(
@@ -608,6 +644,7 @@ def start_compilation_process(self, engine_id: str, file_path: str) -> bool:
                 f"Compilation start error: {e}",
             )
 
+    self._active_bcasl_callback = _after_bcasl
     run_bcasl_before_compile(self, _after_bcasl, build_context=context)
     return True
 
