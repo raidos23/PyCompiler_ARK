@@ -47,6 +47,17 @@ from Ui.Gui.Compilation.helpers import (
 from Ui.Gui.Compilation.mainprocess import MainProcess, ProcessState
 from Ui.i18n import log_i18n_level, log_with_level
 
+# Shared helpers from CLI for exact code alignment
+from Ui.Cli.helpers import (
+    load_ark_config,
+    validate_ark_config,
+    build_lock_payload,
+    write_lock_files,
+    build_context_object_from_ark_config,
+    build_context_object_from_lock,
+    engine_config_from_lock,
+)
+
 # ============================================================================
 # DIALOG HELPERS
 # ============================================================================
@@ -146,7 +157,7 @@ def _set_progress_indeterminate(self) -> None:
 
 
 def compile_all(self) -> None:
-    """Slot connected to the compile button. Starts compilation using EngineRunner as source of truth."""
+    """Slot connected to the compile button. Starts compilation using shared logic aligned with CLI."""
 
     def _t(fr: str, en: str) -> str:
         try:
@@ -181,45 +192,17 @@ def compile_all(self) -> None:
             pass
         return
 
-    # Load project configuration
+    # 1. Load and Validate (Aligned with CLI)
     try:
-        from Core.Configs import get_entrypoint, load_ark_config
-        from Core.Locking import build_context_from_ark_config
-
-        cfg = load_ark_config(self.workspace_dir)
-        entry_rel = get_entrypoint(cfg)
+        config = load_ark_config(Path(self.workspace_dir))
+        validated = validate_ark_config(Path(self.workspace_dir), config)
     except Exception as e:
         log_i18n_level(self, "error", f"Erreur config: {e}", f"Config error: {e}")
         return
 
-    if not entry_rel:
-        log_i18n_level(
-            self,
-            "warning",
-            "Point d'entrée requis avant compilation.",
-            "Entrypoint required before compilation.",
-        )
-        _prompt_for_required_entrypoint(self)
-        return
-
-    entrypoint_file = os.path.join(self.workspace_dir, entry_rel)
-    if not os.path.isfile(entrypoint_file):
-        try:
-            missing_display = os.path.relpath(entrypoint_file, self.workspace_dir)
-        except Exception:
-            missing_display = entrypoint_file
-        log_i18n_level(
-            self,
-            "error",
-            f"Point d'entrée introuvable ou obsolète : {missing_display}",
-            f"Entrypoint missing or obsolete: {missing_display}",
-        )
-        _prompt_for_required_entrypoint(self, missing_path=missing_display)
-        return
-
     _set_progress_indeterminate(self)
 
-    # Resolve engine
+    # 2. Resolve engine (GUI: Prefer selected tab, then config)
     engine_id = None
     try:
         import Core.engine as engines_loader
@@ -231,9 +214,9 @@ def compile_all(self) -> None:
         pass
 
     if not engine_id:
-        engine_id = resolve_default_engine_id()
+        engine_id = str(validated.config["build"]["engine"])
 
-    # Save GUI state to disk (persists tab settings)
+    # Housekeeping: Save GUI tab settings to disk
     try:
         from Core.engine.ConfigManager import save_engine_config_for_gui
 
@@ -241,7 +224,7 @@ def compile_all(self) -> None:
     except Exception:
         pass
 
-    # Build lock payload (CLI-like behavior for reproducibility)
+    # 3. Generate Lock and Context (Exact CLI Code)
     try:
         log_i18n_level(
             self,
@@ -249,59 +232,36 @@ def compile_all(self) -> None:
             "🔒 Génération du verrou de compilation (lock file)...",
             "🔒 Generating build lock file...",
         )
-        from Core.Locking import build_lock_payload, write_lock_files
-
         lock_payload = build_lock_payload(
-            Path(self.workspace_dir), cfg, engine_id=engine_id
+            Path(self.workspace_dir), validated.config, engine_id=engine_id
         )
         write_lock_files(Path(self.workspace_dir), lock_payload)
 
-        # Use engine config from lock (source of truth)
-        engine_config = lock_payload.get("engine", {}).get("config") or {}
-    except Exception as e:
-        log_i18n_level(
-            self,
-            "warning",
-            f"Erreur locking (ignorée): {e}",
-            f"Locking error (ignored): {e}",
-        )
-        engine_config = {}
-
-    # Retrieve engine instance
-    engine = None
-    try:
-        import Core.engine as engines_loader
-
-        engine = engines_loader.registry.get_instance(engine_id)
-    except Exception:
-        engine = None
-
-    if engine is None:
-        try:
-            engine = create(engine_id)
-        except Exception as e:
-            log_i18n_level(
-                self,
-                "error",
-                f"Erreur création moteur '{engine_id}': {e}",
-                f"Engine creation error '{engine_id}': {e}",
-            )
-            return
-
-    # Prepare context and config for EngineRunner
-    try:
-        context = build_context_from_ark_config(cfg)
-        # If no explicit engine_config was derived from lock, fallback to live GUI state
-        if not engine_config and hasattr(engine, "get_config"):
-            engine_config = engine.get_config(self)
+        # Context and Config from lock/config (source of truth)
+        context = build_context_object_from_ark_config(validated.config)
+        engine_config = engine_config_from_lock(lock_payload)
     except Exception as e:
         log_i18n_level(
             self,
             "error",
-            f"Erreur préparation contexte: {e}",
-            f"Context prep error: {e}",
+            f"Erreur préparation compilation: {e}",
+            f"Build prep error: {e}",
         )
         return
+
+    # Retrieve engine instance for display name
+    engine = None
+    try:
+        import Core.engine as engines_loader
+        engine = engines_loader.registry.get_instance(engine_id)
+    except Exception:
+        engine = None
+    if engine is None:
+        try:
+            engine = create(engine_id)
+        except Exception:
+            pass
+    engine_name = getattr(engine, "name", engine_id)
 
     self.set_controls_enabled(False)
     log_i18n_level(
@@ -342,8 +302,8 @@ def compile_all(self) -> None:
             log_i18n_level(
                 self,
                 "info",
-                f"Démarrage de la compilation avec {engine.name}...",
-                f"Starting compilation with {engine.name}...",
+                f"Démarrage de la compilation avec {engine_name}...",
+                f"Starting compilation with {engine_name}...",
             )
 
             # Start compilation using the EngineRunner path
@@ -370,8 +330,7 @@ def compile_all(self) -> None:
                 )
                 main_process._gui_connected = True
 
-            # The actual compilation call. We'll ensure tools inside the thread now
-            # to keep the GUI responsive.
+            # The actual compilation call
             success = main_process.compile_from_context(
                 workspace=self.workspace_dir,
                 engine_id=engine_id,
@@ -395,12 +354,9 @@ def compile_all(self) -> None:
 
 
 def rebuild_from_lock(self, lock_path: Path) -> None:
-    """Rebuild the project using a specific lock file."""
+    """Rebuild the project using a specific lock file, following CLI logic."""
     try:
-        from Core.Locking import (
-            build_context_from_lock,
-            load_yaml_file,
-        )
+        from Core.Locking import load_yaml_file
 
         log_i18n_level(
             self,
@@ -410,77 +366,83 @@ def rebuild_from_lock(self, lock_path: Path) -> None:
         )
         lock_payload = load_yaml_file(lock_path)
         engine_id = str(((lock_payload.get("engine") or {}).get("name")) or "").strip()
-        
+
         if not engine_id:
             raise ValueError("Invalid lock file: missing engine name")
 
-        # Context from lock
-        context = build_context_from_lock(lock_payload)
-        
-        # Engine config from lock
-        engine_config = ((lock_payload.get("engine") or {}).get("config")) or {}
-        engine_config = dict(engine_config) if isinstance(engine_config, dict) else {}
+        # Context and Config from lock (Aligned with CLI)
+        context = build_context_object_from_lock(lock_payload)
+        engine_config = engine_config_from_lock(lock_payload)
 
-        # Retrieve engine instance
+        # Retrieve engine instance for display name
         engine = None
         try:
             import Core.engine as engines_loader
             engine = engines_loader.registry.get_instance(engine_id)
         except Exception:
             engine = None
-
         if engine is None:
             try:
                 engine = create(engine_id)
-            except Exception as e:
-                log_i18n_level(
-                    self,
-                    "error",
-                    f"Erreur création moteur '{engine_id}': {e}",
-                    f"Engine creation error '{engine_id}': {e}",
-                )
-                return
+            except Exception:
+                pass
+        engine_name = getattr(engine, "name", engine_id)
 
         self.set_controls_enabled(False)
         _set_progress_indeterminate(self)
 
+        # BCASL PRE-COMPILE (Aligned with CLI)
         log_i18n_level(
             self,
             "info",
-            f"Démarrage de la reconstruction avec {engine.name}...",
-            f"Starting rebuild with {engine.name}...",
+            "🔍 Lancement de la phase de pré-compilation (BCASL)...",
+            "🔍 Starting pre-compilation phase (BCASL)...",
         )
 
-        main_process = get_main_process()
-        if not hasattr(main_process, "_gui_connected"):
-            main_process.output_ready.connect(lambda msg: _handle_output(self, msg))
-            main_process.error_ready.connect(lambda msg: _handle_error(self, msg))
-            main_process.progress_update.connect(
-                lambda pct, msg: _handle_progress(self, pct, msg)
-            )
-            main_process.log_message.connect(
-                lambda level, msg: _handle_log(self, level, msg)
-            )
-            main_process.compilation_started.connect(
-                lambda info: _handle_compilation_started(self, info)
-            )
-            main_process.compilation_finished.connect(
-                lambda code, info: handle_finished(self, code, info)
-            )
-            main_process.state_changed.connect(
-                lambda state: _handle_state_changed(self, state)
-            )
-            main_process._gui_connected = True
+        def _after_bcasl(_report=None) -> None:
+            if not bcasl_report_allows_compile(self, _report):
+                self.set_controls_enabled(True)
+                return
 
-        success = main_process.compile_from_context(
-            workspace=self.workspace_dir,
-            engine_id=engine_id,
-            context=context,
-            engine_config=engine_config,
-        )
+            log_i18n_level(
+                self,
+                "info",
+                f"Démarrage de la reconstruction avec {engine_name}...",
+                f"Starting rebuild with {engine_name}...",
+            )
 
-        if not success:
-            self.set_controls_enabled(True)
+            main_process = get_main_process()
+            if not hasattr(main_process, "_gui_connected"):
+                main_process.output_ready.connect(lambda msg: _handle_output(self, msg))
+                main_process.error_ready.connect(lambda msg: _handle_error(self, msg))
+                main_process.progress_update.connect(
+                    lambda pct, msg: _handle_progress(self, pct, msg)
+                )
+                main_process.log_message.connect(
+                    lambda level, msg: _handle_log(self, level, msg)
+                )
+                main_process.compilation_started.connect(
+                    lambda info: _handle_compilation_started(self, info)
+                )
+                main_process.compilation_finished.connect(
+                    lambda code, info: handle_finished(self, code, info)
+                )
+                main_process.state_changed.connect(
+                    lambda state: _handle_state_changed(self, state)
+                )
+                main_process._gui_connected = True
+
+            success = main_process.compile_from_context(
+                workspace=self.workspace_dir,
+                engine_id=engine_id,
+                context=context,
+                engine_config=engine_config,
+            )
+
+            if not success:
+                self.set_controls_enabled(True)
+
+        run_bcasl_before_compile(self, _after_bcasl, build_context=context)
 
     except Exception as e:
         log_i18n_level(
@@ -493,21 +455,24 @@ def rebuild_from_lock(self, lock_path: Path) -> None:
 
 
 def start_compilation_process(self, engine_id: str, file_path: str) -> bool:
-    """Start a single compilation process using MainProcess and EngineRunner with build locking."""
+    """Start a single compilation process using shared logic aligned with CLI."""
+    # 1. Load and Validate (Aligned with CLI)
     try:
-        from Core.Configs import load_ark_config
+        cfg = load_ark_config(Path(self.workspace_dir))
+        validated = validate_ark_config(Path(self.workspace_dir), cfg)
+    except Exception as e:
+        log_i18n_level(self, "error", f"Erreur config: {e}", f"Config error: {e}")
+        return False
+
+    # Housekeeping: Save GUI tab settings to disk
+    try:
         from Core.engine.ConfigManager import save_engine_config_for_gui
-        from Core.Locking import (
-            build_context_from_ark_config,
-            build_lock_payload,
-            write_lock_files,
-        )
 
         save_engine_config_for_gui(self, engine_id)
     except Exception:
         pass
 
-    # Build lock payload (CLI-like behavior for reproducibility)
+    # 2. Generate Lock and Context (Exact CLI Code)
     try:
         log_i18n_level(
             self,
@@ -515,126 +480,58 @@ def start_compilation_process(self, engine_id: str, file_path: str) -> bool:
             "🔒 Génération du verrou de compilation (lock file)...",
             "🔒 Generating build lock file...",
         )
-        cfg = load_ark_config(self.workspace_dir)
         lock_payload = build_lock_payload(
-            Path(self.workspace_dir), cfg, engine_id=engine_id
+            Path(self.workspace_dir), validated.config, engine_id=engine_id
         )
         write_lock_files(Path(self.workspace_dir), lock_payload)
 
-        # Use engine config from lock (source of truth)
-        engine_config = lock_payload.get("engine", {}).get("config") or {}
+        # Context and Config from lock (source of truth)
+        context = build_context_object_from_ark_config(validated.config)
+        engine_config = engine_config_from_lock(lock_payload)
+        
+        # Override entrypoint for single file compilation
+        try:
+            rel_path = os.path.relpath(file_path, self.workspace_dir)
+            if not rel_path.startswith(".."):
+                context.entry_point = rel_path
+            else:
+                context.entry_point = file_path
+        except Exception:
+            context.entry_point = file_path
+            
     except Exception as e:
         log_i18n_level(
             self,
-            "warning",
-            f"Erreur locking (ignorée): {e}",
-            f"Locking error (ignored): {e}",
+            "error",
+            f"Erreur préparation compilation: {e}",
+            f"Build prep error: {e}",
         )
-        engine_config = {}
+        return False
 
-    # Resolve engine
+    # Retrieve engine instance for display name
     engine = None
     try:
         import Core.engine as engines_loader
-
         engine = engines_loader.registry.get_instance(engine_id)
     except Exception:
         engine = None
     if engine is None:
         try:
             engine = create(engine_id)
-        except Exception as e:
-            log_i18n_level(
-                self,
-                "error",
-                f"Erreur création moteur '{engine_id}': {e}",
-                f"Engine creation error '{engine_id}': {e}",
-            )
-            return False
-
-    def _do_start() -> bool:
-        # Prepare context for EngineRunner
-        try:
-            context = build_context_from_ark_config(cfg)
-
-            # Use specific file_path as entry point
-            try:
-                rel_path = os.path.relpath(file_path, self.workspace_dir)
-                if not rel_path.startswith(".."):
-                    context.entry_point = rel_path
-                else:
-                    context.entry_point = file_path
-            except Exception:
-                context.entry_point = file_path
-
-            # If no explicit engine_config was derived from lock, fallback to live GUI state
-            if not engine_config and hasattr(engine, "get_config"):
-                engine_config = engine.get_config(self)
-        except Exception as e:
-            log_i18n_level(
-                self,
-                "error",
-                f"Erreur préparation contexte: {e}",
-                f"Context prep error: {e}",
-            )
-            return False
-
-        main_process = get_main_process()
-        if not hasattr(main_process, "_gui_connected"):
-            main_process.output_ready.connect(lambda msg: _handle_output(self, msg))
-            main_process.error_ready.connect(lambda msg: _handle_error(self, msg))
-            main_process.progress_update.connect(
-                lambda pct, msg: _handle_progress(self, pct, msg)
-            )
-            main_process.log_message.connect(
-                lambda level, msg: _handle_log(self, level, msg)
-            )
-            main_process.compilation_started.connect(
-                lambda info: _handle_compilation_started(self, info)
-            )
-            main_process.compilation_finished.connect(
-                lambda code, info: handle_finished(self, code, info)
-            )
-            main_process.state_changed.connect(
-                lambda state: _handle_state_changed(self, state)
-            )
-            main_process._gui_connected = True
-
-        success = main_process.compile_from_context(
-            workspace=self.workspace_dir,
-            engine_id=engine_id,
-            context=context,
-            engine_config=engine_config,
-        )
-
-        if not success:
-            self.set_controls_enabled(True)
-
-        if success:
-            log_i18n_level(
-                self,
-                "info",
-                f"Démarrage {engine.name} pour {os.path.basename(file_path)}...",
-                f"Starting {engine.name} for {os.path.basename(file_path)}...",
-            )
-
-        return success
-
-    try:
-        self._cancel_requested_during_precompile = False
-    except Exception:
-        pass
+        except Exception:
+            pass
+    engine_name = getattr(engine, "name", engine_id)
 
     self.set_controls_enabled(False)
     _set_progress_indeterminate(self)
+
+    # 3. BCASL (GUI async)
     log_i18n_level(
         self,
         "info",
         "🔍 Lancement de la phase de pré-compilation (BCASL)...",
         "🔍 Starting pre-compilation phase (BCASL)...",
     )
-
-    result = {"value": None}
 
     def _after_bcasl(_report=None) -> None:
         if getattr(self, "_cancel_requested_during_precompile", False):
@@ -645,7 +542,6 @@ def start_compilation_process(self, engine_id: str, file_path: str) -> bool:
                 "Compilation annulée avant le démarrage (phase BCASL).",
                 "Compilation cancelled before start (BCASL phase).",
             )
-            result["value"] = False
             return
         if not bcasl_report_allows_compile(self, _report):
             log_i18n_level(
@@ -655,7 +551,6 @@ def start_compilation_process(self, engine_id: str, file_path: str) -> bool:
                 "❌ BCASL validation failed. Compilation cannot continue.",
             )
             self.set_controls_enabled(True)
-            result["value"] = False
             return
 
         log_i18n_level(
@@ -665,26 +560,55 @@ def start_compilation_process(self, engine_id: str, file_path: str) -> bool:
             "✅ BCASL phase completed successfully.",
         )
 
-        ok = False
         try:
-            ok = _do_start()
+            log_i18n_level(
+                self,
+                "info",
+                f"Démarrage {engine_name} pour {os.path.basename(file_path)}...",
+                f"Starting {engine_name} for {os.path.basename(file_path)}...",
+            )
+
+            main_process = get_main_process()
+            if not hasattr(main_process, "_gui_connected"):
+                main_process.output_ready.connect(lambda msg: _handle_output(self, msg))
+                main_process.error_ready.connect(lambda msg: _handle_error(self, msg))
+                main_process.progress_update.connect(
+                    lambda pct, msg: _handle_progress(self, pct, msg)
+                )
+                main_process.log_message.connect(
+                    lambda level, msg: _handle_log(self, level, msg)
+                )
+                main_process.compilation_started.connect(
+                    lambda info: _handle_compilation_started(self, info)
+                )
+                main_process.compilation_finished.connect(
+                    lambda code, info: handle_finished(self, code, info)
+                )
+                main_process.state_changed.connect(
+                    lambda state: _handle_state_changed(self, state)
+                )
+                main_process._gui_connected = True
+
+            success = main_process.compile_from_context(
+                workspace=self.workspace_dir,
+                engine_id=engine_id,
+                context=context,
+                engine_config=engine_config,
+            )
+
+            if not success:
+                self.set_controls_enabled(True)
+
         except Exception as e:
+            self.set_controls_enabled(True)
             log_i18n_level(
                 self,
                 "error",
                 f"Erreur démarrage compilation : {e}",
                 f"Compilation start error: {e}",
             )
-        if not ok:
-            self.set_controls_enabled(True)
-        result["value"] = ok
 
     run_bcasl_before_compile(self, _after_bcasl, build_context=context)
-    if result["value"] is not None:
-        return bool(result["value"])
-    return True
-    if result["value"] is not None:
-        return bool(result["value"])
     return True
 
 
