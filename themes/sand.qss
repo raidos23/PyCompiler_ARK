@@ -76,6 +76,11 @@ QPushButton#compile_btn:hover {
 QPushButton#compile_btn:pressed {
   background: #D97C20;
 }
+QPushButton#compile_btn:disabled {
+  background: #E0E0E0;
+  color: #A0A0A0;
+  border-color: #D0D0D0;
+}
 QPushButton#cancel_btn {
   background: #ffe9ea;
   color: #b00020;
@@ -84,6 +89,11 @@ QPushButton#cancel_btn {
 QPushButton#cancel_btn:hover {
   background: #ffdfe2;
   border-color: #ffb8bd;
+}
+QPushButton#cancel_btn:disabled {
+  background: #E0E0E0;
+  color: #A0A0A0;
+  border-color: #D0D0D0;
 }
 
 /* Cases à cocher */

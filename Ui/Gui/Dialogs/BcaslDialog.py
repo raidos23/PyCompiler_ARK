@@ -875,20 +875,33 @@ class _BCASLWorker(QObject):
     @Slot()
     def run(self) -> None:
         try:
-            from bcasl.Loader import _run_bcasl_sync
+            from bcasl.Loader import (
+                _is_bcasl_enabled,
+                _load_workspace_config,
+                _run_bcasl_sync,
+            )
 
+            # 1. Vérifier si BCASL est activé (en arrière-plan)
+            if not _is_bcasl_enabled(self.workspace_root):
+                self.log.emit("BCASL disabled in ark.yml. Skipping execution\n")
+                self.finished.emit({"status": "disabled"})
+                return
+
+            # 2. Charger la config si non fournie (en arrière-plan)
+            if self.cfg is None:
+                self.cfg = _load_workspace_config(self.workspace_root)
+
+            # 3. Exécuter
             report = _run_bcasl_sync(
                 self.workspace_root,
                 self.Plugins_dir,
                 self.cfg,
-                
                 log_cb=self.log.emit,
                 stop_requested=lambda: bool(self._cancel_requested),
                 build_context=self.build_context,
             )
             self.finished.emit(report)
-        except Exception as e:
-            try:
+        except Exception as e:            try:
                 self.log.emit(f"Erreur BCASL: {e}\n")
             except Exception:
                 pass

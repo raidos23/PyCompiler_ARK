@@ -604,7 +604,7 @@ def open_bc_loader_dialog(self) -> None:
 def run_pre_compile_async(
     self, on_done: Optional[callable] = None, build_context: Optional[Any] = None
 ) -> None:
-    """Lance BCASL en arrière-plan si QtCore est dispo; sinon, exécution bloquante rPluginsde.
+    """Lance BCASL en arrière-plan si QtCore est dispo; sinon, exécution bloquante rapide.
     on_done(report) appelé à la fin si fourni.
     """
     try:
@@ -617,36 +617,17 @@ def run_pre_compile_async(
             return
         workspace_root = Path(self.workspace_dir).resolve()
         Plugins_dir = _get_plugins_dir()
-
-        cfg = _load_workspace_config(workspace_root)
-
-        # Vérifier si BCASL est activé globalement via ark.yml
-        if not _is_bcasl_enabled(workspace_root):
-            try:
-                if hasattr(self, "log") and self.log is not None:
-                    self.log.append(
-                        self.tr(
-                            "BCASL désactivé dans ark.yml. Exécution ignorée\n",
-                            "BCASL disabled in ark.yml. Skipping execution\n",
-                        )
-                    )
-            except Exception:
-                pass
-            if callable(on_done):
-                try:
-                    on_done({"status": "disabled"})
-                except Exception:
-                    pass
-            return
+        cfg = None
 
         if QThread is not None and QObject is not None and Signal is not None:
             from Ui.Gui.Dialogs.BcaslDialog import _BCASLUiBridge, _BCASLWorker
 
             thread = QThread()
+            # On passe cfg=None pour que le worker le charge en arrière-plan
             worker = _BCASLWorker(
                 workspace_root,
                 Plugins_dir,
-                cfg,
+                cfg=None,
                 build_context=build_context,
             )
             try:
@@ -670,11 +651,28 @@ def run_pre_compile_async(
             thread.start()
             return
 
-        # Repli: exécution synchrone
+        # Repli: exécution synchrone (bloquante pour l'UI)
         try:
+            if hasattr(self, "log") and self.log is not None:
+                self.log.append(
+                    self.tr(
+                        "⚠️ Mode dégradé : exécution BCASL synchrone.\n",
+                        "⚠️ Degraded mode: synchronous BCASL execution.\n",
+                    )
+                )
+
+            # Vérifier si BCASL est activé globalement via ark.yml
+            if not _is_bcasl_enabled(workspace_root):
+                if callable(on_done):
+                    on_done({"status": "disabled"})
+                return
+
             log_cb = None
             if hasattr(self, "log") and self.log is not None:
                 log_cb = self.log.append
+            
+            cfg = _load_workspace_config(workspace_root)
+
             report = _run_bcasl_sync(
                 workspace_root,
                 Plugins_dir,
