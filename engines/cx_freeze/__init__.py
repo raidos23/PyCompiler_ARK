@@ -31,9 +31,7 @@ from engine_sdk import (
     BuildContext,
     CompilerEngine,
     add_form_checkbox,
-    add_icon_selector,
     add_output_dir,
-    compute_auto_for_engine,
     engine_register,
 )
 from engine_sdk.utils import log_with_level
@@ -120,15 +118,6 @@ class CXFreezeEngine(CompilerEngine):
             destination = str((mapping or {}).get("destination") or "").strip()
             if source and destination:
                 cmd.extend(["--include-files", f"{source}={destination}"])
-
-        # Auto-mapping args (mapping.json / auto builder)
-        if hasattr(self, "_gui") and self._gui:
-            try:
-                auto_args = compute_auto_for_engine(self._gui, self.id)
-                if auto_args:
-                    cmd.extend(auto_args)
-            except Exception:
-                pass
 
         cmd.extend(["--script", context.entry_point])
         return cmd
@@ -224,7 +213,7 @@ class CXFreezeEngine(CompilerEngine):
             diagnostics_layout.addWidget(self._cx_verbose)
             diagnostics_group.setLayout(diagnostics_layout)
 
-            output_group = QGroupBox("Output", tab)
+            output_group = QGroupBox("Target", tab)
             output_layout = QVBoxLayout()
             output_layout.setSpacing(6)
 
@@ -233,11 +222,6 @@ class CXFreezeEngine(CompilerEngine):
                 output_layout,
                 "Nom de sortie (--target-name)",
                 "cx_target_name_dynamic",
-            )
-
-            # Output directory
-            self._cx_output_dir = add_output_dir(
-                output_layout, "Dossier de sortie", "cx_output_dir_dynamic"
             )
             output_group.setLayout(output_layout)
 
@@ -275,8 +259,6 @@ class CXFreezeEngine(CompilerEngine):
             cfg = {}
             if hasattr(self, "_cx_windowed") and self._cx_windowed is not None:
                 cfg["windowed"] = bool(self._cx_windowed.isChecked())
-            if hasattr(self, "_cx_output_dir") and self._cx_output_dir is not None:
-                cfg["output_dir"] = self._cx_output_dir.text().strip()
             if hasattr(self, "_cx_target_name") and self._cx_target_name is not None:
                 cfg["target_name"] = self._cx_target_name.text().strip()
             if hasattr(self, "_cx_debug") and self._cx_debug is not None:
@@ -302,13 +284,6 @@ class CXFreezeEngine(CompilerEngine):
                 and "windowed" in cfg
             ):
                 self._cx_windowed.setChecked(bool(cfg.get("windowed")))
-            if (
-                hasattr(self, "_cx_output_dir")
-                and self._cx_output_dir is not None
-                and "output_dir" in cfg
-            ):
-                val = cfg.get("output_dir") or ""
-                self._cx_output_dir.setText(str(val))
             if (
                 hasattr(self, "_cx_target_name")
                 and self._cx_target_name is not None
@@ -383,10 +358,6 @@ class CXFreezeEngine(CompilerEngine):
                     self.engine_translate(
                         "target_name_placeholder", "Target executable name"
                     )
-                )
-            if hasattr(self, "_cx_output_dir"):
-                self._cx_output_dir.setPlaceholderText(
-                    self.engine_translate("output_placeholder", "Output directory")
                 )
         except Exception:
             pass

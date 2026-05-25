@@ -27,6 +27,7 @@ Provides:
 
 from __future__ import annotations
 
+import os
 import subprocess
 import threading
 import time
@@ -47,6 +48,7 @@ def resolve_engine_command(
     engine_id: str,
     context: BuildContext,
     engine_config: dict[str, Any] | None = None,
+    gui: Any = None,
 ) -> tuple[str, list[str], dict[str, str]]:
     """
     Load *engine_id* and derive (program, args, env) for *context*.
@@ -55,6 +57,7 @@ def resolve_engine_command(
         engine_id:     Registered engine identifier (e.g. ``"pyinstaller"``).
         context:       BuildContext describing the project.
         engine_config: Optional per-engine config overrides.
+        gui:           Optional GUI or Bridge object for logging and auto-mapping.
 
     Returns:
         A ``(program, args, env)`` tuple ready to be passed to subprocess.
@@ -67,6 +70,11 @@ def resolve_engine_command(
         import Core.engine as engines_loader
 
         engine = engines_loader.create(engine_id)
+        if gui:
+            try:
+                engine._gui = gui
+            except Exception:
+                pass
     except Exception as exc:
         raise EngineRunnerError(f"Unable to load engine '{engine_id}': {exc}") from exc
 
@@ -91,6 +99,44 @@ def resolve_engine_command(
 
     program, args = resolved
 
+    # Integrated Auto-mapping: apply engine-specific flags from detected imports
+    if gui and str(os.environ.get("PYCOMPILER_DISABLE_AUTO_BUILDER", "0")).lower() not in (
+        "1",
+        "true",
+        "yes",
+    ):
+        try:
+            from Core.Auto_Command_Builder import compute_auto_for_engine
+
+            auto_args = compute_auto_for_engine(gui, engine_id)
+            if auto_args:
+                # Try to insert auto-args before the entry point to ensure they are
+                # interpreted as compiler flags, not script arguments.
+                try:
+                    # Exact match or end-match for the entry point
+                    target_idx = -1
+                    if context.entry_point in args:
+                        target_idx = args.index(context.entry_point)
+                    else:
+                        for i, arg in enumerate(args):
+                            if str(arg).endswith(context.entry_point):
+                                target_idx = i
+                                break
+
+                    if target_idx != -1:
+                        for i, a in enumerate(auto_args):
+                            if a not in args:
+                                args.insert(target_idx + i, a)
+                    else:
+                        # Fallback: append at the end
+                        for a in auto_args:
+                            if a not in args:
+                                args.append(a)
+                except Exception:
+                    pass
+        except Exception:
+            pass
+
     # Retrieve engine-specific environment
     try:
         env = engine.environment() if hasattr(engine, "environment") else {}
@@ -108,6 +154,7 @@ def run_engine_compile(
     engine_id: str,
     context: BuildContext,
     engine_config: dict[str, Any] | None = None,
+    gui: Any = None,
 ) -> dict[str, Any]:
     """
     Execute a compilation synchronously.
@@ -122,6 +169,7 @@ def run_engine_compile(
         context:       BuildContext describing the project.
         engine_config: Optional per-engine config overrides (forwarded to
                        ``engine._config_overrides``).
+        gui:           Optional GUI object.
 
     Returns:
         A result dict with success status, return code, command, stdout, stderr, and error message.
@@ -142,6 +190,7 @@ def run_engine_compile(
         engine_config=engine_config,
         on_stdout=_on_stdout,
         on_stderr=_on_stderr,
+        gui=gui,
     )
 
     result["stdout"] = "\n".join(captured_stdout)
@@ -162,6 +211,7 @@ def run_engine_compile_streaming(
     on_stdout: Optional[Callable[[str], None]] = None,
     on_stderr: Optional[Callable[[str], None]] = None,
     stop_signal: Optional[Callable[[], bool]] = None,
+    gui: Any = None,
 ) -> dict[str, Any]:
     """
     Execute a compilation with real-time output streaming.
@@ -174,6 +224,7 @@ def run_engine_compile_streaming(
         on_stdout:     Callback for each line of stdout.
         on_stderr:     Callback for each line of stderr.
         stop_signal:   Optional callback that returns True if cancellation is requested.
+        gui:           Optional GUI object to use instead of creating a bridge.
 
     Returns:
         A result dict.
@@ -199,41 +250,45 @@ def run_engine_compile_streaming(
             if on_stdout:
                 on_stdout(f"  -> {en}")
 
-        # We pass a dummy 'gui' object that supports log_i18n_level-like logging
-        class LogBridge:
-            def __init__(self, log_cb, workspace_path: Path):
-                self.log_cb = log_cb
-                self.workspace_dir = str(workspace_path)
-                self.log = self  # So gui.log.append works
-                self.use_system_python = False  # Default for CLI
-                self.venv_path_manuel = None
-                self._venv_manager = None
-                self._sys_deps_manager = None
+        if gui:
+            bridge = gui
+        else:
+            # We pass a dummy 'gui' object that supports log_i18n_level-like logging
+            class LogBridge:
+                def __init__(self, log_cb, workspace_path: Path):
+                    self.log_cb = log_cb
+                    self.workspace_dir = str(workspace_path)
+                    self.log = self  # So gui.log.append works
+                    self.use_system_python = False  # Default for CLI
+                    self.venv_path_manuel = None
+                    self._venv_manager = None
+                    self._sys_deps_manager = None
 
-            def append(self, message: str):
-                # message is already formatted by log_i18n_level
-                self.log_cb("", message)
+                def append(self, message: str):
+                    # message is already formatted by log_i18n_level
+                    self.log_cb("", message)
 
-            def tr(self, fr, en):
-                return en  # Simple fallback
+                def tr(self, fr, en):
+                    return en  # Simple fallback
 
-            @property
-            def venv_manager(self):
-                if self._venv_manager is None:
-                    from Core.Venv_Manager.Manager import VenvManager
+                @property
+                def venv_manager(self):
+                    if self._venv_manager is None:
+                        from Core.Venv_Manager.Manager import VenvManager
 
-                    self._venv_manager = VenvManager(self)
-                return self._venv_manager
+                        self._venv_manager = VenvManager(self)
+                    return self._venv_manager
 
-            @property
-            def sys_deps_manager(self):
-                if self._sys_deps_manager is None:
-                    from Core.SysDependencyManager import SysDependencyManager
+                @property
+                def sys_deps_manager(self):
+                    if self._sys_deps_manager is None:
+                        from Core.SysDependencyManager import SysDependencyManager
 
-                    self._sys_deps_manager = SysDependencyManager(self)
-                return self._sys_deps_manager
+                        self._sys_deps_manager = SysDependencyManager(self)
+                    return self._sys_deps_manager
 
-        bridge = LogBridge(_log, workspace)
+            bridge = LogBridge(_log, workspace)
+
         # Link bridge to engine for venv/tool resolution in build_command
         try:
             engine_instance._gui = bridge
@@ -257,7 +312,7 @@ def run_engine_compile_streaming(
             on_stdout("Etape 2/3 : Generation de la commande de compilation...")
 
         program, args, engine_env = resolve_engine_command(
-            engine_id, context, engine_config
+            engine_id, context, engine_config, gui=bridge
         )
     except EngineRunnerError as exc:
         return _failure(str(exc))
