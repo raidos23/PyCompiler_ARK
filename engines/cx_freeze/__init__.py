@@ -116,6 +116,8 @@ class CXFreezeEngine(CompilerEngine):
         for mapping in context.data_mappings:
             source = str((mapping or {}).get("source") or "").strip()
             destination = str((mapping or {}).get("destination") or "").strip()
+            # mapping_type = str((mapping or {}).get("type") or "dir").strip().lower()
+            
             if source and destination:
                 cmd.extend(["--include-files", f"{source}={destination}"])
 
