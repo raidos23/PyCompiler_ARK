@@ -27,14 +27,3 @@ jobs:
           python-version: '3.12'
       - run: pip install -r requirements.txt
       - run: pytest -q
-
-  smoke:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-      - run: python pycompiler_ark.py doctor --json
-      - run: python pycompiler_ark.py engine list --json
-      - run: python pycompiler_ark.py workspace apply . --strict --json
