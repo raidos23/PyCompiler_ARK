@@ -393,6 +393,10 @@ class UiFeatures:
             self.venv_button.setEnabled(enabled)
 
         self._refresh_grey_targets()
+        try:
+            QApplication.processEvents()
+        except Exception:
+            pass
 
     def _refresh_grey_targets(self) -> None:
         """Refresh visual state of controls."""

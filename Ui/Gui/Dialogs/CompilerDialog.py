@@ -271,6 +271,7 @@ def compile_all(self) -> None:
     engine_name = getattr(engine, "name", engine_id)
 
     self.set_controls_enabled(False)
+
     log_i18n_level(
         self,
         "info",
@@ -409,6 +410,7 @@ def rebuild_from_lock(self, lock_path: Path) -> None:
         engine_name = getattr(engine, "name", engine_id)
 
         self.set_controls_enabled(False)
+
         _set_progress_indeterminate(self)
 
         # BCASL PRE-COMPILE (Aligned with CLI)
