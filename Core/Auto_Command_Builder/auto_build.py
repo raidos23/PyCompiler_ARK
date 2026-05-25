@@ -25,7 +25,7 @@ from Ui.i18n import log_i18n_level, log_with_level
 
 # Optional access to registered engines for discovery
 try:
-    from ..engines_loader import registry as engines_registry  # type: ignore
+    from ..engine import registry as engines_registry  # type: ignore
 except Exception:  # pragma: no cover
     engines_registry = None  # type: ignore
 
@@ -647,7 +647,7 @@ def _load_engine_package_mapping(
 ) -> tuple[dict[str, dict[str, Optional[str]]], Optional[str]]:
     """Load engine-specific mapping from multiple locations with priorities:
     1) `mapping.json` embedded in imported engine package (`engine_id`)
-    2) `ENGINES/<engine_id>/mapping.json` from project files
+    2) `engines/<engine_id>/mapping.json` from project files
     3) Optional path from `PYCOMPILER_MAPPING` environment variable (merged)
     Returns `(combined_mapping, primary_used_path)`.
     """
@@ -656,7 +656,13 @@ def _load_engine_package_mapping(
 
     # 1) mapping intégré dans le package du moteur (importé par engines_loader)
     try:
-        pkg = importlib.import_module(engine_id)
+        from ..engine.registry import _engine_package_for_class, get_engine
+
+        engine_cls = get_engine(engine_id)
+        pkg_name = (
+            _engine_package_for_class(engine_cls) if engine_cls else f"engines.{engine_id}"
+        )
+        pkg = importlib.import_module(pkg_name)
         with ilr.as_file(ilr.files(pkg).joinpath("mapping.json")) as p:
             p2 = str(p)
             if os.path.isfile(p2):
@@ -671,12 +677,12 @@ def _load_engine_package_mapping(
     except Exception:
         pass
 
-    # 2) mapping dans ENGINES/<engine_id>/mapping.json (filesystem projet)
+    # 2) mapping dans engines/<engine_id>/mapping.json (filesystem projet)
     try:
         project_root = os.path.abspath(
             os.path.join(os.path.dirname(__file__), os.pardir, os.pardir)
         )
-        engines_dir = os.path.join(project_root, "ENGINES", engine_id, "mapping.json")
+        engines_dir = os.path.join(project_root, "engines", engine_id, "mapping.json")
         if os.path.isfile(engines_dir):
             try:
                 data_ext = _read_json_file(engines_dir)

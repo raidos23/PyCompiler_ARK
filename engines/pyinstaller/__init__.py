@@ -31,9 +31,6 @@ from engine_sdk import (
     BuildContext,
     CompilerEngine,
     add_form_checkbox,
-    add_icon_selector,
-    add_output_dir,
-    compute_auto_for_engine,
     engine_register,
 )
 from engine_sdk.utils import log_with_level
@@ -126,15 +123,6 @@ class PyInstallerEngine(CompilerEngine):
             destination = str((mapping or {}).get("destination") or "").strip()
             if source and destination:
                 cmd.extend(["--add-data", f"{source}{separator}{destination}"])
-
-        # Auto-mapping args (mapping.json / auto builder)
-        if hasattr(self, "_gui") and self._gui:
-            try:
-                auto_args = compute_auto_for_engine(self._gui, self.id)
-                if auto_args:
-                    cmd.extend(auto_args)
-            except Exception:
-                pass
 
         cmd.append(context.entry_point)
         return cmd

@@ -319,21 +319,16 @@ Notes.
 - `load_engine_language_file(engine_package, lang)` is still available if you need custom/manual loading.
 - If a key is missing, always provide a safe fallback string.
 
-**Auto Command Builder (Optional)**
-The auto‑builder can read a `mapping.json` to generate engine options from detected imports.
+**Auto Command Builder (Integrated)**
+The auto‑builder is now integrated directly into the core compilation pipeline. It automatically reads a `mapping.json` in your engine's root directory to generate options from detected imports.
 
-Recommended usage (inside `build_command`).
-```python
-from engine_sdk import compute_auto_for_engine
+You no longer need to call `compute_auto_for_engine` manually in your `build_command`. The core runner will:
+1. Detect modules imported in the project.
+2. Read your engine's `mapping.json`.
+3. Generate the appropriate flags.
+4. Automatically insert them into your command (usually before the entry point).
 
-# ...
-if hasattr(self, "_gui") and self._gui:
-    auto_args = compute_auto_for_engine(self._gui, self.id)
-    if auto_args:
-        cmd.extend(auto_args)
-```
-
-#### **Minimal example.**
+#### **Minimal mapping.json example.**
 ```json
 {
   "numpy": {
@@ -432,24 +427,14 @@ def on_success(self, gui, file):
 Notes.
 - Keep logs short and actionable.
 
-8. Auto‑mapping in build_command.
-```python
-if hasattr(self, "_gui") and self._gui:
-    auto_args = compute_auto_for_engine(self._gui, self.id)
-    if auto_args:
-        cmd.extend(auto_args)
-```
-Notes.
-- Zero hardcoded package list.
-
-9. mapping.json for a single library.
+8. mapping.json for a single library.
 ```json
 { "numpy": { "pyinstaller": ["--collect-all", "{import_name}"] } }
 ```
 Notes.
 - Good for quick wins.
 
-10. mapping.json with aliases.
+9. mapping.json with aliases.
 ```json
 { "__aliases__": { "import_to_package": { "cv2": "opencv-python" } } }
 ```
