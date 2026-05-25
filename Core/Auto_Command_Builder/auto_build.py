@@ -357,34 +357,34 @@ def _default_builder_for_engine(engine_id: str):
         matched: dict[str, dict[str, _Optional[str]]], pkg_to_import: dict[str, str]
     ) -> list[str]:
         out: list[str] = []
+        actions_seen = set()
         for pkg, entry in matched.items():
             val = entry.get(engine_id)
             if val is None:
                 continue
             tmpl_import = pkg_to_import.get(pkg, pkg)
+            
+            tokens: list[str] = []
             if isinstance(val, str):
-                out.append(val.replace("{import_name}", tmpl_import))
+                tokens.append(val.replace("{import_name}", tmpl_import))
             elif isinstance(val, list):
-                out.extend([str(x).replace("{import_name}", tmpl_import) for x in val])
+                tokens.extend([str(x).replace("{import_name}", tmpl_import) for x in val])
             elif isinstance(val, dict):
                 a = val.get("args") or val.get("flags")
                 if isinstance(a, list):
-                    out.extend(
+                    tokens.extend(
                         [str(x).replace("{import_name}", tmpl_import) for x in a]
                     )
                 elif isinstance(a, str):
-                    out.append(str(a).replace("{import_name}", tmpl_import))
-            elif val is True:
-                # No generic meaning; skip unless a specific builder is registered
-                pass
-        # de-dup while preserving order
-        seen = set()
-        dedup: list[str] = []
-        for a in out:
-            if a not in seen:
-                seen.add(a)
-                dedup.append(a)
-        return dedup
+                    tokens.append(str(a).replace("{import_name}", tmpl_import))
+            
+            if tokens:
+                # de-dup at the action level (sequence of tokens) while preserving order
+                action_key = tuple(tokens)
+                if action_key not in actions_seen:
+                    actions_seen.add(action_key)
+                    out.extend(tokens)
+        return out
 
     return _builder
 
