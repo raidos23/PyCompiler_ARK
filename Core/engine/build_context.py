@@ -27,7 +27,7 @@ class BuildContext:
     entry_point: str
     output_dir: str
     exclude_patterns: list[str]
-    data_mappings: list[dict[str, Any]]
+    data_mappings: list[dict[str, Any]]  # Each dict: {"source": str, "destination": str, "type": "file" | "dir"}
     icon: str | None = None
 
     def to_dict(self) -> dict[str, Any]:

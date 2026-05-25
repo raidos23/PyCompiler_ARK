@@ -139,8 +139,14 @@ class NuitkaEngine(CompilerEngine):
         for mapping in context.data_mappings:
             source = str((mapping or {}).get("source") or "").strip()
             destination = str((mapping or {}).get("destination") or "").strip()
+            mapping_type = str((mapping or {}).get("type") or "dir").strip().lower()
+            
             if source and destination:
-                cmd.append(f"--include-data-dir={source}={destination}")
+                if mapping_type == "file":
+                    cmd.append(f"--include-data-files={source}={destination}")
+                else:
+                    # Default to dir for backward compatibility or explicit dir type
+                    cmd.append(f"--include-data-dir={source}={destination}")
 
         cmd.append(context.entry_point)
         return cmd

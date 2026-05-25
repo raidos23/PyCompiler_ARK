@@ -36,8 +36,13 @@ class BuildContext:
     entry_point: str        # Main script path (relative to workspace root)
     output_dir: str         # Directory where artifacts should be placed
     exclude_patterns: list  # List of glob patterns for files to ignore
-    data_mappings: list     # List of source/destination pairs for raw assets
+    data_mappings: list     # List of source/destination/type dicts for raw assets
     icon: str | None        # Optional path to an icon file
+
+Each dictionary in `data_mappings` follows this structure:
+- `source`: Path to the source file or directory.
+- `destination`: Path to the destination in the bundle.
+- `type`: Either `"file"` or `"dir"`. (Defaults to `"dir"` if omitted for backward compatibility).
 ```
 
 ---
@@ -89,7 +94,14 @@ class MyEngine(CompilerEngine):
         
         # Add data files
         for mapping in context.data_mappings:
-            cmd.append(f"--include-data-dir={mapping['source']}={mapping['destination']}")
+            source = mapping['source']
+            dest = mapping['destination']
+            mapping_type = mapping.get('type', 'dir')
+            
+            if mapping_type == 'file':
+                cmd.append(f"--include-data-files={source}={dest}")
+            else:
+                cmd.append(f"--include-data-dir={source}={dest}")
         
         # Metadata and resources
         if context.icon:
