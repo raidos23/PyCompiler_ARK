@@ -901,7 +901,8 @@ class _BCASLWorker(QObject):
                 build_context=self.build_context,
             )
             self.finished.emit(report)
-        except Exception as e:            try:
+        except Exception as e:
+            try:
                 self.log.emit(f"Erreur BCASL: {e}\n")
             except Exception:
                 pass
