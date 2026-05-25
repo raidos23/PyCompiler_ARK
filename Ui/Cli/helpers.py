@@ -419,7 +419,11 @@ def run_bcasl_before_compile_sync(
     Returns:
         True if compilation can proceed (success or BCASL disabled), False otherwise.
     """
-    from bcasl.Loader import run_pre_compile
+    from bcasl.Loader import _is_bcasl_enabled, run_pre_compile
+
+    # Quick check to avoid "blablabla inutile" when disabled
+    if not _is_bcasl_enabled(workspace):
+        return True
 
     from .output import error, info, log, success, get_console
 

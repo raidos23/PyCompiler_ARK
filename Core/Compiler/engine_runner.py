@@ -295,6 +295,24 @@ def run_engine_compile_streaming(
         except Exception:
             pass
 
+        # Log the environment used for this compilation
+        env_display = "System"
+        if bridge and hasattr(bridge, "venv_manager"):
+            try:
+                vpath = bridge.venv_manager.resolve_project_venv()
+                if vpath:
+                    # Make path relative if it's inside workspace
+                    try:
+                        rel_path = Path(vpath).relative_to(workspace)
+                        env_display = f"Venv ({rel_path})"
+                    except ValueError:
+                        env_display = f"Venv ({vpath})"
+            except Exception:
+                pass
+        
+        if on_stdout:
+            on_stdout(f"⚙️ Environnement : {env_display}")
+
         if hasattr(engine_instance, "ensure_tools_installed"):
             if not engine_instance.ensure_tools_installed(
                 bridge, stop_signal=stop_signal
