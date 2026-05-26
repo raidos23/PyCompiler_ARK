@@ -277,6 +277,12 @@ def run_engine_compile_streaming(
                         from Core.Venv_Manager.Manager import VenvManager
 
                         self._venv_manager = VenvManager(self)
+                        # Automatically load workspace preferences if available
+                        if hasattr(self, "workspace_dir") and self.workspace_dir:
+                            try:
+                                self._venv_manager.apply_workspace_pref(self.workspace_dir)
+                            except Exception:
+                                pass
                     return self._venv_manager
 
                 @property
