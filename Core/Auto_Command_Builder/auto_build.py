@@ -614,12 +614,12 @@ def compute_for_all(
                     ordered.append(e)
         except Exception:
             pass
-        # 2) moteurs sous ENGINES/<engine_id>/mapping.json (plug-and-play)
+        # 2) moteurs sous engines/<engine_id>/mapping.json (plug-and-play)
         try:
             project_root = os.path.abspath(
                 os.path.join(os.path.dirname(__file__), os.pardir, os.pardir)
             )
-            engines_root = os.path.join(project_root, "ENGINES")
+            engines_root = os.path.join(project_root, "engines")
             if os.path.isdir(engines_root):
                 for name in sorted(os.listdir(engines_root)):
                     d = os.path.join(engines_root, name)

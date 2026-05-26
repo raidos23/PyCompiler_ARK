@@ -11,7 +11,12 @@ def _project_root() -> Path:
 
 
 def _plugins_root() -> Path:
-    return _project_root() / "Plugins"
+    path = _project_root() / "Plugins"
+    try:
+        path.mkdir(parents=True, exist_ok=True)
+    except Exception:
+        pass
+    return path
 
 
 def _read_version_from_init(rel_path: str) -> str:
@@ -230,7 +235,7 @@ def bcasl_doctor_payload(workspace: str | None = None) -> dict[str, Any]:
 def scaffold_engine(target_name: str, root_dir: str | None = None) -> dict[str, Any]:
     safe = str(target_name).strip().replace("-", "_").replace(" ", "_").lower()
     base_root = Path(root_dir or Path.cwd())
-    engine_dir = base_root / "ENGINES" / safe
+    engine_dir = base_root / "engines" / safe
     lang_dir = engine_dir / "languages"
     created: list[str] = []
     if engine_dir.exists():
