@@ -134,11 +134,13 @@ def _discover_external_plugins(
 
 
 def _auto_discover() -> None:
-    """Discover and register external engine plugins from the project ENGINES folder."""
+    """Discover and register external engine plugins from the project engines folder."""
     base_dir = os.path.dirname(__file__)
     try:
         project_root = os.path.abspath(os.path.join(base_dir, os.pardir, os.pardir))
         external_dir = os.path.join(project_root, "engines")
+        # Ensure directory exists for auto-discovery
+        os.makedirs(external_dir, exist_ok=True)
         _discover_external_plugins(external_dir, namespace_package="engines")
     except Exception:
         logger.exception("Automatic engine discovery failed")

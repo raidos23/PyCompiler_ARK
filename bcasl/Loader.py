@@ -321,9 +321,16 @@ def _run_bcasl_sync(
 
 def _get_plugins_dir() -> Path:
     try:
-        return Path(__file__).resolve().parents[1] / "Plugins"
+        path = Path(__file__).resolve().parents[1] / "Plugins"
+        path.mkdir(parents=True, exist_ok=True)
+        return path
     except Exception:
-        return Path("Plugins")
+        fallback = Path("Plugins")
+        try:
+            fallback.mkdir(parents=True, exist_ok=True)
+        except Exception:
+            pass
+        return fallback
 
 
 def _resolve_ordered_plugin_ids(
