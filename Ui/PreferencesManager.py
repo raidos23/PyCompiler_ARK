@@ -28,18 +28,9 @@ PREFS_BASENAME = "pycompiler_gui_prefs.json"
 
 def _user_config_dir() -> str:
     """
-    Return le folder de preferences au sein du projet source: <project_root>/.pref
+    Return le folder de preferences global de l'utilisateur : ~/.PyCompiler_ARK
     """
-    try:
-        project_root = os.path.abspath(
-            os.path.join(os.path.dirname(os.path.abspath(__file__)), os.pardir)
-        )
-        return os.path.join(project_root, ".pref")
-    except Exception:
-        # Repli: toujours utiliser un dossier '.pref' à la racine du module utils
-        return os.path.abspath(
-            os.path.join(os.path.dirname(os.path.abspath(__file__)), os.pardir, ".pref")
-        )
+    return os.path.expanduser("~/.PyCompiler_ARK")
 
 
 def _prefs_path() -> str:
@@ -64,26 +55,36 @@ def _atomic_write_json(path: str, data: dict):
 
 def load_preferences(self):
     try:
-        # Essaye d'abord le chemin config utilisateur, puis l'ancien chemin relatif (migration douce)
+        # Essaye d'abord le chemin config utilisateur (nouveau), puis les anciens chemins (migration)
         prefs_path = PREFS_FILE
         try:
             with open(prefs_path, encoding="utf-8") as f:
                 prefs = json.load(f)
         except Exception:
-            # Migration douce: tenter l'ancien chemin <project_root>/pref/<basename>
+            # Migration douce: tenter l'ancien chemin dans le projet <project_root>/.pref
             try:
-                old_dir = os.path.abspath(
-                    os.path.join(
-                        os.path.dirname(os.path.abspath(__file__)), os.pardir, "pref"
-                    )
+                project_root = os.path.abspath(
+                    os.path.join(os.path.dirname(os.path.abspath(__file__)), os.pardir)
                 )
-                old_path = os.path.join(old_dir, PREFS_BASENAME)
-                with open(old_path, encoding="utf-8") as f:
+                old_pref_dir = os.path.join(project_root, ".pref")
+                old_pref_path = os.path.join(old_pref_dir, PREFS_BASENAME)
+                with open(old_pref_path, encoding="utf-8") as f:
                     prefs = json.load(f)
             except Exception:
-                # Dernier recours: fichier à la racine du cwd
-                with open(PREFS_BASENAME, encoding="utf-8") as f:
-                    prefs = json.load(f)
+                # Migration douce: tenter l'ancien chemin <project_root>/pref/
+                try:
+                    old_dir = os.path.abspath(
+                        os.path.join(
+                            os.path.dirname(os.path.abspath(__file__)), os.pardir, "pref"
+                        )
+                    )
+                    old_path = os.path.join(old_dir, PREFS_BASENAME)
+                    with open(old_path, encoding="utf-8") as f:
+                        prefs = json.load(f)
+                except Exception:
+                    # Dernier recours: fichier à la racine du cwd
+                    with open(PREFS_BASENAME, encoding="utf-8") as f:
+                        prefs = json.load(f)
 
         self.language_pref = prefs.get("language_pref", prefs.get("language", "System"))
         # Compat: conserver self.language utilisé ailleurs
