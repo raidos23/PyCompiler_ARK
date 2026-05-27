@@ -3,21 +3,25 @@
 Practical reference for building, packaging, and integrating custom compilation engines.
 
 ### **Overview**
+
 A PyCompiler_ARK engine is a Python package placed in `engines/` and auto‑loaded at startup. It registers itself with `@engine_register` and provides a `CompilerEngine` that builds the compile command and, optionally, a dedicated UI tab.
 
 ### **Discovery And Loading**
+
 - Engines are discovered only in `engines/<engine_id>/`.
 - The folder must contain an `__init__.py`.
 - At startup, `EngineLoader` scans `engines/` and imports each package.
 - Auto discovery can be disabled with `ARK_ENGINES_AUTO_DISCOVER=0`.
 
 ### **Package Layout**
+
 - `engines/<engine_id>/__init__.py`: engine code, registration, UI.
 - `engines/<engine_id>/languages/<code>.json`: optional translations.
 - `engines/<engine_id>/mapping.json`: optional mapping for the auto‑builder.
 - Optional internal modules, assets, helpers.
 
 #### **Minimal Example**
+
 ```python
 from __future__ import annotations
 
@@ -42,6 +46,7 @@ class MyEngine(CompilerEngine):
 ```
 
 ### **Lifecycle**
+
 1. Package import from `engines/<engine_id>`.
 2. `@engine_register` adds the class to the registry.
 3. The GUI calls `create_tab` if present to create a tab.
@@ -49,12 +54,15 @@ class MyEngine(CompilerEngine):
 5. The process runs the command and calls `on_success` on success.
 
 ### **Workspace Entrypoint**
+
 The workspace can define a single build entrypoint in `ark.yml`.
 When `build.entrypoint` is set, the Core will compile only that file and pass it
 to your engine as the `entry_point` in the `BuildContext`. See `docs/ark.md`.
 
 ### **Full API**
+
 Required attributes.
+
 - `id`: stable unique id (used by UI and config).
 - `name`: display label.
 - `version`: engine version.
@@ -62,6 +70,7 @@ Required attributes.
 - `required_sdk_version`: minimal SDK version.
 
 Core methods.
+
 - `build_command(self, context: BuildContext) -> list[str]`: Primary API, full command, index 0 is the program.
 - `program_and_args(self, context: BuildContext) -> (program, args) | None`: override if needed.
 - `preflight(self, gui, file) -> bool`: checks before compile, return False to abort.
@@ -69,20 +78,24 @@ Core methods.
 - `on_success(self, gui, file) -> None`: post‑build hook.
 
 UI and i18n.
+
 - `create_tab(self, gui) -> (QWidget, label) | None`: adds a tab.
 - `engine_translate(self_or_id, key, default=None)`: simple engine-local translation lookup.
 - `apply_i18n(self, gui, tr)`: update text on language change.
 
 Tools and dependencies.
+
 - `required_tools`: dict `{ "python": [...], "system": [...] }`.
 - `ensure_tools_installed(self, gui)`: installs missing tools when possible.
 
 ### **Tools And Dependencies**
+
 - Python tools install through the project venv when available.
 - System tools use `SysDependencyManager` (GUI supported) if available.
 - Keep the list minimal to avoid unnecessary installs.
 
 ### **UI Tab**
+
 - In `create_tab`, create widgets and store them on `self` (ex: `self._opt_onefile`).
 - Avoid heavy work in `__init__` to keep loading fast.
 - Wire signals locally and use `gui.log.append(...)` for logs.
@@ -92,15 +105,18 @@ Tools and dependencies.
 - Keep widget attribute names stable once they are used by config persistence or compilation logic.
 
 ### **Engine Config (get_config / set_config)**
+
 ARK can persist engine UI options per workspace in:
 `<workspace>/.ark/<engine_id>/config.json`.
 
 Flow:
+
 - `get_config(gui)` returns a JSON‑serializable dict of current UI state.
 - `set_config(gui, cfg)` applies a config dict back to the widgets.
 - The Core saves configs on compile and reloads them when a workspace is applied.
 
-#### Minimal example.
+#### Minimal example
+
 ```python
 class MyEngine(CompilerEngine):
     # ...
@@ -124,14 +140,17 @@ class MyEngine(CompilerEngine):
 ```
 
 Notes.
+
 - Keep the config flat and JSON‑safe (bool, str, list, dict).
 - Always guard for missing keys and absent widgets.
 
 ### **Advanced Config Control (Special Engines)**
+
 Special engines can fully control where/how config is stored and whether the UI
 is allowed to save it.
 
 New hooks:
+
 - `config_policy(gui) -> dict`: control permissions
   - `read`: allow Core to load/apply config
   - `write`: allow Core to persist config
@@ -143,6 +162,7 @@ If a custom loader/saver returns `None`, Core falls back to the default
 `.ark/<engine_id>/config.json` behavior.
 
 #### Example: custom path + read‑only UI
+
 ```python
 class SpecialEngine(CompilerEngine):
     id = "special"
@@ -172,6 +192,7 @@ The following dummy engine shows how to build a very large UI tab. The UI will
 handle scrolling automatically if needed. You do not need to wrap your engine
 tab in an extra scroll area for this use case, because the host UI already adds
 scrolling behavior when a tab becomes too large.
+
 ```python
 from __future__ import annotations
 
@@ -223,6 +244,7 @@ class MonolithicEngine(CompilerEngine):
 
 **SDK UI Helpers**
 Use the shared helpers to reduce duplication across engines.
+
 ```python
 from engine_sdk import add_form_checkbox, add_icon_selector, add_output_dir
 
@@ -245,7 +267,9 @@ self._output_dir_input = add_output_dir(
     "output_dir_input_dynamic",
 )
 ```
+
 **I18n**
+
 - Add `languages/en.json`, `languages/fr.json`, etc. in your engine package.
 - Two supported approaches:
   - simple mode with `engine_translate(...)` for direct key lookup
@@ -255,6 +279,7 @@ self._output_dir_input = add_output_dir(
 Concrete example (files + code).
 
 `engines/my_engine/languages/en.json`
+
 ```json
 {
   "tab_title": "My Engine",
@@ -266,6 +291,7 @@ Concrete example (files + code).
 ```
 
 `engines/my_engine/languages/fr.json`
+
 ```json
 {
   "tab_title": "Mon Moteur",
@@ -277,6 +303,7 @@ Concrete example (files + code).
 ```
 
 `engines/my_engine/__init__.py` (simple mode + live refresh).
+
 ```python
 from engine_sdk import CompilerEngine, engine_register, engine_translate
 
@@ -314,6 +341,7 @@ class MyEngine(CompilerEngine):
 ```
 
 Notes.
+
 - `engine_translate(...)` reads the active engine translation cache and falls back safely.
 - `apply_i18n(...)` remains the right place to refresh existing widgets after a language switch.
 - `load_engine_language_file(engine_package, lang)` is still available if you need custom/manual loading.
@@ -323,12 +351,14 @@ Notes.
 The auto‑builder is now integrated directly into the core compilation pipeline. It automatically reads a `mapping.json` in your engine's root directory to generate options from detected imports.
 
 You no longer need to call `compute_auto_for_engine` manually in your `build_command`. The core runner will:
+
 1. Detect modules imported in the project.
 2. Read your engine's `mapping.json`.
 3. Generate the appropriate flags.
 4. Automatically insert them into your command (usually before the entry point).
 
 #### **Minimal mapping.json example.**
+
 ```json
 {
   "numpy": {
@@ -343,6 +373,7 @@ You no longer need to call `compute_auto_for_engine` manually in your `build_com
 ```
 
 Key points.
+
 - Top‑level keys are package names.
 - Engine values accept `str`, `list[str]`, or `dict` with `args` or `flags`.
 - `"{import_name}"` is replaced by the actual import name.
@@ -352,6 +383,7 @@ Key points.
 Each example includes context, intent, and a working pattern. Adjust IDs and labels to match your engine.
 
 1. Minimal engine with a clean tool invocation.
+
 ```python
 class MinimalToolEngine(CompilerEngine):
     id = "minimal"
@@ -359,11 +391,14 @@ class MinimalToolEngine(CompilerEngine):
     def build_command(self, context: BuildContext):
         return [sys.executable, "-m", "mytool", context.entry_point]
 ```
+
 Notes.
+
 - Best for CLI wrappers.
 - No UI required.
 
-2. Engine using venv python with fallback.
+1. Engine using venv python with fallback.
+
 ```python
 def build_command(self, context: BuildContext):
     python_exe = sys.executable
@@ -375,11 +410,14 @@ def build_command(self, context: BuildContext):
                 python_exe = venv_manager.python_path(venv_path)
     return [python_exe, "-m", "mytool", context.entry_point]
 ```
+
 Notes.
+
 - Keeps isolation inside the project venv.
 - Always safe if venv missing.
 
-3. Preflight to block invalid files.
+1. Preflight to block invalid files.
+
 ```python
 def preflight(self, gui, file):
     if not os.path.isfile(file):
@@ -387,263 +425,362 @@ def preflight(self, gui, file):
         return False
     return True
 ```
+
 Notes.
+
 - Fail fast before building command.
 
-4. Environment injection for stable logs.
+1. Environment injection for stable logs.
+
 ```python
 def environment(self):
     return {"PYTHONIOENCODING": "utf-8", "LC_ALL": "C", "PYTHONUTF8": "0"}
 ```
+
 Notes.
+
 - Avoids mojibake in logs.
 
-5. Override program_and_args for a non‑Python tool.
+1. Override program_and_args for a non‑Python tool.
+
 ```python
 def program_and_args(self, context: BuildContext):
     exe = "/usr/local/bin/some_tool"
     args = ["--input", context.entry_point]
     return exe, args
 ```
+
 Notes.
+
 - Bypasses Python modules entirely.
 
-6. Required tools with python + system dependencies.
+1. Required tools with python + system dependencies.
+
 ```python
 @property
 def required_tools(self):
     return {"python": ["mytool"], "system": ["patchelf", "gcc"]}
 ```
+
 Notes.
+
 - Use minimal list to avoid heavy installs.
 
-7. on_success with output directory log.
+1. on_success with output directory log.
+
 ```python
 def on_success(self, gui, file):
     out = getattr(self, "_output_dir", None)
     if out and out.text().strip():
         log_i18n_level(gui, "success", f"Sortie: {out.text()}", f"Output: {out.text()}")
 ```
+
 Notes.
+
 - Keep logs short and actionable.
 
-8. mapping.json for a single library.
+1. mapping.json for a single library.
+
 ```json
 { "numpy": { "pyinstaller": ["--collect-all", "{import_name}"] } }
 ```
+
 Notes.
+
 - Good for quick wins.
 
-9. mapping.json with aliases.
+1. mapping.json with aliases.
+
 ```json
 { "__aliases__": { "import_to_package": { "cv2": "opencv-python" } } }
 ```
+
 Notes.
+
 - Detect `cv2` even if requirements mention `opencv-python`.
 
-11. mapping.json using structured args.
+1. mapping.json using structured args.
+
 ```json
 { "Pillow": { "nuitka": { "args": ["--include-package-data={import_name}"] } } }
 ```
+
 Notes.
+
 - Use `args` or `flags` interchangeably.
 
-12. mapping.json with multiple engines.
+1. mapping.json with multiple engines.
+
 ```json
 { "numpy": { "pyinstaller": ["--collect-all", "{import_name}"], "nuitka": "--enable-plugin=numpy" } }
 ```
+
 Notes.
+
 - One file can serve all engines.
 
-13. mapping.json for GUI frameworks.
+1. mapping.json for GUI frameworks.
+
 ```json
 { "PySide6": { "nuitka": "--enable-plugin=pyside6", "pyinstaller": ["--collect-all", "{import_name}"] } }
 ```
+
 Notes.
+
 - Ensure Qt data/plugins are bundled.
 
-14. mapping.json for hidden imports.
+1. mapping.json for hidden imports.
+
 ```json
 { "PyYAML": { "pyinstaller": ["--hidden-import", "{import_name}"] } }
 ```
+
 Notes.
+
 - Good for packages with dynamic imports.
 
-15. mapping.json for data packages.
+1. mapping.json for data packages.
+
 ```json
 { "matplotlib": { "nuitka": ["--include-package-data={import_name}"] } }
 ```
+
 Notes.
+
 - Fix missing data files at runtime.
 
-16. UI: single checkbox option.
+1. UI: single checkbox option.
+
 ```python
 self._opt_onefile = QCheckBox("Onefile")
 layout.addWidget(self._opt_onefile)
 ```
+
 Notes.
+
 - Keep labels short.
 
-17. UI: form layout for grouped options.
+1. UI: form layout for grouped options.
+
 ```python
 form = QFormLayout()
 form.addRow("Mode:", self._opt_onefile)
 layout.addLayout(form)
 ```
+
 Notes.
+
 - Clean alignment for labels + widgets.
 
-18. UI: output directory input.
+1. UI: output directory input.
+
 ```python
 self._output_dir = QLineEdit()
 self._output_dir.setPlaceholderText("Output directory")
 ```
+
 Notes.
+
 - Always give a hint.
 
-19. UI: icon selector button.
+1. UI: icon selector button.
+
 ```python
 btn = QPushButton("Choose Icon")
 btn.clicked.connect(self.select_icon)
 ```
+
 Notes.
+
 - Keep the handler small, update a field.
 
-20. UI: store data files list.
+1. UI: store data files list.
+
 ```python
 self._data_files = []
 self._data_files.append(("/path/a.txt", "a.txt"))
 ```
+
 Notes.
+
 - Use tuples for source/dest.
 
-21. UI: QFileDialog for icon.
+1. UI: QFileDialog for icon.
+
 ```python
 path, _ = QFileDialog.getOpenFileName(gui, "Select", "", "*.ico")
 if path:
     self._selected_icon = path
 ```
+
 Notes.
+
 - Validate extension if needed.
 
-22. UI: read state in build_command.
+1. UI: read state in build_command.
+
 ```python
 if self._opt_onefile.isChecked():
     cmd.append("--onefile")
 ```
+
 Notes.
+
 - Only access widgets you created.
 
-23. Design: concise labels and grouping.
+1. Design: concise labels and grouping.
+
 ```python
 self._opt_clean = QCheckBox("Clean")
 self._opt_fast = QCheckBox("Fast")
 ```
+
 Notes.
+
 - Avoid long labels in dense UIs.
 
-24. Design: placeholder and tooltip.
+1. Design: placeholder and tooltip.
+
 ```python
 self._output_name.setPlaceholderText("Output name")
 self._output_name.setToolTip("Name of the final binary")
 ```
+
 Notes.
+
 - Tooltips clarify ambiguous options.
 
-25. Design: spacing and stretch.
+1. Design: spacing and stretch.
+
 ```python
 layout.addLayout(form_layout)
 layout.addSpacing(8)
 layout.addStretch()
 ```
+
 Notes.
+
 - Keeps the tab readable at all sizes.
 
-26. Design: avoid heavy work in __init__.
+1. Design: avoid heavy work in **init**.
+
 ```python
 # do not scan files here; use preflight/build_command
 ```
+
 Notes.
+
 - Keeps startup fast.
 
-27. Design: keep UI responsive.
+1. Design: keep UI responsive.
+
 ```python
 # long tasks should run in QProcess, not in the GUI thread
 ```
+
 Notes.
+
 - Avoid freezing the app.
 
-28. I18n: translate labels with gui.tr.
+1. I18n: translate labels with gui.tr.
+
 ```python
 self._opt_onefile.setText(gui.tr("Un seul fichier", "Onefile"))
 ```
+
 Notes.
+
 - Works even if no language file exists.
 
-29. I18n: simple lookup with engine_translate.
+1. I18n: simple lookup with engine_translate.
+
 ```python
 self._opt_onefile.setText(self.engine_translate("onefile_checkbox", "Onefile"))
 ```
+
 Notes.
+
 - Best default for engine-local labels and placeholders.
 
-30. I18n: apply_i18n hook.
+1. I18n: apply_i18n hook.
+
 ```python
 def apply_i18n(self, gui, tr):
     self._opt_onefile.setText(self.engine_translate("onefile", "Onefile"))
 ```
+
 Notes.
+
 - Keep this hook for live widget refresh; host synchronization stays automatic.
 
-31. Logging with GUI.
+1. Logging with GUI.
+
 ```python
 gui.log.append("Building...")
 ```
+
 Notes.
+
 - Avoid noisy logs in loops.
 
-32. Safe fallback when widgets are missing.
+1. Safe fallback when widgets are missing.
+
 ```python
 opt = getattr(self, "_opt_onefile", None)
 if opt and opt.isChecked():
     cmd.append("--onefile")
 ```
+
 Notes.
+
 - Robust if tab not created.
 
-33. Use gui.workspace_dir.
+1. Use gui.workspace_dir.
+
 ```python
 work = getattr(gui, "workspace_dir", None)
 if work:
     cmd.extend(["--work-dir", work])
 ```
+
 Notes.
+
 - Keep outputs in the project.
 
-33. Normalize output path.
+1. Normalize output path.
+
 ```python
 out = os.path.abspath(self._output_dir.text().strip())
 cmd.extend(["--output-dir", out])
 ```
+
 Notes.
+
 - Avoid relative path issues.
 
-34. Avoid duplicate args.
+1. Avoid duplicate args.
+
 ```python
 if "--onefile" not in cmd:
     cmd.append("--onefile")
 ```
+
 Notes.
+
 - Helpful when merging auto args.
 
-35. Build command by concatenation.
+1. Build command by concatenation.
+
 ```python
 cmd = [python_path, "-m", "tool"] + extra_args + [file]
 ```
+
 Notes.
+
 - Simple and readable.
 
-36. Auto builder plugin for advanced logic.
+1. Auto builder plugin for advanced logic.
+
 ```python
 # engines/my_engine/auto_plugins.py
 
@@ -655,38 +792,53 @@ def get_auto_builder():
         return args
     return builder
 ```
+
 Notes.
+
 - Use when simple mapping is not enough.
 
-37. mapping.json for torch (example).
+1. mapping.json for torch (example).
+
 ```json
 { "torch": { "pyinstaller": ["--collect-all", "torch"] } }
 ```
+
 Notes.
+
 - PyInstaller often needs full collect‑all.
 
-38. Multiple args per package.
+1. Multiple args per package.
+
 ```json
 { "numpy": { "nuitka": ["--enable-plugin=numpy", "--include-package=numpy"] } }
 ```
+
 Notes.
+
 - Use list for ordered args.
 
-39. Detection source (requirements preferred).
+1. Detection source (requirements preferred).
+
 ```python
 # Auto builder prioritizes requirements.txt when present
 ```
+
 Notes.
+
 - Keeps build consistent with declared deps.
 
-40. Auto report for debugging.
+1. Auto report for debugging.
+
 ```bash
 PYCOMPILER_AUTO_REPORT=1
 ```
+
 Notes.
+
 - Produces a JSON report in the workspace.
 
 **Best Practices**
+
 - Keep engines stateless and drive behavior from `gui` and the target file.
 - Validate paths, handle exceptions, and log clearly.
 - Provide safe defaults when widgets are missing.

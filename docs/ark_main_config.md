@@ -33,11 +33,13 @@ build:
 `project.entry` defines the primary script to compile. It must be a path relative to the workspace root.
 
 Behavior:
+
 - When a build is triggered (CLI or GUI), this entrypoint is used to populate the `BuildContext`.
 - In the GUI, you can select any file to compile, but the `project.entry` remains the default configuration.
 - If it is missing or invalid, compilation is blocked until a valid entrypoint is selected.
 
 GUI shortcuts:
+
 - Right‑click a file in the workspace list → **Set as entrypoint**.
 - Right‑click again → **Clear entrypoint**.
 - The entrypoint is marked with an icon in the list.

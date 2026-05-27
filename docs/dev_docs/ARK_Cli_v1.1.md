@@ -133,11 +133,14 @@ build:
 ### **8. Detailed Command Behavior**
 
 #### **`ark init --entry <path>`**
+
 Initializes the current directory as a workspace.
+
 - **Requirement**: The directory must already exist.
 - **Validation**: `--entry` must point to a file, not a directory.
 
 #### **`ark build`**
+
 - **Default**: Validates `ark.yml` and builds using the configured engine.
 - **Engine Override**: `--engine <id>` uses a temporary engine without modifying `ark.yml`.
 - **Reproducible Rebuild**: `--lock [file]` rebuilds strictly from a lock file (default: `.ark/lock/latest.lock.yml`).

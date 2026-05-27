@@ -1,4 +1,5 @@
 ## **BC Plugin Guide**
+
 ## **BCASL = Before Compilation Action System & Loader.**
 
 **Overview**
@@ -7,16 +8,19 @@ A BC plugin (BCASL) is a package placed in `Plugins/` and executed before compil
 The BCASL engine and loader are **pure-Python** modules, meaning they can run in headless environments (CLI, CI) without any Qt dependencies. UI integration is provided separately by the ARK GUI.
 
 **Discovery And Loading**
+
 - Plugins are discovered in `Plugins/<plugin_name>/`.
 - The folder must contain an `__init__.py`.
 - The loader imports each package and detects plugins via `@bc_register` or `bcasl_register(manager)`.
 - If `bcasl.yml` is missing, a default file is generated.
 
 **Package Layout**
+
 - `Plugins/<plugin_name>/__init__.py`: main plugin code.
 - Optional internal modules: helpers, config, assets.
 
 **Recommended Registration (Decorator)**
+
 ```python
 from __future__ import annotations
 
@@ -59,6 +63,7 @@ class ExampleClean(BcPluginBase):
 ```
 
 **Legacy Registration (Function)**
+
 ```python
 from bcasl import BCASL
 from Plugins_SDK.BcPluginContext import BcPluginBase, PluginMeta
@@ -75,15 +80,18 @@ def bcasl_register(manager: BCASL) -> None:
 
 **PluginMeta And Compatibility**
 Important fields.
+
 - `id`: unique and stable id (used in `bcasl.yml`).
 - `name`, `version`, `description`, `author`.
 - `tags`: used for default ordering when no explicit order is provided.
 - `required_*_version`: compatibility requirements (BCASL, Core, SDK, Context).
 
 Validation.
+
 - `bcasl/validator.py` provides compatibility utilities.
 
 **Ordering And Dependencies**
+
 - `priority`: lower runs earlier.
 - `requires`: list of required plugin IDs.
 - `tags`: used for default ordering if `plugin_order` is absent.
@@ -95,6 +103,7 @@ For plugin authors, `bcasl.yml` is the canonical workspace config file.
 the format you should target in examples and real plugin code.
 
 Example.
+
 ```yaml
 file_patterns:
 - "**/*.py"
@@ -118,6 +127,7 @@ plugin_order:
 ```
 
 Important notes.
+
 - Global BCASL activation is managed by **`ark.yml`** (`plugins.bcasl_enabled`).
 - Keys in `plugins` are the `PluginMeta.id` values.
 - `plugin_order` forces ordering and adjusts priority.
@@ -126,6 +136,7 @@ Important notes.
 
 **Execution Context (PreCompileContext)**
 Key properties and methods.
+
 - `root`: Path object pointant vers la racine du workspace.
 - `name`: Nom du dossier workspace.
 - `config`: Dictionnaire complet de configuration (`bcasl.yml`).
@@ -135,6 +146,7 @@ Key properties and methods.
 - `iter_files(include, exclude)`: Itérateur optimisé (respecte les exclusions par défaut).
 
 Usage du BuildContext :
+
 ```python
 def on_pre_compile(self, ctx: PreCompileContext) -> None:
     if ctx.build_context:
@@ -146,6 +158,7 @@ def on_pre_compile(self, ctx: PreCompileContext) -> None:
 *Exemple concret : Le plugin **OutputCleaner** utilise `ctx.build_context.output_dir` pour vider le dossier de sortie avant la compilation.*
 
 Usage simplifié :
+
 ```python
 # Parcourt tous les fichiers du projet selon la config bcasl.yml
 for path in ctx.iter_files():
@@ -166,12 +179,14 @@ ok = set_selected_workspace("/path/to/new/workspace")
 ```
 
 Behavior.
+
 - The request is accepted by contract (returns True).
 - The target directory is created if needed (best‑effort).
 - If the UI is present, the Core applies the change and may stop ongoing builds.
 - After requesting a switch, avoid using the old `ctx` for sensitive actions.
 
 **UI And Logs**
+
 - Use `Plugins_SDK.GeneralContext.Dialog` for messages and progress.
 - When running in the GUI, dialogs are routed through the UI thread and inherit the theme.
 - In headless/CLI mode, these are routed to standard output.
@@ -181,6 +196,7 @@ Behavior.
 BCASL can expose per‑plugin configuration tabs in the BCASL config UI.
 
 Implement:
+
 ```python
 def build_config_tab(self, parent, ctx, config):
     # return QWidget or (title, widget) or (title, widget, on_save)
@@ -188,6 +204,7 @@ def build_config_tab(self, parent, ctx, config):
 ```
 
 Notes.
+
 - `config` is a dict to read/write.
 - `on_save(config_dict)` can return an updated dict.
 - Saved under `plugins.<id>.config` in `bcasl.yml`.
@@ -198,6 +215,7 @@ The Core now propagates language changes to the Plugin SDK automatically, and th
 SDK loads translations for all plugins found in `Plugins/` (by folder name).
 
 Example layout:
+
 ```
 Plugins/MyPlugin/
   __init__.py
@@ -207,6 +225,7 @@ Plugins/MyPlugin/
 ```
 
 Load and use (with live updates when the language changes):
+
 ```python
 from Plugins_SDK.GeneralContext import (
     get_language_code, load_plugin_language_file,
@@ -224,22 +243,26 @@ label = translate("my.plugin.id", "ui_title", "Default title")
 ```
 
 Notes.
+
 - The SDK also accepts the plugin folder name as ID (case‑insensitive).
 - If a key is missing, `translate()` falls back to the default you pass in.
 
 **Sandbox and Resource Limits**
+
 - If `options.sandbox` is `true`, plugins can run in isolated processes.
 - Resource limits via `options.plugin_limits` (mem, cpu, files, size).
 - Note: Global timeout and parallelism are no longer supported to ensure sequential stability.
 
 **Plugins_SDK Utilities**
 The SDK provides many helpers.
+
 - Project and Python file analysis.
 - Dependency and venv inspection.
 - Git, Docker, CI, tests, metrics, security utilities.
 - Template generation with `Generate_Bc_Plugin_Template()`.
 
 **Best Practices**
+
 - Keep plugins idempotent and error‑tolerant.
 - Use `ctx.iter_files` so you respect `exclude_patterns`.
 - Avoid relying on global state if sandbox is enabled.
