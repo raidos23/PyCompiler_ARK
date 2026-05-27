@@ -124,14 +124,19 @@ def resolve_engine_command(
                                 break
 
                     if target_idx != -1:
-                        for i, a in enumerate(auto_args):
-                            if a not in args:
-                                args.insert(target_idx + i, a)
+                        # Insert before target_idx
+                        # We don't check "if a not in args" because some flags like 
+                        # --collect-all or --hidden-import can be repeated with different values.
+                        # However, we avoid adding the EXACT same pair twice if possible.
+                        
+                        # To be safe and simple, we just insert all auto_args at target_idx
+                        # and rely on the engine or auto-builder to have filtered exact duplicates.
+                        for a in reversed(auto_args):
+                            args.insert(target_idx, a)
                     else:
                         # Fallback: append at the end
                         for a in auto_args:
-                            if a not in args:
-                                args.append(a)
+                            args.append(a)
                 except Exception:
                     pass
         except Exception:
