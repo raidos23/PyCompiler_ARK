@@ -451,6 +451,16 @@ class VenvManager:
     def ensure_tools_installed(self, venv_root: str, tools: list[str]) -> None:
         """Asynchronously check/install the provided tools list with progress dialog."""
         try:
+            from Core.Compiler.utils import check_internet_connection
+
+            if not check_internet_connection():
+                self._safe_log(
+                    "🛑 [ERROR] Pas de connexion internet. Installation des outils annulée.",
+                    "🛑 [ERROR] No internet connection. Tool installation cancelled.",
+                    level="error",
+                )
+                return
+
             self._reset_cancel_state()
             self._venv_check_pkgs = list(tools)
             self._venv_check_index = 0
@@ -483,6 +493,16 @@ class VenvManager:
     def ensure_tools_installed_system(self, tools: list[str]) -> None:
         """Asynchronously check/install tools in system Python using pip."""
         try:
+            from Core.Compiler.utils import check_internet_connection
+
+            if not check_internet_connection():
+                self._safe_log(
+                    "🛑 [ERROR] Pas de connexion internet. Installation système annulée.",
+                    "🛑 [ERROR] No internet connection. System installation cancelled.",
+                    level="error",
+                )
+                return
+
             self._reset_cancel_state()
             self._venv_check_pkgs = list(tools)
             self._venv_check_index = 0

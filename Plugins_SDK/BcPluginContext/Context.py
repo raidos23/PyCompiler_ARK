@@ -2360,6 +2360,27 @@ def analyze_ci_config(root: Pathish) -> CIInfo:
 # -----------------------------
 
 
+def check_internet() -> bool:
+    """Check si internet est disponible.
+
+    Returns:
+      bool: True si connecté
+    """
+    try:
+        from Core.Compiler.utils import check_internet_connection
+
+        return check_internet_connection()
+    except ImportError:
+        # Fallback si Core n'est pas accessible
+        import socket
+
+        try:
+            socket.create_connection(("8.8.8.8", 53), timeout=2)
+            return True
+        except Exception:
+            return False
+
+
 def download_file(url: str, destination: Pathish, timeout: int = 30) -> bool:
     """Téléload un file depuis une URL.
 
@@ -2375,6 +2396,8 @@ def download_file(url: str, destination: Pathish, timeout: int = 30) -> bool:
       >>> if download_file("https://example.com/file.txt", "file.txt"):
       ...   print("Téléloadment réussi")
     """
+    if not check_internet():
+        return False
     try:
         dest_path = Path(destination)
         dest_path.parent.mkdir(parents=True, exist_ok=True)
@@ -2405,6 +2428,8 @@ def check_url_accessible(url: str, timeout: int = 10) -> bool:
       >>> if check_url_accessible("https://pypi.org"):
       ...   print("PyPI est accessible")
     """
+    if not check_internet():
+        return False
     try:
         parsed = urllib.parse.urlparse(url)
         if parsed.scheme == "https":
@@ -2432,6 +2457,8 @@ def get_external_ip() -> Optional[str]:
       >>> if ip:
       ...   print(f"IP externe: {ip}")
     """
+    if not check_internet():
+        return None
     try:
         req = urllib.request.Request("https://Plugins.ipify.org?format=json")
         req.add_header("User-Agent", "PyCompiler-BC-Plugin/1.0")
