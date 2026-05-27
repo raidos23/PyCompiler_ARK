@@ -587,7 +587,7 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
                     self.cancel_all_compilations()
                 self._terminate_background_tasks()
                 try:
-                    from bcasl.Loader import ensure_bcasl_thread_stopped
+                    from Ui.Gui.Dialogs.BcaslDialog import ensure_bcasl_thread_stopped
 
                     ensure_bcasl_thread_stopped(self)
                 except Exception:
@@ -597,7 +597,7 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
                 event.ignore()
         else:
             try:
-                from bcasl.Loader import ensure_bcasl_thread_stopped
+                from Ui.Gui.Dialogs.BcaslDialog import ensure_bcasl_thread_stopped
 
                 ensure_bcasl_thread_stopped(self)
             except Exception:

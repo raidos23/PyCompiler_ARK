@@ -685,9 +685,9 @@ def cancel_all_compilations(self) -> None:
     # 1. Handle pre-compilation (BCASL) cancellation
     self._cancel_requested_during_precompile = True
     try:
-        from bcasl.Loader import ensure_bcasl_thread_stopped
-
+        from Ui.Gui.Dialogs.BcaslDialog import ensure_bcasl_thread_stopped
         ensure_bcasl_thread_stopped(self)
+
     except Exception:
         pass
 

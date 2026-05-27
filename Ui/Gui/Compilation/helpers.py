@@ -56,7 +56,7 @@ def run_bcasl_before_compile(
 ) -> None:
     """Run BCASL pre-compile stage, then invoke `on_done(report)`."""
     try:
-        from bcasl import run_pre_compile_async
+        from Ui.Gui.Dialogs.BcaslDialog import run_pre_compile_async
     except Exception:
         if callable(on_done):
             try:
