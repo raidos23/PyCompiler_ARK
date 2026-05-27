@@ -18,8 +18,8 @@ import shutil
 from pathlib import Path
 from typing import Optional
 
-from bcasl import bc_register
-from Plugins_SDK.BcPluginContext import BcPluginBase, PluginMeta, PreCompileContext
+
+from Plugins_SDK.BcPluginContext import BcPluginBase, PluginMeta, PreCompileContext, bc_register
 from Plugins_SDK.GeneralContext import (
     Dialog,
     get_language_code,
@@ -55,16 +55,27 @@ except Exception:
 
 # Plugin metadata
 PLUGIN_META = PluginMeta(
+    # pyrefly: ignore [unexpected-keyword]
     id="cleaner",
+    # pyrefly: ignore [unexpected-keyword]
     name="Cleaner",
+    # pyrefly: ignore [unexpected-keyword]
     version="1.0.0",
+    # pyrefly: ignore [unexpected-keyword]
     description="Clean the workspace (.pyc and __pycache__)",
+    # pyrefly: ignore [unexpected-keyword]
     author="Samuel Amen Ague",
+    # pyrefly: ignore [unexpected-keyword]
     tags=["clean"],
+    # pyrefly: ignore [unexpected-keyword]
     required_bcasl_version="2.0.0",
+    # pyrefly: ignore [unexpected-keyword]
     required_core_version="1.0.0",
+    # pyrefly: ignore [unexpected-keyword]
     required_plugins_sdk_version="1.0.0",
+    # pyrefly: ignore [unexpected-keyword]
     required_bc_plugin_context_version="1.0.0",
+    # pyrefly: ignore [unexpected-keyword]
     required_general_context_version="1.0.0",
 )
 

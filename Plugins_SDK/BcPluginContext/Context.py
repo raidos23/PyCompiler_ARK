@@ -75,6 +75,10 @@ def register_plugin(cls: Any) -> Any:  # type: ignore
 
     BCASL_PLUGIN_REGISTER_FUNC = "bcasl_register"
 
+from bcasl import bc_register as _bc_register
+
+def bc_register ():
+    return _bc_register
 
 # -----------------------------
 # Version information
