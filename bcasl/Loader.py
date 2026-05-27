@@ -20,8 +20,6 @@ Objectifs de simplification:
 - Config YML uniquement (bcasl.yml ou .bcasl.yml) - YML ONLY, NO YAML, NO JSON
 - Détection de plugins minimale: packages dans Plugins/ ayant __init__.py
 - Ordre: plugin_order depuis config sinon basé sur tags simples, sinon alphabétique
-- UI minimale pour activer/désactiver et réordonner (pas d'éditeur brut multi-format)
-- Async via QThread si QtCore dispo, sinon repli synchrone
 - Journalisation concise dans self.log si disponible
 - Activation/désactivation gérée par ark.yml (plugins.bcasl_enabled)
 """
@@ -39,16 +37,6 @@ from Core.Configs import load_ark_config
 from .Base import BcPluginBase, PreCompileContext
 from .executor import BCASL
 from .tagging import compute_tag_order
-
-# Qt (facultatif). Ne pas importer QtWidgets au niveau module pour compatibilité headless.
-try:  # pragma: no cover
-    from PySide6.QtCore import QObject, Qt, QThread, Signal, Slot
-except Exception:  # pragma: no cover
-    QObject = None  # type: ignore
-    QThread = None  # type: ignore
-    Signal = None  # type: ignore
-    Slot = None  # type: ignore
-    Qt = None  # type: ignore
 
 # --- Utilitaires ---
 
@@ -420,7 +408,6 @@ def _load_workspace_config(workspace_root: Path) -> dict[str, Any]:
             "venv/**",
             ".venv/**",
         ]
-        plugin_timeout = 0.0
 
         try:
             from Core.Configs import load_ark_config
@@ -478,238 +465,7 @@ def _load_workspace_config(workspace_root: Path) -> dict[str, Any]:
     return default_cfg
 
 
-# --- Plugins publique attendue par le reste de l'app ---
-
-
-def ensure_bcasl_thread_stopped(self, timeout_ms: int = 5000) -> None:
-    """Arrête proprement un thread BCASL en cours (si présent)."""
-    try:
-        # Request cooperative cancellation first, then hard-kill any sandbox workers.
-        try:
-            w = getattr(self, "_bcasl_worker", None)
-            if w is not None and hasattr(w, "request_cancel"):
-                w.request_cancel()
-        except Exception:
-            pass
-        try:
-            from .executor import kill_active_workers
-
-            kill_active_workers()
-        except Exception:
-            pass
-        t = getattr(self, "_bcasl_thread", None)
-        if t is not None:
-            try:
-                if t.isRunning():
-                    try:
-                        t.quit()
-                    except Exception:
-                        pass
-                    if not t.wait(timeout_ms):
-                        try:
-                            t.terminate()
-                        except Exception:
-                            pass
-                        try:
-                            t.wait(1000)
-                        except Exception:
-                            pass
-                    try:
-                        from .executor import kill_active_workers
-
-                        kill_active_workers()
-                    except Exception:
-                        pass
-            except Exception:
-                pass
-        # Nettoyage
-        try:
-            self._bcasl_thread = None
-            self._bcasl_worker = None
-            if hasattr(self, "_bcasl_ui_bridge"):
-                self._bcasl_ui_bridge = None
-        except Exception:
-            pass
-    except Exception:
-        pass
-
-
-def resolve_bcasl_timeout(self) -> float:
-    """Legacy resolve_bcasl_timeout - returns 0.0 (no timeout)."""
-    return 0.0
-
-
-def open_bc_loader_dialog(self) -> None:
-    """Ouvre l'éditeur visuel du pipeline BCASL.
-
-    Délègue à Ui/Gui/Dialogs/BcaslDialog.BcaslPipelineDialog.
-    Persiste dans <workspace>/bcasl.yml (format liste YAML).
-    """
-    try:
-        from PySide6.QtWidgets import QMessageBox
-    except Exception:  # pragma: no cover
-        return
-
-    try:
-        if not getattr(self, "workspace_dir", None):
-            QMessageBox.warning(
-                self,
-                self.tr("Attention", "Warning"),
-                self.tr(
-                    "Veuillez d'abord sélectionner un dossier workspace.",
-                    "Please select a workspace folder first.",
-                ),
-            )
-            return
-
-        workspace_root = Path(self.workspace_dir).resolve()
-        Plugins_dir = _get_plugins_dir()
-
-        if not Plugins_dir.exists():
-            QMessageBox.information(
-                self,
-                self.tr("Information", "Information"),
-                self.tr(
-                    "Aucun répertoire Plugins/ trouvé dans le projet.",
-                    "No Plugins/ directory found in the project.",
-                ),
-            )
-            return
-
-        meta_map = _discover_bcasl_meta(Plugins_dir)
-        if not meta_map:
-            QMessageBox.information(
-                self,
-                self.tr("Information", "Information"),
-                self.tr(
-                    "Aucun plugin détecté dans Plugins/.",
-                    "No plugins detected in Plugins.",
-                ),
-            )
-            return
-
-        cfg = _load_workspace_config(workspace_root)
-        plugin_instances = _discover_bcasl_plugins(Plugins_dir, workspace_root, cfg)
-
-        from Ui.Gui.Dialogs.BcaslDialog import open_bcasl_pipeline_dialog
-
-        open_bcasl_pipeline_dialog(
-            self, workspace_root, meta_map, cfg, plugin_instances
-        )
-
-    except Exception as e:
-        try:
-            if hasattr(self, "log") and self.log is not None:
-                self.log.append(f"BCASL Pipeline UI error: {e}")
-        except Exception:
-            pass
-
-
 # Plugins
-
-
-def run_pre_compile_async(
-    self, on_done: Optional[callable] = None, build_context: Optional[Any] = None
-) -> None:
-    """Lance BCASL en arrière-plan si QtCore est dispo; sinon, exécution bloquante rapide.
-    on_done(report) appelé à la fin si fourni.
-    """
-    try:
-        if not getattr(self, "workspace_dir", None):
-            if callable(on_done):
-                try:
-                    on_done(None)
-                except Exception:
-                    pass
-            return
-        workspace_root = Path(self.workspace_dir).resolve()
-        Plugins_dir = _get_plugins_dir()
-        cfg = None
-
-        if QThread is not None and QObject is not None and Signal is not None:
-            from Ui.Gui.Dialogs.BcaslDialog import _BCASLUiBridge, _BCASLWorker
-
-            thread = QThread()
-            # On passe cfg=None pour que le worker le charge en arrière-plan
-            worker = _BCASLWorker(
-                workspace_root,
-                Plugins_dir,
-                cfg=None,
-                build_context=build_context,
-            )
-            try:
-                self._bcasl_thread = thread
-                self._bcasl_worker = worker
-            except Exception:
-                pass
-            bridge = _BCASLUiBridge(self, on_done, thread)
-            try:
-                self._bcasl_ui_bridge = bridge
-            except Exception:
-                pass
-            if hasattr(self, "log") and self.log is not None:
-                worker.log.connect(bridge.on_log)
-            worker.finished.connect(bridge.on_finished)
-            worker.finished.connect(worker.deleteLater)
-            thread.finished.connect(thread.deleteLater)
-
-            worker.moveToThread(thread)
-            thread.started.connect(worker.run)
-            thread.start()
-            return
-
-        # Repli: exécution synchrone (bloquante pour l'UI)
-        try:
-            if hasattr(self, "log") and self.log is not None:
-                self.log.append(
-                    self.tr(
-                        "⚠️ Mode dégradé : exécution BCASL synchrone.\n",
-                        "⚠️ Degraded mode: synchronous BCASL execution.\n",
-                    )
-                )
-
-            # Vérifier si BCASL est activé globalement via ark.yml
-            if not _is_bcasl_enabled(workspace_root):
-                if callable(on_done):
-                    on_done({"status": "disabled"})
-                return
-
-            log_cb = None
-            if hasattr(self, "log") and self.log is not None:
-                log_cb = self.log.append
-            
-            cfg = _load_workspace_config(workspace_root)
-
-            report = _run_bcasl_sync(
-                workspace_root,
-                Plugins_dir,
-                cfg,
-                log_cb=log_cb,
-                build_context=build_context,
-            )
-        except Exception as _e:
-            report = None
-            try:
-                if hasattr(self, "log") and self.log is not None:
-                    self.log.append(f"Erreur BCASL: {_e}\n")
-            except Exception:
-                pass
-        if callable(on_done):
-            try:
-                on_done(report)
-            except Exception:
-                pass
-    except Exception as e:
-        try:
-            if callable(on_done):
-                on_done(None)
-        except Exception:
-            pass
-        try:
-            if hasattr(self, "log") and self.log is not None:
-                self.log.append(f"Erreur BCASL (async): {e}\n")
-        except Exception:
-            pass
 
 
 def run_pre_compile(self, build_context: Optional[Any] = None) -> Optional[object]:
@@ -718,11 +474,9 @@ def run_pre_compile(self, build_context: Optional[Any] = None) -> Optional[objec
         if not getattr(self, "workspace_dir", None):
             return None
         workspace_root = Path(self.workspace_dir).resolve()
-        Plugins_dir = _get_plugins_dir()
 
-        cfg = _load_workspace_config(workspace_root)
-
-        # Vérifier si BCASL est activé globalement via ark.yml
+        # Étape 0: Vérifier si BCASL est activé globalement via ark.yml
+        # On le fait AVANT toute découverte lourde de plugins ou de config
         if not _is_bcasl_enabled(workspace_root):
             try:
                 if hasattr(self, "log") and self.log is not None:
@@ -730,6 +484,9 @@ def run_pre_compile(self, build_context: Optional[Any] = None) -> Optional[objec
             except Exception:
                 pass
             return None
+
+        Plugins_dir = _get_plugins_dir()
+        cfg = _load_workspace_config(workspace_root)
 
         log_cb = None
         if hasattr(self, "log") and self.log is not None:

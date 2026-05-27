@@ -1013,8 +1013,205 @@ def _build_plugin_item(
 
 
 # ---------------------------------------------------------------------------
-# Point d'entrée (appelé depuis bcasl/Loader.py)
+# Point d'entrée (appelé par la GUI)
 # ---------------------------------------------------------------------------
+
+
+def ensure_bcasl_thread_stopped(self, timeout_ms: int = 5000) -> None:
+    """Arrête proprement un thread BCASL en cours (si présent)."""
+    try:
+        # Request cooperative cancellation first, then hard-kill any sandbox workers.
+        try:
+            w = getattr(self, "_bcasl_worker", None)
+            if w is not None and hasattr(w, "request_cancel"):
+                w.request_cancel()
+        except Exception:
+            pass
+        try:
+            from bcasl.executor import kill_active_workers
+
+            kill_active_workers()
+        except Exception:
+            pass
+        t = getattr(self, "_bcasl_thread", None)
+        if t is not None:
+            try:
+                if t.isRunning():
+                    try:
+                        t.quit()
+                    except Exception:
+                        pass
+                    if not t.wait(timeout_ms):
+                        try:
+                            t.terminate()
+                        except Exception:
+                            pass
+                        try:
+                            t.wait(1000)
+                        except Exception:
+                            pass
+                    try:
+                        from bcasl.executor import kill_active_workers
+
+                        kill_active_workers()
+                    except Exception:
+                        pass
+            except Exception:
+                pass
+        # Nettoyage
+        try:
+            self._bcasl_thread = None
+            self._bcasl_worker = None
+            if hasattr(self, "_bcasl_ui_bridge"):
+                self._bcasl_ui_bridge = None
+        except Exception:
+            pass
+    except Exception:
+        pass
+
+
+def open_bc_loader_dialog(self) -> None:
+    """Ouvre l'éditeur visuel du pipeline BCASL.
+
+    Persiste dans <workspace>/bcasl.yml (format liste YAML).
+    """
+    try:
+        from PySide6.QtWidgets import QMessageBox
+    except Exception:  # pragma: no cover
+        return
+
+    try:
+        if not getattr(self, "workspace_dir", None):
+            QMessageBox.warning(
+                self,
+                self.tr("Attention", "Warning"),
+                self.tr(
+                    "Veuillez d'abord sélectionner un dossier workspace.",
+                    "Please select a workspace folder first.",
+                ),
+            )
+            return
+
+        workspace_root = Path(self.workspace_dir).resolve()
+        
+        from bcasl.Loader import (_discover_bcasl_meta,
+                                  _discover_bcasl_plugins, _get_plugins_dir,
+                                  _load_workspace_config)
+        
+        Plugins_dir = _get_plugins_dir()
+
+        if not Plugins_dir.exists():
+            QMessageBox.information(
+                self,
+                self.tr("Information", "Information"),
+                self.tr(
+                    "Aucun répertoire Plugins/ trouvé dans le projet.",
+                    "No Plugins/ directory found in the project.",
+                ),
+            )
+            return
+
+        meta_map = _discover_bcasl_meta(Plugins_dir)
+        if not meta_map:
+            QMessageBox.information(
+                self,
+                self.tr("Information", "Information"),
+                self.tr(
+                    "Aucun plugin détecté dans Plugins/.",
+                    "No plugins detected in Plugins.",
+                ),
+            )
+            return
+
+        cfg = _load_workspace_config(workspace_root)
+        plugin_instances = _discover_bcasl_plugins(Plugins_dir, workspace_root, cfg)
+
+        open_bcasl_pipeline_dialog(
+            self, workspace_root, meta_map, cfg, plugin_instances
+        )
+
+    except Exception as e:
+        try:
+            if hasattr(self, "log") and self.log is not None:
+                self.log.append(f"BCASL Pipeline UI error: {e}")
+        except Exception:
+            pass
+
+
+def run_pre_compile_async(
+    self, on_done: Optional[callable] = None, build_context: Optional[Any] = None
+) -> None:
+    """Lance BCASL en arrière-plan via QThread.
+    on_done(report) appelé à la fin si fourni.
+    """
+    try:
+        if not getattr(self, "workspace_dir", None):
+            if callable(on_done):
+                try:
+                    on_done(None)
+                except Exception:
+                    pass
+            return
+        workspace_root = Path(self.workspace_dir).resolve()
+
+        from bcasl.Loader import (_get_plugins_dir, _is_bcasl_enabled,
+                                  _run_bcasl_sync, _load_workspace_config)
+
+        # Étape 0: Vérifier si BCASL est activé globalement via ark.yml
+        if not _is_bcasl_enabled(workspace_root):
+            try:
+                if hasattr(self, "log") and self.log is not None:
+                    self.log.append("BCASL désactivé dans ark.yml. Exécution ignorée\n")
+            except Exception:
+                pass
+            if callable(on_done):
+                try:
+                    on_done(None)
+                except Exception:
+                    pass
+            return
+
+        Plugins_dir = _get_plugins_dir()
+
+        thread = QThread()
+        # On passe cfg=None pour que le worker le charge en arrière-plan
+        worker = _BCASLWorker(
+            workspace_root,
+            Plugins_dir,
+            cfg=None,
+            build_context=build_context,
+        )
+        try:
+            self._bcasl_thread = thread
+            self._bcasl_worker = worker
+        except Exception:
+            pass
+        bridge = _BCASLUiBridge(self, on_done, thread)
+        try:
+            self._bcasl_ui_bridge = bridge
+        except Exception:
+            pass
+        if hasattr(self, "log") and self.log is not None:
+            worker.log.connect(bridge.on_log)
+        worker.finished.connect(bridge.on_finished)
+        worker.finished.connect(worker.deleteLater)
+        thread.finished.connect(thread.deleteLater)
+
+        worker.moveToThread(thread)
+        thread.started.connect(worker.run)
+        thread.start()
+        
+    except Exception as e:
+        try:
+            if callable(on_done):
+                on_done(None)
+        except Exception:
+            pass
+        try:
+            if hasattr(self, "log") and self.log is not None:
+                self.log.append(f"Erreur BCASL (async): {e}\n")
+        except Exception:
+            pass
 
 
 def open_bcasl_pipeline_dialog(

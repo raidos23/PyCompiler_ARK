@@ -531,7 +531,7 @@ def _connect_signals(self) -> None:
 
     if self.btn_bc_loader:
         try:
-            from bcasl import open_bc_loader_dialog
+            from Ui.Gui.Dialogs.BcaslDialog import open_bc_loader_dialog
 
             self.btn_bc_loader.clicked.connect(lambda: open_bc_loader_dialog(self))
         except Exception:

@@ -421,75 +421,6 @@ def _configure_worker_env(config: dict[str, Any]) -> None:
         pass
 
 
-def _maybe_init_qt_app(config: dict[str, Any]) -> None:
-    try:
-        _opts2 = (
-            dict(config or {}).get("options", {}) if isinstance(config, dict) else {}
-        )
-        _env_allow = os.environ.get("PYCOMPILER_SANDBOX_DIALOGS")
-        _allow_dialogs = (
-            (str(_env_allow).strip().lower() in ("1", "true", "yes"))
-            if (_env_allow is not None)
-            else bool(_opts2.get("allow_sandbox_dialogs", True))
-        )
-        if _allow_dialogs and (
-            str(os.environ.get("PYCOMPILER_NONINTERACTIVE", "")).strip().lower()
-            not in ("1", "true", "yes")
-        ):
-            os.environ.setdefault("QT_WAYLAND_DISABLE_FRACTIONAL_SCALE", "1")
-            try:
-                from PySide6.QtWidgets import QApplication as _QApp  # type: ignore
-            except Exception:
-                try:
-                    from PySide6.QtWidgets import QApplication as _QApp  # type: ignore
-                except Exception:
-                    _QApp = None  # type: ignore
-            if _QApp is not None:
-                try:
-                    if _QApp.instance() is None:
-                        _sandbox_qapp = _QApp([])  # noqa: F841
-                except Exception:
-                    pass
-    except Exception:
-        pass
-
-
-def _enforce_sdk_progress() -> None:
-    try:
-        os.environ["PYCOMPILER_ENFORCE_SDK_PROGRESS"] = "1"
-    except Exception:
-        pass
-    try:
-        from PySide6 import QtWidgets as _QtW2  # type: ignore
-
-        class _NoDirectProgressDialog:  # type: ignore
-            def __init__(self, *args, **kwargs) -> None:
-                raise RuntimeError(
-                    "Plugins must use Plugins_SDK.progress(...) instead of PySide6.QProgressDialog"
-                )
-
-        try:
-            _QtW2.QProgressDialog = _NoDirectProgressDialog  # type: ignore[attr-defined]
-        except Exception:
-            pass
-    except Exception:
-        try:
-            from PySide6 import QtWidgets as _QtW2  # type: ignore
-
-            class _NoDirectProgressDialog:  # type: ignore
-                def __init__(self, *args, **kwargs) -> None:
-                    raise RuntimeError(
-                        "Plugins must use Plugins_SDK.progress(...) instead of PyQt.QProgressDialog"
-                    )
-
-            try:
-                _QtW2.QProgressDialog = _NoDirectProgressDialog  # type: ignore[attr-defined]
-            except Exception:
-                pass
-        except Exception:
-            pass
-
-
 def _apply_resource_limits(config: dict[str, Any]) -> None:
     try:
         _opts3 = (
@@ -923,8 +854,6 @@ def _plugin_worker(
 
     try:
         _configure_worker_env(config)
-        _maybe_init_qt_app(config)
-        _enforce_sdk_progress()
         _apply_resource_limits(config)
         try:
             from bcasl import PreCompileContext as _PCC
