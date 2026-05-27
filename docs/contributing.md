@@ -21,9 +21,9 @@ For a deeper dive into ARK's internal architecture, review our core specificatio
 
 ## **Development Workflow**
 
-1.  **Code Style**: We use `ruff` for linting and `black` for formatting.
-2.  **Testing**: Run tests using `pytest`.
-3.  **Engine Registry**: New engines should be placed in the `ENGINES/` directory.
+1. **Code Style**: We use `ruff` for linting and `black` for formatting.
+2. **Testing**: Run tests using `pytest`.
+3. **Engine Registry**: New engines should be placed in the `ENGINES/` directory.
 
 ## **License**
 

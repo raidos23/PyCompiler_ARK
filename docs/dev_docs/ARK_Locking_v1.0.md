@@ -5,6 +5,7 @@ This document defines the architecture and behavior of the build locking mechani
 ---
 
 ### **1. Purpose of the Lock**
+
 The lock file is a frozen snapshot of the project's build intent and its execution environment.
 It guarantees **Reproducibility**: same lock → same artifact.
 
@@ -81,11 +82,11 @@ workspace_hash: sha256:4a5b6c7d8e9f0a1b2c3d...
 
 When rebuilding from a lock, ARK performs a "Strict Rebuild":
 
-1.  **Read Lock**: Loads the specified lock file (ignores live `ark.yml`).
-2.  **Verify Environment**: (Optional/Informational) compares the current environment against the lock metadata.
-3.  **Build**: Passes the locked data directly to the engine via the **BuildContext**.
-4.  **Shadow Lock Generation**: During the rebuild, ARK generates a *new* lock based on the current live state.
-5.  **Comparison**: The used lock and the generated shadow lock are compared.
+1. **Read Lock**: Loads the specified lock file (ignores live `ark.yml`).
+2. **Verify Environment**: (Optional/Informational) compares the current environment against the lock metadata.
+3. **Build**: Passes the locked data directly to the engine via the **BuildContext**.
+4. **Shadow Lock Generation**: During the rebuild, ARK generates a *new* lock based on the current live state.
+5. **Comparison**: The used lock and the generated shadow lock are compared.
     - **Identical**: Build successful, environment is consistent.
     - **Mismatch**: ARK issues a warning (stored in `.ark/cache/rebuild.lock/`).
 

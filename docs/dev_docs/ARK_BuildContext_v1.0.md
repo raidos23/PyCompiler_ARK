@@ -5,9 +5,11 @@ This document defines the data contract between ARK core and compilation engines
 ---
 
 ### **1. Definition**
+
 The `BuildContext` is a normalized data structure passed by ARK to:
-1.  An engine's `build_command` method.
-2.  BC (Before-Compilation) plugins via the `PreCompileContext`.
+
+1. An engine's `build_command` method.
+2. BC (Before-Compilation) plugins via the `PreCompileContext`.
 
 - **Source Agnostic**: Engines do not read source files (`ark.yml`, lock files, etc.). They rely exclusively on this context.
 - **Reproducibility**: The context contains all project-level metadata required to generate a consistent build command, regardless of whether it was triggered from a live configuration or a lock file.
@@ -15,6 +17,7 @@ The `BuildContext` is a normalized data structure passed by ARK to:
 ---
 
 ### **2. Construction Modes**
+
 The `BuildContext` is built differently depending on the entry point:
 
 | Command | Source |
@@ -64,12 +67,12 @@ Each dictionary in `data_mappings` follows this structure:
 
 An engine implementation MUST adhere to the following rules when processing a `BuildContext`:
 
-1.  **Name Application**: Use `project_name` for the final executable (e.g., `MyApp.exe` or `MyApp`).
-2.  **Entry Point**: Treat `entry_point` as the primary script to compile/bundle.
-3.  **Output Path**: Place all generated artifacts and temporary files inside `output_dir`.
-4.  **Exclusions**: Respect `exclude_patterns` by preventing those modules/files from being bundled.
-5.  **Assets**: Copy all items defined in `data_mappings` from their source to the appropriate relative destination within the bundle.
-6.  **Icon**: Apply the file specified in `icon` to the executable metadata/resource if supported by the target OS.
+1. **Name Application**: Use `project_name` for the final executable (e.g., `MyApp.exe` or `MyApp`).
+2. **Entry Point**: Treat `entry_point` as the primary script to compile/bundle.
+3. **Output Path**: Place all generated artifacts and temporary files inside `output_dir`.
+4. **Exclusions**: Respect `exclude_patterns` by preventing those modules/files from being bundled.
+5. **Assets**: Copy all items defined in `data_mappings` from their source to the appropriate relative destination within the bundle.
+6. **Icon**: Apply the file specified in `icon` to the executable metadata/resource if supported by the target OS.
 
 ---
 
