@@ -4,7 +4,7 @@
 
 # **PyCompiler ARK**
 
-A Python project build workshop with a Qt GUI, a headless-friendly CLI, a BCASL pre-compilation pipeline, and a multi-engine system.
+A Python project build workshop with a Qt GUI, a headless-friendly CLI, a pre-compilation pipeline, and a multi-engine system.
 
 ---
 
@@ -94,9 +94,12 @@ python3 pycompiler_ark.py build --lock latest.lock   # Rebuild from lock file
 python3 pycompiler_ark.py run bcasl                  # Execute BCASL pipeline
 python3 pycompiler_ark.py run bcasl --list-plugins   # List active plugins
 ```
+
 # GUI
+
 python3 pycompiler_ark.py gui                        # Launch modern IDE-like GUI
 python3 pycompiler_ark.py gui --legacy               # Launch classic GUI
+
 ```
 
 ### Developer Commands
@@ -116,7 +119,9 @@ python3 pycompiler_ark.py scaffold plugin-bcasl demo # Create a new BCASL plugin
 ```
 
 ### JSON Output
+
 For CI/CD and scripting, key commands support the `--json` flag to return machine-readable results:
+
 ```bash
 python3 pycompiler_ark.py build --json
 python3 pycompiler_ark.py init --entry main.py --json

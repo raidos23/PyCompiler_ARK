@@ -1,4 +1,4 @@
-# **ARK CLI Specification v1.0**
+# **ARK CLI Specification v1.1**
 
 This document defines the final, streamlined specification for the ARK Command Line Interface.
 
