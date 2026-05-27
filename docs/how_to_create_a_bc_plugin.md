@@ -4,6 +4,8 @@
 **Overview**
 A BC plugin (BCASL) is a package placed in `Plugins/` and executed before compilation. It registers automatically, respects execution order (priority, tags, dependencies), and uses `PreCompileContext` to work with the workspace.
 
+The BCASL engine and loader are **pure-Python** modules, meaning they can run in headless environments (CLI, CI) without any Qt dependencies. UI integration is provided separately by the ARK GUI.
+
 **Discovery And Loading**
 - Plugins are discovered in `Plugins/<plugin_name>/`.
 - The folder must contain an `__init__.py`.
@@ -31,8 +33,8 @@ META = PluginMeta(
     description="Remove .pyc files before build",
     author="You",
     tags=("clean",),
-    required_bcasl_version="2.0.0",
-    required_core_version="1.0.0",
+    required_bcasl_version="1.0.0",
+    required_core_version="1.1.0",
     required_plugins_sdk_version="1.0.0",
     required_bc_plugin_context_version="1.0.0",
     required_general_context_version="1.0.0",
@@ -171,8 +173,9 @@ Behavior.
 
 **UI And Logs**
 - Use `Plugins_SDK.GeneralContext.Dialog` for messages and progress.
-- Dialogs are routed through the UI thread and inherit the theme.
-- Direct Qt dialogs (like `QProgressDialog`) are blocked in sandboxed runs.
+- When running in the GUI, dialogs are routed through the UI thread and inherit the theme.
+- In headless/CLI mode, these are routed to standard output.
+- **Important**: Plugins should avoid direct Qt imports to remain compatible with headless execution. Direct Qt dialogs (like `QProgressDialog`) are not supported in sandboxed or headless runs.
 
 **Plugin UI Config Tabs**
 BCASL can expose per‑plugin configuration tabs in the BCASL config UI.
