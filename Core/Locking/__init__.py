@@ -52,9 +52,13 @@ def read_engine_config(workspace: Path, engine_id: str) -> dict[str, Any]:
         return {}
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
+        if isinstance(data, dict) and "options" in data and "meta" in data:
+            # Format saved by Core.engine.ConfigManager
+            opts = data.get("options")
+            return opts if isinstance(opts, dict) else {}
+        return data if isinstance(data, dict) else {}
     except Exception:
         return {}
-    return data if isinstance(data, dict) else {}
 
 
 def installed_distributions_snapshot() -> dict[str, str]:

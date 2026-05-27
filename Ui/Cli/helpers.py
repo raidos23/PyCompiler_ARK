@@ -392,7 +392,13 @@ def build_context_object_from_lock(lock_payload: dict[str, Any]) -> BuildContext
 
 def engine_config_from_lock(lock_payload: dict[str, Any]) -> dict[str, Any]:
     config = ((lock_payload.get("engine") or {}).get("config")) or {}
-    return dict(config) if isinstance(config, dict) else {}
+    if not isinstance(config, dict):
+        return {}
+    # Robust unwrapping: handle both flat config and wrapped ConfigManager format
+    if "options" in config and "meta" in config:
+        opts = config.get("options")
+        return dict(opts) if isinstance(opts, dict) else {}
+    return dict(config)
 
 
 def list_engines_payload() -> dict[str, Any]:
