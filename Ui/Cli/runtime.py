@@ -77,10 +77,24 @@ def configure_env() -> None:
 
 
 def _platform_log_dir() -> Path:
+    """
+    Return the log directory. 
+    Aligned with the global config directory dit in Ui/PreferencesManager.py.
+    """
     try:
-        return ROOT_DIR / "logs"
+        # Try to use the global config directory defined in PreferencesManager
+        from Ui.PreferencesManager import _user_config_dir
+        return Path(_user_config_dir()) / "logs"
     except Exception:
-        return Path.cwd() / "logs"
+        # Robust fallback to ~/.PyCompiler_ARK/logs
+        try:
+            return Path("~/.PyCompiler_ARK/logs").expanduser()
+        except Exception:
+            # Last resort fallbacks
+            try:
+                return ROOT_DIR / "logs"
+            except Exception:
+                return Path.cwd() / "logs"
 
 
 def enable_faulthandler() -> Optional[Path]:

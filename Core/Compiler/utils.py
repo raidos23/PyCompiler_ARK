@@ -471,52 +471,64 @@ def check_module_available(module_name: str, python_path: Optional[str] = None) 
     except Exception:
         return False
 
-def check_internet_connection(timeout: float = 3.0, retries: int = 1) -> bool:
+def check_internet_connection(timeout: float = 2.0, retries: int = 1) -> bool:
     """
     Check if internet connection is available with high certainty.
-    Uses a multi-tiered approach: DNS, socket connection, and optional HTTP.
-    
+    Uses a multi-tiered approach:
+    1. Direct TCP connection to multiple public IPs (bypasses DNS issues).
+    2. DNS resolution check for common domains.
+    3. HTTP HEAD request to common domains (handles captive portals).
+
     Args:
         timeout: Timeout in seconds for each attempt.
         retries: Number of retries before giving up.
-        
+
     Returns:
         True if internet is available, False otherwise.
     """
     import socket
     import http.client
+    import time
 
-    # Tier 1: Fast DNS check (Public DNS)
-    # Using 8.8.8.8 (Google) and 1.1.1.1 (Cloudflare)
-    dns_hosts = [("8.8.8.8", 53), ("1.1.1.1", 53), ("8.8.4.4", 53)]
-    
+    # Reliable public IPs and ports (DNS, HTTPS)
+    # 8.8.8.8 (Google), 1.1.1.1 (Cloudflare), 9.9.9.9 (Quad9)
+    targets = [
+        ("8.8.8.8", 53),   # Google DNS (TCP)
+        ("1.1.1.1", 53),   # Cloudflare DNS (TCP)
+        ("8.8.4.4", 443),  # Google HTTPS
+        ("1.0.0.1", 443),  # Cloudflare HTTPS
+        ("9.9.9.9", 53),   # Quad9 DNS
+    ]
+
+    # Common domains for DNS and HTTP checks
+    hosts = ["www.google.com", "www.cloudflare.com", "www.github.com", "pypi.org"]
+
     for attempt in range(retries + 1):
-        for host, port in dns_hosts:
+        # Tier 1: Direct IP connection (Fastest, ignores DNS failures)
+        for ip, port in targets:
             try:
-                socket.setdefaulttimeout(timeout)
-                # Try to establish a socket connection (TCP)
-                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                s.connect((host, port))
-                s.close()
-                return True
+                # create_connection is the recommended way to test connectivity
+                with socket.create_connection((ip, port), timeout=timeout):
+                    return True
             except (socket.timeout, socket.error):
                 continue
-        
-        # Tier 2: HTTP check (if Tier 1 fails, to handle captive portals or DNS blocks)
-        http_hosts = ["www.google.com", "www.bing.com", "www.github.com"]
-        for host in http_hosts:
+
+        # Tier 2: DNS & HTTP (Handles cases where IPs might be blocked but domains work via proxy)
+        for host in hosts:
             try:
+                # Check DNS first
+                socket.gethostbyname(host)
+                # Then check HTTP
                 conn = http.client.HTTPSConnection(host, timeout=timeout)
                 conn.request("HEAD", "/")
                 res = conn.getresponse()
                 conn.close()
-                if res.status < 400:
+                if 200 <= res.status < 400:
                     return True
             except Exception:
                 continue
-                
+
         if attempt < retries:
-            import time
-            time.sleep(1.0) # Wait before retry
+            time.sleep(1.0)
 
     return False
