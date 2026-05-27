@@ -18,6 +18,7 @@ from .Context import (
     Generate_Bc_Plugin_Template,
     PluginMeta,
     PreCompileContext,
+    bc_register,
 )
 
 __version__ = "1.0.0"
@@ -28,4 +29,5 @@ __all__ = [
     "PluginMeta",
     "PreCompileContext",
     "__version__",
+    "bc_register",
 ]

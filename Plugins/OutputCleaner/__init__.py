@@ -17,8 +17,8 @@ import shutil
 from pathlib import Path
 from typing import Optional
 
-from bcasl import bc_register
-from Plugins_SDK.BcPluginContext import BcPluginBase, PluginMeta, PreCompileContext
+
+from Plugins_SDK.BcPluginContext import BcPluginBase, PluginMeta, PreCompileContext, bc_register
 from Plugins_SDK.GeneralContext import (
     Dialog,
     get_language_code,
@@ -52,12 +52,19 @@ except Exception:
 
 # Plugin metadata
 PLUGIN_META = PluginMeta(
+    # pyrefly: ignore [unexpected-keyword]
     id="outputcleaner",
+    # pyrefly: ignore [unexpected-keyword]
     name="Output Cleaner",
+    # pyrefly: ignore [unexpected-keyword]
     version="1.0.0",
+    # pyrefly: ignore [unexpected-keyword]
     description="Clean the output directory before compilation",
+    # pyrefly: ignore [unexpected-keyword]
     author="Samuel Amen Ague",
+    # pyrefly: ignore [unexpected-keyword]
     tags=["clean", "output"],
+    # pyrefly: ignore [unexpected-keyword]
     required_bcasl_version="1.0.0",
 )
 
