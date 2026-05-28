@@ -92,17 +92,15 @@ class PyInstallerEngine(CompilerEngine):
         if windowed_enabled and platform.system() in {"Windows", "Darwin"}:
             cmd.append("--windowed")
 
-        output_dir = str(context.output_dir or cfg.get("output_dir") or "").strip()
+        output_dir = str(context.output_dir or "").strip()
         if output_dir:
             cmd.extend(["--distpath", output_dir])
 
-        icon_path = str(context.icon or cfg.get("selected_icon") or "").strip()
-        if not icon_path and hasattr(self, "_selected_icon") and self._selected_icon:
-            icon_path = str(self._selected_icon).strip()
+        icon_path = str(context.icon or "").strip()
         if icon_path:
             cmd.extend(["--icon", icon_path])
 
-        output_name = str(cfg.get("target_name") or context.project_name or "").strip()
+        output_name = str(context.project_name or "").strip()
         if output_name:
             cmd.extend(["--name", output_name])
 
@@ -150,24 +148,12 @@ class PyInstallerEngine(CompilerEngine):
     def on_success(self, gui, file: str) -> None:
         """Handle successful compilation."""
         try:
-            # Log success message with output location
-            output_dir = (
-                getattr(
-                    self, "_output_dir_input", getattr(gui, "output_dir_input", None)
+            if hasattr(gui, "log"):
+                log_with_level(
+                    gui,
+                    "success",
+                    "Compilation PyInstaller terminée avec succès.",
                 )
-                if hasattr(self, "_gui")
-                else getattr(self, "_output_dir_input", None)
-            )
-            if output_dir and output_dir.text().strip():
-                try:
-                    if hasattr(gui, "log"):
-                        log_with_level(
-                            gui,
-                            "success",
-                            f"Sortie générée dans: {output_dir.text().strip()}",
-                        )
-                except Exception:
-                    pass
         except Exception:
             pass
 
