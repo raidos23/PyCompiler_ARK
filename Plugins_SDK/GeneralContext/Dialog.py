@@ -41,6 +41,35 @@ class Dialog:
         colorama.init()
         self.console = Console()
         self.plugin_id: Optional[str] = None
+        self._ensure_qt_context()
+
+    def _ensure_qt_context(self) -> None:
+        """Ensure a QApplication exists to allow showing Qt dialogs from plugins."""
+        try:
+            from PySide6.QtWidgets import QApplication
+            import os
+            
+            # Skip if already initialized or in explicit headless mode
+            if QApplication.instance() is not None:
+                return
+            
+            nonint = os.environ.get("PYCOMPILER_NONINTERACTIVE")
+            if nonint and str(nonint).strip().lower() in ("1", "true", "yes"):
+                return
+            
+            # Initialize a minimal QApplication for the sandbox process
+            # We use an empty list for argv and set offscreen if no display
+            try:
+                import sys
+                if not os.environ.get("DISPLAY") and not os.environ.get("WAYLAND_DISPLAY"):
+                    if sys.platform != "win32":
+                        os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+                
+                self._qapp = QApplication([])
+            except Exception:
+                pass
+        except Exception:
+            pass
 
     def _resolve_plugin_id(self) -> str:
         """Resolve plugin id for i18n lookup.
@@ -125,15 +154,15 @@ class Dialog:
 
     def log_info(self, message: str) -> None:
         """Log an info message."""
-        self.console.print(f"[bold green][INFO][/bold green] {message}")
+        self.console.print(f"ℹ️ [bold green][INFO][/bold green] {message}")
 
     def log_warn(self, message: str) -> None:
         """Log a warning message."""
-        self.console.print(f"[bold yellow][WARN][/bold yellow] {message}")
+        self.console.print(f"⚠️ [bold yellow][WARN][/bold yellow] {message}")
 
     def log_error(self, message: str) -> None:
         """Log an error message."""
-        self.console.print(f"[bold red][ERROR][/bold red] {message}")
+        self.console.print(f"❌ [bold red][ERROR][/bold red] {message}")
 
     def sys_msgbox_for_installing(
         self,
