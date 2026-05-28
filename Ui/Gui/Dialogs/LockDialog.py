@@ -21,7 +21,6 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
-from typing import Any
 
 import yaml
 from PySide6.QtCore import Qt
@@ -37,7 +36,6 @@ from PySide6.QtWidgets import (
     QPushButton,
     QSplitter,
     QVBoxLayout,
-    QWidget,
 )
 
 from Core.Locking import load_yaml_file

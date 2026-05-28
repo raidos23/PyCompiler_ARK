@@ -1,10 +1,7 @@
 
-import pytest
-from pathlib import Path
 from Core.Configs import (
     normalize_ark_config,
-    should_exclude_file,
-    DEFAULT_EXCLUDE_PATTERNS
+    should_exclude_file
 )
 
 def test_normalize_ark_config_empty():

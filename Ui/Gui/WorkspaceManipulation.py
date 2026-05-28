@@ -25,7 +25,6 @@ import os
 from PySide6.QtGui import QDropEvent
 from PySide6.QtWidgets import QFileDialog, QMessageBox
 
-from Core.Globals import _workspace_dir_lock
 
 
 class WorkspaceAdvancedManipulation:

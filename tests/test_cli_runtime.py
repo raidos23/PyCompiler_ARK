@@ -1,8 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 import unittest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 from pathlib import Path
-import os
 import sys
 
 # Add project root to sys.path

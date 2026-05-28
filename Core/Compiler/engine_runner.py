@@ -363,7 +363,7 @@ def run_engine_compile_streaming(
     command = [safe_program] + safe_args
 
     if on_stdout:
-        on_stdout(f"Etape 3/3 : Execution du processus de compilation...")
+        on_stdout("Etape 3/3 : Execution du processus de compilation...")
         on_stdout(f"  Commande : {' '.join(command)}")
         on_stdout("-" * 40)
 
