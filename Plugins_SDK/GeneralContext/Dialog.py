@@ -26,6 +26,8 @@ from rich.console import Console
 from Ui.Gui.WidgetsCreator import (
     InstallAuth,
     ProgressDialog,
+    _is_cli_mode,
+    _is_noninteractive,
     _redact_secrets,
     show_msgbox,
     sys_msgbox_for_installing,
@@ -41,20 +43,21 @@ class Dialog:
         colorama.init()
         self.console = Console()
         self.plugin_id: Optional[str] = None
-        self._ensure_qt_context()
+        if not _is_cli_mode() and not _is_noninteractive():
+            self._ensure_qt_context()
 
     def _ensure_qt_context(self) -> None:
         """Ensure a QApplication exists to allow showing Qt dialogs from plugins."""
         try:
             from PySide6.QtWidgets import QApplication
             import os
-            
+
+            # CLI and headless runs must stay on Rich, never bootstrap Qt here.
+            if _is_cli_mode() or _is_noninteractive():
+                return
+
             # Skip if already initialized or in explicit headless mode
             if QApplication.instance() is not None:
-                return
-            
-            nonint = os.environ.get("PYCOMPILER_NONINTERACTIVE")
-            if nonint and str(nonint).strip().lower() in ("1", "true", "yes"):
                 return
             
             # Initialize a minimal QApplication for the sandbox process
@@ -178,48 +181,60 @@ class Dialog:
     ) -> ProgressDialog:
         """Create and return a ProgressDialog from Core.dialogs.
 
-        Uses Core.dialogs.ProgressDialog when GUI is available, 
+        Uses Core.dialogs.ProgressDialog when GUI is available,
         otherwise returns a Rich-based console fallback.
         """
-        from PySide6.QtWidgets import QApplication
-        if QApplication.instance() is None:
-            # Fallback for headless/sandbox mode using Rich
-            from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskProgressColumn, TimeElapsedColumn
-            
-            class ConsoleProgress:
-                def __init__(self, title_str, console_obj):
-                    self.progress = Progress(
-                        SpinnerColumn(),
-                        TextColumn("[progress.description]{task.description}"),
-                        BarColumn(),
-                        TaskProgressColumn(),
-                        TimeElapsedColumn(),
-                        console=console_obj,
-                        transient=True # Disappear when finished
-                    )
-                    self.task_id = self.progress.add_task(description=title_str, total=None)
+        use_rich = _is_cli_mode() or _is_noninteractive()
+        if not use_rich:
+            try:
+                from PySide6.QtWidgets import QApplication
 
-                def show(self):
-                    self.progress.start()
+                if QApplication.instance() is not None:
+                    return ProgressDialog(title=title, cancelable=cancelable)
+            except Exception:
+                pass
 
-                def set_message(self, msg):
-                    self.progress.update(self.task_id, description=msg)
+        from rich.progress import (
+            BarColumn,
+            Progress,
+            SpinnerColumn,
+            TaskProgressColumn,
+            TextColumn,
+            TimeElapsedColumn,
+        )
 
-                def set_status(self, msg):
-                    self.set_message(msg)
+        class ConsoleProgress:
+            def __init__(self, title_str, console_obj):
+                self.progress = Progress(
+                    SpinnerColumn(),
+                    TextColumn("[progress.description]{task.description}"),
+                    BarColumn(),
+                    TaskProgressColumn(),
+                    TimeElapsedColumn(),
+                    console=console_obj,
+                    transient=True,
+                )
+                self.task_id = self.progress.add_task(description=title_str, total=None)
 
-                def set_progress(self, val, total=None):
-                    kwargs = {"completed": val}
-                    if total is not None:
-                        kwargs["total"] = total
-                    self.progress.update(self.task_id, **kwargs)
+            def show(self):
+                self.progress.start()
 
-                def close(self):
-                    self.progress.stop()
+            def set_message(self, msg):
+                self.progress.update(self.task_id, description=msg)
 
-                def is_canceled(self):
-                    return False
-            
-            return ConsoleProgress(title, self.console) # type: ignore
+            def set_status(self, msg):
+                self.set_message(msg)
 
-        return ProgressDialog(title=title, cancelable=cancelable)
+            def set_progress(self, val, total=None):
+                kwargs = {"completed": val}
+                if total is not None:
+                    kwargs["total"] = total
+                self.progress.update(self.task_id, **kwargs)
+
+            def close(self):
+                self.progress.stop()
+
+            def is_canceled(self):
+                return False
+
+        return ConsoleProgress(title, self.console)  # type: ignore

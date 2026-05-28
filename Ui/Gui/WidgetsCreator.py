@@ -42,6 +42,8 @@ from PySide6.QtWidgets import (
     QPushButton,
     QVBoxLayout,
 )
+from rich.console import Console
+from rich.panel import Panel
 
 
 def _get_linux_display_server() -> str:
@@ -139,6 +141,29 @@ def _is_noninteractive() -> bool:
         return False
 
 
+def _is_cli_mode() -> bool:
+    """True when ARK CLI is active: plugins/dialogs must use Rich, not Qt."""
+    try:
+        from Ui.Cli.runtime import is_cli_mode
+
+        return is_cli_mode()
+    except Exception:
+        try:
+            import os
+
+            v = os.environ.get("PYCOMPILER_CLI")
+            if v is None:
+                return False
+            return str(v).strip().lower() not in ("", "0", "false", "no")
+        except Exception:
+            return False
+
+
+def _use_rich_dialogs() -> bool:
+    """Use Rich console dialogs instead of Qt message boxes."""
+    return _is_cli_mode() or _is_noninteractive()
+
+
 def _qt_active_parent():
     """Get the active Qt parent window."""
     try:
@@ -173,21 +198,16 @@ def show_msgbox(
     Show a message box if a Qt toolkit is available; fallback to console output otherwise.
     Executes in the main Qt thread to ensure theme inheritance and proper UI integration.
     """
-    if QApplication.instance() is None or _is_noninteractive():
-        try:
-            from Ui.i18n import log_with_level
+    if _use_rich_dialogs() or QApplication.instance() is None:
+        if str(kind or "").lower() != "question":
+            try:
+                from Ui.i18n import log_with_level
 
-            lvl = "warning" if kind in ("warning", "error") else "info"
-            log_with_level(None, lvl, f"[MSGBOX:{kind}] {title}: {text}")
-        except Exception:
-            pass
-        if kind == "question":
-            return (
-                True
-                if (default and str(default).lower() in ("yes", "ok", "true", "1"))
-                else False
-            )
-        return None
+                lvl = "warning" if kind in ("warning", "error") else "info"
+                log_with_level(None, lvl, f"[MSGBOX:{kind}] {title}: {text}")
+            except Exception:
+                pass
+        return _show_rich_msgbox(kind, title, text, default=default)
 
     def _show_in_main_thread():
         try:
@@ -228,15 +248,63 @@ def show_msgbox(
                 log_with_level(None, lvl, f"[MSGBOX:{kind}] {title}: {text}")
             except Exception:
                 pass
-            if kind == "question":
-                return (
-                    True
-                    if (default and str(default).lower() in ("yes", "ok", "true", "1"))
-                    else False
-                )
-            return None
+            return _show_rich_msgbox(kind, title, text, default=default)
 
     return _invoke_in_main_thread(_show_in_main_thread)
+
+
+def _show_rich_msgbox(
+    kind: str, title: str, text: str, *, default: Optional[str] = None
+) -> Optional[bool]:
+    """Render a Rich message-box-style panel in CLI environments."""
+    from Ui.Cli.interactive import cli_pause_for_user_input
+
+    kind_key = str(kind or "info").lower()
+    icon = "ℹ"
+    border_style = "cyan"
+
+    if kind_key == "warning":
+        icon = "⚠"
+        border_style = "yellow"
+    elif kind_key == "error":
+        icon = "✖"
+        border_style = "red"
+    elif kind_key == "question":
+        icon = "?"
+        border_style = "magenta"
+
+    panel_title = f"{icon} {str(title)}" if title else icon
+    body = str(text or "")
+    if kind_key == "question":
+        body = f"{body}\n\n[bold]Yes[/bold]/No"
+
+    with cli_pause_for_user_input() as console:
+        if console is None:
+            console = Console()
+        console.print(
+            Panel(
+                body,
+                title=panel_title,
+                border_style=border_style,
+                expand=False,
+            )
+        )
+
+        if kind_key == "question":
+            default_yes = bool(
+                default and str(default).lower() in ("yes", "ok", "true", "1")
+            )
+            try:
+                from Ui.i18n import is_french_language
+
+                prompt = "Confirmer" if is_french_language(None) else "Confirm"
+            except Exception:
+                prompt = "Confirm"
+            from Ui.Cli.interactive import ask_yes_no
+
+            return ask_yes_no(prompt, default_yes=default_yes)
+
+    return None
 
 
 def sys_msgbox_for_installing(
@@ -273,7 +341,7 @@ def sys_msgbox_for_installing(
                 else "\nOn Linux/macOS, your sudo password is required."
             )
         )
-    if QApplication.instance() is not None:
+    if QApplication.instance() is not None and not _use_rich_dialogs():
         try:
             parent = _qt_active_parent()
             proceed = show_msgbox("question", title, msg, default="Yes")
