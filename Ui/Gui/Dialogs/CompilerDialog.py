@@ -301,6 +301,11 @@ def compile_all(self) -> None:
                 "❌ Échec de la validation BCASL. La compilation ne peut pas continuer.",
                 "❌ BCASL validation failed. Compilation cannot continue.",
             )
+            try:
+                from Ui.Gui.Dialogs.BcaslDialog import ensure_bcasl_thread_stopped
+                ensure_bcasl_thread_stopped(self)
+            except Exception:
+                pass
             self.set_controls_enabled(True)
             return
 
@@ -427,6 +432,11 @@ def rebuild_from_lock(self, lock_path: Path) -> None:
                 return
 
             if not bcasl_report_allows_compile(self, _report):
+                try:
+                    from Ui.Gui.Dialogs.BcaslDialog import ensure_bcasl_thread_stopped
+                    ensure_bcasl_thread_stopped(self)
+                except Exception:
+                    pass
                 self.set_controls_enabled(True)
                 return
 
@@ -588,6 +598,11 @@ def start_compilation_process(self, engine_id: str, file_path: str) -> bool:
                 "❌ Échec de la validation BCASL. La compilation ne peut pas continuer.",
                 "❌ BCASL validation failed. Compilation cannot continue.",
             )
+            try:
+                from Ui.Gui.Dialogs.BcaslDialog import ensure_bcasl_thread_stopped
+                ensure_bcasl_thread_stopped(self)
+            except Exception:
+                pass
             self.set_controls_enabled(True)
             return
 
