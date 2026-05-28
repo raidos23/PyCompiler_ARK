@@ -485,11 +485,18 @@ class VenvManager:
             )
             self._call_ui("update_progress_progress", "tools_check", 0, len(tools))
             
-            # In CLI mode without a global event loop, we might need a local one
-            is_cli = getattr(self.parent, "verbose", False) or os.environ.get("PYCOMPILER_CLI") == "1"
+            # We need a local event loop if we are in a background thread or CLI mode
+            # to process QProcess signals and QTimer events.
+            from PySide6.QtCore import QCoreApplication, QEventLoop, QThread
+            
+            must_wait = (
+                getattr(self.parent, "verbose", False) or 
+                os.environ.get("PYCOMPILER_CLI") == "1" or
+                (QCoreApplication.instance() and QThread.currentThread() != QCoreApplication.instance().thread())
+            )
+            
             loop = None
-            if is_cli:
-                from PySide6.QtCore import QCoreApplication, QEventLoop
+            if must_wait:
                 if not QCoreApplication.instance():
                     self._app_ref = QCoreApplication([]) # Keep alive
                 
@@ -541,18 +548,20 @@ class VenvManager:
             self._bind_cancel_for_progress(
                 "tools_check", "verification des outils systeme"
             )
-            self._call_ui(
-                "update_progress_message",
-                "tools_check",
-                f"Verification de {tools[0]}...",
-            )
+            self._call_ui("update_progress_message", "tools_check", f"Verification de {tools[0]}...")
             self._call_ui("update_progress_progress", "tools_check", 0, len(tools))
             
-            # In CLI mode without a global event loop, we might need a local one
-            is_cli = getattr(self.parent, "verbose", False) or os.environ.get("PYCOMPILER_CLI") == "1"
+            # We need a local event loop if we are in a background thread or CLI mode
+            from PySide6.QtCore import QCoreApplication, QEventLoop, QThread
+            
+            must_wait = (
+                getattr(self.parent, "verbose", False) or 
+                os.environ.get("PYCOMPILER_CLI") == "1" or
+                (QCoreApplication.instance() and QThread.currentThread() != QCoreApplication.instance().thread())
+            )
+            
             loop = None
-            if is_cli:
-                from PySide6.QtCore import QCoreApplication, QEventLoop
+            if must_wait:
                 if not QCoreApplication.instance():
                     self._app_ref = QCoreApplication([]) # Keep alive
                 
