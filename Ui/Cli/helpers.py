@@ -401,6 +401,52 @@ def engine_config_from_lock(lock_payload: dict[str, Any]) -> dict[str, Any]:
     return dict(config)
 
 
+def ensure_correct_git_commit(workspace: Path, lock_payload: dict[str, Any]) -> bool:
+    """Vérifie si le commit Git actuel correspond à celui du verrou."""
+    locked_commit = ((lock_payload.get("project") or {}).get("git_commit"))
+    if not locked_commit:
+        return True
+
+    from Core.Locking import get_git_commit_hash
+    current_commit = get_git_commit_hash(workspace)
+
+    if not current_commit or current_commit == locked_commit:
+        return True
+
+    from .output import warn, info, error, success
+    import platform
+    import subprocess
+
+    is_linux = platform.system().lower() == "linux"
+
+    warn(f"Mismatch Git détecté.")
+    info(f" - Verrou : {locked_commit[:8]}")
+    info(f" - Actuel : {current_commit[:8]}")
+
+    if is_linux:
+        try:
+            import click
+            if click.confirm(f"Effectuer un 'git checkout {locked_commit[:8]}' automatique ?", default=True):
+                info(f"Alignement Git en cours...")
+                subprocess.run(["git", "checkout", locked_commit], cwd=str(workspace), check=True)
+                success("Workspace aligné.")
+                return True
+            else:
+                warn("Build avec mismatch (non recommandé).")
+                return True
+        except Exception as e:
+            error(f"Échec checkout : {e}")
+            return False
+    else:
+        warn("Checkout automatique non supporté sur cette plateforme.")
+        info(f"Action manuelle requise : git checkout {locked_commit}")
+        try:
+            import click
+            return click.confirm("Continuer quand même ?", default=False)
+        except Exception:
+            return True
+
+
 def list_engines_payload() -> dict[str, Any]:
     return engine_list_payload()
 
