@@ -97,7 +97,7 @@ class CXFreezeEngine(CompilerEngine):
         if icon_path:
             cmd.extend(["--icon", icon_path])
 
-        target_name = str(cfg.get("target_name") or context.project_name or "").strip()
+        target_name = str(context.project_name or "").strip()
         if target_name:
             cmd.extend(["--target-name", target_name])
 
@@ -215,20 +215,8 @@ class CXFreezeEngine(CompilerEngine):
             diagnostics_layout.addWidget(self._cx_verbose)
             diagnostics_group.setLayout(diagnostics_layout)
 
-            output_group = QGroupBox("Target", tab)
-            output_layout = QVBoxLayout()
-            output_layout.setSpacing(6)
-
-            # Target name
-            self._cx_target_name = add_output_dir(
-                output_layout,
-                "Nom de sortie (--target-name)",
-                "cx_target_name_dynamic",
-            )
-            output_group.setLayout(output_layout)
-
             hint = QLabel(
-                "Tip: use target name for the executable label. Global icon and output are managed in ark.yml.",
+                "Tip: use the console visibility option. Global icon and output are managed in ark.yml.",
                 tab,
             )
             hint.setStyleSheet("color: #888; font-size: 11px;")
@@ -236,7 +224,6 @@ class CXFreezeEngine(CompilerEngine):
 
             layout.addWidget(build_group)
             layout.addWidget(diagnostics_group)
-            layout.addWidget(output_group)
             layout.addWidget(hint)
             layout.addStretch()
 
@@ -261,8 +248,6 @@ class CXFreezeEngine(CompilerEngine):
             cfg = {}
             if hasattr(self, "_cx_windowed") and self._cx_windowed is not None:
                 cfg["windowed"] = bool(self._cx_windowed.isChecked())
-            if hasattr(self, "_cx_target_name") and self._cx_target_name is not None:
-                cfg["target_name"] = self._cx_target_name.text().strip()
             if hasattr(self, "_cx_debug") and self._cx_debug is not None:
                 cfg["debug"] = bool(self._cx_debug.isChecked())
             if hasattr(self, "_cx_verbose") and self._cx_verbose is not None:
@@ -286,13 +271,6 @@ class CXFreezeEngine(CompilerEngine):
                 and "windowed" in cfg
             ):
                 self._cx_windowed.setChecked(bool(cfg.get("windowed")))
-            if (
-                hasattr(self, "_cx_target_name")
-                and self._cx_target_name is not None
-                and "target_name" in cfg
-            ):
-                val = cfg.get("target_name") or ""
-                self._cx_target_name.setText(str(val))
             if (
                 hasattr(self, "_cx_debug")
                 and self._cx_debug is not None
@@ -355,12 +333,6 @@ class CXFreezeEngine(CompilerEngine):
                 )
             if hasattr(self, "_cx_verbose"):
                 self._cx_verbose.setToolTip(self.engine_translate("tt_verbose", ""))
-            if hasattr(self, "_cx_target_name"):
-                self._cx_target_name.setPlaceholderText(
-                    self.engine_translate(
-                        "target_name_placeholder", "Target executable name"
-                    )
-                )
         except Exception:
             pass
 
