@@ -121,7 +121,7 @@ class CXFreezeEngine(CompilerEngine):
             if source and destination:
                 cmd.extend(["--include-files", f"{source}={destination}"])
 
-        cmd.extend(["--script", context.entry_point])
+        cmd.append(context.entry_point)
         return cmd
 
     def environment(self) -> Optional[dict[str, str]]:
