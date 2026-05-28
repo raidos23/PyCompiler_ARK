@@ -93,13 +93,10 @@ python3 pycompiler_ark.py build --lock latest.lock   # Rebuild from lock file
 # Execution
 python3 pycompiler_ark.py run bcasl                  # Execute BCASL pipeline
 python3 pycompiler_ark.py run bcasl --list-plugins   # List active plugins
-```
 
 # GUI
-
 python3 pycompiler_ark.py gui                        # Launch modern IDE-like GUI
 python3 pycompiler_ark.py gui --legacy               # Launch classic GUI
-
 ```
 
 ### Developer Commands
@@ -129,7 +126,7 @@ python3 pycompiler_ark.py init --entry main.py --json
 
 ---
 
-## How it works
+## Documentation
 
 - [Contributing guide](docs/contributing.md)
 - [How to create an engine](docs/how_to_create_an_engine.md)
@@ -139,8 +136,8 @@ python3 pycompiler_ark.py init --entry main.py --json
 
 ## Configuration
 
-- **`ark.yml`**: workspace/build exclusion patterns, build entrypoint, and a few workspace-level defaults consumed by BCASL bootstrap.
-- **`bcasl.yml`**: plugin enable/disable, order, and timeouts.
+- **`ark.yml`**: Project metadata, build entrypoint, build/workspace exclusions, and global BCASL activation.
+- **`bcasl.yml`**: Detailed BCASL pipeline configuration, plugin settings, and execution order.
 
 ---
 

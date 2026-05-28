@@ -45,12 +45,15 @@ project:
   entry: src/main.py       # Copied from project.entry
 
 workspace:
-  exclude_patterns:        # Copied from workspace.exclude
+  exclude_patterns:        # Copied from build.exclude (legacy support)
     - tests/**/*
     - "**/__pycache__/**"
 
 build:
   output: dist/            # Copied from build.output
+  exclude:                 # Copied from build.exclude
+    - tests/**/*
+    - "**/__pycache__/**"
   data:                    # Copied from build.data
     - source: assets/
       destination: assets/
