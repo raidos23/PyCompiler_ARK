@@ -251,12 +251,26 @@ def should_enable_qt(argv: list[str] | None) -> bool:
     return False
 
 
+def is_cli_mode() -> bool:
+    """True when ARK runs as a terminal CLI (no Qt UI for plugins/dialogs)."""
+    try:
+        v = os.environ.get("PYCOMPILER_CLI")
+        if v is None:
+            return False
+        return str(v).strip().lower() not in ("", "0", "false", "no")
+    except Exception:
+        return False
+
+
 def install_runtime(app_version: str, enable_qt: bool = True) -> None:
     ensure_sys_path()
     configure_logging()
     configure_env()
     enable_faulthandler()
     if enable_qt:
+        os.environ.pop("PYCOMPILER_CLI", None)
         install_qt_metadata(app_version)
         install_qt_handlers()
+    else:
+        os.environ["PYCOMPILER_CLI"] = "1"
     install_signal_handlers()

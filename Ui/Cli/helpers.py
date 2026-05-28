@@ -70,10 +70,13 @@ def run_engine_compile(
     captured_stdout = []
     captured_stderr = []
 
+    from .interactive import register_cli_status, unregister_cli_status
+
     console = get_console()
     status = None
     if not verbose and console:
         status = console.status("[cyan]Initialisation de la compilation...[/cyan]", spinner="dots")
+        register_cli_status(status)
         status.start()
 
     def _on_stdout(line: str):
@@ -124,6 +127,7 @@ def run_engine_compile(
         signal.signal(signal.SIGINT, old_handler)
         if status:
             status.stop()
+            unregister_cli_status(status)
 
     if _CLI_CANCEL_EVENT.is_set():
         error("Compilation annulee par l'utilisateur (Ctrl+C).")
@@ -479,10 +483,13 @@ def run_bcasl_before_compile_sync(
 
     from .output import error, info, log, success, get_console
 
+    from .interactive import register_cli_status, unregister_cli_status
+
     console = get_console()
     status = None
     if not verbose and console:
         status = console.status("[cyan]Exécution de BCASL...[/cyan]", spinner="dots")
+        register_cli_status(status)
         status.start()
 
     class CliBcaslHost:
@@ -530,6 +537,7 @@ def run_bcasl_before_compile_sync(
     except Exception as exc:
         if status:
             status.stop()
+            unregister_cli_status(status)
         error(f"BCASL execution failed: {exc}")
         return False
     finally:
@@ -537,6 +545,7 @@ def run_bcasl_before_compile_sync(
         signal.signal(signal.SIGINT, old_handler)
         if status:
             status.stop()
+            unregister_cli_status(status)
 
     if _CLI_CANCEL_EVENT.is_set():
         error("BCASL annule par l'utilisateur (Ctrl+C).")
@@ -579,10 +588,13 @@ def run_bcasl_headless(args: list[str], verbose: bool = False) -> int:
                     workspace = candidate.resolve()
                 break
 
+    from .interactive import register_cli_status, unregister_cli_status
+
     console = get_console()
     status = None
     if not verbose and console:
         status = console.status("[cyan]Exécution de BCASL (headless)...[/cyan]", spinner="dots")
+        register_cli_status(status)
         status.start()
 
     class CliBcaslHost:
@@ -629,28 +641,36 @@ def run_bcasl_headless(args: list[str], verbose: bool = False) -> int:
         if _CLI_CANCEL_EVENT.is_set():
             if status:
                 status.stop()
+                unregister_cli_status(status)
             error("BCASL annule par l'utilisateur (Ctrl+C).")
             return 1
             
         if report and hasattr(report, "ok") and not getattr(report, "ok"):
             if status:
                 status.stop()
+                unregister_cli_status(status)
             error("\nBCASL found issues.")
             return 1
             
         if status:
             status.stop()
+            unregister_cli_status(status)
         success("\nBCASL completed successfully.")
         return 0
     except Exception as exc:
         if status:
             status.stop()
+            unregister_cli_status(status)
         error(f"BCASL failed: {exc}")
         return 1
     finally:
         signal.signal(signal.SIGINT, old_handler)
         if status:
-            status.stop()
+            try:
+                status.stop()
+            except Exception:
+                pass
+            unregister_cli_status(status)
 
 
 def launch_gui(*, legacy: bool = False) -> int:
