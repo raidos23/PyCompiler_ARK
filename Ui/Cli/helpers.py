@@ -115,6 +115,7 @@ def run_engine_compile(
                 on_stdout=_on_stdout,
                 on_stderr=_on_stderr,
                 stop_signal=lambda: _CLI_CANCEL_EVENT.is_set(),
+                verbose=verbose,
             )
     except Exception as exc:
         result = {

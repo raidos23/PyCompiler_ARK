@@ -484,7 +484,24 @@ class VenvManager:
                 f"Verification de {tools[0]}...",
             )
             self._call_ui("update_progress_progress", "tools_check", 0, len(tools))
+            
+            # In CLI mode without a global event loop, we might need a local one
+            is_cli = getattr(self.parent, "verbose", False) or os.environ.get("PYCOMPILER_CLI") == "1"
+            loop = None
+            if is_cli:
+                from PySide6.QtCore import QCoreApplication, QEventLoop
+                if not QCoreApplication.instance():
+                    self._app_ref = QCoreApplication([]) # Keep alive
+                
+                loop = QEventLoop()
+                # We need a way to stop the loop when all tools are checked
+                self._venv_check_loop = loop
+            
             self._check_next_venv_pkg()
+            
+            if loop:
+                loop.exec()
+                self._venv_check_loop = None
         except Exception as e:
             self._safe_log(
                 f"[ERROR] {self._tools_stage_prefix()}Erreur ensure_tools_installed: {e}"
@@ -530,7 +547,23 @@ class VenvManager:
                 f"Verification de {tools[0]}...",
             )
             self._call_ui("update_progress_progress", "tools_check", 0, len(tools))
+            
+            # In CLI mode without a global event loop, we might need a local one
+            is_cli = getattr(self.parent, "verbose", False) or os.environ.get("PYCOMPILER_CLI") == "1"
+            loop = None
+            if is_cli:
+                from PySide6.QtCore import QCoreApplication, QEventLoop
+                if not QCoreApplication.instance():
+                    self._app_ref = QCoreApplication([]) # Keep alive
+                
+                loop = QEventLoop()
+                self._venv_check_loop = loop
+            
             self._check_next_venv_pkg()
+            
+            if loop:
+                loop.exec()
+                self._venv_check_loop = None
         except Exception as e:
             self._safe_log(
                 f"[ERROR] {self._tools_stage_prefix()}Erreur ensure_tools_installed_system: {e}"
@@ -918,6 +951,10 @@ class VenvManager:
         """Execute _check_next_venv_pkg logic for this component."""
         if self._is_cancel_requested():
             self._call_ui("close_progress", "tools_check")
+            # Exit local loop if any
+            loop = getattr(self, "_venv_check_loop", None)
+            if loop:
+                loop.quit()
             return
         if self._venv_check_index >= len(self._venv_check_pkgs):
             self._call_ui(
@@ -930,6 +967,11 @@ class VenvManager:
             )
             self._call_ui("update_progress_progress", "tools_check", total, total)
             self._call_ui("close_progress", "tools_check")
+
+            # Exit local loop if any
+            loop = getattr(self, "_venv_check_loop", None)
+            if loop:
+                loop.quit()
 
             # Installer les dependances du projet si un requirements.txt est present
             try:
@@ -996,6 +1038,11 @@ class VenvManager:
                     level="error",
                 )
                 self._call_ui("close_progress", "tools_check")
+                
+                # Exit local loop if any
+                loop = getattr(self, "_venv_check_loop", None)
+                if loop:
+                    loop.quit()
                 return
 
             self._safe_log(
@@ -1048,7 +1095,14 @@ class VenvManager:
         lines = data.strip().splitlines()
         if lines:
             self._call_ui("update_progress_message", "tools_check", lines[-1][:200])
-        self._safe_log(data)
+            
+            # Detailed logging for verbose mode or errors
+            is_verbose = getattr(self.parent, "verbose", False)
+            if is_verbose or error:
+                for line in lines:
+                    lvl = "warning" if error else "info"
+                    # We use a slight indentation to make it clear it's sub-output
+                    self._safe_log(f"  [pip] {line}", level=lvl)
 
     def verify_venv_binding(self, venv_root: str) -> bool:
         """Keep synchronous verification path for internal compatibility."""
@@ -1479,7 +1533,13 @@ class VenvManager:
                 self._venv_progress_lines,
                 0,
             )
-        self._safe_log(data)
+            
+            # Detailed logging for verbose mode or errors
+            is_verbose = getattr(self.parent, "verbose", False)
+            if is_verbose or error:
+                for line in lines:
+                    lvl = "warning" if error else "info"
+                    self._safe_log(f"  [venv] {line}", level=lvl)
 
     def _on_venv_created(self, process, code, status, venv_path):
         """Handle the related event callback."""
@@ -1735,7 +1795,13 @@ class VenvManager:
             self._call_ui(
                 "update_progress_progress", "reqs_install", self._pip_progress_lines, 0
             )
-        self._safe_log(data)
+            
+            # Detailed logging for verbose mode or errors
+            is_verbose = getattr(self.parent, "verbose", False)
+            if is_verbose or error:
+                for line in lines:
+                    lvl = "warning" if error else "info"
+                    self._safe_log(f"  [pip] {line}", level=lvl)
 
     def _on_pip_finished(self, process, code, status):
         """Handle the related event callback."""

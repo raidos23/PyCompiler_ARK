@@ -160,6 +160,7 @@ def run_engine_compile(
     context: BuildContext,
     engine_config: dict[str, Any] | None = None,
     gui: Any = None,
+    verbose: bool = False,
 ) -> dict[str, Any]:
     """
     Execute a compilation synchronously.
@@ -175,6 +176,7 @@ def run_engine_compile(
         engine_config: Optional per-engine config overrides (forwarded to
                        ``engine._config_overrides``).
         gui:           Optional GUI object.
+        verbose:       Whether to enable verbose logging.
 
     Returns:
         A result dict with success status, return code, command, stdout, stderr, and error message.
@@ -196,6 +198,7 @@ def run_engine_compile(
         on_stdout=_on_stdout,
         on_stderr=_on_stderr,
         gui=gui,
+        verbose=verbose,
     )
 
     result["stdout"] = "\n".join(captured_stdout)
@@ -217,6 +220,7 @@ def run_engine_compile_streaming(
     on_stderr: Optional[Callable[[str], None]] = None,
     stop_signal: Optional[Callable[[], bool]] = None,
     gui: Any = None,
+    verbose: bool = False,
 ) -> dict[str, Any]:
     """
     Execute a compilation with real-time output streaming.
@@ -230,6 +234,7 @@ def run_engine_compile_streaming(
         on_stderr:     Callback for each line of stderr.
         stop_signal:   Optional callback that returns True if cancellation is requested.
         gui:           Optional GUI object to use instead of creating a bridge.
+        verbose:       Whether to enable verbose logging.
 
     Returns:
         A result dict.
@@ -258,11 +263,15 @@ def run_engine_compile_streaming(
         if gui:
             bridge = gui
         else:
+            from PySide6.QtCore import QObject
+            
             # We pass a dummy 'gui' object that supports log_i18n_level-like logging
-            class LogBridge:
-                def __init__(self, log_cb, workspace_path: Path):
+            class LogBridge(QObject):
+                def __init__(self, log_cb, workspace_path: Path, verbose: bool = False):
+                    super().__init__()
                     self.log_cb = log_cb
                     self.workspace_dir = str(workspace_path)
+                    self.verbose = verbose
                     self.log = self  # So gui.log.append works
                     self.use_system_python = False  # Default for CLI
                     self.venv_path_manuel = None
@@ -272,6 +281,11 @@ def run_engine_compile_streaming(
                 def append(self, message: str):
                     # message is already formatted by log_i18n_level
                     self.log_cb("", message)
+
+                def _safe_log(self, text, text_en=None, level=None):
+                    # Fallback for VenvManager
+                    msg = text_en if text_en else text
+                    self.log_cb("", msg)
 
                 def tr(self, fr, en):
                     return en  # Simple fallback
@@ -298,7 +312,7 @@ def run_engine_compile_streaming(
                         self._sys_deps_manager = SysDependencyManager(self)
                     return self._sys_deps_manager
 
-            bridge = LogBridge(_log, workspace)
+            bridge = LogBridge(_log, workspace, verbose=verbose)
 
         # Link bridge to engine for venv/tool resolution in build_command
         try:
