@@ -15,7 +15,7 @@
 # limitations under the License.
 
 """
-PyCompiler ARK — Cross-platform hardened bootstrap with Intelligent CLI Entry Point
+PyCompiler ARK — Python Build Studio
 
 """
 
