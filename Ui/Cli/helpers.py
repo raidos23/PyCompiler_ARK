@@ -555,6 +555,17 @@ def run_bcasl_before_compile_sync(
         # report is None if BCASL is disabled or failed silently
         return True
 
+    if isinstance(report, dict):
+        try:
+            from bcasl.Loader import is_bcasl_disabled_report
+
+            if is_bcasl_disabled_report(report):
+                return True
+        except Exception:
+            pass
+        if "ok" in report:
+            return bool(report.get("ok"))
+
     if hasattr(report, "ok"):
         if not getattr(report, "ok"):
             error("BCASL reported security or validation failures.")

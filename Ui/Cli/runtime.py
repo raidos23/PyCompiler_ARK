@@ -262,6 +262,22 @@ def is_cli_mode() -> bool:
         return False
 
 
+def is_noninteractive() -> bool:
+    """True when prompts must not block (CI, headless plugin workers, etc.)."""
+    try:
+        v = os.environ.get("PYCOMPILER_NONINTERACTIVE")
+        if v is None:
+            return False
+        return str(v).strip().lower() not in ("", "0", "false", "no")
+    except Exception:
+        return False
+
+
+def use_rich_dialogs() -> bool:
+    """Use Rich console dialogs instead of Qt message boxes."""
+    return is_cli_mode() or is_noninteractive()
+
+
 def install_runtime(app_version: str, enable_qt: bool = True) -> None:
     ensure_sys_path()
     configure_logging()

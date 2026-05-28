@@ -87,6 +87,16 @@ def bcasl_report_allows_compile(gui_instance, report) -> bool:
     """Return True when BCASL pre-compile report allows compilation to continue."""
     try:
         if report is None:
+            try:
+                from pathlib import Path
+
+                from bcasl.Loader import _is_bcasl_enabled
+
+                ws = getattr(gui_instance, "workspace_dir", None)
+                if ws and not _is_bcasl_enabled(Path(ws).resolve()):
+                    return True
+            except Exception:
+                pass
             log_i18n_level(
                 gui_instance,
                 "error",
@@ -96,9 +106,15 @@ def bcasl_report_allows_compile(gui_instance, report) -> bool:
             return False
 
         if isinstance(report, dict):
-            status = str(report.get("status", "")).strip().lower()
-            if status in {"disabled", "skipped"}:
-                return True
+            try:
+                from bcasl.Loader import is_bcasl_disabled_report
+
+                if is_bcasl_disabled_report(report):
+                    return True
+            except Exception:
+                status = str(report.get("status", "")).strip().lower()
+                if status in {"disabled", "skipped"}:
+                    return True
             if "ok" in report:
                 ok = bool(report.get("ok"))
                 if not ok:
