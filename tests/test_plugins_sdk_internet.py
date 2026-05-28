@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 import unittest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 from Plugins_SDK.BcPluginContext.Context import check_internet, download_file, get_external_ip
 
 class TestPluginsSDKInternet(unittest.TestCase):

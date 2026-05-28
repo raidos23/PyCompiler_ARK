@@ -32,10 +32,9 @@ from pathlib import Path
 from typing import Any, Optional
 
 import yaml
-from PySide6.QtCore import QByteArray, QMimeData, QObject, Qt, QThread, Signal, Slot
-from PySide6.QtGui import QColor, QKeySequence, QPalette, QShortcut
+from PySide6.QtCore import QObject, Qt, QThread, Signal, Slot
+from PySide6.QtGui import QKeySequence, QPalette, QShortcut
 from PySide6.QtWidgets import (
-    QAbstractItemView,
     QApplication,
     QCheckBox,
     QDialog,
@@ -43,13 +42,10 @@ from PySide6.QtWidgets import (
     QGroupBox,
     QHBoxLayout,
     QLabel,
-    QListWidget,
-    QListWidgetItem,
     QMessageBox,
     QPushButton,
     QScrollArea,
     QSizePolicy,
-    QSpinBox,
     QTabWidget,
     QVBoxLayout,
     QWidget,
@@ -467,7 +463,7 @@ class BcaslPipelineDialog(QDialog):
 
         # Titre
         title_row = QHBoxLayout()
-        lbl = QLabel(f"<b>BCASL Pipeline</b>")
+        lbl = QLabel("<b>BCASL Pipeline</b>")
         lbl.setTextFormat(Qt.RichText)
         title_row.addWidget(lbl)
         title_row.addStretch(1)
@@ -1169,8 +1165,6 @@ def run_pre_compile_async(
             BCASL_DISABLED_REPORT,
             _get_plugins_dir,
             _is_bcasl_enabled,
-            _load_workspace_config,
-            _run_bcasl_sync,
         )
 
         # Étape 0: Vérifier si BCASL est activé globalement via ark.yml

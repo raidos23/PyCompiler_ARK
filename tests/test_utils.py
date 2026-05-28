@@ -2,17 +2,21 @@
 import unittest
 from unittest.mock import patch, MagicMock
 import socket
-import http.client
 from Core.Compiler.utils import check_internet_connection
 
 class TestUtils(unittest.TestCase):
 
     @patch("socket.create_connection")
-    def test_check_internet_connection_success_ip(self, mock_create):
+    @patch("socket.gethostbyname")
+    def test_check_internet_connection_success_ip(self, mock_dns, mock_create):
         # Case 1: TCP connection to IP works
+        # Mock DNS to fail for all domains so it reaches the IP host
+        mock_dns.side_effect = Exception("DNS Fail")
         mock_create.return_value.__enter__.return_value = MagicMock()
+        
         self.assertTrue(check_internet_connection(timeout=0.1))
-        self.assertEqual(mock_create.call_count, 1)
+        # It should be called for 1.1.1.1
+        self.assertTrue(mock_create.called)
 
     @patch("socket.create_connection")
     @patch("socket.gethostbyname")

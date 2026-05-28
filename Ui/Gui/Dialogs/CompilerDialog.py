@@ -31,20 +31,16 @@ from __future__ import annotations
 import os
 import time
 from pathlib import Path
-from typing import Any, Optional
 
-from PySide6.QtCore import QObject, QProcess, Signal
-from PySide6.QtWidgets import QApplication, QFileDialog, QMessageBox
+from PySide6.QtWidgets import QFileDialog, QMessageBox
 
 from Core.Compiler import create
-from Ui.Gui.Compilation.compiler import CompilationStatus
 from Ui.Gui.Compilation.helpers import (
     bcasl_report_allows_compile,
     get_main_process,
-    resolve_default_engine_id,
     run_bcasl_before_compile,
 )
-from Ui.Gui.Compilation.mainprocess import MainProcess, ProcessState
+from Ui.Gui.Compilation.mainprocess import ProcessState
 from Ui.i18n import log_i18n_level, log_with_level
 
 # Shared helpers from CLI for exact code alignment

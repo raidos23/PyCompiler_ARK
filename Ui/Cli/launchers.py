@@ -3,10 +3,9 @@ from __future__ import annotations
 import os
 import sys
 from pathlib import Path
-from typing import Optional
 
 from .icons import set_app_icon, set_window_icon
-from .output import error, warn
+from .output import error
 from .runtime import ROOT_DIR, handle_fatal
 
 
@@ -58,7 +57,7 @@ def launch_main_application(
 ) -> int:
     try:
         from PySide6.QtCore import Qt, QTimer
-        from PySide6.QtGui import QColor, QPixmap
+        from PySide6.QtGui import QPixmap
         from PySide6.QtWidgets import QSplashScreen
 
         from Ui.Gui.Gui import PyCompilerArkGui

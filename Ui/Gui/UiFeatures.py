@@ -19,8 +19,6 @@ UiFeatures — mixin de fonctionnalités UI pour PyCompiler ARK.
 Ce module ne contient que du code Qt. Toute logique métier est déléguée à Core/.
 """
 
-import asyncio
-import json
 import os
 import platform
 from typing import Callable

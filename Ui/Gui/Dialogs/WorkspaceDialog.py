@@ -23,7 +23,6 @@ et délègue toute la logique métier à Core.WorkSpaceManager.SetupWorkspace.
 from __future__ import annotations
 
 import os
-from pathlib import Path
 from typing import Optional
 
 from PySide6.QtWidgets import QApplication, QFileDialog, QMessageBox
