@@ -54,8 +54,48 @@ def test_should_exclude_file(tmp_path):
 from Core.Locking import (
     ensure_workspace_layout,
     included_workspace_files,
-    installed_distributions_snapshot
+    installed_distributions_snapshot,
+    get_git_commit_hash,
+    build_lock_payload
 )
+from unittest.mock import patch, MagicMock
+
+def test_get_git_commit_hash(tmp_path):
+    """Test Git commit hash retrieval (mocked)."""
+    with patch("subprocess.run") as mock_run:
+        mock_run.return_value = MagicMock(stdout="abc12345\n", returncode=0)
+        commit = get_git_commit_hash(tmp_path)
+        assert commit == "abc12345"
+        mock_run.assert_called_once()
+
+def test_build_lock_payload_with_git(tmp_path):
+    """Test that build_lock_payload includes git commit."""
+    config = {
+        "project": {"name": "Test", "version": "1.0.0", "entry": "main.py"},
+        "build": {"engine": "nuitka"}
+    }
+    with patch("Core.Locking.get_git_commit_hash") as mock_git:
+        mock_git.return_value = "git_hash_123"
+        payload = build_lock_payload(tmp_path, config, engine_id="nuitka")
+        
+        assert payload["project"]["git_commit"] == "git_hash_123"
+        assert payload["engine"]["name"] == "nuitka"
+
+def test_check_internet_connection_success():
+    """Test internet check success (mocked)."""
+    from Core.Compiler.utils import check_internet_connection
+    with patch("socket.create_connection") as mock_conn:
+        # Mock success on first IP
+        mock_conn.return_value.__enter__.return_value = MagicMock()
+        assert check_internet_connection() is True
+
+def test_check_internet_connection_failure():
+    """Test internet check failure (mocked)."""
+    from Core.Compiler.utils import check_internet_connection
+    with patch("socket.create_connection", side_effect=Exception("Offline")):
+        with patch("http.client.HTTPSConnection") as mock_http:
+            mock_http.return_value.getresponse.side_effect = Exception("Offline")
+            assert check_internet_connection(timeout=0.1, retries=0) is False
 
 def test_ensure_workspace_layout(tmp_path):
     """Test that .ark subdirectories are created."""

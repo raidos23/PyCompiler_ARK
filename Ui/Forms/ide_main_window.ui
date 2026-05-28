@@ -483,21 +483,8 @@ QProgressBar::chunk { background: #0e639c; }</string>
            </widget>
           </item>
           <item>
-           <widget class="QPushButton" name="btn_export_config">
-            <property name="text">
-             <string>Export</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QPushButton" name="btn_import_config">
-            <property name="text">
-             <string>Import</string>
-            </property>
-           </widget>
-          </item>
-          <item>
            <widget class="QPushButton" name="select_lang">
+
             <property name="text">
              <string>Language</string>
             </property>
