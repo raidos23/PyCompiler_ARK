@@ -471,60 +471,37 @@ def check_module_available(module_name: str, python_path: Optional[str] = None) 
     except Exception:
         return False
 
-def check_internet_connection(timeout: float = 2.0, retries: int = 1) -> bool:
+def check_internet_connection(timeout: float = 3.0, retries: int = 0) -> bool:
     """
     Check if internet connection is available with high certainty.
-    Uses a multi-tiered approach:
-    1. Direct TCP connection to multiple public IPs (bypasses DNS issues).
-    2. DNS resolution check for common domains.
-    3. HTTP HEAD request to common domains (handles captive portals).
-
-    Args:
-        timeout: Timeout in seconds for each attempt.
-        retries: Number of retries before giving up.
-
-    Returns:
-        True if internet is available, False otherwise.
+    Prioritizes checking connectivity to essential services like PyPI.
     """
     import socket
     import http.client
     import time
 
-    # Reliable public IPs and ports (DNS, HTTPS)
-    # 8.8.8.8 (Google), 1.1.1.1 (Cloudflare), 9.9.9.9 (Quad9)
-    targets = [
-        ("8.8.8.8", 53),   # Google DNS (TCP)
-        ("1.1.1.1", 53),   # Cloudflare DNS (TCP)
-        ("8.8.4.4", 443),  # Google HTTPS
-        ("1.0.0.1", 443),  # Cloudflare HTTPS
-        ("9.9.9.9", 53),   # Quad9 DNS
-    ]
-
-    # Common domains for DNS and HTTP checks
-    hosts = ["www.google.com", "www.cloudflare.com", "www.github.com", "pypi.org"]
+    # Essential hosts to verify connectivity for tool installation
+    # pypi.org is the most important one for pip installs
+    hosts = ["pypi.org", "www.google.com", "www.cloudflare.com", "1.1.1.1"]
 
     for attempt in range(retries + 1):
-        # Tier 1: Direct IP connection (Fastest, ignores DNS failures)
-        for ip, port in targets:
-            try:
-                # create_connection is the recommended way to test connectivity
-                with socket.create_connection((ip, port), timeout=timeout):
-                    return True
-            except (socket.timeout, socket.error):
-                continue
-
-        # Tier 2: DNS & HTTP (Handles cases where IPs might be blocked but domains work via proxy)
+        # Try each host
         for host in hosts:
             try:
-                # Check DNS first
-                socket.gethostbyname(host)
-                # Then check HTTP
-                conn = http.client.HTTPSConnection(host, timeout=timeout)
-                conn.request("HEAD", "/")
-                res = conn.getresponse()
-                conn.close()
-                if 200 <= res.status < 400:
-                    return True
+                # If it looks like an IP, use direct connection
+                if host[0].isdigit():
+                    with socket.create_connection((host, 53), timeout=timeout):
+                        return True
+                else:
+                    # For domains, try both resolution and a quick HTTP HEAD request
+                    # This handles environments with DNS but no real internet egress
+                    socket.gethostbyname(host)
+                    conn = http.client.HTTPSConnection(host, timeout=timeout)
+                    conn.request("HEAD", "/")
+                    res = conn.getresponse()
+                    conn.close()
+                    if 200 <= res.status < 400:
+                        return True
             except Exception:
                 continue
 
