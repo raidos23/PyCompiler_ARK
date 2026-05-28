@@ -51,7 +51,7 @@ class MyEngine(CompilerEngine):
 2. `@engine_register` adds the class to the registry.
 3. The GUI calls `create_tab` if present to create a tab.
 4. When compile is triggered, the engine provides the command via `build_command`.
-5. The process runs the command and calls `on_success` on success.
+5. The process runs the command and calls `on_success` on success. **Note**: ARK automatically opens the output directory (from `BuildContext.output_dir`) before calling this hook.
 
 ### **Workspace Entrypoint**
 
@@ -78,7 +78,7 @@ Core methods.
 - `program_and_args(self, context: BuildContext) -> (program, args) | None`: override if needed.
 - `preflight(self, gui, file) -> bool`: checks before compile, return False to abort.
 - `environment(self) -> dict[str, str] | None`: env vars to inject.
-- `on_success(self, gui, file) -> None`: post‑build hook.
+- `on_success(self, gui, file) -> None`: post‑build hook. Use this for specific cleanup or custom notifications. (The output directory is already opened by ARK).
 
 UI and i18n.
 
