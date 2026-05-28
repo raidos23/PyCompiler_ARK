@@ -516,13 +516,13 @@ def _load_plugin_instance(
 
 # phase_score -> (display_name, min_priority, max_priority)
 PHASES: dict[int, tuple[str, int, int]] = {
-    0: ("Nettoyage", 0, 9),
+    0: ("Cleanup", 0, 9),
     10: ("Validation", 10, 19),
-    20: ("Préparation", 20, 29),
-    30: ("Conformité", 30, 39),
+    20: ("Preparation", 20, 29),
+    30: ("Compliance", 30, 39),
     40: ("Linting", 40, 49),
     50: ("Obfuscation", 50, 59),
-    100: ("Défaut", 60, 199),
+    100: ("Default", 60, 199),
 }
 
 

@@ -123,13 +123,13 @@ def _apply_themed_icon(widget: QPushButton, icon_name: str, size: int = 18) -> N
 
 # phase_score → (display_name, description)
 SECTION_PHASES: dict[int, tuple[str, str]] = {
-    0: ("Nettoyage", "Nettoyage et hygiène du workspace"),
-    10: ("Validation", "Validation et vérification des prérequis"),
-    20: ("Préparation", "Préparation et génération des ressources"),
-    30: ("Conformité", "Conformité et injection de headers"),
-    40: ("Linting", "Linting, formatage et vérification de type"),
-    50: ("Obfuscation", "Obfuscation, protection et transpilation"),
-    100: ("Défaut", "Autres actions (phase par défaut)"),
+    0: ("Cleanup", "Workspace cleanup and hygiene"),
+    10: ("Validation", "Prerequisite validation and checking"),
+    20: ("Preparation", "Resource preparation and generation"),
+    30: ("Compliance", "Compliance and header injection"),
+    40: ("Linting", "Linting, formatting, and type checking"),
+    50: ("Obfuscation", "Obfuscation, protection and transpilation"),
+    100: ("Default", "Other actions (default phase)"),
 }
 
 # Tag → score de phase

@@ -17,19 +17,19 @@ from typing import Any
 
 # Hiérarchie de priorité basée sur les tags (ordre d'exécution)
 TAG_PRIORITY_MAP = {
-    # Phase 0: Nettoyage et hygiène du workspace
+    # Phase 0: Workspace cleanup and hygiene
     "clean": 0,
     "cleanup": 0,
     "sanitize": 0,
     "prune": 0,
     "tidy": 0,
-    # Phase 1: Validation et vérification des prérequis
+    # Phase 1: Prerequisite validation and checking
     "validation": 10,
     "presence": 10,
     "check": 10,
     "requirements": 10,
     "verify": 10,
-    # Phase 2: Préparation et génération des ressources
+    # Phase 2: Resource preparation and generation
     "prepare": 20,
     "codegen": 20,
     "generate": 20,
@@ -40,7 +40,7 @@ TAG_PRIORITY_MAP = {
     "bootstrap": 20,
     "configure": 20,
     "setup": 20,
-    # Phase 3: Conformité et injection de headers
+    # Phase 3: Compliance and header injection
     "license": 30,
     "header": 30,
     "normalize": 30,
@@ -49,7 +49,7 @@ TAG_PRIORITY_MAP = {
     "banner": 30,
     "copyright": 30,
     "metadata": 30,
-    # Phase 4: Linting, formatage et vérification de type
+    # Phase 4: Linting, formatting and type checking
     "lint": 40,
     "format": 40,
     "typecheck": 40,
@@ -61,7 +61,7 @@ TAG_PRIORITY_MAP = {
     "isort": 40,
     "sort-imports": 40,
     "style": 40,
-    # Phase 5: Obfuscation, protection et transpilation (dernière passe)
+    # Phase 5: Obfuscation, protection and transpilation (last pass)
     "obfuscation": 50,
     "obfuscate": 50,
     "transpile": 50,
@@ -81,13 +81,13 @@ def compute_tag_order(meta_map: dict[str, dict[str, Any]]) -> list[str]:
     Tags pris depuis meta_map[pid]["tags"]. Inconnu => DEFAULT_TAG_PRIORITY.
 
     Phases d'exécution:
-    - 0: Nettoyage (clean, cleanup, sanitize)
+    - 0: Cleanup (clean, cleanup, sanitize)
     - 10: Validation (check, requirements, verify)
-    - 20: Préparation (prepare, generate, install, configure)
-    - 30: Conformité (license, header, normalize, inject)
+    - 20: Preparation (prepare, generate, install, configure)
+    - 30: Compliance (license, header, normalize, inject)
     - 40: Linting (lint, format, typecheck, style)
     - 50: Obfuscation (obfuscate, transpile, protect, encrypt)
-    - 100: Défaut (none tag reconnu)
+    - 100: Default (none tag reconnu)
     """
 
     def _compute_score(pid: str) -> int:
@@ -126,13 +126,13 @@ def get_tag_phase_name(tag: str) -> str:
     score = TAG_PRIORITY_MAP.get(tag_lower, DEFAULT_TAG_PRIORITY)
 
     phase_names = {
-        0: "Nettoyage",
+        0: "Cleanup",
         10: "Validation",
-        20: "Préparation",
-        30: "Conformité",
+        20: "Preparation",
+        30: "Compliance",
         40: "Linting",
         50: "Obfuscation",
-        100: "Défaut",
+        100: "Default",
     }
 
     return phase_names.get(score, f"Phase {score}")
@@ -144,7 +144,7 @@ def describe_plugin_priority(plugin_id: str, tags: list[str]) -> str:
     Exemple: "plugin_id (lint, format) -> Phase 4: Linting"
     """
     if not tags:
-        return f"{plugin_id} (aucun tag) -> Phase {DEFAULT_TAG_PRIORITY}: Défaut"
+        return f"{plugin_id} (aucun tag) -> Phase {DEFAULT_TAG_PRIORITY}: Default"
 
     tag_str = ", ".join(str(t).strip().lower() for t in tags)
     scores = [

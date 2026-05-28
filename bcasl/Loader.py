@@ -439,15 +439,15 @@ def _load_workspace_config(workspace_root: Path) -> dict[str, Any]:
         except Exception:
             pass
 
-        # Phases par défaut (toutes activées)
+        # Default phases (all enabled)
         default_phases = {
-            "Nettoyage": True,
+            "Cleanup": True,
             "Validation": True,
-            "Préparation": True,
-            "Conformité": True,
+            "Preparation": True,
+            "Compliance": True,
             "Linting": True,
             "Obfuscation": True,
-            "Défaut": True,
+            "Default": True,
         }
 
         default_cfg = {
