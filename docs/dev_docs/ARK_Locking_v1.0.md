@@ -43,6 +43,7 @@ project:
   name: MyApp              # Copied from project.name
   version: 1.0.0           # Copied from project.version
   entry: src/main.py       # Copied from project.entry
+  git_commit: sha256:abc123... # Snapshot of current git commit
 
 workspace:
   exclude_patterns:        # Copied from build.exclude (legacy support)

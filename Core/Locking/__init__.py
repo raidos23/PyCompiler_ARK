@@ -134,7 +134,8 @@ def get_git_commit_hash(workspace: Path) -> str | None:
 
 
 def next_build_id(lock_dir: Path) -> str:
-    today = datetime.utcnow().strftime("%Y_%m_%d")
+    from datetime import UTC
+    today = datetime.now(UTC).strftime("%Y_%m_%d")
     prefix = f"ARK_{today}_"
     seq = 1
     if lock_dir.exists():
