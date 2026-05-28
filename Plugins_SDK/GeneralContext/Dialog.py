@@ -150,24 +150,47 @@ class Dialog:
         """Create and return a ProgressDialog from Core.dialogs.
 
         Uses Core.dialogs.ProgressDialog when GUI is available, 
-        otherwise returns a console-based fallback.
+        otherwise returns a Rich-based console fallback.
         """
         from PySide6.QtWidgets import QApplication
         if QApplication.instance() is None:
-            # Fallback for headless/sandbox mode
-            class ConsoleProgress:
-                def __init__(self, title):
-                    self.title = title
-                    self._canceled = False
-                def show(self): print(f"[PROGRESS:START] {self.title}")
-                def set_message(self, msg): print(f"[PROGRESS:MSG] {msg}")
-                def set_status(self, msg): print(f"[PROGRESS:STATUS] {msg}")
-                def set_progress(self, val, total=None): 
-                    if total: print(f"[PROGRESS:VALUE] {val}/{total}")
-                    else: print(f"[PROGRESS:VALUE] {val}%")
-                def close(self): print(f"[PROGRESS:END] {self.title}")
-                def is_canceled(self): return False
+            # Fallback for headless/sandbox mode using Rich
+            from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskProgressColumn, TimeElapsedColumn
             
-            return ConsoleProgress(title) # type: ignore
+            class ConsoleProgress:
+                def __init__(self, title_str, console_obj):
+                    self.progress = Progress(
+                        SpinnerColumn(),
+                        TextColumn("[progress.description]{task.description}"),
+                        BarColumn(),
+                        TaskProgressColumn(),
+                        TimeElapsedColumn(),
+                        console=console_obj,
+                        transient=True # Disappear when finished
+                    )
+                    self.task_id = self.progress.add_task(description=title_str, total=None)
+
+                def show(self):
+                    self.progress.start()
+
+                def set_message(self, msg):
+                    self.progress.update(self.task_id, description=msg)
+
+                def set_status(self, msg):
+                    self.set_message(msg)
+
+                def set_progress(self, val, total=None):
+                    kwargs = {"completed": val}
+                    if total is not None:
+                        kwargs["total"] = total
+                    self.progress.update(self.task_id, **kwargs)
+
+                def close(self):
+                    self.progress.stop()
+
+                def is_canceled(self):
+                    return False
+            
+            return ConsoleProgress(title, self.console) # type: ignore
 
         return ProgressDialog(title=title, cancelable=cancelable)
