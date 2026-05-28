@@ -381,38 +381,6 @@ def validate_payload(file_id: str, data: Any) -> tuple[list[str], list[str]]:
             ):
                 errs.append("build.exclude must be a list of strings.")
 
-        deps = data.get("dependencies")
-        if deps is not None and not isinstance(deps, dict):
-            errs.append("dependencies must be an object.")
-        if isinstance(deps, dict):
-            req_files = deps.get("requirements_files")
-            if req_files is not None and (
-                not isinstance(req_files, list)
-                or not all(isinstance(item, str) for item in req_files)
-            ):
-                errs.append(
-                    "dependencies.requirements_files must be a list of strings."
-                )
-            autogen = deps.get("auto_generate_from_imports")
-            if autogen is not None and not isinstance(autogen, bool):
-                errs.append(
-                    "dependencies.auto_generate_from_imports must be a boolean."
-                )
-
-        env = data.get("environment_manager")
-        if env is not None and not isinstance(env, dict):
-            errs.append("environment_manager must be an object.")
-        if isinstance(env, dict):
-            priority = env.get("priority")
-            if priority is not None and (
-                not isinstance(priority, list)
-                or not all(isinstance(item, str) for item in priority)
-            ):
-                errs.append("environment_manager.priority must be a list of strings.")
-            for flag in ("auto_detect", "fallback_to_pip"):
-                if flag in env and not isinstance(env.get(flag), bool):
-                    errs.append(f"environment_manager.{flag} must be a boolean.")
-
     elif file_id == "bcasl":
         file_patterns = data.get("file_patterns")
         if file_patterns is not None and (
