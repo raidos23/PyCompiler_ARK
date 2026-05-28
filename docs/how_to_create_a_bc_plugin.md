@@ -1,18 +1,18 @@
-## **BC Plugin Guide**
+## **BCASL Plugin Guide**
 
-## **BCASL = Before Compilation Action System & Loader.**
+**BCASL = Before-Compilation Action System & Loader.**
 
 **Overview**
-A BC plugin (BCASL) is a package placed in `Plugins/` and executed before compilation. It registers automatically, respects execution order (priority, tags, dependencies), and uses `PreCompileContext` to work with the workspace.
+A BC plugin is a package placed in `Plugins/` and executed before compilation. It registers automatically, respects execution order (priority, tags, dependencies), and uses `PreCompileContext` to work with the workspace.
 
-The BCASL engine and loader are **pure-Python** modules, meaning they can run in headless environments (CLI, CI) without any Qt dependencies. UI integration is provided separately by the ARK GUI.
+The BCASL loader and runtime are **pure-Python**. They run in headless environments (CLI, CI) without Qt dependencies. UI integration is provided separately by the ARK GUI.
 
 **Discovery And Loading**
 
 - Plugins are discovered in `Plugins/<plugin_name>/`.
 - The folder must contain an `__init__.py`.
 - The loader imports each package and detects plugins via `@bc_register` or `bcasl_register(manager)`.
-- If `bcasl.yml` is missing, a default file is generated.
+- If `bcasl.yml` is missing, BCASL generates a best-effort default file when it runs.
 
 **Package Layout**
 
@@ -53,8 +53,8 @@ class ExampleClean(BcPluginBase):
         super().__init__(META)
 
     def on_pre_compile(self, ctx: PreCompileContext) -> None:
-        # ctx.root est un objet Path pointant vers la racine du workspace
-        # iter_files() utilise par défaut les patterns d'inclusion/exclusion du projet
+        # ctx.root is a Path to the workspace root.
+        # iter_files() uses the configured include/exclude patterns by default.
         for pyc in ctx.iter_files(["**/*.pyc"]):
             try:
                 pyc.unlink()
@@ -81,7 +81,7 @@ def bcasl_register(manager: BCASL) -> None:
 **PluginMeta And Compatibility**
 Important fields.
 
-- `id`: unique and stable id (used in `bcasl.yml`).
+- `id`: unique, stable id used in `bcasl.yml`.
 - `name`, `version`, `description`, `author`.
 - `tags`: used for default ordering when no explicit order is provided.
 - `required_*_version`: compatibility requirements (BCASL, Core, SDK, Context).
@@ -99,8 +99,8 @@ Validation.
 
 **Configuration (bcasl.yml)**
 For plugin authors, `bcasl.yml` is the canonical workspace config file.
-`PreCompileContext` helpers and validity checks rely on it directly, so it is
-the format you should target in examples and real plugin code.
+`PreCompileContext` helpers and validation logic read it directly, so target
+this format in examples and plugin code.
 
 Example.
 
@@ -131,40 +131,40 @@ Important notes.
 - Global BCASL activation is managed by **`ark.yml`** (`plugins.bcasl_enabled`).
 - Keys in `plugins` are the `PluginMeta.id` values.
 - `plugin_order` forces ordering and adjusts priority.
-- If `bcasl.yml` is missing, a default file is generated.
+- If `bcasl.yml` is missing, the workspace tools can generate a default file.
 - In plugin code, assume `bcasl.yml` lives at the workspace root.
 
 **Execution Context (PreCompileContext)**
 Key properties and methods.
 
-- `root`: Path object pointant vers la racine du workspace.
-- `name`: Nom du dossier workspace.
-- `config`: Dictionnaire complet de configuration (`bcasl.yml`).
-- `build_context`: Objet `BuildContext` contenant les paramètres de compilation (si disponible).
-- `file_patterns`: Patterns d'inclusion définis.
-- `exclude_patterns`: Patterns d'exclusion définis.
-- `iter_files(include, exclude)`: Itérateur optimisé (respecte les exclusions par défaut).
+- `root`: Path object pointing to the workspace root.
+- `name`: Workspace folder name.
+- `config`: Full `bcasl.yml` configuration dictionary.
+- `build_context`: `BuildContext` with compilation settings, when available.
+- `file_patterns`: Configured include patterns.
+- `exclude_patterns`: Configured exclude patterns.
+- `iter_files(include, exclude)`: Optimized iterator that respects exclusions by default.
 
-Usage du BuildContext :
+BuildContext usage:
 
 ```python
 def on_pre_compile(self, ctx: PreCompileContext) -> None:
     if ctx.build_context:
-        # Accès au dossier de sortie défini dans ark.yml ou le verrou
+        # Access the output directory defined in ark.yml or the lock file.
         output_dir = ctx.build_context.output_dir
         ...
 ```
 
-*Exemple concret : Le plugin **OutputCleaner** utilise `ctx.build_context.output_dir` pour vider le dossier de sortie avant la compilation.*
+*Example: the **OutputCleaner** plugin uses `ctx.build_context.output_dir` to clear the output directory before compilation.*
 
-Usage simplifié :
+Simplified usage:
 
 ```python
-# Parcourt tous les fichiers du projet selon la config bcasl.yml
+# Iterate over all project files using the bcasl.yml configuration.
 for path in ctx.iter_files():
     ...
 
-# Recherche spécifique tout en respectant les exclusions globales
+# Search specific files while still respecting global exclusions.
 for path in ctx.iter_files(["**/*.json"]):
     ...
 ```
@@ -180,8 +180,8 @@ ok = set_selected_workspace("/path/to/new/workspace")
 
 Behavior.
 
-- The request is accepted by contract (returns True).
-- The target directory is created if needed (best‑effort).
+- The request is accepted by contract (returns `True`).
+- The target directory is created if needed, best effort.
 - If the UI is present, the Core applies the change and may stop ongoing builds.
 - After requesting a switch, avoid using the old `ctx` for sensitive actions.
 
@@ -190,10 +190,10 @@ Behavior.
 - Use `Plugins_SDK.GeneralContext.Dialog` for messages and progress.
 - When running in the GUI, dialogs are routed through the UI thread and inherit the theme.
 - In headless/CLI mode, these are routed to standard output.
-- **Important**: Plugins should avoid direct Qt imports to remain compatible with headless execution. Direct Qt dialogs (like `QProgressDialog`) are not supported in sandboxed or headless runs.
+- **Important**: Avoid direct Qt imports to remain compatible with headless execution. Direct Qt dialogs such as `QProgressDialog` are not supported in sandboxed or headless runs.
 
 **Plugin UI Config Tabs**
-BCASL can expose per‑plugin configuration tabs in the BCASL config UI.
+BCASL can expose per-plugin configuration tabs in the BCASL config UI.
 
 Implement:
 
@@ -207,12 +207,13 @@ Notes.
 
 - `config` is a dict to read/write.
 - `on_save(config_dict)` can return an updated dict.
-- Saved under `plugins.<id>.config` in `bcasl.yml`.
+- Each plugin entry stores its config in the `config` field inside the `plugins` collection in `bcasl.yml`.
+- `build_config_tab(...)` may return a widget, a `(title, widget)` tuple, a `(title, widget, on_save)` tuple, or a dict with `title`, `widget`, and `on_save`.
 
 **Plugin i18n (GeneralContext)**
 Plugins can use the SDK i18n system with a `languages/` folder in the plugin package.
-The Core now propagates language changes to the Plugin SDK automatically, and the
-SDK loads translations for all plugins found in `Plugins/` (by folder name).
+The Core propagates language changes to the Plugin SDK, and the SDK loads
+translations for plugins found in `Plugins/` by folder name.
 
 Example layout:
 
@@ -224,7 +225,7 @@ Plugins/MyPlugin/
     fr.json
 ```
 
-Load and use (with live updates when the language changes):
+Load and use, with live updates when the language changes:
 
 ```python
 from Plugins_SDK.GeneralContext import (
@@ -251,10 +252,10 @@ Notes.
 
 - If `options.sandbox` is `true`, plugins can run in isolated processes.
 - Resource limits via `options.plugin_limits` (mem, cpu, files, size).
-- Note: Global timeout and parallelism are no longer supported to ensure sequential stability.
+- Note: global timeout and parallelism are no longer supported to keep execution sequential.
 
 **Plugins_SDK Utilities**
-The SDK provides many helpers.
+The SDK provides helpers for:
 
 - Project and Python file analysis.
 - Dependency and venv inspection.

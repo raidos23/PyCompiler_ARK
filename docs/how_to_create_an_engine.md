@@ -10,7 +10,7 @@ A PyCompiler_ARK engine is a Python package placed in `engines/` and auto‑load
 
 - Engines are discovered only in `engines/<engine_id>/`.
 - The folder must contain an `__init__.py`.
-- At startup, `EngineLoader` scans `engines/` and imports each package.
+- Discovery is lazy: the registry loads engines on first real access such as `get_engine`, `available_engines`, `create`, or `bind_tabs`.
 - Auto discovery can be disabled with `ARK_ENGINES_AUTO_DISCOVER=0`.
 
 ### **Package Layout**
@@ -55,9 +55,12 @@ class MyEngine(CompilerEngine):
 
 ### **Workspace Entrypoint**
 
-The workspace can define a single build entrypoint in `ark.yml`.
-When `build.entrypoint` is set, the Core will compile only that file and pass it
-to your engine as the `entry_point` in the `BuildContext`. See `docs/ark.md`.
+The workspace defines its entrypoint in `ark.yml` under `project.entry`.
+That value is normalized by Core into `BuildContext.entry_point` and used as the
+primary script for compilation. A legacy `build.entrypoint` key is still accepted
+as a fallback during normalization, but `project.entry` is the canonical field.
+
+See `docs/ark_main_config.md`.
 
 ### **Full API**
 
@@ -98,8 +101,8 @@ Tools and dependencies.
 
 - In `create_tab`, create widgets and store them on `self` (ex: `self._opt_onefile`).
 - Avoid heavy work in `__init__` to keep loading fast.
-- Wire signals locally and use `gui.log.append(...)` for logs.
-- No need to wrap your tab in a scroll area: the UI handles large tabs automatically when needed.
+- Wire signals locally and prefer `gui.log.append(...)` for logs.
+- Do not add your own scroll area unless you need custom behavior; the host wraps large engine tabs automatically.
 - **IMPORTANT**: Do not include UI components for **Icon** selection or **Output directory** in your engine tab. These are globally managed in `ark.yml` and passed to your engine via the `BuildContext`. Focus only on engine‑specific flags and options.
 - Prefer grouping options with `QGroupBox` sections and compact hints, following the built-in engines layout style.
 - Keep widget attribute names stable once they are used by config persistence or compilation logic.
@@ -146,8 +149,7 @@ Notes.
 
 ### **Advanced Config Control (Special Engines)**
 
-Special engines can fully control where/how config is stored and whether the UI
-is allowed to save it.
+Special engines can override where config is stored and whether the UI may save it.
 
 New hooks:
 
@@ -158,8 +160,9 @@ New hooks:
 - `load_config(gui, workspace_dir) -> dict | None`: custom loader
 - `save_config(gui, workspace_dir, options) -> bool | None`: custom saver
 
-If a custom loader/saver returns `None`, Core falls back to the default
-`.ark/<engine_id>/config.json` behavior.
+If a custom loader returns `None`, Core falls back to the default
+`.ark/<engine_id>/config.json` behavior. A custom saver that returns `None`
+also falls back to the default storage path.
 
 #### Example: custom path + read‑only UI
 
@@ -348,14 +351,18 @@ Notes.
 - If a key is missing, always provide a safe fallback string.
 
 **Auto Command Builder (Integrated)**
-The auto‑builder is now integrated directly into the core compilation pipeline. It automatically reads a `mapping.json` in your engine's root directory to generate options from detected imports.
+The auto-builder is integrated into the core compilation pipeline. It can read
+`mapping.json` from the engine package, the workspace `engines/<engine_id>/`
+folder, or the `PYCOMPILER_MAPPING` environment variable to generate options
+from detected modules.
 
 You no longer need to call `compute_auto_for_engine` manually in your `build_command`. The core runner will:
 
-1. Detect modules imported in the project.
-2. Read your engine's `mapping.json`.
-3. Generate the appropriate flags.
-4. Automatically insert them into your command (usually before the entry point).
+1. Prefer `requirements.txt` or `requirements.in` when present.
+2. Fall back to `pyproject.toml` dependencies.
+3. Fall back to scanning Python imports.
+4. Read the engine mapping and generate the appropriate flags.
+5. Insert them into your command, usually before the entry point.
 
 #### **Minimal mapping.json example.**
 
@@ -374,10 +381,11 @@ You no longer need to call `compute_auto_for_engine` manually in your `build_com
 
 Key points.
 
-- Top‑level keys are package names.
+- Top-level keys are package names.
 - Engine values accept `str`, `list[str]`, or `dict` with `args` or `flags`.
-- `"{import_name}"` is replaced by the actual import name.
-- For advanced logic, expose `AUTO_BUILDER` in `engines/<engine_id>/auto_plugins.py`.
+- `"{import_name}"` is replaced by the matched import name.
+- For advanced logic, expose `AUTO_BUILDER`, `get_auto_builder()`, or
+  `register_auto_builder()` in `engines/<engine_id>/auto_plugins.py`.
 
 **Deep Examples Catalog (40)**
 Each example includes context, intent, and a working pattern. Adjust IDs and labels to match your engine.
@@ -795,7 +803,7 @@ def get_auto_builder():
 
 Notes.
 
-- Use when simple mapping is not enough.
+- Use this when simple mapping is not enough.
 
 1. mapping.json for torch (example).
 
@@ -820,7 +828,7 @@ Notes.
 1. Detection source (requirements preferred).
 
 ```python
-# Auto builder prioritizes requirements.txt when present
+# Auto-builder prioritizes `requirements.txt` or `requirements.in` when present.
 ```
 
 Notes.

@@ -1,8 +1,8 @@
-## **ark.yml** — Workspace Configuration
+## **ark.yml** - Workspace Configuration
 
-This file defines the project settings used to build the normalized **BuildContext**. It lives at the workspace root and is created automatically when the workspace is first set in the GUI (if missing).
+This file defines the project settings used to build the normalized **BuildContext**. It lives at the workspace root and is created automatically when the workspace is first configured in the GUI, if missing.
 
-The configuration is loaded by `Core/Configs/` and serves as the primary source of truth for project metadata.
+The configuration is loaded by `Core/Configs/` and is the primary source of truth for project metadata.
 
 ## Minimal Example
 
@@ -37,8 +37,8 @@ plugins:
 
 Behavior:
 
-- When a build is triggered (CLI or GUI), this entrypoint is used to populate the `BuildContext`.
-- In the GUI, you can select any file to compile, but the `project.entry` remains the default configuration.
+- When a build is triggered from the CLI or GUI, this entrypoint is used to populate the `BuildContext`.
+- In the GUI, you can select any file to compile, but `project.entry` remains the default configuration.
 - If it is missing or invalid, compilation is blocked until a valid entrypoint is selected.
 
 GUI shortcuts:
@@ -60,7 +60,7 @@ The fields in `ark.yml` are mapped directly to the `BuildContext` data structure
 | `build.data` | `data_mappings` |
 | `build.icon` | `icon` |
 
-> **Note**: `workspace.exclude` is exclusive to the GUI workspace view filtering (file explorer). `build.exclude` is what determines which files are ignored during the actual compilation (engine) and BCASL phases.
+> **Note**: `workspace.exclude` is used only for the GUI workspace view filter. `build.exclude` determines which files are ignored during compilation and BCASL phases.
 
 ## Plugins Configuration
 
@@ -71,7 +71,7 @@ plugins:
   bcasl_enabled: true  # Global toggle for the BCASL pipeline
 ```
 
-If `bcasl_enabled` is set to `false`, the entire pipeline is skipped during compilation. This setting is also manageable via the **BCASL Pipeline** dialog in the GUI.
+If `bcasl_enabled` is set to `false`, the entire pipeline is skipped during compilation. You can also change this setting in the **BCASL Pipeline** dialog in the GUI.
 
 ## Advanced Config Editor (GUI)
 
