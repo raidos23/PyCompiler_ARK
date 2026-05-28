@@ -329,15 +329,16 @@ def validate_payload(file_id: str, data: Any) -> tuple[list[str], list[str]]:
         return errs, warns
 
     if file_id == "ark":
+        deprecated_top = {"dependencies", "environment_manager"}
         allowed_top = {
             "project",
             "workspace",
-            "dependencies",
-            "environment_manager",
             "build",
             "plugins",
         }
-        unknown = sorted(k for k in data.keys() if k not in allowed_top)
+        unknown = sorted(
+            k for k in data.keys() if k not in allowed_top and k not in deprecated_top
+        )
         if unknown:
             warns.append("Unknown top-level keys: " + ", ".join(unknown))
 
