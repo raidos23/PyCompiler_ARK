@@ -71,7 +71,6 @@ class NuitkaEngine(CompilerEngine):
 
     def build_command(self, context: BuildContext) -> list[str]:
         """Build a Nuitka command line from a normalized build context."""
-        self._last_context = context
         cfg = getattr(self, "_config_overrides", {})
         if not isinstance(cfg, dict):
             cfg = {}
@@ -173,10 +172,6 @@ class NuitkaEngine(CompilerEngine):
                     "success",
                     "Compilation Nuitka terminée avec succès.",
                 )
-            
-            # Open output directory automatically
-            if hasattr(self, "_last_context") and self._last_context:
-                self.open_output_dir(self._last_context.output_dir)
         except Exception:
             pass
 

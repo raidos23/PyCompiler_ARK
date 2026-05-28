@@ -430,8 +430,16 @@ def run_engine_compile_streaming(
         stdout_thread.join()
         stderr_thread.join()
 
-        # Call on_success hook if compilation succeeded
+        # Compilation success hooks
         if process.returncode == 0:
+            # 1. ARK opens the output directory by default
+            try:
+                if hasattr(engine_instance, "open_output_dir"):
+                    engine_instance.open_output_dir(context.output_dir)
+            except Exception:
+                pass
+
+            # 2. Call engine-specific on_success hook
             try:
                 if hasattr(engine_instance, "on_success"):
                     engine_instance.on_success(bridge, str(entry_path))
