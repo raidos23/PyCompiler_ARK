@@ -116,6 +116,23 @@ def compute_workspace_hash(workspace: Path, exclude_patterns: list[str]) -> str:
     return "sha256:" + digest.hexdigest()
 
 
+def get_git_commit_hash(workspace: Path) -> str | None:
+    """Return the current Git commit hash of the workspace if available."""
+    try:
+        import subprocess
+        result = subprocess.run(
+            ["git", "rev-parse", "HEAD"],
+            cwd=str(workspace),
+            capture_output=True,
+            text=True,
+            timeout=5,
+            check=True
+        )
+        return result.stdout.strip()
+    except Exception:
+        return None
+
+
 def next_build_id(lock_dir: Path) -> str:
     today = datetime.utcnow().strftime("%Y_%m_%d")
     prefix = f"ARK_{today}_"
@@ -143,12 +160,15 @@ def build_lock_payload(
     ensure_workspace_layout(workspace)
     lock_dir = workspace / ".ark" / "lock"
     build_id = next_build_id(lock_dir)
+    git_commit = get_git_commit_hash(workspace)
+    
     return {
         "build_id": build_id,
         "project": {
             "name": project.get("name"),
             "version": project.get("version"),
             "entry": project.get("entry"),
+            "git_commit": git_commit,
         },
         "workspace": {"exclude_patterns": exclude_patterns},
         "build": {

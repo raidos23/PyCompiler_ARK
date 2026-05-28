@@ -171,6 +171,12 @@ def _build_impl(
 
     if not as_json and verbose:
         info(f"Building from lock with engine '{engine_id}'...")
+    
+    # Alignement Git
+    from .helpers import ensure_correct_git_commit
+    if not ensure_correct_git_commit(workspace, lock_payload):
+        return 1
+
     context = build_context_object_from_lock(lock_payload)
 
     # BCASL Pre-compile check for lock branch

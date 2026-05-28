@@ -137,6 +137,16 @@ class LockDialog(QDialog):
             return
         
         path = items[0].data(Qt.ItemDataRole.UserRole)
+        try:
+            lock_payload = load_yaml_file(Path(path))
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Impossible de lire le verrou : {e}")
+            return
+
+        # Vérification Alignement Git
+        if not self._ensure_git_alignment(lock_payload):
+            return
+
         answer = QMessageBox.question(
             self,
             self.gui.tr("Confirmer Rebuild", "Confirm Rebuild"),
@@ -154,6 +164,51 @@ class LockDialog(QDialog):
             self.gui.rebuild_from_lock(Path(path))
         else:
             QMessageBox.critical(self, "Error", "rebuild_from_lock method not implemented in GUI")
+
+    def _ensure_git_alignment(self, lock_payload: dict) -> bool:
+        locked_commit = (lock_payload.get("project") or {}).get("git_commit")
+        if not locked_commit:
+            return True
+
+        from Core.Locking import get_git_commit_hash
+        ws = getattr(self.gui, "workspace_dir", None)
+        if not ws:
+            return True
+        
+        current_commit = get_git_commit_hash(Path(ws))
+        if not current_commit or current_commit == locked_commit:
+            return True
+
+        import platform
+        import subprocess
+        is_linux = platform.system().lower() == "linux"
+        
+        msg = self.gui.tr(
+            f"Le commit Git actuel ({current_commit[:8]}) ne correspond pas à celui du verrou ({locked_commit[:8]}).\n\n",
+            f"Current Git commit ({current_commit[:8]}) does not match lock file ({locked_commit[:8]}).\n\n"
+        )
+        
+        if is_linux:
+            msg += self.gui.tr(
+                "Voulez-vous que ARK effectue un 'git checkout' automatique pour aligner le code ?",
+                "Do you want ARK to perform an automatic 'git checkout' to align the code?"
+            )
+            ans = QMessageBox.question(self, "Git Mismatch", msg, QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel)
+            if ans == QMessageBox.Yes:
+                try:
+                    subprocess.run(["git", "checkout", locked_commit], cwd=ws, check=True)
+                    return True
+                except Exception as e:
+                    QMessageBox.critical(self, "Error", f"Échec du checkout : {e}")
+                    return False
+            return ans == QMessageBox.No # True si l'user ignore, False si Cancel
+        else:
+            msg += self.gui.tr(
+                f"Action recommandée : exécutez 'git checkout {locked_commit}' manuellement avant de continuer.\n\nContinuer le build quand même ?",
+                f"Recommended action: run 'git checkout {locked_commit}' manually before continuing.\n\nContinue build anyway?"
+            )
+            ans = QMessageBox.warning(self, "Git Mismatch", msg, QMessageBox.Yes | QMessageBox.No)
+            return ans == QMessageBox.Yes
 
     def _open_lock_dir(self):
         lock_dir = self._get_lock_dir()
