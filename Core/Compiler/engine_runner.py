@@ -430,12 +430,21 @@ def run_engine_compile_streaming(
         stdout_thread.join()
         stderr_thread.join()
 
-    return {
-        "success": process.returncode == 0,
-        "return_code": process.returncode,
-        "command": command,
-        "error": None if process.returncode == 0 else "Build failed",
-    }
+        # Call on_success hook if compilation succeeded
+        if process.returncode == 0:
+            try:
+                if hasattr(engine_instance, "on_success"):
+                    engine_instance.on_success(bridge, str(entry_path))
+            except Exception:
+                pass
+
+        return {
+            "success": process.returncode == 0,
+            "return_code": process.returncode,
+            "command": command,
+            "error": None if process.returncode == 0 else "Build failed",
+        }
+
 
 
 # -- helpers ------------------------------------------------------------------
