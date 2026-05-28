@@ -57,7 +57,7 @@ Each dictionary in `data_mappings` follows this structure:
 | `project_name` | `project.name` | `project.name` |
 | `entry_point` | `project.entry` | `project.entry` |
 | `output_dir` | `build.output` | `build.output` |
-| `exclude_patterns` | `workspace.exclude` | `workspace.exclude_patterns` |
+| `exclude_patterns` | `build.exclude` | `build.exclude` (or `workspace.exclude_patterns` fallback) |
 | `data_mappings` | `build.data` | `build.data` |
 | `icon` | `build.icon` | `build.icon` |
 

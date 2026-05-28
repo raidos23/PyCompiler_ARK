@@ -116,16 +116,20 @@ project:
 
 workspace:
   exclude:
-    - "tests/**/*"
     - "**/__pycache__/**" 
 
 build:
   engine: nuitka
   output: dist/
+  exclude:
+    - "tests/**/*"
   data:
     - source: plugins/
       destination: plugins/
   icon: assets/icon.ico
+
+plugins:
+  bcasl_enabled: true
 ```
 
 ---

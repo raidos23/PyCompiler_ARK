@@ -26,6 +26,9 @@ build:
   data:
     - source: assets/
       destination: assets/
+
+plugins:
+  bcasl_enabled: true
 ```
 
 ## Build Entrypoint
@@ -57,7 +60,7 @@ The fields in `ark.yml` are mapped directly to the `BuildContext` data structure
 | `build.data` | `data_mappings` |
 | `build.icon` | `icon` |
 
-> **Note**: `workspace.exclude` is exclusive to the GUI workspace view filtering. `build.exclude` is what determines which files are ignored during the actual compilation and BCASL phases.
+> **Note**: `workspace.exclude` is exclusive to the GUI workspace view filtering (file explorer). `build.exclude` is what determines which files are ignored during the actual compilation (engine) and BCASL phases.
 
 ## Plugins Configuration
 
