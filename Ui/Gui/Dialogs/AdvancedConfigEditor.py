@@ -318,7 +318,12 @@ class AdvancedConfigEditor(QDialog):
             return
 
         keys = flatten_keys(data)
+        hidden_roots = {"dependencies", "environment_manager"}
         for key in keys:
+            if state["file_id"] == "ark":
+                root = key.split(".", 1)[0].split("[", 1)[0]
+                if root in hidden_roots:
+                    continue
             QListWidgetItem(key, outline)
 
         errs, warns = validate_payload(state["file_id"], data)

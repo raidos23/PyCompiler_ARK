@@ -133,8 +133,6 @@ DEFAULT_ENVIRONMENT_MANAGER_OPTIONS: dict[str, Any] = {
 
 DEFAULT_CONFIG: dict[str, Any] = {
     **deepcopy(DEFAULT_ARK_CONFIG),
-    "dependencies": deepcopy(DEFAULT_DEPENDENCY_OPTIONS),
-    "environment_manager": deepcopy(DEFAULT_ENVIRONMENT_MANAGER_OPTIONS),
     "build": {
         **deepcopy(DEFAULT_ARK_CONFIG["build"]),
         "entrypoint": None,
@@ -211,22 +209,6 @@ def _looks_like_semver(value: str) -> bool:
 def _compatibility_view(config: dict[str, Any]) -> dict[str, Any]:
     normalized = normalize_ark_config(config)
     view = deepcopy(normalized)
-    view["dependencies"] = _deep_merge_dict(
-        DEFAULT_DEPENDENCY_OPTIONS,
-        (
-            config.get("dependencies")
-            if isinstance(config.get("dependencies"), dict)
-            else {}
-        ),
-    )
-    view["environment_manager"] = _deep_merge_dict(
-        DEFAULT_ENVIRONMENT_MANAGER_OPTIONS,
-        (
-            config.get("environment_manager")
-            if isinstance(config.get("environment_manager"), dict)
-            else {}
-        ),
-    )
     build = view.get("build")
     if not isinstance(build, dict):
         build = {}
@@ -255,6 +237,8 @@ def normalize_ark_config(config: dict[str, Any]) -> dict[str, Any]:
     # Nettoyage explicite des clés obsolètes si présentes
     merged.pop("exclusion_patterns", None)
     merged.pop("inclusion_patterns", None)
+    merged.pop("dependencies", None)
+    merged.pop("environment_manager", None)
 
     # Normalisation de la section 'project'
     project = merged.get("project")
