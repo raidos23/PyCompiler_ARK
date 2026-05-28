@@ -23,11 +23,10 @@ import colorama
 from rich.console import Console
 
 # Import des classes et fonctions de Core.dialogs
+from Ui.Cli.runtime import is_cli_mode, is_noninteractive
 from Ui.Gui.WidgetsCreator import (
     InstallAuth,
     ProgressDialog,
-    _is_cli_mode,
-    _is_noninteractive,
     _redact_secrets,
     show_msgbox,
     sys_msgbox_for_installing,
@@ -43,7 +42,7 @@ class Dialog:
         colorama.init()
         self.console = Console()
         self.plugin_id: Optional[str] = None
-        if not _is_cli_mode() and not _is_noninteractive():
+        if not is_cli_mode() and not is_noninteractive():
             self._ensure_qt_context()
 
     def _ensure_qt_context(self) -> None:
@@ -53,7 +52,7 @@ class Dialog:
             import os
 
             # CLI and headless runs must stay on Rich, never bootstrap Qt here.
-            if _is_cli_mode() or _is_noninteractive():
+            if is_cli_mode() or is_noninteractive():
                 return
 
             # Skip if already initialized or in explicit headless mode
@@ -184,7 +183,7 @@ class Dialog:
         Uses Core.dialogs.ProgressDialog when GUI is available,
         otherwise returns a Rich-based console fallback.
         """
-        use_rich = _is_cli_mode() or _is_noninteractive()
+        use_rich = is_cli_mode() or is_noninteractive()
         if not use_rich:
             try:
                 from PySide6.QtWidgets import QApplication

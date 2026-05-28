@@ -876,6 +876,7 @@ class _BCASLWorker(QObject):
     def run(self) -> None:
         try:
             from bcasl.Loader import (
+                BCASL_DISABLED_REPORT,
                 _is_bcasl_enabled,
                 _load_workspace_config,
                 _run_bcasl_sync,
@@ -884,7 +885,7 @@ class _BCASLWorker(QObject):
             # 1. Vérifier si BCASL est activé (en arrière-plan)
             if not _is_bcasl_enabled(self.workspace_root):
                 self.log.emit("BCASL disabled in ark.yml. Skipping execution\n")
-                self.finished.emit({"status": "disabled"})
+                self.finished.emit(dict(BCASL_DISABLED_REPORT))
                 return
 
             # 2. Charger la config si non fournie (en arrière-plan)
@@ -927,7 +928,17 @@ class _BCASLUiBridge(QObject):
     @Slot(object)
     def on_finished(self, rep) -> None:
         try:
-            if rep and hasattr(self._gui, "log") and self._gui.log is not None:
+            try:
+                from bcasl.Loader import is_bcasl_disabled_report
+            except Exception:
+                is_bcasl_disabled_report = lambda _r: False  # type: ignore[assignment,misc]
+
+            if (
+                rep
+                and not is_bcasl_disabled_report(rep)
+                and hasattr(self._gui, "log")
+                and self._gui.log is not None
+            ):
                 self._gui.log.append("BCASL - Rapport:\n")
                 for item in rep:
                     try:
@@ -1154,8 +1165,13 @@ def run_pre_compile_async(
             return
         workspace_root = Path(self.workspace_dir).resolve()
 
-        from bcasl.Loader import (_get_plugins_dir, _is_bcasl_enabled,
-                                  _run_bcasl_sync, _load_workspace_config)
+        from bcasl.Loader import (
+            BCASL_DISABLED_REPORT,
+            _get_plugins_dir,
+            _is_bcasl_enabled,
+            _load_workspace_config,
+            _run_bcasl_sync,
+        )
 
         # Étape 0: Vérifier si BCASL est activé globalement via ark.yml
         if not _is_bcasl_enabled(workspace_root):
@@ -1166,7 +1182,7 @@ def run_pre_compile_async(
                 pass
             if callable(on_done):
                 try:
-                    on_done(None)
+                    on_done(dict(BCASL_DISABLED_REPORT))
                 except Exception:
                     pass
             return

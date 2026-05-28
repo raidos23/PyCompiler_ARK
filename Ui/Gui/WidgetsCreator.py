@@ -130,38 +130,23 @@ def _redact_secrets(text: str) -> str:
 
 def _is_noninteractive() -> bool:
     """Check if running in non-interactive mode."""
-    try:
-        import os
+    from Ui.Cli.runtime import is_noninteractive
 
-        v = os.environ.get("PYCOMPILER_NONINTERACTIVE")
-        if v is None:
-            return False
-        return str(v).strip().lower() not in ("", "0", "false", "no")
-    except Exception:
-        return False
+    return is_noninteractive()
 
 
 def _is_cli_mode() -> bool:
     """True when ARK CLI is active: plugins/dialogs must use Rich, not Qt."""
-    try:
-        from Ui.Cli.runtime import is_cli_mode
+    from Ui.Cli.runtime import is_cli_mode
 
-        return is_cli_mode()
-    except Exception:
-        try:
-            import os
-
-            v = os.environ.get("PYCOMPILER_CLI")
-            if v is None:
-                return False
-            return str(v).strip().lower() not in ("", "0", "false", "no")
-        except Exception:
-            return False
+    return is_cli_mode()
 
 
 def _use_rich_dialogs() -> bool:
     """Use Rich console dialogs instead of Qt message boxes."""
-    return _is_cli_mode() or _is_noninteractive()
+    from Ui.Cli.runtime import use_rich_dialogs
+
+    return use_rich_dialogs()
 
 
 def _qt_active_parent():

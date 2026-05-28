@@ -14,10 +14,9 @@ _active_statuses: list[Any] = []
 
 def _is_noninteractive_env() -> bool:
     try:
-        v = os.environ.get("PYCOMPILER_NONINTERACTIVE")
-        if v is None:
-            return False
-        return str(v).strip().lower() not in ("", "0", "false", "no")
+        from Ui.Cli.runtime import is_noninteractive
+
+        return is_noninteractive()
     except Exception:
         return False
 

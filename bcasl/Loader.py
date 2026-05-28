@@ -38,6 +38,16 @@ from .Base import BcPluginBase, PreCompileContext
 from .executor import BCASL
 from .tagging import compute_tag_order
 
+BCASL_DISABLED_REPORT: dict[str, Any] = {"status": "disabled", "ok": True}
+
+
+def is_bcasl_disabled_report(report: Any) -> bool:
+    """Return True when BCASL was skipped because it is disabled in ark.yml."""
+    if not isinstance(report, dict):
+        return False
+    return str(report.get("status", "")).strip().lower() in {"disabled", "skipped"}
+
+
 # --- Utilitaires ---
 
 
@@ -483,7 +493,7 @@ def run_pre_compile(self, build_context: Optional[Any] = None) -> Optional[objec
                     self.log.append("BCASL désactivé dans ark.yml. Exécution ignorée\n")
             except Exception:
                 pass
-            return None
+            return dict(BCASL_DISABLED_REPORT)
 
         Plugins_dir = _get_plugins_dir()
         cfg = _load_workspace_config(workspace_root)
