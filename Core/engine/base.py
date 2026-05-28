@@ -220,6 +220,31 @@ class CompilerEngine:
                             missing_system.append(tool)
 
                     if missing_system:
+                        # Check internet connection before attempting installation
+                        from Core.Compiler.utils import check_internet_connection
+                        
+                        log_i18n_level(
+                            gui,
+                            "info",
+                            *_tools_stage_message(
+                                "system",
+                                "Vérification de la connexion Internet...",
+                                "Checking Internet connection...",
+                            ),
+                        )
+                        
+                        if not check_internet_connection(timeout=4.0):
+                            log_i18n_level(
+                                gui,
+                                "error",
+                                *_tools_stage_message(
+                                    "system",
+                                    "Pas de connexion Internet. Impossible d'installer les outils systeme manquants.",
+                                    "No Internet connection. Cannot install missing system tools.",
+                                ),
+                            )
+                            return False
+
                         log_i18n_level(
                             gui,
                             "info",
@@ -468,6 +493,31 @@ class CompilerEngine:
                         if not gui.venv_manager.is_tool_installed_system(tool):
                             missing_python.append(tool)
                     if missing_python:
+                        # Check internet connection before attempting installation
+                        from Core.Compiler.utils import check_internet_connection
+                        
+                        log_i18n_level(
+                            gui,
+                            "info",
+                            *_tools_stage_message(
+                                "python",
+                                "Vérification de la connexion Internet...",
+                                "Checking Internet connection...",
+                            ),
+                        )
+                        
+                        if not check_internet_connection(timeout=4.0):
+                            log_i18n_level(
+                                gui,
+                                "error",
+                                *_tools_stage_message(
+                                    "python",
+                                    "Pas de connexion Internet. Impossible d'installer les outils Python manquants.",
+                                    "No Internet connection. Cannot install missing Python tools.",
+                                ),
+                            )
+                            return False
+
                         log_i18n_level(
                             gui,
                             "info",
@@ -518,6 +568,31 @@ class CompilerEngine:
                             if not gui.venv_manager.is_tool_installed(venv_path, tool):
                                 missing_python.append(tool)
                         if missing_python:
+                            # Check internet connection before attempting installation
+                            from Core.Compiler.utils import check_internet_connection
+                            
+                            log_i18n_level(
+                                gui,
+                                "info",
+                                *_tools_stage_message(
+                                    "python",
+                                    "Vérification de la connexion Internet...",
+                                    "Checking Internet connection...",
+                                ),
+                            )
+                            
+                            if not check_internet_connection(timeout=4.0):
+                                log_i18n_level(
+                                    gui,
+                                    "error",
+                                    *_tools_stage_message(
+                                        "python",
+                                        "Pas de connexion Internet. Impossible d'installer les outils Python manquants.",
+                                        "No Internet connection. Cannot install missing Python tools.",
+                                    ),
+                                )
+                                return False
+
                             log_i18n_level(
                                 gui,
                                 "info",
