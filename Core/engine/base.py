@@ -117,6 +117,36 @@ class CompilerEngine:
         """Hook called when a build is successful."""
         pass
 
+    def open_output_dir(self, output_dir: str) -> None:
+        """Open the output directory with the default system handler."""
+        if not output_dir:
+            return
+
+        import os
+
+        from engine_sdk.utils import log_with_level, open_path
+
+        path = output_dir
+        if not os.path.isabs(path):
+            # Try to find workspace_dir to resolve relative path
+            ws = getattr(self, "workspace_dir", None)
+            if not ws and hasattr(self, "_gui"):
+                ws = getattr(self._gui, "workspace_dir", None)
+
+            if ws:
+                path = os.path.join(ws, path)
+            else:
+                path = os.path.abspath(path)
+
+        if os.path.isdir(path):
+            # Log attempt to open
+            gui = getattr(self, "_gui", None)
+            if gui:
+                log_with_level(
+                    gui, "info", f"Ouverture du dossier de sortie : {path}"
+                )
+            open_path(path)
+
     def engine_translate(self, key: str, default: Optional[str] = None) -> str:
         """Translate an engine-local key using the shared engine i18n registry."""
         try:
