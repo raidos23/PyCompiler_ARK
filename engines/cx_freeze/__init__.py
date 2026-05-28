@@ -87,13 +87,11 @@ class CXFreezeEngine(CompilerEngine):
         if windowed_enabled and platform.system() == "Windows":
             cmd.extend(["--base", "Win32GUI"])
 
-        output_dir = str(context.output_dir or cfg.get("output_dir") or "").strip()
+        output_dir = str(context.output_dir or "").strip()
         if output_dir:
             cmd.extend(["--target-dir", output_dir])
 
-        icon_path = str(context.icon or cfg.get("selected_icon") or "").strip()
-        if not icon_path and hasattr(self, "_selected_icon") and self._selected_icon:
-            icon_path = str(self._selected_icon).strip()
+        icon_path = str(context.icon or "").strip()
         if icon_path:
             cmd.extend(["--icon", icon_path])
 
@@ -145,22 +143,12 @@ class CXFreezeEngine(CompilerEngine):
     def on_success(self, gui, file: str) -> None:
         """Handle successful compilation."""
         try:
-            # Log success message with output location
-            output_dir = (
-                getattr(self, "_cx_output_dir", getattr(gui, "output_dir_input", None))
-                if hasattr(self, "_gui")
-                else getattr(self, "_cx_output_dir", None)
-            )
-            if output_dir and output_dir.text().strip():
-                try:
-                    if hasattr(gui, "log"):
-                        log_with_level(
-                            gui,
-                            "success",
-                            f"Compilation CX_Freeze terminée. Sortie dans: {output_dir.text().strip()}",
-                        )
-                except Exception:
-                    pass
+            if hasattr(gui, "log"):
+                log_with_level(
+                    gui,
+                    "success",
+                    "Compilation CX_Freeze terminée avec succès.",
+                )
         except Exception:
             pass
 

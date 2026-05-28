@@ -107,7 +107,7 @@ class NuitkaEngine(CompilerEngine):
         if disable_console:
             cmd.append("--windows-disable-console")
 
-        output_dir = str(context.output_dir or cfg.get("output_dir") or "").strip()
+        output_dir = str(context.output_dir or "").strip()
         if output_dir:
             cmd.append(f"--output-dir={output_dir}")
 
@@ -115,13 +115,7 @@ class NuitkaEngine(CompilerEngine):
         if output_name:
             cmd.append(f"--output-filename={output_name}")
 
-        icon_path = str(context.icon or cfg.get("selected_icon") or "").strip()
-        if (
-            not icon_path
-            and hasattr(self, "_nuitka_selected_icon")
-            and self._nuitka_selected_icon
-        ):
-            icon_path = str(self._nuitka_selected_icon).strip()
+        icon_path = str(context.icon or "").strip()
         if icon_path:
             cmd.append(f"--windows-icon-from-ico={icon_path}")
 
@@ -172,20 +166,12 @@ class NuitkaEngine(CompilerEngine):
     def on_success(self, gui, file: str) -> None:
         """Handle successful compilation."""
         try:
-            # Log success message with output location
-            if (
-                hasattr(self, "_nuitka_output_dir")
-                and self._nuitka_output_dir.text().strip()
-            ):
-                try:
-                    if hasattr(gui, "log"):
-                        log_with_level(
-                            gui,
-                            "success",
-                            f"Compilation Nuitka terminée. Sortie dans: {self._nuitka_output_dir.text().strip()}",
-                        )
-                except Exception:
-                    pass
+            if hasattr(gui, "log"):
+                log_with_level(
+                    gui,
+                    "success",
+                    "Compilation Nuitka terminée avec succès.",
+                )
         except Exception:
             pass
 
