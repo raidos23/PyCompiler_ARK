@@ -36,29 +36,21 @@ from typing import Any, Dict, Iterator, List, Optional, Pattern, Set, Tuple, Uni
 # Plugin base (BCASL) and decorator
 # -----------------------------
 # Reuse BCASL types to guarantee compatibility with the host
-try:  # noqa: E402
+try:
     from bcasl import BCASL as BCASL
+    from bcasl import BCASL_PLUGIN_REGISTER_FUNC as BCASL_PLUGIN_REGISTER_FUNC
     from bcasl import BcPluginBase as BcPluginBase
     from bcasl import ExecutionReport as ExecutionReport
     from bcasl import PluginMeta as PluginMeta
     from bcasl import PreCompileContext as PreCompileContext
-
-    try:
-        from bcasl import BCASL_PLUGIN_REGISTER_FUNC as BCASL_PLUGIN_REGISTER_FUNC
-        from bcasl import register_plugin as register_plugin
-    except Exception:  # pragma: no cover
-
-        def register_plugin(cls: Any) -> Any:  # type: ignore
-            setattr(cls, "__bcasl_plugin__", True)
-            return cls
-
-        BCASL_PLUGIN_REGISTER_FUNC = "bcasl_register"
-except Exception:  # pragma: no cover — dev fallback when BCASL is not importable
-
-    class BcPluginBase:  # type: ignore
+    from bcasl import bc_register as _bc_register
+    from bcasl import register_plugin as register_plugin
+except ImportError:
+    # Dev fallback when BCASL is not importable (e.g. standalone SDK testing)
+    class BcPluginBase:
         pass
 
-    class PluginMeta:  # type: ignore
+    class PluginMeta:
         pass
 
     @dataclass
@@ -68,17 +60,23 @@ except Exception:  # pragma: no cover — dev fallback when BCASL is not importa
         metadata: dict[str, Any] = field(default_factory=dict)
         build_context: Optional[Any] = None
 
-
-def register_plugin(cls: Any) -> Any:  # type: ignore
-    setattr(cls, "__bcasl_plugin__", True)
-    return cls
+    def register_plugin(cls: Any) -> Any:
+        setattr(cls, "__bcasl_plugin__", True)
+        return cls
 
     BCASL_PLUGIN_REGISTER_FUNC = "bcasl_register"
 
-from bcasl import bc_register as _bc_register
+    def _bc_register(cls=None, **kwargs):
+        def inner(c):
+            setattr(c, "__bcasl_plugin__", True)
+            return c
 
-def bc_register ():
-    return _bc_register
+        return inner(cls) if cls else inner
+
+
+def bc_register(cls=None, **kwargs):
+    """SDK-level wrapper for bc_register."""
+    return _bc_register(cls, **kwargs)
 
 # -----------------------------
 # Version information
