@@ -148,6 +148,7 @@ Initializes the current directory as a workspace.
 - **Default**: Validates `ark.yml` and builds using the configured engine.
 - **Engine Override**: `--engine <id>` uses a temporary engine without modifying `ark.yml`.
 - **Reproducible Rebuild**: `--lock [file]` rebuilds strictly from a lock file (default: `.ark/lock/latest.lock.yml`).
+  - **Git State**: Automatically verifies if the current branch and commit match the lock. Offers automatic checkout on Linux.
 - **Constraint**: `--engine` and `--lock` cannot be used together.
 
 ---
