@@ -14,180 +14,56 @@
 # limitations under the License.
 
 """
-AdvancedConfigEditor — dialog Qt pour l'édition des fichiers de configuration avancés.
-
-Toute la logique métier (parsing, validation, diff) est déléguée à
-Core.Services.ConfigEditorService. Ce module ne contient que du code Qt.
+AdvancedConfigEditor — Structured GUI for project configuration (ark.yml).
 """
 
 from __future__ import annotations
 
 import os
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
-from PySide6.QtCore import QRegularExpression, Qt
-from PySide6.QtGui import (
-    QColor,
-    QFont,
-    QSyntaxHighlighter,
-    QTextCharFormat,
-    QTextDocument,
-)
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QFont
 from PySide6.QtWidgets import (
+    QCheckBox,
+    QComboBox,
     QDialog,
     QFileDialog,
+    QFormLayout,
+    QGroupBox,
     QHBoxLayout,
     QLabel,
     QLineEdit,
-    QListWidget,
-    QListWidgetItem,
     QMessageBox,
     QPlainTextEdit,
     QPushButton,
-    QSplitter,
-    QTabWidget,
+    QScrollArea,
+    QTableWidget,
+    QTableWidgetItem,
     QVBoxLayout,
+    QWidget,
 )
 
-from Services.ConfigEditorService import (
-    flatten_keys,
-    format_text,
-    make_default_content,
-    parse_text,
-    read_text,
-    render_colored_diff,
-    validate_payload,
-    write_text,
-)
-
-# ---------------------------------------------------------------------------
-# Highlighters Qt
-# ---------------------------------------------------------------------------
-
-
-class _SimpleHighlighter(QSyntaxHighlighter):
-    """Colorisation syntaxique simple pour YAML et JSON."""
-
-    def __init__(self, doc, mode: str = "yaml"):
-        super().__init__(doc)
-        self.mode = mode
-        self.rules: list[tuple[QRegularExpression, QTextCharFormat]] = []
-
-        def _fmt(color: str, bold: bool = False) -> QTextCharFormat:
-            fmt = QTextCharFormat()
-            fmt.setForeground(QColor(color))
-            if bold:
-                fmt.setFontWeight(QFont.Weight.Bold)
-            return fmt
-
-        key_fmt = _fmt("#9cdcfe", bold=True)
-        str_fmt = _fmt("#ce9178")
-        num_fmt = _fmt("#b5cea8")
-        bool_fmt = _fmt("#569cd6", bold=True)
-        sym_fmt = _fmt("#d4d4d4")
-        com_fmt = _fmt("#6a9955")
-
-        self.rules.append((QRegularExpression(r"'[^']*'"), str_fmt))
-        self.rules.append((QRegularExpression(r'"[^"]*"'), str_fmt))
-        self.rules.append((QRegularExpression(r"\b\d+(?:\.\d+)?\b"), num_fmt))
-        self.rules.append(
-            (
-                QRegularExpression(
-                    r"\b(true|false|null|yes|no)\b",
-                    QRegularExpression.CaseInsensitiveOption,
-                ),
-                bool_fmt,
-            )
-        )
-        self.rules.append((QRegularExpression(r"[{}\[\]:,]"), sym_fmt))
-        self.rules.append((QRegularExpression(r"#.*$"), com_fmt))
-
-        if mode == "yaml":
-            self.rules.append(
-                (QRegularExpression(r"^\s*[A-Za-z0-9_\-\.]+(?=\s*:)"), key_fmt)
-            )
-        else:
-            self.rules.append(
-                (QRegularExpression(r'"[A-Za-z0-9_\-\.]+"(?=\s*:)'), key_fmt)
-            )
-
-    def highlightBlock(self, text: str) -> None:
-        for pattern, fmt in self.rules:
-            it = pattern.globalMatch(text)
-            while it.hasNext():
-                match = it.next()
-                self.setFormat(match.capturedStart(), match.capturedLength(), fmt)
-
-
-class _DiffHighlighter(QSyntaxHighlighter):
-    """Colorisation visuelle pour les aperçus de diff."""
-
-    _EDITOR_BG = "#111111"
-
-    def __init__(self, doc: QTextDocument):
-        super().__init__(doc)
-
-        self._insert_fmt = QTextCharFormat()
-        self._insert_fmt.setBackground(QColor("#123222"))
-
-        self._delete_fmt = QTextCharFormat()
-        self._delete_fmt.setBackground(QColor("#3a1717"))
-
-        self._hint_fmt = QTextCharFormat()
-        self._hint_fmt.setForeground(QColor("#8a8a8a"))
-        self._hint_fmt.setFontItalic(True)
-
-        self._equal_fmt = QTextCharFormat()
-        self._equal_fmt.setForeground(QColor("#d8d8d8"))
-
-        self._marker_fmt = QTextCharFormat()
-        self._marker_fmt.setForeground(QColor(self._EDITOR_BG))
-        self._marker_fmt.setBackground(QColor(self._EDITOR_BG))
-
-    @staticmethod
-    def _apply_content_format(
-        highlighter: "_DiffHighlighter", text: str, fmt: QTextCharFormat
-    ) -> None:
-        if len(text) <= 2:
-            return
-        highlighter.setFormat(2, len(text) - 2, fmt)
-
-    def highlightBlock(self, text: str) -> None:
-        if text.startswith("A "):
-            self._apply_content_format(self, text, self._insert_fmt)
-            self.setFormat(0, 2, self._marker_fmt)
-        elif text.startswith("D "):
-            self._apply_content_format(self, text, self._delete_fmt)
-            self.setFormat(0, 2, self._marker_fmt)
-        elif text.startswith("= "):
-            self._apply_content_format(self, text, self._equal_fmt)
-            self.setFormat(0, 2, self._marker_fmt)
-        elif text == "...":
-            self.setFormat(0, len(text), self._hint_fmt)
-
-
-# ---------------------------------------------------------------------------
-# Dialog principal
-# ---------------------------------------------------------------------------
+from Core.AdvancedConfigEditor import validate_ark_payload
+from Core.Configs import load_ark_config, write_ark_config
+from Core.engine.registry import available_engines
 
 
 class AdvancedConfigEditor(QDialog):
-    """Dialog Qt d'édition avancée des fichiers de configuration ARK."""
+    """Structured editor for ark.yml configuration."""
 
     def __init__(self, gui):
         super().__init__(gui)
         self.gui = gui
-        self._tab_states: list[dict[str, Any]] = []
-        self.setWindowTitle(
-            gui.tr("Configurations avancées", "Advanced Configurations")
-        )
-        self.resize(1120, 760)
+        self.setWindowTitle(gui.tr("Configuration du projet", "Project Configuration"))
+        self.resize(800, 800)
 
         layout = QVBoxLayout(self)
-        layout.setSpacing(8)
-        layout.setContentsMargins(10, 10, 10, 10)
+        layout.setContentsMargins(15, 15, 15, 15)
+        layout.setSpacing(10)
 
+        # Info Header
         ws = self._workspace_dir() or ""
         ws_label = QLabel(
             self.gui.tr(
@@ -195,566 +71,269 @@ class AdvancedConfigEditor(QDialog):
                 f"Workspace: {ws}" if ws else "No workspace selected",
             )
         )
-        ws_label.setStyleSheet("color: #888;")
+        ws_label.setStyleSheet("color: #888; font-style: italic;")
         layout.addWidget(ws_label)
 
-        top_actions = QHBoxLayout()
-        self.btn_validate_all = QPushButton(self.gui.tr("Valider tout", "Validate all"))
-        self.btn_save_all = QPushButton(self.gui.tr("Tout enregistrer", "Save all"))
-        self.btn_reload_all = QPushButton(self.gui.tr("Tout recharger", "Reload all"))
-        self.btn_format_tab = QPushButton(self.gui.tr("Formater onglet", "Format tab"))
-        top_actions.addWidget(self.btn_validate_all)
-        top_actions.addWidget(self.btn_save_all)
-        top_actions.addWidget(self.btn_reload_all)
-        top_actions.addWidget(self.btn_format_tab)
-        top_actions.addStretch(1)
-        layout.addLayout(top_actions)
+        # Scroll Area for the form
+        scroll = QScrollArea(self)
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QScrollArea.Shape.NoFrame)
+        container = QWidget()
+        scroll.setWidget(container)
+        self.form_layout = QVBoxLayout(container)
+        self.form_layout.setSpacing(15)
+        layout.addWidget(scroll)
 
-        self.tabs = QTabWidget(self)
-        layout.addWidget(self.tabs)
+        # --- Section: Project ---
+        group_project = QGroupBox(self.gui.tr("Projet", "Project"))
+        form_project = QFormLayout(group_project)
+        self.edit_name = QLineEdit()
+        self.edit_version = QLineEdit()
+        self.edit_entry = QLineEdit()
+        btn_browse_entry = QPushButton("...")
+        btn_browse_entry.setFixedWidth(30)
+        btn_browse_entry.clicked.connect(self._browse_entry)
+        
+        row_entry = QHBoxLayout()
+        row_entry.addWidget(self.edit_entry)
+        row_entry.addWidget(btn_browse_entry)
+        
+        form_project.addRow(self.gui.tr("Nom du projet:", "Project Name:"), self.edit_name)
+        form_project.addRow(self.gui.tr("Version:", "Version:"), self.edit_version)
+        form_project.addRow(self.gui.tr("Point d'entrée:", "Entry Point:"), row_entry)
+        self.form_layout.addWidget(group_project)
 
-        self.status_label = QLabel("")
-        self.status_label.setStyleSheet("color: #888;")
-        layout.addWidget(self.status_label)
+        # --- Section: Build ---
+        group_build = QGroupBox(self.gui.tr("Compilation", "Build"))
+        form_build = QFormLayout(group_build)
+        self.combo_engine = QComboBox()
+        self.combo_engine.addItems(available_engines())
+        
+        self.edit_output = QLineEdit()
+        btn_browse_output = QPushButton("...")
+        btn_browse_output.setFixedWidth(30)
+        btn_browse_output.clicked.connect(self._browse_output)
+        row_output = QHBoxLayout()
+        row_output.addWidget(self.edit_output)
+        row_output.addWidget(btn_browse_output)
 
-        self._setup_tab_ark()
-        self._setup_tab_bcasl()
-        self._setup_tab_pref()
-        self._setup_engine_tabs()
+        self.edit_icon = QLineEdit()
+        btn_browse_icon = QPushButton("...")
+        btn_browse_icon.setFixedWidth(30)
+        btn_browse_icon.clicked.connect(self._browse_icon)
+        row_icon = QHBoxLayout()
+        row_icon.addWidget(self.edit_icon)
+        row_icon.addWidget(btn_browse_icon)
 
+        form_build.addRow(self.gui.tr("Moteur (Engine):", "Engine:"), self.combo_engine)
+        form_build.addRow(self.gui.tr("Dossier de sortie:", "Output Directory:"), row_output)
+        form_build.addRow(self.gui.tr("Icône (.ico):", "Icon:"), row_icon)
+        self.form_layout.addWidget(group_build)
+
+        # --- Section: Data Mappings ---
+        group_data = QGroupBox(self.gui.tr("Données (Assets)", "Data Mappings"))
+        lay_data = QVBoxLayout(group_data)
+        self.table_data = QTableWidget(0, 2)
+        self.table_data.setHorizontalHeaderLabels([
+            self.gui.tr("Source (relatif)", "Source (relative)"),
+            self.gui.tr("Destination (dans le bundle)", "Destination (in bundle)")
+        ])
+        self.table_data.horizontalHeader().setStretchLastSection(True)
+        self.table_data.setMinimumHeight(150)
+        lay_data.addWidget(self.table_data)
+        
+        row_btns_data = QHBoxLayout()
+        btn_add_data = QPushButton(self.gui.tr("Ajouter", "Add"))
+        btn_del_data = QPushButton(self.gui.tr("Supprimer", "Remove"))
+        btn_add_data.clicked.connect(self._add_data_row)
+        btn_del_data.clicked.connect(self._remove_data_row)
+        row_btns_data.addWidget(btn_add_data)
+        row_btns_data.addWidget(btn_del_data)
+        row_btns_data.addStretch()
+        lay_data.addLayout(row_btns_data)
+        self.form_layout.addWidget(group_data)
+
+        # --- Section: Exclusions ---
+        group_exclude = QGroupBox(self.gui.tr("Exclusions", "Exclusions"))
+        lay_exclude = QVBoxLayout(group_exclude)
+        
+        lay_exclude.addWidget(QLabel(self.gui.tr("Exclusions Build (exclure du bundle):", "Build Exclusions (ignore for bundle):")))
+        self.edit_build_exclude = QPlainTextEdit()
+        self.edit_build_exclude.setPlaceholderText("docs/**\ntests/**\n*.md")
+        self.edit_build_exclude.setMaximumHeight(80)
+        lay_exclude.addWidget(self.edit_build_exclude)
+        
+        lay_exclude.addWidget(QLabel(self.gui.tr("Exclusions Workspace (filtre GUI):", "Workspace Exclusions (GUI filter):")))
+        self.edit_ws_exclude = QPlainTextEdit()
+        self.edit_ws_exclude.setPlaceholderText(".git/**\nvenv/**\n__pycache__/**")
+        self.edit_ws_exclude.setMaximumHeight(80)
+        lay_exclude.addWidget(self.edit_ws_exclude)
+        self.form_layout.addWidget(group_exclude)
+
+        # --- Section: Plugins ---
+        group_plugins = QGroupBox(self.gui.tr("Plugins", "Plugins"))
+        lay_plugins = QVBoxLayout(group_plugins)
+        self.check_bcasl = QCheckBox(self.gui.tr("Activer le pipeline BCASL", "Enable BCASL Pipeline"))
+        lay_plugins.addWidget(self.check_bcasl)
+        self.form_layout.addWidget(group_plugins)
+
+        # Bottom Buttons
         btn_row = QHBoxLayout()
-        btn_row.addStretch(1)
-        btn_close = QPushButton(gui.tr("Fermer", "Close"))
-        btn_close.clicked.connect(self.close)
-        btn_row.addWidget(btn_close)
+        btn_row.addStretch()
+        btn_cancel = QPushButton(self.gui.tr("Annuler", "Cancel"))
+        btn_cancel.clicked.connect(self.reject)
+        btn_save = QPushButton(self.gui.tr("Enregistrer", "Save"))
+        btn_save.clicked.connect(self._on_save)
+        btn_save.setDefault(True)
+        btn_row.addWidget(btn_cancel)
+        btn_row.addWidget(btn_save)
         layout.addLayout(btn_row)
 
-        self.btn_validate_all.clicked.connect(self._validate_all_tabs)
-        self.btn_save_all.clicked.connect(self._save_all_tabs)
-        self.btn_reload_all.clicked.connect(self._reload_all_tabs)
-        self.btn_format_tab.clicked.connect(self._format_current_tab)
-        self.tabs.currentChanged.connect(self._on_current_tab_changed)
-        self._refresh_global_status()
-
-    # -------------------------------------------------------------------------
-    # Helpers UI
-    # -------------------------------------------------------------------------
+        self._load_config()
 
     def _workspace_dir(self) -> str | None:
         return getattr(self.gui, "workspace_dir", None)
 
-    def _make_editor(self, parent) -> QPlainTextEdit:
-        edit = QPlainTextEdit(parent)
-        edit.setFont(QFont("Consolas", 10))
-        edit.setLineWrapMode(QPlainTextEdit.LineWrapMode.NoWrap)
-        return edit
-
-    def _show_diff(self, title: str, before: str, after: str) -> None:
-        diff = render_colored_diff(before, after)
-        if not diff.strip():
-            QMessageBox.information(
-                self, title, self.gui.tr("Aucune différence.", "No differences.")
-            )
-            return
-        dlg = QDialog(self)
-        dlg.setWindowTitle(title)
-        dlg.resize(900, 600)
-        lay = QVBoxLayout(dlg)
-        view = QPlainTextEdit(dlg)
-        view.setReadOnly(True)
-        view.setFont(QFont("Consolas", 10))
-        view.setPlainText(diff)
-        view.setStyleSheet(
-            "QPlainTextEdit { background-color: #111111; color: #dddddd; }"
-        )
-        _DiffHighlighter(view.document())
-        lay.addWidget(view)
-        btn = QPushButton(self.gui.tr("Fermer", "Close"))
-        btn.clicked.connect(dlg.close)
-        lay.addWidget(btn)
-        dlg.exec()
-
-    # -------------------------------------------------------------------------
-    # Gestion d'état des onglets
-    # -------------------------------------------------------------------------
-
-    def _set_tab_dirty(self, state: dict[str, Any], dirty: bool) -> None:
-        if state.get("dirty") == dirty:
-            return
-        state["dirty"] = dirty
-        idx = self.tabs.indexOf(state["tab"])
-        base = state.get("tab_title", "")
-        if idx >= 0:
-            self.tabs.setTabText(idx, ("* " + base) if dirty else base)
-        self._refresh_global_status()
-
-    def _refresh_global_status(self) -> None:
-        if not hasattr(self, "status_label") or self.status_label is None:
-            return
-        dirty_count = sum(1 for s in self._tab_states if s.get("dirty"))
-        if dirty_count:
-            self.status_label.setText(
-                self.gui.tr(
-                    f"{dirty_count} onglet(s) modifié(s).",
-                    f"{dirty_count} modified tab(s).",
-                )
-            )
-        else:
-            self.status_label.setText(self.gui.tr("Tout est sauvegardé.", "All saved."))
-
-    def _update_outline(self, state: dict[str, Any]) -> None:
-        text = state["editor"].toPlainText()
-        is_yaml = bool(state["is_yaml"])
-        ok, data, err = parse_text(text, is_yaml)
-        outline: QListWidget = state["outline"]
-        diagnostics: QLabel = state["diagnostics"]
-        outline.clear()
-
-        if not ok:
-            diagnostics.setText(
-                self.gui.tr(f"Erreur de parsing: {err}", f"Parse error: {err}")
-            )
-            diagnostics.setStyleSheet("color: #d9534f;")
-            return
-
-        keys = flatten_keys(data)
-        hidden_roots = {"dependencies", "environment_manager"}
-        for key in keys:
-            if state["file_id"] == "ark":
-                root = key.split(".", 1)[0].split("[", 1)[0]
-                if root in hidden_roots:
-                    continue
-            QListWidgetItem(key, outline)
-
-        errs, warns = validate_payload(state["file_id"], data)
-        if errs:
-            diagnostics.setText(
-                self.gui.tr(
-                    "Erreurs:\n- " + "\n- ".join(errs),
-                    "Errors:\n- " + "\n- ".join(errs),
-                )
-            )
-            diagnostics.setStyleSheet("color: #d9534f;")
-        elif warns:
-            diagnostics.setText(
-                self.gui.tr(
-                    "Avertissements:\n- " + "\n- ".join(warns),
-                    "Warnings:\n- " + "\n- ".join(warns),
-                )
-            )
-            diagnostics.setStyleSheet("color: #f0ad4e;")
-        else:
-            diagnostics.setText(self.gui.tr("Validation OK.", "Validation OK."))
-            diagnostics.setStyleSheet("color: #5cb85c;")
-
-    def _validate_one_tab(self, state: dict[str, Any], popup: bool = False) -> bool:
-        text = state["editor"].toPlainText()
-        ok, data, err = parse_text(text, bool(state["is_yaml"]))
-        if not ok:
-            if popup:
-                QMessageBox.warning(
-                    self,
-                    self.gui.tr("Erreur", "Error"),
-                    self.gui.tr(f"Format invalide:\n{err}", f"Invalid format:\n{err}"),
-                )
-            self._update_outline(state)
-            return False
-        errs, warns = validate_payload(state["file_id"], data)
-        self._update_outline(state)
-        if errs and popup:
-            QMessageBox.warning(
-                self,
-                self.gui.tr("Erreur", "Error"),
-                self.gui.tr(
-                    "Erreurs de validation:\n- " + "\n- ".join(errs),
-                    "Validation errors:\n- " + "\n- ".join(errs),
-                ),
-            )
-        elif warns and popup:
-            QMessageBox.information(
-                self,
-                self.gui.tr("Avertissement", "Warning"),
-                self.gui.tr(
-                    "Validation avec avertissements:\n- " + "\n- ".join(warns),
-                    "Validation with warnings:\n- " + "\n- ".join(warns),
-                ),
-            )
-        return not errs
-
-    def _jump_to_search(self, state: dict[str, Any], backward: bool = False) -> None:
-        needle = state["search"].text().strip()
-        if not needle:
-            return
-        editor = state["editor"]
-        flags = (
-            QTextDocument.FindFlag.FindBackward
-            if backward
-            else QTextDocument.FindFlag(0)
-        )
-        if editor.find(needle, flags):
-            return
-        cursor = editor.textCursor()
-        cursor.movePosition(
-            cursor.MoveOperation.End if backward else cursor.MoveOperation.Start
-        )
-        editor.setTextCursor(cursor)
-        editor.find(needle, flags)
-
-    def _on_current_tab_changed(self, _index: int) -> None:
-        self._refresh_global_status()
-
-    def _reload_all_tabs(self) -> None:
-        for state in self._tab_states:
-            state["reload"]()
-        self._refresh_global_status()
-
-    def _save_all_tabs(self) -> None:
-        for state in self._tab_states:
-            state["save"]()
-        self._refresh_global_status()
-
-    def _validate_all_tabs(self) -> None:
-        all_ok = True
-        for state in self._tab_states:
-            if not self._validate_one_tab(state, popup=False):
-                all_ok = False
-        if all_ok:
-            QMessageBox.information(
-                self,
-                self.gui.tr("Validation", "Validation"),
-                self.gui.tr(
-                    "Toutes les configurations sont valides.",
-                    "All configurations are valid.",
-                ),
-            )
-            return
-        QMessageBox.warning(
-            self,
-            self.gui.tr("Validation", "Validation"),
-            self.gui.tr(
-                "Certaines configurations contiennent des erreurs.",
-                "Some configurations contain errors.",
-            ),
-        )
-
-    def _format_current_tab(self) -> None:
-        idx = self.tabs.currentIndex()
-        if idx < 0:
-            return
-        tab = self.tabs.widget(idx)
-        for state in self._tab_states:
-            if state["tab"] != tab:
-                continue
-            ok, formatted, err = format_text(
-                state["editor"].toPlainText(), bool(state["is_yaml"])
-            )
-            if not ok:
-                QMessageBox.warning(
-                    self,
-                    self.gui.tr("Erreur", "Error"),
-                    self.gui.tr(
-                        f"Format invalide, impossible de formater:\n{err}",
-                        f"Invalid format, cannot format:\n{err}",
-                    ),
-                )
-                return
-            state["editor"].setPlainText(formatted)
-            self._update_outline(state)
-            return
-
-    # -------------------------------------------------------------------------
-    # Construction des onglets
-    # -------------------------------------------------------------------------
-
-    def _build_tab(
-        self,
-        file_id: str,
-        label: str,
-        path_getter: Callable[[], str | None],
-        is_yaml: bool,
-        tab_title: str,
-    ) -> tuple[QDialog, QPlainTextEdit, QLabel]:
-        tab = QDialog(self)
-        lay = QVBoxLayout(tab)
-        lay.setSpacing(6)
-
-        title = QLabel(label)
-        lay.addWidget(title)
-
-        path_label = QLabel("")
-        path_label.setStyleSheet("color: #888;")
-        lay.addWidget(path_label)
-
-        actions = QHBoxLayout()
-        search = QLineEdit(tab)
-        search.setPlaceholderText(self.gui.tr("Rechercher...", "Search..."))
-        btn_prev = QPushButton(self.gui.tr("Précédent", "Previous"))
-        btn_next = QPushButton(self.gui.tr("Suivant", "Next"))
-        btn_validate = QPushButton(self.gui.tr("Valider", "Validate"))
-        btn_format = QPushButton(self.gui.tr("Formater", "Format"))
-        btn_defaults = QPushButton(self.gui.tr("Valeurs par défaut", "Load defaults"))
-        actions.addWidget(search, 1)
-        actions.addWidget(btn_prev)
-        actions.addWidget(btn_next)
-        actions.addWidget(btn_validate)
-        actions.addWidget(btn_format)
-        actions.addWidget(btn_defaults)
-        lay.addLayout(actions)
-
-        splitter = QSplitter(Qt.Orientation.Horizontal, tab)
-        editor = self._make_editor(splitter)
-        splitter.addWidget(editor)
-
-        side = QDialog(splitter)
-        side_lay = QVBoxLayout(side)
-        side_lay.setContentsMargins(0, 0, 0, 0)
-        side_lay.setSpacing(6)
-        side_lay.addWidget(QLabel(self.gui.tr("Structure", "Structure")))
-        outline = QListWidget(side)
-        side_lay.addWidget(outline, 1)
-        diagnostics = QLabel("")
-        diagnostics.setWordWrap(True)
-        diagnostics.setStyleSheet("color: #888;")
-        side_lay.addWidget(diagnostics)
-        splitter.addWidget(side)
-        splitter.setSizes([760, 280])
-        lay.addWidget(splitter, 1)
-
-        _SimpleHighlighter(editor.document(), "yaml" if is_yaml else "json")
-
-        btns = QHBoxLayout()
-        btn_reload = QPushButton(self.gui.tr("Recharger", "Reload"))
-        btn_save = QPushButton(self.gui.tr("Enregistrer", "Save"))
-        btn_diff = QPushButton(self.gui.tr("Voir diff", "View diff"))
-        btn_open = QPushButton(self.gui.tr("Ouvrir fichier…", "Open file…"))
-        btns.addWidget(btn_reload)
-        btns.addWidget(btn_save)
-        btns.addWidget(btn_diff)
-        btns.addStretch(1)
-        btns.addWidget(btn_open)
-        lay.addLayout(btns)
-
-        # Initialisation anticipée pour que les closures puissent y accéder.
-        state: dict[str, Any] = {}
-
-        def _load():
-            path = path_getter()
-            if not path:
-                editor.setPlainText("")
-                path_label.setText("")
-                self._update_outline(state)
-                return
-            path_label.setText(path)
-            content = read_text(path)
-            if not content.strip():
-                content = make_default_content(file_id, is_yaml, self._workspace_dir())
-            editor.setPlainText(content)
-            state["last_saved"] = editor.toPlainText()
-            self._set_tab_dirty(state, False)
-            self._update_outline(state)
-
-        def _save():
-            path = path_getter()
-            if not path:
-                return
-            text = editor.toPlainText()
-            if text.strip() and not self._validate_one_tab(state, popup=True):
-                return
-            write_text(path, text)
-            state["last_saved"] = text
-            self._set_tab_dirty(state, False)
-            self._update_outline(state)
-
-        def _diff():
-            path = path_getter()
-            if not path:
-                return
-            before = read_text(path)
-            after = editor.toPlainText()
-            self._show_diff(self.gui.tr("Diff du fichier", "File diff"), before, after)
-
-        def _open_any():
-            path, _ = QFileDialog.getOpenFileName(
-                self, self.gui.tr("Ouvrir un fichier", "Open file"), "", "*.*"
-            )
-            if not path:
-                return
-            editor.setPlainText(read_text(path))
-            path_label.setText(path)
-            self._update_outline(state)
-
-        def _load_defaults():
-            default_text = make_default_content(file_id, is_yaml, self._workspace_dir())
-            if not default_text.strip():
-                return
-            answer = QMessageBox.question(
-                self,
-                self.gui.tr("Confirmer", "Confirm"),
-                self.gui.tr(
-                    "Remplacer le contenu courant par une configuration par défaut ?",
-                    "Replace current content with default configuration?",
-                ),
-            )
-            if answer == QMessageBox.StandardButton.Yes:
-                editor.setPlainText(default_text)
-                self._update_outline(state)
-
-        btn_reload.clicked.connect(_load)
-        btn_save.clicked.connect(_save)
-        btn_diff.clicked.connect(_diff)
-        btn_open.clicked.connect(_open_any)
-        btn_validate.clicked.connect(lambda: self._validate_one_tab(state, popup=True))
-        btn_format.clicked.connect(
-            lambda: (
-                (
-                    lambda ok, content, err: (
-                        editor.setPlainText(content)
-                        if ok
-                        else QMessageBox.warning(
-                            self,
-                            self.gui.tr("Erreur", "Error"),
-                            self.gui.tr(
-                                f"Format invalide, impossible de formater:\n{err}",
-                                f"Invalid format, cannot format:\n{err}",
-                            ),
-                        )
-                    )
-                )(*format_text(editor.toPlainText(), is_yaml))
-            )
-        )
-        btn_defaults.clicked.connect(_load_defaults)
-        btn_prev.clicked.connect(lambda: self._jump_to_search(state, backward=True))
-        btn_next.clicked.connect(lambda: self._jump_to_search(state, backward=False))
-        search.returnPressed.connect(
-            lambda: self._jump_to_search(state, backward=False)
-        )
-
-        self.tabs.addTab(tab, tab_title)
-        state.update(
-            {
-                "file_id": file_id,
-                "tab_title": tab_title,
-                "tab": tab,
-                "is_yaml": is_yaml,
-                "editor": editor,
-                "path_label": path_label,
-                "outline": outline,
-                "diagnostics": diagnostics,
-                "search": search,
-                "dirty": False,
-                "last_saved": "",
-                "reload": _load,
-                "save": _save,
-            }
-        )
-        self._tab_states.append(state)
-
-        def _on_changed():
-            self._set_tab_dirty(
-                state, editor.toPlainText() != state.get("last_saved", "")
-            )
-            self._update_outline(state)
-
-        editor.textChanged.connect(_on_changed)
-        outline.itemDoubleClicked.connect(
-            lambda item: search.setText(item.text())
-            or self._jump_to_search(state, backward=False)
-        )
-
-        _load()
-        return tab, editor, path_label
-
-    # -------------------------------------------------------------------------
-    # Configuration des onglets
-    # -------------------------------------------------------------------------
-
-    def _setup_tab_ark(self) -> None:
-        ws = self._workspace_dir()
-        self._build_tab(
-            "ark",
-            self.gui.tr("ark.yml", "ark.yml"),
-            lambda: os.path.join(ws, "ark.yml") if ws else None,
-            True,
-            self.gui.tr("ARK Config", "ARK Config"),
-        )
-
-    def _setup_tab_bcasl(self) -> None:
-        ws = self._workspace_dir()
-        self._build_tab(
-            "bcasl",
-            self.gui.tr("bcasl.yml", "bcasl.yml"),
-            lambda: os.path.join(ws, "bcasl.yml") if ws else None,
-            True,
-            self.gui.tr("BCASL Config", "BCASL Config"),
-        )
-
-    def _setup_tab_pref(self) -> None:
-        ws = self._workspace_dir()
-        self._build_tab(
-            "pref",
-            self.gui.tr(
-                "Préférences Workspace (.ark/pref.json)",
-                "Workspace Preferences (.ark/pref.json)",
-            ),
-            lambda: os.path.join(ws, ".ark", "pref.json") if ws else None,
-            False,
-            self.gui.tr("Workspace Pref", "Workspace Pref"),
-        )
-
-    def _setup_engine_tabs(self) -> None:
+    def _load_config(self) -> None:
         ws = self._workspace_dir()
         if not ws:
             return
-        root = Path(ws) / ".ark"
-        root.mkdir(parents=True, exist_ok=True)
-
-        engine_ids: list[str] = []
+        
         try:
-            import Core.engine as engines_loader
+            config = load_ark_config(Path(ws))
+            
+            project = config.get("project", {})
+            self.edit_name.setText(str(project.get("name", "")))
+            self.edit_version.setText(str(project.get("version", "1.0.0")))
+            self.edit_entry.setText(str(project.get("entry", "")))
+            
+            build = config.get("build", {})
+            engine = build.get("engine", "pyinstaller")
+            idx = self.combo_engine.findText(engine)
+            if idx >= 0:
+                self.combo_engine.setCurrentIndex(idx)
+            else:
+                # Add engine to combo if missing (e.g. custom engine not loaded yet)
+                self.combo_engine.addItem(engine)
+                self.combo_engine.setCurrentText(engine)
+            
+            self.edit_output.setText(str(build.get("output", "dist/")))
+            self.edit_icon.setText(str(build.get("icon", "")))
+            
+            build_exclude = build.get("exclude", [])
+            if isinstance(build_exclude, list):
+                self.edit_build_exclude.setPlainText("\n".join(build_exclude))
+            
+            workspace = config.get("workspace", {})
+            ws_exclude = workspace.get("exclude", [])
+            if isinstance(ws_exclude, list):
+                self.edit_ws_exclude.setPlainText("\n".join(ws_exclude))
+            
+            data_map = build.get("data", [])
+            self.table_data.setRowCount(0)
+            if isinstance(data_map, list):
+                for item in data_map:
+                    if isinstance(item, dict):
+                        self._add_data_row(item.get("source", ""), item.get("destination", ""))
+            
+            plugins = config.get("plugins", {})
+            self.check_bcasl.setChecked(bool(plugins.get("bcasl_enabled", True)))
+            
+        except Exception as e:
+            QMessageBox.critical(self, self.gui.tr("Erreur", "Error"), 
+                               self.gui.tr(f"Impossible de charger ark.yml : {e}", 
+                                         f"Failed to load ark.yml: {e}"))
 
-            if hasattr(engines_loader, "available_engines"):
-                engine_ids = [str(e) for e in engines_loader.available_engines() if e]
-        except Exception:
-            engine_ids = []
-
-        if not engine_ids:
-            try:
-                for p in sorted(root.iterdir()):
-                    if not p.is_dir():
-                        continue
-                    if p.name in {"__pycache__"}:
-                        continue
-                    engine_ids.append(p.name)
-            except Exception:
-                pass
-
-        for engine_id in sorted(set(engine_ids)):
-            cfg = root / engine_id / "config.json"
-            self._build_tab(
-                f"engine:{engine_id}",
-                self.gui.tr(
-                    f"Engine config ({engine_id})",
-                    f"Engine config ({engine_id})",
-                ),
-                lambda p=str(cfg): p,
-                False,
-                self.gui.tr(f"Engine: {engine_id}", f"Engine: {engine_id}"),
-            )
-
-    def closeEvent(self, event) -> None:  # noqa: N802
-        dirty = [s for s in self._tab_states if s.get("dirty")]
-        if not dirty:
-            event.accept()
+    def _on_save(self) -> None:
+        ws = self._workspace_dir()
+        if not ws:
+            self.reject()
             return
-        answer = QMessageBox.question(
-            self,
-            self.gui.tr("Modifications non sauvegardées", "Unsaved changes"),
-            self.gui.tr(
-                "Des onglets contiennent des modifications non sauvegardées. Fermer quand même ?",
-                "Some tabs contain unsaved changes. Close anyway?",
-            ),
-        )
-        if answer == QMessageBox.StandardButton.Yes:
-            event.accept()
-        else:
-            event.ignore()
+
+        # Prepare payload
+        data_map = []
+        for row in range(self.table_data.rowCount()):
+            src = self.table_data.item(row, 0).text().strip()
+            dst = self.table_data.item(row, 1).text().strip()
+            if src:
+                data_map.append({"source": src, "destination": dst})
+
+        config = {
+            "project": {
+                "name": self.edit_name.text().strip(),
+                "version": self.edit_version.text().strip(),
+                "entry": self.edit_entry.text().strip(),
+            },
+            "workspace": {
+                "exclude": [line.strip() for line in self.edit_ws_exclude.toPlainText().splitlines() if line.strip()],
+            },
+            "build": {
+                "engine": self.combo_engine.currentText(),
+                "output": self.edit_output.text().strip(),
+                "icon": self.edit_icon.text().strip() or None,
+                "exclude": [line.strip() for line in self.edit_build_exclude.toPlainText().splitlines() if line.strip()],
+                "data": data_map,
+            },
+            "plugins": {
+                "bcasl_enabled": self.check_bcasl.isChecked(),
+            }
+        }
+
+        # Validate
+        errs, warns = validate_ark_payload(config)
+        if errs:
+            QMessageBox.warning(self, self.gui.tr("Erreur de validation", "Validation Error"),
+                              "\n".join(errs))
+            return
+
+        if warns:
+            ans = QMessageBox.question(self, self.gui.tr("Avertissement", "Warning"),
+                                     "\n".join(warns) + "\n\n" + 
+                                     self.gui.tr("Enregistrer quand même ?", "Save anyway?"))
+            if ans != QMessageBox.StandardButton.Yes:
+                return
+
+        try:
+            write_ark_config(Path(ws), config)
+            self.accept()
+        except Exception as e:
+            QMessageBox.critical(self, self.gui.tr("Erreur", "Error"), 
+                               self.gui.tr(f"Impossible d'enregistrer ark.yml : {e}", 
+                                         f"Failed to save ark.yml: {e}"))
+
+    def _add_data_row(self, source: str = "", dest: str = "") -> None:
+        row = self.table_data.rowCount()
+        self.table_data.insertRow(row)
+        self.table_data.setItem(row, 0, QTableWidgetItem(source))
+        self.table_data.setItem(row, 1, QTableWidgetItem(dest))
+
+    def _remove_data_row(self) -> None:
+        curr = self.table_data.currentRow()
+        if curr >= 0:
+            self.table_data.removeRow(curr)
+
+    def _browse_entry(self) -> None:
+        ws = self._workspace_dir()
+        path, _ = QFileDialog.getOpenFileName(self, self.gui.tr("Sélectionner le point d'entrée", "Select Entry Point"), 
+                                            ws or "", "Python Files (*.py *.pyw);;All Files (*)")
+        if path:
+            if ws and path.startswith(ws):
+                path = os.path.relpath(path, ws)
+            self.edit_entry.setText(path)
+
+    def _browse_output(self) -> None:
+        ws = self._workspace_dir()
+        path = QFileDialog.getExistingDirectory(self, self.gui.tr("Dossier de sortie", "Output Directory"), ws or "")
+        if path:
+            if ws and path.startswith(ws):
+                path = os.path.relpath(path, ws)
+            self.edit_output.setText(path)
+
+    def _browse_icon(self) -> None:
+        ws = self._workspace_dir()
+        path, _ = QFileDialog.getOpenFileName(self, self.gui.tr("Sélectionner une icône", "Select Icon"), 
+                                            ws or "", "Icon Files (*.ico);;All Files (*)")
+        if path:
+            if ws and path.startswith(ws):
+                path = os.path.relpath(path, ws)
+            self.edit_icon.setText(path)

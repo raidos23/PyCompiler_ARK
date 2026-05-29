@@ -6,3 +6,4 @@
 - [x] renforcement et blocage immédiat du build en cas d'absence d'Internet lors de l'installation des outils.
 
 - [x] GUI : ne plus bloquer la compilation quand BCASL est désactivé dans ark.yml (rapport `disabled` au lieu de `None`).
+- [x] Refactor de l'éditeur de config avancé en formulaire structuré pour ark.yml.
