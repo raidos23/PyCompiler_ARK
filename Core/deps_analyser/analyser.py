@@ -708,6 +708,27 @@ def collect_project_dependencies(
     all_deps: set[str] = set()
 
     # 1. Scan configuration files (high priority, more accurate than imports)
+    
+    # requirements.txt / requirements.in (Very high priority, can skip full scan if found)
+    reqs_found = False
+    for req_file in ["requirements.txt", "requirements.in"]:
+        path = os.path.join(workspace_dir, req_file)
+        if os.path.isfile(path):
+            try:
+                with open(path, "r", encoding="utf-8") as f:
+                    for line in f:
+                        line = line.strip()
+                        if line and not line.startswith(("#", "-")):
+                            # Basic parsing of requirement line
+                            name = re.split(r"[<>=!~\s]", line)[0].strip()
+                            if name:
+                                all_deps.add(name)
+                                reqs_found = True
+            except Exception:
+                pass
+    
+    # If we found explicit requirements, we can potentially skip the expensive scan
+    # unless specific validation is requested. For now, we continue but mark it.
 
     # pyproject.toml
     pyproject_path = os.path.join(workspace_dir, "pyproject.toml")
@@ -793,6 +814,10 @@ def collect_project_dependencies(
             pass
 
     # 2. Scan imports in all Python files (fallback/validation)
+    # OPTIMIZATION: If we already found dependencies in config files, we skip the slow full scan
+    if reqs_found and all_deps:
+        return all_deps
+
     modules_from_imports = set()
     workspace_python_files = []
     for root, dirs, files in os.walk(workspace_dir):

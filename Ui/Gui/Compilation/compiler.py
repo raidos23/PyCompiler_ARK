@@ -60,6 +60,8 @@ class CompilationThread(QThread):
         engine_id: str,
         context: BuildContext,
         engine_config: Optional[Dict[str, Any]] = None,
+        ark_config: Optional[Dict[str, Any]] = None,
+        python_version: str | None = None,
     ):
         """
         Initialize the compilation thread.
@@ -69,6 +71,8 @@ class CompilationThread(QThread):
         self.engine_id = engine_id
         self.context = context
         self.engine_config = engine_config
+        self.ark_config = ark_config
+        self.python_version = python_version
         self.cancel_requested = False
         self.start_time: Optional[datetime] = None
 
@@ -78,6 +82,30 @@ class CompilationThread(QThread):
         self.cancel_requested = False
 
         self.progress_update.emit(0, "Process started")
+
+        # 1. Build Preparation (Background)
+        if self.ark_config:
+            try:
+                from Core.Locking import build_lock_payload, write_lock_files
+                from engine_sdk import build_context_object_from_ark_config
+                from Ui.Cli.helpers import engine_config_from_lock
+
+                self.output_ready.emit("🔒 Génération du verrou de compilation (lock file)...")
+                lock_payload = build_lock_payload(
+                    self.workspace,
+                    self.ark_config,
+                    engine_id=self.engine_id,
+                    python_version=self.python_version,
+                )
+                write_lock_files(self.workspace, lock_payload)
+                
+                # Update context and config from the fresh lock
+                self.context = build_context_object_from_ark_config(self.ark_config)
+                self.engine_config = engine_config_from_lock(lock_payload)
+            except Exception as e:
+                self.error_ready.emit(f"Error during preparation: {e}")
+                self.finished.emit(1)
+                return
 
         def _on_stdout(line: str):
             self.output_ready.emit(line)
@@ -223,11 +251,13 @@ class CompilerCore(QObject):
         engine_id: str,
         context: BuildContext,
         engine_config: Optional[Dict[str, Any]] = None,
+        ark_config: Optional[Dict[str, Any]] = None,
+        python_version: str | None = None,
     ) -> bool:
         """
         Start an async compilation from a BuildContext.
         """
-        if self.is_running:
+        if self.is_running():
             self.log_message.emit("warning", "Compilation already in progress")
             return False
 
@@ -250,6 +280,8 @@ class CompilerCore(QObject):
             engine_id=engine_id,
             context=context,
             engine_config=engine_config,
+            ark_config=ark_config,
+            python_version=python_version,
         )
 
         # Connecter les signaux
