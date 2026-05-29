@@ -235,8 +235,27 @@ def compile_all(self) -> None:
             "🔒 Génération du verrou de compilation (lock file)...",
             "🔒 Generating build lock file...",
         )
+        
+        # Resolve Python version for locking
+        python_version = None
+        try:
+            from Core.Compiler.utils import get_interpreter_version_str
+            from Core.Venv_Manager.Manager import VenvManager
+            vm = VenvManager(self)
+            vpython = vm.resolve_project_venv()
+            if vpython:
+                vpath = vm.python_path(vpython)
+                python_version = get_interpreter_version_str(vpath)
+            else:
+                python_version = get_interpreter_version_str()
+        except Exception:
+            pass
+
         lock_payload = build_lock_payload(
-            Path(self.workspace_dir), validated.config, engine_id=engine_id
+            Path(self.workspace_dir),
+            validated.config,
+            engine_id=engine_id,
+            python_version=python_version,
         )
         write_lock_files(Path(self.workspace_dir), lock_payload)
 

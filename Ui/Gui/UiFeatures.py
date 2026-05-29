@@ -365,6 +365,11 @@ class UiFeatures:
         if hasattr(self, "btn_remove_file") and self.btn_remove_file:
             self.btn_remove_file.setEnabled(enabled)
 
+        if hasattr(self, "file_list") and self.file_list:
+            self.file_list.setEnabled(enabled)
+        if hasattr(self, "file_filter_input") and self.file_filter_input:
+            self.file_filter_input.setEnabled(enabled)
+
         for attr in (
             "btn_suggest_deps",
             "btn_bc_loader",
@@ -417,6 +422,8 @@ class UiFeatures:
                 "activity_btn_deps",
                 "advanced_cfg_btn",
                 "toolButton_more",
+                "file_list",
+                "file_filter_input",
             )
             for attr in target_names:
                 try:
@@ -526,26 +533,32 @@ class UiFeatures:
             except Exception:
                 mem_info = None
 
-        msg = "<b>Statistiques de compilation</b><br>"
-        msg += f"Fichiers distincts : {total_files}<br>"
-        msg += f"Compilations totales : {total_compiles}<br>"
-        msg += f"Succès : {success} | Échecs : {failed} | Annulées : {canceled}<br>"
-        msg += f"Temps total : {total_time:.3f} secondes<br>"
-        msg += f"Temps moyen : {avg_time:.3f} secondes<br>"
+        msg = f"<b>{self.tr('Statistiques de compilation', 'Build statistics')}</b><br><br>"
+        msg += f"{self.tr('Fichiers distincts', 'Distinct files')} : {total_files}<br>"
+        msg += f"{self.tr('Compilations totales', 'Total builds')} : {total_compiles}<br>"
+        msg += (
+            f"{self.tr('Succès', 'Success')} : {success} | "
+            f"{self.tr('Échecs', 'Failed')} : {failed} | "
+            f"{self.tr('Annulées', 'Cancelled')} : {canceled}<br>"
+        )
+        msg += f"{self.tr('Temps total', 'Total time')} : {total_time:.3f} {self.tr('secondes', 'seconds')}<br>"
+        msg += f"{self.tr('Temps moyen', 'Average time')} : {avg_time:.3f} {self.tr('secondes', 'seconds')}<br>"
         if min_time is not None and max_time is not None:
-            msg += f"Temps min/max : {float(min_time):.3f} / {float(max_time):.3f} secondes<br>"
+            msg += f"{self.tr('Temps min/max', 'Min/max time')} : {float(min_time):.3f} / {float(max_time):.3f} {self.tr('secondes', 'seconds')}<br>"
+        
         if slowest_file and slowest_time is not None:
             msg += (
-                f"Fichier le plus lent : {os.path.basename(str(slowest_file))}"
-                f" ({float(slowest_time):.3f} secondes)<br>"
+                f"<br><b>{self.tr('Fichier le plus lent', 'Slowest file')}</b> : {os.path.basename(str(slowest_file))}"
+                f" ({float(slowest_time):.3f} {self.tr('secondes', 'seconds')})<br>"
             )
         if slowest_files:
             top_n = slowest_files[:5]
-            msg += "Top 5 fichiers les plus lents :<br>"
+            msg += f"<br><b>{self.tr('Top 5 fichiers les plus lents', 'Top 5 slowest files')} :</b><br>"
             for path, duration in top_n:
-                msg += f"- {os.path.basename(str(path))} ({float(duration):.3f} secondes)<br>"
+                msg += f"- {os.path.basename(str(path))} ({float(duration):.3f} {self.tr('secondes', 'seconds')})<br>"
+        
         if isinstance(engines, dict) and engines:
-            msg += "Par moteur :<br>"
+            msg += f"<br><b>{self.tr('Par moteur', 'By engine')} :</b><br>"
             for engine_id, estats in engines.items():
                 if not isinstance(estats, dict):
                     continue
@@ -556,15 +569,18 @@ class UiFeatures:
                 eng_failed = int(estats.get("failed", 0))
                 eng_canceled = int(estats.get("canceled", 0))
                 msg += (
-                    f"- {engine_id} : {eng_count} compiles | "
-                    f"{eng_success} OK / {eng_failed} KO / {eng_canceled} ann. | "
-                    f"{eng_avg:.3f}s moy<br>"
+                    f"- {engine_id} : {eng_count} {self.tr('compiles', 'builds')} | "
+                    f"{eng_success} OK / {eng_failed} KO / {eng_canceled} {self.tr('ann.', 'canc.')} | "
+                    f"{eng_avg:.3f}s {self.tr('moy', 'avg')}<br>"
                 )
+        
         if last_file and last_duration is not None:
-            msg += f"Dernier fichier : {os.path.basename(str(last_file))}<br>"
-            msg += f"Dernière durée : {float(last_duration):.3f} secondes<br>"
+            msg += f"<br><b>{self.tr('Dernier build', 'Last build')}</b> : {os.path.basename(str(last_file))}"
+            msg += f" ({float(last_duration):.3f} {self.tr('secondes', 'seconds')})<br>"
+        
         if mem_info is not None:
-            msg += f"Mémoire utilisée (processus GUI) : {mem_info:.1f} Mo<br>"
+            msg += f"<br>{self.tr('Mémoire utilisée (GUI)', 'Memory usage (GUI)')} : {mem_info:.1f} Mo<br>"
+        
         QMessageBox.information(
             self, self.tr("Statistiques de compilation", "Build statistics"), msg
         )

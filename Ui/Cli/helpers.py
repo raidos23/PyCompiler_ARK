@@ -354,12 +354,14 @@ def build_lock_payload(
     config: dict[str, Any],
     *,
     engine_id: str,
+    python_version: str | None = None,
 ) -> dict[str, Any]:
     return _build_lock_payload(
         workspace,
         config,
         engine_id=engine_id,
         engine_version=engine_version(engine_id),
+        python_version=python_version,
     )
 
 
@@ -407,15 +409,22 @@ def engine_config_from_lock(lock_payload: dict[str, Any]) -> dict[str, Any]:
 
 
 def ensure_correct_git_commit(workspace: Path, lock_payload: dict[str, Any]) -> bool:
-    """Vérifie si le commit Git actuel correspond à celui du verrou."""
-    locked_commit = ((lock_payload.get("project") or {}).get("git_commit"))
-    if not locked_commit:
+    """Vérifie si le commit et la branche Git actuels correspondent à ceux du verrou."""
+    project = lock_payload.get("project") or {}
+    locked_commit = project.get("git_commit")
+    locked_branch = project.get("git_branch")
+    
+    if not locked_commit and not locked_branch:
         return True
 
-    from Core.Locking import get_git_commit_hash
+    from Core.Locking import get_git_commit_hash, get_git_branch
     current_commit = get_git_commit_hash(workspace)
+    current_branch = get_git_branch(workspace)
 
-    if not current_commit or current_commit == locked_commit:
+    commit_match = (not locked_commit) or (current_commit == locked_commit)
+    branch_match = (not locked_branch) or (current_branch == locked_branch)
+
+    if commit_match and branch_match:
         return True
 
     from .output import warn, info, error, success
@@ -425,26 +434,46 @@ def ensure_correct_git_commit(workspace: Path, lock_payload: dict[str, Any]) -> 
     is_linux = platform.system().lower() == "linux"
 
     warn(f"Mismatch Git détecté.")
-    info(f" - Verrou : {locked_commit[:8]}")
-    info(f" - Actuel : {current_commit[:8]}")
+    if not branch_match:
+        info(f" - Branche Verrou : {locked_branch}")
+        info(f" - Branche Actuelle : {current_branch}")
+    if not commit_match:
+        info(f" - Commit Verrou : {locked_commit[:8] if locked_commit else 'N/A'}")
+        info(f" - Commit Actuel : {current_commit[:8] if current_commit else 'N/A'}")
 
     if is_linux:
         try:
             import click
-            if click.confirm(f"Effectuer un 'git checkout {locked_commit[:8]}' automatique ?", default=True):
-                info(f"Alignement Git en cours...")
-                subprocess.run(["git", "checkout", locked_commit], cwd=str(workspace), check=True)
+            if not branch_match and locked_branch:
+                 if click.confirm(f"Effectuer un 'git checkout {locked_branch}' automatique ?", default=True):
+                    info(f"Changement de branche en cours...")
+                    subprocess.run(["git", "checkout", locked_branch], cwd=str(workspace), check=True)
+                    # Re-verify commit after branch change
+                    current_commit = get_git_commit_hash(workspace)
+                    commit_match = (not locked_commit) or (current_commit == locked_commit)
+            
+            if not commit_match and locked_commit:
+                if click.confirm(f"Effectuer un 'git checkout {locked_commit[:8]}' automatique ?", default=True):
+                    info(f"Alignement du commit en cours...")
+                    subprocess.run(["git", "checkout", locked_commit], cwd=str(workspace), check=True)
+                    success("Workspace aligné.")
+                    return True
+            
+            if commit_match and branch_match:
                 success("Workspace aligné.")
                 return True
             else:
                 warn("Build avec mismatch (non recommandé).")
                 return True
         except Exception as e:
-            error(f"Échec checkout : {e}")
+            error(f"Échec alignement Git : {e}")
             return False
     else:
-        warn("Checkout automatique non supporté sur cette plateforme.")
-        info(f"Action manuelle requise : git checkout {locked_commit}")
+        warn("Alignement automatique non supporté sur cette plateforme.")
+        if not branch_match and locked_branch:
+            info(f"Action manuelle requise : git checkout {locked_branch}")
+        if not commit_match and locked_commit:
+            info(f"Action manuelle requise : git checkout {locked_commit}")
         try:
             import click
             return click.confirm("Continuer quand même ?", default=False)
