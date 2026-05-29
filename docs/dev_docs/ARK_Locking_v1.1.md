@@ -1,4 +1,4 @@
-# **ARK Locking Specification v1.0**
+# **ARK Locking Specification v1.1**
 
 This document defines the architecture and behavior of the build locking mechanism, ensuring reproducibility across environments.
 
@@ -44,6 +44,7 @@ project:
   version: 1.0.0           # Copied from project.version
   entry: src/main.py       # Copied from project.entry
   git_commit: sha256:abc123... # Snapshot of current git commit
+  git_branch: main         # Current git branch name
 
 workspace:
   exclude_patterns:        # Copied from build.exclude (legacy support)
@@ -70,7 +71,7 @@ engine:
 platform:
   os: windows              # sys.platform snapshot
   arch: x86_64             # machine architecture snapshot
-  python_version: 3.11.9   # runtime version snapshot
+  python_version: 3.11.9   # exact build interpreter version
 
 dependencies:              # Full 'pip freeze' snapshot
   PySide6: 6.7.2
@@ -87,10 +88,13 @@ workspace_hash: sha256:4a5b6c7d8e9f0a1b2c3d...
 When rebuilding from a lock, ARK performs a "Strict Rebuild":
 
 1. **Read Lock**: Loads the specified lock file (ignores live `ark.yml`).
-2. **Verify Environment**: (Optional/Informational) compares the current environment against the lock metadata.
-3. **Build**: Passes the locked data directly to the engine via the **BuildContext**.
-4. **Shadow Lock Generation**: During the rebuild, ARK generates a *new* lock based on the current live state.
-5. **Comparison**: The used lock and the generated shadow lock are compared.
+2. **Verify Git Alignment**: Checks if current `git_branch` and `git_commit` match the lock.
+    - **Linux**: ARK offers to perform automatic `git checkout` (branch then commit).
+    - **Windows**: ARK displays the exact manual commands to run.
+3. **Verify Environment**: ARK captures the current Python version and environment.
+4. **Build**: Passes the locked data directly to the engine via the **BuildContext**.
+5. **Shadow Lock Generation**: During the rebuild, ARK generates a *new* lock based on the current live state.
+6. **Comparison**: The used lock and the generated shadow lock are compared.
     - **Identical**: Build successful, environment is consistent.
     - **Mismatch**: ARK issues a warning (stored in `.ark/cache/rebuild.lock/`).
 
@@ -105,4 +109,4 @@ When rebuilding from a lock, ARK performs a "Strict Rebuild":
 - **L5**: The lock is the **sole source of truth** during a `--lock` build.
 
 ---
-*End of Specification v1.0*
+*End of Specification v1.1*
