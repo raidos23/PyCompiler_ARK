@@ -33,6 +33,7 @@ from PySide6.QtWidgets import (
     QFormLayout,
     QGroupBox,
     QHBoxLayout,
+    QHeaderView,
     QLabel,
     QLineEdit,
     QMessageBox,
@@ -133,21 +134,29 @@ class AdvancedConfigEditor(QDialog):
         # --- Section: Data Mappings ---
         group_data = QGroupBox(self.gui.tr("Données (Assets)", "Data Mappings"))
         lay_data = QVBoxLayout(group_data)
-        self.table_data = QTableWidget(0, 2)
+        self.table_data = QTableWidget(0, 3)
         self.table_data.setHorizontalHeaderLabels([
             self.gui.tr("Source (relatif)", "Source (relative)"),
-            self.gui.tr("Destination (dans le bundle)", "Destination (in bundle)")
+            self.gui.tr("Destination (bundle)", "Destination (in bundle)"),
+            self.gui.tr("Type", "Type")
         ])
-        self.table_data.horizontalHeader().setStretchLastSection(True)
-        self.table_data.setMinimumHeight(150)
+        self.table_data.horizontalHeader().setStretchLastSection(False)
+        self.table_data.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
+        self.table_data.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
+        self.table_data.setMinimumHeight(180)
         lay_data.addWidget(self.table_data)
         
         row_btns_data = QHBoxLayout()
-        btn_add_data = QPushButton(self.gui.tr("Ajouter", "Add"))
+        btn_add_file = QPushButton(self.gui.tr("📄 Fichier", "Add File"))
+        btn_add_dir = QPushButton(self.gui.tr("📁 Dossier", "Add Dir"))
         btn_del_data = QPushButton(self.gui.tr("Supprimer", "Remove"))
-        btn_add_data.clicked.connect(self._add_data_row)
+        
+        btn_add_file.clicked.connect(self._on_add_file_data)
+        btn_add_dir.clicked.connect(self._on_add_dir_data)
         btn_del_data.clicked.connect(self._remove_data_row)
-        row_btns_data.addWidget(btn_add_data)
+        
+        row_btns_data.addWidget(btn_add_file)
+        row_btns_data.addWidget(btn_add_dir)
         row_btns_data.addWidget(btn_del_data)
         row_btns_data.addStretch()
         lay_data.addLayout(row_btns_data)
@@ -234,7 +243,11 @@ class AdvancedConfigEditor(QDialog):
             if isinstance(data_map, list):
                 for item in data_map:
                     if isinstance(item, dict):
-                        self._add_data_row(item.get("source", ""), item.get("destination", ""))
+                        self._add_data_row(
+                            item.get("source", ""), 
+                            item.get("destination", ""), 
+                            item.get("type", "dir")
+                        )
             
             plugins = config.get("plugins", {})
             self.check_bcasl.setChecked(bool(plugins.get("bcasl_enabled", True)))
@@ -253,10 +266,18 @@ class AdvancedConfigEditor(QDialog):
         # Prepare payload
         data_map = []
         for row in range(self.table_data.rowCount()):
-            src = self.table_data.item(row, 0).text().strip()
-            dst = self.table_data.item(row, 1).text().strip()
+            src_item = self.table_data.item(row, 0)
+            dst_item = self.table_data.item(row, 1)
+            src = src_item.text().strip() if src_item else ""
+            dst = dst_item.text().strip() if dst_item else ""
+            
+            combo = self.table_data.cellWidget(row, 2)
+            m_type = "dir"
+            if isinstance(combo, QComboBox):
+                m_type = combo.currentText()
+            
             if src:
-                data_map.append({"source": src, "destination": dst})
+                data_map.append({"source": src, "destination": dst, "type": m_type})
 
         config = {
             "project": {
@@ -301,11 +322,39 @@ class AdvancedConfigEditor(QDialog):
                                self.gui.tr(f"Impossible d'enregistrer ark.yml : {e}", 
                                          f"Failed to save ark.yml: {e}"))
 
-    def _add_data_row(self, source: str = "", dest: str = "") -> None:
+    def _add_data_row(self, source: str = "", dest: str = "", m_type: str = "dir") -> None:
         row = self.table_data.rowCount()
         self.table_data.insertRow(row)
         self.table_data.setItem(row, 0, QTableWidgetItem(source))
         self.table_data.setItem(row, 1, QTableWidgetItem(dest))
+        
+        combo = QComboBox()
+        combo.addItems(["dir", "file"])
+        combo.setCurrentText(m_type)
+        self.table_data.setCellWidget(row, 2, combo)
+
+    def _on_add_file_data(self) -> None:
+        ws = self._workspace_dir()
+        path, _ = QFileDialog.getOpenFileName(
+            self, 
+            self.gui.tr("Sélectionner un fichier", "Select File"), 
+            ws or "", 
+            "All Files (*)"
+        )
+        if path:
+            rel = os.path.relpath(path, ws) if ws and path.startswith(ws) else path
+            self._add_data_row(rel, rel, "file")
+
+    def _on_add_dir_data(self) -> None:
+        ws = self._workspace_dir()
+        path = QFileDialog.getExistingDirectory(
+            self, 
+            self.gui.tr("Sélectionner un dossier", "Select Directory"), 
+            ws or ""
+        )
+        if path:
+            rel = os.path.relpath(path, ws) if ws and path.startswith(ws) else path
+            self._add_data_row(rel, rel, "dir")
 
     def _remove_data_row(self) -> None:
         curr = self.table_data.currentRow()
