@@ -23,7 +23,7 @@ import os
 from pathlib import Path
 from typing import Any
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QSize
 from PySide6.QtGui import QFont
 from PySide6.QtWidgets import (
     QCheckBox,
@@ -49,6 +49,20 @@ from PySide6.QtWidgets import (
 from Core.AdvancedConfigEditor import validate_ark_payload
 from Core.Configs import load_ark_config, write_ark_config
 from Core.engine.registry import available_engines
+
+
+def _apply_themed_icon(widget: QPushButton, icon_name: str, size: int = 16) -> None:
+    """Applique une icône SVG thémée au widget."""
+    try:
+        from Ui.Gui.UiConnection import themed_svg_icon
+        # icons/ is at project root, which is 4 levels up from this file
+        icon_path = str(Path(__file__).parent.parent.parent.parent / "icons" / icon_name)
+        icon = themed_svg_icon(icon_path, size=size)
+        if icon:
+            widget.setIcon(icon)
+            widget.setIconSize(QSize(size, size))
+    except Exception:
+        pass
 
 
 class AdvancedConfigEditor(QDialog):
@@ -91,8 +105,9 @@ class AdvancedConfigEditor(QDialog):
         self.edit_name = QLineEdit()
         self.edit_version = QLineEdit()
         self.edit_entry = QLineEdit()
-        btn_browse_entry = QPushButton("...")
-        btn_browse_entry.setFixedWidth(30)
+        btn_browse_entry = QPushButton()
+        _apply_themed_icon(btn_browse_entry, "play.svg")
+        btn_browse_entry.setFixedWidth(35)
         btn_browse_entry.clicked.connect(self._browse_entry)
         
         row_entry = QHBoxLayout()
@@ -111,16 +126,18 @@ class AdvancedConfigEditor(QDialog):
         self.combo_engine.addItems(available_engines())
         
         self.edit_output = QLineEdit()
-        btn_browse_output = QPushButton("...")
-        btn_browse_output.setFixedWidth(30)
+        btn_browse_output = QPushButton()
+        _apply_themed_icon(btn_browse_output, "folder.svg")
+        btn_browse_output.setFixedWidth(35)
         btn_browse_output.clicked.connect(self._browse_output)
         row_output = QHBoxLayout()
         row_output.addWidget(self.edit_output)
         row_output.addWidget(btn_browse_output)
 
         self.edit_icon = QLineEdit()
-        btn_browse_icon = QPushButton("...")
-        btn_browse_icon.setFixedWidth(30)
+        btn_browse_icon = QPushButton()
+        _apply_themed_icon(btn_browse_icon, "image.svg")
+        btn_browse_icon.setFixedWidth(35)
         btn_browse_icon.clicked.connect(self._browse_icon)
         row_icon = QHBoxLayout()
         row_icon.addWidget(self.edit_icon)
@@ -147,9 +164,12 @@ class AdvancedConfigEditor(QDialog):
         lay_data.addWidget(self.table_data)
         
         row_btns_data = QHBoxLayout()
-        btn_add_file = QPushButton(self.gui.tr("📄 Fichier", "Add File"))
-        btn_add_dir = QPushButton(self.gui.tr("📁 Dossier", "Add Dir"))
+        btn_add_file = QPushButton(self.gui.tr("Fichier", "File"))
+        _apply_themed_icon(btn_add_file, "file-plus.svg")
+        btn_add_dir = QPushButton(self.gui.tr("Dossier", "Dir"))
+        _apply_themed_icon(btn_add_dir, "folder-plus.svg")
         btn_del_data = QPushButton(self.gui.tr("Supprimer", "Remove"))
+        _apply_themed_icon(btn_del_data, "trash-2.svg")
         
         btn_add_file.clicked.connect(self._on_add_file_data)
         btn_add_dir.clicked.connect(self._on_add_dir_data)
@@ -190,8 +210,10 @@ class AdvancedConfigEditor(QDialog):
         btn_row = QHBoxLayout()
         btn_row.addStretch()
         btn_cancel = QPushButton(self.gui.tr("Annuler", "Cancel"))
+        _apply_themed_icon(btn_cancel, "x.svg")
         btn_cancel.clicked.connect(self.reject)
         btn_save = QPushButton(self.gui.tr("Enregistrer", "Save"))
+        _apply_themed_icon(btn_save, "save.svg")
         btn_save.clicked.connect(self._on_save)
         btn_save.setDefault(True)
         btn_row.addWidget(btn_cancel)
