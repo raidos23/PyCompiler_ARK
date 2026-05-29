@@ -96,6 +96,12 @@ QPushButton#cancel_btn:disabled {
   border-color: #1F2329;
 }
 
+QLineEdit:disabled, QTextEdit:disabled, QPlainTextEdit:disabled, QListWidget:disabled, QTreeWidget:disabled, QTableWidget:disabled, QTableView:disabled, QComboBox:disabled, QSpinBox:disabled, QDoubleSpinBox:disabled, QDateEdit:disabled, QDateTimeEdit:disabled {
+  background: #1A1D21;
+  color: #55595F;
+  border-color: #1F2329;
+}
+
 /* Cases à cocher */
 QCheckBox { color: #E6E8EB; }
 QCheckBox::indicator {

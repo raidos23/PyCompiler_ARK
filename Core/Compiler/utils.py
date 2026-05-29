@@ -443,6 +443,20 @@ def get_interpreter_version(python_path: Optional[str] = None) -> Tuple[int, int
     return sys.version_info.major, sys.version_info.minor, sys.version_info.micro
 
 
+def get_interpreter_version_str(python_path: Optional[str] = None) -> str:
+    """
+    Return Python interpreter version as a string.
+
+    Args:
+     python_path: Path de l'interpréteur (défaut: sys.executable)
+
+    Returns:
+     Version string (ex: "3.10.12")
+    """
+    v = get_interpreter_version(python_path)
+    return f"{v[0]}.{v[1]}.{v[2]}"
+
+
 def check_module_available(module_name: str, python_path: Optional[str] = None) -> bool:
     """
     Check whether a Python module is available.

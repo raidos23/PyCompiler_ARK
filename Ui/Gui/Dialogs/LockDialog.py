@@ -164,46 +164,75 @@ class LockDialog(QDialog):
             QMessageBox.critical(self, "Error", "rebuild_from_lock method not implemented in GUI")
 
     def _ensure_git_alignment(self, lock_payload: dict) -> bool:
-        locked_commit = (lock_payload.get("project") or {}).get("git_commit")
-        if not locked_commit:
+        project = lock_payload.get("project") or {}
+        locked_commit = project.get("git_commit")
+        locked_branch = project.get("git_branch")
+        
+        if not locked_commit and not locked_branch:
             return True
 
-        from Core.Locking import get_git_commit_hash
+        from Core.Locking import get_git_commit_hash, get_git_branch
         ws = getattr(self.gui, "workspace_dir", None)
         if not ws:
             return True
         
         current_commit = get_git_commit_hash(Path(ws))
-        if not current_commit or current_commit == locked_commit:
+        current_branch = get_git_branch(Path(ws))
+
+        commit_match = (not locked_commit) or (current_commit == locked_commit)
+        branch_match = (not locked_branch) or (current_branch == locked_branch)
+
+        if commit_match and branch_match:
             return True
 
         import platform
         import subprocess
         is_linux = platform.system().lower() == "linux"
         
+        lines = []
+        if not branch_match:
+            lines.append(self.gui.tr(
+                f"Branche : actuelle={current_branch}, verrou={locked_branch}",
+                f"Branch: current={current_branch}, lock={locked_branch}"
+            ))
+        if not commit_match:
+            lines.append(self.gui.tr(
+                f"Commit : actuel={current_commit[:8] if current_commit else 'N/A'}, verrou={locked_commit[:8] if locked_commit else 'N/A'}",
+                f"Commit: current={current_commit[:8] if current_commit else 'N/A'}, lock={locked_commit[:8] if locked_commit else 'N/A'}"
+            ))
+
         msg = self.gui.tr(
-            f"Le commit Git actuel ({current_commit[:8]}) ne correspond pas à celui du verrou ({locked_commit[:8]}).\n\n",
-            f"Current Git commit ({current_commit[:8]}) does not match lock file ({locked_commit[:8]}).\n\n"
-        )
+            "Désalignement Git détecté :\n",
+            "Git mismatch detected:\n"
+        ) + "\n".join(lines) + "\n\n"
         
         if is_linux:
             msg += self.gui.tr(
-                "Voulez-vous que ARK effectue un 'git checkout' automatique pour aligner le code ?",
-                "Do you want ARK to perform an automatic 'git checkout' to align the code?"
+                "Voulez-vous que ARK tente d'aligner automatiquement le code (git checkout) ?",
+                "Do you want ARK to attempt automatic code alignment (git checkout)?"
             )
             ans = QMessageBox.question(self, "Git Mismatch", msg, QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel)
             if ans == QMessageBox.Yes:
                 try:
-                    subprocess.run(["git", "checkout", locked_commit], cwd=ws, check=True)
+                    if not branch_match and locked_branch:
+                        subprocess.run(["git", "checkout", locked_branch], cwd=ws, check=True)
+                    if not commit_match and locked_commit:
+                        subprocess.run(["git", "checkout", locked_commit], cwd=ws, check=True)
                     return True
                 except Exception as e:
-                    QMessageBox.critical(self, "Error", f"Échec du checkout : {e}")
+                    QMessageBox.critical(self, "Error", f"Échec de l'alignement : {e}")
                     return False
             return ans == QMessageBox.No # True si l'user ignore, False si Cancel
         else:
+            cmd_hint = ""
+            if not branch_match and locked_branch:
+                cmd_hint += f"git checkout {locked_branch}\n"
+            if not commit_match and locked_commit:
+                cmd_hint += f"git checkout {locked_commit[:8]}\n"
+
             msg += self.gui.tr(
-                f"Action recommandée : exécutez 'git checkout {locked_commit}' manuellement avant de continuer.\n\nContinuer le build quand même ?",
-                f"Recommended action: run 'git checkout {locked_commit}' manually before continuing.\n\nContinue build anyway?"
+                f"Action manuelle recommandée :\n{cmd_hint}\nContinuer le build quand même ?",
+                f"Recommended manual action:\n{cmd_hint}\nContinue build anyway?"
             )
             ans = QMessageBox.warning(self, "Git Mismatch", msg, QMessageBox.Yes | QMessageBox.No)
             return ans == QMessageBox.Yes

@@ -133,6 +133,23 @@ def get_git_commit_hash(workspace: Path) -> str | None:
         return None
 
 
+def get_git_branch(workspace: Path) -> str | None:
+    """Return the current Git branch of the workspace if available."""
+    try:
+        import subprocess
+        result = subprocess.run(
+            ["git", "rev-parse", "--abbrev-ref", "HEAD"],
+            cwd=str(workspace),
+            capture_output=True,
+            text=True,
+            timeout=5,
+            check=True
+        )
+        return result.stdout.strip()
+    except Exception:
+        return None
+
+
 def next_build_id(lock_dir: Path) -> str:
     from datetime import UTC
     today = datetime.now(UTC).strftime("%Y_%m_%d")
@@ -153,6 +170,7 @@ def build_lock_payload(
     engine_id: str,
     engine_version: str = "unknown",
     dependencies: dict[str, str] | None = None,
+    python_version: str | None = None,
 ) -> dict[str, Any]:
     config = normalize_ark_config(config)
     build = config.get("build") or {}
@@ -162,6 +180,7 @@ def build_lock_payload(
     lock_dir = workspace / ".ark" / "lock"
     build_id = next_build_id(lock_dir)
     git_commit = get_git_commit_hash(workspace)
+    git_branch = get_git_branch(workspace)
     
     return {
         "build_id": build_id,
@@ -170,6 +189,7 @@ def build_lock_payload(
             "version": project.get("version"),
             "entry": project.get("entry"),
             "git_commit": git_commit,
+            "git_branch": git_branch,
         },
         "workspace": {"exclude_patterns": exclude_patterns},
         "build": {
@@ -186,7 +206,7 @@ def build_lock_payload(
         "platform": {
             "os": sys.platform,
             "arch": platform.machine(),
-            "python_version": platform.python_version(),
+            "python_version": python_version or platform.python_version(),
         },
         "dependencies": dependencies or installed_distributions_snapshot(),
         "workspace_hash": compute_workspace_hash(workspace, exclude_patterns),
@@ -275,6 +295,8 @@ __all__ = [
     "default_lock_path",
     "engine_config_path",
     "ensure_workspace_layout",
+    "get_git_branch",
+    "get_git_commit_hash",
     "included_workspace_files",
     "installed_distributions_snapshot",
     "load_yaml_file",

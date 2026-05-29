@@ -90,6 +90,26 @@ def _build_impl(
     if not as_json and verbose:
         info(f"Workspace: {workspace}")
 
+    # Shared Python version resolution for locking/comparison
+    python_version = None
+    try:
+        from Core.Compiler.utils import get_interpreter_version_str
+        from Core.Venv_Manager.Manager import VenvManager
+        # We create a dummy bridge for VenvManager
+        class DummyBridge:
+            def __init__(self, ws):
+                self.workspace_dir = ws
+                self.use_system_python = False
+        vm = VenvManager(DummyBridge(str(workspace)))
+        vpython = vm.resolve_existing_venv()
+        if vpython:
+            vpath = vm.python_path(vpython)
+            python_version = get_interpreter_version_str(vpath)
+        else:
+            python_version = get_interpreter_version_str()
+    except Exception:
+        pass
+
     if lock_file is None:
         if not as_json and verbose:
             info("Loading ark.yml...")
@@ -102,9 +122,13 @@ def _build_impl(
         
         if not as_json and verbose:
             info(f"Generating lock payload for engine '{engine_id}'...")
+
         # Point 3 alignment: build_lock_payload now correctly loads engine config via fixed path
         lock_payload = build_lock_payload(
-            workspace, validated.config, engine_id=engine_id
+            workspace,
+            validated.config,
+            engine_id=engine_id,
+            python_version=python_version,
         )
         if not as_json and verbose:
             info("Writing lock files...")
@@ -204,6 +228,7 @@ def _build_impl(
             workspace,
             validated.config,
             engine_id=str(validated.config["build"]["engine"]),
+            python_version=python_version,
         )
         rebuild_cache = cache_rebuild_lock(workspace, regenerated)
         comparison = compare_lock_payloads(lock_payload, regenerated)
