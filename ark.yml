@@ -1,0 +1,32 @@
+project:
+  name: PyCompiler_ARK
+  version: 1.0.0
+  entry: pycompiler_ark.py
+workspace:
+  exclude:
+  - .ark/**
+  - '**/__pycache__/**'
+  - '**/*.pyc'
+  - '**/*.pyo'
+  - '**/*.pyd'
+  - .git/**
+  - .svn/**
+  - .hg/**
+  - venv/**
+  - .venv/**
+  - env/**
+  - .env/**
+  - node_modules/**
+  - build/**
+  - dist/**
+  - '*.spec'
+  - '*.egg-info/**'
+  - .pytest_cache/**
+  - .mypy_cache/**
+  - .tox/**
+  - site-packages/**
+build:
+  engine: pyinstaller
+  output: dist/
+  data: []
+  exclude: []

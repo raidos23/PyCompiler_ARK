@@ -167,8 +167,7 @@ config.json
 config.yaml
 config.toml
 user_preferences.json
-bcasl.yml
-ark.yml
+
 clean_venv_duplicates.py
 force_clean_venv_files.py
 Licence_Injector.py
@@ -178,7 +177,6 @@ sys
 .kombai
 .pref/
 .qodo
-.ark/
 
 # Temporary files
 temp/
