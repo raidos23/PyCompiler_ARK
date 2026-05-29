@@ -474,18 +474,19 @@ Notes.
 
 - Use minimal list to avoid heavy installs.
 
-1. on_success with output directory log.
+1. on_success with custom message.
 
 ```python
 def on_success(self, gui, file):
-    out = getattr(self, "_output_dir", None)
-    if out and out.text().strip():
-        log_i18n_level(gui, "success", f"Sortie: {out.text()}", f"Output: {out.text()}")
+    # ARK already opens the output directory.
+    # Use this for additional engine-specific messages.
+    log_i18n_level(gui, "success", "Build terminé!", "Build finished!")
 ```
 
 Notes.
 
 - Keep logs short and actionable.
+- No need to manually open the folder.
 
 1. mapping.json for a single library.
 
@@ -580,27 +581,16 @@ Notes.
 
 - Clean alignment for labels + widgets.
 
-1. UI: output directory input.
+1. UI: rely on global configuration.
 
 ```python
-self._output_dir = QLineEdit()
-self._output_dir.setPlaceholderText("Output directory")
+# Do NOT create widgets for Output Directory or Icon.
+# These are managed globally in ark.yml and passed via BuildContext.
 ```
 
 Notes.
 
-- Always give a hint.
-
-1. UI: icon selector button.
-
-```python
-btn = QPushButton("Choose Icon")
-btn.clicked.connect(self.select_icon)
-```
-
-Notes.
-
-- Keep the handler small, update a field.
+- Keeps the engine tab focused and clean.
 
 1. UI: store data files list.
 
@@ -755,16 +745,17 @@ Notes.
 
 - Keep outputs in the project.
 
-1. Normalize output path.
+1. Use context.output_dir.
 
 ```python
-out = os.path.abspath(self._output_dir.text().strip())
-cmd.extend(["--output-dir", out])
+# The core runner already ensures output_dir is absolute if needed.
+# Use it directly from the context.
+cmd.extend(["--output-dir", context.output_dir])
 ```
 
 Notes.
 
-- Avoid relative path issues.
+- Avoids manual widget parsing and relative path issues.
 
 1. Avoid duplicate args.
 
