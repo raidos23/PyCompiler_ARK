@@ -127,24 +127,6 @@ def _matches_exclude_pattern(relative_path: str, pattern: str) -> bool:
     return fnmatch.fnmatch(rel, pat) or Path(rel).match(pat)
 
 
-def compute_workspace_hash(workspace: Path, exclude_patterns: list[str]) -> str:
-    """
-    Compute a fast hash of the workspace using file metadata (path, size, mtime).
-    This is much faster than reading full content for large projects.
-    """
-    digest = sha256()
-    for path in included_workspace_files(workspace, exclude_patterns):
-        try:
-            stat = path.stat()
-            # We hash the relative path, size, and mtime
-            rel = path.relative_to(workspace).as_posix()
-            entry = f"{rel}|{stat.st_size}|{stat.st_mtime}"
-            digest.update(entry.encode("utf-8"))
-        except Exception:
-            continue
-    return "metadata-sha256:" + digest.hexdigest()
-
-
 def get_git_commit_hash(workspace: Path) -> str | None:
     """Return the current Git commit hash of the workspace if available."""
     try:
@@ -238,7 +220,6 @@ def build_lock_payload(
             "python_version": python_version or platform.python_version(),
         },
         "dependencies": dependencies or installed_distributions_snapshot(),
-        "workspace_hash": compute_workspace_hash(workspace, exclude_patterns),
     }
 
 
@@ -320,7 +301,6 @@ __all__ = [
     "build_lock_payload",
     "cache_rebuild_lock",
     "compare_lock_payloads",
-    "compute_workspace_hash",
     "default_lock_path",
     "engine_config_path",
     "ensure_workspace_layout",
