@@ -227,16 +227,9 @@ def compile_all(self) -> None:
     except Exception:
         pass
 
-    # 4. Generate Lock and Context (Exact CLI Code)
+    # 4. Preparation (Resolve context and engine config)
     try:
-        log_i18n_level(
-            self,
-            "info",
-            "🔒 Génération du verrou de compilation (lock file)...",
-            "🔒 Generating build lock file...",
-        )
-        
-        # Resolve Python version for locking
+        # Resolve Python version for locking (will be used in background thread)
         python_version = None
         try:
             from Core.Compiler.utils import get_interpreter_version_str
@@ -251,17 +244,10 @@ def compile_all(self) -> None:
         except Exception:
             pass
 
-        lock_payload = build_lock_payload(
-            Path(self.workspace_dir),
-            validated.config,
-            engine_id=engine_id,
-            python_version=python_version,
-        )
-        write_lock_files(Path(self.workspace_dir), lock_payload)
-
-        # Context and Config from lock/config (source of truth)
+        # Use BuildContext helper to get initial context
         context = build_context_object_from_ark_config(validated.config)
-        engine_config = engine_config_from_lock(lock_payload)
+        # In UI mode, we use current overrides. The thread will update them from the fresh lock.
+        engine_config = getattr(self, "_config_overrides", {})
     except Exception as e:
         log_i18n_level(
             self,
@@ -280,7 +266,7 @@ def compile_all(self) -> None:
         engine = None
     if engine is None:
         try:
-            engine = create(engine_id)
+            engine = engines_loader.create(engine_id)
         except Exception:
             pass
     engine_name = getattr(engine, "name", engine_id)
@@ -369,6 +355,8 @@ def compile_all(self) -> None:
                 engine_id=engine_id,
                 context=context,
                 engine_config=engine_config,
+                ark_config=validated.config, # Passing this triggers background lock generation
+                python_version=python_version,
             )
 
             if not success:

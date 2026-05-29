@@ -77,17 +77,39 @@ def installed_distributions_snapshot() -> dict[str, str]:
 def included_workspace_files(
     workspace: Path, exclude_patterns: list[str]
 ) -> list[Path]:
+    """
+    Return a list of files to be included in the workspace snapshot.
+    Optimized to skip excluded directories early.
+    """
     included: list[Path] = []
-    for path in sorted(workspace.rglob("*")):
-        if not path.is_file():
-            continue
-        rel = path.relative_to(workspace).as_posix()
-        if rel.startswith(".ark/"):
-            continue
-        if any(_matches_exclude_pattern(rel, pattern) for pattern in exclude_patterns):
-            continue
-        included.append(path)
-    return included
+    ws_str = str(workspace.resolve())
+    
+    # Prune list for os.walk
+    prune_dirs = {".git", ".ark", "__pycache__", "venv", ".venv", "build", "dist"}
+    
+    import os
+    for root, dirs, files in os.walk(ws_str):
+        # 1. Early pruning of common heavy/system directories
+        dirs[:] = [d for d in dirs if d not in prune_dirs]
+        
+        # 2. Apply custom exclude patterns to directories
+        rel_root = os.path.relpath(root, ws_str)
+        if rel_root == ".":
+            rel_root = ""
+            
+        if rel_root:
+            if any(_matches_exclude_pattern(rel_root + "/", p) for p in exclude_patterns):
+                dirs[:] = [] # Stop recursion here
+                continue
+
+        # 3. Process files
+        for f in files:
+            rel_path = os.path.join(rel_root, f) if rel_root else f
+            if any(_matches_exclude_pattern(rel_path, p) for p in exclude_patterns):
+                continue
+            included.append(Path(root) / f)
+            
+    return sorted(included)
 
 
 def _matches_exclude_pattern(relative_path: str, pattern: str) -> bool:
@@ -106,14 +128,21 @@ def _matches_exclude_pattern(relative_path: str, pattern: str) -> bool:
 
 
 def compute_workspace_hash(workspace: Path, exclude_patterns: list[str]) -> str:
+    """
+    Compute a fast hash of the workspace using file metadata (path, size, mtime).
+    This is much faster than reading full content for large projects.
+    """
     digest = sha256()
     for path in included_workspace_files(workspace, exclude_patterns):
-        rel = path.relative_to(workspace).as_posix().encode("utf-8")
-        digest.update(rel)
-        digest.update(b"\0")
-        digest.update(path.read_bytes())
-        digest.update(b"\0")
-    return "sha256:" + digest.hexdigest()
+        try:
+            stat = path.stat()
+            # We hash the relative path, size, and mtime
+            rel = path.relative_to(workspace).as_posix()
+            entry = f"{rel}|{stat.st_size}|{stat.st_mtime}"
+            digest.update(entry.encode("utf-8"))
+        except Exception:
+            continue
+    return "metadata-sha256:" + digest.hexdigest()
 
 
 def get_git_commit_hash(workspace: Path) -> str | None:
