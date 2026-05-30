@@ -12,3 +12,7 @@
 - [x] le dialog statistic doit etre i18naliser  fr/en comme les autre dialogs.
 
 - [x] dans le locking on doit aussi prendre en compte en plus du commit git , la branch git. et  apliquer les ajout ui(gui et cli) comme il a deja été fait lors de l'implementation du support de commit.
+
+- [] verifier que les commandes cli sont parfaitement fonctionnelle et verifer les fcntionnalités une a une au niveau cli. surtout les commde specialement conçu pour les dev comme le engine user dir pour dev dir aussi et les scaffoldings.
+
+- [] ecrire des tests pour chaque partie critique du logiciel.
