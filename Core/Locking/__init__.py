@@ -182,6 +182,7 @@ def build_lock_payload(
     engine_version: str = "unknown",
     dependencies: dict[str, str] | None = None,
     python_version: str | None = None,
+    resolved_command: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     config = normalize_ark_config(config)
     build = config.get("build") or {}
@@ -213,6 +214,7 @@ def build_lock_payload(
             "name": engine_id,
             "version": engine_version,
             "config": read_engine_config(workspace, engine_id),
+            **({"resolved_command": resolved_command} if resolved_command else {}),
         },
         "platform": {
             "os": sys.platform,

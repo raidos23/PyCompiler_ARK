@@ -23,10 +23,10 @@
 
 # revue de Ergonomie 
 
-- [] le locking doit save aussi les commande genérer par auto mapping.
-- [] lorsque en cli l'on lance le rebuild avec '--lock' si pas de fichier lock specifier il doit y avoir un msg qui dit de linker le lock a utliser pas de defaut. et aussi l'option `--lock` peut utliser `--lock latest`  pour utliser le dernier lock récencé.
-- [] les log lors d'un rebuild sans `-v` verbose, doit etre plus ou moins expressif (en similitude au build simple en matiere de log) pour ne pas sembler bugger ou lent aux yeux de l'user.
+- [x] le locking doit save aussi les commande genérer par auto mapping.
+- [x] lorsque en cli l'on lance le rebuild avec '--lock' si pas de fichier lock specifier il doit y avoir un msg qui dit de linker le lock a utliser pas de defaut. et aussi l'option `--lock` peut utliser `--lock latest` pour utliser le dernier lock récencé.
+- [x] les log lors d'un rebuild sans `-v` verbose, doit etre plus ou moins expressif (en similitude au build simple en matiere de log) pour ne pas sembler bugger ou lent aux yeux de l'user.
 
-- [] retirer les emojis en cli pour opter pour des implementation de rich.
-- [] en cli sans le mode verbose, utlsier des spinners rich pour chaque etapes pour ne pas paraître bloquant.
+- [x] retirer les emojis en cli pour opter pour des implementation de rich.
+- [x] en cli sans le mode verbose, utlsier des spinners rich pour chaque etapes pour ne pas paraître bloquant.
 - [] quand un worspace nest pas selectionner le advanced editor en gui ne doit point s'ouvrir et afiche un message qui indique de selectionner un workspace. tout comme le fait le dialog bcasl.

@@ -60,6 +60,7 @@ class CompilationThread(QThread):
         engine_id: str,
         context: BuildContext,
         engine_config: Optional[Dict[str, Any]] = None,
+        is_rebuild: bool = False,
     ):
         """
         Initialize the compilation thread.
@@ -69,6 +70,7 @@ class CompilationThread(QThread):
         self.engine_id = engine_id
         self.context = context
         self.engine_config = engine_config
+        self.is_rebuild = is_rebuild
         self.cancel_requested = False
         self.start_time: Optional[datetime] = None
 
@@ -98,6 +100,7 @@ class CompilationThread(QThread):
                 on_stdout=_on_stdout,
                 on_stderr=_on_stderr,
                 stop_signal=_stop_signal,
+                is_rebuild=self.is_rebuild,
             )
 
             return_code = result.get("return_code", 1)
@@ -223,6 +226,7 @@ class CompilerCore(QObject):
         engine_id: str,
         context: BuildContext,
         engine_config: Optional[Dict[str, Any]] = None,
+        is_rebuild: bool = False,
     ) -> bool:
         """
         Start an async compilation from a BuildContext.
@@ -250,6 +254,7 @@ class CompilerCore(QObject):
             engine_id=engine_id,
             context=context,
             engine_config=engine_config,
+            is_rebuild=is_rebuild,
         )
 
         # Connecter les signaux

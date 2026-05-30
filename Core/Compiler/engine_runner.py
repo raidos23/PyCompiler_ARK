@@ -221,6 +221,7 @@ def run_engine_compile_streaming(
     stop_signal: Optional[Callable[[], bool]] = None,
     gui: Any = None,
     verbose: bool = False,
+    is_rebuild: bool = False,
 ) -> dict[str, Any]:
     """
     Execute a compilation with real-time output streaming.
@@ -235,6 +236,7 @@ def run_engine_compile_streaming(
         stop_signal:   Optional callback that returns True if cancellation is requested.
         gui:           Optional GUI object to use instead of creating a bridge.
         verbose:       Whether to enable verbose logging.
+        is_rebuild:     Whether this is a rebuild from a lock file (disables auto-mapping).
 
     Returns:
         A result dict.
@@ -354,9 +356,23 @@ def run_engine_compile_streaming(
         if on_stdout:
             on_stdout("Etape 2/3 : Generation de la commande de compilation...")
 
-        program, args, engine_env = resolve_engine_command(
-            engine_id, context, engine_config, gui=bridge
-        )
+        # Check if we have a pre-resolved command in the engine_config (from lock)
+        resolved_cmd = (engine_config or {}).get("_resolved_command")
+        if resolved_cmd and isinstance(resolved_cmd, dict):
+            program = str(resolved_cmd.get("program") or "")
+            args = list(resolved_cmd.get("args") or [])
+            engine_env = dict(resolved_cmd.get("env") or {})
+            if not program:
+                return _failure("Verrou invalide : commande résolue manquante.")
+        elif is_rebuild:
+            return _failure(
+                "Mode Rebuild : Aucune commande pré-résolue trouvée dans le verrou. "
+                "L'auto-mapping est désactivé lors d'un rebuild pour garantir l'intégrité."
+            )
+        else:
+            program, args, engine_env = resolve_engine_command(
+                engine_id, context, engine_config, gui=bridge
+            )
     except EngineRunnerError as exc:
         return _failure(str(exc))
     except Exception as exc:
