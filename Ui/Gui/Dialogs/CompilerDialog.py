@@ -328,6 +328,42 @@ def compile_all(self) -> None:
             # Start compilation using the EngineRunner path
             main_process = get_main_process()
 
+            # CLI Alignment: Generate lock before starting the engine
+            try:
+                from Core.Locking import build_lock_payload, write_lock_files
+                from engine_sdk import build_context_object_from_ark_config
+                from Ui.Cli.helpers import engine_config_from_lock
+
+                log_i18n_level(
+                    self,
+                    "info",
+                    "🔒 Génération du verrou de compilation (lock file)...",
+                    "🔒 Generating compilation lock file...",
+                )
+                
+                # Generate fresh lock payload using resolved python_version
+                lock_payload = build_lock_payload(
+                    self.workspace_dir,
+                    validated.config,
+                    engine_id=engine_id,
+                    python_version=python_version,
+                )
+                write_lock_files(self.workspace_dir, lock_payload)
+                
+                # Update context and engine_config from the fresh lock to ensure strict alignment
+                context = build_context_object_from_ark_config(validated.config)
+                engine_config = engine_config_from_lock(lock_payload)
+                
+            except Exception as e:
+                log_i18n_level(
+                    self,
+                    "error",
+                    f"Échec génération verrou: {e}",
+                    f"Lock generation failed: {e}",
+                )
+                self.set_controls_enabled(True)
+                return
+
             # Connection logic
             if not hasattr(main_process, "_gui_connected"):
                 main_process.output_ready.connect(lambda msg: _handle_output(self, msg))
@@ -355,8 +391,6 @@ def compile_all(self) -> None:
                 engine_id=engine_id,
                 context=context,
                 engine_config=engine_config,
-                ark_config=validated.config, # Passing this triggers background lock generation
-                python_version=python_version,
             )
 
             if not success:
@@ -527,8 +561,27 @@ def start_compilation_process(self, engine_id: str, file_path: str) -> bool:
             "🔒 Génération du verrou de compilation (lock file)...",
             "🔒 Generating build lock file...",
         )
+
+        # Shared Python version resolution for locking/comparison (Aligned with CLI)
+        python_version = None
+        try:
+            from Core.Compiler.utils import get_interpreter_version_str
+            from Core.Venv_Manager.Manager import VenvManager
+            vm = VenvManager(self)
+            vpython = vm.resolve_project_venv()
+            if vpython:
+                vpath = vm.python_path(vpython)
+                python_version = get_interpreter_version_str(vpath)
+            else:
+                python_version = get_interpreter_version_str()
+        except Exception:
+            pass
+
         lock_payload = build_lock_payload(
-            Path(self.workspace_dir), validated.config, engine_id=engine_id
+            Path(self.workspace_dir), 
+            validated.config, 
+            engine_id=engine_id,
+            python_version=python_version
         )
         write_lock_files(Path(self.workspace_dir), lock_payload)
 
