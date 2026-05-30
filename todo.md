@@ -15,4 +15,6 @@
 
 - [] verifier que les commandes cli sont parfaitement fonctionnelle et verifer les fcntionnalités une a une au niveau cli. surtout les commde specialement conçu pour les dev comme le engine user dir pour dev dir aussi et les scaffoldings.
 
+- [] fix l'error [ERROR] Erreur démarrage compilation : MainProcess.compile_from_context() got an unexpected keyword argument 'ark_config'
+
 - [] ecrire des tests pour chaque partie critique du logiciel.
