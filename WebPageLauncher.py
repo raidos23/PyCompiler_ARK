@@ -122,9 +122,7 @@ def main(argv=None):
         httpd.allow_reuse_address = True
         sys.stderr.write(f"[WebPage] Serving {ROOT} at http://{args.host}:{args.port}\n")
 
-        if not args.no_browser:
-            threading.Thread(target=open_browser, args=(args.host, args.port), daemon=True).start()
-
+        
         try:
             httpd.serve_forever()
         except KeyboardInterrupt:

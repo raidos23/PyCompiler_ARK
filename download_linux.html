@@ -66,7 +66,7 @@
       </div>
       <div class="nav-actions">
         <a class="btn" href="index.html">Accueil</a>
-        <a class="btn primary" href="https://github.com/raidos23/PyCompiler-ARK-Professional" target="_blank">GitHub</a>
+        <a class="btn primary" href="https://github.com/raidos23/PyCompiler_ARK" target="_blank">GitHub</a>
       </div>
     </div>
   </header>
@@ -210,13 +210,13 @@
         statusInfo.textContent = `Dernière mise à jour : ${new Date().toLocaleTimeString()}`;
 
         if (releases.length === 0) {
-            releaseList.innerHTML = '<p class="muted">Aucune release n\'a été publiée pour le moment.</p><a class="btn" style="margin-top: 12px; display: inline-block;" href="https://github.com/raidos23/PyCompiler-ARK-Professional/releases" target="_blank">Consulter les releases sur GitHub</a>';
+            releaseList.innerHTML = '<p class="muted">Aucune release n\'a été publiée pour le moment.</p><a class="btn" style="margin-top: 12px; display: inline-block;" href="https://github.com/raidos23/PyCompiler_ARK/releases" target="_blank">Consulter les releases sur GitHub</a>';
             globalReleaseList.innerHTML = '';
         }
 
       } catch (error) {
         console.error('Erreur lors de la récupération des releases:', error);
-        releaseList.innerHTML = '<p class="muted">Impossible de charger la liste des versions depuis GitHub.</p><a class="btn" style="margin-top: 12px; display: inline-block;" href="https://github.com/raidos23/PyCompiler-ARK-Professional/releases" target="_blank">Consulter les releases sur GitHub</a>';
+        releaseList.innerHTML = '<p class="muted">Impossible de charger la liste des versions depuis GitHub.</p><a class="btn" style="margin-top: 12px; display: inline-block;" href="https://github.com/raidos23/PyCompiler_ARK/releases" target="_blank">Consulter les releases sur GitHub</a>';
         globalReleaseList.innerHTML = '';
         statusInfo.textContent = `Erreur de mise à jour.`;
       }
