@@ -17,7 +17,7 @@
 
 - [] verifier commde specialement conçu pour les dev comme le engine user dir pour dev dir aussi et les scaffoldings.
 
-- [] fix l'error [ERROR] Erreur démarrage compilation : `MainProcess.compile_from_context()` got an unexpected keyword argument `ark_config`
+- [x] fix l'error [ERROR] Erreur démarrage compilation : `MainProcess.compile_from_context()` got an unexpected keyword argument `ark_config`
 
 - [] ecrire des tests pour chaque partie critique du logiciel.
 
