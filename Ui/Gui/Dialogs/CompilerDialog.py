@@ -341,12 +341,25 @@ def compile_all(self) -> None:
                     "🔒 Generating compilation lock file...",
                 )
                 
+                # Pre-resolve command for auto-mapping persistence (Phase 3)
+                resolved_command = None
+                try:
+                    from Core.Compiler.engine_runner import resolve_engine_command
+                    # Use currently resolved context and config for resolution
+                    prog, args, env = resolve_engine_command(
+                        engine_id, context, engine_config, gui=self
+                    )
+                    resolved_command = {"program": prog, "args": args, "env": env}
+                except Exception as e:
+                    log_i18n_level(self, "warning", f"Auto-mapping non persisté: {e}", f"Auto-mapping not persisted: {e}")
+
                 # Generate fresh lock payload using resolved python_version
                 lock_payload = build_lock_payload(
                     self.workspace_dir,
                     validated.config,
                     engine_id=engine_id,
                     python_version=python_version,
+                    resolved_command=resolved_command,
                 )
                 write_lock_files(self.workspace_dir, lock_payload)
                 
@@ -391,6 +404,7 @@ def compile_all(self) -> None:
                 engine_id=engine_id,
                 context=context,
                 engine_config=engine_config,
+                is_rebuild=False,
             )
 
             if not success:
@@ -510,6 +524,7 @@ def rebuild_from_lock(self, lock_path: Path) -> None:
                 engine_id=engine_id,
                 context=context,
                 engine_config=engine_config,
+                is_rebuild=True,
             )
 
             if not success:
@@ -577,19 +592,11 @@ def start_compilation_process(self, engine_id: str, file_path: str) -> bool:
         except Exception:
             pass
 
-        lock_payload = build_lock_payload(
-            Path(self.workspace_dir), 
-            validated.config, 
-            engine_id=engine_id,
-            python_version=python_version
-        )
-        write_lock_files(Path(self.workspace_dir), lock_payload)
-
-        # Context and Config from lock (source of truth)
+        # Context from config (base context)
+        from engine_sdk import build_context_object_from_ark_config
         context = build_context_object_from_ark_config(validated.config)
-        engine_config = engine_config_from_lock(lock_payload)
         
-        # Override entrypoint for single file compilation
+        # Override entrypoint for single file compilation (must be done before resolution)
         try:
             rel_path = os.path.relpath(file_path, self.workspace_dir)
             if not rel_path.startswith(".."):
@@ -598,7 +605,34 @@ def start_compilation_process(self, engine_id: str, file_path: str) -> bool:
                 context.entry_point = file_path
         except Exception:
             context.entry_point = file_path
-            
+
+        # Pre-resolve command for auto-mapping persistence (Phase 3)
+        resolved_command = None
+        try:
+            from Core.Compiler.engine_runner import resolve_engine_command
+            # Use current engine config for resolution
+            from Core.Locking import read_engine_config
+            current_engine_config = read_engine_config(Path(self.workspace_dir), engine_id)
+            prog, args, env = resolve_engine_command(
+                engine_id, context, current_engine_config, gui=self
+            )
+            resolved_command = {"program": prog, "args": args, "env": env}
+        except Exception as e:
+             log_i18n_level(self, "warning", f"Auto-mapping non persisté: {e}", f"Auto-mapping not persisted: {e}")
+
+        lock_payload = build_lock_payload(
+            Path(self.workspace_dir), 
+            validated.config, 
+            engine_id=engine_id,
+            python_version=python_version,
+            resolved_command=resolved_command
+        )
+        write_lock_files(Path(self.workspace_dir), lock_payload)
+
+        # Config from lock (source of truth for engine specific options)
+        from Ui.Cli.helpers import engine_config_from_lock
+        engine_config = engine_config_from_lock(lock_payload)
+        
     except Exception as e:
         log_i18n_level(
             self,
@@ -703,6 +737,7 @@ def start_compilation_process(self, engine_id: str, file_path: str) -> bool:
                 engine_id=engine_id,
                 context=context,
                 engine_config=engine_config,
+                is_rebuild=True,
             )
 
             if not success:

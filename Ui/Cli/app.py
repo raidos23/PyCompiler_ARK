@@ -48,7 +48,8 @@ def _echo_json(payload: Any) -> None:
 
 
 def _format_warning(message: str) -> str:
-    return f"Warning: {message}"
+    from .output import strip_emojis
+    return f"[warning]Warning:[/warning] {strip_emojis(message)}"
 
 
 def _resolve_version() -> str:
@@ -123,17 +124,43 @@ def _build_impl(
         if not as_json and verbose:
             info(f"Generating lock payload for engine '{engine_id}'...")
 
+        context = build_context_object_from_ark_config(validated.config)
+        
+        # Pre-resolve command for auto-mapping persistence (Phase 3)
+        resolved_command = None
+        try:
+            from Core.Compiler.engine_runner import resolve_engine_command
+            from Core.Locking import read_engine_config
+            
+            # Create a minimal bridge for resolution
+            class ResolutionBridge:
+                def __init__(self, ws):
+                    self.workspace_dir = str(ws)
+                    self.use_system_python = False
+                def tr(self, fr, en): return en
+
+            # We use the current engine config from disk for resolution
+            current_engine_config = read_engine_config(workspace, engine_id)
+            
+            prog, args, env = resolve_engine_command(
+                engine_id, context, current_engine_config, gui=ResolutionBridge(workspace)
+            )
+            resolved_command = {"program": prog, "args": args, "env": env}
+        except Exception as e:
+            if verbose:
+                info(f"Auto-mapping resolution skipped for lock: {e}")
+
         # Point 3 alignment: build_lock_payload now correctly loads engine config via fixed path
         lock_payload = build_lock_payload(
             workspace,
             validated.config,
             engine_id=engine_id,
             python_version=python_version,
+            resolved_command=resolved_command,
         )
         if not as_json and verbose:
             info("Writing lock files...")
         lock_paths = write_lock_files(workspace, lock_payload)
-        context = build_context_object_from_ark_config(validated.config)
         
         # 1. BCASL Pre-compile check (Point 1 of mutation plan)
         from .helpers import run_bcasl_before_compile_sync
@@ -160,33 +187,44 @@ def _build_impl(
         if as_json:
             _echo_json(payload)
         else:
+            from .output import success
             for warning in validated.warnings:
                 click.echo(_format_warning(warning))
             if verbose:
-                click.echo(f"Engine: {engine_id}")
-                click.echo(f"Lock: {lock_paths['lock']}")
+                info(f"Engine: {engine_id}")
+                info(f"Lock: {lock_paths['lock']}")
             if result.get("success"):
                 success("Build completed successfully.")
             else:
                 raise CliSpecError(result.get("error") or "Build failed")
         return 0 if result.get("success") else 1
 
-    if not as_json and verbose:
-        info(f"Loading lock file: {lock_file}")
-    lock_path = Path(lock_file).expanduser()
-    if not lock_path.is_absolute():
-        lock_path = workspace / lock_path
+    # Rebuild from lock
+    if lock_file == "__default__":
+        raise CliSpecError(
+            "Usage: ark build --lock <FILE_OR_LATEST>\n"
+            "Exemple: ark build --lock latest"
+        )
+
+    if lock_file == "latest":
+        lock_path = default_lock_path(workspace)
+    else:
+        lock_path = Path(lock_file).expanduser()
+        if not lock_path.is_absolute():
+            lock_path = workspace / lock_path
+
     if not lock_path.exists():
-        if lock_file == "__default__":
-            lock_path = default_lock_path(workspace)
-        if not lock_path.exists():
-            raise CliSpecError(f"Lock file not found: {lock_path}")
+        raise CliSpecError(f"Lock file not found: {lock_path}")
+
+    if not as_json:
+        info(f"Rebuilding from lock: {lock_path.name}")
 
     lock_payload = load_yaml_file(lock_path)
     engine_id = str(((lock_payload.get("engine") or {}).get("name")) or "").strip()
     entry_file = str(((lock_payload.get("project") or {}).get("entry")) or "").strip()
     if not engine_id or not entry_file:
         raise CliSpecError("Invalid lock file: missing engine.name or project.entry")
+    
     entry_path = workspace / Path(entry_file)
     if not entry_path.is_file():
         raise CliSpecError(
@@ -194,7 +232,7 @@ def _build_impl(
         )
 
     if not as_json and verbose:
-        info(f"Building from lock with engine '{engine_id}'...")
+        info(f"Target engine: {engine_id}")
     
     # Alignement Git
     from .helpers import ensure_correct_git_commit
@@ -208,12 +246,16 @@ def _build_impl(
     if not run_bcasl_before_compile_sync(workspace, verbose=verbose, build_context=context):
         return 1
 
+    if not as_json:
+        info("Starting engine rebuild...")
+
     result = run_engine_compile(
         workspace=workspace,
         engine_id=engine_id,
         context=context,
         engine_config=engine_config_from_lock(lock_payload),
         verbose=verbose,
+        is_rebuild=True,
     )
 
     comparison = None
@@ -253,9 +295,9 @@ def _build_impl(
         for warning in warnings:
             click.echo(_format_warning(warning))
         if verbose:
-            click.echo(f"Lock: {lock_path}")
+            info(f"Lock: {lock_path}")
             if rebuild_cache:
-                click.echo(f"Comparison lock: {rebuild_cache}")
+                info(f"Comparison lock: {rebuild_cache}")
         if result.get("success"):
             success("Rebuild completed successfully.")
         else:
@@ -297,12 +339,14 @@ def build_cli():
         if as_json:
             _echo_json(payload)
             return
-        click.echo(f"Workspace initialized: {payload['workspace']}")
-        click.echo(f"ark.yml: {payload['ark_yml']}")
+            
+        from .output import success, info
+        success(f"Workspace initialized: {payload['workspace']}")
+        info(f"ark.yml: {payload['ark_yml']}")
         if payload.get("venv"):
-            click.echo(f"Venv: {payload['venv']}")
+            info(f"Venv: {payload['venv']}")
         if payload.get("requirements"):
-            click.echo(f"Requirements: {payload['requirements']}")
+            info(f"Requirements: {payload['requirements']}")
 
     @cli.command("build")
     @click.option("--engine", "engine_override", type=str)
@@ -412,8 +456,23 @@ def build_cli():
         if as_json:
             _echo_json(payload)
             return
-        for engine in payload.get("engines", []):
-            click.echo(f"{engine['id']} {engine['version']} {engine['name']}")
+        
+        from rich.table import Table
+        from .output import get_console
+        
+        console = get_console()
+        if console:
+            table = Table(title="Available Engines", box=None, header_style="bold cyan")
+            table.add_column("ID", style="bright_blue")
+            table.add_column("Version", style="green")
+            table.add_column("Name")
+            
+            for engine in payload.get("engines", []):
+                table.add_row(engine['id'], engine['version'], engine['name'])
+            console.print(table)
+        else:
+            for engine in payload.get("engines", []):
+                click.echo(f"{engine['id']} {engine['version']} {engine['name']}")
 
     @list_group.command("plugins")
     @click.option("--json", "as_json", is_flag=True)
@@ -422,8 +481,23 @@ def build_cli():
         if as_json:
             _echo_json(payload)
             return
-        for plugin in payload.get("plugins", []):
-            click.echo(f"{plugin['id']} {plugin['version']} {plugin['name']}")
+            
+        from rich.table import Table
+        from .output import get_console
+        
+        console = get_console()
+        if console:
+            table = Table(title="Available Plugins", box=None, header_style="bold cyan")
+            table.add_column("ID", style="bright_blue")
+            table.add_column("Version", style="green")
+            table.add_column("Name")
+            
+            for plugin in payload.get("plugins", []):
+                table.add_row(plugin['id'], plugin['version'], plugin['name'])
+            console.print(table)
+        else:
+            for plugin in payload.get("plugins", []):
+                click.echo(f"{plugin['id']} {plugin['version']} {plugin['name']}")
 
     @cli.group("scaffold")
     def scaffold_group():

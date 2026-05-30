@@ -386,6 +386,7 @@ class MainProcess(QObject):
         engine_id: str,
         context: BuildContext,
         engine_config: Optional[Dict[str, Any]] = None,
+        is_rebuild: bool = False,
     ) -> bool:
         """
         Start an async compilation from a :class:`BuildContext`.
@@ -397,6 +398,7 @@ class MainProcess(QObject):
             engine_id:     Registered engine identifier.
             context:       BuildContext describing the project.
             engine_config: Optional per-engine config overrides.
+            is_rebuild:    Whether this is a rebuild from a lock file.
 
         Returns:
             ``True`` if the compilation thread started successfully.
@@ -422,6 +424,7 @@ class MainProcess(QObject):
             engine_id=engine_id,
             context=context,
             engine_config=engine_config,
+            is_rebuild=is_rebuild,
         )
 
     def reset(self) -> None:

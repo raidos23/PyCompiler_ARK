@@ -62,6 +62,7 @@ def run_engine_compile(
     context: BuildContext,
     engine_config: dict[str, Any] | None = None,
     verbose: bool = False,
+    is_rebuild: bool = False,
 ) -> dict[str, Any]:
     """Execute a compilation with real-time output streaming to the CLI."""
     from Core.Compiler.engine_runner import run_engine_compile_streaming
@@ -81,18 +82,19 @@ def run_engine_compile(
 
     def _on_stdout(line: str):
         captured_stdout.append(line)
+        from .output import strip_emojis
+        
+        clean_line = strip_emojis(line)
         if verbose:
-            # We are inside the redirection if verbose is False, 
-            # but here verbose is False so we don't print.
-            # If verbose is True, we are NOT redirected.
+            # plain() already strips emojis via _emit()
             plain(line)
         elif status:
-            clean = line.strip()
-            if clean:
-                # Update status message if it's a high-level step or important progress
-                if any(x in clean for x in ("Etape", "Étape", "->", "Execution", "Commande", "➡️", "🚀", "⚙️", "🔨", "📦", "✅")):
-                    # We must use console.print or status.update which bypasses sys.stdout if rich is used
-                    status.update(f"[cyan]{clean}[/cyan]")
+            if clean_line:
+                # Update status message for high-level steps
+                # We check the original line for emojis/markers to identify steps, 
+                # but we display the clean version.
+                if any(x in line for x in ("Etape", "Étape", "->", "Execution", "Commande", "➡️", "🚀", "⚙️", "🔨", "📦", "✅")):
+                    status.update(f"[cyan]{clean_line}[/cyan]")
 
     def _on_stderr(line: str):
         captured_stderr.append(line)
@@ -116,6 +118,7 @@ def run_engine_compile(
                 on_stderr=_on_stderr,
                 stop_signal=lambda: _CLI_CANCEL_EVENT.is_set(),
                 verbose=verbose,
+                is_rebuild=is_rebuild,
             )
     except Exception as exc:
         result = {
@@ -398,14 +401,22 @@ def build_context_object_from_lock(lock_payload: dict[str, Any]) -> BuildContext
 
 
 def engine_config_from_lock(lock_payload: dict[str, Any]) -> dict[str, Any]:
-    config = ((lock_payload.get("engine") or {}).get("config")) or {}
+    engine_data = lock_payload.get("engine") or {}
+    config = engine_data.get("config") or {}
+    
+    final_config = {}
     if not isinstance(config, dict):
-        return {}
-    # Robust unwrapping: handle both flat config and wrapped ConfigManager format
-    if "options" in config and "meta" in config:
+        final_config = {}
+    elif "options" in config and "meta" in config:
         opts = config.get("options")
-        return dict(opts) if isinstance(opts, dict) else {}
-    return dict(config)
+        final_config = dict(opts) if isinstance(opts, dict) else {}
+    else:
+        final_config = dict(config)
+        
+    if "resolved_command" in engine_data:
+        final_config["_resolved_command"] = engine_data["resolved_command"]
+        
+    return final_config
 
 
 def ensure_correct_git_commit(workspace: Path, lock_payload: dict[str, Any]) -> bool:
