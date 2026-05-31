@@ -180,12 +180,11 @@
     <aside class="sidebar">
       <h3>Documentation</h3>
       <ul>
-        <li><a href="docs-guide.html">Guide de démarrage</a></li>
-        <li><a href="docs-sdks.html">Présentation des SDKs</a></li>
+        
         <li><a href="docs-config.html">Configuration Globale</a></li>
         <li><a href="docs-engine.html">Créer un Moteur</a></li>
         <li><a href="docs-bc-plugin.html" class="active">Créer un Plugin BC</a></li>
-        <li><a href="docs-bcasl.html">Configuration des Plugins BC</a></li>
+        
       </ul>
     </aside>
 
@@ -258,7 +257,7 @@
     }
 
     async function loadDocumentation(docFile) {
-      const url = `https://raw.githubusercontent.com/raidos23/PyCompiler-ARK-Professional/main/docs/${docFile}`;
+      const url = `https://raw.githubusercontent.com/raidos23/PyCompiler_ARK/main/docs/${docFile}`;
       const contentDiv = $('#content');
       try {
         const response = await fetch(url);
