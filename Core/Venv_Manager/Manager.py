@@ -149,7 +149,7 @@ class VenvManager:
                 return False
             mode = str(data.get("venv_mode", "")).strip().lower()
             venv_path = data.get("venv_path")
-            
+
             applied = False
             if mode == "system":
                 try:
@@ -176,7 +176,7 @@ class VenvManager:
                         pass
                 else:
                     self._clear_workspace_pref(workspace_dir)
-            
+
             if applied:
                 self._call_ui("on_pref_applied", mode, venv_path)
                 return True
@@ -464,7 +464,7 @@ class VenvManager:
             self._reset_cancel_state()
             self._venv_check_pkgs = list(tools)
             self._venv_check_index = 0
-            
+
             pip_exe, pip_args = deps_analyser._find_pip_executable(venv_path=venv_root)
             self._venv_check_pip_exe = pip_exe
             self._venv_check_pip_args = pip_args
@@ -484,28 +484,31 @@ class VenvManager:
                 f"Verification de {tools[0]}...",
             )
             self._call_ui("update_progress_progress", "tools_check", 0, len(tools))
-            
+
             # We need a local event loop if we are in a background thread or CLI mode
             # to process QProcess signals and QTimer events.
             from PySide6.QtCore import QCoreApplication, QEventLoop, QThread
-            
+
             must_wait = (
-                getattr(self.parent, "verbose", False) or 
-                os.environ.get("PYCOMPILER_CLI") == "1" or
-                (QCoreApplication.instance() and QThread.currentThread() != QCoreApplication.instance().thread())
+                getattr(self.parent, "verbose", False)
+                or os.environ.get("PYCOMPILER_CLI") == "1"
+                or (
+                    QCoreApplication.instance()
+                    and QThread.currentThread() != QCoreApplication.instance().thread()
+                )
             )
-            
+
             loop = None
             if must_wait:
                 if not QCoreApplication.instance():
-                    self._app_ref = QCoreApplication([]) # Keep alive
-                
+                    self._app_ref = QCoreApplication([])  # Keep alive
+
                 loop = QEventLoop()
                 # We need a way to stop the loop when all tools are checked
                 self._venv_check_loop = loop
-            
+
             self._check_next_venv_pkg()
-            
+
             if loop:
                 loop.exec()
                 self._venv_check_loop = None
@@ -530,8 +533,10 @@ class VenvManager:
             self._reset_cancel_state()
             self._venv_check_pkgs = list(tools)
             self._venv_check_index = 0
-            
-            pip_exe, pip_args = deps_analyser._find_pip_executable(venv_path=None, workspace_dir=None)
+
+            pip_exe, pip_args = deps_analyser._find_pip_executable(
+                venv_path=None, workspace_dir=None
+            )
             self._venv_check_pip_exe = pip_exe
             self._venv_check_pip_args = pip_args
             self._venv_check_path = (
@@ -548,28 +553,35 @@ class VenvManager:
             self._bind_cancel_for_progress(
                 "tools_check", "verification des outils systeme"
             )
-            self._call_ui("update_progress_message", "tools_check", f"Verification de {tools[0]}...")
+            self._call_ui(
+                "update_progress_message",
+                "tools_check",
+                f"Verification de {tools[0]}...",
+            )
             self._call_ui("update_progress_progress", "tools_check", 0, len(tools))
-            
+
             # We need a local event loop if we are in a background thread or CLI mode
             from PySide6.QtCore import QCoreApplication, QEventLoop, QThread
-            
+
             must_wait = (
-                getattr(self.parent, "verbose", False) or 
-                os.environ.get("PYCOMPILER_CLI") == "1" or
-                (QCoreApplication.instance() and QThread.currentThread() != QCoreApplication.instance().thread())
+                getattr(self.parent, "verbose", False)
+                or os.environ.get("PYCOMPILER_CLI") == "1"
+                or (
+                    QCoreApplication.instance()
+                    and QThread.currentThread() != QCoreApplication.instance().thread()
+                )
             )
-            
+
             loop = None
             if must_wait:
                 if not QCoreApplication.instance():
-                    self._app_ref = QCoreApplication([]) # Keep alive
-                
+                    self._app_ref = QCoreApplication([])  # Keep alive
+
                 loop = QEventLoop()
                 self._venv_check_loop = loop
-            
+
             self._check_next_venv_pkg()
-            
+
             if loop:
                 loop.exec()
                 self._venv_check_loop = None
@@ -874,6 +886,7 @@ class VenvManager:
     def is_tool_installed_system(self, tool: str) -> bool:
         """Check if a tool is installed in system Python via deps_analyser."""
         return deps_analyser._check_module_installed(tool)
+
     def check_tools_in_venv(self, venv_path: str):
         """Check both python and system requirements for the current workspace."""
         try:
@@ -896,20 +909,24 @@ class VenvManager:
                         venv_path, "Python/pip do not point to the selected venv"
                     )
                     return
-                
+
                 reqs = self._discover_engine_requirements()
                 python_tools = reqs.get("python", [])
                 system_tools = reqs.get("system", [])
 
                 # 1. Check system tools first (fast, usually non-blocking)
                 if system_tools:
-                    missing_sys = [t for t in system_tools if not sys_deps.check_system_packages([t])]
+                    missing_sys = [
+                        t
+                        for t in system_tools
+                        if not sys_deps.check_system_packages([t])
+                    ]
                     if missing_sys:
                         self._safe_log(
                             f"[WARNING] Outils systeme manquants : {', '.join(missing_sys)}",
                             f"[WARNING] Missing system tools: {', '.join(missing_sys)}",
                         )
-                        # On pourrait proposer l'installation, mais on laisse les engines gérer 
+                        # On pourrait proposer l'installation, mais on laisse les engines gérer
                         # ou on affiche juste l'avertissement.
                     else:
                         self._safe_log("[OK] Outils systeme verifies.")
@@ -921,8 +938,10 @@ class VenvManager:
                         "[INFO] No required Python tools detected from engines.",
                     )
                     return
-                
-                pip_exe, pip_args = deps_analyser._find_pip_executable(venv_path=venv_path)
+
+                pip_exe, pip_args = deps_analyser._find_pip_executable(
+                    venv_path=venv_path
+                )
                 self._venv_check_pkgs = python_tools
                 self._venv_check_index = 0
                 self._venv_check_pip_exe = pip_exe
@@ -1047,7 +1066,7 @@ class VenvManager:
                     level="error",
                 )
                 self._call_ui("close_progress", "tools_check")
-                
+
                 # Exit local loop if any
                 loop = getattr(self, "_venv_check_loop", None)
                 if loop:
@@ -1067,13 +1086,13 @@ class VenvManager:
             process2 = QProcess(self.parent)
             self._venv_check_install_process = process2
             process2.setProgram(self._venv_check_pip_exe)
-            
+
             # Use stored pip args (e.g. ['-m', 'pip']) if available
             args = list(getattr(self, "_venv_check_pip_args", []))
             process2.setArguments(
                 args + ["install"] + self._pip_break_system_args() + [pkg]
             )
-            
+
             process2.setWorkingDirectory(self._venv_check_path)
             process2.readyReadStandardOutput.connect(
                 lambda: self._on_venv_check_output(process2)
@@ -1104,7 +1123,7 @@ class VenvManager:
         lines = data.strip().splitlines()
         if lines:
             self._call_ui("update_progress_message", "tools_check", lines[-1][:200])
-            
+
             # Detailed logging for verbose mode or errors
             is_verbose = getattr(self.parent, "verbose", False)
             if is_verbose or error:
@@ -1228,6 +1247,7 @@ class VenvManager:
                                 f"[TIMEOUT] Timeout exceeded for {label} ({timeout_ms} ms). Killing process..."
                             )
                             from Core.process_killer import kill_process_tree
+
                             kill_process_tree(process.processId())
                     except Exception:
                         pass
@@ -1388,7 +1408,9 @@ class VenvManager:
             )
             return best_venv
         except Exception as e:
-            self._safe_log(f"[WARNING] Erreur lors de la selection du meilleur venv: {e}")
+            self._safe_log(
+                f"[WARNING] Erreur lors de la selection du meilleur venv: {e}"
+            )
             return None
 
     def _on_venv_pkg_installed(self, process, code, status, pkg):
@@ -1477,7 +1499,9 @@ class VenvManager:
                     f"[STATE] Utilisation de l'interpreteur systeme : {python_candidate}"
                 )
             else:
-                self._safe_log(f"[STATE] Utilisation de sys.executable : {python_candidate}")
+                self._safe_log(
+                    f"[STATE] Utilisation de sys.executable : {python_candidate}"
+                )
 
             self._call_ui(
                 "show_progress",
@@ -1542,7 +1566,7 @@ class VenvManager:
                 self._venv_progress_lines,
                 0,
             )
-            
+
             # Detailed logging for verbose mode or errors
             is_verbose = getattr(self.parent, "verbose", False)
             if is_verbose or error:
@@ -1624,7 +1648,9 @@ class VenvManager:
                 return others[0]
 
             # 3. Use DepsAnalyser to generate requirements.txt from project analysis
-            self._safe_log("[SEARCH] Analyse des dependances du projet via DepsAnalyser...")
+            self._safe_log(
+                "[SEARCH] Analyse des dependances du projet via DepsAnalyser..."
+            )
             generated = deps_analyser.write_requirements_txt(workspace_dir)
             if generated and os.path.isfile(generated):
                 self._safe_log("[OK] requirements.txt genere via DepsAnalyser.")
@@ -1632,7 +1658,9 @@ class VenvManager:
 
             return None
         except Exception as e:
-            self._safe_log(f"[WARNING] Erreur lors de la detection des requirements: {e}")
+            self._safe_log(
+                f"[WARNING] Erreur lors de la detection des requirements: {e}"
+            )
             return None
 
     # ---------- Install requirements.txt ----------
@@ -1804,7 +1832,7 @@ class VenvManager:
             self._call_ui(
                 "update_progress_progress", "reqs_install", self._pip_progress_lines, 0
             )
-            
+
             # Detailed logging for verbose mode or errors
             is_verbose = getattr(self.parent, "verbose", False)
             if is_verbose or error:
@@ -1922,7 +1950,9 @@ class VenvManager:
                     "update_progress_message", "reqs_install", "Installation terminee."
                 )
             else:
-                self._safe_log(f"[ERROR] Echec installation requirements.txt (code {code})")
+                self._safe_log(
+                    f"[ERROR] Echec installation requirements.txt (code {code})"
+                )
                 self._call_ui(
                     "update_progress_message",
                     "reqs_install",
@@ -1955,6 +1985,7 @@ class VenvManager:
             try:
                 if proc:
                     from Core.process_killer import kill_process_tree
+
                     kill_process_tree(proc.processId())
             except Exception:
                 pass
@@ -1969,7 +2000,6 @@ class VenvManager:
         # Close dialogs via UI callbacks
         for task_id in ["venv_creation", "reqs_install", "tools_check"]:
             self._call_ui("close_progress", task_id)
-
 
     # ---------- Environment Manager Detection & Handling ----------
     def _detect_environment_manager(self, workspace_dir: str) -> str:

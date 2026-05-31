@@ -142,9 +142,7 @@ class CompilerEngine:
             # Log attempt to open
             gui = getattr(self, "_gui", None)
             if gui:
-                log_with_level(
-                    gui, "info", f"Ouverture du dossier de sortie : {path}"
-                )
+                log_with_level(gui, "info", f"Ouverture du dossier de sortie : {path}")
             open_path(path)
 
     def engine_translate(self, key: str, default: Optional[str] = None) -> str:
@@ -252,7 +250,7 @@ class CompilerEngine:
                     if missing_system:
                         # Check internet connection before attempting installation
                         from Core.Compiler.utils import check_internet_connection
-                        
+
                         log_i18n_level(
                             gui,
                             "info",
@@ -262,7 +260,7 @@ class CompilerEngine:
                                 "Checking Internet connection...",
                             ),
                         )
-                        
+
                         if not check_internet_connection(timeout=4.0):
                             log_i18n_level(
                                 gui,
@@ -300,7 +298,10 @@ class CompilerEngine:
                                 interval = 500  # 0.5s
                                 while not process.waitForFinished(interval):
                                     if stop_signal and stop_signal():
-                                        from Core.process_killer import kill_process_tree
+                                        from Core.process_killer import (
+                                            kill_process_tree,
+                                        )
+
                                         kill_process_tree(process.processId())
                                         return False
                                     elapsed += interval
@@ -411,7 +412,10 @@ class CompilerEngine:
                                     interval = 500  # 0.5s
                                     while not process.waitForFinished(interval):
                                         if stop_signal and stop_signal():
-                                            from Core.process_killer import kill_process_tree
+                                            from Core.process_killer import (
+                                                kill_process_tree,
+                                            )
+
                                             kill_process_tree(process.processId())
                                             return False
                                         elapsed += interval
@@ -525,7 +529,7 @@ class CompilerEngine:
                     if missing_python:
                         # Check internet connection before attempting installation
                         from Core.Compiler.utils import check_internet_connection
-                        
+
                         log_i18n_level(
                             gui,
                             "info",
@@ -535,7 +539,7 @@ class CompilerEngine:
                                 "Checking Internet connection...",
                             ),
                         )
-                        
+
                         if not check_internet_connection(timeout=4.0):
                             log_i18n_level(
                                 gui,
@@ -600,7 +604,7 @@ class CompilerEngine:
                         if missing_python:
                             # Check internet connection before attempting installation
                             from Core.Compiler.utils import check_internet_connection
-                            
+
                             log_i18n_level(
                                 gui,
                                 "info",
@@ -610,7 +614,7 @@ class CompilerEngine:
                                     "Checking Internet connection...",
                                 ),
                             )
-                            
+
                             if not check_internet_connection(timeout=4.0):
                                 log_i18n_level(
                                     gui,

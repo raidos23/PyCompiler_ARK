@@ -83,23 +83,26 @@ def included_workspace_files(
     """
     included: list[Path] = []
     ws_str = str(workspace.resolve())
-    
+
     # Prune list for os.walk
     prune_dirs = {".git", ".ark", "__pycache__", "venv", ".venv", "build", "dist"}
-    
+
     import os
+
     for root, dirs, files in os.walk(ws_str):
         # 1. Early pruning of common heavy/system directories
         dirs[:] = [d for d in dirs if d not in prune_dirs]
-        
+
         # 2. Apply custom exclude patterns to directories
         rel_root = os.path.relpath(root, ws_str)
         if rel_root == ".":
             rel_root = ""
-            
+
         if rel_root:
-            if any(_matches_exclude_pattern(rel_root + "/", p) for p in exclude_patterns):
-                dirs[:] = [] # Stop recursion here
+            if any(
+                _matches_exclude_pattern(rel_root + "/", p) for p in exclude_patterns
+            ):
+                dirs[:] = []  # Stop recursion here
                 continue
 
         # 3. Process files
@@ -108,7 +111,7 @@ def included_workspace_files(
             if any(_matches_exclude_pattern(rel_path, p) for p in exclude_patterns):
                 continue
             included.append(Path(root) / f)
-            
+
     return sorted(included)
 
 
@@ -131,13 +134,14 @@ def get_git_commit_hash(workspace: Path) -> str | None:
     """Return the current Git commit hash of the workspace if available."""
     try:
         import subprocess
+
         result = subprocess.run(
             ["git", "rev-parse", "HEAD"],
             cwd=str(workspace),
             capture_output=True,
             text=True,
             timeout=5,
-            check=True
+            check=True,
         )
         return result.stdout.strip()
     except Exception:
@@ -148,13 +152,14 @@ def get_git_branch(workspace: Path) -> str | None:
     """Return the current Git branch of the workspace if available."""
     try:
         import subprocess
+
         result = subprocess.run(
             ["git", "rev-parse", "--abbrev-ref", "HEAD"],
             cwd=str(workspace),
             capture_output=True,
             text=True,
             timeout=5,
-            check=True
+            check=True,
         )
         return result.stdout.strip()
     except Exception:
@@ -163,6 +168,7 @@ def get_git_branch(workspace: Path) -> str | None:
 
 def next_build_id(lock_dir: Path) -> str:
     from datetime import UTC
+
     today = datetime.now(UTC).strftime("%Y_%m_%d")
     prefix = f"ARK_{today}_"
     seq = 1
@@ -193,7 +199,7 @@ def build_lock_payload(
     build_id = next_build_id(lock_dir)
     git_commit = get_git_commit_hash(workspace)
     git_branch = get_git_branch(workspace)
-    
+
     return {
         "build_id": build_id,
         "project": {
@@ -279,7 +285,7 @@ def build_context_from_lock(lock_payload: dict[str, Any]) -> BuildContext:
     project = lock_payload.get("project") or {}
     build = lock_payload.get("build") or {}
     workspace_cfg = lock_payload.get("workspace") or {}
-    
+
     # Check build.exclude (new) then workspace.exclude_patterns (legacy)
     exclude_patterns = list(build.get("exclude") or [])
     if not exclude_patterns:

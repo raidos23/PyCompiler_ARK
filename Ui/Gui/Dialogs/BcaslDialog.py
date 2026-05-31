@@ -851,7 +851,6 @@ class _BCASLWorker(QObject):
         workspace_root: "Path",
         plugins_dirs: "list[Path]",
         cfg: "dict[str, Any]",
-
         build_context: Optional[Any] = None,
     ) -> None:
         super().__init__()
@@ -1100,18 +1099,21 @@ def open_bc_loader_dialog(self) -> None:
             return
 
         workspace_root = Path(self.workspace_dir).resolve()
-        
-        from bcasl.Loader import (_discover_bcasl_meta,
-                                  _discover_bcasl_plugins, _get_all_plugins_dirs,
-                                  _load_workspace_config)
-        
+
+        from bcasl.Loader import (
+            _discover_bcasl_meta,
+            _discover_bcasl_plugins,
+            _get_all_plugins_dirs,
+            _load_workspace_config,
+        )
+
         plugins_dirs = _get_all_plugins_dirs()
 
         meta_map = {}
         for pdir in plugins_dirs:
-             if pdir.exists() and pdir.is_dir():
-                  meta_map.update(_discover_bcasl_meta(pdir))
-                  
+            if pdir.exists() and pdir.is_dir():
+                meta_map.update(_discover_bcasl_meta(pdir))
+
         if not meta_map:
             QMessageBox.information(
                 self,
@@ -1124,11 +1126,13 @@ def open_bc_loader_dialog(self) -> None:
             return
 
         cfg = _load_workspace_config(workspace_root)
-        
+
         plugin_instances = {}
         for pdir in plugins_dirs:
-             if pdir.exists() and pdir.is_dir():
-                  plugin_instances.update(_discover_bcasl_plugins(pdir, workspace_root, cfg))
+            if pdir.exists() and pdir.is_dir():
+                plugin_instances.update(
+                    _discover_bcasl_plugins(pdir, workspace_root, cfg)
+                )
 
         open_bcasl_pipeline_dialog(
             self, workspace_root, meta_map, cfg, plugin_instances
@@ -1207,7 +1211,7 @@ def run_pre_compile_async(
         worker.moveToThread(thread)
         thread.started.connect(worker.run)
         thread.start()
-        
+
     except Exception as e:
         try:
             if callable(on_done):

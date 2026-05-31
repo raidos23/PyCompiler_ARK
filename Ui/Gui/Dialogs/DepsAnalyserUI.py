@@ -32,7 +32,7 @@ from Core.deps_analyser.analyser import (
     _extract_imported_modules_from_file,
     _collect_workspace_module_roots,
     _classify_module_origin,
-    _find_pip_executable
+    _find_pip_executable,
 )
 from Ui.Gui.WidgetsCreator import ProgressDialog
 from Ui.i18n import log_with_level

@@ -56,6 +56,7 @@ def _unregister_worker_pid(pid: int) -> None:
 
 def _kill_pid_tree(pid: int) -> None:
     from Core.process_killer import kill_process_tree
+
     kill_process_tree(pid)
 
 
@@ -207,8 +208,9 @@ def _stop_process(proc, join_s: float = 1.0) -> None:
             return
     except Exception:
         return
-    
+
     from Core.process_killer import kill_process_tree
+
     try:
         pid = getattr(proc, "pid", None)
         if pid:
@@ -236,9 +238,7 @@ def _resolve_reliability_options(config: dict[str, Any]) -> tuple[bool, bool]:
     return skip_dependents, fail_fast
 
 
-def _resolve_exec_options(
-    config: dict[str, Any], default_sandbox: bool
-) -> bool:
+def _resolve_exec_options(config: dict[str, Any], default_sandbox: bool) -> bool:
     try:
         opts = dict(config or {}).get("options", {}) if isinstance(config, dict) else {}
     except Exception:
@@ -840,7 +840,7 @@ def _plugin_worker(
     _fnull = None
     _old_stdout = None
     _old_stderr = None
-    
+
     if _quiet:
         _fnull = open(_os.devnull, "w")
         _old_stdout = _sys.stdout

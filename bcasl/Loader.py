@@ -285,7 +285,7 @@ def _apply_plugins_config(
 def _get_all_plugins_dirs() -> list[Path]:
     """Return all directories where BCASL plugins may be located."""
     dirs: list[Path] = []
-    
+
     # 1. Project local Plugins folder
     try:
         project_plugins = Path(__file__).resolve().parents[1] / "Plugins"
@@ -293,10 +293,11 @@ def _get_all_plugins_dirs() -> list[Path]:
         dirs.append(project_plugins)
     except Exception:
         pass
-        
+
     # 2. User-level and Dev-level plugins folders (from Core.Configs)
     try:
         from Core.Configs import resolve_config_value
+
         for key in ("user-plugin-dir", "dev-plugin-dir"):
             try:
                 dir_path = resolve_config_value(key, create_default=False)
@@ -306,7 +307,7 @@ def _get_all_plugins_dirs() -> list[Path]:
                 pass
     except Exception:
         pass
-        
+
     # Fallback/Default if nothing else worked
     if not dirs:
         fallback = Path("Plugins")
@@ -315,7 +316,7 @@ def _get_all_plugins_dirs() -> list[Path]:
         except Exception:
             pass
         dirs.append(fallback)
-        
+
     return dirs
 
 
@@ -342,24 +343,32 @@ def _run_bcasl_sync(
         config=cfg,
         build_context=build_context,
     )
-    
+
     total_loaded = 0
     all_errors: list[tuple[str, str]] = []
-    
+
     for pdir in plugins_dirs:
         loaded, errors = manager.load_plugins_from_directory(pdir)
         total_loaded += loaded
         if errors:
             all_errors.extend(errors)
-            
-    _emit_log(log_cb, f"BCASL: {total_loaded} package(s) chargé(s) depuis {len(plugins_dirs)} dossiers\n")
+
+    _emit_log(
+        log_cb,
+        f"BCASL: {total_loaded} package(s) chargé(s) depuis {len(plugins_dirs)} dossiers\n",
+    )
     for mod, msg in all_errors:
         _emit_log(log_cb, f"Plugin '{mod}': {msg}\n")
 
     # For priority/order, we need to know all plugins
     # We pass the FIRST directory for legacy compatibility in _apply_plugins_config,
     # but the manager already has everything loaded.
-    _apply_plugins_config(manager, cfg, plugins_dirs[0] if plugins_dirs else Path("Plugins"), log_cb=log_cb)
+    _apply_plugins_config(
+        manager,
+        cfg,
+        plugins_dirs[0] if plugins_dirs else Path("Plugins"),
+        log_cb=log_cb,
+    )
 
     workspace_meta = _build_workspace_meta(workspace_root, cfg)
     return manager.run_pre_compile(
@@ -442,11 +451,13 @@ def _load_workspace_config(workspace_root: Path) -> dict[str, Any]:
             names = []
             for pdir in _get_all_plugins_dirs():
                 try:
-                    names.extend([
-                        p.name
-                        for p in sorted(pdir.iterdir())
-                        if (p.is_dir() and _has_bcasl_marker(p))
-                    ])
+                    names.extend(
+                        [
+                            p.name
+                            for p in sorted(pdir.iterdir())
+                            if (p.is_dir() and _has_bcasl_marker(p))
+                        ]
+                    )
                 except Exception:
                     pass
             for idx, pid in enumerate(sorted(names)):

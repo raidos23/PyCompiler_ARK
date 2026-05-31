@@ -71,8 +71,14 @@ def check_plugin_compatibility(
     _check("BCASL", bcasl_version, meta.required_bcasl_version)
     _check("Core", core_version, meta.required_core_version)
     _check("Plugins SDK", plugins_sdk_version, meta.required_plugins_sdk_version)
-    _check("BcPluginContext", bc_plugin_context_version, meta.required_bc_plugin_context_version)
-    _check("GeneralContext", general_context_version, meta.required_general_context_version)
+    _check(
+        "BcPluginContext",
+        bc_plugin_context_version,
+        meta.required_bc_plugin_context_version,
+    )
+    _check(
+        "GeneralContext", general_context_version, meta.required_general_context_version
+    )
 
     is_compatible = len(missing_requirements) == 0
     error_message = ""
@@ -106,12 +112,13 @@ def validate_plugins_compatibility(
             meta = plugin.meta
             if strict_mode:
                 has_explicit = any(
-                    v != "1.0.0" for v in [
+                    v != "1.0.0"
+                    for v in [
                         meta.required_bcasl_version,
                         meta.required_core_version,
                         meta.required_plugins_sdk_version,
                         meta.required_bc_plugin_context_version,
-                        meta.required_general_context_version
+                        meta.required_general_context_version,
                     ]
                 )
 
@@ -120,15 +127,21 @@ def validate_plugins_compatibility(
                         plugin_id=meta.id,
                         plugin_name=meta.name,
                         is_compatible=False,
-                        missing_requirements=["No explicit version requirements specified"],
+                        missing_requirements=[
+                            "No explicit version requirements specified"
+                        ],
                         error_message=f"No explicit version requirements specified. Plugin '{meta.name}' ({meta.id}) does not specify version requirements.",
                     )
                     incompatible_results.append(result)
                     continue
 
             result = check_plugin_compatibility(
-                plugin, bcasl_version, core_version, plugins_sdk_version,
-                bc_plugin_context_version, general_context_version,
+                plugin,
+                bcasl_version,
+                core_version,
+                plugins_sdk_version,
+                bc_plugin_context_version,
+                general_context_version,
             )
 
             if result.is_compatible:
@@ -137,13 +150,17 @@ def validate_plugins_compatibility(
                 incompatible_results.append(result)
 
         except Exception as e:
-            incompatible_results.append(CompatibilityCheckResult(
-                plugin_id=getattr(getattr(plugin, "meta", None), "id", "unknown"),
-                plugin_name=getattr(getattr(plugin, "meta", None), "name", "Unknown"),
-                is_compatible=False,
-                missing_requirements=[],
-                error_message=f"Error validating plugin: {str(e)}",
-            ))
+            incompatible_results.append(
+                CompatibilityCheckResult(
+                    plugin_id=getattr(getattr(plugin, "meta", None), "id", "unknown"),
+                    plugin_name=getattr(
+                        getattr(plugin, "meta", None), "name", "Unknown"
+                    ),
+                    is_compatible=False,
+                    missing_requirements=[],
+                    error_message=f"Error validating plugin: {str(e)}",
+                )
+            )
 
     return compatible_plugins, incompatible_results
 

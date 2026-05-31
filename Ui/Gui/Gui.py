@@ -195,7 +195,7 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
     select_icon = UiFeatures.select_icon
     select_nuitka_icon = UiFeatures.select_nuitka_icon
     show_help_dialog = UiFeatures.show_help_dialog
-   
+
     update_command_preview = UiFeatures.update_command_preview
     set_controls_enabled = UiFeatures.set_controls_enabled
     set_compilation_ui_enabled = UiFeatures.set_compilation_ui_enabled
@@ -355,9 +355,11 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
         _on_dep_pip_output,
         suggest_missing_dependencies,
     )
+
     def open_lock_dialog(self):
         """Open the build lock management dialog."""
         from Ui.Gui.Dialogs.LockDialog import open_lock_dialog
+
         open_lock_dialog(self)
 
     from Ui.Gui.Dialogs.CompilerDialog import (
@@ -497,6 +499,7 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
                 try:
                     if proc is not None and proc.state() != proc.NotRunning:
                         from Core.process_killer import kill_process_tree
+
                         kill_process_tree(proc.processId())
                 except Exception:
                     pass

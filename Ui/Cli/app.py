@@ -49,6 +49,7 @@ def _echo_json(payload: Any) -> None:
 
 def _format_warning(message: str) -> str:
     from .output import strip_emojis
+
     return f"[warning]Warning:[/warning] {strip_emojis(message)}"
 
 
@@ -96,11 +97,13 @@ def _build_impl(
     try:
         from Core.Compiler.utils import get_interpreter_version_str
         from Core.Venv_Manager.Manager import VenvManager
+
         # We create a dummy bridge for VenvManager
         class DummyBridge:
             def __init__(self, ws):
                 self.workspace_dir = ws
                 self.use_system_python = False
+
         vm = VenvManager(DummyBridge(str(workspace)))
         vpython = vm.resolve_existing_venv()
         if vpython:
@@ -120,30 +123,35 @@ def _build_impl(
         validated = validate_ark_config(workspace, config)
         engine_id = engine_override or str(validated.config["build"]["engine"])
         _ensure_engine_known(engine_id)
-        
+
         if not as_json and verbose:
             info(f"Generating lock payload for engine '{engine_id}'...")
 
         context = build_context_object_from_ark_config(validated.config)
-        
+
         # Pre-resolve command for auto-mapping persistence (Phase 3)
         resolved_command = None
         try:
             from Core.Compiler.engine_runner import resolve_engine_command
             from Core.Locking import read_engine_config
-            
+
             # Create a minimal bridge for resolution
             class ResolutionBridge:
                 def __init__(self, ws):
                     self.workspace_dir = str(ws)
                     self.use_system_python = False
-                def tr(self, fr, en): return en
+
+                def tr(self, fr, en):
+                    return en
 
             # We use the current engine config from disk for resolution
             current_engine_config = read_engine_config(workspace, engine_id)
-            
+
             prog, args, env = resolve_engine_command(
-                engine_id, context, current_engine_config, gui=ResolutionBridge(workspace)
+                engine_id,
+                context,
+                current_engine_config,
+                gui=ResolutionBridge(workspace),
             )
             resolved_command = {"program": prog, "args": args, "env": env}
         except Exception as e:
@@ -161,10 +169,13 @@ def _build_impl(
         if not as_json and verbose:
             info("Writing lock files...")
         lock_paths = write_lock_files(workspace, lock_payload)
-        
+
         # 1. BCASL Pre-compile check (Point 1 of mutation plan)
         from .helpers import run_bcasl_before_compile_sync
-        if not run_bcasl_before_compile_sync(workspace, verbose=verbose, build_context=context):
+
+        if not run_bcasl_before_compile_sync(
+            workspace, verbose=verbose, build_context=context
+        ):
             return 1
 
         if not as_json and verbose:
@@ -188,6 +199,7 @@ def _build_impl(
             _echo_json(payload)
         else:
             from .output import success
+
             for warning in validated.warnings:
                 click.echo(_format_warning(warning))
             if verbose:
@@ -224,7 +236,7 @@ def _build_impl(
     entry_file = str(((lock_payload.get("project") or {}).get("entry")) or "").strip()
     if not engine_id or not entry_file:
         raise CliSpecError("Invalid lock file: missing engine.name or project.entry")
-    
+
     entry_path = workspace / Path(entry_file)
     if not entry_path.is_file():
         raise CliSpecError(
@@ -233,9 +245,10 @@ def _build_impl(
 
     if not as_json and verbose:
         info(f"Target engine: {engine_id}")
-    
+
     # Alignement Git
     from .helpers import ensure_correct_git_commit
+
     if not ensure_correct_git_commit(workspace, lock_payload):
         return 1
 
@@ -243,7 +256,10 @@ def _build_impl(
 
     # BCASL Pre-compile check for lock branch
     from .helpers import run_bcasl_before_compile_sync
-    if not run_bcasl_before_compile_sync(workspace, verbose=verbose, build_context=context):
+
+    if not run_bcasl_before_compile_sync(
+        workspace, verbose=verbose, build_context=context
+    ):
         return 1
 
     if not as_json:
@@ -339,8 +355,9 @@ def build_cli():
         if as_json:
             _echo_json(payload)
             return
-            
+
         from .output import success, info
+
         success(f"Workspace initialized: {payload['workspace']}")
         info(f"ark.yml: {payload['ark_yml']}")
         if payload.get("venv"):
@@ -456,19 +473,19 @@ def build_cli():
         if as_json:
             _echo_json(payload)
             return
-        
+
         from rich.table import Table
         from .output import get_console
-        
+
         console = get_console()
         if console:
             table = Table(title="Available Engines", box=None, header_style="bold cyan")
             table.add_column("ID", style="bright_blue")
             table.add_column("Version", style="green")
             table.add_column("Name")
-            
+
             for engine in payload.get("engines", []):
-                table.add_row(engine['id'], engine['version'], engine['name'])
+                table.add_row(engine["id"], engine["version"], engine["name"])
             console.print(table)
         else:
             for engine in payload.get("engines", []):
@@ -481,19 +498,19 @@ def build_cli():
         if as_json:
             _echo_json(payload)
             return
-            
+
         from rich.table import Table
         from .output import get_console
-        
+
         console = get_console()
         if console:
             table = Table(title="Available Plugins", box=None, header_style="bold cyan")
             table.add_column("ID", style="bright_blue")
             table.add_column("Version", style="green")
             table.add_column("Name")
-            
+
             for plugin in payload.get("plugins", []):
-                table.add_row(plugin['id'], plugin['version'], plugin['name'])
+                table.add_row(plugin["id"], plugin["version"], plugin["name"])
             console.print(table)
         else:
             for plugin in payload.get("plugins", []):

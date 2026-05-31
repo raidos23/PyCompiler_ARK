@@ -134,7 +134,7 @@ class NuitkaEngine(CompilerEngine):
             source = str((mapping or {}).get("source") or "").strip()
             destination = str((mapping or {}).get("destination") or "").strip()
             mapping_type = str((mapping or {}).get("type") or "dir").strip().lower()
-            
+
             if source and destination:
                 if mapping_type == "file":
                     cmd.append(f"--include-data-files={source}={destination}")
@@ -334,4 +334,3 @@ class NuitkaEngine(CompilerEngine):
     def select_icon(self) -> None:
         """Legacy select_icon method. Global icon is now managed in ark.yml."""
         pass
-

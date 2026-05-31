@@ -81,7 +81,6 @@ FALLBACK_EN: dict[str, Any] = {
     "tt_select_folder": "Select the workspace folder.",
     "tt_select_files": "Add files to compile.",
     "tt_build_all": "Start compilation.",
-    
     "tt_cancel_all": "Cancel the current compilation.",
     "tt_remove_file": "Remove the selected file(s) from the list.",
     "tt_help": "Show help.",

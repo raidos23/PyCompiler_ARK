@@ -51,7 +51,7 @@ class PluginMeta:
     description: str = ""
     author: str = ""
     tags: tuple[str, ...] = ()
-    
+
     # Versions minimales requises
     required_bcasl_version: str = "1.0.0"
     required_core_version: str = "1.0.0"
@@ -226,8 +226,14 @@ class ExecutionReport:
 
 class _PluginRecord:
     __slots__ = (
-        "plugin", "active", "requires", "priority", "order",
-        "insert_idx", "module_path", "module_name",
+        "plugin",
+        "active",
+        "requires",
+        "priority",
+        "order",
+        "insert_idx",
+        "module_path",
+        "module_name",
     )
 
     def __init__(self, plugin: BcPluginBase, insert_idx: int) -> None:
@@ -256,7 +262,7 @@ def bc_register(
 
         setattr(cls_to_decorate, "__bcasl_plugin__", True)
         meta = getattr(cls_to_decorate, "meta", None)
-        
+
         if meta is None and cls_to_decorate.__init__ is not BcPluginBase.__init__:
             try:
                 temp = cls_to_decorate()

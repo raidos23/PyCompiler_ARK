@@ -535,7 +535,9 @@ class UiFeatures:
 
         msg = f"<b>{self.tr('Statistiques de compilation', 'Build statistics')}</b><br><br>"
         msg += f"{self.tr('Fichiers distincts', 'Distinct files')} : {total_files}<br>"
-        msg += f"{self.tr('Compilations totales', 'Total builds')} : {total_compiles}<br>"
+        msg += (
+            f"{self.tr('Compilations totales', 'Total builds')} : {total_compiles}<br>"
+        )
         msg += (
             f"{self.tr('Succès', 'Success')} : {success} | "
             f"{self.tr('Échecs', 'Failed')} : {failed} | "
@@ -545,7 +547,7 @@ class UiFeatures:
         msg += f"{self.tr('Temps moyen', 'Average time')} : {avg_time:.3f} {self.tr('secondes', 'seconds')}<br>"
         if min_time is not None and max_time is not None:
             msg += f"{self.tr('Temps min/max', 'Min/max time')} : {float(min_time):.3f} / {float(max_time):.3f} {self.tr('secondes', 'seconds')}<br>"
-        
+
         if slowest_file and slowest_time is not None:
             msg += (
                 f"<br><b>{self.tr('Fichier le plus lent', 'Slowest file')}</b> : {os.path.basename(str(slowest_file))}"
@@ -556,7 +558,7 @@ class UiFeatures:
             msg += f"<br><b>{self.tr('Top 5 fichiers les plus lents', 'Top 5 slowest files')} :</b><br>"
             for path, duration in top_n:
                 msg += f"- {os.path.basename(str(path))} ({float(duration):.3f} {self.tr('secondes', 'seconds')})<br>"
-        
+
         if isinstance(engines, dict) and engines:
             msg += f"<br><b>{self.tr('Par moteur', 'By engine')} :</b><br>"
             for engine_id, estats in engines.items():
@@ -573,14 +575,14 @@ class UiFeatures:
                     f"{eng_success} OK / {eng_failed} KO / {eng_canceled} {self.tr('ann.', 'canc.')} | "
                     f"{eng_avg:.3f}s {self.tr('moy', 'avg')}<br>"
                 )
-        
+
         if last_file and last_duration is not None:
             msg += f"<br><b>{self.tr('Dernier build', 'Last build')}</b> : {os.path.basename(str(last_file))}"
             msg += f" ({float(last_duration):.3f} {self.tr('secondes', 'seconds')})<br>"
-        
+
         if mem_info is not None:
             msg += f"<br>{self.tr('Mémoire utilisée (GUI)', 'Memory usage (GUI)')} : {mem_info:.1f} Mo<br>"
-        
+
         QMessageBox.information(
             self, self.tr("Statistiques de compilation", "Build statistics"), msg
         )

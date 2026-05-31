@@ -596,8 +596,11 @@ class SysDependencyUI(SysDependencyManager):
 
             def _on_timeout():
                 try:
-                    self._dbg(f"sudo shell (progress) timeout after {timeout_s}s; killing")
+                    self._dbg(
+                        f"sudo shell (progress) timeout after {timeout_s}s; killing"
+                    )
                     from Core.process_killer import kill_process_tree
+
                     kill_process_tree(proc.processId())
                     dlg.set_message(self.tr("Délai dépassé", "Timed out"))
                 except Exception:

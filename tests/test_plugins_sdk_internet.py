@@ -1,7 +1,12 @@
 # SPDX-License-Identifier: Apache-2.0
 import unittest
 from unittest.mock import patch
-from Plugins_SDK.BcPluginContext.Context import check_internet, download_file, get_external_ip
+from Plugins_SDK.BcPluginContext.Context import (
+    check_internet,
+    download_file,
+    get_external_ip,
+)
+
 
 class TestPluginsSDKInternet(unittest.TestCase):
 
@@ -19,6 +24,7 @@ class TestPluginsSDKInternet(unittest.TestCase):
     def test_get_external_ip_no_internet(self, mock_check):
         mock_check.return_value = False
         self.assertIsNone(get_external_ip())
+
 
 if __name__ == "__main__":
     unittest.main()
