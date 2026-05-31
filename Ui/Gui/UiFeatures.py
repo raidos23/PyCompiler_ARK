@@ -657,6 +657,21 @@ class UiFeatures:
 
     def open_advanced_config_editor(self):
         """Open the advanced config editor dialog."""
+        workspace_dir = getattr(self, "workspace_dir", None)
+        if not workspace_dir:
+            self.log_i18n(
+                "❌ Aucun workspace sélectionné.", "❌ No workspace selected."
+            )
+            QMessageBox.warning(
+                self,
+                self.tr("Workspace manquant", "Workspace missing"),
+                self.tr(
+                    "Veuillez sélectionner un Workspace pour accéder à l'éditeur avancé.",
+                    "Please select a Workspace to access the advanced editor.",
+                ),
+            )
+            return
+
         try:
             from Ui.Gui.Dialogs.AdvancedConfigEditor import AdvancedConfigEditor
 

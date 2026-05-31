@@ -282,9 +282,55 @@ def _apply_plugins_config(
     return order_list
 
 
+def _get_all_plugins_dirs() -> list[Path]:
+    """Return all directories where BCASL plugins may be located."""
+    dirs: list[Path] = []
+    
+    # 1. Project local Plugins folder
+    try:
+        project_plugins = Path(__file__).resolve().parents[1] / "Plugins"
+        project_plugins.mkdir(parents=True, exist_ok=True)
+        dirs.append(project_plugins)
+    except Exception:
+        pass
+        
+    # 2. User-level and Dev-level plugins folders (from Core.Configs)
+    try:
+        from Core.Configs import resolve_config_value
+        for key in ("user-plugin-dir", "dev-plugin-dir"):
+            try:
+                dir_path = resolve_config_value(key, create_default=False)
+                if dir_path and os.path.isdir(dir_path):
+                    dirs.append(Path(dir_path))
+            except Exception:
+                pass
+    except Exception:
+        pass
+        
+    # Fallback/Default if nothing else worked
+    if not dirs:
+        fallback = Path("Plugins")
+        try:
+            fallback.mkdir(parents=True, exist_ok=True)
+        except Exception:
+            pass
+        dirs.append(fallback)
+        
+    return dirs
+
+
+def _discover_all_bcasl_meta() -> dict[str, dict[str, Any]]:
+    """Discover meta for all plugins in all configured directories."""
+    all_meta: dict[str, dict[str, Any]] = {}
+    for pdir in _get_all_plugins_dirs():
+        if pdir.exists() and pdir.is_dir():
+            all_meta.update(_discover_bcasl_meta(pdir))
+    return all_meta
+
+
 def _run_bcasl_sync(
     workspace_root: Path,
-    plugins_dir: Path,
+    plugins_dirs: list[Path],
     cfg: dict[str, Any],
     log_cb: Optional[callable] = None,
     stop_requested: Optional[callable] = None,
@@ -296,12 +342,24 @@ def _run_bcasl_sync(
         config=cfg,
         build_context=build_context,
     )
-    loaded, errors = manager.load_plugins_from_directory(plugins_dir)
-    _emit_log(log_cb, f"BCASL: {loaded} package(s) chargé(s) depuis Plugins/\n")
-    for mod, msg in errors or []:
+    
+    total_loaded = 0
+    all_errors: list[tuple[str, str]] = []
+    
+    for pdir in plugins_dirs:
+        loaded, errors = manager.load_plugins_from_directory(pdir)
+        total_loaded += loaded
+        if errors:
+            all_errors.extend(errors)
+            
+    _emit_log(log_cb, f"BCASL: {total_loaded} package(s) chargé(s) depuis {len(plugins_dirs)} dossiers\n")
+    for mod, msg in all_errors:
         _emit_log(log_cb, f"Plugin '{mod}': {msg}\n")
 
-    _apply_plugins_config(manager, cfg, plugins_dir, log_cb=log_cb)
+    # For priority/order, we need to know all plugins
+    # We pass the FIRST directory for legacy compatibility in _apply_plugins_config,
+    # but the manager already has everything loaded.
+    _apply_plugins_config(manager, cfg, plugins_dirs[0] if plugins_dirs else Path("Plugins"), log_cb=log_cb)
 
     workspace_meta = _build_workspace_meta(workspace_root, cfg)
     return manager.run_pre_compile(
@@ -314,20 +372,6 @@ def _run_bcasl_sync(
         stop_requested=stop_requested,
         log_cb=log_cb,
     )
-
-
-def _get_plugins_dir() -> Path:
-    try:
-        path = Path(__file__).resolve().parents[1] / "Plugins"
-        path.mkdir(parents=True, exist_ok=True)
-        return path
-    except Exception:
-        fallback = Path("Plugins")
-        try:
-            fallback.mkdir(parents=True, exist_ok=True)
-        except Exception:
-            pass
-        return fallback
 
 
 def _resolve_ordered_plugin_ids(
@@ -386,9 +430,8 @@ def _load_workspace_config(workspace_root: Path) -> dict[str, Any]:
     # 2) Génération défaut avec fusion ARK
     default_cfg: dict[str, Any] = {}
     try:
-        Plugins_dir = _get_plugins_dir()
         detected_plugins: dict[str, Any] = {}
-        meta_map = _discover_bcasl_meta(Plugins_dir) if Plugins_dir.exists() else {}
+        meta_map = _discover_all_bcasl_meta()
         if meta_map:
             order = compute_tag_order(meta_map)
             for idx, pid in enumerate(order):
@@ -396,14 +439,16 @@ def _load_workspace_config(workspace_root: Path) -> dict[str, Any]:
             plugin_order = order
         else:
             # Fallback alphabétique par dossier
-            try:
-                names = [
-                    p.name
-                    for p in sorted(Plugins_dir.iterdir())
-                    if (p.is_dir() and _has_bcasl_marker(p))
-                ]
-            except Exception:
-                names = []
+            names = []
+            for pdir in _get_all_plugins_dirs():
+                try:
+                    names.extend([
+                        p.name
+                        for p in sorted(pdir.iterdir())
+                        if (p.is_dir() and _has_bcasl_marker(p))
+                    ])
+                except Exception:
+                    pass
             for idx, pid in enumerate(sorted(names)):
                 detected_plugins[pid] = {"enabled": True, "priority": idx}
             plugin_order = sorted(names)
@@ -494,7 +539,7 @@ def run_pre_compile(self, build_context: Optional[Any] = None) -> Optional[objec
                 pass
             return dict(BCASL_DISABLED_REPORT)
 
-        Plugins_dir = _get_plugins_dir()
+        plugins_dirs = _get_all_plugins_dirs()
         cfg = _load_workspace_config(workspace_root)
 
         log_cb = None
@@ -502,7 +547,7 @@ def run_pre_compile(self, build_context: Optional[Any] = None) -> Optional[objec
             log_cb = self.log.append
         report = _run_bcasl_sync(
             workspace_root,
-            Plugins_dir,
+            plugins_dirs,
             cfg,
             log_cb=log_cb,
             build_context=build_context,
