@@ -768,9 +768,9 @@ def try_start_processes(self) -> bool:
             engine_id = engines_loader.registry.get_engine_for_tab(idx)
     except Exception:
         pass
-
+    from Ui.Gui.Compilation.helpers import resolve_default_engine_id
     if not engine_id:
-        engine_id = _resolve_default_engine_id()
+        engine_id = resolve_default_engine_id()
 
     return start_compilation_process(self, engine_id, self.python_files[0])
 
