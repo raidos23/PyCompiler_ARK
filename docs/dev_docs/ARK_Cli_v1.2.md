@@ -1,4 +1,4 @@
-# **ARK CLI Specification v1.1**
+# **ARK CLI Specification v1.2**
 
 This document defines the final, streamlined specification for the ARK Command Line Interface.
 
@@ -11,7 +11,7 @@ The CLI is designed to be simple, predictable, and headless-friendly.
 - **Unified Binary**: Use `ark` (or `python pycompiler_ark.py`).
 - **Explicit Commands**: No hidden magic; every action requires an explicit command.
 - **CLI-First**: All features accessible via GUI are also available via CLI.
-- **Predictable**: No dangerous auto-detection; reproducibility through locking.
+- **Reproducibility**: Guaranteed via functional locking comparison.
 
 ---
 
@@ -149,6 +149,7 @@ Initializes the current directory as a workspace.
 - **Engine Override**: `--engine <id>` uses a temporary engine without modifying `ark.yml`.
 - **Reproducible Rebuild**: `--lock [file]` rebuilds strictly from a lock file (default: `.ark/lock/latest.lock.yml`).
   - **Git State**: Automatically verifies if the current branch and commit match the lock. Offers automatic checkout on Linux.
+  - **Integrity Check**: ARK generates a shadow lock from the rebuild environment and performs a **Functional Equivalence** comparison. Detailed diffs are displayed in case of mismatch.
 - **Constraint**: `--engine` and `--lock` cannot be used together.
 
 ---
@@ -161,4 +162,4 @@ Initializes the current directory as a workspace.
 - **CLI4**: Engines and plugins follow a clear `dev > user > core` priority.
 
 ---
-*End of Specification v1.0*
+*End of Specification v1.2*
