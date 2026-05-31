@@ -9,6 +9,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from Ui.Cli.runtime import _platform_log_dir
 
+
 class TestCliRuntime(unittest.TestCase):
 
     @patch("Ui.PreferencesManager._user_config_dir")
@@ -21,11 +22,12 @@ class TestCliRuntime(unittest.TestCase):
     def test_platform_log_dir_fallback(self, mock_user_dir):
         # Simulate import error or exception
         mock_user_dir.side_effect = Exception("Import fail")
-        
+
         # We expect it to fallback to ~/.PyCompiler_ARK/logs
         log_dir = _platform_log_dir()
         expected = Path("~/.PyCompiler_ARK/logs").expanduser()
         self.assertEqual(log_dir, expected)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -19,7 +19,12 @@ from pathlib import Path
 from typing import Optional
 
 
-from Plugins_SDK.BcPluginContext import BcPluginBase, PluginMeta, PreCompileContext, bc_register
+from Plugins_SDK.BcPluginContext import (
+    BcPluginBase,
+    PluginMeta,
+    PreCompileContext,
+    bc_register,
+)
 from Plugins_SDK.GeneralContext import (
     Dialog,
     get_language_code,
@@ -181,7 +186,7 @@ class Cleaner(BcPluginBase):
             ask_confirm = bool(cfg.get("confirm", True))
             clean_pyc = bool(cfg.get("clean_pyc", True))
             clean_pycache = bool(cfg.get("clean_pycache", True))
-            
+
             if not clean_pyc and not clean_pycache:
                 return
 
@@ -207,17 +212,19 @@ class Cleaner(BcPluginBase):
 
             try:
                 progress.set_message("Scanning files...")
-                
+
                 if clean_pyc:
                     pyc_files = list(ctx.iter_files(["**/*.pyc"]))
                     progress.set_message("Removing .pyc files...")
                     progress.set_progress(0, len(pyc_files))
                     for idx, file_path in enumerate(pyc_files):
-                        if progress.is_canceled(): break
+                        if progress.is_canceled():
+                            break
                         try:
                             file_path.unlink()
                             self.cleaned_files += 1
-                        except Exception: pass
+                        except Exception:
+                            pass
                         progress.set_progress(idx + 1, len(pyc_files))
 
                 if clean_pycache:
@@ -225,11 +232,13 @@ class Cleaner(BcPluginBase):
                     pycache_dirs = list(ctx.root.rglob("__pycache__"))
                     progress.set_progress(0, len(pycache_dirs))
                     for idx, pycache_dir in enumerate(pycache_dirs):
-                        if progress.is_canceled(): break
+                        if progress.is_canceled():
+                            break
                         try:
                             shutil.rmtree(pycache_dir)
                             self.cleaned_dirs += 1
-                        except Exception: pass
+                        except Exception:
+                            pass
                         progress.set_progress(idx + 1, len(pycache_dirs))
             finally:
                 progress.close()

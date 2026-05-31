@@ -234,6 +234,7 @@ def compile_all(self) -> None:
         try:
             from Core.Compiler.utils import get_interpreter_version_str
             from Core.Venv_Manager.Manager import VenvManager
+
             vm = VenvManager(self)
             vpython = vm.resolve_project_venv()
             if vpython:
@@ -261,6 +262,7 @@ def compile_all(self) -> None:
     engine = None
     try:
         import Core.engine as engines_loader
+
         engine = engines_loader.registry.get_instance(engine_id)
     except Exception:
         engine = None
@@ -304,6 +306,7 @@ def compile_all(self) -> None:
             )
             try:
                 from Ui.Gui.Dialogs.BcaslDialog import ensure_bcasl_thread_stopped
+
                 ensure_bcasl_thread_stopped(self)
             except Exception:
                 pass
@@ -336,18 +339,24 @@ def compile_all(self) -> None:
                     "🔒 Génération du verrou de compilation (lock file)...",
                     "🔒 Generating compilation lock file...",
                 )
-                
+
                 # Pre-resolve command for auto-mapping persistence (Phase 3)
                 resolved_command = None
                 try:
                     from Core.Compiler.engine_runner import resolve_engine_command
+
                     # Use currently resolved context and config for resolution
                     prog, args, env = resolve_engine_command(
                         engine_id, context, engine_config, gui=self
                     )
                     resolved_command = {"program": prog, "args": args, "env": env}
                 except Exception as e:
-                    log_i18n_level(self, "warning", f"Auto-mapping non persisté: {e}", f"Auto-mapping not persisted: {e}")
+                    log_i18n_level(
+                        self,
+                        "warning",
+                        f"Auto-mapping non persisté: {e}",
+                        f"Auto-mapping not persisted: {e}",
+                    )
 
                 # Generate fresh lock payload using resolved python_version
                 lock_payload = build_lock_payload(
@@ -358,11 +367,11 @@ def compile_all(self) -> None:
                     resolved_command=resolved_command,
                 )
                 write_lock_files(self.workspace_dir, lock_payload)
-                
+
                 # Update context and engine_config from the fresh lock to ensure strict alignment
                 context = build_context_object_from_ark_config(validated.config)
                 engine_config = engine_config_from_lock(lock_payload)
-                
+
             except Exception as e:
                 log_i18n_level(
                     self,
@@ -451,6 +460,7 @@ def rebuild_from_lock(self, lock_path: Path) -> None:
         engine = None
         try:
             import Core.engine as engines_loader
+
             engine = engines_loader.registry.get_instance(engine_id)
         except Exception:
             engine = None
@@ -481,6 +491,7 @@ def rebuild_from_lock(self, lock_path: Path) -> None:
             if not bcasl_report_allows_compile(self, _report):
                 try:
                     from Ui.Gui.Dialogs.BcaslDialog import ensure_bcasl_thread_stopped
+
                     ensure_bcasl_thread_stopped(self)
                 except Exception:
                     pass
@@ -578,6 +589,7 @@ def start_compilation_process(self, engine_id: str, file_path: str) -> bool:
         try:
             from Core.Compiler.utils import get_interpreter_version_str
             from Core.Venv_Manager.Manager import VenvManager
+
             vm = VenvManager(self)
             vpython = vm.resolve_project_venv()
             if vpython:
@@ -590,7 +602,7 @@ def start_compilation_process(self, engine_id: str, file_path: str) -> bool:
 
         # Context from config (base context)
         context = build_context_object_from_ark_config(validated.config)
-        
+
         # Override entrypoint for single file compilation (must be done before resolution)
         try:
             rel_path = os.path.relpath(file_path, self.workspace_dir)
@@ -605,28 +617,37 @@ def start_compilation_process(self, engine_id: str, file_path: str) -> bool:
         resolved_command = None
         try:
             from Core.Compiler.engine_runner import resolve_engine_command
+
             # Use current engine config for resolution
             from Core.Locking import read_engine_config
-            current_engine_config = read_engine_config(Path(self.workspace_dir), engine_id)
+
+            current_engine_config = read_engine_config(
+                Path(self.workspace_dir), engine_id
+            )
             prog, args, env = resolve_engine_command(
                 engine_id, context, current_engine_config, gui=self
             )
             resolved_command = {"program": prog, "args": args, "env": env}
         except Exception as e:
-             log_i18n_level(self, "warning", f"Auto-mapping non persisté: {e}", f"Auto-mapping not persisted: {e}")
+            log_i18n_level(
+                self,
+                "warning",
+                f"Auto-mapping non persisté: {e}",
+                f"Auto-mapping not persisted: {e}",
+            )
 
         lock_payload = build_lock_payload(
-            Path(self.workspace_dir), 
-            validated.config, 
+            Path(self.workspace_dir),
+            validated.config,
             engine_id=engine_id,
             python_version=python_version,
-            resolved_command=resolved_command
+            resolved_command=resolved_command,
         )
         write_lock_files(Path(self.workspace_dir), lock_payload)
 
         # Config from lock (source of truth for engine specific options)
         engine_config = engine_config_from_lock(lock_payload)
-        
+
     except Exception as e:
         log_i18n_level(
             self,
@@ -640,6 +661,7 @@ def start_compilation_process(self, engine_id: str, file_path: str) -> bool:
     engine = None
     try:
         import Core.engine as engines_loader
+
         engine = engines_loader.registry.get_instance(engine_id)
     except Exception:
         engine = None
@@ -684,6 +706,7 @@ def start_compilation_process(self, engine_id: str, file_path: str) -> bool:
             )
             try:
                 from Ui.Gui.Dialogs.BcaslDialog import ensure_bcasl_thread_stopped
+
                 ensure_bcasl_thread_stopped(self)
             except Exception:
                 pass
@@ -769,6 +792,7 @@ def try_start_processes(self) -> bool:
     except Exception:
         pass
     from Ui.Gui.Compilation.helpers import resolve_default_engine_id
+
     if not engine_id:
         engine_id = resolve_default_engine_id()
 
@@ -786,6 +810,7 @@ def cancel_all_compilations(self) -> None:
     self._cancel_requested_during_precompile = True
     try:
         from Ui.Gui.Dialogs.BcaslDialog import ensure_bcasl_thread_stopped
+
         ensure_bcasl_thread_stopped(self)
 
     except Exception:

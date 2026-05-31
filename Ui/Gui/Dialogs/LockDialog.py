@@ -51,14 +51,14 @@ class LockDialog(QDialog):
         self.resize(900, 600)
 
         layout = QVBoxLayout(self)
-        
+
         ws = getattr(self.gui, "workspace_dir", None)
         ws_label = QLabel(gui.tr(f"Workspace: {ws}", f"Workspace: {ws}"))
         ws_label.setStyleSheet("color: #888;")
         layout.addWidget(ws_label)
 
         splitter = QSplitter(Qt.Orientation.Horizontal)
-        
+
         # Liste des verrous
         self.list_widget = QListWidget()
         self.list_widget.itemSelectionChanged.connect(self._on_selection_changed)
@@ -69,7 +69,7 @@ class LockDialog(QDialog):
         self.details_view.setReadOnly(True)
         self.details_view.setFont(QFont("Consolas", 10))
         splitter.addWidget(self.details_view)
-        
+
         splitter.setSizes([300, 600])
         layout.addWidget(splitter, 1)
 
@@ -78,13 +78,13 @@ class LockDialog(QDialog):
         self.btn_rebuild = QPushButton(gui.tr("Reconstruire (Rebuild)", "Rebuild"))
         self.btn_rebuild.setEnabled(False)
         self.btn_rebuild.clicked.connect(self._do_rebuild)
-        
+
         self.btn_open_dir = QPushButton(gui.tr("Ouvrir dossier", "Open Directory"))
         self.btn_open_dir.clicked.connect(self._open_lock_dir)
-        
+
         btn_close = QPushButton(gui.tr("Fermer", "Close"))
         btn_close.clicked.connect(self.close)
-        
+
         btn_layout.addWidget(self.btn_rebuild)
         btn_layout.addWidget(self.btn_open_dir)
         btn_layout.addStretch(1)
@@ -105,7 +105,9 @@ class LockDialog(QDialog):
         if not lock_dir or not lock_dir.exists():
             return
 
-        locks = sorted(lock_dir.glob("*.lock.yml"), key=lambda p: p.stat().st_mtime, reverse=True)
+        locks = sorted(
+            lock_dir.glob("*.lock.yml"), key=lambda p: p.stat().st_mtime, reverse=True
+        )
         for path in locks:
             item = QListWidgetItem(path.name)
             item.setData(Qt.ItemDataRole.UserRole, str(path))
@@ -133,7 +135,7 @@ class LockDialog(QDialog):
         items = self.list_widget.selectedItems()
         if not items:
             return
-        
+
         path = items[0].data(Qt.ItemDataRole.UserRole)
         try:
             lock_payload = load_yaml_file(Path(path))
@@ -150,8 +152,8 @@ class LockDialog(QDialog):
             self.gui.tr("Confirmer Rebuild", "Confirm Rebuild"),
             self.gui.tr(
                 "Voulez-vous reconstruire le projet à partir de ce verrou ?",
-                "Do you want to rebuild the project using this lock file?"
-            )
+                "Do you want to rebuild the project using this lock file?",
+            ),
         )
         if answer != QMessageBox.StandardButton.Yes:
             return
@@ -161,21 +163,24 @@ class LockDialog(QDialog):
         if hasattr(self.gui, "rebuild_from_lock"):
             self.gui.rebuild_from_lock(Path(path))
         else:
-            QMessageBox.critical(self, "Error", "rebuild_from_lock method not implemented in GUI")
+            QMessageBox.critical(
+                self, "Error", "rebuild_from_lock method not implemented in GUI"
+            )
 
     def _ensure_git_alignment(self, lock_payload: dict) -> bool:
         project = lock_payload.get("project") or {}
         locked_commit = project.get("git_commit")
         locked_branch = project.get("git_branch")
-        
+
         if not locked_commit and not locked_branch:
             return True
 
         from Core.Locking import get_git_commit_hash, get_git_branch
+
         ws = getattr(self.gui, "workspace_dir", None)
         if not ws:
             return True
-        
+
         current_commit = get_git_commit_hash(Path(ws))
         current_branch = get_git_branch(Path(ws))
 
@@ -187,42 +192,57 @@ class LockDialog(QDialog):
 
         import platform
         import subprocess
+
         is_linux = platform.system().lower() == "linux"
-        
+
         lines = []
         if not branch_match:
-            lines.append(self.gui.tr(
-                f"Branche : actuelle={current_branch}, verrou={locked_branch}",
-                f"Branch: current={current_branch}, lock={locked_branch}"
-            ))
+            lines.append(
+                self.gui.tr(
+                    f"Branche : actuelle={current_branch}, verrou={locked_branch}",
+                    f"Branch: current={current_branch}, lock={locked_branch}",
+                )
+            )
         if not commit_match:
-            lines.append(self.gui.tr(
-                f"Commit : actuel={current_commit[:8] if current_commit else 'N/A'}, verrou={locked_commit[:8] if locked_commit else 'N/A'}",
-                f"Commit: current={current_commit[:8] if current_commit else 'N/A'}, lock={locked_commit[:8] if locked_commit else 'N/A'}"
-            ))
+            lines.append(
+                self.gui.tr(
+                    f"Commit : actuel={current_commit[:8] if current_commit else 'N/A'}, verrou={locked_commit[:8] if locked_commit else 'N/A'}",
+                    f"Commit: current={current_commit[:8] if current_commit else 'N/A'}, lock={locked_commit[:8] if locked_commit else 'N/A'}",
+                )
+            )
 
-        msg = self.gui.tr(
-            "Désalignement Git détecté :\n",
-            "Git mismatch detected:\n"
-        ) + "\n".join(lines) + "\n\n"
-        
+        msg = (
+            self.gui.tr("Désalignement Git détecté :\n", "Git mismatch detected:\n")
+            + "\n".join(lines)
+            + "\n\n"
+        )
+
         if is_linux:
             msg += self.gui.tr(
                 "Voulez-vous que ARK tente d'aligner automatiquement le code (git checkout) ?",
-                "Do you want ARK to attempt automatic code alignment (git checkout)?"
+                "Do you want ARK to attempt automatic code alignment (git checkout)?",
             )
-            ans = QMessageBox.question(self, "Git Mismatch", msg, QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel)
+            ans = QMessageBox.question(
+                self,
+                "Git Mismatch",
+                msg,
+                QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel,
+            )
             if ans == QMessageBox.Yes:
                 try:
                     if not branch_match and locked_branch:
-                        subprocess.run(["git", "checkout", locked_branch], cwd=ws, check=True)
+                        subprocess.run(
+                            ["git", "checkout", locked_branch], cwd=ws, check=True
+                        )
                     if not commit_match and locked_commit:
-                        subprocess.run(["git", "checkout", locked_commit], cwd=ws, check=True)
+                        subprocess.run(
+                            ["git", "checkout", locked_commit], cwd=ws, check=True
+                        )
                     return True
                 except Exception as e:
                     QMessageBox.critical(self, "Error", f"Échec de l'alignement : {e}")
                     return False
-            return ans == QMessageBox.No # True si l'user ignore, False si Cancel
+            return ans == QMessageBox.No  # True si l'user ignore, False si Cancel
         else:
             cmd_hint = ""
             if not branch_match and locked_branch:
@@ -232,18 +252,21 @@ class LockDialog(QDialog):
 
             msg += self.gui.tr(
                 f"Action manuelle recommandée :\n{cmd_hint}\nContinuer le build quand même ?",
-                f"Recommended manual action:\n{cmd_hint}\nContinue build anyway?"
+                f"Recommended manual action:\n{cmd_hint}\nContinue build anyway?",
             )
-            ans = QMessageBox.warning(self, "Git Mismatch", msg, QMessageBox.Yes | QMessageBox.No)
+            ans = QMessageBox.warning(
+                self, "Git Mismatch", msg, QMessageBox.Yes | QMessageBox.No
+            )
             return ans == QMessageBox.Yes
 
     def _open_lock_dir(self):
         lock_dir = self._get_lock_dir()
         if not lock_dir or not lock_dir.exists():
             return
-        
+
         import platform
         import subprocess
+
         system = platform.system()
         if system == "Windows":
             os.startfile(str(lock_dir))

@@ -11,19 +11,28 @@ except Exception:  # pragma: no cover
     Console = None
     Theme = None
 
-_THEME = Theme({
-    "info": "cyan",
-    "warning": "bold yellow",
-    "error": "bold red",
-    "success": "bold green",
-    "prefix": "bold",
-}) if Theme is not None else None
+_THEME = (
+    Theme(
+        {
+            "info": "cyan",
+            "warning": "bold yellow",
+            "error": "bold red",
+            "success": "bold green",
+            "prefix": "bold",
+        }
+    )
+    if Theme is not None
+    else None
+)
 
 _CONSOLE = Console(theme=_THEME) if Console is not None else None
 _CONSOLE_ERR = Console(stderr=True, theme=_THEME) if Console is not None else None
 
 # Common emojis to strip for a cleaner CLI look
-_EMOJI_RE = re.compile(r"[\U0001f000-\U0001f9ff]|[\U00002600-\U000026ff]|[\U00002700-\U000027bf]", re.UNICODE)
+_EMOJI_RE = re.compile(
+    r"[\U0001f000-\U0001f9ff]|[\U00002600-\U000026ff]|[\U00002700-\U000027bf]",
+    re.UNICODE,
+)
 
 
 def strip_emojis(text: str) -> str:
@@ -38,17 +47,17 @@ def get_console() -> Optional[Console]:
 def _emit(message: str, err: bool = False, style: str | None = None) -> None:
     # Always strip emojis in CLI mode for a modern look
     clean_message = strip_emojis(message)
-    
+
     if _CONSOLE is not None:
         console = _CONSOLE_ERR if err else _CONSOLE
         # Use markup=True to support Rich tags in log messages if provided
         console.print(clean_message, style=style, markup=True)
         return
-    
+
     if click is not None:
         click.echo(clean_message, err=err)
         return
-    
+
     stream = sys.stderr if err else sys.stdout
     print(clean_message, file=stream)
 
@@ -59,7 +68,7 @@ def plain(message: str, err: bool = False) -> None:
 
 def log(level: str, message: str, err: bool | None = None) -> None:
     lvl = level.upper().strip()
-    
+
     # Map level to theme styles
     style_map = {
         "INFO": "info",
@@ -68,10 +77,10 @@ def log(level: str, message: str, err: bool | None = None) -> None:
         "ERROR": "error",
         "SUCCESS": "success",
     }
-    
+
     style = style_map.get(lvl, "info")
     prefix = f"[prefix][{lvl}][/prefix]"
-    
+
     out_err = err if err is not None else lvl in ("ERROR", "WARN", "WARNING")
     _emit(f"{prefix} {message}", err=out_err, style=style)
 

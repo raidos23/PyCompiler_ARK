@@ -35,7 +35,6 @@ from typing import Any, Dict, List, Optional
 
 from PySide6.QtCore import QObject, Signal
 
-
 # Importations ArkConfig pour la gestion des exclusions
 from Core.Configs import DEFAULT_EXCLUDE_PATTERNS, load_ark_config, should_exclude_file
 from Core.engine.build_context import BuildContext

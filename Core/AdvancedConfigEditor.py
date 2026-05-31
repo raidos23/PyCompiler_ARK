@@ -117,7 +117,9 @@ def validate_ark_payload(data: Any) -> tuple[list[str], list[str]]:
                                 errs.append(f"build.data[{idx}] missing 'source'.")
                             m_type = item.get("type")
                             if m_type is not None and m_type not in ("file", "dir"):
-                                errs.append(f"build.data[{idx}].type must be 'file' or 'dir'.")
+                                errs.append(
+                                    f"build.data[{idx}].type must be 'file' or 'dir'."
+                                )
 
     # plugins
     plugins = data.get("plugins")

@@ -58,15 +58,18 @@ class Dialog:
             # Skip if already initialized or in explicit headless mode
             if QApplication.instance() is not None:
                 return
-            
+
             # Initialize a minimal QApplication for the sandbox process
             # We use an empty list for argv and set offscreen if no display
             try:
                 import sys
-                if not os.environ.get("DISPLAY") and not os.environ.get("WAYLAND_DISPLAY"):
+
+                if not os.environ.get("DISPLAY") and not os.environ.get(
+                    "WAYLAND_DISPLAY"
+                ):
                     if sys.platform != "win32":
                         os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
-                
+
                 self._qapp = QApplication([])
             except Exception:
                 pass

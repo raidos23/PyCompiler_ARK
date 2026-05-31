@@ -577,7 +577,9 @@ def _retranslate_ide_like_actions(self) -> None:
         "theme": _widget_text("select_theme") or _label(theme_key, "Theme", "Theme"),
         "advanced": _widget_text("advanced_cfg_btn")
         or _label("advanced_config", "Configurations avancees", "Advanced config"),
-        "lock": _label("lock_manager", "Gestion des verrous (Locks)", "Lock management"),
+        "lock": _label(
+            "lock_manager", "Gestion des verrous (Locks)", "Lock management"
+        ),
         "save_engines": _label(
             "save_engine_configs",
             "Enregistrer les configs engines",
