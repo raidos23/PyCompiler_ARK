@@ -289,9 +289,18 @@ def _build_impl(
             python_version=python_version,
         )
         rebuild_cache = cache_rebuild_lock(workspace, regenerated)
-        comparison = compare_lock_payloads(lock_payload, regenerated)
-        if not comparison:
+        comparison_ok, diffs = compare_lock_payloads(lock_payload, regenerated, return_diff=True)
+        comparison = comparison_ok
+        if not comparison_ok:
             warnings.append("Lock mismatch")
+            if not as_json and verbose:
+                from .output import warn
+                warn("Functional mismatch detected:")
+                for d in diffs:
+                    info(f"  - {d}")
+        elif not as_json and verbose:
+            from .output import success
+            success("Lock integrity confirmed (Functional Equivalence).")
     except Exception as exc:
         warnings.append(f"Unable to regenerate comparison lock: {exc}")
 

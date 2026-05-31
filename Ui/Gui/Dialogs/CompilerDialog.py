@@ -1119,15 +1119,18 @@ def handle_finished(self, return_code: int, info: dict) -> None:
                 )
                 
                 rebuild_cache = cache_rebuild_lock(ws, regenerated)
-                comparison_ok = compare_lock_payloads(self._rebuild_lock_payload, regenerated)
+                comparison_ok, diffs = compare_lock_payloads(self._rebuild_lock_payload, regenerated, return_diff=True)
                 
                 if not comparison_ok:
                     log_i18n_level(
                         self,
                         "warning",
-                        "⚠️ Mismatch détecté : le verrou actuel diffère de celui utilisé pour le rebuild.",
-                        "⚠️ Lock mismatch detected: the current configuration differs from the one in the lock file.",
+                        "⚠️ Mismatch fonctionnel détecté : le verrou actuel diffère de celui utilisé pour le rebuild.",
+                        "⚠️ Functional mismatch detected: the current configuration differs from the one in the lock file.",
                     )
+                    for d in diffs:
+                        log_with_level(self, "info", f"  - {d}")
+
                     if rebuild_cache:
                         log_i18n_level(
                             self,
@@ -1139,8 +1142,8 @@ def handle_finished(self, return_code: int, info: dict) -> None:
                     log_i18n_level(
                         self,
                         "success",
-                        "✅ Intégrité du verrou confirmée (Strict Alignment).",
-                        "✅ Lock integrity confirmed (Strict Alignment).",
+                        "✅ Intégrité du verrou confirmée (Équivalence Fonctionnelle).",
+                        "✅ Lock integrity confirmed (Functional Equivalence).",
                     )
             except Exception as exc:
                 log_i18n_level(
