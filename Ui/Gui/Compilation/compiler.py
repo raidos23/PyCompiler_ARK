@@ -231,7 +231,7 @@ class CompilerCore(QObject):
         """
         Start an async compilation from a BuildContext.
         """
-        if self.is_running():
+        if self.is_running:
             self.log_message.emit("warning", "Compilation already in progress")
             return False
 

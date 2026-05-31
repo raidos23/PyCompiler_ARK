@@ -52,6 +52,8 @@ from Ui.Cli.helpers import (
     build_context_object_from_ark_config,
     build_context_object_from_lock,
     engine_config_from_lock,
+    cache_rebuild_lock,
+    compare_lock_payloads,
 )
 
 # ============================================================================
@@ -191,6 +193,7 @@ def compile_all(self) -> None:
     # 1. Reset state for a new build
     try:
         self._cancel_requested_during_precompile = False
+        self._is_rebuild = False
         get_main_process().reset()
     except Exception:
         pass
@@ -230,7 +233,7 @@ def compile_all(self) -> None:
     # 4. Preparation (Resolve context and engine config)
     try:
         # Resolve Python version for locking (will be used in background thread)
-        python_version = None
+        self._python_version = None
         try:
             from Core.Compiler.utils import get_interpreter_version_str
             from Core.Venv_Manager.Manager import VenvManager
@@ -239,9 +242,9 @@ def compile_all(self) -> None:
             vpython = vm.resolve_project_venv()
             if vpython:
                 vpath = vm.python_path(vpython)
-                python_version = get_interpreter_version_str(vpath)
+                self._python_version = get_interpreter_version_str(vpath)
             else:
-                python_version = get_interpreter_version_str()
+                self._python_version = get_interpreter_version_str()
         except Exception:
             pass
 
@@ -363,7 +366,7 @@ def compile_all(self) -> None:
                     self.workspace_dir,
                     validated.config,
                     engine_id=engine_id,
-                    python_version=python_version,
+                    python_version=self._python_version,
                     resolved_command=resolved_command,
                 )
                 write_lock_files(self.workspace_dir, lock_payload)
@@ -452,9 +455,58 @@ def rebuild_from_lock(self, lock_path: Path) -> None:
         if not engine_id:
             raise ValueError("Invalid lock file: missing engine name")
 
+        entry_file = str(((lock_payload.get("project") or {}).get("entry")) or "").strip()
+        if not entry_file:
+            raise ValueError("Invalid lock file: missing project.entry")
+
+        entry_path = Path(self.workspace_dir) / Path(entry_file)
+        if not entry_path.is_file():
+            # Show a nice dialog as this is a GUI
+            _prompt_for_required_entrypoint(self, missing_path=str(entry_path))
+            return
+
         # Context and Config from lock (Aligned with CLI)
         context = build_context_object_from_lock(lock_payload)
+        self._is_rebuild = True
+        self._rebuild_lock_payload = lock_payload
+
+        # Alignement Git (Exact CLI Logic)
+        try:
+            from Ui.Cli.helpers import ensure_correct_git_commit
+
+            if not ensure_correct_git_commit(Path(self.workspace_dir), lock_payload):
+                log_i18n_level(
+                    self,
+                    "warning",
+                    "Compilation annulée: Mismatch Git non résolu.",
+                    "Compilation cancelled: Git mismatch not resolved.",
+                )
+                return
+        except Exception as e:
+            log_i18n_level(
+                self,
+                "warning",
+                f"Échec vérification Git: {e}",
+                f"Git verification failed: {e}",
+            )
+
         engine_config = engine_config_from_lock(lock_payload)
+
+        # Shared Python version resolution for locking/comparison (Aligned with CLI)
+        self._python_version = None
+        try:
+            from Core.Compiler.utils import get_interpreter_version_str
+            from Core.Venv_Manager.Manager import VenvManager
+
+            vm = VenvManager(self)
+            vpython = vm.resolve_project_venv()
+            if vpython:
+                vpath = vm.python_path(vpython)
+                self._python_version = get_interpreter_version_str(vpath)
+            else:
+                self._python_version = get_interpreter_version_str()
+        except Exception:
+            pass
 
         # Retrieve engine instance for display name
         engine = None
@@ -555,6 +607,7 @@ def start_compilation_process(self, engine_id: str, file_path: str) -> bool:
     # 0. Reset state for a new build
     try:
         self._cancel_requested_during_precompile = False
+        self._is_rebuild = False
         get_main_process().reset()
     except Exception:
         pass
@@ -585,7 +638,7 @@ def start_compilation_process(self, engine_id: str, file_path: str) -> bool:
         )
 
         # Shared Python version resolution for locking/comparison (Aligned with CLI)
-        python_version = None
+        self._python_version = None
         try:
             from Core.Compiler.utils import get_interpreter_version_str
             from Core.Venv_Manager.Manager import VenvManager
@@ -594,9 +647,9 @@ def start_compilation_process(self, engine_id: str, file_path: str) -> bool:
             vpython = vm.resolve_project_venv()
             if vpython:
                 vpath = vm.python_path(vpython)
-                python_version = get_interpreter_version_str(vpath)
+                self._python_version = get_interpreter_version_str(vpath)
             else:
-                python_version = get_interpreter_version_str()
+                self._python_version = get_interpreter_version_str()
         except Exception:
             pass
 
@@ -640,7 +693,7 @@ def start_compilation_process(self, engine_id: str, file_path: str) -> bool:
             Path(self.workspace_dir),
             validated.config,
             engine_id=engine_id,
-            python_version=python_version,
+            python_version=self._python_version,
             resolved_command=resolved_command,
         )
         write_lock_files(Path(self.workspace_dir), lock_payload)
@@ -754,7 +807,7 @@ def start_compilation_process(self, engine_id: str, file_path: str) -> bool:
                 engine_id=engine_id,
                 context=context,
                 engine_config=engine_config,
-                is_rebuild=True,
+                is_rebuild=False,
             )
 
             if not success:
@@ -1028,6 +1081,56 @@ def handle_finished(self, return_code: int, info: dict) -> None:
             "Compilation terminée avec succès!",
             "Compilation completed successfully!",
         )
+
+        # Integrity Check (Aligned with CLI)
+        if getattr(self, "_is_rebuild", False) and getattr(self, "_rebuild_lock_payload", None):
+            try:
+                log_i18n_level(
+                    self,
+                    "info",
+                    "Vérification de l'intégrité du verrou après compilation...",
+                    "Performing lock integrity check after compilation...",
+                )
+                current_config = load_ark_config(Path(self.workspace_dir))
+                validated = validate_ark_config(Path(self.workspace_dir), current_config)
+                regenerated = build_lock_payload(
+                    Path(self.workspace_dir),
+                    validated.config,
+                    engine_id=info.get("engine", ""),
+                    python_version=getattr(self, "_python_version", None),
+                )
+                
+                rebuild_cache = cache_rebuild_lock(Path(self.workspace_dir), regenerated)
+                comparison_ok = compare_lock_payloads(self._rebuild_lock_payload, regenerated)
+                
+                if not comparison_ok:
+                    log_i18n_level(
+                        self,
+                        "warning",
+                        "⚠️ Mismatch détecté : le verrou actuel diffère de celui utilisé pour le rebuild.",
+                        "⚠️ Lock mismatch detected: the current configuration differs from the one in the lock file.",
+                    )
+                    if rebuild_cache:
+                        log_i18n_level(
+                            self,
+                            "info",
+                            f"Verrou de comparaison généré : {rebuild_cache}",
+                            f"Comparison lock generated: {rebuild_cache}",
+                        )
+                else:
+                    log_i18n_level(
+                        self,
+                        "success",
+                        "✅ Intégrité du verrou confirmée (Strict Alignment).",
+                        "✅ Lock integrity confirmed (Strict Alignment).",
+                    )
+            except Exception as exc:
+                log_i18n_level(
+                    self,
+                    "warning",
+                    f"Impossible de regénérer le verrou de comparaison: {exc}",
+                    f"Unable to regenerate comparison lock: {exc}",
+                )
 
         engine_id = info.get("engine")
         if engine_id:
