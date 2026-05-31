@@ -15,7 +15,7 @@
 
 - [x] verifier que les commandes cli sont parfaitement fonctionnelle et verifer les fcntionnalités une a une au niveau cli. 
 
-- [] verifier commde specialement conçu pour les dev comme le engine user dir pour dev dir aussi et les scaffoldings.
+- [x] verifier commde specialement conçu pour les dev comme le engine user dir pour dev dir aussi et les scaffoldings.
 
 - [x] fix l'error [ERROR] Erreur démarrage compilation : `MainProcess.compile_from_context()` got an unexpected keyword argument `ark_config`
 
@@ -29,4 +29,4 @@
 
 - [x] retirer les emojis en cli pour opter pour des implementation de rich.
 - [x] en cli sans le mode verbose, utlsier des spinners rich pour chaque etapes pour ne pas paraître bloquant.
-- [] quand un worspace nest pas selectionner le advanced editor en gui ne doit point s'ouvrir et afiche un message qui indique de selectionner un workspace. tout comme le fait le dialog bcasl.
+- [x] quand un worspace nest pas selectionner le advanced editor en gui ne doit point s'ouvrir et afiche un message qui indique de selectionner un workspace. tout comme le fait le dialog bcasl.
