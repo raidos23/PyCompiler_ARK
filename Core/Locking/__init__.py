@@ -254,13 +254,77 @@ def cache_rebuild_lock(workspace: Path, payload: dict[str, Any]) -> str:
     return str(target)
 
 
-def compare_lock_payloads(left: dict[str, Any], right: dict[str, Any]) -> bool:
-    def comparable(payload: dict[str, Any]) -> dict[str, Any]:
-        data = dict(payload)
-        data.pop("build_id", None)
-        return data
+def get_functional_snapshot(payload: dict[str, Any]) -> dict[str, Any]:
+    """
+    Extract critical metadata for functional equivalence check.
+    Ignores non-functional fields like build_id, git_branch, or resolved_command.
+    """
+    if not isinstance(payload, dict):
+        return {}
 
-    return comparable(left) == comparable(right)
+    project = payload.get("project") or {}
+    build = payload.get("build") or {}
+    engine = payload.get("engine") or {}
+    platform_info = payload.get("platform") or {}
+    dependencies = payload.get("dependencies") or {}
+
+    return {
+        "project": {
+            "name": str(project.get("name") or ""),
+            "version": str(project.get("version") or ""),
+            "entry": str(project.get("entry") or ""),
+            "git_commit": project.get("git_commit"),
+        },
+        "build": {
+            "output": str(build.get("output") or ""),
+            "data": list(build.get("data") or []),
+            "exclude": list(build.get("exclude") or []),
+            "icon": build.get("icon"),
+        },
+        "engine": {
+            "name": str(engine.get("name") or ""),
+            "version": str(engine.get("version") or ""),
+            "config": engine.get("config") or {},
+        },
+        "platform": {
+            "os": platform_info.get("os"),
+            "arch": platform_info.get("arch"),
+            "python_version": platform_info.get("python_version"),
+        },
+        "dependencies": dependencies,
+    }
+
+
+def compare_lock_payloads(
+    left: dict[str, Any], right: dict[str, Any], return_diff: bool = False
+) -> bool | tuple[bool, list[str]]:
+    """
+    Compare two build lock payloads for functional equivalence.
+    If return_diff is True, returns (is_equal, diff_list).
+    """
+    snap_left = get_functional_snapshot(left)
+    snap_right = get_functional_snapshot(right)
+
+    if not return_diff:
+        return snap_left == snap_right
+
+    diffs = []
+
+    def _diff_dict(a: dict, b: dict, path: str):
+        keys = set(a.keys()) | set(b.keys())
+        for k in sorted(keys):
+            val_a = a.get(k)
+            val_b = b.get(k)
+            cur_path = f"{path}.{k}" if path else k
+
+            if val_a != val_b:
+                if isinstance(val_a, dict) and isinstance(val_b, dict):
+                    _diff_dict(val_a, val_b, cur_path)
+                else:
+                    diffs.append(f"{cur_path}: {val_a} -> {val_b}")
+
+    _diff_dict(snap_left, snap_right, "")
+    return (len(diffs) == 0, diffs)
 
 
 def default_lock_path(workspace: Path) -> Path:
