@@ -470,7 +470,7 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
             return True
         try:
             bcasl_thread = getattr(self, "_bcasl_thread", None)
-            if bcasl_thread is not None and bcasl_thread.is_alive():
+            if bcasl_thread is not None and bcasl_thread.isRunning():
                 return True
         except Exception:
             pass

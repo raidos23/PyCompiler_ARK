@@ -23,6 +23,7 @@ by delegating to Core.Compiler.
 from __future__ import annotations
 
 import os
+import re
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
@@ -43,6 +44,14 @@ class CompilationStatus(Enum):
     FAILED = "failed"
 
 
+# Pre-compiled regex patterns for progress detection
+PROGRESS_PATTERNS = [
+    re.compile(r"\[(\d+)%\]"),
+    re.compile(r"Progress:\s*(\d+)"),
+    re.compile(r"(\d+)/(\d+)"),
+]
+
+
 class CompilationThread(QThread):
     """
     Thread used to run compilation without blocking the UI.
@@ -60,7 +69,7 @@ class CompilationThread(QThread):
         engine_id: str,
         context: BuildContext,
         engine_config: Optional[Dict[str, Any]] = None,
-        is_rebuild: any = False,
+        is_rebuild: bool = False,
     ):
         """
         Initialize the compilation thread.
@@ -114,27 +123,25 @@ class CompilationThread(QThread):
 
     def _update_progress(self, line: str) -> None:
         """Update progress based on process output."""
-        # Détecter les patterns de progression courants
-        progress_patterns = [
-            r"\[(\d+)%\]",
-            r"Progress:\s*(\d+)",
-            r"(\d+)/(\d+)",
-        ]
-
-        import re
-
-        for pattern in progress_patterns:
-            match = re.search(pattern, line)
+        for pattern in PROGRESS_PATTERNS:
+            match = pattern.search(line)
             if match:
-                if len(match.groups()) == 1:
-                    progress = int(match.group(1))
-                    self.progress_update.emit(progress, line)
-                elif len(match.groups()) == 2:
-                    current = int(match.group(1))
-                    total = int(match.group(2))
-                    if total > 0:
-                        progress = int((current / total) * 100)
+                groups = match.groups()
+                if len(groups) == 1:
+                    try:
+                        progress = int(groups[0])
                         self.progress_update.emit(progress, line)
+                    except (ValueError, TypeError):
+                        pass
+                elif len(groups) == 2:
+                    try:
+                        current = int(groups[0])
+                        total = int(groups[1])
+                        if total > 0:
+                            progress = int((current / total) * 100)
+                            self.progress_update.emit(progress, line)
+                    except (ValueError, TypeError):
+                        pass
                 break
 
     def cancel(self) -> None:
@@ -180,7 +187,7 @@ class CompilerCore(QObject):
         return self._status
 
     @property
-    def is_running(self) -> any:
+    def is_running(self) -> bool:
         """Return True when a compilation is currently running."""
         return self._status == CompilationStatus.RUNNING
 
@@ -200,7 +207,7 @@ class CompilerCore(QObject):
         engine_id: Optional[str] = None,
         file_path: Optional[str] = None,
         workspace_dir: Optional[str] = None,
-    ) -> any:
+    ) -> bool:
         """
         Legacy compile method. Use compile_from_context instead.
         """
@@ -226,8 +233,8 @@ class CompilerCore(QObject):
         engine_id: str,
         context: BuildContext,
         engine_config: Optional[Dict[str, Any]] = None,
-        is_rebuild: any = False,
-    ) -> any:
+        is_rebuild: bool = False,
+    ) -> bool:
         """
         Start an async compilation from a BuildContext.
         """
@@ -272,7 +279,7 @@ class CompilerCore(QObject):
 
         return True
 
-    def cancel(self) -> any:
+    def cancel(self) -> bool:
         """
         Cancel current compilation.
         """
