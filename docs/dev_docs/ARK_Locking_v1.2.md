@@ -1,13 +1,13 @@
-# **ARK Locking Specification v1.1**
+# **ARK Locking Specification v1.2**
 
-This document defines the architecture and behavior of the build locking mechanism, ensuring reproducibility across environments.
+This document defines the architecture and behavior of the build locking mechanism, ensuring functional reproducibility across environments.
 
 ---
 
 ### **1. Purpose of the Lock**
 
 The lock file is a frozen snapshot of the project's build intent and its execution environment.
-It guarantees **Reproducibility**: same lock → same artifact.
+It guarantees **Functional Reproducibility**: same technical parameters -> functionally equivalent artifact.
 
 ---
 
@@ -73,12 +73,9 @@ platform:
   arch: x86_64             # machine architecture snapshot
   python_version: 3.11.9   # exact build interpreter version
 
-dependencies:              # Full 'pip freeze' snapshot
+dependencies:              # Full 'pip list' snapshot
   PySide6: 6.7.2
   requests: 2.32.3 
-
-# workspace_hash: sha256 hash of all included files (respecting excludes)
-workspace_hash: sha256:4a5b6c7d8e9f0a1b2c3d...
 ```
 
 ---
@@ -94,19 +91,33 @@ When rebuilding from a lock, ARK performs a "Strict Rebuild":
 3. **Verify Environment**: ARK captures the current Python version and environment.
 4. **Build**: Passes the locked data directly to the engine via the **BuildContext**.
 5. **Shadow Lock Generation**: During the rebuild, ARK generates a *new* lock based on the current live state.
-6. **Comparison**: The used lock and the generated shadow lock are compared.
+6. **Functional Comparison**: The used lock and the generated shadow lock are compared for **Functional Equivalence**.
     - **Identical**: Build successful, environment is consistent.
-    - **Mismatch**: ARK issues a warning (stored in `.ark/cache/rebuild.lock/`).
+    - **Mismatch**: ARK issues a warning and displays a detailed **diff** of technical changes (e.g. dependency version mismatch, engine config changes).
 
 ---
 
-### **6. Fundamental Rules**
+### **6. Functional Equivalence Criteria**
 
-- **L1**: No timestamps are included in the hash-critical sections of the lock (reproducibility).
+A build is considered equivalent if the following sections match exactly:
+
+1.  **Engine**: name, version, and full configuration (`engine.config`).
+2.  **Dependencies**: all package versions must match.
+3.  **Project**: name, version, entry point, and Git commit.
+4.  **Build**: output path, data mappings, exclusion patterns, and icon.
+5.  **Platform**: OS, architecture, and Python version.
+
+**Ignored fields**: `build_id`, `git_branch`, `resolved_command`, and other volatile metadata.
+
+---
+
+### **7. Fundamental Rules**
+
+- **L1**: No volatile timestamps are included in the functional sections.
 - **L2**: `latest.lock.yml` should be tracked in source control.
-- **L3**: The `workspace_hash` ensures the source code itself hasn't changed between builds.
+- **L3**: The Git commit hash ensures the source code consistency when using Git.
 - **L4**: The engine configuration is completely captured, ensuring identical compiler flags.
 - **L5**: The lock is the **sole source of truth** during a `--lock` build.
 
 ---
-*End of Specification v1.1*
+*End of Specification v1.2*

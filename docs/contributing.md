@@ -16,8 +16,8 @@ If you are a developer looking to extend ARK's functionality, please refer to th
 For a deeper dive into ARK's internal architecture, review our core specifications:
 
 - **BuildContext Spec**: [docs/dev_docs/ARK_BuildContext_v1.0.md](dev_docs/ARK_BuildContext_v1.0.md)
-- **CLI Spec**: [docs/dev_docs/ARK_Cli_v1.1.md](dev_docs/ARK_Cli_v1.1.md)
-- **Locking Spec**: [docs/dev_docs/ARK_Locking_v1.1.md](dev_docs/ARK_Locking_v1.1.md)
+- **CLI Spec**: [docs/dev_docs/ARK_Cli_v1.2.md](dev_docs/ARK_Cli_v1.2.md)
+- **Locking Spec**: [docs/dev_docs/ARK_Locking_v1.2.md](dev_docs/ARK_Locking_v1.2.md)
 
 ## **Development Workflow**
 
