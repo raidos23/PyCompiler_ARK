@@ -849,16 +849,15 @@ class _BCASLWorker(QObject):
     def __init__(
         self,
         workspace_root: "Path",
-        Plugins_dir: "Path",
+        plugins_dirs: "list[Path]",
         cfg: "dict[str, Any]",
-        
+
         build_context: Optional[Any] = None,
     ) -> None:
         super().__init__()
         self.workspace_root = workspace_root
-        self.Plugins_dir = Plugins_dir
+        self.plugins_dirs = plugins_dirs
         self.cfg = cfg
-        
         self.build_context = build_context
         self._cancel_requested = False
 
@@ -891,12 +890,13 @@ class _BCASLWorker(QObject):
             # 3. Exécuter
             report = _run_bcasl_sync(
                 self.workspace_root,
-                self.Plugins_dir,
+                self.plugins_dirs,
                 self.cfg,
                 log_cb=self.log.emit,
-                stop_requested=lambda: bool(self._cancel_requested),
+                stop_requested=lambda: self._cancel_requested,
                 build_context=self.build_context,
             )
+
             self.finished.emit(report)
         except Exception as e:
             try:
@@ -1102,36 +1102,33 @@ def open_bc_loader_dialog(self) -> None:
         workspace_root = Path(self.workspace_dir).resolve()
         
         from bcasl.Loader import (_discover_bcasl_meta,
-                                  _discover_bcasl_plugins, _get_plugins_dir,
+                                  _discover_bcasl_plugins, _get_all_plugins_dirs,
                                   _load_workspace_config)
         
-        Plugins_dir = _get_plugins_dir()
+        plugins_dirs = _get_all_plugins_dirs()
 
-        if not Plugins_dir.exists():
-            QMessageBox.information(
-                self,
-                self.tr("Information", "Information"),
-                self.tr(
-                    "Aucun répertoire Plugins/ trouvé dans le projet.",
-                    "No Plugins/ directory found in the project.",
-                ),
-            )
-            return
-
-        meta_map = _discover_bcasl_meta(Plugins_dir)
+        meta_map = {}
+        for pdir in plugins_dirs:
+             if pdir.exists() and pdir.is_dir():
+                  meta_map.update(_discover_bcasl_meta(pdir))
+                  
         if not meta_map:
             QMessageBox.information(
                 self,
                 self.tr("Information", "Information"),
                 self.tr(
-                    "Aucun plugin détecté dans Plugins/.",
-                    "No plugins detected in Plugins.",
+                    "Aucun plugin détecté dans les répertoires configurés.",
+                    "No plugins detected in configured directories.",
                 ),
             )
             return
 
         cfg = _load_workspace_config(workspace_root)
-        plugin_instances = _discover_bcasl_plugins(Plugins_dir, workspace_root, cfg)
+        
+        plugin_instances = {}
+        for pdir in plugins_dirs:
+             if pdir.exists() and pdir.is_dir():
+                  plugin_instances.update(_discover_bcasl_plugins(pdir, workspace_root, cfg))
 
         open_bcasl_pipeline_dialog(
             self, workspace_root, meta_map, cfg, plugin_instances
@@ -1163,7 +1160,7 @@ def run_pre_compile_async(
 
         from bcasl.Loader import (
             BCASL_DISABLED_REPORT,
-            _get_plugins_dir,
+            _get_all_plugins_dirs,
             _is_bcasl_enabled,
         )
 
@@ -1181,13 +1178,13 @@ def run_pre_compile_async(
                     pass
             return
 
-        Plugins_dir = _get_plugins_dir()
+        plugins_dirs = _get_all_plugins_dirs()
 
         thread = QThread()
         # On passe cfg=None pour que le worker le charge en arrière-plan
         worker = _BCASLWorker(
             workspace_root,
-            Plugins_dir,
+            plugins_dirs,
             cfg=None,
             build_context=build_context,
         )
