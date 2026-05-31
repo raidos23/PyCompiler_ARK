@@ -358,6 +358,7 @@ def build_lock_payload(
     *,
     engine_id: str,
     python_version: str | None = None,
+    resolved_command: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     return _build_lock_payload(
         workspace,
@@ -365,6 +366,7 @@ def build_lock_payload(
         engine_id=engine_id,
         engine_version=engine_version(engine_id),
         python_version=python_version,
+        resolved_command=resolved_command,
     )
 
 

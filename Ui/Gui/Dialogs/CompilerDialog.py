@@ -330,10 +330,6 @@ def compile_all(self) -> None:
 
             # CLI Alignment: Generate lock before starting the engine
             try:
-                from Core.Locking import build_lock_payload, write_lock_files
-                from engine_sdk import build_context_object_from_ark_config
-                from Ui.Cli.helpers import engine_config_from_lock
-
                 log_i18n_level(
                     self,
                     "info",
@@ -593,7 +589,6 @@ def start_compilation_process(self, engine_id: str, file_path: str) -> bool:
             pass
 
         # Context from config (base context)
-        from engine_sdk import build_context_object_from_ark_config
         context = build_context_object_from_ark_config(validated.config)
         
         # Override entrypoint for single file compilation (must be done before resolution)
@@ -630,7 +625,6 @@ def start_compilation_process(self, engine_id: str, file_path: str) -> bool:
         write_lock_files(Path(self.workspace_dir), lock_payload)
 
         # Config from lock (source of truth for engine specific options)
-        from Ui.Cli.helpers import engine_config_from_lock
         engine_config = engine_config_from_lock(lock_payload)
         
     except Exception as e:
