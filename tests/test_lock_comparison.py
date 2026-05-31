@@ -1,5 +1,16 @@
 import pytest
 from Core.Locking import compare_lock_payloads
+from Ui.Cli.helpers import compare_lock_payloads as wrapper_compare_lock_payloads
+
+def test_wrapper_compare_lock_payloads_with_diff():
+    """Test that the CLI helper wrapper correctly handles return_diff."""
+    lock_a = {"dependencies": {"numpy": "1.24.0"}}
+    lock_b = {"dependencies": {"numpy": "1.25.0"}}
+    
+    ok, diffs = wrapper_compare_lock_payloads(lock_a, lock_b, return_diff=True)
+    assert ok is False
+    assert any("dependencies.numpy: 1.24.0 -> 1.25.0" in d for d in diffs)
+
 
 def test_compare_lock_payloads_functional_equivalence():
     """Test that comparison ignores build_id but detects critical changes."""
