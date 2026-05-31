@@ -184,6 +184,8 @@
         <li><a href="docs-config.html" class="active">Configuration Globale</a></li>
         <li><a href="docs-engine.html">Créer un Moteur</a></li>
         <li><a href="docs-bc-plugin.html">Créer un Plugin BC</a></li>
+        <li><a href="docs-locking.html">Gestion des Verrous</a></li>
+        <li><a href="docs-cli.html">Spécifications CLI</a></li>
         
       </ul>
     </aside>
@@ -257,7 +259,7 @@
     }
 
     async function loadDocumentation(docFile) {
-      const url = `https://raw.githubusercontent.com/raidos23/PyCompiler_ARK/main/docs/${docFile}`;
+      const url = `https://raw.githubusercontent.com/raidos23/PyCompiler_ARK/experience/docs/${docFile}`;
       const contentDiv = $('#content');
       try {
         const response = await fetch(url);
@@ -270,7 +272,7 @@
       }
     }
 
-    loadDocumentation('ARK_Configuration.md');
+    loadDocumentation('ark_main_config.md');
   </script>
 </body>
 </html>
