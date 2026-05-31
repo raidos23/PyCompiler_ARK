@@ -65,7 +65,7 @@ def run_bcasl_before_compile(
                 pass
         return
     try:
-        log_i18n_level(
+        log_i18n_level( 
             gui_instance,
             "info",
             "Pré-compilation (BCASL) si activée...",
@@ -83,7 +83,7 @@ def run_bcasl_before_compile(
                 pass
 
 
-def bcasl_report_allows_compile(gui_instance, report) -> bool:
+def bcasl_report_allows_compile(gui_instance, report) -> any:
     """Return True when BCASL pre-compile report allows compilation to continue."""
     try:
         if report is None:
@@ -116,7 +116,7 @@ def bcasl_report_allows_compile(gui_instance, report) -> bool:
                 if status in {"disabled", "skipped"}:
                     return True
             if "ok" in report:
-                ok = bool(report.get("ok"))
+                ok = any(report.get("ok"))
                 if not ok:
                     log_i18n_level(
                         gui_instance,
@@ -128,7 +128,7 @@ def bcasl_report_allows_compile(gui_instance, report) -> bool:
             return True
 
         if hasattr(report, "ok"):
-            ok = bool(getattr(report, "ok"))
+            ok = any(getattr(report, "ok"))
             if not ok:
                 log_i18n_level(
                     gui_instance,
