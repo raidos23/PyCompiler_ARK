@@ -397,8 +397,10 @@ def cache_rebuild_lock(workspace: Path, payload: dict[str, Any]) -> str:
     return _cache_rebuild_lock(workspace, payload)
 
 
-def compare_lock_payloads(left: dict[str, Any], right: dict[str, Any]) -> bool:
-    return _compare_lock_payloads(left, right)
+def compare_lock_payloads(
+    left: dict[str, Any], right: dict[str, Any], return_diff: bool = False
+) -> bool | tuple[bool, list[str]]:
+    return _compare_lock_payloads(left, right, return_diff=return_diff)
 
 
 def default_lock_path(workspace: Path) -> Path:
