@@ -59,4 +59,6 @@ L'erreur 'bool' object is not callable signifie qu'une variable contenant un boo
    * À l'intérieur de cette méthode, lors de l'appel d'un helper ou de l'émission d'un signal dont un slot est corrompu.
 
 
+- [] recire lintegralité de l'orchestration de build de la gui en focntion de la cli.
+
 - [] le locking est conçu pour un build reproductible mais dans l'incapacité de recréer un build bit par bit.. la comparaion lors dun rebuild doit etre revue pour une comparaison basé sur un build non bit for bit mais focntionnrlemnt equivalente donc l'on ne comparera plus le lock par hash ou en entireté mais plutot des metadonnées importante pour être fonctionnelement identique... .
