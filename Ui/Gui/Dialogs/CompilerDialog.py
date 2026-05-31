@@ -190,6 +190,8 @@ def compile_all(self) -> None:
             pass
         return
 
+    ws = Path(self.workspace_dir)
+
     # 1. Reset state for a new build
     try:
         self._cancel_requested_during_precompile = False
@@ -200,8 +202,8 @@ def compile_all(self) -> None:
 
     # 2. Load and Validate (Aligned with CLI)
     try:
-        config = load_ark_config(Path(self.workspace_dir))
-        validated = validate_ark_config(Path(self.workspace_dir), config)
+        config = load_ark_config(ws)
+        validated = validate_ark_config(ws, config)
     except Exception as e:
         log_i18n_level(self, "error", f"Erreur config: {e}", f"Config error: {e}")
         return
@@ -286,6 +288,8 @@ def compile_all(self) -> None:
     )
 
     def _after_bcasl(_report=None) -> None:
+        nonlocal context, engine_config
+
         # Ensure we only process the callback for the current active build
         if _after_bcasl != getattr(self, "_active_bcasl_callback", None):
             return
@@ -363,13 +367,13 @@ def compile_all(self) -> None:
 
                 # Generate fresh lock payload using resolved python_version
                 lock_payload = build_lock_payload(
-                    self.workspace_dir,
+                    ws,
                     validated.config,
                     engine_id=engine_id,
                     python_version=self._python_version,
                     resolved_command=resolved_command,
                 )
-                write_lock_files(self.workspace_dir, lock_payload)
+                write_lock_files(ws, lock_payload)
 
                 # Update context and engine_config from the fresh lock to ensure strict alignment
                 context = build_context_object_from_ark_config(validated.config)
@@ -408,7 +412,7 @@ def compile_all(self) -> None:
 
             # The actual compilation call
             success = main_process.compile_from_context(
-                workspace=self.workspace_dir,
+                workspace=ws,
                 engine_id=engine_id,
                 context=context,
                 engine_config=engine_config,
@@ -433,6 +437,10 @@ def compile_all(self) -> None:
 
 def rebuild_from_lock(self, lock_path: Path) -> None:
     """Rebuild the project using a specific lock file, following CLI logic."""
+    if not self.workspace_dir:
+        return
+    ws = Path(self.workspace_dir)
+
     try:
         # Reset state for a new build
         self._cancel_requested_during_precompile = False
@@ -459,7 +467,7 @@ def rebuild_from_lock(self, lock_path: Path) -> None:
         if not entry_file:
             raise ValueError("Invalid lock file: missing project.entry")
 
-        entry_path = Path(self.workspace_dir) / Path(entry_file)
+        entry_path = ws / Path(entry_file)
         if not entry_path.is_file():
             # Show a nice dialog as this is a GUI
             _prompt_for_required_entrypoint(self, missing_path=str(entry_path))
@@ -474,7 +482,7 @@ def rebuild_from_lock(self, lock_path: Path) -> None:
         try:
             from Ui.Cli.helpers import ensure_correct_git_commit
 
-            if not ensure_correct_git_commit(Path(self.workspace_dir), lock_payload):
+            if not ensure_correct_git_commit(ws, lock_payload):
                 log_i18n_level(
                     self,
                     "warning",
@@ -536,6 +544,8 @@ def rebuild_from_lock(self, lock_path: Path) -> None:
         )
 
         def _after_bcasl(_report=None) -> None:
+            nonlocal context, engine_config
+
             # Ensure we only process the callback for the current active build
             if _after_bcasl != getattr(self, "_active_bcasl_callback", None):
                 return
@@ -579,7 +589,7 @@ def rebuild_from_lock(self, lock_path: Path) -> None:
                 main_process._gui_connected = True
 
             success = main_process.compile_from_context(
-                workspace=self.workspace_dir,
+                workspace=ws,
                 engine_id=engine_id,
                 context=context,
                 engine_config=engine_config,
@@ -604,6 +614,10 @@ def rebuild_from_lock(self, lock_path: Path) -> None:
 
 def start_compilation_process(self, engine_id: str, file_path: str) -> bool:
     """Start a single compilation process using shared logic aligned with CLI."""
+    if not self.workspace_dir:
+        return False
+    ws = Path(self.workspace_dir)
+
     # 0. Reset state for a new build
     try:
         self._cancel_requested_during_precompile = False
@@ -614,8 +628,8 @@ def start_compilation_process(self, engine_id: str, file_path: str) -> bool:
 
     # 1. Load and Validate (Aligned with CLI)
     try:
-        cfg = load_ark_config(Path(self.workspace_dir))
-        validated = validate_ark_config(Path(self.workspace_dir), cfg)
+        cfg = load_ark_config(ws)
+        validated = validate_ark_config(ws, cfg)
     except Exception as e:
         log_i18n_level(self, "error", f"Erreur config: {e}", f"Config error: {e}")
         return False
@@ -658,7 +672,7 @@ def start_compilation_process(self, engine_id: str, file_path: str) -> bool:
 
         # Override entrypoint for single file compilation (must be done before resolution)
         try:
-            rel_path = os.path.relpath(file_path, self.workspace_dir)
+            rel_path = os.path.relpath(file_path, str(ws))
             if not rel_path.startswith(".."):
                 context.entry_point = rel_path
             else:
@@ -674,9 +688,7 @@ def start_compilation_process(self, engine_id: str, file_path: str) -> bool:
             # Use current engine config for resolution
             from Core.Locking import read_engine_config
 
-            current_engine_config = read_engine_config(
-                Path(self.workspace_dir), engine_id
-            )
+            current_engine_config = read_engine_config(ws, engine_id)
             prog, args, env = resolve_engine_command(
                 engine_id, context, current_engine_config, gui=self
             )
@@ -690,13 +702,13 @@ def start_compilation_process(self, engine_id: str, file_path: str) -> bool:
             )
 
         lock_payload = build_lock_payload(
-            Path(self.workspace_dir),
+            ws,
             validated.config,
             engine_id=engine_id,
             python_version=self._python_version,
             resolved_command=resolved_command,
         )
-        write_lock_files(Path(self.workspace_dir), lock_payload)
+        write_lock_files(ws, lock_payload)
 
         # Config from lock (source of truth for engine specific options)
         engine_config = engine_config_from_lock(lock_payload)
@@ -737,6 +749,8 @@ def start_compilation_process(self, engine_id: str, file_path: str) -> bool:
     )
 
     def _after_bcasl(_report=None) -> None:
+        nonlocal context, engine_config
+
         # Ensure we only process the callback for the current active build
         if _after_bcasl != getattr(self, "_active_bcasl_callback", None):
             return
@@ -803,7 +817,7 @@ def start_compilation_process(self, engine_id: str, file_path: str) -> bool:
                 main_process._gui_connected = True
 
             success = main_process.compile_from_context(
-                workspace=self.workspace_dir,
+                workspace=ws,
                 engine_id=engine_id,
                 context=context,
                 engine_config=engine_config,
@@ -1085,22 +1099,26 @@ def handle_finished(self, return_code: int, info: dict) -> None:
         # Integrity Check (Aligned with CLI)
         if getattr(self, "_is_rebuild", False) and getattr(self, "_rebuild_lock_payload", None):
             try:
+                if not self.workspace_dir:
+                    return
+                ws = Path(self.workspace_dir)
+
                 log_i18n_level(
                     self,
                     "info",
                     "Vérification de l'intégrité du verrou après compilation...",
                     "Performing lock integrity check after compilation...",
                 )
-                current_config = load_ark_config(Path(self.workspace_dir))
-                validated = validate_ark_config(Path(self.workspace_dir), current_config)
+                current_config = load_ark_config(ws)
+                validated = validate_ark_config(ws, current_config)
                 regenerated = build_lock_payload(
-                    Path(self.workspace_dir),
+                    ws,
                     validated.config,
                     engine_id=info.get("engine", ""),
                     python_version=getattr(self, "_python_version", None),
                 )
                 
-                rebuild_cache = cache_rebuild_lock(Path(self.workspace_dir), regenerated)
+                rebuild_cache = cache_rebuild_lock(ws, regenerated)
                 comparison_ok = compare_lock_payloads(self._rebuild_lock_payload, regenerated)
                 
                 if not comparison_ok:

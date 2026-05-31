@@ -83,7 +83,7 @@ def run_bcasl_before_compile(
                 pass
 
 
-def bcasl_report_allows_compile(gui_instance, report) -> any:
+def bcasl_report_allows_compile(gui_instance, report) -> bool:
     """Return True when BCASL pre-compile report allows compilation to continue."""
     try:
         if report is None:

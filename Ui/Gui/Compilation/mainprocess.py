@@ -140,21 +140,21 @@ class MainProcess(QObject):
         return self._current_engine
 
     @property
-    def is_ready(self) -> any:
+    def is_ready(self) -> bool:
         """Return True when the process is ready."""
         return self._state in (ProcessState.READY, ProcessState.IDLE)
 
     @property
-    def is_compiling(self) -> any:
+    def is_compiling(self) -> bool:
         """Return True when a compilation is currently running."""
         return self._state == ProcessState.COMPILING
 
     @property
-    def is_idle(self) -> any:
+    def is_idle(self) -> bool:
         """Return True when the process is idle."""
         return self._state == ProcessState.IDLE
 
-    def set_workspace(self, workspace_dir: str) -> any:
+    def set_workspace(self, workspace_dir: str) -> bool:
         """
         Set workspace directory.
 
@@ -180,7 +180,7 @@ class MainProcess(QObject):
 
         return True
 
-    def set_file(self, file_path: str) -> any:
+    def set_file(self, file_path: str) -> bool:
         """
         Set file to compile.
 
@@ -218,7 +218,7 @@ class MainProcess(QObject):
         engine_id: Optional[str] = None,
         file_path: Optional[str] = None,
         workspace_dir: Optional[str] = None,
-    ) -> any:
+    ) -> bool:
         """
         Start a compilation.
 
@@ -296,7 +296,7 @@ class MainProcess(QObject):
 
         return success
 
-    def cancel(self) -> any:
+    def cancel(self) -> bool:
         """
         Cancel current compilation.
 
@@ -385,8 +385,8 @@ class MainProcess(QObject):
         engine_id: str,
         context: BuildContext,
         engine_config: Optional[Dict[str, Any]] = None,
-        is_rebuild: any = False,
-    ) -> any:
+        is_rebuild: bool = False,
+    ) -> bool:
         """
         Start an async compilation from a :class:`BuildContext`.
 
@@ -455,7 +455,7 @@ class MainProcess(QObject):
                 pass
         return DEFAULT_EXCLUDE_PATTERNS
 
-    def should_exclude(self, file_path: str) -> any:
+    def should_exclude(self, file_path: str) -> bool:
         """
         Determine whether a file must be excluded from compilation.
 
