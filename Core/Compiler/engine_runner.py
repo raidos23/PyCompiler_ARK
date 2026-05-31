@@ -100,7 +100,9 @@ def resolve_engine_command(
     program, args = resolved
 
     # Integrated Auto-mapping: apply engine-specific flags from detected imports
-    if gui and str(os.environ.get("PYCOMPILER_DISABLE_AUTO_BUILDER", "0")).lower() not in (
+    if gui and str(
+        os.environ.get("PYCOMPILER_DISABLE_AUTO_BUILDER", "0")
+    ).lower() not in (
         "1",
         "true",
         "yes",
@@ -125,10 +127,10 @@ def resolve_engine_command(
 
                     if target_idx != -1:
                         # Insert before target_idx
-                        # We don't check "if a not in args" because some flags like 
+                        # We don't check "if a not in args" because some flags like
                         # --collect-all or --hidden-import can be repeated with different values.
                         # However, we avoid adding the EXACT same pair twice if possible.
-                        
+
                         # To be safe and simple, we just insert all auto_args at target_idx
                         # and rely on the engine or auto-builder to have filtered exact duplicates.
                         for a in reversed(auto_args):
@@ -249,9 +251,7 @@ def run_engine_compile_streaming(
     # -- 2. Resolve (program, args, env) from engine --------------------------
     try:
         if on_stdout:
-            on_stdout(
-                "Etape 1/3 : Verification et installation des outils requis..."
-            )
+            on_stdout("Etape 1/3 : Verification et installation des outils requis...")
 
         import Core.engine as engines_loader
 
@@ -266,7 +266,7 @@ def run_engine_compile_streaming(
             bridge = gui
         else:
             from PySide6.QtCore import QObject
-            
+
             # We pass a dummy 'gui' object that supports log_i18n_level-like logging
             class LogBridge(QObject):
                 def __init__(self, log_cb, workspace_path: Path, verbose: bool = False):
@@ -301,7 +301,9 @@ def run_engine_compile_streaming(
                         # Automatically load workspace preferences if available
                         if hasattr(self, "workspace_dir") and self.workspace_dir:
                             try:
-                                self._venv_manager.apply_workspace_pref(self.workspace_dir)
+                                self._venv_manager.apply_workspace_pref(
+                                    self.workspace_dir
+                                )
                             except Exception:
                                 pass
                     return self._venv_manager
@@ -336,7 +338,7 @@ def run_engine_compile_streaming(
                         env_display = f"Venv ({vpath})"
             except Exception:
                 pass
-        
+
         if on_stdout:
             on_stdout(f"⚙️ Environnement : {env_display}")
 
@@ -468,7 +470,6 @@ def run_engine_compile_streaming(
             "command": command,
             "error": None if process.returncode == 0 else "Build failed",
         }
-
 
 
 # -- helpers ------------------------------------------------------------------

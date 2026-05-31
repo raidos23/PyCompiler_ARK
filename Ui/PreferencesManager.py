@@ -75,7 +75,9 @@ def load_preferences(self):
                 try:
                     old_dir = os.path.abspath(
                         os.path.join(
-                            os.path.dirname(os.path.abspath(__file__)), os.pardir, "pref"
+                            os.path.dirname(os.path.abspath(__file__)),
+                            os.pardir,
+                            "pref",
                         )
                     )
                     old_path = os.path.join(old_dir, PREFS_BASENAME)

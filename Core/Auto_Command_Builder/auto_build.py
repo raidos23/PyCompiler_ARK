@@ -363,12 +363,14 @@ def _default_builder_for_engine(engine_id: str):
             if val is None:
                 continue
             tmpl_import = pkg_to_import.get(pkg, pkg)
-            
+
             tokens: list[str] = []
             if isinstance(val, str):
                 tokens.append(val.replace("{import_name}", tmpl_import))
             elif isinstance(val, list):
-                tokens.extend([str(x).replace("{import_name}", tmpl_import) for x in val])
+                tokens.extend(
+                    [str(x).replace("{import_name}", tmpl_import) for x in val]
+                )
             elif isinstance(val, dict):
                 a = val.get("args") or val.get("flags")
                 if isinstance(a, list):
@@ -377,7 +379,7 @@ def _default_builder_for_engine(engine_id: str):
                     )
                 elif isinstance(a, str):
                     tokens.append(str(a).replace("{import_name}", tmpl_import))
-            
+
             if tokens:
                 # de-dup at the action level (sequence of tokens) while preserving order
                 action_key = tuple(tokens)
@@ -660,7 +662,9 @@ def _load_engine_package_mapping(
 
         engine_cls = get_engine(engine_id)
         pkg_name = (
-            _engine_package_for_class(engine_cls) if engine_cls else f"engines.{engine_id}"
+            _engine_package_for_class(engine_cls)
+            if engine_cls
+            else f"engines.{engine_id}"
         )
         pkg = importlib.import_module(pkg_name)
         with ilr.as_file(ilr.files(pkg).joinpath("mapping.json")) as p:

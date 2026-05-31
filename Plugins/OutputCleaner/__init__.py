@@ -18,7 +18,12 @@ from pathlib import Path
 from typing import Optional
 
 
-from Plugins_SDK.BcPluginContext import BcPluginBase, PluginMeta, PreCompileContext, bc_register
+from Plugins_SDK.BcPluginContext import (
+    BcPluginBase,
+    PluginMeta,
+    PreCompileContext,
+    bc_register,
+)
 from Plugins_SDK.GeneralContext import (
     Dialog,
     get_language_code,
@@ -93,7 +98,9 @@ class OutputCleaner(BcPluginBase):
         """Nettoie le dossier output avant la compilation."""
         try:
             if not ctx.build_context:
-                log.log_warn("OutputCleaner: No BuildContext available. Cannot identify output directory.")
+                log.log_warn(
+                    "OutputCleaner: No BuildContext available. Cannot identify output directory."
+                )
                 return
 
             output_dir_str = getattr(ctx.build_context, "output_dir", None)
@@ -106,11 +113,13 @@ class OutputCleaner(BcPluginBase):
                 output_dir = ctx.root / output_dir
 
             if not output_dir.exists():
-                log.log_info(f"OutputCleaner: Output directory does not exist: {output_dir}")
+                log.log_info(
+                    f"OutputCleaner: Output directory does not exist: {output_dir}"
+                )
                 return
 
             log.log_info(f"OutputCleaner: Cleaning output directory: {output_dir}")
-            
+
             # Simple confirmation if configured
             cfg = self._get_config(ctx)
             if bool(cfg.get("confirm", False)):

@@ -25,14 +25,14 @@ def _redirect_output(enabled: bool):
 
     # Set env var for child processes (e.g. BCASL sandbox workers)
     os.environ["PYCOMPILER_QUIET"] = "1"
-    
+
     # Silence 'bcasl' logger
     bcasl_logger = logging.getLogger("bcasl")
     old_level = bcasl_logger.level
     # If not verbose, only show CRITICAL/ERROR if they happen during compilation
     # but the user wants it really clean, so let's go with ERROR.
     bcasl_logger.setLevel(logging.ERROR)
-    
+
     # Some handlers might be bound to the original sys.stderr/stdout.
     # We don't remove them to avoid side effects, but setting the level should be enough.
 
@@ -76,14 +76,16 @@ def run_engine_compile(
     console = get_console()
     status = None
     if not verbose and console:
-        status = console.status("[cyan]Initialisation de la compilation...[/cyan]", spinner="dots")
+        status = console.status(
+            "[cyan]Initialisation de la compilation...[/cyan]", spinner="dots"
+        )
         register_cli_status(status)
         status.start()
 
     def _on_stdout(line: str):
         captured_stdout.append(line)
         from .output import strip_emojis
-        
+
         clean_line = strip_emojis(line)
         if verbose:
             # plain() already strips emojis via _emit()
@@ -91,9 +93,24 @@ def run_engine_compile(
         elif status:
             if clean_line:
                 # Update status message for high-level steps
-                # We check the original line for emojis/markers to identify steps, 
+                # We check the original line for emojis/markers to identify steps,
                 # but we display the clean version.
-                if any(x in line for x in ("Etape", "Étape", "->", "Execution", "Commande", "➡️", "🚀", "⚙️", "🔨", "📦", "✅")):
+                if any(
+                    x in line
+                    for x in (
+                        "Etape",
+                        "Étape",
+                        "->",
+                        "Execution",
+                        "Commande",
+                        "➡️",
+                        "🚀",
+                        "⚙️",
+                        "🔨",
+                        "📦",
+                        "✅",
+                    )
+                ):
                     status.update(f"[cyan]{clean_line}[/cyan]")
 
     def _on_stderr(line: str):
@@ -105,7 +122,7 @@ def run_engine_compile(
     # Register SIGINT handler
     _CLI_CANCEL_EVENT.clear()
     old_handler = signal.signal(signal.SIGINT, _cli_sigint_handler)
-    
+
     try:
         # Use redirection to catch any direct print() calls from engines or their dependencies
         with _redirect_output(not verbose):
@@ -145,6 +162,8 @@ def run_engine_compile(
         result["error"] = result["stderr"].strip() or "Build failed"
 
     return result
+
+
 from Core.Configs import (
     CONFIG_KEYS,
     DEFAULT_USER_DIRS,
@@ -405,7 +424,7 @@ def build_context_object_from_lock(lock_payload: dict[str, Any]) -> BuildContext
 def engine_config_from_lock(lock_payload: dict[str, Any]) -> dict[str, Any]:
     engine_data = lock_payload.get("engine") or {}
     config = engine_data.get("config") or {}
-    
+
     final_config = {}
     if not isinstance(config, dict):
         final_config = {}
@@ -414,10 +433,10 @@ def engine_config_from_lock(lock_payload: dict[str, Any]) -> dict[str, Any]:
         final_config = dict(opts) if isinstance(opts, dict) else {}
     else:
         final_config = dict(config)
-        
+
     if "resolved_command" in engine_data:
         final_config["_resolved_command"] = engine_data["resolved_command"]
-        
+
     return final_config
 
 
@@ -426,11 +445,12 @@ def ensure_correct_git_commit(workspace: Path, lock_payload: dict[str, Any]) -> 
     project = lock_payload.get("project") or {}
     locked_commit = project.get("git_commit")
     locked_branch = project.get("git_branch")
-    
+
     if not locked_commit and not locked_branch:
         return True
 
     from Core.Locking import get_git_commit_hash, get_git_branch
+
     current_commit = get_git_commit_hash(workspace)
     current_branch = get_git_branch(workspace)
 
@@ -457,21 +477,38 @@ def ensure_correct_git_commit(workspace: Path, lock_payload: dict[str, Any]) -> 
     if is_linux:
         try:
             import click
+
             if not branch_match and locked_branch:
-                 if click.confirm(f"Effectuer un 'git checkout {locked_branch}' automatique ?", default=True):
+                if click.confirm(
+                    f"Effectuer un 'git checkout {locked_branch}' automatique ?",
+                    default=True,
+                ):
                     info(f"Changement de branche en cours...")
-                    subprocess.run(["git", "checkout", locked_branch], cwd=str(workspace), check=True)
+                    subprocess.run(
+                        ["git", "checkout", locked_branch],
+                        cwd=str(workspace),
+                        check=True,
+                    )
                     # Re-verify commit after branch change
                     current_commit = get_git_commit_hash(workspace)
-                    commit_match = (not locked_commit) or (current_commit == locked_commit)
-            
+                    commit_match = (not locked_commit) or (
+                        current_commit == locked_commit
+                    )
+
             if not commit_match and locked_commit:
-                if click.confirm(f"Effectuer un 'git checkout {locked_commit[:8]}' automatique ?", default=True):
+                if click.confirm(
+                    f"Effectuer un 'git checkout {locked_commit[:8]}' automatique ?",
+                    default=True,
+                ):
                     info(f"Alignement du commit en cours...")
-                    subprocess.run(["git", "checkout", locked_commit], cwd=str(workspace), check=True)
+                    subprocess.run(
+                        ["git", "checkout", locked_commit],
+                        cwd=str(workspace),
+                        check=True,
+                    )
                     success("Workspace aligné.")
                     return True
-            
+
             if commit_match and branch_match:
                 success("Workspace aligné.")
                 return True
@@ -489,6 +526,7 @@ def ensure_correct_git_commit(workspace: Path, lock_payload: dict[str, Any]) -> 
             info(f"Action manuelle requise : git checkout {locked_commit}")
         try:
             import click
+
             return click.confirm("Continuer quand même ?", default=False)
         except Exception:
             return True
@@ -555,20 +593,26 @@ def run_bcasl_before_compile_sync(
                             if clean.startswith("Plugin: "):
                                 # Utilisation de markup Rich au lieu d'icônes
                                 plugin_name = clean[8:].strip()
-                                display = f"Plugin: [bold white]{plugin_name}[/bold white]"
+                                display = (
+                                    f"Plugin: [bold white]{plugin_name}[/bold white]"
+                                )
                             elif clean.startswith("Phase: "):
                                 phase_name = clean[7:].strip()
-                                display = f"Phase: [bold yellow]{phase_name}[/bold yellow]"
-                            
+                                display = (
+                                    f"Phase: [bold yellow]{phase_name}[/bold yellow]"
+                                )
+
                             if len(display) < 120:
-                                self.host_ptr.status_obj.update(f"[cyan]BCASL[/cyan] [white]»[/white] {display}")
+                                self.host_ptr.status_obj.update(
+                                    f"[cyan]BCASL[/cyan] [white]»[/white] {display}"
+                                )
 
             self.log = Logger(self)
 
     host = CliBcaslHost(workspace, status)
-    
+
     info("Running BCASL pre-compile checks...")
-        
+
     # Register SIGINT handler
     _CLI_CANCEL_EVENT.clear()
     old_handler = signal.signal(signal.SIGINT, _cli_sigint_handler)
@@ -647,7 +691,9 @@ def run_bcasl_headless(args: list[str], verbose: bool = False) -> int:
     console = get_console()
     status = None
     if not verbose and console:
-        status = console.status("[cyan]Exécution de BCASL (headless)...[/cyan]", spinner="dots")
+        status = console.status(
+            "[cyan]Exécution de BCASL (headless)...[/cyan]", spinner="dots"
+        )
         register_cli_status(status)
         status.start()
 
@@ -670,20 +716,26 @@ def run_bcasl_headless(args: list[str], verbose: bool = False) -> int:
                             if clean.startswith("Plugin: "):
                                 # Utilisation de markup Rich au lieu d'icônes
                                 plugin_name = clean[8:].strip()
-                                display = f"Plugin: [bold white]{plugin_name}[/bold white]"
+                                display = (
+                                    f"Plugin: [bold white]{plugin_name}[/bold white]"
+                                )
                             elif clean.startswith("Phase: "):
                                 phase_name = clean[7:].strip()
-                                display = f"Phase: [bold yellow]{phase_name}[/bold yellow]"
-                            
+                                display = (
+                                    f"Phase: [bold yellow]{phase_name}[/bold yellow]"
+                                )
+
                             if len(display) < 120:
-                                self.host_ptr.status_obj.update(f"[cyan]BCASL[/cyan] [white]»[/white] {display}")
+                                self.host_ptr.status_obj.update(
+                                    f"[cyan]BCASL[/cyan] [white]»[/white] {display}"
+                                )
 
             self.log = Logger(self)
 
     host = CliBcaslHost(workspace, status)
-        
+
     info(f"Running BCASL headless in {workspace}...")
-        
+
     # Register SIGINT handler
     _CLI_CANCEL_EVENT.clear()
     old_handler = signal.signal(signal.SIGINT, _cli_sigint_handler)
@@ -691,21 +743,21 @@ def run_bcasl_headless(args: list[str], verbose: bool = False) -> int:
     try:
         with _redirect_output(not verbose):
             report = run_pre_compile(host)
-        
+
         if _CLI_CANCEL_EVENT.is_set():
             if status:
                 status.stop()
                 unregister_cli_status(status)
             error("BCASL annule par l'utilisateur (Ctrl+C).")
             return 1
-            
+
         if report and hasattr(report, "ok") and not getattr(report, "ok"):
             if status:
                 status.stop()
                 unregister_cli_status(status)
             error("\nBCASL found issues.")
             return 1
-            
+
         if status:
             status.stop()
             unregister_cli_status(status)

@@ -25,8 +25,6 @@ from importlib.metadata import PackageNotFoundError, distribution
 
 import yaml
 
-
-
 # NOTE PRODUCTION-HARDENING:
 # Les fonctionnalités non finalisées sont encapsulées dans des gardes afin de ne jamais
 # faire échouer l'application. Les Plugins publiques restent stables; les chemins non
@@ -708,7 +706,7 @@ def collect_project_dependencies(
     all_deps: set[str] = set()
 
     # 1. Scan configuration files (high priority, more accurate than imports)
-    
+
     # requirements.txt / requirements.in (Very high priority, can skip full scan if found)
     reqs_found = False
     for req_file in ["requirements.txt", "requirements.in"]:
@@ -726,7 +724,7 @@ def collect_project_dependencies(
                                 reqs_found = True
             except Exception:
                 pass
-    
+
     # If we found explicit requirements, we can potentially skip the expensive scan
     # unless specific validation is requested. For now, we continue but mark it.
 
@@ -849,7 +847,9 @@ def collect_project_dependencies(
                     pass
 
     # Identify internal module roots to avoid misclassifying them as third-party
-    internal_roots = _collect_workspace_module_roots(workspace_python_files, workspace_dir)
+    internal_roots = _collect_workspace_module_roots(
+        workspace_python_files, workspace_dir
+    )
 
     # Filter and classify modules from imports
     for m in modules_from_imports:

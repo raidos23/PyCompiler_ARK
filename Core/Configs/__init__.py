@@ -178,7 +178,9 @@ def _normalize_list(values: Any) -> list[Any]:
 
 
 def _normalize_build_exclude(values: Any) -> list[str]:
-    return list(dict.fromkeys(pattern for pattern in _normalize_list(values) if pattern))
+    return list(
+        dict.fromkeys(pattern for pattern in _normalize_list(values) if pattern)
+    )
 
 
 def _normalize_workspace_exclude(values: Any) -> list[str]:

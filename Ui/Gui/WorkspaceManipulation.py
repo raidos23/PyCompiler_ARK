@@ -26,7 +26,6 @@ from PySide6.QtGui import QDropEvent
 from PySide6.QtWidgets import QFileDialog, QMessageBox
 
 
-
 class WorkspaceAdvancedManipulation:
     """Gestion Qt avancée du workspace (drag & drop, sélection, nettoyage)."""
 

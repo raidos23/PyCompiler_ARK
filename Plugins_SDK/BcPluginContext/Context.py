@@ -78,6 +78,7 @@ def bc_register(cls=None, **kwargs):
     """SDK-level wrapper for bc_register."""
     return _bc_register(cls, **kwargs)
 
+
 # -----------------------------
 # Version information
 # -----------------------------

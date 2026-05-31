@@ -434,4 +434,3 @@ class VenvManagerUI(VenvManager):
                 self.save_workspace_pref(os.path.dirname(venv_path))
             except Exception:
                 pass
-

@@ -44,9 +44,11 @@ _logger = logging.getLogger("process_killer")
 # Platform detection
 _IS_WINDOWS = sys.platform == "win32"
 
+
 @dataclass
 class ProcessInfo:
     """Information about a process."""
+
     pid: int
     name: str
     command: str = ""
@@ -90,10 +92,10 @@ class ProcessKiller:
 
         if psutil:
             return self._kill_with_psutil(pid, include_parent)
-        
+
         if _IS_WINDOWS:
             return self._kill_with_taskkill(pid, include_parent)
-        
+
         return self._kill_with_signals(pid, include_parent)
 
     def _kill_with_psutil(self, pid: int, include_parent: bool) -> bool:
@@ -103,10 +105,12 @@ class ProcessKiller:
             all_procs = set(parent.children(recursive=True))
             if include_parent:
                 all_procs.add(parent)
-            
+
             # Sort by depth if possible, or just kill children first
-            procs = sorted(list(all_procs), key=lambda p: len(p.parents()), reverse=True)
-            
+            procs = sorted(
+                list(all_procs), key=lambda p: len(p.parents()), reverse=True
+            )
+
             # Phase 1: SIGTERM / Terminate
             for p in procs:
                 try:
@@ -114,7 +118,7 @@ class ProcessKiller:
                         p.terminate()
                 except (psutil.NoSuchProcess, psutil.AccessDenied):
                     pass
-            
+
             # Wait for they to exit
             gone, alive = psutil.wait_procs(procs, timeout=self.timeout / 2)
 
@@ -126,14 +130,14 @@ class ProcessKiller:
                         p.kill()
                 except (psutil.NoSuchProcess, psutil.AccessDenied):
                     pass
-            
+
             # Final wait to reap zombies
             if alive:
                 psutil.wait_procs(alive, timeout=2.0)
-                
+
             return not any(p.is_running() for p in procs)
         except psutil.NoSuchProcess:
-            return True # Already gone
+            return True  # Already gone
         except Exception as e:
             _logger.error("Error killing process tree with psutil: %s", e)
             return False
@@ -165,7 +169,7 @@ class ProcessKiller:
             except Exception:
                 pass
 
-            if pgid > 1: # Avoid killing system-wide groups
+            if pgid > 1:  # Avoid killing system-wide groups
                 try:
                     # Terminate the whole group
                     os.killpg(pgid, signal.SIGTERM)
@@ -174,7 +178,7 @@ class ProcessKiller:
                         if not self._is_alive(pid):
                             break
                         time.sleep(0.5)
-                    
+
                     if self._is_alive(pid):
                         _logger.warning("Forcing kill on process group %d", pgid)
                         os.killpg(pgid, signal.SIGKILL)
@@ -204,10 +208,7 @@ class ProcessKiller:
         try:
             # Try using pgrep to find children
             result = subprocess.run(
-                ["pgrep", "-P", str(ppid)],
-                capture_output=True,
-                text=True,
-                check=False
+                ["pgrep", "-P", str(ppid)], capture_output=True, text=True, check=False
             )
             if result.returncode == 0:
                 for line in result.stdout.splitlines():
@@ -227,10 +228,14 @@ class ProcessKiller:
         """
         killed_count = 0
         if psutil:
-            for proc in psutil.process_iter(['name']):
+            for proc in psutil.process_iter(["name"]):
                 try:
-                    proc_name = proc.info['name']
-                    match = proc_name.lower() == name.lower() if ignore_case else proc_name == name
+                    proc_name = proc.info["name"]
+                    match = (
+                        proc_name.lower() == name.lower()
+                        if ignore_case
+                        else proc_name == name
+                    )
                     if match:
                         proc.kill()
                         killed_count += 1
@@ -241,8 +246,13 @@ class ProcessKiller:
                 try:
                     # Case insensitive by default on Windows
                     cmd = ["taskkill", "/F", "/IM", name]
-                    subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False)
-                    killed_count = 1 
+                    subprocess.run(
+                        cmd,
+                        stdout=subprocess.DEVNULL,
+                        stderr=subprocess.DEVNULL,
+                        check=False,
+                    )
+                    killed_count = 1
                 except Exception:
                     pass
             else:
@@ -262,7 +272,7 @@ class ProcessKiller:
                 return p.is_running() and p.status() != psutil.STATUS_ZOMBIE
             except psutil.NoSuchProcess:
                 return False
-        
+
         try:
             if _IS_WINDOWS:
                 # Tasklist can be slow, but it's reliable for existence
@@ -300,7 +310,7 @@ def kill_process(pid: int) -> bool:
             except psutil.TimeoutExpired:
                 p.kill()
             return True
-        
+
         if _IS_WINDOWS:
             subprocess.run(["taskkill", "/F", "/PID", str(pid)], check=False)
         else:
@@ -314,10 +324,12 @@ def kill_process(pid: int) -> bool:
     except Exception:
         return False
 
+
 def kill_by_name(name: str) -> int:
     """Kill processes by name."""
     killer = ProcessKiller()
     return killer.kill_by_name(name)
+
 
 def get_process_info(pid: int) -> Optional[ProcessInfo]:
     """Return information for one process."""
@@ -329,11 +341,11 @@ def get_process_info(pid: int) -> Optional[ProcessInfo]:
                 name=p.name(),
                 command=" ".join(p.cmdline()),
                 start_time=datetime.fromtimestamp(p.create_time()),
-                children=[c.pid for c in p.children()]
+                children=[c.pid for c in p.children()],
             )
         except (psutil.NoSuchProcess, psutil.AccessDenied):
             return None
-    
+
     # Fallback
     try:
         if _IS_WINDOWS:

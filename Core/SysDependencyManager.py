@@ -116,6 +116,7 @@ class SysDependencyManager:
         try:
             if proc is not None and proc.state() != QProcess.NotRunning:
                 from Core.process_killer import kill_process_tree
+
                 kill_process_tree(proc.processId())
         except Exception:
             pass
@@ -383,6 +384,7 @@ class SysDependencyManager:
                 try:
                     self._dbg(f"sudo shell timeout after {timeout_s}s; killing")
                     from Core.process_killer import kill_process_tree
+
                     kill_process_tree(proc.processId())
                 except Exception:
                     pass

@@ -485,6 +485,7 @@ def check_module_available(module_name: str, python_path: Optional[str] = None) 
     except Exception:
         return False
 
+
 def check_internet_connection(timeout: float = 3.0, retries: int = 0) -> bool:
     """
     Check if internet connection is available with high certainty.

@@ -132,6 +132,7 @@ def _discover_external_plugins(
     finally:
         _sync_engine_sdk_registry()
 
+
 def _auto_discover() -> None:
     """Discover and register external engine plugins from multiple locations."""
     # 1. Project local engines folder
@@ -148,6 +149,7 @@ def _auto_discover() -> None:
     # 2. User-level and Dev-level engines folders (from Core.Configs)
     try:
         from Core.Configs import resolve_config_value
+
         for key in ("user-engine-dir", "dev-engine-dir"):
             try:
                 dir_path = resolve_config_value(key, create_default=False)
@@ -160,4 +162,3 @@ def _auto_discover() -> None:
         logger.exception("External engine discovery from user config failed")
     finally:
         _sync_engine_sdk_registry()
-
