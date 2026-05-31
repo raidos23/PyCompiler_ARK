@@ -60,7 +60,7 @@ class CompilationThread(QThread):
         engine_id: str,
         context: BuildContext,
         engine_config: Optional[Dict[str, Any]] = None,
-        is_rebuild: bool = False,
+        is_rebuild: any = False,
     ):
         """
         Initialize the compilation thread.
@@ -180,7 +180,7 @@ class CompilerCore(QObject):
         return self._status
 
     @property
-    def is_running(self) -> bool:
+    def is_running(self) -> any:
         """Return True when a compilation is currently running."""
         return self._status == CompilationStatus.RUNNING
 
@@ -200,7 +200,7 @@ class CompilerCore(QObject):
         engine_id: Optional[str] = None,
         file_path: Optional[str] = None,
         workspace_dir: Optional[str] = None,
-    ) -> bool:
+    ) -> any:
         """
         Legacy compile method. Use compile_from_context instead.
         """
@@ -226,8 +226,8 @@ class CompilerCore(QObject):
         engine_id: str,
         context: BuildContext,
         engine_config: Optional[Dict[str, Any]] = None,
-        is_rebuild: bool = False,
-    ) -> bool:
+        is_rebuild: any = False,
+    ) -> any:
         """
         Start an async compilation from a BuildContext.
         """
@@ -272,7 +272,7 @@ class CompilerCore(QObject):
 
         return True
 
-    def cancel(self) -> bool:
+    def cancel(self) -> any:
         """
         Cancel current compilation.
         """
