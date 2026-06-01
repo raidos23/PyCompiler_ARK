@@ -19,7 +19,7 @@
 
 - [x] fix l'error [ERROR] Erreur démarrage compilation : `MainProcess.compile_from_context()` got an unexpected keyword argument `ark_config`
 
-- [] ecrire des tests pour chaque partie critique du logiciel.
+- [x] ecrire des tests pour chaque partie critique du logiciel.
 
 # revue de Ergonomie 
 
@@ -62,3 +62,78 @@ L'erreur 'bool' object is not callable signifie qu'une variable contenant un boo
 - [x] recire lintegralité de l'orchestration de build de la gui en focntion de la cli.
 
 - [x] le locking est conçu pour un build reproductible mais dans l'incapacité de recréer un build bit par bit.. la comparaion lors dun rebuild doit etre revue pour une comparaison basé sur un build non bit for bit mais focntionnrlemnt equivalente donc l'on ne comparera plus le lock par hash ou en entireté mais plutot des metadonnées importante pour être fonctionnelement identique... .
+
+
+- [] corriger l'erreur : [ERROR] Error while validating BCASL report. Compilation blocked.
+                        [ERROR] BCASL validation failed. Compilation cannot continue.
+
+
+[INFO] Theme applied: Dark (dark.qss)
+[INFO] Language applied: English
+[STATE] Exclusion applied: 875 file(s) excluded according to ark.yml
+[INFO] Starting pre-compilation phase (BCASL)...
+[INFO] Pre-compilation (BCASL) if enabled...
+
+BCASL désactivé dans ark.yml. Exécution ignorée
+[SUCCESS] BCASL phase completed successfully.
+[INFO] Starting compilation with CX_Freeze...
+[INFO] 🔒 Generating compilation lock file...
+[INFO] Engine-specific mapping (cx_freeze): /home/sam/PyCompiler_ARK/engines/cx_freeze/mapping.json
+[INFO] Generic builder used for engine 'cx_freeze'.
+[INFO] Auto-detection of sensitive modules (cx_freeze) enabled.
+[INFO] Detection source: imports
+[INFO] Detected modules: football_app
+[INFO] No additional cx_freeze options required from mapping.
+[INFO] Starting compilation: main.py with cx_freeze
+[STATE] État: Compilation en cours...
+[INFO] Starting compilation with cx_freeze
+[INFO] Etape 1/3 : Verification et installation des outils requis...
+[INFO] ⚙️ Environnement : System
+[INFO] Etape 2/3 : Generation de la commande de compilation...
+[INFO] Etape 3/3 : Execution du processus de compilation...
+[INFO] Commande : /usr/bin/python -m cx_Freeze --target-dir dist/ --target-name just_an_app main.py
+[INFO] ----------------------------------------
+[INFO] running build_exe
+[INFO] running egg_info
+[INFO] writing UNKNOWN.egg-info/PKG-INFO
+[INFO] writing dependency_links to UNKNOWN.egg-info/dependency_links.txt
+[INFO] writing top-level names to UNKNOWN.egg-info/top_level.txt
+[INFO] reading manifest file 'UNKNOWN.egg-info/SOURCES.txt'
+[INFO] writing manifest file 'UNKNOWN.egg-info/SOURCES.txt'
+[STATE] État: Annulation...
+[STATE] État: Prêt
+[INFO] Compilation cancellation requested
+[INFO] Cancellation requested.
+[INFO] -> [SUCCESS] Compilation CX_Freeze terminée avec succès.
+[STATE] État: Prêt
+[INFO] Compilation cancelled
+[INFO] Compilation cancelled.
+[STATE] État: Erreur
+
+✅ BCASL pipeline saved to bcasl.yml[STATE] État: Prêt
+[INFO] Process reset
+[INFO] Starting pre-compilation phase (BCASL)...
+[INFO] Pre-compilation (BCASL) if enabled...
+
+BCASL: 2 package(s) chargé(s) depuis 1 dossiers
+
+⏫ Priorité 0 pour cleaner
+
+⏫ Priorité 1 pour outputcleaner
+
+Phase: Cleanup
+Plugin: Cleaner
+Plugin: Output Cleaner
+BCASL - Rapport:
+
+ - cleaner: OK (2004.3 ms)
+
+ - outputcleaner: OK (4.7 ms)
+
+Plugins: 2/2 ok, temps total 2009.0 ms
+[ERROR] Error while validating BCASL report. Compilation blocked.
+[ERROR] BCASL validation failed. Compilation cannot continue.
+
+
+- [] en gui la compialtion tarde a ce lancer sur des projet exetrement massif...
+- lorsque bcasl n'est pas activer la compilation prend plus d temps a ce lancer en gui.
