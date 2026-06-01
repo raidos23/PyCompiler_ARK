@@ -208,7 +208,7 @@ class CliSpecError(RuntimeError):
 
 
 @dataclass(slots=True)
-class ArkValidationResult:
+class PyCompilerArkValidationResult:
     config: dict[str, Any]
     warnings: list[str]
 
@@ -219,7 +219,7 @@ class ArkValidationResult:
 
 
 def config_home() -> Path:
-    """Return the ARK user config root (delegates to Core.Configs)."""
+    """Return the PyCompiler ARK user config root (delegates to Core.Configs)."""
     return _config_home()
 
 
@@ -304,7 +304,7 @@ def init_workspace(
     if install_requirements:
         if not requirements_path.exists():
             raise CliSpecError(
-                "requirements.txt not found. Run 'ark init --generate-requirements' first."
+                "requirements.txt not found. Run 'pycompiler-ark init --generate-requirements' first."
             )
         if not venv_path.exists():
             builder = venv.EnvBuilder(with_pip=True)
@@ -337,7 +337,7 @@ def load_ark_config(workspace: Path) -> dict[str, Any]:
         raise CliSpecError(str(exc)) from exc
 
 
-def validate_ark_config(workspace: Path, config: dict[str, Any]) -> ArkValidationResult:
+def validate_ark_config(workspace: Path, config: dict[str, Any]) -> PyCompilerArkValidationResult:
     result: ArkConfigValidationResult = _validate_ark_config(workspace, config)
     errors = list(result.errors)
     warnings = list(result.warnings)
@@ -355,7 +355,7 @@ def validate_ark_config(workspace: Path, config: dict[str, Any]) -> ArkValidatio
         joined = "\n".join(f"- {item}" for item in errors)
         raise CliSpecError(f"Invalid ark.yml\n{joined}")
 
-    return ArkValidationResult(config=result.config, warnings=warnings)
+    return PyCompilerArkValidationResult(config=result.config, warnings=warnings)
 
 
 def engine_version(engine_id: str) -> str:
