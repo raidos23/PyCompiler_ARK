@@ -1,5 +1,5 @@
 project:
-  name: PyCompiler_ARK
+  name: PyCompiler-ARK
   version: 1.0.0
   entry: pycompiler_ark.py
 workspace:
@@ -28,5 +28,37 @@ workspace:
 build:
   engine: pyinstaller
   output: dist/
-  data: []
-  exclude: []
+  data:
+  - source: engines/
+    destination: engines/
+    type: dir
+  - source: icons/
+    destination: icons/
+    type: dir
+  - source: images/
+    destination: images/
+    type: dir
+  - source: languages/
+    destination: languages/
+    type: dir
+  - source: Plugins/
+    destination: Plugins/
+    type: dir
+  - source: themes/
+    destination: themes/
+    type: dir
+  - source: Ui/Forms/
+    destination: Ui/Forms/
+    type: dir
+  - source: Core/Auto_Command_Builder/schemas/
+    destination: Core/Auto_Command_Builder/schemas/
+    type: dir
+  - source: Core/Venv_Manager/ManagerMapping.yml
+    destination: Core/Venv_Manager/ManagerMapping.yml
+    type: file
+  - source: Core/deps_analyser/stblib.yml
+    destination: Core/deps_analyser/stblib.yml
+    type: file
+  exclude:
+  - "**/__pycache__/**"
+  - "**/*.pyc"
