@@ -115,4 +115,4 @@ If `bcasl_enabled` is set to `false`, the entire pipeline is skipped during comp
 
 ## Advanced Config Editor (GUI)
 
-The main GUI has a **Configurations avancées** button that opens a dedicated editor for `ark.yml`, `bcasl.yml`, and other configuration files managed by PyCompiler ARK.
+The main GUI has a **Configurations avancées** button that opens a dedicated editor for `ark.yml` managed by PyCompiler ARK.
