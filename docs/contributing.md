@@ -1,10 +1,10 @@
 # **Contributing to PyCompiler ARK**
 
-Thank you for your interest in contributing to ARK! This workshop is designed to be extensible through its multi-engine and pre-compile plugin systems.
+Thank you for your interest in contributing to PyCompiler ARK! This workshop is designed to be extensible through its multi-engine and pre-compile plugin systems.
 
 ## **Where to Start?**
 
-If you are a developer looking to extend ARK's functionality, please refer to the following guides:
+If you are a developer looking to extend PyCompiler ARK's functionality, please refer to the following guides:
 
 - **Creating a Compilation Engine**: [docs/how_to_create_an_engine.md](how_to_create_an_engine.md)
   Learn how to package and register a new compiler (e.g., Py2Exe, Docker).
@@ -13,11 +13,11 @@ If you are a developer looking to extend ARK's functionality, please refer to th
 
 ## **Technical Specifications**
 
-For a deeper dive into ARK's internal architecture, review our core specifications:
+For a deeper dive into PyCompiler ARK's internal architecture, review our core specifications:
 
 - **BuildContext Spec**: [docs/dev_docs/ARK_BuildContext_v1.0.md](dev_docs/ARK_BuildContext_v1.0.md)
-- **CLI Spec**: [docs/dev_docs/ARK_Cli_v1.2.md](dev_docs/ARK_Cli_v1.2.md)
-- **Locking Spec**: [docs/dev_docs/ARK_Locking_v1.2.md](dev_docs/ARK_Locking_v1.2.md)
+- **CLI Spec**: [docs/dev_docs/PyCompiler_ARK_Cli_v1.2.md](dev_docs/PyCompiler_ARK_Cli_v1.2.md)
+- **Locking Spec**: [docs/dev_docs/PyCompiler_ARK_Locking_v1.2.md](dev_docs/PyCompiler_ARK_Locking_v1.2.md)
 
 ## **Development Workflow**
 

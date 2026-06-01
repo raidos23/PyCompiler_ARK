@@ -253,7 +253,7 @@ def should_enable_qt(argv: list[str] | None) -> bool:
 
 
 def is_cli_mode() -> bool:
-    """True when ARK runs as a terminal CLI (no Qt UI for plugins/dialogs)."""
+    """True when PyCompiler ARK runs as a terminal CLI (no Qt UI for plugins/dialogs)."""
     try:
         v = os.environ.get("PYCOMPILER_CLI")
         if v is None:
@@ -275,7 +275,7 @@ def is_noninteractive() -> bool:
 
 
 def use_rich_dialogs() -> bool:
-    """Use Rich console dialogs instead of Qt message boxes."""
+    """Use Rich console dialogs instead of Qt message boxes (for PyCompiler ARK)."""
     return is_cli_mode() or is_noninteractive()
 
 
