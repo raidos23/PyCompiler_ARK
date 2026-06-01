@@ -52,97 +52,127 @@ def resolve_default_engine_id() -> str:
 
 
 def run_bcasl_before_compile(
-    gui_instance, on_done, build_context: Optional[Any] = None
+    gui_instance, on_done, build_context: Optional[Any] = None, ark_config: Optional[dict] = None
 ) -> None:
-    """Run BCASL pre-compile stage, then invoke `on_done(report)`."""
+    """
+    Run BCASL pre-compile stage, then invoke `on_done(report)`.
+    Optimized: Checks activation state before launching the async thread.
+    """
     try:
+        from bcasl.Loader import BCASL_DISABLED_REPORT, _is_bcasl_enabled
         from Ui.Gui.Dialogs.BcaslDialog import run_pre_compile_async
+        from pathlib import Path
     except Exception:
         if callable(on_done):
-            try:
-                on_done(None)
-            except Exception:
-                pass
+            on_done(None)
         return
+
+    ws = getattr(gui_instance, "workspace_dir", None)
+    if not ws:
+        if callable(on_done):
+            on_done(None)
+        return
+
+    # Optimization: Short-circuit if BCASL is disabled to avoid thread overhead
+    enabled = True
+    try:
+        if ark_config:
+            enabled = bool(ark_config.get("plugins", {}).get("bcasl_enabled", True))
+        else:
+            enabled = _is_bcasl_enabled(Path(ws))
+    except Exception:
+        pass
+
+    if not enabled:
+        try:
+            log_i18n_level(
+                gui_instance,
+                "info",
+                "BCASL désactivé dans ark.yml. Exécution ignorée.",
+                "BCASL disabled in ark.yml. Skipping execution.",
+            )
+        except Exception:
+            pass
+        if callable(on_done):
+            on_done(dict(BCASL_DISABLED_REPORT))
+        return
+
     try:
         log_i18n_level( 
             gui_instance,
             "info",
-            "Pré-compilation (BCASL) si activée...",
-            "Pre-compilation (BCASL) if enabled...",
+            "Pré-compilation (BCASL)...",
+            "Pre-compilation (BCASL)...",
         )
     except Exception:
         pass
+
     try:
         run_pre_compile_async(gui_instance, on_done, build_context=build_context)
     except Exception:
         if callable(on_done):
-            try:
-                on_done(None)
-            except Exception:
-                pass
+            on_done(None)
 
 
 def bcasl_report_allows_compile(gui_instance, report) -> bool:
-    """Return True when BCASL pre-compile report allows compilation to continue."""
+    """
+    Return True when BCASL pre-compile report allows compilation to continue.
+    Robustly handles dicts, objects, and lists.
+    """
     try:
         if report is None:
+            # Fallback check if the thread returned nothing
             try:
                 from pathlib import Path
-
                 from bcasl.Loader import _is_bcasl_enabled
-
                 ws = getattr(gui_instance, "workspace_dir", None)
                 if ws and not _is_bcasl_enabled(Path(ws).resolve()):
                     return True
             except Exception:
                 pass
-            log_i18n_level(
-                gui_instance,
-                "error",
-                "BCASL a échoué ou n'a pas retourné de rapport. Compilation bloquée.",
-                "BCASL failed or returned no report. Compilation blocked.",
-            )
             return False
 
+        # 1. Handle Disabled Report (Dict)
         if isinstance(report, dict):
             try:
                 from bcasl.Loader import is_bcasl_disabled_report
-
                 if is_bcasl_disabled_report(report):
                     return True
             except Exception:
-                status = str(report.get("status", "")).strip().lower()
-                if status in {"disabled", "skipped"}:
-                    return True
+                pass
+            
+            # Simple check for 'ok' key
             if "ok" in report:
-                ok = any(report.get("ok"))
-                if not ok:
-                    log_i18n_level(
-                        gui_instance,
-                        "error",
-                        "BCASL a signalé un échec. Compilation bloquée.",
-                        "BCASL reported a failure. Compilation blocked.",
-                    )
-                return ok
+                res = report.get("ok")
+                return bool(res) if not isinstance(res, (list, tuple, set)) else all(res)
             return True
 
+        # 2. Handle ExecutionReport object
         if hasattr(report, "ok"):
-            ok = any(getattr(report, "ok"))
-            if not ok:
-                log_i18n_level(
-                    gui_instance,
-                    "error",
-                    "BCASL a signalé des erreurs plugins. Compilation bloquée.",
-                    "BCASL reported plugin errors. Compilation blocked.",
-                )
-            return ok
+            ok_val = getattr(report, "ok")
+            # If it's a property returning bool, use it directly
+            if isinstance(ok_val, bool):
+                return ok_val
+            # If it's a list (legacy/compat), check all
+            try:
+                return all(ok_val)
+            except Exception:
+                return bool(ok_val)
+
+        # 3. Handle List of Results
+        if isinstance(report, (list, tuple)):
+            return all(getattr(item, "success", True) for item in report)
+
     except Exception:
-        log_i18n_level(
-            gui_instance,
-            "error",
-            "Erreur lors de la validation du rapport BCASL. Compilation bloquée.",
-            "Error while validating BCASL report. Compilation blocked.",
-        )
+        try:
+            log_i18n_level(
+                gui_instance,
+                "error",
+                "Erreur lors de la validation du rapport BCASL. Compilation bloquée.",
+                "Error while validating BCASL report. Compilation blocked.",
+            )
+        except Exception:
+            pass
         return False
+
     return True
