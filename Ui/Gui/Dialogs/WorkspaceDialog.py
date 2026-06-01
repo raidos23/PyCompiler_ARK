@@ -222,14 +222,14 @@ class WorkspaceDialog:
             if isinstance(workspace_cfg, dict):
                 exclusion_patterns = workspace_cfg.get("exclude", [])
 
-            # Suppression de la rétro-compatibilité avec exclusion_patterns racine
-            # exclusion_patterns = ark_config.get("exclusion_patterns", [])
-
             added_count = 0
             excluded_count = 0
+            
+            # Optimization: collect items and add them in batches to avoid UI overhead
+            to_add_relative = []
+            to_add_absolute = []
 
             import time
-
             last_pump = time.monotonic()
 
             for full_path in files:
@@ -237,16 +237,29 @@ class WorkspaceDialog:
                     excluded_count += 1
                     continue
 
-                gui_instance.python_files.append(full_path)
-                if hasattr(gui_instance, "file_list"):
-                    relative_path = os.path.relpath(full_path, folder)
-                    gui_instance.file_list.addItem(relative_path)
+                to_add_absolute.append(full_path)
+                relative_path = os.path.relpath(full_path, folder)
+                to_add_relative.append(relative_path)
 
                 added_count += 1
-                if added_count % 200 == 0:
+                
+                # Periodically process events to keep UI responsive during heavy filtering
+                if added_count % 500 == 0:
                     if time.monotonic() - last_pump > 0.05:
                         QApplication.processEvents()
                         last_pump = time.monotonic()
+
+            # Apply to GUI state
+            gui_instance.python_files.extend(to_add_absolute)
+            
+            # Batch update the UI list widget
+            if hasattr(gui_instance, "file_list"):
+                # Disabling updates during batch addition for performance
+                gui_instance.file_list.setUpdatesEnabled(False)
+                try:
+                    gui_instance.file_list.addItems(to_add_relative)
+                finally:
+                    gui_instance.file_list.setUpdatesEnabled(True)
 
             if excluded_count > 0:
                 gui_instance.log_i18n(
