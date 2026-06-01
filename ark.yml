@@ -59,6 +59,4 @@ build:
   - source: Core/deps_analyser/stblib.yml
     destination: Core/deps_analyser/stblib.yml
     type: file
-  exclude:
-  - "**/__pycache__/**"
-  - "**/*.pyc"
+  exclude: []
