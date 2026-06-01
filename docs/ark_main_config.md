@@ -2,7 +2,7 @@
 
 This file defines the project settings used to build the normalized **BuildContext**. It lives at the workspace root and is created automatically when the workspace is first configured in the GUI, if missing.
 
-The configuration is loaded by `Core/Configs/` and is the primary source of truth for project metadata.
+The configuration is loaded by `Core/Configs/` and is the primary source of truth for PyCompiler ARK project metadata.
 
 ## Minimal Example
 
@@ -75,4 +75,4 @@ If `bcasl_enabled` is set to `false`, the entire pipeline is skipped during comp
 
 ## Advanced Config Editor (GUI)
 
-The main GUI has a **Configurations avancées** button that opens a dedicated editor for `ark.yml`, `bcasl.yml`, and other configuration files.
+The main GUI has a **Configurations avancées** button that opens a dedicated editor for `ark.yml`, `bcasl.yml`, and other configuration files managed by PyCompiler ARK.

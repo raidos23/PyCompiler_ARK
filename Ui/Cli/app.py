@@ -86,7 +86,7 @@ def _build_impl(
 ) -> int:
     if lock_file and engine_override:
         raise CliSpecError(
-            "--engine cannot be used with --lock\nIf you need a different engine, create a new lock with: ark build --engine <engine_id>"
+            "--engine cannot be used with --lock\nIf you need a different engine, create a new lock with: pycompiler-ark build --engine <engine_id>"
         )
 
     if not as_json and verbose:
@@ -214,8 +214,8 @@ def _build_impl(
     # Rebuild from lock
     if lock_file == "__default__":
         raise CliSpecError(
-            "Usage: ark build --lock <FILE_OR_LATEST>\n"
-            "Exemple: ark build --lock latest"
+            "Usage: pycompiler-ark build --lock <FILE_OR_LATEST>\n"
+            "Exemple: pycompiler-ark build --lock latest"
         )
 
     if lock_file == "latest":
@@ -335,9 +335,9 @@ def build_cli():
         raise RuntimeError("Click is not available")
 
     @click.group(context_settings={"help_option_names": ["-h", "--help"]})
-    @click.version_option(version=_resolve_version(), prog_name="ark")
+    @click.version_option(version=_resolve_version(), prog_name="pycompiler-ark")
     def cli():
-        """ARK command line interface."""
+        """PyCompiler ARK command line interface."""
 
     @cli.command("init")
     @click.option("--entry", required=True, type=str)
@@ -349,7 +349,7 @@ def build_cli():
     def init_cmd(
         entry, icon, with_venv, install_requirements, generate_requirements, as_json
     ):
-        """Initialize the current directory as an ARK workspace."""
+        """Initialize the current directory as a PyCompiler ARK workspace."""
         try:
             payload = init_workspace(
                 cwd=Path.cwd(),
@@ -423,24 +423,24 @@ def build_cli():
     @cli.command("gui")
     @click.option("--legacy", is_flag=True)
     def gui_cmd(legacy):
-        """Launch the ARK GUI."""
+        """Launch the PyCompiler ARK GUI."""
         if legacy:
             click.echo(
-                "LIMITATION: The classic GUI does not support full UI feature integration.\nFor full functionality, use 'ark gui'."
+                "LIMITATION: The classic GUI does not support full UI feature integration.\nFor full functionality, use 'pycompiler-ark gui'."
             )
         raise click.exceptions.Exit(launch_gui(legacy=legacy))
 
     @cli.group("set")
     def set_group():
-        """Set user-level ARK paths."""
+        """Set user-level PyCompiler ARK paths."""
 
     @cli.group("get")
     def get_group():
-        """Get user-level ARK paths."""
+        """Get user-level PyCompiler ARK paths."""
 
     @cli.group("unset")
     def unset_group():
-        """Unset user-level ARK paths."""
+        """Unset user-level PyCompiler ARK paths."""
 
     for key in (
         "user-engine-dir",
@@ -567,7 +567,7 @@ def main(argv: list[str] | None = None) -> int:
     install_runtime(_resolve_version(), enable_qt=should_enable_qt(args))
     try:
         cli = build_cli()
-        result = cli.main(args=args, prog_name="ark", standalone_mode=False)
+        result = cli.main(args=args, prog_name="pycompiler-ark", standalone_mode=False)
         return int(result) if isinstance(result, int) else 0
     except SystemExit as exc:
         return int(exc.code) if isinstance(exc.code, int) else 0
