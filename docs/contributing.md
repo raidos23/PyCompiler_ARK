@@ -15,7 +15,7 @@ If you are a developer looking to extend PyCompiler ARK's functionality, please 
 
 For a deeper dive into PyCompiler ARK's internal architecture, review our core specifications:
 
-- **BuildContext Spec**: [docs/dev_docs/ARK_BuildContext_v1.0.md](dev_docs/ARK_BuildContext_v1.0.md)
+- **BuildContext Spec**: [docs/dev_docs/PyCompiler_ARK_BuildContext_v1.0.md](dev_docs/PyCompiler_ARK_BuildContext_v1.0.md)
 - **CLI Spec**: [docs/dev_docs/PyCompiler_ARK_Cli_v1.2.md](dev_docs/PyCompiler_ARK_Cli_v1.2.md)
 - **Locking Spec**: [docs/dev_docs/PyCompiler_ARK_Locking_v1.2.md](dev_docs/PyCompiler_ARK_Locking_v1.2.md)
 
