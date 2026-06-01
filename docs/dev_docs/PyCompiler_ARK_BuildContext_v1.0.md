@@ -1,4 +1,4 @@
-# **ARK BuildContext Specification v1.0**
+# **PyCompiler ARK BuildContext Specification v1.0**
 
 This document defines the data contract between ARK core and compilation engines.
 
