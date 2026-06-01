@@ -432,7 +432,9 @@ def compile_all(self) -> None:
             )
 
     self._active_bcasl_callback = _after_bcasl
-    run_bcasl_before_compile(self, _after_bcasl, build_context=context)
+    # Pass validated config to short-circuit if BCASL is disabled
+    ark_cfg = getattr(validated, "config", None) if 'validated' in locals() else None
+    run_bcasl_before_compile(self, _after_bcasl, build_context=context, ark_config=ark_cfg)
 
 
 def rebuild_from_lock(self, lock_path: Path) -> None:
@@ -837,7 +839,9 @@ def start_compilation_process(self, engine_id: str, file_path: str) -> bool:
             )
 
     self._active_bcasl_callback = _after_bcasl
-    run_bcasl_before_compile(self, _after_bcasl, build_context=context)
+    # Pass validated config to short-circuit if BCASL is disabled
+    ark_cfg = getattr(validated, "config", None) if 'validated' in locals() else None
+    run_bcasl_before_compile(self, _after_bcasl, build_context=context, ark_config=ark_cfg)
     return True
 
 
