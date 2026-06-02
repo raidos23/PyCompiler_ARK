@@ -47,13 +47,15 @@ project:
   git_branch: main         # Current git branch name
 
 workspace:
-  exclude_patterns:        # Copied from build.exclude (legacy support)
+  exclude_patterns:        # Workspace filter snapshot
     - tkinter
     - unittest
 
 build:
   output: dist/            # Copied from build.output
-  exclude:                 # Copied from build.exclude
+  include:                 # Copied from build.include
+    - langchain
+  exclude:                 # Python packages to ignore, copied from build.exclude
     - tkinter
     - unittest
   data:                    # Copied from build.data
@@ -104,7 +106,7 @@ A build is considered equivalent if the following sections match exactly:
 1.  **Engine**: name, version, and full configuration (`engine.config`).
 2.  **Dependencies**: all package versions must match.
 3.  **Project**: name, version, entry point, and Git commit.
-4.  **Build**: output path, data mappings, exclusion patterns, and icon.
+4.  **Build**: output path, data mappings, inclusion packages, package exclusions, and icon.
 5.  **Platform**: OS, architecture, and Python version.
 
 **Ignored fields**: `build_id`, `git_branch`, `resolved_command`, and other volatile metadata.
