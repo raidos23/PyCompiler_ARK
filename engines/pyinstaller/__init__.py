@@ -115,6 +115,10 @@ class PyInstallerEngine(CompilerEngine):
             if module and "*" not in module:
                 cmd.extend(["--exclude-module", module.replace("/", ".")])
 
+        for module in context.include_packages:
+            if module.strip():
+                cmd.extend(["--collect-all", module.strip()])
+
         separator = ";" if platform.system() == "Windows" else ":"
         for mapping in context.data_mappings:
             source = str((mapping or {}).get("source") or "").strip()

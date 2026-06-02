@@ -111,6 +111,10 @@ class CXFreezeEngine(CompilerEngine):
         if verbose_enabled:
             cmd.append("--verbose")
 
+        for module in context.include_packages:
+            if module.strip():
+                cmd.extend(["--includes", module.strip()])
+
         for mapping in context.data_mappings:
             source = str((mapping or {}).get("source") or "").strip()
             destination = str((mapping or {}).get("destination") or "").strip()

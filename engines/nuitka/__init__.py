@@ -130,6 +130,10 @@ class NuitkaEngine(CompilerEngine):
             if module and "*" not in module:
                 cmd.append(f"--nofollow-import-to={module.replace('/', '.')}")
 
+        for module in context.include_packages:
+            if module.strip():
+                cmd.append(f"--include-package={module.strip()}")
+
         for mapping in context.data_mappings:
             source = str((mapping or {}).get("source") or "").strip()
             destination = str((mapping or {}).get("destination") or "").strip()

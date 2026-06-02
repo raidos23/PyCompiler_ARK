@@ -218,8 +218,12 @@ class CompilerCore(QObject):
             return False
 
         ctx = BuildContext(
+            project_name=os.path.basename(file_path),
             entry_point=os.path.basename(file_path),
             output_dir="dist/",
+            exclude_patterns=[],
+            include_packages=[],
+            data_mappings=[],
         )
         return self.compile_from_context(
             workspace=Path(workspace_dir or os.getcwd()),

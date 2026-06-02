@@ -347,6 +347,7 @@ def build_context_from_ark_config(config: dict[str, Any]) -> BuildContext:
         entry_point=str(project.get("entry") or ""),
         output_dir=str(build.get("output") or ""),
         exclude_patterns=list(build.get("exclude") or []),
+        include_packages=list(build.get("include") or []),
         data_mappings=list(build.get("data") or []),
         icon=str(build.get("icon")) if build.get("icon") else None,
     )
@@ -367,6 +368,7 @@ def build_context_from_lock(lock_payload: dict[str, Any]) -> BuildContext:
         entry_point=str(project.get("entry") or ""),
         output_dir=str(build.get("output") or ""),
         exclude_patterns=exclude_patterns,
+        include_packages=list(build.get("include") or []),
         data_mappings=list(build.get("data") or []),
         icon=str(build.get("icon")) if build.get("icon") else None,
     )
