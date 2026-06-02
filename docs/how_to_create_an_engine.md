@@ -356,6 +356,12 @@ The auto-builder is integrated into the core compilation pipeline. It can read
 folder, or the `PYCOMPILER_MAPPING` environment variable to generate options
 from detected modules.
 
+ARK v1.5.0 expands this layer into a Zero-Config auto-mapping system covering
+80+ widely used libraries across AI, modern web, data science, and automation.
+When ARK detects an import, it applies the engine-specific flags automatically,
+so engine authors only need to fill the gaps that are not covered by the core
+mapping catalog.
+
 You no longer need to call `compute_auto_for_engine` manually in your `build_command`. The core runner will:
 
 1. Prefer `requirements.txt` or `requirements.in` when present.
@@ -384,6 +390,8 @@ Key points.
 - Top-level keys are package names.
 - Engine values accept `str`, `list[str]`, or `dict` with `args` or `flags`.
 - `"{import_name}"` is replaced by the matched import name.
+- Use `build.include` when a package must be bundled even if the core mapping
+  or import scanner does not trigger it automatically.
 - For advanced logic, expose `AUTO_BUILDER`, `get_auto_builder()`, or
   `register_auto_builder()` in `engines/<engine_id>/auto_plugins.py`.
 
