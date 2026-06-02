@@ -105,6 +105,7 @@ DEFAULT_ARK_CONFIG: dict[str, Any] = {
         "output": "dist/",
         "data": [],
         "exclude": [],
+        "include": [],
     },
 }
 
@@ -283,6 +284,7 @@ def normalize_ark_config(config: dict[str, Any]) -> dict[str, Any]:
             if isinstance(item, dict)
         ],
         "exclude": _normalize_build_exclude(build.get("exclude")),
+        "include": _normalize_build_exclude(build.get("include")),
     }
     icon_value = build.get("icon")
     if isinstance(icon_value, str) and icon_value.strip():
@@ -364,6 +366,10 @@ def validate_ark_config(
     build_exclude_patterns = build.get("exclude")
     if not isinstance(build_exclude_patterns, list):
         errors.append("build.exclude must be a list")
+
+    build_include_patterns = build.get("include")
+    if not isinstance(build_include_patterns, list):
+        errors.append("build.include must be a list")
 
     return ArkConfigValidationResult(
         config=normalized, warnings=warnings, errors=errors
