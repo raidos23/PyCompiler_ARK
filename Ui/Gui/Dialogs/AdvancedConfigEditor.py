@@ -215,7 +215,20 @@ class AdvancedConfigEditor(QDialog):
         lay_exclude.addWidget(
             QLabel(
                 self.gui.tr(
-                    "Exclusions Workspace (filtre GUI):",
+                    "Inclusions Build (Packages Python à forcer dans le bundle) :",
+                    "Build Inclusions (Python packages to force into the bundle):",
+                )
+            )
+        )
+        self.edit_build_include = QPlainTextEdit()
+        self.edit_build_include.setPlaceholderText("my_custom_lib\nrare_package")
+        self.edit_build_include.setMaximumHeight(80)
+        lay_exclude.addWidget(self.edit_build_include)
+
+        lay_exclude.addWidget(
+            QLabel(
+                self.gui.tr(
+                    "Exclusions Workspace (filtre GUI) :",
                     "Workspace Exclusions (GUI filter):",
                 )
             )
@@ -283,6 +296,10 @@ class AdvancedConfigEditor(QDialog):
             build_exclude = build.get("exclude", [])
             if isinstance(build_exclude, list):
                 self.edit_build_exclude.setPlainText("\n".join(build_exclude))
+
+            build_include = build.get("include", [])
+            if isinstance(build_include, list):
+                self.edit_build_include.setPlainText("\n".join(build_include))
 
             workspace = config.get("workspace", {})
             ws_exclude = workspace.get("exclude", [])
@@ -355,6 +372,11 @@ class AdvancedConfigEditor(QDialog):
                 "exclude": [
                     line.strip()
                     for line in self.edit_build_exclude.toPlainText().splitlines()
+                    if line.strip()
+                ],
+                "include": [
+                    line.strip()
+                    for line in self.edit_build_include.toPlainText().splitlines()
                     if line.strip()
                 ],
                 "data": data_map,
