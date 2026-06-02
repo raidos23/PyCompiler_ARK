@@ -64,7 +64,7 @@ L'erreur 'bool' object is not callable signifie qu'une variable contenant un boo
 - [x] le locking est conçu pour un build reproductible mais dans l'incapacité de recréer un build bit par bit.. la comparaion lors dun rebuild doit etre revue pour une comparaison basé sur un build non bit for bit mais focntionnrlemnt equivalente donc l'on ne comparera plus le lock par hash ou en entireté mais plutot des metadonnées importante pour être fonctionnelement identique... .
 
 
-- [] corriger l'erreur : [ERROR] Error while validating BCASL report. Compilation blocked.
+- [x] corriger l'erreur : [ERROR] Error while validating BCASL report. Compilation blocked.
                         [ERROR] BCASL validation failed. Compilation cannot continue.
 
 
@@ -137,3 +137,7 @@ Plugins: 2/2 ok, temps total 2009.0 ms
 
 - [] en gui la compialtion tarde a ce lancer sur des projet exetrement massif...
 - lorsque bcasl n'est pas activer la compilation prend plus d temps a ce lancer en gui.
+
+- [] en fonction des derniere modification des docs sur lutlisation de `build.exclude` dans la cfg managed par le logiciel , ... modification de advancededitor car au message de fond de la section dediée a `build.exclude` il ya des exlusiond de dossier et Pycache comme exemple ... modifer vers des un message de fond parlt de exclusion de package python.
+
+- lors de la creation de .ark/ dans un dworkspace un gitingore doit etre ajouter permetant dexclure le ficheor pref.json le dossier cache le dossier logs et build  uniquement.
