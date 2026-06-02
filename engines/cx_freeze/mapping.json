@@ -1,67 +1,75 @@
 {
   "__meta__": {
     "title": "CX_Freeze auto-mapping",
-    "version": "1.0.0",
-    "description": "Auto args for CX_Freeze based on detected packages."
+    "version": "1.5.0",
+    "description": "Omni-Comprehensive mapping for CX_Freeze covering all major ecosystems."
   },
   "__aliases__": {
     "import_to_package": {
-      "cv2": "opencv-python",
-      "pil": "Pillow",
-      "sklearn": "scikit-learn",
-      "skimage": "scikit-image",
-      "yaml": "PyYAML",
-      "bs4": "beautifulsoup4"
+      "cv2": "opencv-python", "pil": "Pillow", "sklearn": "scikit-learn", "skimage": "scikit-image",
+      "yaml": "PyYAML", "bs4": "beautifulsoup4", "sqlalchemy": "SQLAlchemy", "flask": "Flask",
+      "django": "Django", "fastapi": "FastAPI", "crypto": "pycryptodome", "dotenv": "python-dotenv",
+      "mysql": "mysql-connector-python", "pg": "psycopg2", "flet": "flet", "streamlit": "streamlit"
     },
     "package_to_import_name": {
-      "opencv-python": "cv2",
-      "Pillow": "PIL",
-      "scikit-learn": "sklearn",
-      "scikit-image": "skimage",
-      "PyYAML": "yaml",
-      "beautifulsoup4": "bs4"
+      "opencv-python": "cv2", "Pillow": "PIL", "scikit-learn": "sklearn", "scikit-image": "skimage",
+      "PyYAML": "yaml", "beautifulsoup4": "bs4", "SQLAlchemy": "sqlalchemy", "Flask": "flask",
+      "Django": "django", "FastAPI": "fastapi", "pycryptodome": "Crypto", "python-dotenv": "dotenv",
+      "mysql-connector-python": "mysql.connector", "psycopg2": "psycopg2"
     }
   },
-  "numpy": {
-    "cx_freeze": ["--includes={import_name}"]
-  },
-  "matplotlib": {
-    "cx_freeze": ["--includes={import_name}"]
-  },
-  "Pillow": {
-    "cx_freeze": ["--includes={import_name}"]
-  },
-  "opencv-python": {
-    "cx_freeze": ["--includes={import_name}"]
-  },
-  "pandas": {
-    "cx_freeze": ["--includes={import_name}"]
-  },
-  "scipy": {
-    "cx_freeze": ["--includes={import_name}"]
-  },
-  "scikit-learn": {
-    "cx_freeze": ["--includes={import_name}"]
-  },
-  "scikit-image": {
-    "cx_freeze": ["--includes={import_name}"]
-  },
-  "lxml": {
-    "cx_freeze": ["--includes={import_name}"]
-  },
-  "PyYAML": {
-    "cx_freeze": ["--includes={import_name}"]
-  },
-  "PySide6": {
-    "cx_freeze": ["--includes={import_name}"]
-  },
-  "PySide2": {
-    "cx_freeze": ["--includes={import_name}"]
-  },
-  "PyQt5": {
-    "cx_freeze": ["--includes={import_name}"]
-  },
-  "PyQt6": {
-    "cx_freeze": ["--includes={import_name}"]
-  }
+  "numpy": { "cx_freeze": ["--includes=numpy"] },
+  "matplotlib": { "cx_freeze": ["--includes=matplotlib"] },
+  "Pillow": { "cx_freeze": ["--includes=PIL"] },
+  "opencv-python": { "cx_freeze": ["--includes=cv2"] },
+  "pandas": { "cx_freeze": ["--includes=pandas"] },
+  "polars": { "cx_freeze": ["--includes=polars"] },
+  "scipy": { "cx_freeze": ["--includes=scipy"] },
+  "scikit-learn": { "cx_freeze": ["--includes=sklearn"] },
+  "scikit-image": { "cx_freeze": ["--includes=skimage"] },
+  "lxml": { "cx_freeze": ["--includes=lxml"] },
+  "PyYAML": { "cx_freeze": ["--includes=yaml"] },
+  "PySide6": { "cx_freeze": ["--includes=PySide6"] },
+  "PySide2": { "cx_freeze": ["--includes=PySide2"] },
+  "PyQt5": { "cx_freeze": ["--includes=PyQt5"] },
+  "PyQt6": { "cx_freeze": ["--includes=PyQt6"] },
+  "requests": { "cx_freeze": ["--includes=requests"] },
+  "beautifulsoup4": { "cx_freeze": ["--includes=bs4"] },
+  "SQLAlchemy": { "cx_freeze": ["--includes=sqlalchemy"] },
+  "pygame": { "cx_freeze": ["--includes=pygame"] },
+  "torch": { "cx_freeze": ["--includes=torch"] },
+  "tensorflow": { "cx_freeze": ["--includes=tensorflow"] },
+  "Flask": { "cx_freeze": ["--includes=flask"] },
+  "Django": { "cx_freeze": ["--includes=django"] },
+  "FastAPI": { "cx_freeze": ["--includes=fastapi"] },
+  "selenium": { "cx_freeze": ["--includes=selenium"] },
+  "playwright": { "cx_freeze": ["--includes=playwright"] },
+  "tqdm": { "cx_freeze": ["--includes=tqdm"] },
+  "rich": { "cx_freeze": ["--includes=rich"] },
+  "click": { "cx_freeze": ["--includes=click"] },
+  "typer": { "cx_freeze": ["--includes=typer"] },
+  "aiohttp": { "cx_freeze": ["--includes=aiohttp"] },
+  "httpx": { "cx_freeze": ["--includes=httpx"] },
+  "pymongo": { "cx_freeze": ["--includes=pymongo"] },
+  "redis": { "cx_freeze": ["--includes=redis"] },
+  "psycopg2": { "cx_freeze": ["--includes=psycopg2"] },
+  "cryptography": { "cx_freeze": ["--includes=cryptography"] },
+  "pycryptodome": { "cx_freeze": ["--includes=Crypto"] },
+  "kivy": { "cx_freeze": ["--includes=kivy"] },
+  "customtkinter": { "cx_freeze": ["--includes=customtkinter"] },
+  "flet": { "cx_freeze": ["--includes=flet"] },
+  "streamlit": { "cx_freeze": ["--includes=streamlit"] },
+  "dearpygui": { "cx_freeze": ["--includes=dearpygui"] },
+  "imgui": { "cx_freeze": ["--includes=imgui"] },
+  "pydantic": { "cx_freeze": ["--includes=pydantic", "--includes=pydantic_core"] },
+  "boto3": { "cx_freeze": ["--includes=boto3", "--includes=botocore"] },
+  "psutil": { "cx_freeze": ["--includes=psutil"] },
+  "pyautogui": { "cx_freeze": ["--includes=pyautogui"] },
+  "pynput": { "cx_freeze": ["--includes=pynput"] },
+  "loguru": { "cx_freeze": ["--includes=loguru"] },
+  "langchain": { "cx_freeze": ["--includes=langchain"] },
+  "openai": { "cx_freeze": ["--includes=openai"] },
+  "paramiko": { "cx_freeze": ["--includes=paramiko"] },
+  "python-dotenv": { "cx_freeze": ["--includes=dotenv"] },
+  "openpyxl": { "cx_freeze": ["--includes=openpyxl"] }
 }
