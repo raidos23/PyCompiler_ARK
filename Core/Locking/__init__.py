@@ -200,6 +200,7 @@ def build_lock_payload(
     config = normalize_ark_config(config)
     build = config.get("build") or {}
     exclude_patterns = list(build.get("exclude") or [])
+    include_packages = list(build.get("include") or [])
     project = config.get("project") or {}
     ensure_workspace_layout(workspace)
     lock_dir = workspace / ".ark" / "lock"
@@ -221,6 +222,7 @@ def build_lock_payload(
             "output": build.get("output"),
             "data": list(build.get("data") or []),
             "exclude": exclude_patterns,
+            "include": include_packages,
             **({"icon": build.get("icon")} if build.get("icon") else {}),
         },
         "engine": {
