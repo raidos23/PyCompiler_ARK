@@ -104,6 +104,13 @@ def validate_ark_payload(data: Any) -> tuple[list[str], list[str]]:
             ):
                 errs.append("build.exclude must be a list of strings.")
 
+            include = build.get("include")
+            if include is not None and (
+                not isinstance(include, list)
+                or not all(isinstance(item, str) for item in include)
+            ):
+                errs.append("build.include must be a list of strings.")
+
             data_map = build.get("data")
             if data_map is not None:
                 if not isinstance(data_map, list):

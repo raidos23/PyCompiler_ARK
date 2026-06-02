@@ -141,3 +141,5 @@ Plugins: 2/2 ok, temps total 2009.0 ms
 - [x] en fonction des derniere modification des docs sur lutlisation de `build.exclude` dans la cfg managed par le logiciel , ... modification de advancededitor car au message de fond de la section dediée a `build.exclude` il ya des exlusiond de dossier et Pycache comme exemple ... modifer vers des un message de fond parlt de exclusion de package python.
 
 - [x] lors de la creation de .ark/ dans un dworkspace un gitingore doit etre ajouter permetant dexclure le ficheor pref.json le dossier cache le dossier logs et build  uniquement.
+
+- [x] Implémentation de `build.include` dans ark.yml et l'UI pour permettre de forcer l'inclusion de packages Python (traduction automatique pour Nuitka, PyInstaller et cx_Freeze).
