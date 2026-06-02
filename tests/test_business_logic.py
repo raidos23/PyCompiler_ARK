@@ -99,12 +99,21 @@ def test_check_internet_connection_failure():
 
 
 def test_ensure_workspace_layout(tmp_path):
-    """Test that .ark subdirectories are created."""
+    """Test that .ark subdirectories and .gitignore are created."""
     ensure_workspace_layout(tmp_path)
     assert (tmp_path / ".ark" / "lock").is_dir()
     assert (tmp_path / ".ark" / "cache").is_dir()
     assert (tmp_path / ".ark" / "build").is_dir()
     assert (tmp_path / ".ark" / "logs").is_dir()
+
+    gitignore = tmp_path / ".ark" / ".gitignore"
+    assert gitignore.is_file()
+    content = gitignore.read_text()
+    assert "pref.json" in content
+    assert "cache/" in content
+    assert "logs/" in content
+    assert "build/" in content
+    assert "lock/" not in content
 
 
 def test_included_workspace_files(tmp_path):
