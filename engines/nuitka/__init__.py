@@ -46,7 +46,7 @@ class NuitkaEngine(CompilerEngine):
 
     id: str = "nuitka"
     name: str = "Nuitka"
-    version: str = "1.0.0"
+    version: str = "1.1.0"
     required_core_version: str = "1.0.0"
     required_sdk_version: str = "1.0.0"
 
