@@ -143,3 +143,5 @@ Plugins: 2/2 ok, temps total 2009.0 ms
 - [x] lors de la creation de .ark/ dans un dworkspace un gitingore doit etre ajouter permetant dexclure le ficheor pref.json le dossier cache le dossier logs et build  uniquement.
 
 - [x] Implémentation de `build.include` dans ark.yml et l'UI pour permettre de forcer l'inclusion de packages Python (traduction automatique pour Nuitka, PyInstaller et cx_Freeze).
+
+- [] reverifier la parité Gui et Cli pour une assurance finale de la parité. faire une synhese des details (verifer la parité des fonctionnalité presente en cli et non en gui tel que la recente vue que l'utlisation de la cfg des engines en compilation est pas utliser en gui etc bref localiser les petites zone de parité oublier mais qui sont cruciales)
