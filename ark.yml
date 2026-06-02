@@ -60,3 +60,6 @@ build:
     destination: Core/deps_analyser/stblib.yml
     type: file
   exclude: []
+  icon: images/logo.png
+plugins:
+  bcasl_enabled: true

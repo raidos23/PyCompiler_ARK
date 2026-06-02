@@ -30,7 +30,7 @@ from pathlib import Path
 from typing import Any, Optional
 
 import yaml
-
+import os
 from Core.Configs import load_ark_config
 
 from .Base import BcPluginBase, PreCompileContext
