@@ -38,7 +38,8 @@ class BuildContext:
     project_name: str       # Name of the project (used for executable naming)
     entry_point: str        # Main script path (relative to workspace root)
     output_dir: str         # Directory where artifacts should be placed
-    exclude_patterns: list  # List of glob patterns for files to ignore
+    exclude_patterns: list  # List of Python packages to ignore
+    include_packages: list  # List of Python packages to force into the bundle
     data_mappings: list     # List of source/destination/type dicts for raw assets
     icon: str | None        # Optional path to an icon file
 
@@ -57,7 +58,8 @@ Each dictionary in `data_mappings` follows this structure:
 | `project_name` | `project.name` | `project.name` |
 | `entry_point` | `project.entry` | `project.entry` |
 | `output_dir` | `build.output` | `build.output` |
-| `exclude_patterns` | `build.exclude` | `build.exclude` (or `workspace.exclude_patterns` fallback) |
+| `include_packages` | `build.include` | `build.include` |
+| `exclude_patterns` | `build.exclude` | `build.exclude` |
 | `data_mappings` | `build.data` | `build.data` |
 | `icon` | `build.icon` | `build.icon` |
 
@@ -70,9 +72,10 @@ An engine implementation MUST adhere to the following rules when processing a `B
 1. **Name Application**: Use `project_name` for the final executable (e.g., `MyApp.exe` or `MyApp`).
 2. **Entry Point**: Treat `entry_point` as the primary script to compile/bundle.
 3. **Output Path**: Place all generated artifacts and temporary files inside `output_dir`.
-4. **Exclusions**: Respect `exclude_patterns` by preventing those modules/files from being bundled.
-5. **Assets**: Copy all items defined in `data_mappings` from their source to the appropriate relative destination within the bundle.
-6. **Icon**: Apply the file specified in `icon` to the executable metadata/resource if supported by the target OS.
+4. **Inclusions**: Respect `include_packages` by forcing those packages to be bundled, even when the engine would not infer them automatically.
+5. **Exclusions**: Respect `exclude_patterns` by preventing the listed Python packages from being bundled.
+6. **Assets**: Copy all items defined in `data_mappings` from their source to the appropriate relative destination within the bundle.
+7. **Icon**: Apply the file specified in `icon` to the executable metadata/resource if supported by the target OS.
 
 ---
 
@@ -89,11 +92,14 @@ class MyEngine(CompilerEngine):
     def build_command(self, context: BuildContext) -> list[str]:
         # Start with base command
         cmd = ["nuitka", context.entry_point]
+
+        # Force package inclusions
+        for package in context.include_packages:
+            cmd.append(f"--include-package={package}")
         
         # Convert exclusions
-        for pattern in context.exclude_patterns:
-            module = pattern.replace("/**/*", "").replace("**/*", "")
-            cmd.append(f"--nofollow-import-to={module}")
+        for package in context.exclude_patterns:
+            cmd.append(f"--nofollow-import-to={package}")
         
         # Add data files
         for mapping in context.data_mappings:

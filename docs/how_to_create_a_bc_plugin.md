@@ -141,6 +141,7 @@ Key properties and methods.
 - `name`: Workspace folder name.
 - `config`: Full `bcasl.yml` configuration dictionary.
 - `build_context`: `BuildContext` with compilation settings, when available.
+- `build_context.include_packages`: Packages that ARK has been told to force into the bundle via `build.include`.
 - `file_patterns`: Configured include patterns.
 - `exclude_patterns`: Configured exclude patterns.
 - `iter_files(include, exclude)`: Optimized iterator that respects exclusions by default.

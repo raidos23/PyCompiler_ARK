@@ -19,7 +19,8 @@ Build Python apps with a predictable workflow, a configurable pre-compile pipeli
 - **BuildContext-driven builds**: engines receive a normalized project context, abstracting away the source of configuration (YAML vs. Lock files).
 - **Multi-engine support**: switch between PyInstaller, Nuitka, and cx_Freeze seamlessly.
 - **Extensible SDKs**: create new engines and BCASL plugins using simplified, consolidated APIs.
-- **Auto-detection for tricky dependencies**: engine-specific auto-args based on requirements or import scanning.
+- **Zero-Config auto-mapping for 80+ libraries**: automatic import detection covers major AI, modern web, data science, and automation stacks, with engine-specific arguments applied without manual tuning.
+- **Simplified build inclusions**: `build.include` forces package bundling and ARK translates it automatically per engine.
 - **Workspace-first UI**: filter files, manage exclusions, and follow progress and logs in one place.
 - **Venv-aware execution**: engines can use the project virtual environment automatically.
 - **Theme-aware dynamic UI**: 100% dynamic integration using QPalette and themed SVGs.
@@ -136,7 +137,7 @@ python3 pycompiler_ark.py init --entry main.py --json
 
 ## Configuration
 
-- **`ark.yml`**: Project metadata, build entrypoint, build/workspace exclusions, and global BCASL activation.
+- **`ark.yml`**: Project metadata, build entrypoint, build include/exclude rules, and global BCASL activation.
 - **`bcasl.yml`**: Detailed BCASL pipeline configuration, plugin settings, and execution order.
 
 ---
