@@ -16,8 +16,6 @@
 !/images/**
 !WebPageLauncher.py
 !download.html
-!download_windows.html
-!download_linux.html
 
 # Documentation pages
 !docs-guide.html

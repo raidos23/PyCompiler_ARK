@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Spécifications CLI - PyCompiler ARK</title>
-  <meta name="description" content="Spécifications de l'interface en ligne de commande PyCompiler ARK" />
+  <title>CLI Reference - PyCompiler ARK</title>
+  <meta name="description" content="Command-line interface reference for PyCompiler ARK" />
   <link rel="icon" type="image/png" href="images/logo.png" />
   <style>
     :root {
@@ -170,7 +170,7 @@
         <h1>PyCompiler ARK</h1>
       </div>
       <div class="nav-actions">
-        <a class="btn" href="index.html">Accueil</a>
+        <a class="btn" href="index.html">Home</a>
         <a class="btn primary" href="https://github.com/raidos23/PyCompiler_ARK" target="_blank">GitHub</a>
       </div>
     </div>
@@ -181,23 +181,23 @@
       <h3>Documentation</h3>
       <ul>
         
-        <li><a href="docs-config.html">Configuration Globale</a></li>
-        <li><a href="docs-engine.html">Créer un Moteur</a></li>
-        <li><a href="docs-bc-plugin.html">Créer un Plugin BC</a></li>
-        <li><a href="docs-locking.html">Gestion des Verrous</a></li>
-        <li><a href="docs-cli.html" class="active">Spécifications CLI</a></li>
+        <li><a href="docs-config.html">Global Config</a></li>
+        <li><a href="docs-engine.html">Create an Engine</a></li>
+        <li><a href="docs-bc-plugin.html">Create a BC Plugin</a></li>
+        <li><a href="docs-locking.html">Locking</a></li>
+        <li><a href="docs-cli.html" class="active">CLI Reference</a></li>
         
       </ul>
     </aside>
 
     <article class="content" id="content">
-      <div class="loading">Chargement de la documentation...</div>
+      <div class="loading">Loading documentation...</div>
     </article>
   </main>
 
   <footer>
     <div class="container">
-      © <span id="year"></span> PyCompiler ARK — Tous droits réservés
+      © <span id="year"></span> PyCompiler ARK — All rights reserved
     </div>
   </footer>
 
@@ -263,12 +263,12 @@
       const contentDiv = $('#content');
       try {
         const response = await fetch(url);
-        if (!response.ok) throw new Error('Fichier non trouvé');
+        if (!response.ok) throw new Error('File not found');
         const markdown = await response.text();
         const html = markdownToHtml(markdown);
         contentDiv.innerHTML = html;
       } catch (error) {
-        contentDiv.innerHTML = `<div class="loading" style="color: #ff6b6b;">Erreur lors du chargement: ${error.message}</div>`;
+        contentDiv.innerHTML = `<div class="loading" style="color: #ff6b6b;">Error while loading: ${error.message}</div>`;
       }
     }
 

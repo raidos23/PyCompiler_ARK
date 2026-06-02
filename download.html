@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Téléchargements - PyCompiler ARK</title>
-  <meta name="description" content="Téléchargements par release pour PyCompiler ARK." />
+  <title>Downloads - PyCompiler ARK</title>
+  <meta name="description" content="Release downloads for PyCompiler ARK." />
   <link rel="icon" type="image/png" href="images/logo.png" />
   <style>
     :root {
@@ -200,7 +200,7 @@
         <h1>PyCompiler ARK</h1>
       </div>
       <div class="nav-actions">
-        <a class="btn" href="index.html">Accueil</a>
+        <a class="btn" href="index.html">Home</a>
         <a class="btn primary" href="https://github.com/raidos23/PyCompiler_ARK" target="_blank" rel="noreferrer">GitHub</a>
       </div>
     </div>
@@ -209,55 +209,55 @@
   <main class="container">
     <section class="hero">
       <div class="panel">
-        <span class="eyebrow">Téléchargements</span>
-        <h2>Releases et fichiers à télécharger</h2>
+        <span class="eyebrow">Downloads</span>
+        <h2>Releases and downloadable files</h2>
         <p>
-          Choisissez une version puis cliquez sur le fichier voulu.
+          Choose a version, then click the file you need.
         </p>
         <div class="hero-actions">
-          <a class="btn primary" href="#releases">Voir les releases</a>
-          <a class="btn" href="https://github.com/raidos23/PyCompiler_ARK/releases" target="_blank" rel="noreferrer">Ouvrir sur GitHub</a>
+          <a class="btn primary" href="#releases">View releases</a>
+          <a class="btn" href="https://github.com/raidos23/PyCompiler_ARK/releases" target="_blank" rel="noreferrer">Open on GitHub</a>
         </div>
         <div class="hero-actions">
           <span class="pill">Windows</span>
           <span class="pill">Linux</span>
           <span class="pill">Source</span>
-          <span class="pill">Autres fichiers</span>
+          <span class="pill">Other files</span>
         </div>
       </div>
 
       <div class="panel">
-        <img src="images/splash.png" srcset="images/splash.png 1x, images/splash@2x.png 2x" alt="Aperçu PyCompiler ARK" style="width:100%; border-radius:14px; border:1px solid var(--border); display:block; margin-bottom:14px;" />
+        <img src="images/splash.png" srcset="images/splash.png 1x, images/splash@2x.png 2x" alt="PyCompiler ARK preview" style="width:100%; border-radius:14px; border:1px solid var(--border); display:block; margin-bottom:14px;" />
         <p class="muted" style="margin: 0;">
-          Les badges aident à repérer le bon fichier.
+          Badges help identify the correct file.
         </p>
       </div>
     </section>
 
     <section class="layout" id="releases">
       <article class="card">
-        <h3>Dernières versions</h3>
-        <p class="muted" style="margin-top: 0;">Chaque version affiche ses fichiers disponibles juste en dessous.</p>
+        <h3>Latest releases</h3>
+        <p class="muted" style="margin-top: 0;">Each release lists its available files below.</p>
         <div id="release-list" class="release-list">
-          <div class="empty-state">Chargement des releases...</div>
+          <div class="empty-state">Loading releases...</div>
         </div>
       </article>
 
       <aside class="sidebar-sticky">
         <div class="card">
-          <h3>Repères</h3>
+          <h3>Labels</h3>
           <div class="badges">
             <span class="badge win">Windows</span>
             <span class="badge linux">Linux</span>
             <span class="badge source">Source</span>
-            <span class="badge other">Autre</span>
+            <span class="badge other">Other</span>
           </div>
         </div>
 
         <div class="card">
           <h3>GitHub</h3>
-          <p class="muted" style="margin-top: 0;">Historique complet des releases.</p>
-          <a class="btn" href="https://github.com/raidos23/PyCompiler_ARK/releases" target="_blank" rel="noreferrer">Voir l’historique</a>
+          <p class="muted" style="margin-top: 0;">Complete release history.</p>
+          <a class="btn" href="https://github.com/raidos23/PyCompiler_ARK/releases" target="_blank" rel="noreferrer">View history</a>
         </div>
       </aside>
     </section>
@@ -265,7 +265,7 @@
 
   <footer>
     <div class="container">
-      © <span id="year"></span> PyCompiler ARK — Tous droits réservés
+      © <span id="year"></span> PyCompiler ARK — All rights reserved
     </div>
   </footer>
 
@@ -300,7 +300,7 @@
 
     function classifyAsset(asset) {
       const name = (asset?.name || '').toLowerCase();
-      if (!name) return { label: 'Autre', cls: 'other' };
+      if (!name) return { label: 'Other', cls: 'other' };
 
       const isSource = name.includes('source') || name.includes('src') || name.includes('code');
       const isWindows = name.endsWith('.exe') || name.endsWith('.msi') || (name.endsWith('.zip') && (name.includes('win') || name.includes('windows')));
@@ -309,16 +309,16 @@
       if (isWindows) return { label: 'Windows', cls: 'win' };
       if (isSource) return { label: 'Source', cls: 'source' };
       if (isLinux || name.endsWith('.tar.gz')) return { label: 'Linux', cls: 'linux' };
-      return { label: 'Autre', cls: 'other' };
+      return { label: 'Other', cls: 'other' };
     }
 
     function renderRelease(release) {
       const assets = (release.assets || []).slice().sort((a, b) => a.name.localeCompare(b.name, 'fr'));
-      const publishedAt = new Date(release.published_at).toLocaleDateString('fr-FR');
+      const publishedAt = new Date(release.published_at).toLocaleDateString('en-US');
       const title = release.name || release.tag_name || 'Release';
 
       const assetMarkup = assets.length
-        ? `<div class="assets">${assets.map((asset) => {
+          ? `<div class="assets">${assets.map((asset) => {
             const badge = classifyAsset(asset);
             return `
               <div class="asset">
@@ -327,23 +327,23 @@
                   <span class="badge other">${formatBytes(asset.size)}</span>
                 </div>
                 <a href="${asset.browser_download_url}" target="_blank" rel="noreferrer">${escapeHtml(asset.name)}</a>
-                <small>Téléchargement direct depuis GitHub</small>
+                <small>Direct download from GitHub</small>
               </div>
             `;
           }).join('')}</div>`
-        : `<div class="empty-state">Aucun artefact disponible pour cette release.</div>`;
+        : `<div class="empty-state">No artifacts are available for this release.</div>`;
 
       return `
         <section class="release">
           <div class="release-head">
             <div>
               <h4 class="release-title">${escapeHtml(title)}</h4>
-              <p class="release-meta">Tag: ${escapeHtml(release.tag_name || 'n/a')} · Publiée le ${publishedAt}</p>
+              <p class="release-meta">Tag: ${escapeHtml(release.tag_name || 'n/a')} · Published on ${publishedAt}</p>
             </div>
-            <div class="badges">
-              <span class="badge other">${(release.assets || []).length} fichier(s)</span>
-            </div>
+          <div class="badges">
+            <span class="badge other">${(release.assets || []).length} file(s)</span>
           </div>
+        </div>
           ${release.body ? `<p class="release-meta" style="white-space: pre-line; margin-top: 0;">${escapeHtml(release.body)}</p>` : ''}
           ${assetMarkup}
         </section>
@@ -356,15 +356,15 @@
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const releases = await response.json();
         const sorted = [...releases].sort((a, b) => new Date(b.published_at) - new Date(a.published_at));
-        releaseList.innerHTML = sorted.length
+          releaseList.innerHTML = sorted.length
           ? sorted.map(renderRelease).join('')
-          : `<div class="empty-state">Aucune release publiée pour le moment.</div>`;
+          : `<div class="empty-state">No releases have been published yet.</div>`;
       } catch (error) {
         releaseList.innerHTML = `
           <div class="error-state">
-            Impossible de charger les releases pour le moment.
+            Unable to load releases right now.
             <div style="margin-top: 12px;">
-              <a class="btn" href="https://github.com/raidos23/PyCompiler_ARK/releases" target="_blank" rel="noreferrer">Ouvrir GitHub</a>
+              <a class="btn" href="https://github.com/raidos23/PyCompiler_ARK/releases" target="_blank" rel="noreferrer">Open GitHub</a>
             </div>
           </div>
         `;
