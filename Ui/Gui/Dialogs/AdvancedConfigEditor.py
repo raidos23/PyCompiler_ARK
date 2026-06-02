@@ -202,13 +202,13 @@ class AdvancedConfigEditor(QDialog):
         lay_exclude.addWidget(
             QLabel(
                 self.gui.tr(
-                    "Exclusions Build (exclure du bundle):",
-                    "Build Exclusions (ignore for bundle):",
+                    "Exclusions Build (Packages Python à ignorer par le compilateur) :",
+                    "Build Exclusions (Python packages to ignore by the compiler):",
                 )
             )
         )
         self.edit_build_exclude = QPlainTextEdit()
-        self.edit_build_exclude.setPlaceholderText("docs/**\ntests/**\n*.md")
+        self.edit_build_exclude.setPlaceholderText("tkinter\nunittest\nrequests")
         self.edit_build_exclude.setMaximumHeight(80)
         lay_exclude.addWidget(self.edit_build_exclude)
 

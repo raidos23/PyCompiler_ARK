@@ -24,6 +24,7 @@ class LockingError(RuntimeError):
 
 
 def ensure_workspace_layout(workspace: Path) -> None:
+    # Create subdirectories
     for path in (
         workspace / ".ark" / "lock",
         workspace / ".ark" / "cache",
@@ -31,6 +32,12 @@ def ensure_workspace_layout(workspace: Path) -> None:
         workspace / ".ark" / "logs",
     ):
         path.mkdir(parents=True, exist_ok=True)
+
+    # Create .ark/.gitignore to ignore local/transient files
+    gitignore_path = workspace / ".ark" / ".gitignore"
+    if not gitignore_path.exists():
+        content = "pref.json\ncache/\nlogs/\nbuild/\n"
+        gitignore_path.write_text(content, encoding="utf-8")
 
 
 def load_yaml_file(path: Path) -> dict[str, Any]:
