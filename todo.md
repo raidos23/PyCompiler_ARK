@@ -145,3 +145,7 @@ Plugins: 2/2 ok, temps total 2009.0 ms
 - [x] Implémentation de `build.include` dans ark.yml et l'UI pour permettre de forcer l'inclusion de packages Python (traduction automatique pour Nuitka, PyInstaller et cx_Freeze).
 
 - [] reverifier la parité Gui et Cli pour une assurance finale de la parité. faire une synhese des details (verifer la parité des fonctionnalité presente en cli et non en gui tel que la recente vue que l'utlisation de la cfg des engines en compilation est pas utliser en gui etc bref localiser les petites zone de parité oublier mais qui sont cruciales)
+
+# ergonomie Gui
+
+- [x] en gui les button comme select venv et les autre qui sont pertinent doivent avoir leur dialog pour afficher un msg de vous dire de selectionner un workspace... cela evite des bug imprevisible et potentiellent inutile.

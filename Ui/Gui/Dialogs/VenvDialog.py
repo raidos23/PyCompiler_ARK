@@ -237,6 +237,18 @@ class VenvManagerUI(VenvManager):
 
     def select_venv_manually(self) -> None:
         """Open dialog to manually select a venv or switch to system Python."""
+        workspace_dir = getattr(self.parent, "workspace_dir", None)
+        if not workspace_dir:
+            QMessageBox.warning(
+                self.parent,
+                self.tr("Attention", "Warning"),
+                self.tr(
+                    "Veuillez d'abord sélectionner un dossier workspace.",
+                    "Please select a workspace folder first.",
+                ),
+            )
+            return
+
         try:
             ok_sys, missing, has_source = self._can_use_system_python()
             if ok_sys:

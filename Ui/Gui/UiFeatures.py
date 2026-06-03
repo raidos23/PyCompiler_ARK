@@ -298,6 +298,14 @@ class UiFeatures:
             self.log_i18n(
                 "❌ Aucun workspace sélectionné.", "❌ No workspace selected."
             )
+            QMessageBox.warning(
+                self,
+                self.tr("Workspace manquant", "Workspace missing"),
+                self.tr(
+                    "Veuillez d'abord sélectionner un dossier workspace.",
+                    "Please select a workspace folder first.",
+                ),
+            )
             return
         try:
             import Core.engine as engines_loader
@@ -456,6 +464,18 @@ class UiFeatures:
 
     def show_statistics(self) -> None:
         """Show compilation statistics."""
+        workspace_dir = getattr(self, "workspace_dir", None)
+        if not workspace_dir:
+            QMessageBox.warning(
+                self,
+                self.tr("Workspace manquant", "Workspace missing"),
+                self.tr(
+                    "Veuillez d'abord sélectionner un dossier workspace.",
+                    "Please select a workspace folder first.",
+                ),
+            )
+            return
+
         try:
             import psutil
         except Exception:
