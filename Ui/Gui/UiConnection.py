@@ -276,7 +276,7 @@ def _apply_button_icons(self) -> None:
     """Apply SVG icons to primary controls when icon assets are available."""
     if not getattr(self, "ui", None):
         return
-    icon_dir = os.path.join(
+    icons_dir = os.path.join(
         os.path.dirname(os.path.abspath(__file__)), "..", "..", "data", "icons"
     )
     if not os.path.isdir(icons_dir):

@@ -58,7 +58,7 @@ def _apply_themed_icon(widget: QPushButton, icon_name: str, size: int = 16) -> N
 
         # icons/ is at project root, which is 4 levels up from this file
         icon_path = (
-            Path(__file__).parent.parent.parent.parent / "data" / "icons" / icon_name
+            Path(__file__).resolve().parent.parent.parent.parent / "data" / "icons" / icon_name
         )
         icon = themed_svg_icon(icon_path, size=size)
         if icon:
