@@ -39,6 +39,9 @@ def _open_tty_stream() -> Tuple[Optional[TextIO], bool]:
 
 def ask_yes_no(prompt: str, *, default_yes: bool = True) -> bool:
     """Blocking yes/no prompt; never auto-accept on EOF or missing TTY."""
+    if os.environ.get("PYCOMPILER_YES") == "1":
+        return True
+
     try:
         from Ui.i18n import is_french_language
 
