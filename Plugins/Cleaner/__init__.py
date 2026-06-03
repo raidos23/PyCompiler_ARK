@@ -193,11 +193,7 @@ class Cleaner(BcPluginBase):
             if ask_confirm:
                 response = dialog.msg_question(
                     title="Cleaner",
-                    text=translate(
-                        "cleaner",
-                        "dlg_confirm",
-                        "Do you want to clean the workspace (.pyc and __pycache__)?",
-                    ),
+                    text=f"Do you want to clean the workspace (.pyc and __pycache__)?",
                     default_yes=True,
                 )
                 if not response:

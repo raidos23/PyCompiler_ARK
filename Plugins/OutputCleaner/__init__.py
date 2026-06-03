@@ -76,9 +76,9 @@ PLUGIN_META = PluginMeta(
 
 @bc_register
 class OutputCleaner(BcPluginBase):
-    """Plugin de nettoyage du dossier output avant compilation.
+    """Plugin to clean the output dir.
 
-    Utilise le BuildContext pour identifier le dossier de sortie.
+    Use BuildContext to identify the output dir .
     """
 
     meta = PLUGIN_META
@@ -122,7 +122,7 @@ class OutputCleaner(BcPluginBase):
 
             # Simple confirmation if configured
             cfg = self._get_config(ctx)
-            if bool(cfg.get("confirm", False)):
+            if bool(cfg.get("confirm", True)):
                 response = dialog.msg_question(
                     title="Output Cleaner",
                     text=f"Do you want to delete all contents in {output_dir}?",
