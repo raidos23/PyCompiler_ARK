@@ -10,7 +10,7 @@ import venv
 from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Callable, Optional
 
 # Global event for CLI cancellation
 _CLI_CANCEL_EVENT = threading.Event()
@@ -442,7 +442,9 @@ def engine_config_from_lock(lock_payload: dict[str, Any]) -> dict[str, Any]:
     return final_config
 
 
-def ensure_correct_git_commit(workspace: Path, lock_payload: dict[str, Any]) -> bool:
+def ensure_correct_git_commit(
+    workspace: Path, lock_payload: dict[str, Any], confirm_cb: Callable[[str], bool] | None = None
+) -> bool:
     """Vérifie si le commit et la branche Git actuels correspondent à ceux du verrou."""
     project = lock_payload.get("project") or {}
     locked_commit = project.get("git_commit")
@@ -478,13 +480,14 @@ def ensure_correct_git_commit(workspace: Path, lock_payload: dict[str, Any]) -> 
 
     if is_linux:
         try:
-            import click
+            def _confirm(msg: str) -> bool:
+                if confirm_cb:
+                    return confirm_cb(msg)
+                import click
+                return bool(click.confirm(msg, default=True))
 
             if not branch_match and locked_branch:
-                if click.confirm(
-                    f"Effectuer un 'git checkout {locked_branch}' automatique ?",
-                    default=True,
-                ):
+                if _confirm(f"Effectuer un 'git checkout {locked_branch}' automatique ?"):
                     info(f"Changement de branche en cours...")
                     subprocess.run(
                         ["git", "checkout", locked_branch],
@@ -498,10 +501,7 @@ def ensure_correct_git_commit(workspace: Path, lock_payload: dict[str, Any]) -> 
                     )
 
             if not commit_match and locked_commit:
-                if click.confirm(
-                    f"Effectuer un 'git checkout {locked_commit[:8]}' automatique ?",
-                    default=True,
-                ):
+                if _confirm(f"Effectuer un 'git checkout {locked_commit[:8]}' automatique ?"):
                     info(f"Alignement du commit en cours...")
                     subprocess.run(
                         ["git", "checkout", locked_commit],
