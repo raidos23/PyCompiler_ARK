@@ -4,7 +4,7 @@ import json
 import sys
 from pathlib import Path
 from typing import Any
-
+import os
 from .helpers import (
     CliSpecError,
     build_context_object_from_ark_config,
