@@ -91,7 +91,10 @@ def _default_excluded_stdlib() -> set[str]:
 
 def _load_excluded_stdlib() -> set[str]:
     default = _default_excluded_stdlib()
-    mapping_path = os.path.join(os.path.dirname(__file__), "stblib.yml")
+    # Path to decentralized data folder
+    mapping_path = os.path.join(
+        os.path.dirname(__file__), os.pardir, os.pardir, "data", "stblib.yml"
+    )
     if not os.path.isfile(mapping_path):
         return default
     try:

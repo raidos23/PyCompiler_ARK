@@ -144,7 +144,7 @@ def _read_json_file(path: str) -> dict[str, dict[str, Optional[str]]]:
                 os.path.join(os.path.dirname(__file__), os.pardir, os.pardir)
             )
             schema_path = os.path.join(
-                repo_root, "Core", "Auto_Builder", "schemas", "mapping.schema.json"
+                repo_root, "data", "schemas", "mapping.schema.json"
             )
             if os.path.isfile(schema_path):
                 with open(schema_path, encoding="utf-8") as sf:

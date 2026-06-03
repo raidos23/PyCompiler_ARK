@@ -471,7 +471,7 @@ def _apply_activity_buttons_theme(self) -> None:
         base_path = os.path.abspath(
             os.path.join(os.path.dirname(__file__), "..", "..", "..")
         )
-        icons_dir = os.path.join(base_path, "icons")
+        icons_dir = os.path.join(base_path, "data", "icons")
 
         more_btn = getattr(self, "toolButton_more", None)
         if more_btn is not None:
