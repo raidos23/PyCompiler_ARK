@@ -52,6 +52,48 @@ PROGRESS_PATTERNS = [
 ]
 
 
+class SafeGuiBridge(QObject):
+    """
+    Thread-safe bridge between the compilation background thread and the UI.
+    Prevents segfaults by not accessing GUI widgets directly from the thread.
+    """
+
+    log_triggered = Signal(str, str)  # level, message
+    log_i18n_triggered = Signal(str, str, str)  # level, fr, en
+
+    def __init__(self, original_gui: Any):
+        super().__init__()
+        self._gui = original_gui
+        self.workspace_dir = getattr(original_gui, "workspace_dir", None)
+        self.use_system_python = getattr(original_gui, "use_system_python", False)
+
+        # Mirror managers
+        self.venv_manager = getattr(original_gui, "venv_manager", None)
+        self.sys_deps_manager = getattr(original_gui, "sys_deps_manager", None)
+
+    def tr(self, fr, en):
+        # tr is generally thread-safe as it returns strings, but we fallback to en if needed
+        try:
+            return self._gui.tr(fr, en)
+        except Exception:
+            return en
+
+    def _safe_log(self, text, text_en=None, level=None):
+        if text_en:
+            self.log_i18n_triggered.emit(level or "info", text, text_en)
+        else:
+            self.log_triggered.emit(level or "info", text)
+
+    @property
+    def log(self):
+        # We return ourselves as the log object so that log.append() works
+        return self
+
+    def append(self, message: str):
+        # engine_runner calls gui.log.append(message)
+        self.log_triggered.emit("info", message)
+
+
 class CompilationThread(QThread):
     """
     Thread used to run compilation without blocking the UI.
@@ -62,6 +104,7 @@ class CompilationThread(QThread):
     error_ready = Signal(str)
     finished = Signal(int)
     progress_update = Signal(int, str)
+    log_requested = Signal(str, str)  # level, message
 
     def __init__(
         self,
@@ -81,9 +124,24 @@ class CompilationThread(QThread):
         self.context = context
         self.engine_config = engine_config
         self.is_rebuild = is_rebuild
-        self.gui = gui
+
+        # Create a safe bridge instead of using the raw GUI object
+        self.bridge = SafeGuiBridge(gui) if gui else None
+        if self.bridge:
+            # Connect bridge signals to emit via the thread
+            self.bridge.log_triggered.connect(self._handle_bridge_log)
+            self.bridge.log_i18n_triggered.connect(self._handle_bridge_log_i18n)
+
         self.cancel_requested = False
         self.start_time: Optional[datetime] = None
+
+    def _handle_bridge_log(self, level, message):
+        self.log_requested.emit(level, message)
+
+    def _handle_bridge_log_i18n(self, level, fr, en):
+        # Use simple translation for the signal
+        msg = self.bridge.tr(fr, en) if self.bridge else en
+        self.log_requested.emit(level, msg)
 
     def run(self) -> None:
         """Run the compilation process."""
@@ -112,7 +170,7 @@ class CompilationThread(QThread):
                 on_stderr=_on_stderr,
                 stop_signal=_stop_signal,
                 is_rebuild=self.is_rebuild,
-                gui=self.gui,
+                gui=self.bridge,  # PASS THE BRIDGE
             )
 
             return_code = result.get("return_code", 1)
@@ -278,6 +336,7 @@ class CompilerCore(QObject):
         self._thread.error_ready.connect(self.error_ready.emit)
         self._thread.finished.connect(self._on_finished)
         self._thread.progress_update.connect(self.progress_update.emit)
+        self._thread.log_requested.connect(self.log_message.emit)
 
         # Changer le statut
         self._set_status(CompilationStatus.RUNNING)

@@ -190,6 +190,7 @@ def compile_all(self) -> None:
             pass
         return
 
+    # Workspace directory
     ws = Path(self.workspace_dir)
 
     # 1. Reset state for a new build
@@ -252,8 +253,10 @@ def compile_all(self) -> None:
 
         # Use BuildContext helper to get initial context
         context = build_context_object_from_ark_config(validated.config)
-        # In UI mode, we use current overrides. The thread will update them from the fresh lock.
-        engine_config = getattr(self, "_config_overrides", {})
+        # load the engine config from disk 
+        from Core.Locking import read_engine_config
+
+        engine_config = read_engine_config(ws, engine_id)
     except Exception as e:
         log_i18n_level(
             self,
