@@ -24,10 +24,24 @@ from .Context import (
 __version__ = "1.0.0"
 
 __all__ = [
+    # Version
+    "__version__",
+    # Base classes and types
     "BcPluginBase",
-    "Generate_Bc_Plugin_Template",
     "PluginMeta",
     "PreCompileContext",
-    "__version__",
+    "register_plugin",
+    "BCASL_PLUGIN_REGISTER_FUNC",
     "bc_register",
+    # Type aliases
+    "Pathish",
+    # Data classes
+    "DependencyInfo",
+    "PythonFileInfo",
+    "VenvInfo",
+    "GitInfo",
+    # Workspace management
+    "set_selected_workspace",
+    # Template generation
+    "Generate_Bc_Plugin_Template",
 ]
