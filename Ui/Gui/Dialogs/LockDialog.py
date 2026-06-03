@@ -278,5 +278,17 @@ class LockDialog(QDialog):
 
 def open_lock_dialog(gui):
     """Helper pour ouvrir le dialog."""
+    workspace_dir = getattr(gui, "workspace_dir", None)
+    if not workspace_dir:
+        QMessageBox.warning(
+            gui,
+            gui.tr("Attention", "Warning"),
+            gui.tr(
+                "Veuillez d'abord sélectionner un dossier workspace.",
+                "Please select a workspace folder first.",
+            ),
+        )
+        return
+
     dlg = LockDialog(gui)
     dlg.exec()
