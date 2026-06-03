@@ -1,4 +1,4 @@
-# **PyCompiler ARK CLI Specification v1.2**
+# **PyCompiler ARK CLI Specification v1.3**
 
 This document defines the final, streamlined specification for the PyCompiler ARK Command Line Interface.
 
@@ -12,6 +12,7 @@ The CLI is designed to be simple, predictable, and headless-friendly.
 - **Explicit Commands**: No hidden magic; every action requires an explicit command.
 - **CLI-First**: All features accessible via GUI are also available via CLI.
 - **Reproducibility**: Guaranteed via functional locking comparison.
+- **Headless-Ready**: Support for non-interactive execution (CI/CD).
 
 ---
 
@@ -20,12 +21,12 @@ The CLI is designed to be simple, predictable, and headless-friendly.
 ```bash
 # Workspace (User)
 pycompiler-ark init --entry <path> [--icon <path>] [--with-venv] [--install-requirements] [--generate-requirements]
-pycompiler-ark build
-pycompiler-ark build --engine <id>
-pycompiler-ark build --lock [file] 
+pycompiler-ark build [-y|--yes] [-v|--verbose] [--json]
+pycompiler-ark build --engine <id> [-y|--yes]
+pycompiler-ark build --lock [file] [-y|--yes]
 
 # Execution
-pycompiler-ark run bcasl 
+pycompiler-ark run bcasl [-y|--yes] [--list-plugins]
 
 # GUI
 pycompiler-ark gui
@@ -123,6 +124,9 @@ build:
   output: dist/
   exclude:
     - "tests/**/*"
+  include:
+    - "requests"
+    - "custom_package"
   data:
     - source: plugins/
       destination: plugins/
@@ -146,20 +150,26 @@ Initializes the current directory as a PyCompiler ARK workspace.
 #### **`pycompiler-ark build`**
 
 - **Default**: Validates `ark.yml` and builds using the configured engine.
+- **Auto-Confirm**: `-y` or `--yes` bypasses all interactive prompts (Git alignment, BCASL plugin confirmations).
 - **Engine Override**: `--engine <id>` uses a temporary engine without modifying `ark.yml`.
 - **Reproducible Rebuild**: `--lock [file]` rebuilds strictly from a lock file (default: `.ark/lock/latest.lock.yml`).
   - **Git State**: Automatically verifies if the current branch and commit match the lock. Offers automatic checkout on Linux.
   - **Integrity Check**: PyCompiler ARK generates a shadow lock from the rebuild environment and performs a **Functional Equivalence** comparison. Detailed diffs are displayed in case of mismatch.
 - **Constraint**: `--engine` and `--lock` cannot be used together.
 
+#### **`pycompiler-ark run bcasl`**
+
+Executes the pre-compilation pipeline manually.
+- **Auto-Confirm**: `-y` or `--yes` ensures all plugins demanding confirmation are automatically accepted.
+
 ---
 
 ### **9. Summary Rules**
 
-- **CLI1**: No interactive questions; behavior is strictly deterministic.
+- **CLI1**: Non-interactive by default when `-y` is provided.
 - **CLI2**: `pycompiler-ark init` only operates on the current working directory.
 - **CLI3**: All build artifacts and metadata stay inside the workspace `.ark/` folder.
 - **CLI4**: Engines and plugins follow a clear `dev > user > core` priority.
 
 ---
-*End of Specification v1.2*
+*End of Specification v1.3*

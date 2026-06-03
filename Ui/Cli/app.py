@@ -83,7 +83,12 @@ def _build_impl(
     lock_file: str | None,
     as_json: bool,
     verbose: bool = False,
+    auto_confirm: bool = False,
 ) -> int:
+    if auto_confirm:
+        os.environ["PYCOMPILER_NONINTERACTIVE"] = "1"
+        os.environ["PYCOMPILER_YES"] = "1"
+
     if lock_file and engine_override:
         raise CliSpecError(
             "--engine cannot be used with --lock\nIf you need a different engine, create a new lock with: pycompiler-ark build --engine <engine_id>"
@@ -387,7 +392,10 @@ def build_cli():
     @click.argument("lock_arg", required=False)
     @click.option("--json", "as_json", is_flag=True)
     @click.option("--verbose", "-v", is_flag=True)
-    def build_cmd(engine_override, lock_file, lock_arg, as_json, verbose):
+    @click.option(
+        "--yes", "-y", "auto_confirm", is_flag=True, help="Auto-confirm all prompts."
+    )
+    def build_cmd(engine_override, lock_file, lock_arg, as_json, verbose, auto_confirm):
         """Build from ark.yml or rebuild from a lock file."""
         effective_lock = (
             lock_arg if lock_arg and lock_file == "__default__" else lock_file
@@ -399,6 +407,7 @@ def build_cli():
                 lock_file=effective_lock,
                 as_json=as_json,
                 verbose=verbose,
+                auto_confirm=auto_confirm,
             )
         except CliSpecError as exc:
             raise click.ClickException(str(exc))
@@ -411,8 +420,15 @@ def build_cli():
     @run_group.command("bcasl")
     @click.option("--list-plugins", is_flag=True)
     @click.option("--verbose", "-v", is_flag=True)
-    def run_bcasl_cmd(list_plugins, verbose):
+    @click.option(
+        "--yes", "-y", "auto_confirm", is_flag=True, help="Auto-confirm all prompts."
+    )
+    def run_bcasl_cmd(list_plugins, verbose, auto_confirm):
         """Run BCASL in headless mode for the current workspace."""
+        if auto_confirm:
+            os.environ["PYCOMPILER_NONINTERACTIVE"] = "1"
+            os.environ["PYCOMPILER_YES"] = "1"
+
         args: list[str]
         if list_plugins:
             args = ["list"]

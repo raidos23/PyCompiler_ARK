@@ -483,8 +483,8 @@ def ensure_correct_git_commit(
             def _confirm(msg: str) -> bool:
                 if confirm_cb:
                     return confirm_cb(msg)
-                import click
-                return bool(click.confirm(msg, default=True))
+                from .interactive import ask_yes_no
+                return ask_yes_no(msg, default_yes=True)
 
             if not branch_match and locked_branch:
                 if _confirm(f"Effectuer un 'git checkout {locked_branch}' automatique ?"):
@@ -526,12 +526,8 @@ def ensure_correct_git_commit(
             info(f"Action manuelle requise : git checkout {locked_branch}")
         if not commit_match and locked_commit:
             info(f"Action manuelle requise : git checkout {locked_commit}")
-        try:
-            import click
-
-            return click.confirm("Continuer quand même ?", default=False)
-        except Exception:
-            return True
+        from .interactive import ask_yes_no
+        return ask_yes_no("Continuer quand même ?", default_yes=False)
 
 
 def list_engines_payload() -> dict[str, Any]:
