@@ -417,6 +417,7 @@ def compile_all(self) -> None:
                 context=context,
                 engine_config=engine_config,
                 is_rebuild=False,
+                gui=self,
             )
 
             if not success:
@@ -484,7 +485,18 @@ def rebuild_from_lock(self, lock_path: Path) -> None:
         try:
             from Ui.Cli.helpers import ensure_correct_git_commit
 
-            if not ensure_correct_git_commit(ws, lock_payload):
+            def _confirm(msg: str) -> bool:
+                from PySide6.QtWidgets import QMessageBox
+
+                ans = QMessageBox.question(
+                    self,
+                    self.tr("Alignement Git", "Git Alignment"),
+                    msg,
+                    QMessageBox.Yes | QMessageBox.No,
+                )
+                return ans == QMessageBox.Yes
+
+            if not ensure_correct_git_commit(ws, lock_payload, confirm_cb=_confirm):
                 log_i18n_level(
                     self,
                     "warning",
@@ -596,6 +608,7 @@ def rebuild_from_lock(self, lock_path: Path) -> None:
                 context=context,
                 engine_config=engine_config,
                 is_rebuild=True,
+                gui=self,
             )
 
             if not success:
@@ -824,6 +837,7 @@ def start_compilation_process(self, engine_id: str, file_path: str) -> bool:
                 context=context,
                 engine_config=engine_config,
                 is_rebuild=False,
+                gui=self,
             )
 
             if not success:
