@@ -51,6 +51,14 @@ build:
     destination: data/
     type: dir
   exclude: []
+  include:
+  - Core
+  - Plugins_SDK
+  - engine_sdk
+  - Services
+  - bcasl
+  - Loaders
+  - Ui
   icon: images/logo.png
 plugins:
   bcasl_enabled: true
