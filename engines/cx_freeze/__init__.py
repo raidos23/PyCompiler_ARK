@@ -111,17 +111,22 @@ class CXFreezeEngine(CompilerEngine):
         if verbose_enabled:
             cmd.append("--verbose")
 
+        # cx_Freeze CLI can be finicky with repeated flags vs comma-separated.
+        # Repeating with --opt=val is generally the most robust for distutils parsers.
         for module in context.include_packages:
-            if module.strip():
-                cmd.extend(["--includes", module.strip()])
+            m = str(module).strip()
+            if m:
+                cmd.append(f"--includes={m}")
 
         for mapping in context.data_mappings:
             source = str((mapping or {}).get("source") or "").strip()
-            destination = str((mapping or {}).get("destination") or "").strip()
-            # mapping_type = str((mapping or {}).get("type") or "dir").strip().lower()
-
-            if source and destination:
-                cmd.extend(["--include-files", f"{source}={destination}"])
+            # CX_FREEZE CLI HACK: 
+            # 1. Remove trailing slashes which confuse path resolution
+            # 2. Avoid ':' destination mapping in CLI as it is often misinterpreted
+            #    as part of the filename. Default behavior preserves the name.
+            source = source.rstrip("/").rstrip("\\")
+            if source:
+                cmd.append(f"--include-files={source}")
 
         cmd.append(context.entry_point)
         return cmd
