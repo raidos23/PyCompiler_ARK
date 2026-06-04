@@ -114,6 +114,7 @@ class CompilationThread(QThread):
         engine_config: Optional[Dict[str, Any]] = None,
         is_rebuild: bool = False,
         gui: Any = None,
+        ark_config: Optional[Dict[str, Any]] = None,
     ):
         """
         Initialize the compilation thread.
@@ -124,6 +125,7 @@ class CompilationThread(QThread):
         self.context = context
         self.engine_config = engine_config
         self.is_rebuild = is_rebuild
+        self.ark_config = ark_config
 
         # Create a safe bridge instead of using the raw GUI object
         self.bridge = SafeGuiBridge(gui) if gui else None
@@ -149,6 +151,64 @@ class CompilationThread(QThread):
         self.cancel_requested = False
 
         self.progress_update.emit(0, "Process started")
+
+        # Optimization: Disable expensive auto-scan in background thread by default for GUI
+        if os.environ.get("PYCOMPILER_SKIP_SCAN") is None:
+            os.environ["PYCOMPILER_SKIP_SCAN"] = "1"
+
+        # DEFERRED LOCK GENERATION (Move from UI thread to background)
+        if not self.is_rebuild and self.ark_config:
+            try:
+                self.log_requested.emit("info", "🔒 Generating compilation lock file (background)...")
+                from Ui.Cli.helpers import (
+                    build_lock_payload,
+                    write_lock_files,
+                    engine_config_from_lock,
+                    build_context_object_from_ark_config
+                )
+                from Core.Compiler.engine_runner import resolve_engine_command
+                from Core.Compiler.utils import get_interpreter_version_str
+                from Core.Venv_Manager.Manager import VenvManager
+
+                # 1. Resolve Python Version
+                python_version = None
+                try:
+                    vm = VenvManager(self.bridge)
+                    vpython = vm.resolve_project_venv()
+                    if vpython:
+                        vpath = vm.python_path(vpython)
+                        python_version = get_interpreter_version_str(vpath)
+                    else:
+                        python_version = get_interpreter_version_str()
+                except Exception:
+                    pass
+
+                # 2. Resolve Command (Pre-resolution for lock)
+                resolved_command = None
+                try:
+                    prog, args, env = resolve_engine_command(
+                        self.engine_id, self.context, self.engine_config, gui=self.bridge
+                    )
+                    resolved_command = {"program": prog, "args": args, "env": env}
+                except Exception as e:
+                    self.log_requested.emit("warning", f"Auto-mapping not persisted in lock: {e}")
+
+                # 3. Build and Write Lock
+                lock_payload = build_lock_payload(
+                    self.workspace,
+                    self.ark_config,
+                    engine_id=self.engine_id,
+                    python_version=python_version,
+                    resolved_command=resolved_command,
+                )
+                write_lock_files(self.workspace, lock_payload)
+
+                # 4. Final Alignment: refresh context and config from lock
+                self.context = build_context_object_from_ark_config(self.ark_config)
+                self.engine_config = engine_config_from_lock(lock_payload)
+
+            except Exception as e:
+                self.log_requested.emit("error", f"Lock generation failed: {e}")
 
         def _on_stdout(line: str):
             self.output_ready.emit(line)
@@ -300,6 +360,7 @@ class CompilerCore(QObject):
         engine_config: Optional[Dict[str, Any]] = None,
         is_rebuild: bool = False,
         gui: Any = None,
+        ark_config: Optional[Dict[str, Any]] = None,
     ) -> bool:
         """
         Start an async compilation from a BuildContext.
@@ -329,6 +390,7 @@ class CompilerCore(QObject):
             engine_config=engine_config,
             is_rebuild=is_rebuild,
             gui=gui,
+            ark_config=ark_config,
         )
 
         # Connecter les signaux

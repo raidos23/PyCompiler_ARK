@@ -293,6 +293,11 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
         """Open `ark.yml` from the current workspace."""
         WorkspaceDialog.open_ark_config(self)
 
+    def open_init_workspace_dialog(self):
+        """Open the project initialization dialog."""
+        from Ui.Gui.Dialogs.InitWorkspaceDialog import open_init_workspace_dialog
+        open_init_workspace_dialog(self)
+
     def on_main_only_changed(self):
         """Handle the `main-only` option toggle."""
         if self.opt_main_only.isChecked():

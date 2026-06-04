@@ -542,6 +542,9 @@ def _detect_modules_preferring_requirements(self) -> tuple[set[str], str]:
     except Exception:
         pass
     # 3) fallback: scan imports
+    if os.environ.get("PYCOMPILER_SKIP_SCAN") == "1":
+        return set(), "skipped"
+
     py_files = (
         self.selected_files
         if getattr(self, "selected_files", None)
