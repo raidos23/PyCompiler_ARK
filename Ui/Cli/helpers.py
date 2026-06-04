@@ -292,9 +292,11 @@ def init_workspace(
             raise CliSpecError(
                 "requirements.txt already exists. (--generate-requirements)"
             )
-        requirements_path.write_text(
-            "# Add your runtime dependencies here.\n", encoding="utf-8"
-        )
+        from Core.deps_analyser.analyser import write_requirements_txt
+        if not write_requirements_txt(str(workspace), str(requirements_path)):
+            requirements_path.write_text(
+                "# Add your runtime dependencies here.\n", encoding="utf-8"
+            )
 
     venv_path = workspace / ".ark" / "venv"
     if with_venv and not venv_path.exists():
