@@ -314,6 +314,12 @@ def _setup_more_tools_menu(self) -> None:
         )
         menu.addAction(act_workspace)
 
+        act_init = QAction(menu)
+        act_init.triggered.connect(
+            lambda: getattr(self, "open_init_workspace_dialog", lambda: None)()
+        )
+        menu.addAction(act_init)
+
         act_venv = QAction(menu)
         act_venv.triggered.connect(
             lambda: getattr(self, "select_venv_manually", lambda: None)()
@@ -378,6 +384,7 @@ def _setup_more_tools_menu(self) -> None:
 
         self._ide_more_menu_actions = {
             "workspace": act_workspace,
+            "init": act_init,
             "venv": act_venv,
             "add_files": act_add_files,
             "clear_workspace": act_clear_workspace,
@@ -564,6 +571,7 @@ def _retranslate_ide_like_actions(self) -> None:
     labels = {
         "workspace": _widget_text("btn_select_folder")
         or _label("action_select_workspace", "Choisir Workspace", "Select Workspace"),
+        "init": _label("action_init_project", "Initialiser le projet", "Initialize Project"),
         "venv": _widget_text("venv_button")
         or _label("action_select_venv", "Choisir un Venv", "Select Venv"),
         "add_files": _widget_text("btn_select_files")

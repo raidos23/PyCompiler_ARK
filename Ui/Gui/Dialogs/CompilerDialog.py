@@ -233,24 +233,8 @@ def compile_all(self) -> None:
     except Exception:
         pass
 
-    # 4. Preparation (Resolve context and engine config)
+    # 4. Preparation (Resolve initial context and engine config)
     try:
-        # Resolve Python version for locking (will be used in background thread)
-        self._python_version = None
-        try:
-            from Core.Compiler.utils import get_interpreter_version_str
-            from Core.Venv_Manager.Manager import VenvManager
-
-            vm = VenvManager(self)
-            vpython = vm.resolve_project_venv()
-            if vpython:
-                vpath = vm.python_path(vpython)
-                self._python_version = get_interpreter_version_str(vpath)
-            else:
-                self._python_version = get_interpreter_version_str()
-        except Exception:
-            pass
-
         # Use BuildContext helper to get initial context
         context = build_context_object_from_ark_config(validated.config)
         # load the engine config from disk 
@@ -341,56 +325,9 @@ def compile_all(self) -> None:
             # Start compilation using the EngineRunner path
             main_process = get_main_process()
 
-            # CLI Alignment: Generate lock before starting the engine
-            try:
-                log_i18n_level(
-                    self,
-                    "info",
-                    "🔒 Génération du verrou de compilation (lock file)...",
-                    "🔒 Generating compilation lock file...",
-                )
-
-                # Pre-resolve command for auto-mapping persistence (Phase 3)
-                resolved_command = None
-                try:
-                    from Core.Compiler.engine_runner import resolve_engine_command
-
-                    # Use currently resolved context and config for resolution
-                    prog, args, env = resolve_engine_command(
-                        engine_id, context, engine_config, gui=self
-                    )
-                    resolved_command = {"program": prog, "args": args, "env": env}
-                except Exception as e:
-                    log_i18n_level(
-                        self,
-                        "warning",
-                        f"Auto-mapping non persisté: {e}",
-                        f"Auto-mapping not persisted: {e}",
-                    )
-
-                # Generate fresh lock payload using resolved python_version
-                lock_payload = build_lock_payload(
-                    ws,
-                    validated.config,
-                    engine_id=engine_id,
-                    python_version=self._python_version,
-                    resolved_command=resolved_command,
-                )
-                write_lock_files(ws, lock_payload)
-
-                # Update context and engine_config from the fresh lock to ensure strict alignment
-                context = build_context_object_from_ark_config(validated.config)
-                engine_config = engine_config_from_lock(lock_payload)
-
-            except Exception as e:
-                log_i18n_level(
-                    self,
-                    "error",
-                    f"Échec génération verrou: {e}",
-                    f"Lock generation failed: {e}",
-                )
-                self.set_controls_enabled(True)
-                return
+            # OPTIMIZATION: Disable expensive auto-scan for GUI builds
+            # This prevents scanning ALL files in the workspace which is slow and often unnecessary.
+            os.environ["PYCOMPILER_SKIP_SCAN"] = "1"
 
             # Connection logic
             if not hasattr(main_process, "_gui_connected"):
@@ -413,7 +350,7 @@ def compile_all(self) -> None:
                 )
                 main_process._gui_connected = True
 
-            # The actual compilation call
+            # The actual compilation call (passing ark_config for background lock generation)
             success = main_process.compile_from_context(
                 workspace=ws,
                 engine_id=engine_id,
@@ -421,6 +358,7 @@ def compile_all(self) -> None:
                 engine_config=engine_config,
                 is_rebuild=False,
                 gui=self,
+                ark_config=validated.config,
             )
 
             if not success:
@@ -660,35 +598,12 @@ def start_compilation_process(self, engine_id: str, file_path: str) -> bool:
     except Exception:
         pass
 
-    # 2. Generate Lock and Context (Exact CLI Code)
+    # 2. Preparation (Resolve initial context and engine config)
     try:
-        log_i18n_level(
-            self,
-            "info",
-            "🔒 Génération du verrou de compilation (lock file)...",
-            "🔒 Generating build lock file...",
-        )
-
-        # Shared Python version resolution for locking/comparison (Aligned with CLI)
-        self._python_version = None
-        try:
-            from Core.Compiler.utils import get_interpreter_version_str
-            from Core.Venv_Manager.Manager import VenvManager
-
-            vm = VenvManager(self)
-            vpython = vm.resolve_project_venv()
-            if vpython:
-                vpath = vm.python_path(vpython)
-                self._python_version = get_interpreter_version_str(vpath)
-            else:
-                self._python_version = get_interpreter_version_str()
-        except Exception:
-            pass
-
         # Context from config (base context)
         context = build_context_object_from_ark_config(validated.config)
 
-        # Override entrypoint for single file compilation (must be done before resolution)
+        # Override entrypoint for single file compilation
         try:
             rel_path = os.path.relpath(file_path, str(ws))
             if not rel_path.startswith(".."):
@@ -698,38 +613,9 @@ def start_compilation_process(self, engine_id: str, file_path: str) -> bool:
         except Exception:
             context.entry_point = file_path
 
-        # Pre-resolve command for auto-mapping persistence (Phase 3)
-        resolved_command = None
-        try:
-            from Core.Compiler.engine_runner import resolve_engine_command
-
-            # Use current engine config for resolution
-            from Core.Locking import read_engine_config
-
-            current_engine_config = read_engine_config(ws, engine_id)
-            prog, args, env = resolve_engine_command(
-                engine_id, context, current_engine_config, gui=self
-            )
-            resolved_command = {"program": prog, "args": args, "env": env}
-        except Exception as e:
-            log_i18n_level(
-                self,
-                "warning",
-                f"Auto-mapping non persisté: {e}",
-                f"Auto-mapping not persisted: {e}",
-            )
-
-        lock_payload = build_lock_payload(
-            ws,
-            validated.config,
-            engine_id=engine_id,
-            python_version=self._python_version,
-            resolved_command=resolved_command,
-        )
-        write_lock_files(ws, lock_payload)
-
-        # Config from lock (source of truth for engine specific options)
-        engine_config = engine_config_from_lock(lock_payload)
+        # load the engine config from disk 
+        from Core.Locking import read_engine_config
+        engine_config = read_engine_config(ws, engine_id)
 
     except Exception as e:
         log_i18n_level(
@@ -750,7 +636,7 @@ def start_compilation_process(self, engine_id: str, file_path: str) -> bool:
         engine = None
     if engine is None:
         try:
-            engine = create(engine_id)
+            engine = engines_loader.create(engine_id)
         except Exception:
             pass
     engine_name = getattr(engine, "name", engine_id)
@@ -813,6 +699,9 @@ def start_compilation_process(self, engine_id: str, file_path: str) -> bool:
                 f"Starting {engine_name} for {os.path.basename(file_path)}...",
             )
 
+            # OPTIMIZATION: Disable expensive auto-scan for GUI builds
+            os.environ["PYCOMPILER_SKIP_SCAN"] = "1"
+
             main_process = get_main_process()
             if not hasattr(main_process, "_gui_connected"):
                 main_process.output_ready.connect(lambda msg: _handle_output(self, msg))
@@ -841,6 +730,7 @@ def start_compilation_process(self, engine_id: str, file_path: str) -> bool:
                 engine_config=engine_config,
                 is_rebuild=False,
                 gui=self,
+                ark_config=validated.config,
             )
 
             if not success:
