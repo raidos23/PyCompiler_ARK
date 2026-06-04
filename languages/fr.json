@@ -83,5 +83,13 @@
   "action_select_venv": "Choisir un Venv",
   "action_create_venv": "Créer un venv",
   "action_retry": "Réessayer",
-  "action_cancel": "Annuler"
+  "action_cancel": "Annuler",
+  "action_init_project": "Initialiser le projet",
+  "init_project_title": "Initialiser le projet",
+  "init_project_entry": "Point d'entrée :",
+  "init_project_gen_reqs": "Générer requirements.txt",
+  "init_project_create_venv": "Créer un environnement virtuel (venv)",
+  "init_project_install_reqs": "Installer les dépendances",
+  "init_project_note": "Note : Cela va créer un fichier ark.yml et configurer la structure du projet.",
+  "init_project_success": "Projet initialisé avec succès !"
 }

@@ -387,6 +387,7 @@ class MainProcess(QObject):
         engine_config: Optional[Dict[str, Any]] = None,
         is_rebuild: bool = False,
         gui: Any = None,
+        ark_config: Optional[Dict[str, Any]] = None,
     ) -> bool:
         """
         Start an async compilation from a :class:`BuildContext`.
@@ -400,6 +401,7 @@ class MainProcess(QObject):
             engine_config: Optional per-engine config overrides.
             is_rebuild:    Whether this is a rebuild from a lock file.
             gui:           Optional GUI instance for auto-mapping and logging.
+            ark_config:    Optional raw ark config for deferred lock generation.
 
         Returns:
             ``True`` if the compilation thread started successfully.
@@ -427,6 +429,7 @@ class MainProcess(QObject):
             engine_config=engine_config,
             is_rebuild=is_rebuild,
             gui=gui,
+            ark_config=ark_config,
         )
 
     def reset(self) -> None:
