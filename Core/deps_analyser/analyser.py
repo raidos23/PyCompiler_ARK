@@ -350,6 +350,8 @@ def _should_skip_analysis_path(path: str, workspace_dir: str | None = None) -> b
         "dist",
         "site-packages",
         "dist-packages",
+        "tests",
+        "test",
     }
     skip_prefixes = ("venv", ".venv", "env", ".env")
     skip_suffixes = (".egg-info", ".dist-info")
