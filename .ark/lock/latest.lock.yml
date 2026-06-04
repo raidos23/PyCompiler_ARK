@@ -1,9 +1,9 @@
-build_id: ARK_2026_06_04_001
+build_id: ARK_2026_06_04_002
 project:
   name: PyCompiler-ARK
   version: 1.0.0
   entry: pycompiler_ark.py
-  git_commit: d68fc97451f3b898ee6d6ce0b8ea4eb68439e30f
+  git_commit: cb1e01d41430f347bb2989b9408ffc4b528d717e
   git_branch: main
 workspace:
   exclude_patterns: &id001 []
@@ -89,13 +89,13 @@ engine:
     - --collect-all
     - rich
     - --collect-all
-    - PySide6
-    - --collect-all
     - psutil
-    - --hidden-import
-    - yaml
     - --collect-all
     - click
+    - --collect-all
+    - PySide6
+    - --hidden-import
+    - yaml
     - pycompiler_ark.py
     env:
       PYTHONIOENCODING: utf-8
