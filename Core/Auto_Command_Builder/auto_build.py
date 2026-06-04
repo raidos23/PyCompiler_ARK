@@ -141,7 +141,9 @@ def _read_json_file(path: str) -> dict[str, dict[str, Optional[str]]]:
     if jsonschema is not None:
         try:
             repo_root = os.path.abspath(
-                os.path.join(os.path.dirname(__file__), os.pardir, os.pardir)
+                os.path.join(
+                    os.path.dirname(os.path.abspath(__file__)), os.pardir, os.pardir
+                )
             )
             schema_path = os.path.join(
                 repo_root, "data", "schemas", "mapping.schema.json"
@@ -619,7 +621,9 @@ def compute_for_all(
         # 2) moteurs sous engines/<engine_id>/mapping.json (plug-and-play)
         try:
             project_root = os.path.abspath(
-                os.path.join(os.path.dirname(__file__), os.pardir, os.pardir)
+                os.path.join(
+                    os.path.dirname(os.path.abspath(__file__)), os.pardir, os.pardir
+                )
             )
             engines_root = os.path.join(project_root, "engines")
             if os.path.isdir(engines_root):
@@ -684,7 +688,9 @@ def _load_engine_package_mapping(
     # 2) mapping dans engines/<engine_id>/mapping.json (filesystem projet)
     try:
         project_root = os.path.abspath(
-            os.path.join(os.path.dirname(__file__), os.pardir, os.pardir)
+            os.path.join(
+                os.path.dirname(os.path.abspath(__file__)), os.pardir, os.pardir
+            )
         )
         engines_dir = os.path.join(project_root, "engines", engine_id, "mapping.json")
         if os.path.isfile(engines_dir):
@@ -745,7 +751,9 @@ def _load_engine_package_mapping(
 def compute_auto_for_engine(self, engine_id: str) -> list[str]:
     """Compute auto arguments for a given engine (plug-and-play)."""
     try:
-        os.path.realpath(os.path.join(os.path.dirname(__file__), os.pardir))
+        os.path.abspath(
+            os.path.join(os.path.dirname(os.path.abspath(__file__)), os.pardir)
+        )
         getattr(self, "workspace_dir", None)
         # Charge uniquement le mapping spécifique moteur (package)
         eng_mapping, eng_used_path = _load_engine_package_mapping(engine_id)

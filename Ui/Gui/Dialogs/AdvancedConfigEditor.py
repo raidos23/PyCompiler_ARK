@@ -56,9 +56,17 @@ def _apply_themed_icon(widget: QPushButton, icon_name: str, size: int = 16) -> N
     try:
         from Ui.Gui.UiConnection import themed_svg_icon
 
-        # icons/ is at project root, which is 4 levels up from this file
-        icon_path = (
-            Path(__file__).resolve().parent.parent.parent.parent / "data" / "icons" / icon_name
+        # icons/ is at project root, which is 3 levels up from this file (Ui/Gui/Dialogs/)
+        icon_path = os.path.abspath(
+            os.path.join(
+                os.path.dirname(os.path.abspath(__file__)),
+                os.pardir,
+                os.pardir,
+                os.pardir,
+                "data",
+                "icons",
+                icon_name,
+            )
         )
         icon = themed_svg_icon(icon_path, size=size)
         if icon:
