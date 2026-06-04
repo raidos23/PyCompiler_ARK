@@ -171,7 +171,9 @@ class UiFeatures:
         if token == current_token and isinstance(icon, QIcon) and not icon.isNull():
             return icon
         try:
-            base = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+            base = os.path.abspath(
+                os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..")
+            )
             path = os.path.join(base, "data", "icons", "check-circle.svg")
             if os.path.isfile(path):
                 icon = None

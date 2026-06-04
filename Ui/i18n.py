@@ -102,7 +102,9 @@ _CACHE_LOCK = asyncio.Lock()
 def _project_root() -> str:
     """Return project root path (sync, no blocking I/O)."""
     try:
-        return os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
+        return os.path.abspath(
+            os.path.join(os.path.dirname(os.path.abspath(__file__)), os.pardir)
+        )
     except Exception:
         return os.getcwd()
 
@@ -110,7 +112,7 @@ def _project_root() -> str:
 def _languages_dir() -> str:
     """Return `languages` directory path (sync, no blocking I/O)."""
     try:
-        return os.path.join(_project_root(), "languages")
+        return os.path.abspath(os.path.join(_project_root(), "languages"))
     except Exception:
         return "languages"
 

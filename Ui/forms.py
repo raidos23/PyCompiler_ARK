@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from pathlib import Path
+import os
 
-FORMS_DIR = Path(__file__).resolve().parent / "Forms"
+FORMS_DIR = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "Forms"))
 
 
 def ui_form_path(filename: str) -> str:
     """Return the absolute path of a Qt Designer form stored in `Ui/Forms/`."""
-    return str((FORMS_DIR / filename).resolve())
+    return os.path.abspath(os.path.join(FORMS_DIR, filename))

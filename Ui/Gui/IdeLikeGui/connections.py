@@ -469,7 +469,7 @@ def _apply_activity_buttons_theme(self) -> None:
 
     try:
         base_path = os.path.abspath(
-            os.path.join(os.path.dirname(__file__), "..", "..", "..")
+            os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..")
         )
         icons_dir = os.path.join(base_path, "data", "icons")
 

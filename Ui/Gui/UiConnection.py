@@ -198,8 +198,14 @@ def _setup_sidebar_logo(self) -> None:
             break
     if logo_label is None:
         return
-    logo_path = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)), "..", "..", "images", "logo2.png"
+    logo_path = os.path.abspath(
+        os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            "..",
+            "..",
+            "images",
+            "logo2.png",
+        )
     )
     if not os.path.isfile(logo_path):
         return
@@ -276,8 +282,10 @@ def _apply_button_icons(self) -> None:
     """Apply SVG icons to primary controls when icon assets are available."""
     if not getattr(self, "ui", None):
         return
-    icons_dir = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)), "..", "..", "data", "icons"
+    icons_dir = os.path.abspath(
+        os.path.join(
+            os.path.dirname(os.path.abspath(__file__)), "..", "..", "data", "icons"
+        )
     )
     if not os.path.isdir(icons_dir):
         return
