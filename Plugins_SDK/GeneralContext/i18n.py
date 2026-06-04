@@ -176,7 +176,9 @@ def load_plugin_language_file(plugin_package: str, code: str) -> dict:
 def _discover_plugins_dir() -> str | None:
     try:
         base = os.path.abspath(
-            os.path.join(os.path.dirname(__file__), os.pardir, os.pardir)
+            os.path.join(
+                os.path.dirname(os.path.abspath(__file__)), os.pardir, os.pardir
+            )
         )
         cand = os.path.join(base, "Plugins")
         if os.path.isdir(cand):

@@ -136,9 +136,12 @@ def _discover_external_plugins(
 def _auto_discover() -> None:
     """Discover and register external engine plugins from multiple locations."""
     # 1. Project local engines folder
-    base_dir = os.path.dirname(__file__)
     try:
-        project_root = os.path.abspath(os.path.join(base_dir, os.pardir, os.pardir))
+        project_root = os.path.abspath(
+            os.path.join(
+                os.path.dirname(os.path.abspath(__file__)), os.pardir, os.pardir
+            )
+        )
         external_dir = os.path.join(project_root, "engines")
         # Ensure directory exists for auto-discovery
         os.makedirs(external_dir, exist_ok=True)
