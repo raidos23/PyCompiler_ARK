@@ -57,7 +57,9 @@ python -m pycompiler_ark
 
 Experience the PyCompiler ARK workflow in action:
 
-![CLI Demo](https://raw.githubusercontent.com/raidos23/PyCompiler_ARK/main/docs/demo_ark.gif)
+<p align="center">
+  <img src="https://raw.githubusercontent.com/raidos23/PyCompiler_ARK/main/docs/demo_ark.gif" alt="CLI Demo" width="100%"/>
+</p>
 
 ---
 
