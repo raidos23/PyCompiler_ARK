@@ -53,6 +53,14 @@ python -m pycompiler_ark
 
 ---
 
+## CLI Demo
+
+Experience the PyCompiler ARK workflow in action:
+
+![CLI Demo](docs/demo_ark.gif)
+
+---
+
 ## How it works
 
 1. Select a workspace.
