@@ -42,7 +42,7 @@ dependencies = [
 ]
 
 [project.scripts]
-ark = "pycompiler_ark.__main__:main"
+pycompiler-ark = "pycompiler_ark.__main__:main"
 
 [project.urls]
 Homepage = "https://github.com/raidos23/PyCompiler_ARK"
