@@ -1,0 +1,11 @@
+{
+  "ui_safety": "安全",
+  "ui_targets": "目标",
+  "ui_confirm": "清理前请求确认",
+  "ui_pyc": "删除 .pyc 文件",
+  "ui_pycache": "删除 __pycache__ 文件夹",
+  "ui_tip": "提示：禁用你不想删除的内容。",
+  "dlg_confirm": "要清理 workspace 吗（.pyc 和 __pycache__）？",
+  "log_cancel": "用户已取消清理",
+  "log_noop": "Cleaner：无需执行（两个选项都已禁用）"
+}

@@ -1,0 +1,20 @@
+{
+  "_meta": {
+    "code": "es",
+    "name": "Español"
+  },
+  "tab_label": "Nuitka",
+  "mode_label": "Modo:",
+  "onefile_checkbox": "Onefile (--onefile)",
+  "type_label": "Tipo:",
+  "standalone_checkbox": "Standalone (--standalone)",
+  "console_label": "Consola:",
+  "disable_console_checkbox": "Desactivar consola de Windows (--windows-disable-console)",
+  "progress_label": "Progreso:",
+  "show_progress_checkbox": "Mostrar progreso (--show-progress)",
+  "add_data_button": "add_data",
+  "output_placeholder": "Directorio de salida (--output-dir)",
+  "icon_button": "🎨 Elegir icono (.ico) Nuitka",
+  "tt_disable_console": "Disable console window for Windows builds.",
+  "tt_show_progress": "Show compilation progress."
+}

@@ -1,0 +1,35 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 Ague Samuel Amen
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+from __future__ import annotations
+
+# Stable i18n facade for engines
+from pycompiler_ark.Core.engine.registry import (
+    engine_translate,
+    get_language_code,
+    get_translations,
+    load_engine_language_file,
+    register_engine_translations,
+    resolve_language_code,
+)
+
+__all__ = [
+    "engine_translate",
+    "get_language_code",
+    "get_translations",
+    "register_engine_translations",
+    "resolve_language_code",
+    "load_engine_language_file",
+]

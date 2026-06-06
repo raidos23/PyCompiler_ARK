@@ -1,0 +1,28 @@
+{
+  "_meta": {
+    "code": "de",
+    "name": "Deutsch"
+  },
+  "tab_label": "PyInstaller",
+  "mode_label": "Modus:",
+  "onefile_checkbox": "Onefile",
+  "console_label": "Konsole:",
+  "windowed_checkbox": "Windowed",
+  "confirmation_label": "Bestätigung:",
+  "noconfirm_checkbox": "Noconfirm",
+  "cleanup_label": "Bereinigung:",
+  "clean_checkbox": "Clean",
+  "compression_label": "Kompression:",
+  "noupx_checkbox": "No UPX",
+  "files_label": "Dateien:",
+  "main_only_checkbox": "Nur main.py oder app.py kompilieren",
+  "icon_button": "🎨 Icon auswählen (.ico)",
+  "debug_checkbox": "Debug-Modus (--debug)",
+  "add_data_button": "add_data",
+  "output_placeholder": "Ausgabeverzeichnis (--distpath). Leer lassen für ./dist",
+  "tt_noconfirm": "Overwrite output without confirmation.",
+  "tt_clean": "Clean build caches before compiling.",
+  "tt_noupx": "Disable UPX compression.",
+  "tt_main_only": "Build only main.py or app.py if present.",
+  "tt_debug": "Enable debug mode in the build."
+}
