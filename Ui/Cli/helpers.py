@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import logging
 import os
 import signal
@@ -77,7 +78,7 @@ def run_engine_compile(
     status = None
     if not verbose and console:
         status = console.status(
-            "[cyan]Initialisation de la compilation...[/cyan]", spinner="dots"
+            "[cyan]Initializing compilation...[/cyan]", spinner="dots"
         )
         register_cli_status(status)
         status.start()
@@ -98,10 +99,12 @@ def run_engine_compile(
                 if any(
                     x in line
                     for x in (
+                        "Step",
                         "Etape",
                         "Étape",
                         "->",
                         "Execution",
+                        "Command",
                         "Commande",
                         "➡️",
                         "🚀",
@@ -151,9 +154,9 @@ def run_engine_compile(
             unregister_cli_status(status)
 
     if _CLI_CANCEL_EVENT.is_set():
-        error("Compilation annulee par l'utilisateur (Ctrl+C).")
+        error("Compilation cancelled by user (Ctrl+C).")
         result["success"] = False
-        result["error"] = "Annule par l'utilisateur"
+        result["error"] = "Cancelled by user"
 
     result["stdout"] = "\n".join(captured_stdout)
     result["stderr"] = "\n".join(captured_stderr)
@@ -323,6 +326,20 @@ def init_workspace(
                 result.stderr.strip() or "requirements installation failed"
             )
 
+    # Initialize workspace preferences
+    from .output import info
+
+    pref_path = workspace / ".ark" / "pref.json"
+    pref_data = {"venv_mode": "system", "venv_path": None}
+
+    if venv_path.exists():
+        pref_data["venv_mode"] = "manual"
+        pref_data["venv_path"] = str(venv_path)
+    else:
+        info("No virtual environment created, using system Python by default.")
+
+    pref_path.write_text(json.dumps(pref_data, indent=2), encoding="utf-8")
+
     return {
         "workspace": str(workspace),
         "ark_yml": str(ark_yml),
@@ -472,13 +489,13 @@ def ensure_correct_git_commit(
 
     is_linux = platform.system().lower() == "linux"
 
-    warn(f"Mismatch Git détecté.")
+    warn(f"Git mismatch detected.")
     if not branch_match:
-        info(f" - Branche Verrou : {locked_branch}")
-        info(f" - Branche Actuelle : {current_branch}")
+        info(f" - Locked Branch : {locked_branch}")
+        info(f" - Current Branch : {current_branch}")
     if not commit_match:
-        info(f" - Commit Verrou : {locked_commit[:8] if locked_commit else 'N/A'}")
-        info(f" - Commit Actuel : {current_commit[:8] if current_commit else 'N/A'}")
+        info(f" - Locked Commit : {locked_commit[:8] if locked_commit else 'N/A'}")
+        info(f" - Current Commit : {current_commit[:8] if current_commit else 'N/A'}")
 
     if is_linux:
         try:
@@ -489,8 +506,8 @@ def ensure_correct_git_commit(
                 return ask_yes_no(msg, default_yes=True)
 
             if not branch_match and locked_branch:
-                if _confirm(f"Effectuer un 'git checkout {locked_branch}' automatique ?"):
-                    info(f"Changement de branche en cours...")
+                if _confirm(f"Perform automatic 'git checkout {locked_branch}'?"):
+                    info(f"Switching branch...")
                     subprocess.run(
                         ["git", "checkout", locked_branch],
                         cwd=str(workspace),
@@ -503,33 +520,33 @@ def ensure_correct_git_commit(
                     )
 
             if not commit_match and locked_commit:
-                if _confirm(f"Effectuer un 'git checkout {locked_commit[:8]}' automatique ?"):
-                    info(f"Alignement du commit en cours...")
+                if _confirm(f"Perform automatic 'git checkout {locked_commit[:8]}'?"):
+                    info(f"Aligning commit...")
                     subprocess.run(
                         ["git", "checkout", locked_commit],
                         cwd=str(workspace),
                         check=True,
                     )
-                    success("Workspace aligné.")
+                    success("Workspace aligned.")
                     return True
 
             if commit_match and branch_match:
-                success("Workspace aligné.")
+                success("Workspace aligned.")
                 return True
             else:
-                warn("Build avec mismatch (non recommandé).")
+                warn("Build with mismatch (not recommended).")
                 return True
         except Exception as e:
-            error(f"Échec alignement Git : {e}")
+            error(f"Git alignment failed: {e}")
             return False
     else:
-        warn("Alignement automatique non supporté sur cette plateforme.")
+        warn("Automatic alignment not supported on this platform.")
         if not branch_match and locked_branch:
-            info(f"Action manuelle requise : git checkout {locked_branch}")
+            info(f"Manual action required: git checkout {locked_branch}")
         if not commit_match and locked_commit:
-            info(f"Action manuelle requise : git checkout {locked_commit}")
+            info(f"Manual action required: git checkout {locked_commit}")
         from .interactive import ask_yes_no
-        return ask_yes_no("Continuer quand même ?", default_yes=False)
+        return ask_yes_no("Continue anyway?", default_yes=False)
 
 
 def list_engines_payload() -> dict[str, Any]:
@@ -569,7 +586,7 @@ def run_bcasl_before_compile_sync(
     console = get_console()
     status = None
     if not verbose and console:
-        status = console.status("[cyan]Exécution de BCASL...[/cyan]", spinner="dots")
+        status = console.status("[cyan]Running BCASL...[/cyan]", spinner="dots")
         register_cli_status(status)
         status.start()
 
@@ -635,7 +652,7 @@ def run_bcasl_before_compile_sync(
             unregister_cli_status(status)
 
     if _CLI_CANCEL_EVENT.is_set():
-        error("BCASL annule par l'utilisateur (Ctrl+C).")
+        error("BCASL cancelled by user (Ctrl+C).")
         return False
 
     if report is None:
@@ -692,7 +709,7 @@ def run_bcasl_headless(args: list[str], verbose: bool = False) -> int:
     status = None
     if not verbose and console:
         status = console.status(
-            "[cyan]Exécution de BCASL (headless)...[/cyan]", spinner="dots"
+            "[cyan]Running BCASL (headless)...[/cyan]", spinner="dots"
         )
         register_cli_status(status)
         status.start()
@@ -748,7 +765,7 @@ def run_bcasl_headless(args: list[str], verbose: bool = False) -> int:
             if status:
                 status.stop()
                 unregister_cli_status(status)
-            error("BCASL annule par l'utilisateur (Ctrl+C).")
+            error("BCASL cancelled by user (Ctrl+C).")
             return 1
 
         if report and hasattr(report, "ok") and not getattr(report, "ok"):
