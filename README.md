@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="./images/logo2.png" alt="PyCompiler ARK logo" width="100%"/>
+  <img src="./pycompiler_ark/images/logo2.png" alt="PyCompiler ARK logo" width="100%"/>
 </p>
 
 # **PyCompiler ARK**
@@ -44,7 +44,7 @@ pip install -r requirements.txt
 ### Launch
 
 ```bash
-python pycompiler_ark.py
+pycompiler_ark
 # or
 python -m pycompiler_ark
 ```
@@ -92,36 +92,36 @@ The ARK CLI provides a structured set of commands for workspace management, buil
 
 ```bash
 # Workspace Initialization
-python3 pycompiler_ark.py init --entry src/main.py [--icon icon.ico] [--with-venv]
+python3 -m pycompiler_ark init --entry src/main.py [--icon icon.ico] [--with-venv]
 
 # Building
-python3 pycompiler_ark.py build                      # Build using ark.yml engine
-python3 pycompiler_ark.py build --engine nuitka      # Override engine
-python3 pycompiler_ark.py build --lock latest.lock   # Rebuild from lock file
+python3 -m pycompiler_ark build                      # Build using ark.yml engine
+python3 -m pycompiler_ark build --engine nuitka      # Override engine
+python3 -m pycompiler_ark build --lock latest.lock   # Rebuild from lock file
 
 # Execution
-python3 pycompiler_ark.py run bcasl                  # Execute BCASL pipeline
-python3 pycompiler_ark.py run bcasl --list-plugins   # List active plugins
+python3 -m pycompiler_ark run bcasl                  # Execute BCASL pipeline
+python3 -m pycompiler_ark run bcasl --list-plugins   # List active plugins
 
 # GUI
-python3 pycompiler_ark.py gui                        # Launch modern IDE-like GUI
-python3 pycompiler_ark.py gui --legacy               # Launch classic GUI
+python3 -m pycompiler_ark gui                        # Launch modern IDE-like GUI
+python3 -m pycompiler_ark gui --legacy               # Launch classic GUI
 ```
 
 ### Developer Commands
 
 ```bash
 # Discovery
-python3 pycompiler_ark.py list engines               # List available engines
-python3 pycompiler_ark.py list plugins               # List available BCASL plugins
+python3 -m pycompiler_ark list engines               # List available engines
+python3 -m pycompiler_ark list plugins               # List available BCASL plugins
 
 # Configuration (User Paths)
-python3 pycompiler_ark.py set user-engine-dir /path  # Set custom engine directory
-python3 pycompiler_ark.py get user-engine-dir        # Retrieve path
+python3 -m pycompiler_ark set user-engine-dir /path  # Set custom engine directory
+python3 -m pycompiler_ark get user-engine-dir        # Retrieve path
 
 # Scaffolding
-python3 pycompiler_ark.py scaffold engine demo       # Create a new engine template
-python3 pycompiler_ark.py scaffold plugin-bcasl demo # Create a new BCASL plugin template
+python3 -m pycompiler_ark scaffold engine demo       # Create a new engine template
+python3 -m pycompiler_ark scaffold plugin-bcasl demo # Create a new BCASL plugin template
 ```
 
 ### JSON Output
@@ -129,8 +129,8 @@ python3 pycompiler_ark.py scaffold plugin-bcasl demo # Create a new BCASL plugin
 For CI/CD and scripting, key commands support the `--json` flag to return machine-readable results:
 
 ```bash
-python3 pycompiler_ark.py build --json
-python3 pycompiler_ark.py init --entry main.py --json
+python3 -m pycompiler_ark build --json
+python3 -m pycompiler_ark init --entry main.py --json
 ```
 
 ---
@@ -152,15 +152,15 @@ python3 pycompiler_ark.py init --entry main.py --json
 
 ## Project layout
 
-- `Ui/Cli/`: Command-line interface implementation and entry points.
-- `Core/`: Core business logic for compilation, workspace management, and settings.
-- `Core/Compiler/`: The **EngineRunner** and **MainProcess** (single source of truth for builds).
-- `engines/`: Built-in compilation engines (PyInstaller, Nuitka, cx_Freeze).
-- `bcasl/`: BCASL core engine and plugin loader.
-- `Plugins/`: Pre-compile pipeline plugins.
-- `engine_sdk/` & `Plugins_SDK/`: Developer kits for extending ARK.
-- `Ui/Forms/`: Qt Designer `.ui` files for the IDE-like and Classic layouts.
-- `languages/` & `themes/`: Application-wide translations and QSS themes.
+- `pycompiler_ark/Ui/Cli/`: Command-line interface implementation and entry points.
+- `pycompiler_ark/Core/`: Core business logic for compilation, workspace management, and settings.
+- `pycompiler_ark/Core/Compiler/`: The **EngineRunner** and **MainProcess** (single source of truth for builds).
+- `pycompiler_ark/engines/`: Built-in compilation engines (PyInstaller, Nuitka, cx_Freeze).
+- `pycompiler_ark/bcasl/`: BCASL core engine and plugin loader.
+- `pycompiler_ark/Plugins/`: Pre-compile pipeline plugins.
+- `pycompiler_ark/engine_sdk/` & `pycompiler_ark/Plugins_SDK/`: Developer kits for extending ARK.
+- `pycompiler_ark/Ui/Forms/`: Qt Designer `.ui` files for the IDE-like and Classic layouts.
+- `pycompiler_ark/languages/` & `pycompiler_ark/themes/`: Application-wide translations and QSS themes.
 
 ---
 
@@ -172,9 +172,9 @@ ruff check .
 pytest -q tests
 
 # Help discovery
-python3 pycompiler_ark.py --help
-python3 pycompiler_ark.py run bcasl --help
-python3 pycompiler_ark.py build --help
+python3 -m pycompiler_ark --help
+python3 -m pycompiler_ark run bcasl --help
+python3 -m pycompiler_ark build --help
 ```
 
 Quality status:
