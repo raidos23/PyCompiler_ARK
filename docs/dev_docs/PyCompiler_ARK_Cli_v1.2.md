@@ -8,7 +8,7 @@ This document defines the final, streamlined specification for the PyCompiler AR
 
 The CLI is designed to be simple, predictable, and headless-friendly.
 
-- **Unified Binary**: Use `pycompiler-ark` (or `python pycompiler_ark.py`).
+- **Unified Binary**: Use `pycompiler_ark` (or `python -m pycompiler_ark`).
 - **Explicit Commands**: No hidden magic; every action requires an explicit command.
 - **CLI-First**: All features accessible via GUI are also available via CLI.
 - **Reproducibility**: Guaranteed via functional locking comparison.
