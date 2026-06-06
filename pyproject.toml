@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "pycompiler-ark"
+name = "pycompiler_ark"
 version = "1.1.0"
 description = "Python Build Studio with multi-engine support and BCASL pre-compile pipeline."
 readme = "README.md"
@@ -42,7 +42,7 @@ dependencies = [
 ]
 
 [project.scripts]
-pycompiler-ark = "pycompiler_ark.__main__:main"
+pycompiler_ark = "pycompiler_ark.__main__:main"
 
 [project.urls]
 Homepage = "https://github.com/raidos23/PyCompiler_ARK"
