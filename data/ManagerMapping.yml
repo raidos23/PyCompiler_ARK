@@ -1,7 +1,0 @@
-managers:
-  pip:
-    create_venv: ["python", "-m", "venv"]
-    install: ["pip", "install", "-r"]
-    add: ["pip", "install"]
-    show: ["pip", "show"]
-    check: ["pip", "check"]
