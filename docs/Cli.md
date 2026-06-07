@@ -149,6 +149,7 @@ Initializes the current directory as a PyCompiler ARK workspace.
 - **Internal scan**: `--scan-internal` scans the workspace for internal project modules and proposes them for `build.include`.
 - **Confirmation**: When `--scan-internal` is used without `-y/--yes`, PyCompiler ARK asks for confirmation with a Rich prompt before writing to `ark.yml`.
 - **Auto-apply**: With `-y/--yes`, detected internal modules are written directly to `build.include`.
+- **GUI parity**: The init dialog in the Qt GUI exposes the same `scan-internal` behavior, but confirmation is handled with a Qt message box.
 
 #### **`pycompiler_ark build`**
 
