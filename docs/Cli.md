@@ -20,7 +20,7 @@ The CLI is designed to be simple, predictable, and headless-friendly.
 
 ```bash
 # Workspace (User)
-pycompiler_ark init --entry <path> [--icon <path>] [--with-venv] [--install-requirements] [--generate-requirements] [--scan-internal] [-y|--yes]
+pycompiler_ark init --entry <path> [--icon <path>] [--with-venv] [--install-requirements] [--generate-requirements] [--apply-internal] [-y|--yes]
 pycompiler_ark build [-y|--yes] [-v|--verbose] [--json]
 pycompiler_ark build --engine <id> [-y|--yes]
 pycompiler_ark build --lock [file] [-y|--yes]
@@ -146,16 +146,16 @@ Initializes the current directory as a PyCompiler ARK workspace.
 
 - **Requirement**: The directory must already exist.
 - **Validation**: `--entry` must point to a file, not a directory.
-- **Internal scan**: `--scan-internal` scans the workspace for internal project modules and proposes them for `build.include`.
-- **Confirmation**: When `--scan-internal` is used without `-y/--yes`, PyCompiler ARK asks for confirmation with a Rich prompt before writing to `ark.yml`.
+- **Internal apply**: `--apply-internal` scans the workspace for internal project modules and proposes them for `build.include`.
+- **Confirmation**: When `--apply-internal` is used without `-y/--yes`, PyCompiler ARK asks for confirmation with a Rich prompt before writing to `ark.yml`.
 - **Auto-apply**: With `-y/--yes`, detected internal modules are written directly to `build.include`.
-- **GUI parity**: The init dialog in the Qt GUI exposes the same `scan-internal` behavior, but confirmation is handled with a Qt message box.
+- **GUI parity**: The init dialog in the Qt GUI exposes the same `apply-internal` behavior, but confirmation is handled with a Qt message box.
 
 #### **`pycompiler_ark build`**
 
 - **Default**: Validates `ark.yml` and builds using the configured engine.
 - **Auto-Confirm**: `-y` or `--yes` bypasses all interactive prompts (Git alignment, BCASL plugin confirmations).
-- **Interactive Prompts**: `init --scan-internal` uses the same prompt flow and requires confirmation unless `-y` is provided.
+- **Interactive Prompts**: `init --apply-internal` uses the same prompt flow and requires confirmation unless `-y` is provided.
 - **Engine Override**: `--engine <id>` uses a temporary engine without modifying `ark.yml`.
 - **Reproducible Rebuild**: `--lock [file]` rebuilds strictly from a lock file (default: `.ark/lock/latest.lock.yml`).
   - **Git State**: Automatically verifies if the current branch and commit match the lock. Offers automatic checkout on Linux.

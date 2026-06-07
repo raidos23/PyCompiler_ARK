@@ -21,17 +21,17 @@ def _make_internal_workspace(root):
 
 
 @patch("pycompiler_ark.Ui.Cli.interactive.ask_yes_no", return_value=False)
-def test_init_workspace_scan_internal_prompts_and_can_decline(mock_confirm, tmp_path):
+def test_init_workspace_apply_internal_prompts_and_can_decline(mock_confirm, tmp_path):
     workspace = _make_internal_workspace(tmp_path)
 
     payload = init_workspace(
         cwd=workspace,
         entry="src/pkg/main.py",
-        scan_internal=True,
+        apply_internal=True,
         auto_confirm=False,
     )
 
-    assert payload["scan_internal"] is True
+    assert payload["apply_internal"] is True
     assert payload["internal_modules"] == ["pkg"]
     assert payload["internal_modules_applied"] is False
     assert load_ark_config(workspace)["build"]["include"] == []
@@ -39,17 +39,17 @@ def test_init_workspace_scan_internal_prompts_and_can_decline(mock_confirm, tmp_
 
 
 @patch("pycompiler_ark.Ui.Cli.interactive.ask_yes_no", return_value=True)
-def test_init_workspace_scan_internal_prompts_and_can_accept(mock_confirm, tmp_path):
+def test_init_workspace_apply_internal_prompts_and_can_accept(mock_confirm, tmp_path):
     workspace = _make_internal_workspace(tmp_path)
 
     payload = init_workspace(
         cwd=workspace,
         entry="src/pkg/main.py",
-        scan_internal=True,
+        apply_internal=True,
         auto_confirm=False,
     )
 
-    assert payload["scan_internal"] is True
+    assert payload["apply_internal"] is True
     assert payload["internal_modules"] == ["pkg"]
     assert payload["internal_modules_applied"] is True
     assert load_ark_config(workspace)["build"]["include"] == ["pkg"]
@@ -57,17 +57,17 @@ def test_init_workspace_scan_internal_prompts_and_can_accept(mock_confirm, tmp_p
 
 
 @patch("pycompiler_ark.Ui.Cli.interactive.ask_yes_no")
-def test_init_workspace_scan_internal_with_yes_flag(mock_confirm, tmp_path):
+def test_init_workspace_apply_internal_with_yes_flag(mock_confirm, tmp_path):
     workspace = _make_internal_workspace(tmp_path)
 
     payload = init_workspace(
         cwd=workspace,
         entry="src/pkg/main.py",
-        scan_internal=True,
+        apply_internal=True,
         auto_confirm=True,
     )
 
-    assert payload["scan_internal"] is True
+    assert payload["apply_internal"] is True
     assert payload["internal_modules"] == ["pkg"]
     assert payload["internal_modules_applied"] is True
     assert load_ark_config(workspace)["build"]["include"] == ["pkg"]

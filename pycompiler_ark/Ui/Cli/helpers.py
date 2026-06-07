@@ -255,7 +255,7 @@ def init_workspace(
     with_venv: bool = False,
     generate_requirements: bool = False,
     install_requirements: bool = False,
-    scan_internal: bool = False,
+    apply_internal: bool = False,
     auto_confirm: bool = False,
 ) -> dict[str, Any]:
     workspace = cwd.resolve()
@@ -292,7 +292,7 @@ def init_workspace(
 
     internal_modules: list[str] = []
     internal_modules_applied = False
-    if scan_internal:
+    if apply_internal:
         from pycompiler_ark.Core.deps_analyser.analyser import collect_internal_modules
 
         internal_modules = sorted(
@@ -376,7 +376,7 @@ def init_workspace(
         "venv": str(venv_path) if venv_path.exists() else None,
         "requirements": str(requirements_path) if requirements_path.exists() else None,
         "config": config,
-        "scan_internal": scan_internal,
+        "apply_internal": apply_internal,
         "internal_modules": internal_modules,
         "internal_modules_applied": internal_modules_applied,
     }
