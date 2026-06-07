@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="pycompiler_ark/images/logo2.png" alt="PyCompiler ARK logo" width="100%"/>
+  <img src="https://raw.githubusercontent.com/raidos23/PyCompiler_ARK/main/pycompiler_ark/images/logo2.png" alt="PyCompiler ARK logo" width="100%"/>
 </p>
 
 # **PyCompiler ARK**
@@ -99,9 +99,9 @@ python3 -m pycompiler_ark init --entry main.py --json
 
 ## Documentation
 
-- [Contributing guide](docs/contributing.md)
-- [How to create an engine](docs/how_to_create_an_engine.md)
-- [How to create a BC plugin](docs/how_to_create_a_bc_plugin.md)
+- [Contributing guide](https://github.com/raidos23/PyCompiler_ARK/blob/main/docs/contributing.md)
+- [How to create an engine](https://github.com/raidos23/PyCompiler_ARK/blob/main/docs/how_to_create_an_engine.md)
+- [How to create a BC plugin](https://github.com/raidos23/PyCompiler_ARK/blob/main/docs/how_to_create_a_bc_plugin.md)
 
 ---
 
@@ -114,4 +114,4 @@ python3 -m pycompiler_ark init --entry main.py --json
 
 ## License
 
-Apache-2.0 (see [`LICENSE`](LICENSE)).
+Apache-2.0 (see [`LICENSE`](https://github.com/raidos23/PyCompiler_ARK/blob/main/LICENSE)).
