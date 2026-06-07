@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 import unittest
 from unittest.mock import patch, MagicMock
-from Core.Venv_Manager.Manager import VenvManager
+from pycompiler_ark.Core.Venv_Manager.Manager import VenvManager
 
 
 class TestVenvManagerInternet(unittest.TestCase):

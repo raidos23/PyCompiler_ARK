@@ -1,6 +1,6 @@
 import pytest
-from Core.Locking import compare_lock_payloads
-from Ui.Cli.helpers import compare_lock_payloads as wrapper_compare_lock_payloads
+from pycompiler_ark.Core.Locking import compare_lock_payloads
+from pycompiler_ark.Ui.Cli.helpers import compare_lock_payloads as wrapper_compare_lock_payloads
 
 def test_wrapper_compare_lock_payloads_with_diff():
     """Test that the CLI helper wrapper correctly handles return_diff."""
