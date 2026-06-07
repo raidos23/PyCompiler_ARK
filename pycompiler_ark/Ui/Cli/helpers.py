@@ -309,7 +309,7 @@ def init_workspace(
     if install_requirements:
         if not requirements_path.exists():
             raise CliSpecError(
-                "requirements.txt not found. Run 'pycompiler-ark init --generate-requirements' first."
+                "requirements.txt not found. Run 'pycompiler_ark init --generate-requirements' first."
             )
         if not venv_path.exists():
             builder = venv.EnvBuilder(with_pip=True)
