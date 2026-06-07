@@ -19,7 +19,9 @@ PyCompiler ARK — Python Build Studio
 
 """
 
-if __name__ == "__main__":
-    from pycompiler_ark.Ui.Cli.entrypoint import main
+from pycompiler_ark.Ui.Cli.entrypoint import main
 
+__all__ = ["main"]
+
+if __name__ == "__main__":
     raise SystemExit(main())
