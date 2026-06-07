@@ -1,4 +1,14 @@
+from unittest.mock import MagicMock, patch
+
 from pycompiler_ark.Core.Configs import normalize_ark_config, should_exclude_file
+from pycompiler_ark.Core.Compiler.utils import check_internet_connection
+from pycompiler_ark.Core.Locking import (
+    build_lock_payload,
+    ensure_workspace_layout,
+    get_git_commit_hash,
+    included_workspace_files,
+    installed_distributions_snapshot,
+)
 
 
 def test_normalize_ark_config_empty():
@@ -45,16 +55,6 @@ def test_should_exclude_file(tmp_path):
     assert should_exclude_file(str(file_src), str(workspace), exclude) is False
 
 
-from pycompiler_ark.Core.Locking import (
-    ensure_workspace_layout,
-    included_workspace_files,
-    installed_distributions_snapshot,
-    get_git_commit_hash,
-    build_lock_payload,
-)
-from unittest.mock import patch, MagicMock
-
-
 def test_get_git_commit_hash(tmp_path):
     """Test Git commit hash retrieval (mocked)."""
     with patch("subprocess.run") as mock_run:
@@ -73,7 +73,7 @@ def test_build_lock_payload_with_git(tmp_path):
             "include": ["requests", "rich"]
         },
     }
-    with patch("Core.Locking.get_git_commit_hash") as mock_git:
+    with patch("pycompiler_ark.Core.Locking.get_git_commit_hash") as mock_git:
         mock_git.return_value = "git_hash_123"
         payload = build_lock_payload(tmp_path, config, engine_id="nuitka")
 
@@ -84,8 +84,6 @@ def test_build_lock_payload_with_git(tmp_path):
 
 def test_check_internet_connection_success():
     """Test internet check success (mocked)."""
-    from pycompiler_ark.Core.Compiler.utils import check_internet_connection
-
     with patch("socket.create_connection") as mock_conn:
         # Mock success on first IP
         mock_conn.return_value.__enter__.return_value = MagicMock()
@@ -94,8 +92,6 @@ def test_check_internet_connection_success():
 
 def test_check_internet_connection_failure():
     """Test internet check failure (mocked)."""
-    from pycompiler_ark.Core.Compiler.utils import check_internet_connection
-
     with patch("socket.create_connection", side_effect=Exception("Offline")):
         with patch("http.client.HTTPSConnection") as mock_http:
             mock_http.return_value.getresponse.side_effect = Exception("Offline")
