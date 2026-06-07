@@ -7,7 +7,7 @@ import sys
 # Add project root to sys.path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from Ui.Cli.runtime import _platform_log_dir
+from pycompiler_ark.Ui.Cli.runtime import _platform_log_dir
 
 
 class TestCliRuntime(unittest.TestCase):

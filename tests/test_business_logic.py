@@ -1,4 +1,4 @@
-from Core.Configs import normalize_ark_config, should_exclude_file
+from pycompiler_ark.Core.Configs import normalize_ark_config, should_exclude_file
 
 
 def test_normalize_ark_config_empty():
@@ -45,7 +45,7 @@ def test_should_exclude_file(tmp_path):
     assert should_exclude_file(str(file_src), str(workspace), exclude) is False
 
 
-from Core.Locking import (
+from pycompiler_ark.Core.Locking import (
     ensure_workspace_layout,
     included_workspace_files,
     installed_distributions_snapshot,
@@ -84,7 +84,7 @@ def test_build_lock_payload_with_git(tmp_path):
 
 def test_check_internet_connection_success():
     """Test internet check success (mocked)."""
-    from Core.Compiler.utils import check_internet_connection
+    from pycompiler_ark.Core.Compiler.utils import check_internet_connection
 
     with patch("socket.create_connection") as mock_conn:
         # Mock success on first IP
@@ -94,7 +94,7 @@ def test_check_internet_connection_success():
 
 def test_check_internet_connection_failure():
     """Test internet check failure (mocked)."""
-    from Core.Compiler.utils import check_internet_connection
+    from pycompiler_ark.Core.Compiler.utils import check_internet_connection
 
     with patch("socket.create_connection", side_effect=Exception("Offline")):
         with patch("http.client.HTTPSConnection") as mock_http:
