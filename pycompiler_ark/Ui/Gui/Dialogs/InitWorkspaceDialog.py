@@ -84,14 +84,14 @@ class InitWorkspaceDialog(QDialog):
         self.chk_venv.toggled.connect(self.chk_install.setEnabled)
         form.addRow("", self.chk_install)
 
-        self.chk_scan_internal = QCheckBox(
+        self.chk_apply_internal = QCheckBox(
             self.gui.tr(
-                "Scanner les modules internes du projet",
-                "Scan internal project modules",
+                "Appliquer les modules internes détectés",
+                "Apply detected internal modules",
             )
         )
-        self.chk_scan_internal.setChecked(False)
-        form.addRow("", self.chk_scan_internal)
+        self.chk_apply_internal.setChecked(False)
+        form.addRow("", self.chk_apply_internal)
         
         layout.addLayout(form)
         
@@ -162,9 +162,9 @@ class InitWorkspaceDialog(QDialog):
             
         self.btn_init.setEnabled(False)
         try:
-            scan_internal = bool(self.chk_scan_internal.isChecked())
+            apply_internal = bool(self.chk_apply_internal.isChecked())
             effective_auto_confirm = False
-            if scan_internal:
+            if apply_internal:
                 detected_internal = []
                 try:
                     detected_internal = sorted(
@@ -192,7 +192,7 @@ class InitWorkspaceDialog(QDialog):
                         QMessageBox.StandardButton.No,
                     )
                     if choice == QMessageBox.StandardButton.No:
-                        scan_internal = False
+                        apply_internal = False
                     else:
                         effective_auto_confirm = True
                 else:
@@ -204,7 +204,7 @@ class InitWorkspaceDialog(QDialog):
                 generate_requirements=self.chk_reqs.isChecked(),
                 with_venv=self.chk_venv.isChecked(),
                 install_requirements=self.chk_install.isChecked(),
-                scan_internal=scan_internal,
+                apply_internal=apply_internal,
                 auto_confirm=effective_auto_confirm,
             )
             
