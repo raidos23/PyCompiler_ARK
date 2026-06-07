@@ -1,0 +1,74 @@
+from __future__ import annotations
+
+from unittest.mock import patch
+
+from pycompiler_ark.Core.Configs import load_ark_config
+from pycompiler_ark.Ui.Cli.helpers import init_workspace
+
+
+def _make_internal_workspace(root):
+    workspace = root / "workspace"
+    package_dir = workspace / "src" / "pkg"
+    package_dir.mkdir(parents=True)
+    (package_dir / "__init__.py").write_text("", encoding="utf-8")
+    (package_dir / "internal_mod.py").write_text(
+        "VALUE = 1\n", encoding="utf-8"
+    )
+    (package_dir / "main.py").write_text(
+        "from .internal_mod import VALUE\n", encoding="utf-8"
+    )
+    return workspace
+
+
+@patch("pycompiler_ark.Ui.Cli.interactive.ask_yes_no", return_value=False)
+def test_init_workspace_scan_internal_prompts_and_can_decline(mock_confirm, tmp_path):
+    workspace = _make_internal_workspace(tmp_path)
+
+    payload = init_workspace(
+        cwd=workspace,
+        entry="src/pkg/main.py",
+        scan_internal=True,
+        auto_confirm=False,
+    )
+
+    assert payload["scan_internal"] is True
+    assert payload["internal_modules"] == ["pkg"]
+    assert payload["internal_modules_applied"] is False
+    assert load_ark_config(workspace)["build"]["include"] == []
+    mock_confirm.assert_called_once()
+
+
+@patch("pycompiler_ark.Ui.Cli.interactive.ask_yes_no", return_value=True)
+def test_init_workspace_scan_internal_prompts_and_can_accept(mock_confirm, tmp_path):
+    workspace = _make_internal_workspace(tmp_path)
+
+    payload = init_workspace(
+        cwd=workspace,
+        entry="src/pkg/main.py",
+        scan_internal=True,
+        auto_confirm=False,
+    )
+
+    assert payload["scan_internal"] is True
+    assert payload["internal_modules"] == ["pkg"]
+    assert payload["internal_modules_applied"] is True
+    assert load_ark_config(workspace)["build"]["include"] == ["pkg"]
+    mock_confirm.assert_called_once()
+
+
+@patch("pycompiler_ark.Ui.Cli.interactive.ask_yes_no")
+def test_init_workspace_scan_internal_with_yes_flag(mock_confirm, tmp_path):
+    workspace = _make_internal_workspace(tmp_path)
+
+    payload = init_workspace(
+        cwd=workspace,
+        entry="src/pkg/main.py",
+        scan_internal=True,
+        auto_confirm=True,
+    )
+
+    assert payload["scan_internal"] is True
+    assert payload["internal_modules"] == ["pkg"]
+    assert payload["internal_modules_applied"] is True
+    assert load_ark_config(workspace)["build"]["include"] == ["pkg"]
+    mock_confirm.assert_not_called()

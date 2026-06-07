@@ -87,6 +87,8 @@ build:
 - `build.include` forces Python packages to be bundled even when automatic detection is not enough.
 - `build.exclude` ignores Python packages that should not be bundled.
 - `build.include` is the complement of `build.exclude`, not a UI filter and not a generic file/folder rule.
+- During `pycompiler_ark init`, `--scan-internal` can prefill `build.include` with internal modules detected in the workspace.
+- Without `-y/--yes`, PyCompiler ARK asks for confirmation before writing those detected modules into `ark.yml`.
 
 PyCompiler ARK translates `build.include` automatically according to the selected engine:
 
