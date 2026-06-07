@@ -351,7 +351,7 @@ def build_cli():
     @click.option("--install-requirements", is_flag=True)
     @click.option("--generate-requirements", is_flag=True)
     @click.option(
-        "--scan-internal",
+        "--apply-internal",
         is_flag=True,
         help="Detect internal project modules and propose them for build.include.",
     )
@@ -365,7 +365,7 @@ def build_cli():
         with_venv,
         install_requirements,
         generate_requirements,
-        scan_internal,
+        apply_internal,
         auto_confirm,
         as_json,
     ):
@@ -378,7 +378,7 @@ def build_cli():
                 with_venv=with_venv,
                 generate_requirements=generate_requirements,
                 install_requirements=install_requirements,
-                scan_internal=scan_internal,
+                apply_internal=apply_internal,
                 auto_confirm=auto_confirm,
             )
         except CliSpecError as exc:
@@ -391,7 +391,7 @@ def build_cli():
 
         success(f"Workspace initialized: {payload['workspace']}")
         info(f"ark.yml: {payload['ark_yml']}")
-        if payload.get("scan_internal"):
+        if payload.get("apply_internal"):
             detected = payload.get("internal_modules", [])
             if detected:
                 info(
