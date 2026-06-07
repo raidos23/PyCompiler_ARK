@@ -309,9 +309,9 @@ def init_workspace(
 
                 with cli_pause_for_user_input():
                     detected = ", ".join(internal_modules)
-                    info(f"Internal modules detected: {detected}")
+                    info(f"Internal modules to apply: {detected}")
                     if ask_yes_no(
-                        "Add these internal modules to build.include?",
+                        "Apply these internal modules to build.include?",
                         default_yes=False,
                     ):
                         config["build"]["include"] = internal_modules

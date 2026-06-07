@@ -394,10 +394,7 @@ def build_cli():
         if payload.get("apply_internal"):
             detected = payload.get("internal_modules", [])
             if detected:
-                info(
-                    "Internal modules detected: "
-                    + ", ".join(str(item) for item in detected)
-                )
+                info("Internal modules to apply: " + ", ".join(str(item) for item in detected))
                 if payload.get("internal_modules_applied"):
                     info("build.include updated automatically.")
                 else:
