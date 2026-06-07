@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "pycompiler_ark"
-version = "1.0.1"
+version = "1.0.0"
 description = "Python Build Studio with multi-engine support and BCASL pre-compile pipeline."
 readme = "README.md"
 requires-python = ">=3.11"
