@@ -350,9 +350,24 @@ def build_cli():
     @click.option("--with-venv", is_flag=True)
     @click.option("--install-requirements", is_flag=True)
     @click.option("--generate-requirements", is_flag=True)
+    @click.option(
+        "--scan-internal",
+        is_flag=True,
+        help="Detect internal project modules and propose them for build.include.",
+    )
+    @click.option(
+        "--yes", "-y", "auto_confirm", is_flag=True, help="Auto-confirm all prompts."
+    )
     @click.option("--json", "as_json", is_flag=True)
     def init_cmd(
-        entry, icon, with_venv, install_requirements, generate_requirements, as_json
+        entry,
+        icon,
+        with_venv,
+        install_requirements,
+        generate_requirements,
+        scan_internal,
+        auto_confirm,
+        as_json,
     ):
         """Initialize the current directory as a PyCompiler ARK workspace."""
         try:
@@ -363,6 +378,8 @@ def build_cli():
                 with_venv=with_venv,
                 generate_requirements=generate_requirements,
                 install_requirements=install_requirements,
+                scan_internal=scan_internal,
+                auto_confirm=auto_confirm,
             )
         except CliSpecError as exc:
             raise click.ClickException(str(exc))
@@ -374,6 +391,17 @@ def build_cli():
 
         success(f"Workspace initialized: {payload['workspace']}")
         info(f"ark.yml: {payload['ark_yml']}")
+        if payload.get("scan_internal"):
+            detected = payload.get("internal_modules", [])
+            if detected:
+                info(
+                    "Internal modules detected: "
+                    + ", ".join(str(item) for item in detected)
+                )
+                if payload.get("internal_modules_applied"):
+                    info("build.include updated automatically.")
+                else:
+                    info("Pass -y to write them into build.include.")
         if payload.get("venv"):
             info(f"Venv: {payload['venv']}")
         if payload.get("requirements"):

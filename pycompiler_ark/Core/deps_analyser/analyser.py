@@ -873,6 +873,70 @@ def collect_project_dependencies(
     return all_deps
 
 
+def collect_internal_modules(workspace_dir: str) -> set[str]:
+    """
+    Collect internal project modules/packages referenced by imports.
+
+    This is intended for build.include prefill during workspace initialization.
+    It intentionally ignores third-party modules because auto-mapping already
+    handles them elsewhere in the build pipeline.
+    """
+    workspace_dir = _normalize_realpath(workspace_dir)
+    if not workspace_dir or not os.path.isdir(workspace_dir):
+        return set()
+
+    internal_modules: set[str] = set()
+    workspace_python_files: list[str] = []
+
+    for root, dirs, files in os.walk(workspace_dir):
+        dirs[:] = [
+            d
+            for d in dirs
+            if d
+            not in (
+                ".venv",
+                "venv",
+                ".env",
+                "env",
+                "__pycache__",
+                ".git",
+                "build",
+                "dist",
+                "tests",
+                "test",
+            )
+        ]
+        for file in files:
+            if not file.endswith(".py"):
+                continue
+            file_path = os.path.join(root, file)
+            workspace_python_files.append(file_path)
+            try:
+                imported = _extract_imported_modules_from_file(file_path, workspace_dir)
+            except Exception:
+                continue
+            for module_name in imported:
+                if _classify_module_origin(module_name, workspace_dir) == "internal":
+                    top = _top_level_module_name(module_name)
+                    if top:
+                        internal_modules.add(top)
+
+    # Also consider hinted package roots discovered from the source tree itself.
+    try:
+        internal_roots = _collect_workspace_module_roots(
+            workspace_python_files, workspace_dir
+        )
+        for module_name in internal_roots:
+            if _classify_module_origin(module_name, workspace_dir) == "internal":
+                top = _top_level_module_name(module_name)
+                if top:
+                    internal_modules.add(top)
+    except Exception:
+        pass
+
+    return set(sorted(internal_modules))
+
+
 def write_requirements_txt(
     workspace_dir: str, output_path: str | None = None, include_dev: bool = False
 ) -> str | None:

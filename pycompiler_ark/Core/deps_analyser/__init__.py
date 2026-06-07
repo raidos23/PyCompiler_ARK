@@ -35,6 +35,7 @@ from __future__ import annotations
 from .analyser import (
     _check_module_installed,
     _is_stdlib_module,
+    collect_internal_modules,
     collect_project_dependencies,
     write_requirements_txt,
 )
@@ -42,6 +43,7 @@ from .analyser import (
 __all__ = [
     "_check_module_installed",
     "_is_stdlib_module",
+    "collect_internal_modules",
     "collect_project_dependencies",
     "write_requirements_txt",
 ]
