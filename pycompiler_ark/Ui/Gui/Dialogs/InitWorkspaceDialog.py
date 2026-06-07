@@ -36,6 +36,7 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
 )
 
+from pycompiler_ark.Core.deps_analyser import collect_internal_modules
 from pycompiler_ark.Ui.Cli.helpers import init_workspace
 
 
@@ -82,6 +83,15 @@ class InitWorkspaceDialog(QDialog):
         self.chk_install.setEnabled(False)
         self.chk_venv.toggled.connect(self.chk_install.setEnabled)
         form.addRow("", self.chk_install)
+
+        self.chk_scan_internal = QCheckBox(
+            self.gui.tr(
+                "Scanner les modules internes du projet",
+                "Scan internal project modules",
+            )
+        )
+        self.chk_scan_internal.setChecked(False)
+        form.addRow("", self.chk_scan_internal)
         
         layout.addLayout(form)
         
@@ -93,6 +103,16 @@ class InitWorkspaceDialog(QDialog):
         note.setWordWrap(True)
         note.setStyleSheet("color: #888; font-style: italic;")
         layout.addWidget(note)
+
+        scan_note = QLabel(
+            self.gui.tr(
+                "Si activé, la liste des modules internes détectés sera proposée pour build.include avant écriture.",
+                "If enabled, detected internal modules will be proposed for build.include before writing.",
+            )
+        )
+        scan_note.setWordWrap(True)
+        scan_note.setStyleSheet("color: #888; font-style: italic;")
+        layout.addWidget(scan_note)
         
         layout.addStretch()
 
@@ -142,12 +162,50 @@ class InitWorkspaceDialog(QDialog):
             
         self.btn_init.setEnabled(False)
         try:
+            scan_internal = bool(self.chk_scan_internal.isChecked())
+            effective_auto_confirm = False
+            if scan_internal:
+                detected_internal = []
+                try:
+                    detected_internal = sorted(
+                        collect_internal_modules(str(Path(ws))),
+                        key=lambda item: item.lower(),
+                    )
+                except Exception:
+                    detected_internal = []
+
+                if detected_internal:
+                    title = self.gui.tr(
+                        "Confirmer le scan interne",
+                        "Confirm internal scan",
+                    )
+                    message = self.gui.tr(
+                        "Modules internes détectés :\n{modules}\n\nLes ajouter à build.include ?",
+                        "Internal modules detected:\n{modules}\n\nAdd them to build.include?",
+                    ).format(modules="\n".join(f"- {item}" for item in detected_internal))
+                    choice = QMessageBox.question(
+                        self,
+                        title,
+                        message,
+                        QMessageBox.StandardButton.Yes
+                        | QMessageBox.StandardButton.No,
+                        QMessageBox.StandardButton.No,
+                    )
+                    if choice == QMessageBox.StandardButton.No:
+                        scan_internal = False
+                    else:
+                        effective_auto_confirm = True
+                else:
+                    effective_auto_confirm = True
+
             payload = init_workspace(
                 cwd=Path(ws),
                 entry=entry,
                 generate_requirements=self.chk_reqs.isChecked(),
                 with_venv=self.chk_venv.isChecked(),
-                install_requirements=self.chk_install.isChecked()
+                install_requirements=self.chk_install.isChecked(),
+                scan_internal=scan_internal,
+                auto_confirm=effective_auto_confirm,
             )
             
             msg = self.gui.tr("Projet initialisé avec succès !", "init_project_success")

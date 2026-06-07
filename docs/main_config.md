@@ -147,3 +147,11 @@ The main GUI has an **Advanced Configuration** button that opens a dedicated edi
 
 - A dedicated **Inclusions Build** field is now available for `build.include`.
 - The **Exclusions Build** label now explicitly means "Python packages to ignore" to avoid ambiguity with workspace filters.
+
+## Workspace Initialization (GUI)
+
+The **Initialize Project** dialog in the GUI exposes the same internal-module scan as the CLI:
+
+- A **Scan internal project modules** checkbox lets ARK detect local modules and propose them for `build.include`.
+- The GUI asks for confirmation with a Qt message box before writing those modules into `ark.yml`.
+- If the scan is accepted, the detected internal modules are persisted automatically during workspace initialization.
