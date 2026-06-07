@@ -6,24 +6,18 @@ Thank you for your interest in contributing to PyCompiler ARK! This workshop is 
 
 If you are a developer looking to extend PyCompiler ARK's functionality, please refer to the following guides:
 
-- **Creating a Compilation Engine**: [docs/how_to_create_an_engine.md](how_to_create_an_engine.md)
-  Learn how to package and register a new compiler (e.g., Py2Exe, Docker).
-- **Creating a Pre-Compile Plugin**: [docs/how_to_create_a_bc_plugin.md](how_to_create_a_bc_plugin.md)
+- **Creating a Compilation Engine**: [how_to_create_an_engine.md](how_to_create_an_engine.md)
+  Learn how to package and register a new compiler (e.g., Py2Exe).
+- **Creating a Pre-Compile Plugin**: [how_to_create_a_bc_plugin.md](how_to_create_a_bc_plugin.md)
   Learn how to add validation, cleanup, or preparation steps to the build pipeline.
 
 ## **Technical Specifications**
 
 For a deeper dive into PyCompiler ARK's internal architecture, review our core specifications:
 
-- **BuildContext Spec**: [docs/dev_docs/PyCompiler_ARK_BuildContext_v1.0.md](dev_docs/PyCompiler_ARK_BuildContext_v1.0.md)
-- **CLI Spec**: [docs/dev_docs/PyCompiler_ARK_Cli_v1.2.md](dev_docs/PyCompiler_ARK_Cli_v1.2.md)
-- **Locking Spec**: [docs/dev_docs/PyCompiler_ARK_Locking_v1.2.md](dev_docs/PyCompiler_ARK_Locking_v1.2.md)
-
-## **Development Workflow**
-
-1. **Code Style**: We use `ruff` for linting and `black` for formatting.
-2. **Testing**: Run tests using `pytest`.
-3. **Engine Registry**: New engines should be placed in the `ENGINES/` directory.
+- **BuildContext Spec**: [BuildContext.md](BuildContext.md)
+- **CLI Spec**: [Cli.md](Cli.md)
+- **Locking Spec**: [Locking.md](Locking.md)
 
 ## **License**
 

@@ -1,6 +1,6 @@
-# **PyCompiler ARK CLI Specification v1.3**
+# **PyCompiler ARK CLI Specification v1.0.0**
 
-This document defines the final, streamlined specification for the PyCompiler ARK Command Line Interface.
+This document defines the streamlined specification for the PyCompiler ARK command line interface.
 
 ---
 
@@ -20,41 +20,41 @@ The CLI is designed to be simple, predictable, and headless-friendly.
 
 ```bash
 # Workspace (User)
-pycompiler-ark init --entry <path> [--icon <path>] [--with-venv] [--install-requirements] [--generate-requirements]
-pycompiler-ark build [-y|--yes] [-v|--verbose] [--json]
-pycompiler-ark build --engine <id> [-y|--yes]
-pycompiler-ark build --lock [file] [-y|--yes]
+pycompiler_ark init --entry <path> [--icon <path>] [--with-venv] [--install-requirements] [--generate-requirements]
+pycompiler_ark build [-y|--yes] [-v|--verbose] [--json]
+pycompiler_ark build --engine <id> [-y|--yes]
+pycompiler_ark build --lock [file] [-y|--yes]
 
 # Execution
-pycompiler-ark run bcasl [-y|--yes] [--list-plugins]
+pycompiler_ark run bcasl [-y|--yes] [--list-plugins]
 
 # GUI
-pycompiler-ark gui
-pycompiler-ark gui --legacy 
+pycompiler_ark gui
+pycompiler_ark gui --legacy
 
 # Configuration (Developer)
-pycompiler-ark set user-engine-dir <path>
-pycompiler-ark set user-plugin-dir <path>
-pycompiler-ark set dev-engine-dir <path>
-pycompiler-ark set dev-plugin-dir <path> 
+pycompiler_ark set user-engine-dir <path>
+pycompiler_ark set user-plugin-dir <path>
+pycompiler_ark set dev-engine-dir <path>
+pycompiler_ark set dev-plugin-dir <path>
 
-pycompiler-ark get user-engine-dir
-pycompiler-ark get user-plugin-dir
-pycompiler-ark get dev-engine-dir
-pycompiler-ark get dev-plugin-dir 
+pycompiler_ark get user-engine-dir
+pycompiler_ark get user-plugin-dir
+pycompiler_ark get dev-engine-dir
+pycompiler_ark get dev-plugin-dir
 
-pycompiler-ark unset user-engine-dir
-pycompiler-ark unset user-plugin-dir
-pycompiler-ark unset dev-engine-dir
-pycompiler-ark unset dev-plugin-dir 
+pycompiler_ark unset user-engine-dir
+pycompiler_ark unset user-plugin-dir
+pycompiler_ark unset dev-engine-dir
+pycompiler_ark unset dev-plugin-dir
 
 # Discovery
-pycompiler-ark list engines
-pycompiler-ark list plugins 
+pycompiler_ark list engines
+pycompiler_ark list plugins
 
 # Scaffolding
-pycompiler-ark scaffold engine <name> [--path <dir>]
-pycompiler-ark scaffold plugin-bcasl <name> [--path <dir>]
+pycompiler_ark scaffold engine <name> [--path <dir>]
+pycompiler_ark scaffold plugin-bcasl <name> [--path <dir>]
 ```
 
 ---
@@ -63,8 +63,8 @@ pycompiler-ark scaffold plugin-bcasl <name> [--path <dir>]
 
 | GUI Mode | Command | Status |
 | :--- | :--- | :--- |
-| **IDE-like GUI** | `pycompiler-ark gui` | **Active** (Modern, full feature set) |
-| **Classic GUI** | `pycompiler-ark gui --legacy` | **Frozen** (Legacy maintenance only) |
+| **IDE-like GUI** | `pycompiler_ark gui` | **Active** (Modern, full feature set) |
+| **Classic GUI** | `pycompiler_ark gui --legacy` | **Frozen** (Legacy maintenance only) |
 
 ---
 
@@ -74,7 +74,7 @@ PyCompiler ARK loads components from multiple locations in order of priority:
 
 | Tier | Role | Default Location |
 | :--- | :--- | :--- |
-| **Dev** | Development | Optional (set via `pycompiler-ark set dev-*`) |
+| **Dev** | Development | Optional (set via `pycompiler_ark set dev-*`) |
 | **User** | User-installed | `~/ark_user/` (created automatically) |
 | **Core** | Built-in engines | `ENGINES/` folder in installation root |
 
@@ -140,14 +140,14 @@ plugins:
 
 ### **8. Detailed Command Behavior**
 
-#### **`pycompiler-ark init --entry <path>`**
+#### **`pycompiler_ark init --entry <path>`**
 
 Initializes the current directory as a PyCompiler ARK workspace.
 
 - **Requirement**: The directory must already exist.
 - **Validation**: `--entry` must point to a file, not a directory.
 
-#### **`pycompiler-ark build`**
+#### **`pycompiler_ark build`**
 
 - **Default**: Validates `ark.yml` and builds using the configured engine.
 - **Auto-Confirm**: `-y` or `--yes` bypasses all interactive prompts (Git alignment, BCASL plugin confirmations).
@@ -157,7 +157,7 @@ Initializes the current directory as a PyCompiler ARK workspace.
   - **Integrity Check**: PyCompiler ARK generates a shadow lock from the rebuild environment and performs a **Functional Equivalence** comparison. Detailed diffs are displayed in case of mismatch.
 - **Constraint**: `--engine` and `--lock` cannot be used together.
 
-#### **`pycompiler-ark run bcasl`**
+#### **`pycompiler_ark run bcasl`**
 
 Executes the pre-compilation pipeline manually.
 - **Auto-Confirm**: `-y` or `--yes` ensures all plugins demanding confirmation are automatically accepted.
@@ -167,9 +167,9 @@ Executes the pre-compilation pipeline manually.
 ### **9. Summary Rules**
 
 - **CLI1**: Non-interactive by default when `-y` is provided.
-- **CLI2**: `pycompiler-ark init` only operates on the current working directory.
+- **CLI2**: `pycompiler_ark init` only operates on the current working directory.
 - **CLI3**: All build artifacts and metadata stay inside the workspace `.ark/` folder.
 - **CLI4**: Engines and plugins follow a clear `dev > user > core` priority.
 
 ---
-*End of Specification v1.3*
+*End of Specification v1.0.0*

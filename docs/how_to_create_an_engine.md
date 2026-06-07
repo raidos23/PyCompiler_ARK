@@ -1,23 +1,23 @@
-## **PyCompiler_ARK Engine Guide**
+## **PyCompiler ARK Engine Guide**
 
 Practical reference for building, packaging, and integrating custom compilation engines.
 
 ### **Overview**
 
-A PyCompiler_ARK engine is a Python package placed in `engines/` and auto‑loaded at startup. It registers itself with `@engine_register` and provides a `CompilerEngine` that builds the compile command and, optionally, a dedicated UI tab.
+A PyCompiler ARK engine is a Python package placed in `pycompiler_ark/engines/<engine_id>/` and auto-loaded at startup. It registers itself with `@engine_register` and provides a `CompilerEngine` that builds the compile command and, optionally, a dedicated UI tab.
 
 ### **Discovery And Loading**
 
-- Engines are discovered only in `engines/<engine_id>/`.
+- Engines are discovered in `pycompiler_ark/engines/<engine_id>/` for built-in engines, and in the configured engine directories for user or dev overlays.
 - The folder must contain an `__init__.py`.
 - Discovery is lazy: the registry loads engines on first real access such as `get_engine`, `available_engines`, `create`, or `bind_tabs`.
 - Auto discovery can be disabled with `ARK_ENGINES_AUTO_DISCOVER=0`.
 
 ### **Package Layout**
 
-- `engines/<engine_id>/__init__.py`: engine code, registration, UI.
-- `engines/<engine_id>/languages/<code>.json`: optional translations.
-- `engines/<engine_id>/mapping.json`: optional mapping for the auto‑builder.
+- `pycompiler_ark/engines/<engine_id>/__init__.py`: engine code, registration, UI.
+- `pycompiler_ark/engines/<engine_id>/languages/<code>.json`: optional translations.
+- `pycompiler_ark/engines/<engine_id>/mapping.json`: optional mapping for the auto-builder.
 - Optional internal modules, assets, helpers.
 
 #### **Minimal Example**
@@ -26,7 +26,7 @@ A PyCompiler_ARK engine is a Python package placed in `engines/` and auto‑load
 from __future__ import annotations
 
 import sys
-from engine_sdk import BuildContext, CompilerEngine, engine_register
+from pycompiler_ark.engine_sdk import BuildContext, CompilerEngine, engine_register
 
 
 @engine_register
@@ -34,7 +34,7 @@ class MyEngine(CompilerEngine):
     id = "my_engine"
     name = "My Engine"
     version = "0.1.0"
-    required_core_version = "1.1.0"
+    required_core_version = "1.0.0"
     required_sdk_version = "1.0.0"
 
     @property
@@ -47,7 +47,7 @@ class MyEngine(CompilerEngine):
 
 ### **Lifecycle**
 
-1. Package import from `engines/<engine_id>`.
+1. Package import from the engine package directory.
 2. `@engine_register` adds the class to the registry.
 3. The GUI calls `create_tab` if present to create a tab.
 4. When compile is triggered, the engine provides the command via `build_command`.
@@ -57,8 +57,9 @@ class MyEngine(CompilerEngine):
 
 The workspace defines its entrypoint in `ark.yml` under `project.entry`.
 That value is normalized by Core into `BuildContext.entry_point` and used as the
-primary script for compilation. A legacy `build.entrypoint` key is still accepted
-as a fallback during normalization, but `project.entry` is the canonical field.
+primary script for compilation. A legacy `build.entrypoint` key may still be
+accepted by the normalizer for older workspaces, but `project.entry` is the
+canonical field.
 
 See `docs/ark_main_config.md`.
 
@@ -103,13 +104,13 @@ Tools and dependencies.
 - Avoid heavy work in `__init__` to keep loading fast.
 - Wire signals locally and prefer `gui.log.append(...)` for logs.
 - Do not add your own scroll area unless you need custom behavior; the host wraps large engine tabs automatically.
-- **IMPORTANT**: Do not include UI components for **Icon** selection or **Output directory** in your engine tab. These are globally managed in `ark.yml` and passed to your engine via the `BuildContext`. Focus only on engine‑specific flags and options.
+- **IMPORTANT**: Do not include UI components for **Icon** selection or **Output directory** in your engine tab. These are globally managed in `ark.yml` and carried by `BuildContext`. Focus only on engine-specific flags and options.
 - Prefer grouping options with `QGroupBox` sections and compact hints, following the built-in engines layout style.
 - Keep widget attribute names stable once they are used by config persistence or compilation logic.
 
 ### **Engine Config (get_config / set_config)**
 
-ARK can persist engine UI options per workspace in:
+PyCompiler ARK can persist engine UI options per workspace in:
 `<workspace>/.ark/<engine_id>/config.json`.
 
 Flow:
@@ -208,7 +209,7 @@ from PySide6.QtWidgets import (
     QLineEdit,
     QPushButton,
 )
-from engine_sdk import BuildContext, CompilerEngine, engine_register
+from pycompiler_ark.engine_sdk import BuildContext, CompilerEngine, engine_register
 
 
 @engine_register
@@ -241,35 +242,14 @@ class MonolithicEngine(CompilerEngine):
     def create_tab(self, gui):
         root = QWidget()
         root_layout = QVBoxLayout(root)
-        # ... (GUI setup omitted for brevity, see SDK helpers)
+        # ... (GUI setup omitted for brevity, see engine-specific widget patterns below)
         return root, "Monolithic"
 ```
 
 **SDK UI Helpers**
-Use the shared helpers to reduce duplication across engines.
-
-```python
-from engine_sdk import add_form_checkbox, add_icon_selector, add_output_dir
-
-# Inside create_tab(...)
-form = QFormLayout()
-self._opt_onefile = add_form_checkbox(form, "Mode:", "Onefile", "opt_onefile_dynamic")
-self._opt_windowed = add_form_checkbox(form, "Console:", "Windowed", "opt_windowed_dynamic")
-
-self._btn_select_icon, self._icon_path_input = add_icon_selector(
-    layout,
-    "🎨 Choose icon (.ico)",
-    self.select_icon,
-    "btn_select_icon_dynamic",
-    "icon_path_input_dynamic",
-)
-
-self._output_dir_input = add_output_dir(
-    layout,
-    "Output directory",
-    "output_dir_input_dynamic",
-)
-```
+Use shared widgets only for engine-specific options. Do not add helper widgets
+for icon or output directory selection in new engines: those fields are already
+represented in `BuildContext` and managed globally.
 
 **I18n**
 
@@ -278,37 +258,35 @@ self._output_dir_input = add_output_dir(
   - simple mode with `engine_translate(...)` for direct key lookup
   - advanced mode with `apply_i18n(...)` for explicit widget refresh on language changes
 - The host keeps engine translations synchronized automatically when the language changes.
-- See `engines/pyinstaller`, `engines/nuitka`, `engines/cx_freeze` for patterns.
+- See `pycompiler_ark/engines/pyinstaller`, `pycompiler_ark/engines/nuitka`, `pycompiler_ark/engines/cx_freeze` for patterns.
 Concrete example (files + code).
 
-`engines/my_engine/languages/en.json`
+`pycompiler_ark/engines/my_engine/languages/en.json`
 
 ```json
 {
   "tab_title": "My Engine",
   "opt_onefile": "Onefile",
   "opt_clean": "Clean build",
-  "btn_icon": "Choose icon",
-  "label_output": "Output directory"
+  "btn_action": "Action"
 }
 ```
 
-`engines/my_engine/languages/fr.json`
+`pycompiler_ark/engines/my_engine/languages/fr.json`
 
 ```json
 {
   "tab_title": "Mon Moteur",
   "opt_onefile": "Un seul fichier",
   "opt_clean": "Build propre",
-  "btn_icon": "Choisir une icone",
-  "label_output": "Dossier de sortie"
+  "btn_action": "Action"
 }
 ```
 
-`engines/my_engine/__init__.py` (simple mode + live refresh).
+`pycompiler_ark/engines/my_engine/__init__.py` (simple mode + live refresh).
 
 ```python
-from engine_sdk import CompilerEngine, engine_register, engine_translate
+from pycompiler_ark.engine_sdk import CompilerEngine, engine_register, engine_translate
 
 
 @engine_register
@@ -321,13 +299,11 @@ class MyEngine(CompilerEngine):
         layout = QVBoxLayout(tab)
         self._opt_onefile = QCheckBox()
         self._opt_clean = QCheckBox()
-        self._btn_icon = QPushButton()
-        self._output_dir = QLineEdit()
+        self._btn_action = QPushButton()
         form = QFormLayout()
         form.addRow("", self._opt_onefile)
         form.addRow("", self._opt_clean)
-        form.addRow("", self._btn_icon)
-        form.addRow("", self._output_dir)
+        form.addRow("", self._btn_action)
         layout.addLayout(form)
 
         self.apply_i18n(gui, getattr(gui, "_tr", {}))
@@ -337,10 +313,7 @@ class MyEngine(CompilerEngine):
     def apply_i18n(self, gui, tr):
         self._opt_onefile.setText(self.engine_translate("opt_onefile", "Onefile"))
         self._opt_clean.setText(self.engine_translate("opt_clean", "Clean build"))
-        self._btn_icon.setText(self.engine_translate("btn_icon", "Choose icon"))
-        self._output_dir.setPlaceholderText(
-            self.engine_translate("label_output", "Output directory")
-        )
+        self._btn_action.setText(self.engine_translate("btn_action", "Action"))
 ```
 
 Notes.
@@ -356,11 +329,10 @@ The auto-builder is integrated into the core compilation pipeline. It can read
 folder, or the `PYCOMPILER_MAPPING` environment variable to generate options
 from detected modules.
 
-ARK v1.5.0 expands this layer into a Zero-Config auto-mapping system covering
-80+ widely used libraries across AI, modern web, data science, and automation.
-When ARK detects an import, it applies the engine-specific flags automatically,
-so engine authors only need to fill the gaps that are not covered by the core
-mapping catalog.
+PyCompiler ARK expands this layer into a zero-config auto-mapping system that
+applies engine-specific flags automatically when imports are detected, so
+engine authors only need to fill the gaps not covered by the core mapping
+catalog.
 
 You no longer need to call `compute_auto_for_engine` manually in your `build_command`. The core runner will:
 
@@ -393,7 +365,7 @@ Key points.
 - Use `build.include` when a package must be bundled even if the core mapping
   or import scanner does not trigger it automatically.
 - For advanced logic, expose `AUTO_BUILDER`, `get_auto_builder()`, or
-  `register_auto_builder()` in `engines/<engine_id>/auto_plugins.py`.
+  `register_auto_builder()` in `pycompiler_ark/engines/<engine_id>/auto_plugins.py` or the workspace `engines/<engine_id>/auto_plugins.py`.
 
 **Deep Examples Catalog (40)**
 Each example includes context, intent, and a working pattern. Adjust IDs and labels to match your engine.
@@ -611,18 +583,6 @@ Notes.
 
 - Use tuples for source/dest.
 
-1. UI: QFileDialog for icon.
-
-```python
-path, _ = QFileDialog.getOpenFileName(gui, "Select", "", "*.ico")
-if path:
-    self._selected_icon = path
-```
-
-Notes.
-
-- Validate extension if needed.
-
 1. UI: read state in build_command.
 
 ```python
@@ -789,7 +749,7 @@ Notes.
 1. Auto builder plugin for advanced logic.
 
 ```python
-# engines/my_engine/auto_plugins.py
+# pycompiler_ark/engines/my_engine/auto_plugins.py
 
 def get_auto_builder():
     def builder(matched, pkg_to_import):

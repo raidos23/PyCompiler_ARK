@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/raidos23/PyCompiler_ARK/main/pycompiler_ark/images/logo2.png" alt="PyCompiler ARK logo" width="100%"/>
+  <img src="pycompiler_ark/images/logo2.png" alt="PyCompiler ARK logo" width="100%"/>
 </p>
 
 # **PyCompiler ARK**
@@ -19,7 +19,7 @@ Build Python apps with a predictable workflow, a configurable pre-compile pipeli
 - **BuildContext-driven builds**: engines receive a normalized project context, abstracting away the source of configuration (YAML vs. Lock files).
 - **Multi-engine support**: switch between PyInstaller, Nuitka, and cx_Freeze seamlessly.
 - **Extensible SDKs**: create new engines and BCASL plugins using simplified, consolidated APIs.
-- **Zero-Config auto-mapping for 80+ libraries**: automatic import detection covers major AI, modern web, data science, and automation stacks, with engine-specific arguments applied without manual tuning.
+- **Zero-Config auto-mapping for 80+ libraries**: automatic import detection via requirements covers major AI, modern web, data science, and automation stacks, with engine-specific arguments applied without manual tuning.
 - **Simplified build inclusions**: `build.include` forces package bundling and ARK translates it automatically per engine.
 - **Workspace-first UI**: filter files, manage exclusions, and follow progress and logs in one place.
 - **Venv-aware execution**: engines can use the project virtual environment automatically.
@@ -34,11 +34,7 @@ Build Python apps with a predictable workflow, a configurable pre-compile pipeli
 ```bash
 git clone https://github.com/raidos23/PyCompiler_ARK.git
 cd PyCompiler_ARK
-python -m venv .venv
-source .venv/bin/activate  # Linux/macOS
-# or
-.venv\Scripts\activate     # Windows
-pip install -r requirements.txt
+pip install -e .
 ```
 
 ### Launch
@@ -46,49 +42,13 @@ pip install -r requirements.txt
 ```bash
 pycompiler_ark
 # or
-python -m pycompiler_ark
+python -m pycompiler_ark gui # launch the gui
 ```
-
-*Note: The application features a centered and auto-scaled splash screen for a professional startup experience.*
-
----
-
-## CLI Demo
-
-Experience the PyCompiler ARK workflow in action:
-
-<p align="center">
-  <img src="https://raw.githubusercontent.com/raidos23/PyCompiler_ARK/main/docs/demo_ark.gif" alt="CLI Demo" width="100%"/>
-</p>
-
----
-
-## How it works
-
-1. Select a workspace.
-2. Add or filter files to compile.
-3. Configure an engine (PyInstaller, Nuitka, cx_Freeze).
-4. Build and follow logs and progress.
-
-### BCASL pipeline (quick view)
-
-```text
-Workspace
-  |
-  |-- Load bcasl.yml
-  |-- Discover plugins (Plugins/)
-  |-- Enable / order / priorities
-  |-- Sandboxed execution (optional)
-  |  
-  v
-Compilation (PyInstaller / Nuitka / cx_Freeze)
-```
-
 ---
 
 ## CLI Usage
 
-The ARK CLI provides a structured set of commands for workspace management, building, and developer tasks.
+The PyCompiler ARK CLI provides a structured set of commands for workspace management, building, and developer tasks.
 
 ### Core Commands
 
@@ -99,7 +59,7 @@ python3 -m pycompiler_ark init --entry src/main.py [--icon icon.ico] [--with-ven
 # Building
 python3 -m pycompiler_ark build                      # Build using ark.yml engine
 python3 -m pycompiler_ark build --engine nuitka      # Override engine
-python3 -m pycompiler_ark build --lock latest.lock   # Rebuild from lock file
+python3 -m pycompiler_ark build --lock latest         # Rebuild from the latest lock file
 
 # Execution
 python3 -m pycompiler_ark run bcasl                  # Execute BCASL pipeline
@@ -149,40 +109,6 @@ python3 -m pycompiler_ark init --entry main.py --json
 
 - **`ark.yml`**: Project metadata, build entrypoint, build include/exclude rules, and global BCASL activation.
 - **`bcasl.yml`**: Detailed BCASL pipeline configuration, plugin settings, and execution order.
-
----
-
-## Project layout
-
-- `pycompiler_ark/Ui/Cli/`: Command-line interface implementation and entry points.
-- `pycompiler_ark/Core/`: Core business logic for compilation, workspace management, and settings.
-- `pycompiler_ark/Core/Compiler/`: The **EngineRunner** and **MainProcess** (single source of truth for builds).
-- `pycompiler_ark/engines/`: Built-in compilation engines (PyInstaller, Nuitka, cx_Freeze).
-- `pycompiler_ark/bcasl/`: BCASL core engine and plugin loader.
-- `pycompiler_ark/Plugins/`: Pre-compile pipeline plugins.
-- `pycompiler_ark/engine_sdk/` & `pycompiler_ark/Plugins_SDK/`: Developer kits for extending ARK.
-- `pycompiler_ark/Ui/Forms/`: Qt Designer `.ui` files for the IDE-like and Classic layouts.
-- `pycompiler_ark/languages/` & `pycompiler_ark/themes/`: Application-wide translations and QSS themes.
-
----
-
-## Development
-
-```bash
-# Linting and testing
-ruff check .
-pytest -q tests
-
-# Help discovery
-python3 -m pycompiler_ark --help
-python3 -m pycompiler_ark run bcasl --help
-python3 -m pycompiler_ark build --help
-```
-
-Quality status:
-
-- all documented quality-plan phases are closed
-- the active backlog is considered closed under the current quality freeze
 
 ---
 

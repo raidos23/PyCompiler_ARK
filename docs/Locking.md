@@ -1,4 +1,4 @@
-# **PyCompiler ARK Locking Specification v1.2**
+# **PyCompiler ARK Locking Specification v1.0.0**
 
 This document defines the architecture and behavior of the build locking mechanism, ensuring functional reproducibility across environments.
 
@@ -15,8 +15,8 @@ It guarantees **Functional Reproducibility**: same technical parameters -> funct
 
 | Command | Generates a Lock? |
 | :--- | :--- |
-| `pycompiler-ark build` | ✅ Yes (Implicitly) |
-| `pycompiler-ark build --lock` | ❌ No (Uses an existing lock) |
+| `pycompiler_ark build` | ✅ Yes (Implicitly) |
+| `pycompiler_ark build --lock` | ❌ No (Uses an existing lock) |
 
 ---
 
@@ -82,7 +82,7 @@ dependencies:              # Full 'pip list' snapshot
 
 ---
 
-### **5. Behavior of `pycompiler-ark build --lock`**
+### **5. Behavior of `pycompiler_ark build --lock`**
 
 When rebuilding from a lock, PyCompiler ARK performs a "Strict Rebuild":
 
@@ -122,4 +122,4 @@ A build is considered equivalent if the following sections match exactly:
 - **L5**: The lock is the **sole source of truth** during a `--lock` build.
 
 ---
-*End of Specification v1.2*
+*End of Specification v1.0.0*
