@@ -65,11 +65,22 @@ def ask_yes_no(prompt: str, *, default_yes: bool = True) -> bool:
             pass
         return False
 
-    hint = "o/n" if french else "y/n"
-    default_label = "o" if default_yes else "n"
-    out = _REAL_STDOUT
+    try:
+        from rich.prompt import Confirm
+    except Exception:
+        Confirm = None
 
     try:
+        if Confirm is not None:
+            with cli_pause_for_user_input() as console:
+                try:
+                    return bool(Confirm.ask(prompt, default=default_yes, console=console))
+                except EOFError:
+                    return False
+
+        hint = "o/n" if french else "y/n"
+        default_label = "o" if default_yes else "n"
+        out = _REAL_STDOUT
         while True:
             out.write(f"{prompt} [{hint}] ({default_label}): ")
             out.flush()
