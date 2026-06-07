@@ -1,0 +1,11 @@
+name: Minimal
+
+on:
+  workflow_dispatch:
+
+jobs:
+  noop:
+    runs-on: ubuntu-latest
+    steps:
+      - name: No-op
+        run: echo "Minimal workflow: nothing to do."
