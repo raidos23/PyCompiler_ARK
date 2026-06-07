@@ -4,8 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>PyCompiler ARK</title>
-  <meta name="description" content="PyCompiler ARK - English home page" />
-  <link rel="icon" type="image/png" href="images/logo.png" />
+  <meta name="description" content="PyCompiler ARK 1.0.0 - build workshop with CLI, GUI, and reproducible builds." />
+  <link rel="icon" type="image/png" href="images/logo2.png" />
   <style>
     :root {
       --bg: #0b0f14;
@@ -106,7 +106,7 @@
   <header>
     <div class="container nav">
       <div class="brand">
-        <img src="images/logo.png" alt="PyCompiler ARK Logo" />
+        <img src="images/logo2.png" alt="PyCompiler ARK Logo" />
         <h1>PyCompiler ARK</h1>
       </div>
       <div class="nav-actions">
@@ -121,22 +121,23 @@
     <!-- Hero -->
     <section class="hero">
       <div>
-        <h2>Build, package, and deploy your Python apps reliably</h2>
+        <span class="pill" style="display:inline-flex; margin-bottom: 10px;">Release 1.0.0</span>
+        <h2>Build Python apps with a reproducible, engine-driven workflow</h2>
         <p>
-          A structured workflow for Python assembly. Multiple engines, dependency management,
-          and a customizable pre-build pipeline. Available for Windows and Linux.
+          PyCompiler ARK combines a normalized BuildContext, CLI and GUI parity, lock-based
+          rebuilds, and pre-build automation so you can ship with less manual setup.
         </p>
         <div>
           <a class="btn primary" href="download.html">Download Now</a>
         </div>
         <div class="hero-kpis">
+          <div class="kpi"><div class="num">1.0.0</div><div class="label">Public release</div></div>
           <div class="kpi"><div class="num">3</div><div class="label">Integrated Engines</div></div>
-          <div class="kpi"><div class="num">80+</div><div class="label">Auto-Mappings</div></div>
           <div class="kpi"><div class="num">UI/CLI</div><div class="label">Feature Parity</div></div>
         </div>
       </div>
       <div class="hero-card">
-        <img src="images/splash.png" srcset="images/splash.png 1x, images/splash@2x.png 2x" alt="PyCompiler ARK logo" style="width:100%; border-radius:12px; border:1px solid var(--border);" />
+        <img src="images/logo2.png" alt="PyCompiler ARK logo" style="width:100%; max-height: 420px; object-fit: contain; border-radius:12px; border:1px solid var(--border);" />
       </div>
     </section>
 
@@ -144,7 +145,7 @@
     <section class="screenshot-section">
       <h3 style="text-align: center; margin-bottom: 24px;">Interface Preview</h3>
       <div class="screenshot-container">
-        <img src="images/Capture d'écran_20260530_230450.png" srcset="images/Capture d'écran_20260530_230450.png 1x, images/Capture d'écran_20260530_230450@2x.png 2x" alt="PyCompiler ARK interface preview" />
+        <img src="images/Capture d'écran_20260530_230450@2x.png" alt="PyCompiler ARK interface preview" />
       </div>
     </section>
 
@@ -154,19 +155,19 @@
       <div class="grid">
         <div class="card">
           <h4>Dependency Auto-Mapping</h4>
-          <p class="muted">Automatic configuration of arguments for third-party libraries (PySide, Numpy, Pandas, etc.).</p>
+          <p class="muted">Automatic configuration for third-party libraries through the built-in dependency analyzer.</p>
         </div>
         <div class="card">
-          <h4>Inclusion Control</h4>
-          <p class="muted">Management of package inclusions and exclusions via the `ark.yml` configuration file.</p>
+          <h4>Internal Module Apply</h4>
+          <p class="muted">`init --apply-internal` can prefill `build.include` for internal project modules, with confirmation or `-y`.</p>
         </div>
         <div class="card">
           <h4>Build Locking</h4>
-          <p class="muted">Saves Git state and library versions to ensure build reproducibility.</p>
+          <p class="muted">Saves Git state and library versions to ensure reproducible rebuilds from lock files.</p>
         </div>
         <div class="card">
           <h4>BCASL Pipeline</h4>
-          <p class="muted">Execution of custom actions and checks before the assembly phase.</p>
+          <p class="muted">Execution of custom actions and checks before the build phase through BCASL plugins.</p>
         </div>
       </div>
     </section>
@@ -218,7 +219,7 @@
     <section class="section">
       <h3>About</h3>
       <p class="muted">
-        PyCompiler ARK is an open-source tool designed to structure the Python build process. It provides a stable and documented workflow from source to executable.
+        PyCompiler ARK is an open-source build workshop for Python projects. It provides a stable and documented workflow from source to executable.
       </p>
       <p class="muted">
         Licensed under <strong>Apache License 2.0</strong>. Contributions are welcome on
