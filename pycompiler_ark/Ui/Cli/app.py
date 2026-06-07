@@ -91,7 +91,7 @@ def _build_impl(
 
     if lock_file and engine_override:
         raise CliSpecError(
-            "--engine cannot be used with --lock\nIf you need a different engine, create a new lock with: pycompiler-ark build --engine <engine_id>"
+            "--engine cannot be used with --lock\nIf you need a different engine, create a new lock with: pycompiler_ark build --engine <engine_id>"
         )
 
     if not as_json and verbose:
@@ -219,8 +219,8 @@ def _build_impl(
     # Rebuild from lock
     if lock_file == "__default__":
         raise CliSpecError(
-            "Usage: pycompiler-ark build --lock <FILE_OR_LATEST>\n"
-            "Exemple: pycompiler-ark build --lock latest"
+            "Usage: pycompiler_ark build --lock <FILE_OR_LATEST>\n"
+            "Exemple: pycompiler_ark build --lock latest"
         )
 
     if lock_file == "latest":
@@ -340,7 +340,7 @@ def build_cli():
         raise RuntimeError("Click is not available")
 
     @click.group(context_settings={"help_option_names": ["-h", "--help"]})
-    @click.version_option(version=_resolve_version(), prog_name="pycompiler-ark")
+    @click.version_option(version=_resolve_version(), prog_name="pycompiler_ark")
     def cli():
         """PyCompiler ARK command line interface."""
 
@@ -442,7 +442,7 @@ def build_cli():
         """Launch the PyCompiler ARK GUI."""
         if legacy:
             click.echo(
-                "LIMITATION: The classic GUI does not support full UI feature integration.\nFor full functionality, use 'pycompiler-ark gui'."
+                "LIMITATION: The classic GUI does not support full UI feature integration.\nFor full functionality, use 'pycompiler_ark gui'."
             )
         raise click.exceptions.Exit(launch_gui(legacy=legacy))
 
@@ -583,7 +583,7 @@ def main(argv: list[str] | None = None) -> int:
     install_runtime(_resolve_version(), enable_qt=should_enable_qt(args))
     try:
         cli = build_cli()
-        result = cli.main(args=args, prog_name="pycompiler-ark", standalone_mode=False)
+        result = cli.main(args=args, prog_name="pycompiler_ark", standalone_mode=False)
         return int(result) if isinstance(result, int) else 0
     except SystemExit as exc:
         return int(exc.code) if isinstance(exc.code, int) else 0

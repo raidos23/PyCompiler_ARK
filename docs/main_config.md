@@ -1,8 +1,6 @@
-## **ark.yml** - Workspace Configuration
+## **PyCompiler ARK `ark.yml` - Workspace Configuration v1.0.0**
 
-This file defines the project settings used to build the normalized **BuildContext**. It lives at the workspace root and is created automatically when the workspace is first configured in the GUI, if missing.
-
-The configuration is loaded by `Core/Configs/` and is the primary source of truth for PyCompiler ARK project metadata.
+This file defines the project settings used to build the normalized `BuildContext`. It lives at the workspace root and is created automatically when the workspace is first configured in the GUI, if missing.
 
 ## Minimal Example
 
@@ -75,7 +73,7 @@ If your project or any dependency uses `import venv` (the standard library), you
 
 ## Build Inclusions vs Build Exclusions
 
-ARK v1.5.0 introduces a dedicated `build.include` section to force package inclusion during compilation.
+PyCompiler ARK supports a dedicated `build.include` section to force package inclusion during compilation.
 
 ```yaml
 build:
@@ -90,7 +88,7 @@ build:
 - `build.exclude` ignores Python packages that should not be bundled.
 - `build.include` is the complement of `build.exclude`, not a UI filter and not a generic file/folder rule.
 
-ARK translates `build.include` automatically according to the selected engine:
+PyCompiler ARK translates `build.include` automatically according to the selected engine:
 
 - Nuitka: `--include-package`
 - PyInstaller: `--collect-all`
@@ -143,7 +141,7 @@ If `bcasl_enabled` is set to `false`, the entire pipeline is skipped during comp
 
 ## Advanced Config Editor (GUI)
 
-The main GUI has a **Configurations avancées** button that opens a dedicated editor for `ark.yml` managed by PyCompiler ARK.
+The main GUI has an **Advanced Configuration** button that opens a dedicated editor for `ark.yml` managed by PyCompiler ARK.
 
 - A dedicated **Inclusions Build** field is now available for `build.include`.
 - The **Exclusions Build** label now explicitly means "Python packages to ignore" to avoid ambiguity with workspace filters.

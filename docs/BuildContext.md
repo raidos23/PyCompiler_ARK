@@ -1,6 +1,6 @@
-# **PyCompiler ARK BuildContext Specification v1.0**
+# **PyCompiler ARK BuildContext Specification v1.0.0**
 
-This document defines the data contract between ARK core and compilation engines.
+This document defines the data contract between PyCompiler ARK core and compilation engines.
 
 ---
 
@@ -82,7 +82,7 @@ An engine implementation MUST adhere to the following rules when processing a `B
 ### **6. Implementation Example**
 
 ```python
-from engine_sdk import CompilerEngine, engine_register, BuildContext 
+from pycompiler_ark.engine_sdk import BuildContext, CompilerEngine, engine_register
 
 @engine_register
 class MyEngine(CompilerEngine):
@@ -139,4 +139,4 @@ class MyEngine(CompilerEngine):
 - **B3**: Engines are responsible for translating normalized context fields into engine-specific CLI flags or configuration parameters.
 
 ---
-*End of Specification v1.0*
+*End of Specification v1.0.0*

@@ -1,22 +1,22 @@
-## **BCASL Plugin Guide**
+## **PyCompiler ARK BCASL Plugin Guide**
 
 **BCASL = Before-Compilation Action System & Loader.**
 
 **Overview**
-A BC plugin is a package placed in `Plugins/` and executed before compilation. It registers automatically, respects execution order (priority, tags, dependencies), and uses `PreCompileContext` to work with the workspace.
+A BC plugin is a package placed in `pycompiler_ark/Plugins/` and executed before compilation. It registers automatically, respects execution order (priority, tags, dependencies), and uses `PreCompileContext` to work with the workspace.
 
 The BCASL loader and runtime are **pure-Python**. They run in headless environments (CLI, CI) without Qt dependencies. UI integration is provided separately by the ARK GUI.
 
 **Discovery And Loading**
 
-- Plugins are discovered in `Plugins/<plugin_name>/`.
+- Plugins are discovered in `pycompiler_ark/Plugins/<plugin_name>/`.
 - The folder must contain an `__init__.py`.
-- The loader imports each package and detects plugins via `@bc_register` or `bcasl_register(manager)`.
+- The loader imports each package and detects plugins via `@bc_register`; legacy registration helpers remain available for older plugins when needed.
 - If `bcasl.yml` is missing, BCASL generates a best-effort default file when it runs.
 
 **Package Layout**
 
-- `Plugins/<plugin_name>/__init__.py`: main plugin code.
+- `pycompiler_ark/Plugins/<plugin_name>/__init__.py`: main plugin code.
 - Optional internal modules: helpers, config, assets.
 
 **Recommended Registration (Decorator)**
@@ -24,9 +24,13 @@ The BCASL loader and runtime are **pure-Python**. They run in headless environme
 ```python
 from __future__ import annotations
 
-from bcasl import bc_register
-from Plugins_SDK.BcPluginContext import BcPluginBase, PluginMeta, PreCompileContext
-from Plugins_SDK.GeneralContext import Dialog
+from pycompiler_ark.Plugins_SDK.BcPluginContext import (
+    BcPluginBase,
+    PluginMeta,
+    PreCompileContext,
+    bc_register,
+)
+from pycompiler_ark.Plugins_SDK.GeneralContext import Dialog
 
 log = Dialog()
 
@@ -38,7 +42,7 @@ META = PluginMeta(
     author="You",
     tags=("clean",),
     required_bcasl_version="1.0.0",
-    required_core_version="1.1.0",
+    required_core_version="1.0.0",
     required_plugins_sdk_version="1.0.0",
     required_bc_plugin_context_version="1.0.0",
     required_general_context_version="1.0.0",
@@ -64,19 +68,8 @@ class ExampleClean(BcPluginBase):
 
 **Legacy Registration (Function)**
 
-```python
-from bcasl import BCASL
-from Plugins_SDK.BcPluginContext import BcPluginBase, PluginMeta
-
-class MyPlugin(BcPluginBase):
-    meta = PluginMeta(id="legacy", name="Legacy", version="1.0.0")
-    def on_pre_compile(self, ctx):
-        pass
-
-
-def bcasl_register(manager: BCASL) -> None:
-    manager.add_plugin(MyPlugin())
-```
+Prefer `@bc_register` for new plugins. The SDK keeps registration inside the
+plugin package, so you do not need to import host internals directly.
 
 **PluginMeta And Compatibility**
 Important fields.
@@ -85,10 +78,14 @@ Important fields.
 - `name`, `version`, `description`, `author`.
 - `tags`: used for default ordering when no explicit order is provided.
 - `required_*_version`: compatibility requirements (BCASL, Core, SDK, Context).
+- Tags are normalized to lowercase tuples by the SDK, so use them as stable
+  ordering hints rather than free-form labels.
+- `PluginMeta` defaults all SDK compatibility fields to `1.0.0`, which keeps
+  plugin manifests aligned with the current PyCompiler ARK contract.
 
 Validation.
 
-- `bcasl/validator.py` provides compatibility utilities.
+- `pycompiler_ark.bcasl.validator` provides compatibility utilities.
 
 **Ordering And Dependencies**
 
@@ -138,13 +135,17 @@ Important notes.
 Key properties and methods.
 
 - `root`: Path object pointing to the workspace root.
+- `project_root`: Alias for `root` kept for compatibility.
 - `name`: Workspace folder name.
 - `config`: Full `bcasl.yml` configuration dictionary.
+- `metadata`: Additional execution metadata collected by the loader.
 - `build_context`: `BuildContext` with compilation settings, when available.
 - `build_context.include_packages`: Packages that ARK has been told to force into the bundle via `build.include`.
 - `file_patterns`: Configured include patterns.
 - `exclude_patterns`: Configured exclude patterns.
-- `iter_files(include, exclude)`: Optimized iterator that respects exclusions by default.
+- `iter_files(include, exclude)`: Optimized iterator that respects exclusions by default and can use an internal cache when enabled.
+- `iter_files()` uses the active `file_patterns` and `exclude_patterns` by default, so plugin code should not rescan the workspace manually.
+- `PreCompileContext` is intentionally source-agnostic: it already represents the workspace state needed by the plugin.
 
 BuildContext usage:
 
@@ -157,6 +158,16 @@ def on_pre_compile(self, ctx: PreCompileContext) -> None:
 ```
 
 *Example: the **OutputCleaner** plugin uses `ctx.build_context.output_dir` to clear the output directory before compilation.*
+
+Related SDK capabilities:
+
+- `BcPluginBase.requires` declares plugin dependencies that the loader can use
+  when sorting execution order.
+- `BcPluginBase.priority` is a numeric ordering hint; lower values run earlier.
+- `ExecutionReport` is available for aggregated run results when you need to
+  inspect per-plugin success and timing.
+- `Generate_Bc_Plugin_Template()` creates a ready-to-use plugin scaffold with
+  the current SDK imports and metadata defaults.
 
 Simplified usage:
 
@@ -174,7 +185,7 @@ for path in ctx.iter_files(["**/*.json"]):
 A plugin can request a workspace change via the SDK.
 
 ```python
-from Plugins_SDK.BcPluginContext import set_selected_workspace
+from pycompiler_ark.Plugins_SDK.BcPluginContext import set_selected_workspace
 
 ok = set_selected_workspace("/path/to/new/workspace")
 ```
@@ -188,7 +199,7 @@ Behavior.
 
 **UI And Logs**
 
-- Use `Plugins_SDK.GeneralContext.Dialog` for messages and progress.
+- Use `pycompiler_ark.Plugins_SDK.GeneralContext.Dialog` for messages and progress.
 - When running in the GUI, dialogs are routed through the UI thread and inherit the theme.
 - In headless/CLI mode, these are routed to standard output.
 - **Important**: Avoid direct Qt imports to remain compatible with headless execution. Direct Qt dialogs such as `QProgressDialog` are not supported in sandboxed or headless runs.
@@ -214,12 +225,12 @@ Notes.
 **Plugin i18n (GeneralContext)**
 Plugins can use the SDK i18n system with a `languages/` folder in the plugin package.
 The Core propagates language changes to the Plugin SDK, and the SDK loads
-translations for plugins found in `Plugins/` by folder name.
+translations for plugins found in `pycompiler_ark/Plugins/` by folder name.
 
 Example layout:
 
 ```
-Plugins/MyPlugin/
+pycompiler_ark/Plugins/MyPlugin/
   __init__.py
   languages/
     en.json
@@ -229,7 +240,7 @@ Plugins/MyPlugin/
 Load and use, with live updates when the language changes:
 
 ```python
-from Plugins_SDK.GeneralContext import (
+from pycompiler_ark.Plugins_SDK.GeneralContext import (
     get_language_code, load_plugin_language_file,
     register_plugin_translations, register_i18n_handler, translate,
 )

@@ -69,5 +69,5 @@ __all__ = [
     "get_bcasl_version",
     "get_engine_sdk_version",
 ]
-__version__ = "1.1.3"
+__version__ = "1.0.0"
 __author__ = "Ague Samuel Amen"
