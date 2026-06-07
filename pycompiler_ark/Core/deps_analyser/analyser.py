@@ -921,19 +921,6 @@ def collect_internal_modules(workspace_dir: str) -> set[str]:
                     if top:
                         internal_modules.add(top)
 
-    # Also consider hinted package roots discovered from the source tree itself.
-    try:
-        internal_roots = _collect_workspace_module_roots(
-            workspace_python_files, workspace_dir
-        )
-        for module_name in internal_roots:
-            if _classify_module_origin(module_name, workspace_dir) == "internal":
-                top = _top_level_module_name(module_name)
-                if top:
-                    internal_modules.add(top)
-    except Exception:
-        pass
-
     return set(sorted(internal_modules))
 
 

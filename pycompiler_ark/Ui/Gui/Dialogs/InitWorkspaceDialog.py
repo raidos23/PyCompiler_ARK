@@ -86,8 +86,8 @@ class InitWorkspaceDialog(QDialog):
 
         self.chk_apply_internal = QCheckBox(
             self.gui.tr(
-                "Appliquer les modules internes détectés",
-                "Apply detected internal modules",
+                "Appliquer les modules internes",
+                "Apply internal modules",
             )
         )
         self.chk_apply_internal.setChecked(False)
@@ -106,8 +106,8 @@ class InitWorkspaceDialog(QDialog):
 
         scan_note = QLabel(
             self.gui.tr(
-                "Si activé, la liste des modules internes détectés sera proposée pour build.include avant écriture.",
-                "If enabled, detected internal modules will be proposed for build.include before writing.",
+                "Si activé, les modules internes seront proposés pour build.include avant écriture.",
+                "If enabled, internal modules will be proposed for build.include before writing.",
             )
         )
         scan_note.setWordWrap(True)
@@ -164,25 +164,25 @@ class InitWorkspaceDialog(QDialog):
         try:
             apply_internal = bool(self.chk_apply_internal.isChecked())
             effective_auto_confirm = False
+            internal_modules = []
             if apply_internal:
-                detected_internal = []
                 try:
-                    detected_internal = sorted(
+                    internal_modules = sorted(
                         collect_internal_modules(str(Path(ws))),
                         key=lambda item: item.lower(),
                     )
                 except Exception:
-                    detected_internal = []
+                    internal_modules = []
 
-                if detected_internal:
+                if internal_modules:
                     title = self.gui.tr(
-                        "Confirmer le scan interne",
-                        "Confirm internal scan",
+                        "Confirmer l'application interne",
+                        "Confirm internal apply",
                     )
                     message = self.gui.tr(
-                        "Modules internes détectés :\n{modules}\n\nLes ajouter à build.include ?",
-                        "Internal modules detected:\n{modules}\n\nAdd them to build.include?",
-                    ).format(modules="\n".join(f"- {item}" for item in detected_internal))
+                        "Modules internes à appliquer :\n{modules}\n\nLes ajouter à build.include ?",
+                        "Internal modules to apply:\n{modules}\n\nAdd them to build.include?",
+                    ).format(modules="\n".join(f"- {item}" for item in internal_modules))
                     choice = QMessageBox.question(
                         self,
                         title,

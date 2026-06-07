@@ -3,6 +3,7 @@ from __future__ import annotations
 from unittest.mock import patch
 
 from pycompiler_ark.Core.Configs import load_ark_config
+from pycompiler_ark.Core.deps_analyser import collect_internal_modules
 from pycompiler_ark.Ui.Cli.helpers import init_workspace
 
 
@@ -18,6 +19,29 @@ def _make_internal_workspace(root):
         "from .internal_mod import VALUE\n", encoding="utf-8"
     )
     return workspace
+
+
+def test_collect_internal_modules_uses_classification(tmp_path):
+    workspace = _make_internal_workspace(tmp_path)
+
+    def _classify(module_name, _workspace_dir):
+        mapping = {
+            "pkg": "internal",
+            "requests": "third_party",
+            "os": "stdlib",
+        }
+        return mapping.get(module_name, "unknown")
+
+    with patch(
+        "pycompiler_ark.Core.deps_analyser.analyser._extract_imported_modules_from_file",
+        return_value={"pkg", "requests", "os"},
+    ), patch(
+        "pycompiler_ark.Core.deps_analyser.analyser._classify_module_origin",
+        side_effect=_classify,
+    ):
+        detected = collect_internal_modules(str(workspace))
+
+    assert detected == {"pkg"}
 
 
 @patch("pycompiler_ark.Ui.Cli.interactive.ask_yes_no", return_value=False)
