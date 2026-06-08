@@ -134,18 +134,19 @@
     }
 
     .hero {
-      padding: 44px 0 20px;
+      padding: 18px 0 28px;
       display: grid;
-      grid-template-columns: 1.1fr .9fr;
+      grid-template-columns: 1fr;
       gap: 22px;
-      align-items: stretch;
+      align-items: start;
+      min-height: calc(100svh - 84px);
     }
     .hero-copy,
     .hero-visual {
       border-radius: var(--radius-xl);
     }
     .hero-copy {
-      padding: 30px;
+      padding: 32px 30px;
       border: 1px solid var(--border);
       background:
         radial-gradient(1200px 600px at 0% 0%, rgba(53, 194, 255, 0.12) 0%, rgba(53, 194, 255, 0) 38%),
@@ -170,10 +171,10 @@
     .hero h2 {
       margin: 18px 0 14px;
       font-family: "Space Grotesk", sans-serif;
-      font-size: clamp(40px, 5.4vw, 72px);
+      font-size: clamp(44px, 6vw, 82px);
       line-height: .95;
       letter-spacing: -.045em;
-      max-width: 12ch;
+      max-width: 14ch;
     }
     .hero h2 span {
       background: linear-gradient(135deg, #f3fbff 0%, #bfeaff 45%, #42d6b0 100%);
@@ -220,19 +221,20 @@
     }
 
     .hero-visual {
-      padding: 18px;
+      padding: 12px;
       border: 1px solid var(--border);
       background:
         linear-gradient(180deg, rgba(15, 25, 37, 0.92), rgba(8, 15, 24, 0.96));
       box-shadow: 0 26px 70px rgba(0,0,0,.35);
       display: grid;
       gap: 14px;
-      align-content: center;
-      justify-items: center;
-      min-height: 100%;
+      align-content: start;
+      justify-items: stretch;
+      width: 100%;
     }
     .hero-logo {
       width: 100%;
+      min-height: 42vh;
       border-radius: 22px;
       overflow: hidden;
       border: 1px solid rgba(148, 179, 210, 0.12);
@@ -242,14 +244,8 @@
     .hero-logo img {
       display: block;
       width: 100%;
-      height: auto;
-    }
-    .hero-caption {
-      margin: 0;
-      color: var(--muted);
-      font-size: 13px;
-      text-align: center;
-      max-width: 34ch;
+      height: 100%;
+      object-fit: cover;
     }
 
     .section {
@@ -402,12 +398,18 @@
 
   <main class="container">
     <section class="hero">
-      <div class="hero-copy glass reveal">
-        <span class="eyebrow">Python build workshop</span>
-        <h2><span>Structured</span> builds for apps that need more than packaging.</h2>
-        <p>
-          PyCompiler ARK centralizes project context, build locking, plugin-driven pre-build logic,
-          and CLI or GUI workflows in one coherent toolchain.
+        <div class="hero-visual glass reveal delay-1">
+          <div class="hero-logo">
+            <img src="images/logo2spalsh.png" alt="PyCompiler ARK landing logo" />
+          </div>
+        </div>
+
+        <div class="hero-copy glass reveal">
+          <span class="eyebrow">Python build workshop</span>
+          <h2><span>Structured</span> builds for apps that need more than packaging.</h2>
+          <p>
+            PyCompiler ARK centralizes project context, build locking, plugin-driven pre-build logic,
+            and CLI or GUI workflows in one coherent toolchain.
         </p>
         <div class="hero-actions">
           <a class="btn primary" href="#docs">Read the docs</a>
@@ -427,13 +429,6 @@
             <span class="label">Pre-build plugin pipeline for repeatable preparation.</span>
           </div>
         </div>
-      </div>
-
-      <div class="hero-visual glass reveal delay-1">
-        <div class="hero-logo">
-          <img src="images/logo2spalsh.png" alt="PyCompiler ARK landing logo" />
-        </div>
-        <p class="hero-caption">Top-level landing logo for PyCompiler ARK.</p>
       </div>
     </section>
 
