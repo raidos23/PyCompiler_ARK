@@ -4,101 +4,401 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>PyCompiler ARK</title>
-  <meta name="description" content="PyCompiler ARK - build workshop with CLI, GUI, and reproducible builds." />
+  <meta name="description" content="PyCompiler ARK is a build workshop for Python projects with CLI, GUI, locks, and SDK-driven extensibility." />
   <link rel="icon" type="image/png" href="images/logo.png" />
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap');
+
     :root {
-      --bg: #0b0f14;
-      --panel: #121821;
-      --text: #e6eef8;
-      --muted: #a9b2bf;
-      --accent: #1f9cf0;
-      --accent-2: #4bd1a0;
-      --border: #1b2430;
-      --shadow: rgba(0,0,0,.4);
+      --bg: #071018;
+      --bg-2: #0c1621;
+      --panel: rgba(13, 23, 34, 0.86);
+      --panel-strong: rgba(12, 20, 30, 0.98);
+      --text: #edf5ff;
+      --muted: #a6b7c8;
+      --border: rgba(148, 179, 210, 0.16);
+      --shadow: rgba(0, 0, 0, 0.42);
+      --accent: #35c2ff;
+      --accent-2: #42d6b0;
+      --accent-3: #f0b84d;
+      --radius-xl: 26px;
+      --radius-lg: 20px;
+      --radius-md: 16px;
     }
+
     * { box-sizing: border-box; }
-    html, body { height: 100%; }
+    html { scroll-behavior: smooth; }
     body {
       margin: 0;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Arial, "Apple Color Emoji", "Segoe UI Emoji";
       color: var(--text);
-      background: radial-gradient(1200px 800px at 80% -10%, #122233 0%, rgba(18,34,51,0) 60%),
-                  radial-gradient(900px 700px at -10% 110%, #1a2b2a 0%, rgba(26,43,42,0) 55%),
-                  var(--bg);
+      font-family: "IBM Plex Sans", sans-serif;
+      background:
+        radial-gradient(1100px 760px at 85% -10%, rgba(53, 194, 255, 0.18) 0%, rgba(53, 194, 255, 0) 60%),
+        radial-gradient(900px 680px at -10% 110%, rgba(66, 214, 176, 0.15) 0%, rgba(66, 214, 176, 0) 55%),
+        linear-gradient(180deg, #061018 0%, #08131b 48%, #061018 100%);
+    }
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background-image:
+        linear-gradient(rgba(255,255,255,.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.03) 1px, transparent 1px);
+      background-size: 72px 72px;
+      mask-image: radial-gradient(circle at center, black 30%, transparent 85%);
+      opacity: 0.35;
     }
     a { color: var(--accent); text-decoration: none; }
-    a:hover { text-decoration: underline; }
+    a:hover { text-decoration: none; }
+    img { display: block; max-width: 100%; }
 
-    /* Layout */
-    .container { max-width: 1100px; margin: 0 auto; padding: 24px; }
-
-    header {
-      position: sticky; top: 0; z-index: 5;
-      background: linear-gradient(to bottom, rgba(11,15,20,.9), rgba(11,15,20,.6) 50%, rgba(11,15,20,0));
-      backdrop-filter: blur(6px);
-      border-bottom: 1px solid var(--border);
-    }
-    .nav {
-      display: flex; align-items: center; justify-content: space-between;
-      gap: 16px; padding: 12px 0;
-    }
-    .brand { display: flex; align-items: center; gap: 12px; }
-    .brand img { width: 36px; height: 36px; border-radius: 8px; box-shadow: 0 4px 16px var(--shadow); }
-    .brand h1 { font-size: 18px; margin: 0; letter-spacing: .3px; }
-
-    .nav-actions { display: flex; gap: 10px; align-items: center; }
-    .btn {
-      padding: 10px 14px; border: 1px solid var(--border); border-radius: 10px;
-      background: linear-gradient(180deg, #17202b, #101620);
-      color: var(--text); cursor: pointer; font-weight: 600; letter-spacing: .2px;
-      box-shadow: 0 4px 16px var(--shadow);
-      transition: transform .12s ease, background .2s ease, border-color .2s ease;
-    }
-    .btn:hover { transform: translateY(-1px); border-color: #263347; }
-    .btn.primary { background: linear-gradient(180deg, #2095e7, #1679c2); border-color: #197ac7; }
-
-    /* Hero */
-    .hero { display: grid; grid-template-columns: 1.2fr 1fr; gap: 24px; align-items: center; padding: 28px 0 8px; }
-    .hero h2 { font-size: 38px; margin: 0 0 12px; }
-    .hero p { color: var(--muted); margin: 0 0 18px; line-height: 1.6; }
-    .hero-card {
-      background: linear-gradient(180deg, #0f1621, #0c121a);
-      border: 1px solid var(--border); border-radius: 16px; padding: 18px;
-      box-shadow: 0 12px 30px var(--shadow);
-    }
-    .hero-card img { max-height: 400px; object-fit: contain; }
-    .hero-kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 14px; }
-    .kpi { background: #0e1520; border: 1px solid var(--border); border-radius: 12px; padding: 12px; text-align: center; }
-    .kpi .num { font-size: 20px; font-weight: 800; color: var(--accent-2); }
-    .kpi .label { color: var(--muted); font-size: 12px; }
-
-    /* Screenshot Section */
-    .screenshot-section { padding: 32px 0; }
-    .screenshot-container {
-      background: linear-gradient(180deg, #0f1621, #0c121a);
-      border: 1px solid var(--border); border-radius: 16px; padding: 20px;
-      box-shadow: 0 12px 30px var(--shadow);
-      max-width: 900px;
+    .container {
+      width: min(1160px, calc(100% - 32px));
       margin: 0 auto;
     }
-    .screenshot-container img { width: 100%; max-height: 500px; object-fit: contain; border-radius: 12px; border: 1px solid var(--border); }
 
-    /* Features */
-    .section { padding: 24px 0; }
-    .section h3 { margin: 0 0 12px; font-size: 22px; }
-    .grid { display: grid; gap: 14px; grid-template-columns: repeat(3, 1fr); }
-    .card { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 14px; box-shadow: 0 8px 24px var(--shadow); }
-    .card h4 { margin: 0 0 8px; }
-    .muted { color: var(--muted); }
+    .glass {
+      background: linear-gradient(180deg, rgba(16, 27, 39, 0.86), rgba(10, 17, 26, 0.92));
+      border: 1px solid var(--border);
+      box-shadow: 0 24px 70px var(--shadow);
+      backdrop-filter: blur(16px);
+    }
 
-    /* Footer */
-    footer { margin-top: 32px; border-top: 1px solid var(--border); padding: 16px 0 40px; color: var(--muted); font-size: 14px; }
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 30;
+      background: linear-gradient(to bottom, rgba(7, 16, 24, 0.96), rgba(7, 16, 24, 0.72) 70%, rgba(7, 16, 24, 0));
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(148, 179, 210, 0.10);
+    }
+    .nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      padding: 16px 0;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      min-width: 0;
+    }
+    .brand img {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.35);
+    }
+    .brand h1 {
+      margin: 0;
+      font-family: "Space Grotesk", sans-serif;
+      font-size: 18px;
+      letter-spacing: .04em;
+    }
+    .brand small {
+      display: block;
+      color: var(--muted);
+      margin-top: 2px;
+      font-size: 12px;
+      letter-spacing: .02em;
+    }
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
 
-    /* Responsive */
-    @media (max-width: 900px) {
-      .hero { grid-template-columns: 1fr; }
-      .grid { grid-template-columns: 1fr; }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 11px 16px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 179, 210, 0.18);
+      color: var(--text);
+      background: rgba(15, 25, 36, 0.72);
+      box-shadow: 0 10px 24px rgba(0,0,0,.18);
+      transition: transform .14s ease, border-color .2s ease, background .2s ease;
+      font-weight: 600;
+      letter-spacing: .01em;
+    }
+    .btn:hover { transform: translateY(-1px); border-color: rgba(53, 194, 255, 0.40); }
+    .btn.primary {
+      background: linear-gradient(135deg, rgba(53, 194, 255, 0.22), rgba(66, 214, 176, 0.20));
+      border-color: rgba(53, 194, 255, 0.36);
+    }
+
+    .hero {
+      padding: 44px 0 20px;
+      display: grid;
+      grid-template-columns: 1.1fr .9fr;
+      gap: 22px;
+      align-items: stretch;
+    }
+    .hero-copy,
+    .hero-visual {
+      border-radius: var(--radius-xl);
+    }
+    .hero-copy {
+      padding: 30px;
+      border: 1px solid var(--border);
+      background:
+        radial-gradient(1200px 600px at 0% 0%, rgba(53, 194, 255, 0.12) 0%, rgba(53, 194, 255, 0) 38%),
+        radial-gradient(900px 500px at 100% 0%, rgba(66, 214, 176, 0.10) 0%, rgba(66, 214, 176, 0) 35%),
+        linear-gradient(180deg, rgba(14, 23, 34, 0.95), rgba(8, 16, 25, 0.92));
+      box-shadow: 0 26px 70px rgba(0,0,0,.35);
+    }
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(53, 194, 255, 0.25);
+      background: rgba(53, 194, 255, 0.08);
+      color: #9edaff;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+    .hero h2 {
+      margin: 18px 0 14px;
+      font-family: "Space Grotesk", sans-serif;
+      font-size: clamp(40px, 5.4vw, 72px);
+      line-height: .95;
+      letter-spacing: -.045em;
+      max-width: 12ch;
+    }
+    .hero h2 span {
+      background: linear-gradient(135deg, #f3fbff 0%, #bfeaff 45%, #42d6b0 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    .hero p {
+      margin: 0;
+      max-width: 62ch;
+      color: var(--muted);
+      line-height: 1.75;
+      font-size: 16px;
+    }
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 24px;
+    }
+    .hero-stats {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 26px;
+    }
+    .stat {
+      padding: 16px;
+      border-radius: 18px;
+      border: 1px solid rgba(148, 179, 210, 0.14);
+      background: rgba(8, 15, 24, 0.72);
+    }
+    .stat .num {
+      display: block;
+      font-family: "Space Grotesk", sans-serif;
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .stat .label {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .hero-visual {
+      padding: 18px;
+      border: 1px solid var(--border);
+      background:
+        linear-gradient(180deg, rgba(15, 25, 37, 0.92), rgba(8, 15, 24, 0.96));
+      box-shadow: 0 26px 70px rgba(0,0,0,.35);
+      display: grid;
+      gap: 14px;
+      align-content: start;
+    }
+    .hero-visual .frame {
+      border-radius: 22px;
+      overflow: hidden;
+      border: 1px solid rgba(148, 179, 210, 0.12);
+      background: #071019;
+      position: relative;
+      min-height: 320px;
+    }
+    .hero-visual .frame img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .hero-visual .frame::after {
+      content: "";
+      position: absolute;
+      inset: auto 0 0 0;
+      height: 34%;
+      background: linear-gradient(180deg, rgba(7, 16, 24, 0), rgba(7, 16, 24, 0.88));
+    }
+    .hero-note {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 179, 210, 0.14);
+      background: rgba(9, 17, 26, 0.76);
+      color: #d9e9f7;
+      font-size: 12px;
+    }
+    .chip .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      box-shadow: 0 0 0 4px rgba(53, 194, 255, 0.12);
+    }
+
+    .section {
+      padding: 24px 0;
+    }
+    .section-header {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 18px;
+      margin-bottom: 16px;
+    }
+    .section-header h3 {
+      margin: 0;
+      font-family: "Space Grotesk", sans-serif;
+      font-size: 22px;
+      letter-spacing: -.03em;
+    }
+    .section-header p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.6;
+      max-width: 60ch;
+    }
+
+    .grid {
+      display: grid;
+      gap: 14px;
+    }
+    .grid.features {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .grid.docs {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+    .grid.process {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+    .card {
+      border-radius: var(--radius-lg);
+      border: 1px solid rgba(148, 179, 210, 0.14);
+      background: linear-gradient(180deg, rgba(14, 23, 34, 0.92), rgba(10, 17, 25, 0.96));
+      box-shadow: 0 18px 40px rgba(0,0,0,.22);
+      padding: 18px;
+    }
+    .card h4 {
+      margin: 0 0 8px;
+      font-family: "Space Grotesk", sans-serif;
+      font-size: 18px;
+      letter-spacing: -.02em;
+    }
+    .card p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+    .card .link {
+      display: inline-flex;
+      margin-top: 12px;
+      font-weight: 600;
+      color: #9edaff;
+    }
+
+    .screenshot {
+      border-radius: var(--radius-xl);
+      overflow: hidden;
+      border: 1px solid rgba(148, 179, 210, 0.14);
+      box-shadow: 0 20px 50px rgba(0,0,0,.28);
+      background: #071019;
+    }
+    .screenshot img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .about {
+      display: grid;
+      grid-template-columns: 1.1fr .9fr;
+      gap: 16px;
+    }
+    .about .card {
+      min-height: 100%;
+    }
+
+    footer {
+      padding: 28px 0 42px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .footer-inner {
+      border-top: 1px solid rgba(148, 179, 210, 0.12);
+      padding-top: 18px;
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+
+    .reveal {
+      animation: rise .7s ease both;
+    }
+    .reveal.delay-1 { animation-delay: .08s; }
+    .reveal.delay-2 { animation-delay: .16s; }
+    .reveal.delay-3 { animation-delay: .24s; }
+
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(14px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 980px) {
+      .hero,
+      .about {
+        grid-template-columns: 1fr;
+      }
+      .grid.features,
+      .grid.docs,
+      .grid.process {
+        grid-template-columns: 1fr;
+      }
+    }
+    @media (max-width: 720px) {
+      .nav { align-items: flex-start; flex-direction: column; }
+      .hero-copy, .hero-visual, .card { padding: 18px; }
+      .hero h2 { max-width: none; }
+      .hero-stats { grid-template-columns: 1fr; }
+      .section-header { align-items: flex-start; flex-direction: column; }
     }
   </style>
 </head>
@@ -107,128 +407,186 @@
     <div class="container nav">
       <div class="brand">
         <img src="images/logo.png" alt="PyCompiler ARK Logo" />
-        <h1>PyCompiler ARK</h1>
+        <div>
+          <h1>PyCompiler ARK</h1>
+          <small>Build workshop for Python projects</small>
+        </div>
       </div>
-      <div class="nav-actions">
+      <div class="nav-links">
         <a class="btn" href="#features">Features</a>
-        <a class="btn" href="#docs">Documentation</a>
-        <a class="btn primary" href="https://github.com/raidos23/PyCompiler_ARK" target="_blank">GitHub</a>
+        <a class="btn" href="#docs">Docs</a>
+        <a class="btn" href="#about">About</a>
+        <a class="btn primary" href="https://github.com/raidos23/PyCompiler_ARK" target="_blank" rel="noreferrer">Source</a>
       </div>
     </div>
   </header>
 
   <main class="container">
-    <!-- Hero -->
     <section class="hero">
-      <div>
-        <h2>Build Python apps with a reproducible, engine-driven workflow</h2>
+      <div class="hero-copy glass reveal">
+        <span class="eyebrow">Python build workshop</span>
+        <h2><span>Structured</span> builds for apps that need more than packaging.</h2>
         <p>
-          PyCompiler ARK combines a normalized BuildContext, CLI and GUI parity, lock-based
-          rebuilds, and pre-build automation so you can ship with less manual setup.
+          PyCompiler ARK centralizes project context, build locking, plugin-driven pre-build logic,
+          and CLI or GUI workflows in one coherent toolchain.
         </p>
-        <div class="hero-kpis">
-          <div class="kpi"><div class="num">3</div><div class="label">Integrated Engines</div></div>
-          <div class="kpi"><div class="num">UI/CLI</div><div class="label">Feature Parity</div></div>
+        <div class="hero-actions">
+          <a class="btn primary" href="#docs">Read the docs</a>
+          <a class="btn" href="https://github.com/raidos23/PyCompiler_ARK" target="_blank" rel="noreferrer">View source</a>
+        </div>
+        <div class="hero-stats">
+          <div class="stat">
+            <span class="num">BuildContext</span>
+            <span class="label">Normalized project state for engines and tools.</span>
+          </div>
+          <div class="stat">
+            <span class="num">CLI + GUI</span>
+            <span class="label">Shared behavior across terminals and Qt workflows.</span>
+          </div>
+          <div class="stat">
+            <span class="num">BCASL</span>
+            <span class="label">Pre-build plugin pipeline for repeatable preparation.</span>
+          </div>
         </div>
       </div>
-      <div class="hero-card">
-        <img src="images/splash.png" srcset="images/splash.png 1x, images/splash@2x.png 2x" alt="PyCompiler ARK splash" style="width:100%; max-height: 420px; object-fit: contain; border-radius:12px; border:1px solid var(--border);" />
+
+      <div class="hero-visual glass reveal delay-1">
+        <div class="frame">
+          <img src="images/splash.png" srcset="images/splash.png 1x, images/splash@2x.png 2x" alt="PyCompiler ARK splash" />
+        </div>
+        <div class="hero-note">
+          <span class="chip"><span class="dot"></span> Workspace-first</span>
+          <span class="chip"><span class="dot"></span> Engine-aware</span>
+          <span class="chip"><span class="dot"></span> Reproducible</span>
+        </div>
       </div>
     </section>
 
-    <!-- Screenshot -->
-    <section class="screenshot-section">
-      <h3 style="text-align: center; margin-bottom: 24px;">Interface Preview</h3>
-      <div class="screenshot-container">
+    <section class="section reveal delay-2" id="features">
+      <div class="section-header">
+        <div>
+          <h3>What it does well</h3>
+          <p>Designed for projects where consistency, extensibility, and explicit build contracts matter.</p>
+        </div>
+      </div>
+      <div class="grid features">
+        <div class="card">
+          <h4>Normalized build context</h4>
+          <p>Engine input is flattened into a single contract, so every interface consumes the same project state.</p>
+        </div>
+        <div class="card">
+          <h4>Internal module apply</h4>
+          <p>`init --apply-internal` can prefill `build.include` for internal project modules with confirmation or `-y`.</p>
+        </div>
+        <div class="card">
+          <h4>Lock-based rebuilds</h4>
+          <p>Lock files preserve the build environment and make rebuilds deterministic across machines.</p>
+        </div>
+        <div class="card">
+          <h4>BCASL pipeline</h4>
+          <p>Use plugins for validation, preparation, and cleanup before the build engine is invoked.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section reveal delay-3">
+      <div class="section-header">
+        <div>
+          <h3>Interface preview</h3>
+          <p>A fast glance at the current workspace experience.</p>
+        </div>
+      </div>
+      <div class="screenshot">
         <img src="images/Capture d'écran_20260530_230450@2x.png" alt="PyCompiler ARK interface preview" />
       </div>
     </section>
 
-    <!-- Features -->
-    <section class="section" id="features">
-      <h3>Technical Features</h3>
-      <div class="grid">
+    <section class="section reveal">
+      <div class="section-header">
+        <div>
+          <h3>How it fits together</h3>
+          <p>Each layer stays focused: the workspace defines the contract, engines consume it, and plugins prepare it.</p>
+        </div>
+      </div>
+      <div class="grid process">
         <div class="card">
-          <h4>Dependency Auto-Mapping</h4>
-          <p class="muted">Automatic configuration for third-party libraries through the built-in dependency analyzer.</p>
+          <h4>1. Initialize</h4>
+          <p>Create the workspace, normalize the configuration, and decide what should be included or excluded.</p>
         </div>
         <div class="card">
-          <h4>Internal Module Apply</h4>
-          <p class="muted">`init --apply-internal` can prefill `build.include` for internal project modules, with confirmation or `-y`.</p>
+          <h4>2. Prepare</h4>
+          <p>Let BCASL plugins and dependency analysis prepare the project before the build engine runs.</p>
         </div>
         <div class="card">
-          <h4>Build Locking</h4>
-          <p class="muted">Saves Git state and dependency metadata to ensure reproducible rebuilds from lock files.</p>
-        </div>
-        <div class="card">
-          <h4>BCASL Pipeline</h4>
-          <p class="muted">Execution of custom actions and checks before the build phase through BCASL plugins.</p>
+          <h4>3. Build</h4>
+          <p>Run a selected engine with the same data contract whether you are in CLI or GUI mode.</p>
         </div>
       </div>
     </section>
 
-    <!-- Documentation -->
-    <section class="section" id="docs">
-      <h3>Documentation</h3>
-      <div class="grid">
-        
+    <section class="section reveal" id="docs">
+      <div class="section-header">
+        <div>
+          <h3>Documentation</h3>
+          <p>Jump straight to the guides that describe the contracts and extension points.</p>
+        </div>
+      </div>
+      <div class="grid docs">
         <div class="card">
-          <h4>Global Config</h4>
-          <p class="muted">Explore all options in the main configuration file for a project managed by PyCompiler ARK.</p>
-          <a href="docs-config.html" style="color: var(--accent);">Read →</a>
+          <h4>Global config</h4>
+          <p>Project metadata, build include/exclude rules, and workspace defaults.</p>
+          <a class="link" href="docs-config.html">Read the guide →</a>
         </div>
         <div class="card">
-          <h4>Create an Engine</h4>
-          <p class="muted">Learn how to develop and integrate your own build engines (for example, PyInstaller).</p>
-          <a href="docs-engine.html" style="color: var(--accent);">Read →</a>
+          <h4>Create an engine</h4>
+          <p>Build and register a compiler engine using the engine SDK contract.</p>
+          <a class="link" href="docs-engine.html">Read the guide →</a>
         </div>
         <div class="card">
-          <h4>Create a BC Plugin</h4>
-          <p class="muted">Develop plugins that run before the build phase to prepare your project.</p>
-          <a href="docs-bc-plugin.html" style="color: var(--accent);">Read →</a>
+          <h4>Create a BC plugin</h4>
+          <p>Extend the pre-compile pipeline with BCASL plugin hooks.</p>
+          <a class="link" href="docs-bc-plugin.html">Read the guide →</a>
         </div>
         <div class="card">
           <h4>Locking</h4>
-          <p class="muted">Understand the Locking v1.2 system and functional equivalence for your builds.</p>
-          <a href="docs-locking.html" style="color: var(--accent);">Read →</a>
+          <p>Understand build locking and functional equivalence checks.</p>
+          <a class="link" href="docs-locking.html">Read the guide →</a>
         </div>
         <div class="card">
-          <h4>CLI Reference</h4>
-          <p class="muted">Explore command-line interface options for automation.</p>
-          <a href="docs-cli.html" style="color: var(--accent);">Read →</a>
+          <h4>CLI reference</h4>
+          <p>Explore the command-line interface for workspace and build operations.</p>
+          <a class="link" href="docs-cli.html">Read the guide →</a>
         </div>
-        
       </div>
     </section>
 
-    <!-- About -->
-    <section class="section">
-      <h3>About</h3>
-      <p class="muted">
-        PyCompiler ARK is an open-source build workshop for Python projects. It provides a stable and documented workflow from source to executable.
-      </p>
-      <p class="muted">
-        Licensed under <strong>Apache License 2.0</strong>. Contributions are welcome on
-        <a href="https://github.com/raidos23/PyCompiler_ARK" target="_blank">GitHub</a>.
-      </p>
+    <section class="section reveal" id="about">
+      <div class="about">
+        <div class="card">
+          <h4>About</h4>
+          <p>
+            PyCompiler ARK is an open-source build workshop for Python projects. It keeps the
+            project state, build logic, and extension points explicit instead of hiding them behind
+            opaque automation.
+          </p>
+        </div>
+        <div class="card">
+          <h4>Source</h4>
+          <p>
+            Everything lives on GitHub, and the site is intentionally lightweight so it can act as a
+            project front door rather than a marketing shell.
+          </p>
+          <a class="link" href="https://github.com/raidos23/PyCompiler_ARK" target="_blank" rel="noreferrer">Open the repository →</a>
+        </div>
+      </div>
     </section>
-
-    
-      </main>
+  </main>
 
   <footer>
-    <div class="container">
-      © <span id="year"></span> PyCompiler ARK — All rights reserved
+    <div class="container footer-inner">
+      <div>PyCompiler ARK</div>
+      <div>Open source build workshop for Python projects</div>
     </div>
   </footer>
-
-  <script>
-    // Simple utilities
-    const $ = s => document.querySelector(s);
-
-    // Update year
-    $('#year').textContent = new Date().getFullYear();
-
-    </script>
 </body>
 </html>
