@@ -27,7 +27,7 @@ from typing import Optional
 
 from PySide6.QtWidgets import QApplication, QFileDialog, QMessageBox
 
-from pycompiler_ark.Core.Globals import _workspace_dir_lock
+from pycompiler_ark.Ui.Gui.Globals import _workspace_dir_lock
 from pycompiler_ark.Core.WorkSpaceManager.SetupWorkspace import SetupWorkspace
 from pycompiler_ark.Ui.Gui.WidgetsCreator import CompilationProcessDialog
 
@@ -172,7 +172,7 @@ class WorkspaceDialog:
 
             # Étape 5: synchroniser le cache global thread-safe.
             try:
-                from pycompiler_ark.Core.Globals import _workspace_dir_cache
+                from pycompiler_ark.Ui.Gui.Globals import _workspace_dir_cache
 
                 with _workspace_dir_lock:
                     _workspace_dir_cache = folder
