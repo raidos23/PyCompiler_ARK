@@ -22,8 +22,8 @@ from typing import Optional
 from pycompiler_ark.Plugins_SDK.BcPluginContext import (
     BcPluginBase,
     PluginMeta,
-    PreCompileContext,
     bc_register,
+    PreCompileContext
 )
 from pycompiler_ark.Plugins_SDK.GeneralContext import (
     Dialog,

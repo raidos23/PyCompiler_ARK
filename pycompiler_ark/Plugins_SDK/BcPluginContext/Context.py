@@ -42,7 +42,7 @@ try:
     from pycompiler_ark.bcasl import BcPluginBase as BcPluginBase
     from pycompiler_ark.bcasl import ExecutionReport as ExecutionReport
     from pycompiler_ark.bcasl import PluginMeta as PluginMeta
-    from pycompiler_ark.bcasl import PreCompileContext as PreCompileContext
+    from pycompiler_ark.bcasl.PreCompileContext import PreCompileContext as PreCompileContext
     from pycompiler_ark.bcasl import bc_register as _bc_register
     from pycompiler_ark.bcasl import register_plugin as register_plugin
 except ImportError:

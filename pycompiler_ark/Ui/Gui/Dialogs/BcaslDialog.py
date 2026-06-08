@@ -28,6 +28,7 @@ Respecte la SPEC UX BCASL :
 from __future__ import annotations
 
 import copy
+import os
 from pathlib import Path
 from typing import Any, Optional
 
@@ -635,7 +636,7 @@ class BcaslPipelineDialog(QDialog):
     def _build_plugin_config_tabs(self) -> None:
         """Crée les onglets de configuration per-plugin."""
         try:
-            from pycompiler_ark.bcasl.Base import PreCompileContext
+            from pycompiler_ark.bcasl.PreCompileContext import PreCompileContext
             from pycompiler_ark.bcasl.Loader import _build_workspace_meta
 
             workspace_meta = _build_workspace_meta(self._workspace_root, self._cfg)
