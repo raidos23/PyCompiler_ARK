@@ -134,16 +134,14 @@
     }
 
     .hero {
-      padding: 18px 0 28px;
+      padding: 0 0 28px;
       display: grid;
       grid-template-columns: 1fr;
-      gap: 22px;
+      gap: 26px;
       align-items: start;
       min-height: calc(100svh - 84px);
-    }
-    .hero-copy,
-    .hero-visual {
-      border-radius: var(--radius-xl);
+      width: calc(100vw - 32px);
+      margin-left: calc(50% - 50vw + 16px);
     }
     .hero-copy {
       padding: 32px 30px;
@@ -221,31 +219,31 @@
     }
 
     .hero-visual {
-      padding: 12px;
-      border: 1px solid var(--border);
-      background:
-        linear-gradient(180deg, rgba(15, 25, 37, 0.92), rgba(8, 15, 24, 0.96));
-      box-shadow: 0 26px 70px rgba(0,0,0,.35);
+      padding: 0;
+      border: 0;
+      background: transparent;
+      box-shadow: none;
       display: grid;
-      gap: 14px;
+      gap: 0;
       align-content: start;
       justify-items: stretch;
       width: 100%;
     }
     .hero-logo {
       width: 100%;
-      min-height: 42vh;
-      border-radius: 22px;
+      min-height: 52vh;
+      border-radius: 0;
       overflow: hidden;
-      border: 1px solid rgba(148, 179, 210, 0.12);
-      background: #071019;
-      box-shadow: inset 0 1px 0 rgba(255,255,255,.03);
+      border: 0;
+      background: transparent;
+      box-shadow: none;
     }
     .hero-logo img {
       display: block;
       width: 100%;
       height: 100%;
       object-fit: cover;
+      object-position: center top;
     }
 
     .section {
@@ -398,7 +396,7 @@
 
   <main class="container">
     <section class="hero">
-        <div class="hero-visual glass reveal delay-1">
+        <div class="hero-visual reveal delay-1">
           <div class="hero-logo">
             <img src="images/logo2spalsh.png" alt="PyCompiler ARK landing logo" />
           </div>
@@ -410,26 +408,26 @@
           <p>
             PyCompiler ARK centralizes project context, build locking, plugin-driven pre-build logic,
             and CLI or GUI workflows in one coherent toolchain.
-        </p>
-        <div class="hero-actions">
-          <a class="btn primary" href="#docs">Read the docs</a>
-          <a class="btn" href="https://github.com/raidos23/PyCompiler_ARK" target="_blank" rel="noreferrer">View source</a>
+          </p>
+          <div class="hero-actions">
+            <a class="btn primary" href="#docs">Read the docs</a>
+            <a class="btn" href="https://github.com/raidos23/PyCompiler_ARK" target="_blank" rel="noreferrer">View source</a>
+          </div>
+          <div class="hero-stats">
+            <div class="stat">
+              <span class="num">BuildContext</span>
+              <span class="label">Normalized project state for engines and tools.</span>
+            </div>
+            <div class="stat">
+              <span class="num">CLI + GUI</span>
+              <span class="label">Shared behavior across terminals and Qt workflows.</span>
+            </div>
+            <div class="stat">
+              <span class="num">BCASL</span>
+              <span class="label">Pre-build plugin pipeline for repeatable preparation.</span>
+            </div>
+          </div>
         </div>
-        <div class="hero-stats">
-          <div class="stat">
-            <span class="num">BuildContext</span>
-            <span class="label">Normalized project state for engines and tools.</span>
-          </div>
-          <div class="stat">
-            <span class="num">CLI + GUI</span>
-            <span class="label">Shared behavior across terminals and Qt workflows.</span>
-          </div>
-          <div class="stat">
-            <span class="num">BCASL</span>
-            <span class="label">Pre-build plugin pipeline for repeatable preparation.</span>
-          </div>
-        </div>
-      </div>
     </section>
 
     <section class="section reveal delay-2" id="features">
