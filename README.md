@@ -37,12 +37,12 @@ cd PyCompiler_ARK
 pip install -e .
 ```
 
-### Launch
+### Launch Gui
 
 ```bash
-pycompiler_ark
+pycompiler_ark gui
 # or
-python -m pycompiler_ark gui # launch the gui
+python -m pycompiler_ark gui
 ```
 ---
 
