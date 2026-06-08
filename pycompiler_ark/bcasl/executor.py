@@ -23,13 +23,14 @@ import time
 from pathlib import Path
 from typing import Any, Optional
 
-from .Base import (
+from pycompiler_ark.bcasl.PreCompileContext import PreCompileContext
+
+from pycompiler_ark.bcasl.Base import (
     BCASL_PLUGIN_REGISTER_FUNC,
     BcPluginBase,
     ExecutionItem,
     ExecutionReport,
     PluginMeta,
-    PreCompileContext,
     _logger,
     _PluginRecord,
 )
@@ -853,7 +854,7 @@ def _plugin_worker(
         _configure_worker_env(config)
         _apply_resource_limits(config)
         try:
-            from pycompiler_ark.bcasl import PreCompileContext as _PCC
+            from pycompiler_ark.bcasl.PreCompileContext import PreCompileContext as _PCC
 
             plg = _load_plugin_instance(module_path, plugin_id, project_root, config)
             ctx = _PCC(
