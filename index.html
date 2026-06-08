@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>PyCompiler ARK</title>
-  <meta name="description" content="PyCompiler ARK 1.0.0 - build workshop with CLI, GUI, and reproducible builds." />
+  <meta name="description" content="PyCompiler ARK - build workshop with CLI, GUI, and reproducible builds." />
   <link rel="icon" type="image/png" href="images/logo.png" />
   <style>
     :root {
@@ -73,19 +73,6 @@
     .kpi .num { font-size: 20px; font-weight: 800; color: var(--accent-2); }
     .kpi .label { color: var(--muted); font-size: 12px; }
 
-    .release-card {
-      display: none;
-      background: linear-gradient(180deg, #0f1621, #0c121a);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 18px;
-      box-shadow: 0 12px 30px var(--shadow);
-      margin-top: 18px;
-    }
-    .release-card.visible { display: block; }
-    .release-card h3 { margin: 0 0 8px; font-size: 18px; }
-    .release-card .meta { color: var(--muted); margin: 0; line-height: 1.6; }
-
     /* Screenshot Section */
     .screenshot-section { padding: 32px 0; }
     .screenshot-container {
@@ -142,19 +129,10 @@
         <div class="hero-kpis">
           <div class="kpi"><div class="num">3</div><div class="label">Integrated Engines</div></div>
           <div class="kpi"><div class="num">UI/CLI</div><div class="label">Feature Parity</div></div>
-          <div class="kpi"><div class="num">1.0.0</div><div class="label">Current package version</div></div>
         </div>
       </div>
       <div class="hero-card">
         <img src="images/splash.png" srcset="images/splash.png 1x, images/splash@2x.png 2x" alt="PyCompiler ARK splash" style="width:100%; max-height: 420px; object-fit: contain; border-radius:12px; border:1px solid var(--border);" />
-      </div>
-    </section>
-
-    <section class="release-card" id="release-card" aria-live="polite">
-      <h3>Latest release detected</h3>
-      <p class="meta" id="release-meta"></p>
-      <div style="margin-top: 12px;">
-        <a class="btn primary" id="release-link" href="https://github.com/raidos23/PyCompiler_ARK/releases" target="_blank" rel="noreferrer">Open release history</a>
       </div>
     </section>
 
@@ -180,7 +158,7 @@
         </div>
         <div class="card">
           <h4>Build Locking</h4>
-          <p class="muted">Saves Git state and library versions to ensure reproducible rebuilds from lock files.</p>
+          <p class="muted">Saves Git state and dependency metadata to ensure reproducible rebuilds from lock files.</p>
         </div>
         <div class="card">
           <h4>BCASL Pipeline</h4>
@@ -250,33 +228,6 @@
 
     // Update year
     $('#year').textContent = new Date().getFullYear();
-
-    async function loadLatestRelease() {
-      const releaseCard = $('#release-card');
-      const releaseMeta = $('#release-meta');
-      const releaseLink = $('#release-link');
-      try {
-        const response = await fetch('https://api.github.com/repos/raidos23/PyCompiler_ARK/releases');
-        if (!response.ok) return;
-        const releases = await response.json();
-        const latest = Array.isArray(releases)
-          ? [...releases]
-              .filter((release) => release && release.published_at)
-              .sort((a, b) => new Date(b.published_at) - new Date(a.published_at))[0]
-          : null;
-        if (!latest) return;
-
-        const publishedAt = new Date(latest.published_at).toLocaleDateString('en-US');
-        const title = latest.name || latest.tag_name || 'Release';
-        releaseMeta.textContent = `${title} published on ${publishedAt}.`;
-        releaseLink.href = latest.html_url || 'https://github.com/raidos23/PyCompiler_ARK/releases';
-        releaseCard.classList.add('visible');
-      } catch (error) {
-        console.error(error);
-      }
-    }
-
-    loadLatestRelease();
 
     </script>
 </body>
