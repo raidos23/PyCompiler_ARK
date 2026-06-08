@@ -26,7 +26,7 @@ from typing import Optional
 from PySide6.QtGui import QDropEvent
 from PySide6.QtWidgets import QMainWindow, QMessageBox
 
-from pycompiler_ark.Core.Globals import (
+from pycompiler_ark.Ui.Gui.Globals import (
     _latest_gui_instance,
     _run_coro_async,
     _workspace_dir_cache,

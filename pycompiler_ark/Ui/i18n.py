@@ -844,7 +844,7 @@ def log_i18n_level(
 
 def apply_language(self, lang_display: str) -> None:
     """Apply selected language through centralized i18n flow."""
-    from pycompiler_ark.Core.Globals import _run_coro_async
+    from pycompiler_ark.Ui.Gui.Globals import _run_coro_async
 
     async def _do():
         code = (
