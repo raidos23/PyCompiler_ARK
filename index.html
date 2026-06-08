@@ -227,50 +227,29 @@
       box-shadow: 0 26px 70px rgba(0,0,0,.35);
       display: grid;
       gap: 14px;
-      align-content: start;
+      align-content: center;
+      justify-items: center;
+      min-height: 100%;
     }
-    .hero-visual .frame {
+    .hero-logo {
+      width: 100%;
       border-radius: 22px;
       overflow: hidden;
       border: 1px solid rgba(148, 179, 210, 0.12);
       background: #071019;
-      position: relative;
-      min-height: 320px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.03);
     }
-    .hero-visual .frame img {
+    .hero-logo img {
+      display: block;
       width: 100%;
-      height: 100%;
-      object-fit: cover;
+      height: auto;
     }
-    .hero-visual .frame::after {
-      content: "";
-      position: absolute;
-      inset: auto 0 0 0;
-      height: 34%;
-      background: linear-gradient(180deg, rgba(7, 16, 24, 0), rgba(7, 16, 24, 0.88));
-    }
-    .hero-note {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-    }
-    .chip {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 9px 12px;
-      border-radius: 999px;
-      border: 1px solid rgba(148, 179, 210, 0.14);
-      background: rgba(9, 17, 26, 0.76);
-      color: #d9e9f7;
-      font-size: 12px;
-    }
-    .chip .dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, var(--accent), var(--accent-2));
-      box-shadow: 0 0 0 4px rgba(53, 194, 255, 0.12);
+    .hero-caption {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+      text-align: center;
+      max-width: 34ch;
     }
 
     .section {
@@ -451,14 +430,10 @@
       </div>
 
       <div class="hero-visual glass reveal delay-1">
-        <div class="frame">
-          <img src="images/splash.png" srcset="images/splash.png 1x, images/splash@2x.png 2x" alt="PyCompiler ARK splash" />
+        <div class="hero-logo">
+          <img src="images/logo2spalsh.png" alt="PyCompiler ARK landing logo" />
         </div>
-        <div class="hero-note">
-          <span class="chip"><span class="dot"></span> Workspace-first</span>
-          <span class="chip"><span class="dot"></span> Engine-aware</span>
-          <span class="chip"><span class="dot"></span> Reproducible</span>
-        </div>
+        <p class="hero-caption">Top-level landing logo for PyCompiler ARK.</p>
       </div>
     </section>
 
