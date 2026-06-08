@@ -24,25 +24,26 @@ have been moved to Ui.Gui.Dialogs.BcaslDialog to keep this package pure-Python.
 
 from __future__ import annotations
 
+from pycompiler_ark.bcasl.PreCompileContext import PreCompileContext
+
 # Coeur BCASL (moteur de plugins et contexte)
-from .Base import (
+from pycompiler_ark.bcasl.Base import (
     BCASL_PLUGIN_REGISTER_FUNC,
     BcPluginBase,
     ExecutionReport,
     PluginMeta,
-    PreCompileContext,
     bc_register,
     register_plugin,
 )
-from .executor import BCASL
+from pycompiler_ark.bcasl.executor import BCASL
 
 # Chargeur (exécution synchrone, pure-Python)
-from .Loader import (
+from pycompiler_ark.bcasl.Loader import (
     run_pre_compile,
 )
 
 # Validateur de compatibilité
-from .validator import (
+from pycompiler_ark.bcasl.validator import (
     CompatibilityCheckResult,
     check_plugin_compatibility,
     print_compatibility_report,

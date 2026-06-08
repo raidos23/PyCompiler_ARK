@@ -32,10 +32,11 @@ from typing import Any, Optional
 import yaml
 import os
 from pycompiler_ark.Core.Configs import load_ark_config
+from pycompiler_ark.bcasl.PreCompileContext import PreCompileContext
 
-from .Base import BcPluginBase, PreCompileContext
-from .executor import BCASL
-from .tagging import compute_tag_order
+from pycompiler_ark.bcasl.Base import BcPluginBase
+from pycompiler_ark.bcasl.executor import BCASL
+from pycompiler_ark.bcasl.tagging import compute_tag_order
 
 BCASL_DISABLED_REPORT: dict[str, Any] = {"status": "disabled", "ok": True}
 
