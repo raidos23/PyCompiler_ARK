@@ -1,5 +1,4 @@
 graph TD
-    %% Définition des Styles (Code Couleur Sémantique)
     classDef ui fill:#e1f5fe,stroke:#01579b,stroke-width:2px,color:#01579b;
     classDef core fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px,color:#1b5e20;
     classDef engine fill:#fff3e0,stroke:#e65100,stroke-width:2px,color:#e65100;
@@ -7,90 +6,70 @@ graph TD
     classDef system fill:#ffebee,stroke:#b71c1c,stroke-width:2px,color:#b71c1c;
     classDef storage fill:#ffffff,stroke:#616161,stroke-width:1px,stroke-dasharray: 5 5;
 
-    %% 1. COUCHE INTERFACE
-    subgraph UI ["🎨 Interface Utilisateur"]
-        GUI["<b>Gui.py</b><br/>Vue Principale"]:::ui
-        CLI["<b>Cli/</b><br/>Mode Terminal"]:::ui
+    subgraph ENTRY["Entry points"]
+        GUI["Ui/Gui"]:::ui
+        CLI["Ui/Cli/app.py"]:::ui
     end
 
-    %% 2. COUCHE INITIALISATION
-    subgraph INIT ["⚙️ Initialisation (WorkSpaceManager)"]
-        WSM["<b>WorkSpaceManager</b><br/>Orchestrateur Scan"]:::core
-        CFG["<b>Configs/</b><br/>Gestion ark.yml / Global"]:::core
-        DEPS["<b>deps_analyser/</b><br/>Analyse AST & Imports"]:::core
+    subgraph CLI_FLOW["CLI helpers"]
+        INIT["init_workspace"]:::core
+        BUILD["build / lock rebuild"]:::core
+        LIST["list / info / scaffold"]:::core
     end
 
-    %% 3. LE COEUR (ÉTAT)
-    subgraph CONTEXT ["📦 Contexte & Vérité"]
-        BC_CTX["<b>BuildContext</b><br/>Objet d'état partagé"]:::core
-        LOCK["<b>Locking/</b><br/>Garant de reproductibilité"]:::core
+    subgraph CONFIG["Configuration and context"]
+        ARK["Core/Configs"]:::core
+        LOCK["Core/Locking"]:::core
+        CTX["BuildContext"]:::core
+        FS[".ark/ workspace files"]:::storage
     end
 
-    %% 4. COUCHE BCASL (INTERCEPTION PRE-BUILD)
-    subgraph BCASL_SYS ["🧩 Système BCASL (Plugins)"]
-        BCASL_L["<b>Loader</b><br/>Détection & Ordre"]:::bcasl
-        BCASL_E["<b>Executor</b><br/>Sandbox & Orchestration"]:::bcasl
-        BCASL_P["<b>Phases</b><br/>Cleanup, Lint, Obfuscation..."]:::bcasl
+    subgraph PREBUILD["Pre-build pipeline"]
+        BCASL["BCASL sync helper"]:::bcasl
+        BCASL_EXEC["bcasl/executor.py"]:::bcasl
     end
 
-    %% 5. COUCHE COMPILATION
-    subgraph ENGINE_SYS ["🚀 Moteur de Build (EngineRunner)"]
-        RUNNER["<b>EngineRunner</b><br/>Pipeline 1-2-3"]:::engine
-        AUTO["<b>Auto_Command_Builder</b><br/>Génération Flags via Mapping"]:::engine
-        MOTEURS["<b>Engines</b><br/>Nuitka / PyInstaller / cx_Freeze"]:::engine
+    subgraph ENGINE["Compilation pipeline"]
+        RUNNER["Core/Compiler/engine_runner.py"]:::engine
+        DISCOVERY["Core/engine"]:::engine
+        AUTO["Core/Auto_Command_Builder"]:::engine
+        ENGINES["pyinstaller / nuitka / cx_freeze"]:::engine
     end
 
-    %% 6. COUCHE SYSTEME
-    subgraph OS_SYS ["💻 Système d'Exploitation"]
-        SDM["<b>SysDependencyManager</b><br/>Elévation Native"]:::core
-        LINUX["<b>Linux</b> (pkexec)"]:::system
-        WIN["<b>Windows</b> (UAC)"]:::system
-        VENV["<b>VenvManager</b><br/>Isolation Python"]:::core
+    subgraph SYSTEM["Environment and OS"]
+        VENV["VenvManager"]:::system
+        DEPS["SysDependencyManager"]:::system
+        SECURE["process_security"]:::system
     end
 
-    %% 7. PERSISTANCE
-    subgraph DATA ["📁 Stockage (.ark/)"]
-        ARK_YML["ark.yml"]:::storage
-        BCASL_YML["bcasl.yml"]:::storage
-        LOCK_YML["latest.lock.yml"]:::storage
-    end
+    GUI --> INIT
+    GUI --> BUILD
+    CLI --> INIT
+    CLI --> BUILD
+    CLI --> LIST
 
-    %% --- FLUX LOGIQUE ---
+    INIT --> ARK
+    INIT --> FS
+    INIT --> CTX
+    INIT --> VENV
 
-    %% Phase 1: Entrée & Config
-    GUI & CLI --> WSM
-    WSM --> CFG
-    CFG <--> ARK_YML
-    CFG --> BC_CTX
+    BUILD --> ARK
+    BUILD --> LOCK
+    BUILD --> CTX
+    LOCK --> FS
+    LOCK --> CTX
 
-    %% Phase 2: Analyse
-    WSM --> DEPS
-    DEPS --> BC_CTX
+    CTX --> BCASL
+    BCASL --> BCASL_EXEC
+    BCASL_EXEC --> RUNNER
 
-    %% Phase 3: Reproductibilité
-    BC_CTX <--> LOCK
-    LOCK <--> LOCK_YML
-
-    %% Phase 4: Interception BCASL (Avant Compilation)
-    BC_CTX ==> BCASL_L
-    BCASL_L -- "Lit config" --> BCASL_YML
-    BCASL_L --> BCASL_E
-    BCASL_E --> BCASL_P
-    BCASL_P ==> RUNNER
-
-    %% Phase 5: Orchestration Compilation
-    RUNNER --> VENV
-    RUNNER --> SDM
+    RUNNER --> DISCOVERY
+    DISCOVERY --> ENGINES
     RUNNER --> AUTO
-    AUTO -- "Mapping" --> MOTEURS
-    
-    %% Phase 6: Exécution & OS
-    SDM ==> LINUX & WIN
-    MOTEURS --> OS_SYS
+    AUTO --> ENGINES
+    RUNNER --> VENV
+    RUNNER --> DEPS
+    RUNNER --> SECURE
 
-    %% --- STYLISATION DES LIENS ---
-    linkStyle 0,1,2,3,4,5 stroke:#01579b,stroke-width:2px;
-    linkStyle 6,7,8,9 stroke:#1b5e20,stroke-width:2px;
-    linkStyle 10,11,12,13,14 stroke:#4a148c,stroke-width:3px;
-    linkStyle 15,16,17,18 stroke:#e65100,stroke-width:2px;
-    linkStyle 19,20 stroke:#b71c1c,stroke-width:2px;
+    LOCK --> FS
+    BUILD --> FS
