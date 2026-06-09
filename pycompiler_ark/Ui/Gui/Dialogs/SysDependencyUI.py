@@ -15,14 +15,14 @@
 
 """
 SysDependencyUI — GUI layer for system dependency management.
-Uses native elevation (pkexec / UAC). No password handling.
+Uses native elevation (pkexec / UAC). Thread-safe proxying.
 """
 
 import platform
 import shutil
 from typing import Any, Optional
 
-from PySide6.QtCore import QProcess
+from PySide6.QtCore import QProcess, QObject, Signal, Slot, QMetaObject, Qt
 from PySide6.QtWidgets import QMessageBox
 
 from pycompiler_ark.Core.SysDependencyManager import SysDependencyManager
@@ -32,7 +32,7 @@ from pycompiler_ark.Ui.Gui.WidgetsCreator import ProgressDialog
 class SysDependencyUI(SysDependencyManager):
     """
     GUI extension of SysDependencyManager.
-    Simplified: delegates authentication to the OS.
+    Proxies GUI calls to the main thread to avoid segfaults.
     """
 
     def __init__(self, parent_widget=None):
@@ -42,6 +42,8 @@ class SysDependencyUI(SysDependencyManager):
             "register_task": self._ui_register_task,
             "unregister_task": self._ui_unregister_task,
         })
+        # Internal storage for progress dialog
+        self._progress_dlg = None
 
     def _ui_tr(self, fr: str, en: str) -> str:
         try:
@@ -52,17 +54,52 @@ class SysDependencyUI(SysDependencyManager):
 
     def _ui_register_task(self, proc: QProcess, dlg: Optional[Any], label_fr: str, label_en: str) -> None:
         if self.parent_widget is None: return
-        tasks = getattr(self.parent_widget, "_sysdep_tasks", [])
-        tasks.append({"process": proc, "dialog": dlg, "label_fr": label_fr, "label_en": label_en})
-        setattr(self.parent_widget, "_sysdep_tasks", tasks)
+        # Simple task registration is generally thread-safe if it's just a list
+        try:
+            tasks = getattr(self.parent_widget, "_sysdep_tasks", [])
+            tasks.append({"process": proc, "dialog": dlg, "label_fr": label_fr, "label_en": label_en})
+            setattr(self.parent_widget, "_sysdep_tasks", tasks)
+        except Exception:
+            pass
 
     def _ui_unregister_task(self, proc: QProcess) -> None:
         if self.parent_widget is None: return
-        tasks = getattr(self.parent_widget, "_sysdep_tasks", [])
-        setattr(self.parent_widget, "_sysdep_tasks", [t for t in tasks if t.get("process") is not proc])
+        try:
+            tasks = getattr(self.parent_widget, "_sysdep_tasks", [])
+            setattr(self.parent_widget, "_sysdep_tasks", [t for t in tasks if t.get("process") is not proc])
+        except Exception:
+            pass
+
+    def _invoke_gui(self, method: callable, *args):
+        """Invoke a method on the GUI thread."""
+        if self.parent_widget:
+            QMetaObject.invokeMethod(self.parent_widget, lambda: method(*args), Qt.QueuedConnection)
+        else:
+            method(*args)
 
     def msg_error(self, fr: str, en: str) -> None:
-        QMessageBox.critical(self.parent_widget, self.tr("Erreur", "Error"), self.tr(fr, en))
+        def _show():
+            QMessageBox.critical(self.parent_widget, self.tr("Erreur", "Error"), self.tr(fr, en))
+        self._invoke_gui(_show)
+
+    def _show_progress(self, title_fr: str, title_en: str, msg_fr: str, msg_en: str):
+        def _create():
+            self._progress_dlg = ProgressDialog(self.tr(title_fr, title_en), self.parent_widget)
+            self._progress_dlg.set_message(self.tr(msg_fr, msg_en))
+            self._progress_dlg.show()
+        self._invoke_gui(_create)
+
+    def _update_progress(self, msg: str):
+        def _upd():
+            if self._progress_dlg: self._progress_dlg.set_message(msg)
+        self._invoke_gui(_upd)
+
+    def _close_progress(self):
+        def _close():
+            if self._progress_dlg:
+                self._progress_dlg.close()
+                self._progress_dlg = None
+        self._invoke_gui(_close)
 
     def install_packages_linux(self, packages: list[str]) -> Optional[QProcess]:
         pm = self.detect_linux_package_manager()
@@ -73,16 +110,14 @@ class SysDependencyUI(SysDependencyManager):
         pkgs = " ".join(packages)
         cmd = f"{pm} install -y {pkgs}"
         
-        dlg = ProgressDialog(self.tr("Installation système", "System installation"), self.parent_widget)
-        dlg.set_message(self.tr("Installation des dépendances...", "Installing dependencies..."))
-        dlg.show()
+        self._show_progress("Installation système", "System installation", "Installation des dépendances...", "Installing dependencies...")
 
         def _on_output(text: str):
             lines = [l for l in text.strip().splitlines() if l.strip()]
-            if lines: dlg.set_message(lines[-1][:100])
+            if lines: self._update_progress(lines[-1][:100])
 
         def _on_finished(ec, es):
-            dlg.close()
+            self._close_progress()
             if ec != 0: self.msg_error("L'installation a échoué.", "Installation failed.")
 
         return self.run_elevated_shell(cmd, on_output=_on_output, on_finished=_on_finished)
@@ -92,24 +127,20 @@ class SysDependencyUI(SysDependencyManager):
             self.msg_error("winget est requis sur Windows.", "winget is required on Windows.")
             return None
 
-        # On combine les installs en une seule commande shell pour retourner un seul QProcess
         ids = [pkg.get("id") for pkg in packages if pkg.get("id")]
         if not ids: return None
         
-        # Commande Windows qui enchaîne les winget
         cmd_parts = [f"winget install --id {pid} --silent --accept-source-agreements --accept-package-agreements" for pid in ids]
         full_cmd = " && ".join(cmd_parts)
         
-        dlg = ProgressDialog(self.tr("Installation Windows", "Windows installation"), self.parent_widget)
-        dlg.set_message(self.tr("Préparation de winget...", "Preparing winget..."))
-        dlg.show()
+        self._show_progress("Installation Windows", "Windows installation", "Préparation de winget...", "Preparing winget...")
 
         def _on_output(text: str):
             lines = [l for l in text.strip().splitlines() if l.strip()]
-            if lines: dlg.set_message(lines[-1][:100])
+            if lines: self._update_progress(lines[-1][:100])
 
         def _on_finished(ec, es):
-            dlg.close()
+            self._close_progress()
             if ec != 0: self.msg_error("L'installation winget a échoué.", "winget installation failed.")
 
         return self.shell_run(full_cmd, on_output=_on_output, on_finished=_on_finished)

@@ -26,7 +26,7 @@ import webbrowser
 from collections.abc import Callable
 from typing import Any, Optional, Union
 
-from PySide6.QtCore import QProcess
+from PySide6.QtCore import QProcess, QObject
 
 
 class SysDependencyManager:
@@ -35,7 +35,8 @@ class SysDependencyManager:
     Handles command execution and package manager detection.
     """
 
-    def __init__(self, parent_widget=None):
+    def __init__(self, parent_widget: Optional[QObject] = None):
+        # parent_widget is used as the parent for QProcess
         self.parent_widget = parent_widget
         self._ui_callbacks: dict = {}
 
@@ -76,6 +77,8 @@ class SysDependencyManager:
     ) -> Optional[QProcess]:
         """Runs a command without elevation."""
         try:
+            # IMPORTANT: QProcess must be created on the GUI thread if parent is a widget.
+            # However, if parent_widget is a QObject on the correct thread, it's fine.
             proc = QProcess(self.parent_widget)
             if cwd:
                 proc.setWorkingDirectory(cwd)
@@ -92,7 +95,11 @@ class SysDependencyManager:
                 proc.readyReadStandardOutput.connect(lambda: on_output(proc.readAllStandardOutput().data().decode()))
                 proc.readyReadStandardError.connect(lambda: on_output(proc.readAllStandardError().data().decode()))
 
-            proc.finished.connect(lambda ec, es: [on_finished(ec, es) if on_finished else None, self._unregister_task(proc)])
+            def _finished_wrapper(ec, es):
+                if on_finished: on_finished(ec, es)
+                self._unregister_task(proc)
+
+            proc.finished.connect(_finished_wrapper)
             
             self._register_task(proc, None, "commande système", "system command")
             proc.start()
@@ -109,11 +116,9 @@ class SysDependencyManager:
     ) -> Optional[QProcess]:
         """Runs a command with native elevation (pkexec on Linux)."""
         if platform.system() == "Linux":
-            # Delegation to pkexec
             full_cmd = f"pkexec bash -lc '{cmd_str}'"
             return self.shell_run(full_cmd, cwd, on_output, on_finished)
         elif platform.system() == "Windows":
-            # On Windows, winget/installers handle elevation via UAC internally
             return self.shell_run(cmd_str, cwd, on_output, on_finished)
         return None
 
@@ -136,7 +141,7 @@ def install_system_packages(packages: list[str], gui=None) -> bool:
     pm = SysDependencyManager().detect_linux_package_manager()
     if not pm: return False
 
-    cmd_prefix = ["sudo", "-n"] # Strictly non-interactive
+    cmd_prefix = ["sudo", "-n"] 
     if pm == "apt":
         steps = [cmd_prefix + ["apt-get", "update"], cmd_prefix + ["apt-get", "install", "-y"] + pkgs]
     else:
