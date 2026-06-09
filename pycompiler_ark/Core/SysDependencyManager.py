@@ -36,7 +36,7 @@ class SysDependencyManager:
     """
 
     def __init__(self, parent_widget: Optional[QObject] = None):
-        # parent_widget is used as the parent for QProcess
+        # parent_widget is used for UI callbacks and global task registration
         self.parent_widget = parent_widget
         self._ui_callbacks: dict = {}
 
@@ -77,9 +77,10 @@ class SysDependencyManager:
     ) -> Optional[QProcess]:
         """Runs a command without elevation."""
         try:
-            # IMPORTANT: QProcess must be created on the GUI thread if parent is a widget.
-            # However, if parent_widget is a QObject on the correct thread, it's fine.
-            proc = QProcess(self.parent_widget)
+            # IMPORTANT: We create QProcess WITHOUT a parent here. 
+            # This allows it to be created and waited for (waitForFinished) 
+            # in the background thread without violating Qt thread ownership rules.
+            proc = QProcess()
             if cwd:
                 proc.setWorkingDirectory(cwd)
 
@@ -101,6 +102,7 @@ class SysDependencyManager:
 
             proc.finished.connect(_finished_wrapper)
             
+            # Note: The process is registered for global cleanup tracking
             self._register_task(proc, None, "commande système", "system command")
             proc.start()
             return proc

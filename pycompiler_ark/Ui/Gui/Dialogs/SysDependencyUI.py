@@ -22,7 +22,7 @@ import platform
 import shutil
 from typing import Any, Optional
 
-from PySide6.QtCore import QProcess, QObject, Signal, Slot, QMetaObject, Qt
+from PySide6.QtCore import QProcess, QObject, QTimer, Qt
 from PySide6.QtWidgets import QMessageBox
 
 from pycompiler_ark.Core.SysDependencyManager import SysDependencyManager
@@ -32,7 +32,7 @@ from pycompiler_ark.Ui.Gui.WidgetsCreator import ProgressDialog
 class SysDependencyUI(SysDependencyManager):
     """
     GUI extension of SysDependencyManager.
-    Proxies GUI calls to the main thread to avoid segfaults.
+    Proxies GUI calls to the main thread to avoid segfaults and PySide6 signature errors.
     """
 
     def __init__(self, parent_widget=None):
@@ -54,7 +54,7 @@ class SysDependencyUI(SysDependencyManager):
 
     def _ui_register_task(self, proc: QProcess, dlg: Optional[Any], label_fr: str, label_en: str) -> None:
         if self.parent_widget is None: return
-        # Simple task registration is generally thread-safe if it's just a list
+        # Task registration is generally thread-safe for list operations
         try:
             tasks = getattr(self.parent_widget, "_sysdep_tasks", [])
             tasks.append({"process": proc, "dialog": dlg, "label_fr": label_fr, "label_en": label_en})
@@ -71,9 +71,13 @@ class SysDependencyUI(SysDependencyManager):
             pass
 
     def _invoke_gui(self, method: callable, *args):
-        """Invoke a method on the GUI thread."""
+        """
+        Invoke a method on the GUI thread using QTimer.singleShot.
+        This is the most compatible way to pass a lambda/callable across threads in PySide6.
+        """
         if self.parent_widget:
-            QMetaObject.invokeMethod(self.parent_widget, lambda: method(*args), Qt.QueuedConnection)
+            # QTimer.singleShot(0, context, callable) ensures execution in context's thread
+            QTimer.singleShot(0, self.parent_widget, lambda: method(*args))
         else:
             method(*args)
 
@@ -84,6 +88,11 @@ class SysDependencyUI(SysDependencyManager):
 
     def _show_progress(self, title_fr: str, title_en: str, msg_fr: str, msg_en: str):
         def _create():
+            # Close existing one if any
+            if self._progress_dlg:
+                try: self._progress_dlg.close()
+                except Exception: pass
+            
             self._progress_dlg = ProgressDialog(self.tr(title_fr, title_en), self.parent_widget)
             self._progress_dlg.set_message(self.tr(msg_fr, msg_en))
             self._progress_dlg.show()
@@ -91,7 +100,8 @@ class SysDependencyUI(SysDependencyManager):
 
     def _update_progress(self, msg: str):
         def _upd():
-            if self._progress_dlg: self._progress_dlg.set_message(msg)
+            if self._progress_dlg:
+                self._progress_dlg.set_message(msg)
         self._invoke_gui(_upd)
 
     def _close_progress(self):
