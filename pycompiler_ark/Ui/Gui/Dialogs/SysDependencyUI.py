@@ -109,57 +109,61 @@ class SysDependencyUI(SysDependencyManager):
             if self._progress_dlg:
                 self._progress_dlg.close()
                 self._progress_dlg = None
+
         self._invoke_gui(_close)
 
-    def install_packages_linux(self, packages: list[str]) -> Optional[QProcess]:
-        pm = self.detect_linux_package_manager()
-        if not pm:
-            self.msg_error("Gestionnaire de paquets non détecté.", "Package manager not detected.")
+    def install_packages(self, packages: list[str]) -> Optional[QProcess]:
+        """
+        Unified entry point for package installation with GUI feedback.
+        """
+        cmd = self.get_install_command(packages)
+        if not cmd:
+            self.msg_error(
+                "Impossible de générer la commande d'installation (Gestionnaire de paquets manquant).",
+                "Cannot generate installation command (Missing package manager).",
+            )
             return None
 
-        pkgs = " ".join(packages)
-        cmd = f"{pm} install -y {pkgs}"
-        
-        self._show_progress("Installation système", "System installation", "Installation des dépendances...", "Installing dependencies...")
+        self._show_progress(
+            "Installation système",
+            "System installation",
+            "Installation des dépendances...",
+            "Installing dependencies...",
+        )
 
         def _on_output(text: str):
             lines = [l for l in text.strip().splitlines() if l.strip()]
-            if lines: self._update_progress(lines[-1][:100])
+            if lines:
+                self._update_progress(lines[-1][:100])
 
         def _on_finished(ec, es):
             self._close_progress()
-            if ec != 0: self.msg_error("L'installation a échoué.", "Installation failed.")
+            if ec != 0:
+                self.msg_error(
+                    "L'installation a échoué.", "Installation failed."
+                )
 
-        return self.run_elevated_shell(cmd, on_output=_on_output, on_finished=_on_finished)
+        # Elevation is required for system packages
+        proc = self.run_elevated_shell(
+            cmd, on_output=_on_output, on_finished=_on_finished
+        )
+
+        if proc and self._progress_dlg:
+            # Handle cancellation: if user cancels the dialog, kill the process
+            self._progress_dlg.canceled.connect(proc.terminate)
+
+        return proc
+
+    def install_packages_linux(self, packages: list[str]) -> Optional[QProcess]:
+        # Deprecated: use install_packages
+        return self.install_packages(packages)
 
     def install_packages_windows(self, packages: list[dict]) -> Optional[QProcess]:
-        if not shutil.which("winget"):
-            self.msg_error("winget est requis sur Windows.", "winget is required on Windows.")
-            return None
-
+        # Deprecated: use install_packages
         ids = [pkg.get("id") for pkg in packages if pkg.get("id")]
-        if not ids: return None
-        
-        cmd_parts = [f"winget install --id {pid} --silent --accept-source-agreements --accept-package-agreements" for pid in ids]
-        full_cmd = " && ".join(cmd_parts)
-        
-        self._show_progress("Installation Windows", "Windows installation", "Préparation de winget...", "Preparing winget...")
+        return self.install_packages(ids)
 
-        def _on_output(text: str):
-            lines = [l for l in text.strip().splitlines() if l.strip()]
-            if lines: self._update_progress(lines[-1][:100])
-
-        def _on_finished(ec, es):
-            self._close_progress()
-            if ec != 0: self.msg_error("L'installation winget a échoué.", "winget installation failed.")
-
-        return self.shell_run(full_cmd, on_output=_on_output, on_finished=_on_finished)
 
 def install_system_packages(packages: list[str], gui) -> bool:
     mgr = SysDependencyUI(gui)
-    if platform.system() == "Linux":
-        return mgr.install_packages_linux(packages) is not None
-    elif platform.system() == "Windows":
-        win_pkgs = [{"id": p} for p in packages]
-        return mgr.install_packages_windows(win_pkgs) is not None
-    return False
+    return mgr.install_packages(packages) is not None
