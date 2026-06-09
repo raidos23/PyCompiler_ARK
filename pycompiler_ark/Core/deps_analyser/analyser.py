@@ -86,6 +86,9 @@ def _default_excluded_stdlib() -> set[str]:
         "venv",
         "sqlite3",
         "tkinter",
+        "__future__",
+        "__main__",
+        "__builtins__",
     }
 
 
@@ -439,26 +442,43 @@ def _extract_imported_modules_from_source(
     modules: set[str] = set()
     try:
         tree = ast.parse(source, filename=file_path or "<memory>")
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Import):
+                for alias in node.names:
+                    top = _top_level_module_name(alias.name)
+                    if top:
+                        modules.add(top)
+            elif isinstance(node, ast.ImportFrom):
+                if node.level and node.level > 0:
+                    rel_root = _resolve_relative_import_root(
+                        file_path, node.level, workspace_dir
+                    )
+                    if rel_root:
+                        modules.add(rel_root)
+                elif node.module:
+                    top = _top_level_module_name(node.module)
+                    if top:
+                        modules.add(top)
     except Exception:
-        return modules
+        # Robust regex-based fallback if AST parsing fails (e.g. syntax error or newer Python version)
+        # Handle 'import module1, module2 as alias'
+        import_matches = re.findall(r"^\s*import\s+([\w\.,\s]+)", source, re.MULTILINE)
+        for match in import_matches:
+            for part in match.split(","):
+                # Extract 'module1' from 'module1 as alias'
+                mod = part.strip().split(" ")[0].strip()
+                top = _top_level_module_name(mod)
+                if top:
+                    modules.add(top)
 
-    for node in ast.walk(tree):
-        if isinstance(node, ast.Import):
-            for alias in node.names:
-                top = _top_level_module_name(alias.name)
-                if top:
-                    modules.add(top)
-        elif isinstance(node, ast.ImportFrom):
-            if node.level and node.level > 0:
-                rel_root = _resolve_relative_import_root(
-                    file_path, node.level, workspace_dir
-                )
-                if rel_root:
-                    modules.add(rel_root)
-            elif node.module:
-                top = _top_level_module_name(node.module)
-                if top:
-                    modules.add(top)
+        # Handle 'from module import something'
+        from_matches = re.findall(
+            r"^\s*from\s+([\w\.]+)\s+import", source, re.MULTILINE
+        )
+        for mod in from_matches:
+            top = _top_level_module_name(mod)
+            if top:
+                modules.add(top)
 
     dynamic_imports = re.findall(r"__import__\(['\"]([\w\.]+)['\"]\)", source)
     modules.update(
