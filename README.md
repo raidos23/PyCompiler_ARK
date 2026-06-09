@@ -19,7 +19,7 @@ Build Python apps with a predictable workflow, a configurable pre-compile pipeli
 - **BuildContext-driven builds**: engines receive a normalized project context, abstracting away the source of configuration (YAML vs. Lock files).
 - **Multi-engine support**: switch between PyInstaller, Nuitka, and cx_Freeze seamlessly.
 - **Extensible SDKs**: create new engines and BCASL plugins using simplified, consolidated APIs.
-- **Zero-Config auto-mapping for 80+ libraries**: automatic import detection via requirements covers major AI, modern web, data science, and automation stacks, with engine-specific arguments applied without manual tuning.
+- **Core auto-mapping for 80+ libraries**: automatic import detection from requirements and imports covers major AI, modern web, data science, and automation stacks, with engine-specific arguments applied through the engine mapping layer.
 - **Simplified build inclusions**: `build.include` forces package bundling and ARK translates it automatically per engine.
 - **Workspace-first UI**: filter files, manage exclusions, and follow progress and logs in one place.
 - **Venv-aware execution**: engines can use the project virtual environment automatically.
@@ -54,36 +54,47 @@ The PyCompiler ARK CLI provides a structured set of commands for workspace manag
 
 ```bash
 # Workspace Initialization
-python3 -m pycompiler_ark init --entry src/main.py [--icon icon.ico] [--with-venv]
+pycompiler_ark init --entry <path> [--icon <path>] [--with-venv] [--install-requirements] [--generate-requirements] [--apply-internal] [-y|--yes]
 
 # Building
-python3 -m pycompiler_ark build                      # Build using ark.yml engine
-python3 -m pycompiler_ark build --engine nuitka      # Override engine
-python3 -m pycompiler_ark build --lock latest         # Rebuild from the latest lock file
+pycompiler_ark build [-y|--yes] [-v|--verbose] [--json]
+pycompiler_ark build --engine <id> [-y|--yes]
+pycompiler_ark build --lock [file] [-y|--yes]
 
 # Execution
-python3 -m pycompiler_ark run bcasl                  # Execute BCASL pipeline
-python3 -m pycompiler_ark run bcasl --list-plugins   # List active plugins
+pycompiler_ark run bcasl [-y|--yes] [--list-plugins]
 
 # GUI
-python3 -m pycompiler_ark gui                        # Launch modern IDE-like GUI
-python3 -m pycompiler_ark gui --legacy               # Launch classic GUI
+pycompiler_ark gui
+pycompiler_ark gui --legacy
 ```
 
 ### Developer Commands
 
 ```bash
 # Discovery
-python3 -m pycompiler_ark list engines               # List available engines
-python3 -m pycompiler_ark list plugins               # List available BCASL plugins
+pycompiler_ark list engines
+pycompiler_ark list plugins
 
-# Configuration (User Paths)
-python3 -m pycompiler_ark set user-engine-dir /path  # Set custom engine directory
-python3 -m pycompiler_ark get user-engine-dir        # Retrieve path
+# Configuration
+pycompiler_ark set user-engine-dir <path>
+pycompiler_ark set user-plugin-dir <path>
+pycompiler_ark set dev-engine-dir <path>
+pycompiler_ark set dev-plugin-dir <path>
+
+pycompiler_ark get user-engine-dir
+pycompiler_ark get user-plugin-dir
+pycompiler_ark get dev-engine-dir
+pycompiler_ark get dev-plugin-dir
+
+pycompiler_ark unset user-engine-dir
+pycompiler_ark unset user-plugin-dir
+pycompiler_ark unset dev-engine-dir
+pycompiler_ark unset dev-plugin-dir
 
 # Scaffolding
-python3 -m pycompiler_ark scaffold engine demo       # Create a new engine template
-python3 -m pycompiler_ark scaffold plugin-bcasl demo # Create a new BCASL plugin template
+pycompiler_ark scaffold engine <name> [--path <dir>]
+pycompiler_ark scaffold plugin-bcasl <name> [--path <dir>]
 ```
 
 ### JSON Output
@@ -91,8 +102,8 @@ python3 -m pycompiler_ark scaffold plugin-bcasl demo # Create a new BCASL plugin
 For CI/CD and scripting, key commands support the `--json` flag to return machine-readable results:
 
 ```bash
-python3 -m pycompiler_ark build --json
-python3 -m pycompiler_ark init --entry main.py --json
+pycompiler_ark build --json
+pycompiler_ark init --entry main.py --json
 ```
 
 ---

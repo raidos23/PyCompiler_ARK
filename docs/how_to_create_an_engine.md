@@ -17,7 +17,7 @@ A PyCompiler ARK engine is a Python package placed in `pycompiler_ark/engines/<e
 
 - `pycompiler_ark/engines/<engine_id>/__init__.py`: engine code, registration, UI.
 - `pycompiler_ark/engines/<engine_id>/languages/<code>.json`: optional translations.
-- `pycompiler_ark/engines/<engine_id>/mapping.json`: optional mapping for the auto-builder.
+- `pycompiler_ark/engines/<engine_id>/mapping.json`: optional mapping used by the core auto-mapping system.
 - Optional internal modules, assets, helpers.
 
 #### **Minimal Example**
@@ -323,26 +323,15 @@ Notes.
 - `load_engine_language_file(engine_package, lang)` is still available if you need custom/manual loading.
 - If a key is missing, always provide a safe fallback string.
 
-**Auto Command Builder (Integrated)**
-The auto-builder is integrated into the core compilation pipeline. It can read
-`mapping.json` from the engine package, the workspace `engines/<engine_id>/`
-folder, or the `PYCOMPILER_MAPPING` environment variable to generate options
-from detected modules.
+**Core Auto-Mapping**
+PyCompiler ARK handles auto-mapping in the core pipeline. Engine authors do
+not need to implement a separate auto-mapping layer in their engine code.
 
-PyCompiler ARK expands this layer into a zero-config auto-mapping system that
-applies engine-specific flags automatically when imports are detected, so
-engine authors only need to fill the gaps not covered by the core mapping
-catalog.
+For engines that need import-to-flag mapping, provide a `mapping.json` file in
+the engine package. The core reads it and merges the generated flags into the
+final command.
 
-You no longer need to call `compute_auto_for_engine` manually in your `build_command`. The core runner will:
-
-1. Prefer `requirements.txt` or `requirements.in` when present.
-2. Fall back to `pyproject.toml` dependencies.
-3. Fall back to scanning Python imports.
-4. Read the engine mapping and generate the appropriate flags.
-5. Insert them into your command, usually before the entry point.
-
-#### **Minimal mapping.json example.**
+#### **Minimal `mapping.json` example**
 
 ```json
 {
@@ -360,12 +349,12 @@ You no longer need to call `compute_auto_for_engine` manually in your `build_com
 Key points.
 
 - Top-level keys are package names.
-- Engine values accept `str`, `list[str]`, or `dict` with `args` or `flags`.
+- Engine values can be strings, lists of flags, or structured objects accepted
+  by the core mapping parser.
 - `"{import_name}"` is replaced by the matched import name.
 - Use `build.include` when a package must be bundled even if the core mapping
   or import scanner does not trigger it automatically.
-- For advanced logic, expose `AUTO_BUILDER`, `get_auto_builder()`, or
-  `register_auto_builder()` in `pycompiler_ark/engines/<engine_id>/auto_plugins.py` or the workspace `engines/<engine_id>/auto_plugins.py`.
+- Engine authors only need to maintain `mapping.json` for this layer.
 
 **Deep Examples Catalog (40)**
 Each example includes context, intent, and a working pattern. Adjust IDs and labels to match your engine.
