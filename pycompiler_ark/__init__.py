@@ -15,4 +15,7 @@
 # limitations under the License.
 
 
-"""Dummy file to make this directory a package."""
+"""
+PyCompiler ARK — Python Build Studio
+
+"""
