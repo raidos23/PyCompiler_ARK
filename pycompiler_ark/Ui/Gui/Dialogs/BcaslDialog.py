@@ -653,12 +653,12 @@ class BcaslPipelineDialog(QDialog):
         pid_entry = {e["name"]: e for e in plugin_list if e.get("name")}
 
         for pid, plugin in self._plugin_instances.items():
-            if not hasattr(plugin, "build_config_tab"):
+            if not hasattr(plugin, "create_tab"):
                 continue
             try:
                 entry = pid_entry.get(pid, {})
                 base_cfg = dict(entry.get("config", {}))
-                tab_res = plugin.build_config_tab(self._tabs, ctx, base_cfg)
+                tab_res = plugin.create_tab(self._tabs, ctx, base_cfg)
                 if tab_res is None:
                     continue
                 title = widget = on_save = None
