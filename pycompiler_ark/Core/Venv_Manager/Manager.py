@@ -1246,7 +1246,9 @@ class VenvManager:
                             self._safe_log(
                                 f"[TIMEOUT] Timeout exceeded for {label} ({timeout_ms} ms). Killing process..."
                             )
-                            from pycompiler_ark.Core.process_killer import kill_process_tree
+                            from pycompiler_ark.Core.process_killer import (
+                                kill_process_tree,
+                            )
 
                             kill_process_tree(process.processId())
                     except Exception:

@@ -23,7 +23,7 @@ from pycompiler_ark.Plugins_SDK.BcPluginContext import (
     BcPluginBase,
     PluginMeta,
     bc_register,
-    PreCompileContext
+    PreCompileContext,
 )
 from pycompiler_ark.Plugins_SDK.GeneralContext import (
     Dialog,

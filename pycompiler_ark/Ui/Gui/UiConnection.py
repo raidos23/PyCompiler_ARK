@@ -861,7 +861,9 @@ def apply_theme(self, pref: str) -> None:
         except Exception:
             pass
         try:
-            from pycompiler_ark.Ui.Gui.IdeLikeGui.connections import _apply_activity_buttons_theme
+            from pycompiler_ark.Ui.Gui.IdeLikeGui.connections import (
+                _apply_activity_buttons_theme,
+            )
 
             _apply_activity_buttons_theme(self)
         except Exception:

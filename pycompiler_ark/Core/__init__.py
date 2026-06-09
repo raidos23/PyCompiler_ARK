@@ -24,7 +24,11 @@ Qt-dependent classes have been moved to Ui/Gui/Compilation/.
 from __future__ import annotations
 
 # Importations de allversion.py
-from pycompiler_ark.Core.allversion import get_bcasl_version, get_core_version, get_engine_sdk_version
+from pycompiler_ark.Core.allversion import (
+    get_bcasl_version,
+    get_core_version,
+    get_engine_sdk_version,
+)
 
 # Importations de process_killer.py
 from pycompiler_ark.Core.process_killer import (

@@ -195,10 +195,9 @@ class PyInstallerEngine(CompilerEngine):
             build_layout.addRow("Mode:", self._opt_onefile)
 
             # Windowed option
-            self._opt_windowed = QCheckBox( "Windowed")
+            self._opt_windowed = QCheckBox("Windowed")
             self._opt_windowed.setObjectName("opt_windowed_dynamic")
 
-            
             build_group.setLayout(build_layout)
 
             hint = QLabel(

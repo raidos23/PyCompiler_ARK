@@ -187,8 +187,12 @@ from pycompiler_ark.Core.Configs import (
 from pycompiler_ark.Core.Configs import validate_ark_config as _validate_ark_config
 from pycompiler_ark.Core.Configs import write_ark_config
 from pycompiler_ark.Core.Locking import BuildContext
-from pycompiler_ark.Core.Locking import build_context_from_ark_config as _build_context_from_ark_config
-from pycompiler_ark.Core.Locking import build_context_from_lock as _build_context_from_lock
+from pycompiler_ark.Core.Locking import (
+    build_context_from_ark_config as _build_context_from_ark_config,
+)
+from pycompiler_ark.Core.Locking import (
+    build_context_from_lock as _build_context_from_lock,
+)
 from pycompiler_ark.Core.Locking import build_lock_payload as _build_lock_payload
 from pycompiler_ark.Core.Locking import cache_rebuild_lock as _cache_rebuild_lock
 from pycompiler_ark.Core.Locking import compare_lock_payloads as _compare_lock_payloads
@@ -326,6 +330,7 @@ def init_workspace(
                 "requirements.txt already exists. (--generate-requirements)"
             )
         from pycompiler_ark.Core.deps_analyser.analyser import write_requirements_txt
+
         if not write_requirements_txt(str(workspace), str(requirements_path)):
             requirements_path.write_text(
                 "# Add your runtime dependencies here.\n", encoding="utf-8"
@@ -389,7 +394,9 @@ def load_ark_config(workspace: Path) -> dict[str, Any]:
         raise CliSpecError(str(exc)) from exc
 
 
-def validate_ark_config(workspace: Path, config: dict[str, Any]) -> PyCompilerArkValidationResult:
+def validate_ark_config(
+    workspace: Path, config: dict[str, Any]
+) -> PyCompilerArkValidationResult:
     result: ArkConfigValidationResult = _validate_ark_config(workspace, config)
     errors = list(result.errors)
     warnings = list(result.warnings)
@@ -495,7 +502,9 @@ def engine_config_from_lock(lock_payload: dict[str, Any]) -> dict[str, Any]:
 
 
 def ensure_correct_git_commit(
-    workspace: Path, lock_payload: dict[str, Any], confirm_cb: Callable[[str], bool] | None = None
+    workspace: Path,
+    lock_payload: dict[str, Any],
+    confirm_cb: Callable[[str], bool] | None = None,
 ) -> bool:
     """Vérifie si le commit et la branche Git actuels correspondent à ceux du verrou."""
     project = lock_payload.get("project") or {}
@@ -532,10 +541,12 @@ def ensure_correct_git_commit(
 
     if is_linux:
         try:
+
             def _confirm(msg: str) -> bool:
                 if confirm_cb:
                     return confirm_cb(msg)
                 from .interactive import ask_yes_no
+
                 return ask_yes_no(msg, default_yes=True)
 
             if not branch_match and locked_branch:
@@ -579,6 +590,7 @@ def ensure_correct_git_commit(
         if not commit_match and locked_commit:
             info(f"Manual action required: git checkout {locked_commit}")
         from .interactive import ask_yes_no
+
         return ask_yes_no("Continue anyway?", default_yes=False)
 
 

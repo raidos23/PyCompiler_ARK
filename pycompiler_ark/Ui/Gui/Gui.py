@@ -295,7 +295,10 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
 
     def open_init_workspace_dialog(self):
         """Open the project initialization dialog."""
-        from pycompiler_ark.Ui.Gui.Dialogs.InitWorkspaceDialog import open_init_workspace_dialog
+        from pycompiler_ark.Ui.Gui.Dialogs.InitWorkspaceDialog import (
+            open_init_workspace_dialog,
+        )
+
         open_init_workspace_dialog(self)
 
     def on_main_only_changed(self):
@@ -595,7 +598,9 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
                     self.cancel_all_compilations()
                 self._terminate_background_tasks()
                 try:
-                    from pycompiler_ark.Ui.Gui.Dialogs.BcaslDialog import ensure_bcasl_thread_stopped
+                    from pycompiler_ark.Ui.Gui.Dialogs.BcaslDialog import (
+                        ensure_bcasl_thread_stopped,
+                    )
 
                     ensure_bcasl_thread_stopped(self)
                 except Exception:
@@ -605,7 +610,9 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
                 event.ignore()
         else:
             try:
-                from pycompiler_ark.Ui.Gui.Dialogs.BcaslDialog import ensure_bcasl_thread_stopped
+                from pycompiler_ark.Ui.Gui.Dialogs.BcaslDialog import (
+                    ensure_bcasl_thread_stopped,
+                )
 
                 ensure_bcasl_thread_stopped(self)
             except Exception:

@@ -12,9 +12,7 @@ def _make_internal_workspace(root):
     package_dir = workspace / "src" / "pkg"
     package_dir.mkdir(parents=True)
     (package_dir / "__init__.py").write_text("", encoding="utf-8")
-    (package_dir / "internal_mod.py").write_text(
-        "VALUE = 1\n", encoding="utf-8"
-    )
+    (package_dir / "internal_mod.py").write_text("VALUE = 1\n", encoding="utf-8")
     (package_dir / "main.py").write_text(
         "from .internal_mod import VALUE\n", encoding="utf-8"
     )
@@ -32,12 +30,15 @@ def test_collect_internal_modules_uses_classification(tmp_path):
         }
         return mapping.get(module_name, "unknown")
 
-    with patch(
-        "pycompiler_ark.Core.deps_analyser.analyser._extract_imported_modules_from_file",
-        return_value={"pkg", "requests", "os"},
-    ), patch(
-        "pycompiler_ark.Core.deps_analyser.analyser._classify_module_origin",
-        side_effect=_classify,
+    with (
+        patch(
+            "pycompiler_ark.Core.deps_analyser.analyser._extract_imported_modules_from_file",
+            return_value={"pkg", "requests", "os"},
+        ),
+        patch(
+            "pycompiler_ark.Core.deps_analyser.analyser._classify_module_origin",
+            side_effect=_classify,
+        ),
     ):
         detected = collect_internal_modules(str(workspace))
 

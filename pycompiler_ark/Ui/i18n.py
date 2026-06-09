@@ -880,7 +880,9 @@ def apply_language(self, lang_display: str) -> None:
                     pass
             # Ensure IDE-like overflow menu labels update immediately (no restart required).
             try:
-                from pycompiler_ark.Ui.Gui.IdeLikeGui.connections import _retranslate_ide_like_actions
+                from pycompiler_ark.Ui.Gui.IdeLikeGui.connections import (
+                    _retranslate_ide_like_actions,
+                )
 
                 _retranslate_ide_like_actions(self)
             except Exception:

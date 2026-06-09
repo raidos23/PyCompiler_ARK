@@ -28,7 +28,7 @@ __all__ = [
     "PluginMeta",
     "ExecutionReport",
     "bc_register",
-    ]
+]
 
 _logger = logging.getLogger("bcasl")
 if not _logger.handlers:
