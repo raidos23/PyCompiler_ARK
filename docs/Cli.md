@@ -75,18 +75,17 @@ PyCompiler ARK loads components from multiple locations in order of priority:
 | Tier | Role | Default Location |
 | :--- | :--- | :--- |
 | **Dev** | Development | Optional (set via `pycompiler_ark set dev-*`) |
-| **User** | User-installed | `~/ark_user/` (created automatically) |
-| **Core** | Built-in engines | `ENGINES/` folder in installation root |
+| **User** | User-installed | `~/.pycompiler_ark/` (created automatically) |
+| **Core** | Built-in engines | `engines/` folder in installation root |
 
 **Priority**: `Dev > User > Core`
 
 ---
 
-### **5. Configuration (~/.arkconf/)**
+### **5. Configuration (~/.pycompiler_ark/cfg/)**
 
-Global user settings are stored in text files under `~/.arkconf/`:
+Global user settings are stored in text files under `~/.pycompiler_ark/cfg/`:
 
-- `pref.json`: Global GUI and runtime preferences.
 - `user_engine_dir`: Path to user-installed engines.
 - `user_plugin_dir`: Path to user-installed BCASL plugins.
 - `dev_engine_dir`: Path to active engine development.

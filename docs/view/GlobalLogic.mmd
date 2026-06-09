@@ -1,0 +1,16 @@
+flowchart LR
+ subgraph Build Pipeline
+    G(ark.yml) --> A
+    A(BuildContext) --------->I 
+    P(engines configs)----->|resolve_engine_command| I(Locking)
+    B(engines) 
+    I --->|Lock| B
+end
+
+subgraph Bcasl Pipeline
+    B ------>|run_engine_compile| C(artifacts)
+    A ------> D(PreCompileContext) ---> E(BcPlugins) --> F(Bcasl executor)
+    H(bcasl.yml) --> D
+    style A fill:#810505
+    style D fill:#810505
+end

@@ -809,4 +809,3 @@ Notes.
 - Keep engines stateless and drive behavior from `gui` and the target file.
 - Validate paths, handle exceptions, and log clearly.
 - Provide safe defaults when widgets are missing.
-- Use `CompilerCore.dry_run` when helpful.
