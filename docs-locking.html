@@ -7,97 +7,223 @@
   <meta name="description" content="Locking specifications for PyCompiler ARK" />
   <link rel="icon" type="image/png" href="images/logo.png" />
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap');
+
     :root {
-      --bg: #0b0f14;
-      --panel: #121821;
-      --text: #e6eef8;
-      --muted: #a9b2bf;
-      --accent: #1f9cf0;
-      --accent-2: #4bd1a0;
-      --border: #1b2430;
-      --shadow: rgba(0,0,0,.4);
+      --bg: #071018;
+      --bg-2: #0c1621;
+      --panel: rgba(13, 23, 34, 0.86);
+      --panel-strong: rgba(12, 20, 30, 0.98);
+      --text: #edf5ff;
+      --muted: #a6b7c8;
+      --border: rgba(148, 179, 210, 0.16);
+      --shadow: rgba(0, 0, 0, 0.42);
+      --accent: #8d7cff;
+      --accent-2: #35c2ff;
+      --accent-3: #42d6b0;
+      --link: #9d87ff;
+      --link-hover: #78d8ff;
+      --glow: rgba(141, 124, 255, 0.20);
       --code-bg: #0e1520;
+      --radius-xl: 26px;
+      --radius-lg: 20px;
+      --radius-md: 16px;
     }
     * { box-sizing: border-box; }
     html, body { height: 100%; }
     body {
       margin: 0;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      font-family: "IBM Plex Sans", sans-serif;
       color: var(--text);
-      background: radial-gradient(1200px 800px at 80% -10%, #122233 0%, rgba(18,34,51,0) 60%),
-                  radial-gradient(900px 700px at -10% 110%, #1a2b2a 0%, rgba(26,43,42,0) 55%),
-                  var(--bg);
+      background:
+        radial-gradient(1100px 760px at 85% -10%, rgba(53, 194, 255, 0.18) 0%, rgba(53, 194, 255, 0) 60%),
+        radial-gradient(900px 680px at -10% 110%, rgba(66, 214, 176, 0.15) 0%, rgba(66, 214, 176, 0) 55%),
+        linear-gradient(180deg, #061018 0%, #08131b 48%, #061018 100%);
     }
-    a { color: var(--accent); text-decoration: none; }
-    a:hover { text-decoration: underline; }
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background-image:
+        linear-gradient(rgba(255,255,255,.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.03) 1px, transparent 1px);
+      background-size: 72px 72px;
+      mask-image: radial-gradient(circle at center, black 30%, transparent 85%);
+      opacity: 0.35;
+      z-index: -1;
+    }
+    a { color: var(--link); text-decoration: none; transition: color .2s ease; }
+    a:hover { color: var(--link-hover); text-decoration: none; }
 
     /* Layout */
-    .container { max-width: 1000px; margin: 0 auto; padding: 24px; }
+    .container { max-width: 1100px; margin: 0 auto; padding: 24px; }
 
     header {
-      position: sticky; top: 0; z-index: 5;
-      background: linear-gradient(to bottom, rgba(11,15,20,.9), rgba(11,15,20,.6) 50%, rgba(11,15,20,0));
-      backdrop-filter: blur(6px);
-      border-bottom: 1px solid var(--border);
+      position: sticky; top: 0; z-index: 30;
+      background: linear-gradient(to bottom, rgba(7, 16, 24, 0.96), rgba(7, 16, 24, 0.72) 70%, rgba(7, 16, 24, 0));
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(148, 179, 210, 0.10);
     }
     .nav {
       display: flex; align-items: center; justify-content: space-between;
       gap: 16px; padding: 12px 0;
     }
-    .brand { display: flex; align-items: center; gap: 12px; }
-    .brand img { width: 36px; height: 36px; border-radius: 8px; box-shadow: 0 4px 16px var(--shadow); }
-    .brand h1 { font-size: 18px; margin: 0; letter-spacing: .3px; }
+    .brand { display: flex; align-items: center; gap: 14px; }
+    .brand img { width: 38px; height: 38px; border-radius: 10px; box-shadow: 0 4px 16px var(--shadow); }
+    .brand h1 { font-family: "Space Grotesk", sans-serif; font-size: 18px; margin: 0; letter-spacing: .04em; }
+    .brand small { display: block; color: var(--muted); margin-top: 2px; font-size: 12px; }
 
     .nav-actions { display: flex; gap: 10px; align-items: center; }
     .btn {
-      padding: 10px 14px; border: 1px solid var(--border); border-radius: 10px;
-      background: linear-gradient(180deg, #17202b, #101620);
-      color: var(--text); cursor: pointer; font-weight: 600; letter-spacing: .2px;
-      box-shadow: 0 4px 16px var(--shadow);
-      transition: transform .12s ease, background .2s ease, border-color .2s ease;
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      padding: 10px 16px; border-radius: 999px;
+      border: 1px solid rgba(148, 179, 210, 0.18);
+      background: rgba(15, 25, 36, 0.72);
+      color: var(--text); cursor: pointer; font-weight: 600; letter-spacing: .01em;
+      box-shadow: 0 10px 24px rgba(0,0,0,.18);
+      transition: transform .14s ease, border-color .2s ease, background .2s ease;
+      text-decoration: none;
     }
-    .btn:hover { transform: translateY(-1px); border-color: #263347; }
-    .btn.primary { background: linear-gradient(180deg, #2095e7, #1679c2); border-color: #197ac7; }
+    .btn:hover { transform: translateY(-1px); border-color: rgba(141, 124, 255, 0.48); background: rgba(15, 25, 36, 0.85); }
+    .btn.primary { background: linear-gradient(135deg, rgba(141, 124, 255, 0.24), rgba(53, 194, 255, 0.20)); border-color: rgba(141, 124, 255, 0.42); }
 
     /* Main content */
-    main { display: grid; grid-template-columns: 250px 1fr; gap: 24px; padding: 24px 0; }
+    main { display: grid; grid-template-columns: 260px 1fr; gap: 24px; padding: 24px 0; }
     
     /* Sidebar */
     .sidebar {
-      background: var(--panel);
+      background: linear-gradient(180deg, rgba(16, 27, 39, 0.86), rgba(10, 17, 26, 0.92));
       border: 1px solid var(--border);
-      border-radius: 14px;
+      border-radius: var(--radius-lg);
       padding: 20px;
       height: fit-content;
       position: sticky;
       top: 100px;
+      backdrop-filter: blur(16px);
+      box-shadow: 0 10px 30px rgba(0,0,0,.2);
     }
-    .sidebar h3 { margin: 0 0 16px; font-size: 14px; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); }
+    .sidebar h3 { 
+      margin: 0 0 16px; font-family: "Space Grotesk", sans-serif; font-size: 13px; 
+      text-transform: uppercase; letter-spacing: .1em; color: var(--muted); 
+    }
     .sidebar ul { list-style: none; margin: 0; padding: 0; }
-    .sidebar li { margin: 8px 0; }
-    .sidebar a { display: block; padding: 8px 12px; border-radius: 8px; transition: background .2s ease; }
-    .sidebar a:hover { background: #1b2430; text-decoration: none; }
-    .sidebar a.active { background: var(--accent); color: var(--bg); }
+    .sidebar li { margin: 6px 0; }
+    .sidebar a { display: block; padding: 8px 14px; border-radius: 10px; transition: background .2s ease, color .2s ease; color: var(--muted); }
+    .sidebar a:hover { background: rgba(255,255,255,.05); color: var(--text); text-decoration: none; }
+    .sidebar a.active { background: rgba(141, 124, 255, 0.15); color: var(--link); border: 1px solid rgba(141, 124, 255, 0.2); }
 
     /* Content */
     .content {
-      background: var(--panel);
+      background: linear-gradient(180deg, rgba(16, 27, 39, 0.86), rgba(10, 17, 26, 0.92));
       border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 32px;
-      box-shadow: 0 8px 24px var(--shadow);
+      border-radius: var(--radius-xl);
+      padding: 40px;
+      box-shadow: 0 24px 70px var(--shadow);
+      backdrop-filter: blur(16px);
     }
 
-    .content h1 { font-size: 32px; margin: 0 0 8px; }
-    .content h2 { font-size: 24px; margin: 32px 0 16px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
-    .content h3 { font-size: 18px; margin: 24px 0 12px; }
-    .content h4 { font-size: 16px; margin: 16px 0 8px; }
-    .content p { margin: 12px 0; line-height: 1.7; color: var(--text); }
-    .content ul, .content ol { margin: 12px 0; padding-left: 24px; }
-    .content li { margin: 8px 0; line-height: 1.6; }
+    .content h1 { font-family: "Space Grotesk", sans-serif; font-size: 36px; margin: 0 0 12px; letter-spacing: -.03em; }
+    .content h2 { font-family: "Space Grotesk", sans-serif; font-size: 26px; margin: 40px 0 16px; padding-bottom: 12px; border-bottom: 1px solid var(--border); letter-spacing: -.02em; }
+    .content h3 { font-family: "Space Grotesk", sans-serif; font-size: 20px; margin: 28px 0 14px; letter-spacing: -.01em; }
+    .content p { margin: 16px 0; line-height: 1.8; color: var(--muted); font-size: 16px; }
+    .content ul, .content ol { margin: 16px 0; padding-left: 24px; color: var(--muted); }
+    .content li { margin: 10px 0; line-height: 1.7; }
 
     /* Code blocks */
     .content pre {
+      background: #090f16;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px;
+      overflow-x: auto;
+      margin: 20px 0;
+      box-shadow: inset 0 2px 10px rgba(0,0,0,.2);
+    }
+    .content code {
+      font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+      font-size: 14px;
+      color: var(--accent-3);
+    }
+    .content pre code { color: #d0dce8; }
+
+    /* Inline code */
+    .content p code, .content li code {
+      background: rgba(255,255,255,.06);
+      padding: 2px 6px;
+      border-radius: 6px;
+      font-size: 14px;
+      color: var(--accent-2);
+    }
+
+    /* Blockquotes */
+    .content blockquote {
+      border-left: 3px solid var(--accent);
+      padding: 2px 0 2px 20px;
+      margin: 20px 0;
+      color: var(--muted);
+      font-style: italic;
+      background: rgba(141, 124, 255, 0.04);
+      border-radius: 0 8px 8px 0;
+    }
+
+    /* Tables */
+    .content table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      margin: 24px 0;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .content th, .content td {
+      padding: 14px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+    .content th {
+      background: rgba(255,255,255,.03);
+      font-weight: 600;
+      color: var(--text);
+      font-family: "Space Grotesk", sans-serif;
+    }
+    .content tr:last-child td { border-bottom: 0; }
+
+    /* Loading state */
+    .loading {
+      text-align: center;
+      padding: 60px;
+      color: var(--muted);
+      font-style: italic;
+    }
+
+    /* Footer */
+    footer { margin-top: 40px; border-top: 1px solid var(--border); padding: 24px 0 60px; color: var(--muted); font-size: 14px; }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+      main { grid-template-columns: 1fr; }
+      .sidebar { position: static; margin-bottom: 24px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container nav">
+      <div class="brand">
+        <img src="images/logo.png" alt="PyCompiler ARK Logo" />
+        <div>
+          <h1>PyCompiler ARK</h1>
+          <small>Build workshop for Python projects</small>
+        </div>
+      </div>
+      <div class="nav-actions">
+        <a class="btn" href="index.html">Home</a>
+        <a class="btn primary" href="https://github.com/raidos23/PyCompiler_ARK" target="_blank">GitHub</a>
+      </div>
+    </div>
+  </header>
       background: var(--code-bg);
       border: 1px solid var(--border);
       border-radius: 10px;
