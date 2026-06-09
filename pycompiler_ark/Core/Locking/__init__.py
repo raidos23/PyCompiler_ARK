@@ -36,7 +36,7 @@ def ensure_workspace_layout(workspace: Path) -> None:
     # Create .ark/.gitignore to ignore local/transient files
     gitignore_path = workspace / ".ark" / ".gitignore"
     if not gitignore_path.exists():
-        content = "pref.json\ncache/\nlogs/\nbuild/\n"
+        content = "pref.json\ncache/\nlogs/\nbuild/\nvenv/\n.venv/\n"
         gitignore_path.write_text(content, encoding="utf-8")
 
 
