@@ -31,4 +31,3 @@ jsonschema
 click
 rich
 colorama
-future

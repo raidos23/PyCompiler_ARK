@@ -41,7 +41,7 @@ Workspace / project config (previously Core.ArkConfig)
 
 User-level config (previously Core.UserConfig)
 ----------------------------------------------
-- ``config_home``            — resolve ``~/.arkconf`` (or $ARK_CONFIG_HOME)
+- ``config_home``            — resolve ``~/.pycompiler_ark/cfg`` (or $ARK_CONFIG_HOME)
 - ``resolve_config_value``   — read a persisted user setting
 - ``set_config_value``       — persist a user setting
 - ``unset_config_value``     — remove a persisted user setting
@@ -554,8 +554,8 @@ CONFIG_KEYS: dict[str, str] = {
 #: Default sub-directory paths (relative to ``Path.home()``) created on first
 #: access for keys that have no explicit override.
 DEFAULT_USER_DIRS: dict[str, tuple[str, ...]] = {
-    "user-engine-dir": ("ark_user", "engines"),
-    "user-plugin-dir": ("ark_user", "plugins"),
+    "user-engine-dir": (".pycompiler_ark", "engines"),
+    "user-plugin-dir": (".pycompiler_ark", "plugins"),
 }
 
 
@@ -567,12 +567,12 @@ def config_home() -> Path:
     """Return the root directory for user-level ARK config files.
 
     Respects the ``ARK_CONFIG_HOME`` environment variable; falls back to
-    ``~/.arkconf``.
+    ``~/.pycompiler_ark/cfg``.
     """
     override = os.environ.get("ARK_CONFIG_HOME")
     if override:
         return Path(override).expanduser()
-    return Path.home() / ".arkconf"
+    return Path.home() / ".pycompiler_ark/cfg"
 
 
 def ensure_config_home(*, create: bool = True) -> Path:

@@ -23,14 +23,14 @@ import json
 import os
 
 MAX_PARALLEL = 3
-PREFS_BASENAME = "pycompiler_gui_prefs.json"
+PREFS_BASENAME = "gui_prefs.json"
 
 
 def _user_config_dir() -> str:
     """
-    Return le folder de preferences global de l'utilisateur : ~/.PyCompiler_ARK
+    Return le folder de preferences global de l'utilisateur : ~/.pycompiler_ark
     """
-    return os.path.expanduser("~/.PyCompiler_ARK")
+    return os.path.expanduser("~/.pycompiler_ark")
 
 
 def _prefs_path() -> str:
@@ -298,11 +298,11 @@ def export_system_preferences_json(path: str | None = None) -> str:
     Write JSON file containing system information tied to preferences
     (language système détectée, theme clair/sombre, paths de config).
     Si path n'est pas fourni, écrit dans le folder de config utilisateur
-    sous le nom 'system_preferences.json'. Return le path final écrit.
+    sous le nom 'system_infos.json'. Return le path final écrit.
     """
     data = preferences_system_info()
     if not path:
-        path = os.path.join(_user_config_dir(), "system_preferences.json")
+        path = os.path.join(_user_config_dir(), "system_infos.json")
     try:
         os.makedirs(os.path.dirname(path), exist_ok=True)
     except Exception:

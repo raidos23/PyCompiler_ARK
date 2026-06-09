@@ -87,9 +87,9 @@ def _platform_log_dir() -> Path:
 
         return Path(_user_config_dir()) / "logs"
     except Exception:
-        # Robust fallback to ~/.PyCompiler_ARK/logs
+        # Robust fallback to ~/.pycompiler_ark/logs
         try:
-            return Path("~/.PyCompiler_ARK/logs").expanduser()
+            return Path("~/.pycompiler_ark/logs").expanduser()
         except Exception:
             # Last resort fallbacks
             try:
