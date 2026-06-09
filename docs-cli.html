@@ -259,7 +259,7 @@
     }
 
     async function loadDocumentation(docFile) {
-      const url = `https://raw.githubusercontent.com/raidos23/PyCompiler_ARK/main/docs/dev_docs/${docFile}`;
+      const url = `https://raw.githubusercontent.com/raidos23/PyCompiler_ARK/main/docs/${docFile}`;
       const contentDiv = $('#content');
       try {
         const response = await fetch(url);
