@@ -210,7 +210,7 @@ BCASL can expose per-plugin configuration tabs in the BCASL config UI.
 Implement:
 
 ```python
-def build_config_tab(self, parent, ctx, config):
+def create_tab(self, parent, ctx, config):
     # return QWidget or (title, widget) or (title, widget, on_save)
     ...
 ```
@@ -220,7 +220,7 @@ Notes.
 - `config` is a dict to read/write.
 - `on_save(config_dict)` can return an updated dict.
 - Each plugin entry stores its config in the `config` field inside the `plugins` collection in `bcasl.yml`.
-- `build_config_tab(...)` may return a widget, a `(title, widget)` tuple, a `(title, widget, on_save)` tuple, or a dict with `title`, `widget`, and `on_save`.
+- `create_tab(...)` may return a widget, a `(title, widget)` tuple, a `(title, widget, on_save)` tuple, or a dict with `title`, `widget`, and `on_save`.
 
 **Plugin i18n (GeneralContext)**
 Plugins can use the SDK i18n system with a `languages/` folder in the plugin package.
