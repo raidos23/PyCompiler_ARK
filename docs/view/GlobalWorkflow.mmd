@@ -1,8 +1,0 @@
-flowchart TD
-    G(ark.yml) --> A
-    A(BuildContext) ---> B(engines) --resolve_engine_command--> I(Locking)
-    A --------> I
-    B -----> C(artifacts)
-    A ------> D(PreCompileContext) ---> E(BcPlugins) --> F(Bcasl executor)
-    H(bcasl.yml) --> D
-    

@@ -19,9 +19,9 @@ class TestCliRuntime(unittest.TestCase):
         # Simulate import error or exception
         mock_user_dir.side_effect = Exception("Import fail")
 
-        # We expect it to fallback to ~/.PyCompiler_ARK/logs
+        # We expect it to fallback to ~/.pycompiler_ark/logs
         log_dir = _platform_log_dir()
-        expected = Path("~/.PyCompiler_ARK/logs").expanduser()
+        expected = Path("~/.pycompiler_ark/logs").expanduser()
         self.assertEqual(log_dir, expected)
 
 
