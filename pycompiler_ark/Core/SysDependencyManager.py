@@ -65,8 +65,48 @@ class SysDependencyManager:
                 return pm
         return None
 
+    def detect_macos_package_manager(self) -> Optional[str]:
+        if shutil.which("brew"):
+            return "brew"
+        return None
+
     def which(self, cmd: str) -> Optional[str]:
         return shutil.which(cmd)
+
+    def get_install_command(self, packages: list[str]) -> Optional[str]:
+        """
+        Generate the appropriate installation command string for the current platform.
+        Returns None if no supported package manager is found.
+        """
+        if not packages:
+            return None
+
+        system = platform.system()
+        if system == "Linux":
+            pm = self.detect_linux_package_manager()
+            if not pm:
+                return None
+            pkgs = " ".join(packages)
+            # Standard install command for most Linux package managers
+            return f"{pm} install -y {pkgs}"
+
+        elif system == "Windows":
+            if not shutil.which("winget"):
+                return None
+            # Building a combined winget command
+            parts = [
+                f"winget install --id {p} --silent --accept-source-agreements --accept-package-agreements"
+                for p in packages
+            ]
+            return " && ".join(parts)
+
+        elif system == "Darwin":  # macOS
+            pm = self.detect_macos_package_manager()
+            if pm == "brew":
+                pkgs = " ".join(packages)
+                return f"brew install {pkgs}"
+
+        return None
 
     def shell_run(
         self,
@@ -77,9 +117,6 @@ class SysDependencyManager:
     ) -> Optional[QProcess]:
         """Runs a command without elevation."""
         try:
-            # IMPORTANT: We create QProcess WITHOUT a parent here. 
-            # This allows it to be created and waited for (waitForFinished) 
-            # in the background thread without violating Qt thread ownership rules.
             proc = QProcess()
             if cwd:
                 proc.setWorkingDirectory(cwd)
@@ -88,20 +125,37 @@ class SysDependencyManager:
                 proc.setProgram(cmd[0])
                 proc.setArguments(cmd[1:])
             else:
-                proc.setProgram("/bin/bash" if platform.system() != "Windows" else "cmd.exe")
-                args = ["-lc", cmd] if platform.system() != "Windows" else ["/c", cmd]
+                proc.setProgram(
+                    "/bin/bash" if platform.system() != "Windows" else "cmd.exe"
+                )
+                args = (
+                    ["-lc", cmd]
+                    if platform.system() != "Windows"
+                    else ["/c", cmd]
+                )
                 proc.setArguments(args)
 
-            if on_output:
-                proc.readyReadStandardOutput.connect(lambda: on_output(proc.readAllStandardOutput().data().decode()))
-                proc.readyReadStandardError.connect(lambda: on_output(proc.readAllStandardError().data().decode()))
+            def _read_output():
+                # Use errors='replace' to avoid crashes on Windows with non-UTF8 encodings
+                raw = proc.readAllStandardOutput().data().decode(errors="replace")
+                if on_output:
+                    on_output(raw)
+
+            def _read_error():
+                raw = proc.readAllStandardError().data().decode(errors="replace")
+                if on_output:
+                    on_output(raw)
+
+            proc.readyReadStandardOutput.connect(_read_output)
+            proc.readyReadStandardError.connect(_read_error)
 
             def _finished_wrapper(ec, es):
-                if on_finished: on_finished(ec, es)
+                if on_finished:
+                    on_finished(ec, es)
                 self._unregister_task(proc)
 
             proc.finished.connect(_finished_wrapper)
-            
+
             # Note: The process is registered for global cleanup tracking
             self._register_task(proc, None, "commande système", "system command")
             proc.start()
