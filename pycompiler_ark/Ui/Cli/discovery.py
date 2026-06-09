@@ -232,10 +232,16 @@ def bcasl_doctor_payload(workspace: str | None = None) -> dict[str, Any]:
     }
 
 
-def scaffold_engine(target_name: str, root_dir: str | None = None) -> dict[str, Any]:
+def scaffold_engine(
+    target_name: str, root_dir: str | None = None, is_dev: bool = False
+) -> dict[str, Any]:
     safe = str(target_name).strip().replace("-", "_").replace(" ", "_").lower()
     base_root = Path(root_dir or Path.cwd())
-    engine_dir = base_root / "engines" / safe
+    if is_dev:
+        engine_dir = base_root / safe
+    else:
+        engine_dir = base_root / "engines" / safe
+
     lang_dir = engine_dir / "languages"
     created: list[str] = []
     if engine_dir.exists():
@@ -277,10 +283,16 @@ def scaffold_engine(target_name: str, root_dir: str | None = None) -> dict[str, 
     return {"created": True, "path": str(engine_dir)}
 
 
-def scaffold_plugin(target_name: str, root_dir: str | None = None) -> dict[str, Any]:
+def scaffold_plugin(
+    target_name: str, root_dir: str | None = None, is_dev: bool = False
+) -> dict[str, Any]:
     safe = str(target_name).strip().replace("-", "_").replace(" ", "_")
     base_root = Path(root_dir or Path.cwd())
-    plugin_dir = base_root / "Plugins" / safe
+    if is_dev:
+        plugin_dir = base_root / safe
+    else:
+        plugin_dir = base_root / "Plugins" / safe
+
     lang_dir = plugin_dir / "languages"
     if plugin_dir.exists():
         return {"created": False, "path": str(plugin_dir), "reason": "already exists"}

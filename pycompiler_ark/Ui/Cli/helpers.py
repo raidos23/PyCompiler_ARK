@@ -603,11 +603,46 @@ def list_plugins_payload() -> dict[str, Any]:
 
 
 def scaffold_engine_payload(name: str, root_dir: str | None = None) -> dict[str, Any]:
-    return scaffold_engine(name, root_dir=root_dir)
+    from pycompiler_ark.Core.Configs import config_file_for, resolve_config_value
+    from pycompiler_ark.Ui.Cli.interactive import ask_path
+
+    is_dev = False
+    if not root_dir:
+        # Check if user DEFINED a custom dir (explicitly set via 'set')
+        conf_path = config_file_for("dev-engine-dir", create_root=False)
+        if conf_path.exists():
+            root_dir = resolve_config_value("dev-engine-dir", create_default=False)
+            is_dev = True
+
+    if not root_dir:
+        # Prompt user
+        root_dir = ask_path("Path for the new engine")
+        if not root_dir:
+            return {"created": False, "reason": "No destination path provided"}
+
+    # We need to tell scaffold_engine if we are in a dev dir to avoid nesting
+    return scaffold_engine(name, root_dir=root_dir, is_dev=is_dev)
 
 
 def scaffold_plugin_payload(name: str, root_dir: str | None = None) -> dict[str, Any]:
-    return scaffold_plugin(name, root_dir=root_dir)
+    from pycompiler_ark.Core.Configs import config_file_for, resolve_config_value
+    from pycompiler_ark.Ui.Cli.interactive import ask_path
+
+    is_dev = False
+    if not root_dir:
+        # Check if user DEFINED a custom dir
+        conf_path = config_file_for("dev-plugin-dir", create_root=False)
+        if conf_path.exists():
+            root_dir = resolve_config_value("dev-plugin-dir", create_default=False)
+            is_dev = True
+
+    if not root_dir:
+        # Prompt user
+        root_dir = ask_path("Path for the new plugin")
+        if not root_dir:
+            return {"created": False, "reason": "No destination path provided"}
+
+    return scaffold_plugin(name, root_dir=root_dir, is_dev=is_dev)
 
 
 def run_bcasl_before_compile_sync(

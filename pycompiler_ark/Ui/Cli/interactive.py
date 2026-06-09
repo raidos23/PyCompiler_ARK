@@ -118,6 +118,47 @@ def ask_yes_no(prompt: str, *, default_yes: bool = True) -> bool:
                 pass
 
 
+def ask_path(prompt: str, default: Optional[str] = None) -> str | None:
+    """Prompt the user for a directory path."""
+    if os.environ.get("PYCOMPILER_YES") == "1":
+        return default or os.getcwd()
+
+    stream, close_stream = _open_tty_stream()
+    if stream is None:
+        if _is_noninteractive_env():
+            return default
+        return None
+
+    try:
+        out = _REAL_STDOUT
+        default_label = f" ({default})" if default else ""
+        while True:
+            out.write(f"{prompt}{default_label}: ")
+            out.flush()
+            line = stream.readline()
+            if line == "":
+                out.write("\n")
+                out.flush()
+                return None
+            answer = line.strip()
+            if answer == "":
+                out.write("\n")
+                out.flush()
+                return default or os.getcwd()
+
+            # Normalize and return
+            path = os.path.abspath(os.path.expanduser(answer))
+            out.write("\n")
+            out.flush()
+            return path
+    finally:
+        if close_stream and stream is not None:
+            try:
+                stream.close()
+            except Exception:
+                pass
+
+
 def register_cli_status(status: Any) -> None:
     """Register a Rich status spinner that must pause during user prompts."""
     if status is not None and status not in _active_statuses:
