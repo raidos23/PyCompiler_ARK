@@ -108,7 +108,7 @@ class Cleaner(BcPluginBase):
         except Exception:
             return {}
 
-    def build_config_tab(self, parent, ctx: PreCompileContext, config: dict):
+    def create_tab(self, parent, ctx: PreCompileContext, config: dict):
         try:
             from PySide6.QtWidgets import (
                 QCheckBox,
