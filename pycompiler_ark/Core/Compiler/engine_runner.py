@@ -311,7 +311,9 @@ def run_engine_compile_streaming(
                 @property
                 def sys_deps_manager(self):
                     if self._sys_deps_manager is None:
-                        from pycompiler_ark.Core.SysDependencyManager import SysDependencyManager
+                        from pycompiler_ark.Core.SysDependencyManager import (
+                            SysDependencyManager,
+                        )
 
                         self._sys_deps_manager = SysDependencyManager(self)
                     return self._sys_deps_manager

@@ -237,7 +237,7 @@ def compile_all(self) -> None:
     try:
         # Use BuildContext helper to get initial context
         context = build_context_object_from_ark_config(validated.config)
-        # load the engine config from disk 
+        # load the engine config from disk
         from pycompiler_ark.Core.Locking import read_engine_config
 
         engine_config = read_engine_config(ws, engine_id)
@@ -299,7 +299,9 @@ def compile_all(self) -> None:
                 "❌ BCASL validation failed. Compilation cannot continue.",
             )
             try:
-                from pycompiler_ark.Ui.Gui.Dialogs.BcaslDialog import ensure_bcasl_thread_stopped
+                from pycompiler_ark.Ui.Gui.Dialogs.BcaslDialog import (
+                    ensure_bcasl_thread_stopped,
+                )
 
                 ensure_bcasl_thread_stopped(self)
             except Exception:
@@ -375,8 +377,10 @@ def compile_all(self) -> None:
 
     self._active_bcasl_callback = _after_bcasl
     # Pass validated config to short-circuit if BCASL is disabled
-    ark_cfg = getattr(validated, "config", None) if 'validated' in locals() else None
-    run_bcasl_before_compile(self, _after_bcasl, build_context=context, ark_config=ark_cfg)
+    ark_cfg = getattr(validated, "config", None) if "validated" in locals() else None
+    run_bcasl_before_compile(
+        self, _after_bcasl, build_context=context, ark_config=ark_cfg
+    )
 
 
 def rebuild_from_lock(self, lock_path: Path) -> None:
@@ -407,7 +411,9 @@ def rebuild_from_lock(self, lock_path: Path) -> None:
         if not engine_id:
             raise ValueError("Invalid lock file: missing engine name")
 
-        entry_file = str(((lock_payload.get("project") or {}).get("entry")) or "").strip()
+        entry_file = str(
+            ((lock_payload.get("project") or {}).get("entry")) or ""
+        ).strip()
         if not entry_file:
             raise ValueError("Invalid lock file: missing project.entry")
 
@@ -507,7 +513,9 @@ def rebuild_from_lock(self, lock_path: Path) -> None:
 
             if not bcasl_report_allows_compile(self, _report):
                 try:
-                    from pycompiler_ark.Ui.Gui.Dialogs.BcaslDialog import ensure_bcasl_thread_stopped
+                    from pycompiler_ark.Ui.Gui.Dialogs.BcaslDialog import (
+                        ensure_bcasl_thread_stopped,
+                    )
 
                     ensure_bcasl_thread_stopped(self)
                 except Exception:
@@ -613,8 +621,9 @@ def start_compilation_process(self, engine_id: str, file_path: str) -> bool:
         except Exception:
             context.entry_point = file_path
 
-        # load the engine config from disk 
+        # load the engine config from disk
         from pycompiler_ark.Core.Locking import read_engine_config
+
         engine_config = read_engine_config(ws, engine_id)
 
     except Exception as e:
@@ -676,7 +685,9 @@ def start_compilation_process(self, engine_id: str, file_path: str) -> bool:
                 "❌ BCASL validation failed. Compilation cannot continue.",
             )
             try:
-                from pycompiler_ark.Ui.Gui.Dialogs.BcaslDialog import ensure_bcasl_thread_stopped
+                from pycompiler_ark.Ui.Gui.Dialogs.BcaslDialog import (
+                    ensure_bcasl_thread_stopped,
+                )
 
                 ensure_bcasl_thread_stopped(self)
             except Exception:
@@ -747,8 +758,10 @@ def start_compilation_process(self, engine_id: str, file_path: str) -> bool:
 
     self._active_bcasl_callback = _after_bcasl
     # Pass validated config to short-circuit if BCASL is disabled
-    ark_cfg = getattr(validated, "config", None) if 'validated' in locals() else None
-    run_bcasl_before_compile(self, _after_bcasl, build_context=context, ark_config=ark_cfg)
+    ark_cfg = getattr(validated, "config", None) if "validated" in locals() else None
+    run_bcasl_before_compile(
+        self, _after_bcasl, build_context=context, ark_config=ark_cfg
+    )
     return True
 
 
@@ -787,7 +800,9 @@ def cancel_all_compilations(self) -> None:
     # 1. Handle pre-compilation (BCASL) cancellation
     self._cancel_requested_during_precompile = True
     try:
-        from pycompiler_ark.Ui.Gui.Dialogs.BcaslDialog import ensure_bcasl_thread_stopped
+        from pycompiler_ark.Ui.Gui.Dialogs.BcaslDialog import (
+            ensure_bcasl_thread_stopped,
+        )
 
         ensure_bcasl_thread_stopped(self)
 
@@ -1008,7 +1023,9 @@ def handle_finished(self, return_code: int, info: dict) -> None:
         )
 
         # Integrity Check (Aligned with CLI)
-        if getattr(self, "_is_rebuild", False) and getattr(self, "_rebuild_lock_payload", None):
+        if getattr(self, "_is_rebuild", False) and getattr(
+            self, "_rebuild_lock_payload", None
+        ):
             try:
                 if not self.workspace_dir:
                     return
@@ -1028,10 +1045,12 @@ def handle_finished(self, return_code: int, info: dict) -> None:
                     engine_id=info.get("engine", ""),
                     python_version=getattr(self, "_python_version", None),
                 )
-                
+
                 rebuild_cache = cache_rebuild_lock(ws, regenerated)
-                comparison_ok, diffs = compare_lock_payloads(self._rebuild_lock_payload, regenerated, return_diff=True)
-                
+                comparison_ok, diffs = compare_lock_payloads(
+                    self._rebuild_lock_payload, regenerated, return_diff=True
+                )
+
                 if not comparison_ok:
                     log_i18n_level(
                         self,

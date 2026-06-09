@@ -31,7 +31,10 @@ from typing import Any, Dict, List, Optional
 
 from PySide6.QtCore import QObject, QThread, Signal
 
-from pycompiler_ark.Core.Compiler.engine_runner import BuildContext, run_engine_compile_streaming
+from pycompiler_ark.Core.Compiler.engine_runner import (
+    BuildContext,
+    run_engine_compile_streaming,
+)
 
 
 class CompilationStatus(Enum):
@@ -159,15 +162,21 @@ class CompilationThread(QThread):
         # DEFERRED LOCK GENERATION (Move from UI thread to background)
         if not self.is_rebuild and self.ark_config:
             try:
-                self.log_requested.emit("info", "🔒 Generating compilation lock file (background)...")
+                self.log_requested.emit(
+                    "info", "🔒 Generating compilation lock file (background)..."
+                )
                 from pycompiler_ark.Ui.Cli.helpers import (
                     build_lock_payload,
                     write_lock_files,
                     engine_config_from_lock,
-                    build_context_object_from_ark_config
+                    build_context_object_from_ark_config,
                 )
-                from pycompiler_ark.Core.Compiler.engine_runner import resolve_engine_command
-                from pycompiler_ark.Core.Compiler.utils import get_interpreter_version_str
+                from pycompiler_ark.Core.Compiler.engine_runner import (
+                    resolve_engine_command,
+                )
+                from pycompiler_ark.Core.Compiler.utils import (
+                    get_interpreter_version_str,
+                )
                 from pycompiler_ark.Core.Venv_Manager.Manager import VenvManager
 
                 # 1. Resolve Python Version
@@ -187,11 +196,16 @@ class CompilationThread(QThread):
                 resolved_command = None
                 try:
                     prog, args, env = resolve_engine_command(
-                        self.engine_id, self.context, self.engine_config, gui=self.bridge
+                        self.engine_id,
+                        self.context,
+                        self.engine_config,
+                        gui=self.bridge,
                     )
                     resolved_command = {"program": prog, "args": args, "env": env}
                 except Exception as e:
-                    self.log_requested.emit("warning", f"Auto-mapping not persisted in lock: {e}")
+                    self.log_requested.emit(
+                        "warning", f"Auto-mapping not persisted in lock: {e}"
+                    )
 
                 # 3. Build and Write Lock
                 lock_payload = build_lock_payload(

@@ -52,7 +52,9 @@ class WorkspaceAdvancedManipulation:
             gui_instance.tr("Fichiers Python (*.py)", "Python Files (*.py)"),
         )
         if files:
-            from pycompiler_ark.Core.WorkSpaceManager.WorkspaceManipulation import add_files
+            from pycompiler_ark.Core.WorkSpaceManager.WorkspaceManipulation import (
+                add_files,
+            )
 
             added, excluded = add_files(gui_instance, files)
 
@@ -111,7 +113,9 @@ class WorkspaceAdvancedManipulation:
         if not selected_items:
             return
 
-        from pycompiler_ark.Core.WorkSpaceManager.WorkspaceManipulation import remove_files
+        from pycompiler_ark.Core.WorkSpaceManager.WorkspaceManipulation import (
+            remove_files,
+        )
 
         workspace_dir = getattr(gui_instance, "workspace_dir", None)
         abs_paths_to_remove = []
@@ -200,7 +204,9 @@ class WorkspaceAdvancedManipulation:
     def clear_workspace(gui_instance, keep_dir: bool = True) -> bool:
         """Vider l'état courant du workspace."""
         try:
-            from pycompiler_ark.Core.WorkSpaceManager.WorkspaceManipulation import clear_workspace_data
+            from pycompiler_ark.Core.WorkSpaceManager.WorkspaceManipulation import (
+                clear_workspace_data,
+            )
 
             workspace_dir = getattr(gui_instance, "workspace_dir", None)
 

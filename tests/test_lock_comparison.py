@@ -1,5 +1,7 @@
 from pycompiler_ark.Core.Locking import compare_lock_payloads
-from pycompiler_ark.Ui.Cli.helpers import compare_lock_payloads as wrapper_compare_lock_payloads
+from pycompiler_ark.Ui.Cli.helpers import (
+    compare_lock_payloads as wrapper_compare_lock_payloads,
+)
 
 
 def test_wrapper_compare_lock_payloads_with_diff():
@@ -33,12 +35,13 @@ def test_compare_lock_payloads_functional_equivalence():
     lock_c = dict(lock_a)
     lock_c["dependencies"] = {"requests": "2.32.0"}
     assert compare_lock_payloads(lock_a, lock_c) is False
-    
+
     # Different engine config
     lock_d = dict(lock_a)
     lock_d["engine"] = dict(lock_a["engine"])
     lock_d["engine"]["config"] = {"standalone": False}
     assert compare_lock_payloads(lock_a, lock_d) is False
+
 
 def test_compare_lock_payloads_with_diff():
     """Test that we can get a list of differences."""
