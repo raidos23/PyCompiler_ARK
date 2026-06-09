@@ -82,7 +82,7 @@ def _import_module_tree(module_name: str) -> list[ModuleType]:
 
 
 def _sync_engine_sdk_registry() -> None:
-    """Keep engine_sdk.registry aligned with the active EngineLoader registry module."""
+    """Keep engine_sdk.registry aligned with the active engine registry module."""
     try:
         import pycompiler_ark.engine_sdk as engine_sdk
 
