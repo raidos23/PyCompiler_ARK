@@ -240,7 +240,7 @@ def _tune_ide_like_layout(self) -> None:
 
 
 def _setup_ide_like_compiler_tabs(self) -> None:
-    """Bind engine tabs to compiler_tabs using existing EngineLoader registry."""
+    """Bind engine tabs to compiler_tabs using existing engine registry."""
     tabs = getattr(self, "compiler_tabs", None)
     if tabs is None:
         return

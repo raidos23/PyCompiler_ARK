@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import os
 
-from pycompiler_ark.Loaders.EngineLoader.loader import _auto_discover
+from .loader import _auto_discover
 
 from . import registry as registry  # re-export registry module
 from .base import CompilerEngine  # re-export base type

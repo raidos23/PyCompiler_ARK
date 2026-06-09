@@ -23,7 +23,7 @@ if TYPE_CHECKING:
 
 
 def log_i18n_level(gui, level: str, fr: str, en: str) -> None:
-    """Minimal i18n log helper to avoid EngineLoader <-> engine_sdk circular imports."""
+    """Minimal i18n log helper to avoid engine loader <-> engine_sdk circular imports."""
     try:
         if hasattr(gui, "tr") and callable(getattr(gui, "tr")):
             msg = gui.tr(fr, en)

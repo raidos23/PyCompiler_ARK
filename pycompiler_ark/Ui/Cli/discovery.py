@@ -129,7 +129,7 @@ def engine_list_payload(workspace: str | None = None) -> dict[str, Any]:
     engine_ids = list(available_engines())
     if not engine_ids:
         try:
-            from pycompiler_ark.Loaders.EngineLoader.loader import _auto_discover
+            from pycompiler_ark.Core.engine.loader import _auto_discover
 
             _auto_discover()
             engine_ids = list(available_engines())

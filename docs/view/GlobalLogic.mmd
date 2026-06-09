@@ -1,16 +1,192 @@
 flowchart LR
- subgraph Build Pipeline
-    G(ark.yml) --> A
-    A(BuildContext) --------->I 
-    P(engines configs)----->|resolve_engine_command| I(Locking)
-    B(engines) 
-    I --->|Lock| B
+
+%% ===== ENTRY =====
+
+CLI["CLI
+parse_args()"]
+
+GUI["GUI
+on_action()"]
+
+CLI --> CORE
+GUI --> CORE
+
+%% ===== CORE =====
+
+subgraph CORE["Core Orchestrator"]
+
+DISPATCH["dispatch_command()"]
+
+INIT["init_workspace()"]
+
+BUILD["build()"]
+
+LOCKBUILD["build_from_lock()"]
+
+RUNBCASL["run_bcasl()"]
+
 end
 
-subgraph Bcasl Pipeline
-    B ------>|run_engine_compile| C(artifacts)
-    A ------> D(PreCompileContext) ---> E(BcPlugins) --> F(Bcasl executor)
-    H(bcasl.yml) --> D
-    style A fill:#810505
-    style D fill:#810505
+CORE["route_to_pipeline()"]
+
+CORE --> DISPATCH
+
+DISPATCH --> INIT
+DISPATCH --> BUILD
+DISPATCH --> LOCKBUILD
+DISPATCH --> RUNBCASL
+
+%% ===== INIT =====
+
+subgraph INIT_PIPELINE
+
+I1["validate_entry_path()"]
+I2["create_ark_yml()"]
+I3["scan_internal_modules()"]
+I4["confirm_apply_internal()"]
+I5["create_ark_structure()"]
+
+I1 --> I2 --> I3 --> I4 --> I5
+
 end
+
+INIT --> I1
+
+%% ===== BUILD =====
+
+subgraph BUILD_PIPELINE
+
+B1["load_ark_yml()"]
+B2["create_build_context()"]
+B3["git_alignment_check()"]
+B4["execute_bcasl_pipeline()"]
+B5["resolve_engine()"]
+B6["engine_preflight()"]
+B7["build_command()"]
+B8["execute_command()"]
+B9["generate_lock()"]
+
+B1 --> B2 --> B3 --> B4
+B4 --> B5 --> B6 --> B7 --> B8 --> B9
+
+end
+
+BUILD --> B1
+
+%% ===== LOCK BUILD =====
+
+subgraph LOCK_PIPELINE
+
+L1["load_lock_file()"]
+L2["verify_git_state()"]
+L3["create_context_from_lock()"]
+L4["execute_bcasl_pipeline()"]
+L5["resolve_engine_from_lock()"]
+L6["engine_build_command()"]
+L7["execute_command()"]
+L8["generate_shadow_lock()"]
+L9["compare_locks()"]
+
+L1 --> L2 --> L3 --> L4
+L4 --> L5 --> L6 --> L7
+L7 --> L8 --> L9
+
+end
+
+LOCKBUILD --> L1
+
+%% ===== BCASL =====
+
+subgraph BCASL
+
+P1["discover_plugins()"]
+P2["sort_plugins()"]
+P3["plugin.preflight()"]
+P4["plugin.run()"]
+P5["plugin.postflight()"]
+P6["update_context()"]
+
+P1 --> P2 --> P3 --> P4 --> P5 --> P6
+
+end
+
+B4 --> P1
+L4 --> P1
+
+%% ===== ENGINE =====
+
+subgraph ENGINE
+
+E1["engine_preflight()"]
+E2["build_command()"]
+E3["environment()"]
+E4["on_success()"]
+
+E1 --> E2 --> E3 --> E4
+
+end
+
+B5 --> E1
+L5 --> E1
+
+%% ===== RUNNER =====
+
+subgraph RUNNER
+
+R1["spawn_process()"]
+R2["collect_dependencies()"]
+R3["collect_engine_info()"]
+R4["write_lock()"]
+
+R1 --> R2 --> R3 --> R4
+
+end
+
+B8 --> R1
+L7 --> R1
+
+%% ===== DISCOVERY =====
+
+subgraph DISCOVERY
+
+D1["discover_engines()"]
+D2["discover_plugins()"]
+D3["merge_priority()"]
+
+D1 --> D3
+D2 --> D3
+
+end
+
+%% ===== SOURCES =====
+
+DEV["Dev Sources"]
+USER["User Sources"]
+CORESRC["Core Sources"]
+
+DEV --> D1
+USER --> D1
+CORESRC --> D1
+
+DEV --> D2
+USER --> D2
+CORESRC --> D2
+
+%% ===== COLORS =====
+
+linkStyle 0,1 stroke:#1565C0,stroke-width:3px
+linkStyle 2,3,4,5 stroke:#1565C0,stroke-width:3px
+
+linkStyle 6,7,8,9 stroke:#2E7D32,stroke-width:3px
+linkStyle 10 stroke:#2E7D32,stroke-width:3px
+
+linkStyle 11,12,13,14,15,16,17,18 stroke:#8E24AA,stroke-width:3px
+linkStyle 19 stroke:#8E24AA,stroke-width:3px
+
+linkStyle 20,21,22,23,24 stroke:#43A047,stroke-width:3px
+
+linkStyle 25,26 stroke:#5E35B1,stroke-width:3px
+
+linkStyle 27,28,29 stroke:#EF6C00,stroke-width:3px
+
+linkStyle 30,31,32,33 stroke:#00838F,stroke-width:3px

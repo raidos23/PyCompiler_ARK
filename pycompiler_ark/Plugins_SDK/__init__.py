@@ -17,7 +17,7 @@
 Plugins_SDK
 ===========
 
-Kit de développement pour plugins ARK++ couvrant:
+Kit de développement pour plugins couvrant:
 - Contexte BC (Before Compilation)
 - Contexte UI (dialogs de dialogue, i18n)
 

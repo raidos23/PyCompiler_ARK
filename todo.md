@@ -1,7 +1,7 @@
 # CLi ux
 - [x] lorsque le dialog rich saffiche poour a cofiramtion il doit atendre une reponse.
 
-- [] deplacer le engineloader vers Core/engine/loader.py pour centraliser la logcique de laoder et suppr Loaders/ ... et corriger les imports.
+- [x] deplacer le engineloader vers Core/engine/loader.py pour centraliser la logcique de laoder et suppr Loaders/ ... et corriger les imports.
 
 - [] refactor le engine_sdk .... suprimer les chose inutlise dans utils en verifant les import pycompiler_ark.engine_sdk et from pycompiler_ark.engine_sdk pour detecter ce qui est vraiment utliser.
 

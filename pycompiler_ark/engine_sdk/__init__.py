@@ -146,7 +146,7 @@ except Exception:  # pragma: no cover
 
 
 def _sync_registry_reference():
-    """Refresh engine_sdk.registry to match the active EngineLoader registry module."""
+    """Refresh engine_sdk.registry to match the active engine registry module."""
     global registry
     try:
         from pycompiler_ark.Core.engine import registry as active_registry  # type: ignore

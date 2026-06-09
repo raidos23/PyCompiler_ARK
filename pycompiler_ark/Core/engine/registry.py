@@ -315,8 +315,8 @@ def bind_tabs(gui) -> None:
     Also handles hiding the Hello tab when engines are available.
     """
     try:
-        # Ensure lazy discovery happened even when callers use `EngineLoader.registry.bind_tabs`
-        # directly instead of the top-level `EngineLoader.bind_tabs` wrapper.
+        # Ensure lazy discovery happened even when callers use `registry.bind_tabs`
+        # directly instead of the top-level `bind_tabs` wrapper.
         try:
             import pycompiler_ark.Core.engine as engines_loader
 
