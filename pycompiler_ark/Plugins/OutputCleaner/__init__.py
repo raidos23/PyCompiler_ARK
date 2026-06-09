@@ -137,7 +137,7 @@ class OutputCleaner(BcPluginBase):
                 output_dir.mkdir(parents=True, exist_ok=True)
                 log.log_info(f"OutputCleaner: Successfully cleaned {output_dir}")
             except Exception as e:
-                log.log_err(f"OutputCleaner: Failed to clean {output_dir}: {e}")
+                log.log_error(f"OutputCleaner: Failed to clean {output_dir}: {e}")
 
         except Exception as e:
-            log.log_err(f"OutputCleaner error: {e}")
+            log.log_error(f"OutputCleaner error: {e}")
