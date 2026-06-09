@@ -38,11 +38,15 @@ from typing import Any, Dict, Iterator, List, Optional, Pattern, Set, Tuple, Uni
 # Reuse BCASL types to guarantee compatibility with the host
 try:
     from pycompiler_ark.bcasl import BCASL as BCASL
-    from pycompiler_ark.bcasl import BCASL_PLUGIN_REGISTER_FUNC as BCASL_PLUGIN_REGISTER_FUNC
+    from pycompiler_ark.bcasl import (
+        BCASL_PLUGIN_REGISTER_FUNC as BCASL_PLUGIN_REGISTER_FUNC,
+    )
     from pycompiler_ark.bcasl import BcPluginBase as BcPluginBase
     from pycompiler_ark.bcasl import ExecutionReport as ExecutionReport
     from pycompiler_ark.bcasl import PluginMeta as PluginMeta
-    from pycompiler_ark.bcasl.PreCompileContext import PreCompileContext as PreCompileContext
+    from pycompiler_ark.bcasl.PreCompileContext import (
+        PreCompileContext as PreCompileContext,
+    )
     from pycompiler_ark.bcasl import bc_register as _bc_register
     from pycompiler_ark.bcasl import register_plugin as register_plugin
 except ImportError:
@@ -147,9 +151,6 @@ class GitInfo:
     last_commit: Optional[str] = None
 
 
-
-
-
 # -----------------------------
 # Workspace management utilities
 # -----------------------------
@@ -201,8 +202,6 @@ def set_selected_workspace(path: Pathish) -> bool:
         # No GUI or bridge available — still accept
         pass
     return True
-
-
 
 
 # -----------------------------

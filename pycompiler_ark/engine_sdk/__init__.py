@@ -20,13 +20,17 @@ from pycompiler_ark.Core.engine.build_context import BuildContext
 # Re-export the base interface used by the host
 from .base import CompilerEngine
 from .utils import resolve_executable  # executable resolution helper (SDK)
-from .utils import (
-    open_path
-)
+from .utils import open_path
 
 __version__ = "1.0.0"
 
 
 from pycompiler_ark.Core.engine.registry import engine_register
 
-__all__ = ["engine_register", "CompilerEngine", "resolve_executable", "open_path", "BuildContext"]
+__all__ = [
+    "engine_register",
+    "CompilerEngine",
+    "resolve_executable",
+    "open_path",
+    "BuildContext",
+]

@@ -36,6 +36,7 @@ Pathish = Union[str, Path]
 # -------------------------------
 from pycompiler_ark.Ui.i18n import log_with_level
 
+
 def resolve_executable(
     program: Pathish, base_dir: Optional[Pathish] = None, *, prefer_path: bool = True
 ) -> str:
@@ -69,7 +70,6 @@ def resolve_executable(
         return prog
 
 
-
 # -------------------------------
 # OS helpers
 # -------------------------------
@@ -93,5 +93,3 @@ def open_path(path: Pathish) -> bool:
         return True
     except Exception:
         return False
-
-

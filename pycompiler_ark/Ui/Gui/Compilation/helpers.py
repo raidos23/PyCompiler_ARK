@@ -52,7 +52,10 @@ def resolve_default_engine_id() -> str:
 
 
 def run_bcasl_before_compile(
-    gui_instance, on_done, build_context: Optional[Any] = None, ark_config: Optional[dict] = None
+    gui_instance,
+    on_done,
+    build_context: Optional[Any] = None,
+    ark_config: Optional[dict] = None,
 ) -> None:
     """
     Run BCASL pre-compile stage, then invoke `on_done(report)`.
@@ -98,7 +101,7 @@ def run_bcasl_before_compile(
         return
 
     try:
-        log_i18n_level( 
+        log_i18n_level(
             gui_instance,
             "info",
             "Pré-compilation (BCASL)...",
@@ -125,6 +128,7 @@ def bcasl_report_allows_compile(gui_instance, report) -> bool:
             try:
                 from pathlib import Path
                 from pycompiler_ark.bcasl.Loader import _is_bcasl_enabled
+
                 ws = getattr(gui_instance, "workspace_dir", None)
                 if ws and not _is_bcasl_enabled(Path(ws).resolve()):
                     return True
@@ -136,15 +140,18 @@ def bcasl_report_allows_compile(gui_instance, report) -> bool:
         if isinstance(report, dict):
             try:
                 from pycompiler_ark.bcasl.Loader import is_bcasl_disabled_report
+
                 if is_bcasl_disabled_report(report):
                     return True
             except Exception:
                 pass
-            
+
             # Simple check for 'ok' key
             if "ok" in report:
                 res = report.get("ok")
-                return bool(res) if not isinstance(res, (list, tuple, set)) else all(res)
+                return (
+                    bool(res) if not isinstance(res, (list, tuple, set)) else all(res)
+                )
             return True
 
         # 2. Handle ExecutionReport object

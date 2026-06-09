@@ -37,7 +37,9 @@ from pycompiler_ark.Ui.Gui.UiConnection import (
     _auto_resize_for_screen,
     _connect_dialogs_to_app,
 )
-from pycompiler_ark.Ui.Gui.UiConnection import _connect_signals as _connect_classic_signals
+from pycompiler_ark.Ui.Gui.UiConnection import (
+    _connect_signals as _connect_classic_signals,
+)
 from pycompiler_ark.Ui.Gui.UiConnection import (
     _is_qss_dark,
     _refresh_log_palette,
@@ -571,7 +573,9 @@ def _retranslate_ide_like_actions(self) -> None:
     labels = {
         "workspace": _widget_text("btn_select_folder")
         or _label("action_select_workspace", "Choisir Workspace", "Select Workspace"),
-        "init": _label("action_init_project", "Initialiser le projet", "Initialize Project"),
+        "init": _label(
+            "action_init_project", "Initialiser le projet", "Initialize Project"
+        ),
         "venv": _widget_text("venv_button")
         or _label("action_select_venv", "Choisir un Venv", "Select Venv"),
         "add_files": _widget_text("btn_select_files")

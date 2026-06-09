@@ -68,10 +68,7 @@ def test_build_lock_payload_with_git(tmp_path):
     """Test that build_lock_payload includes git commit and include list."""
     config = {
         "project": {"name": "Test", "version": "1.0.0", "entry": "main.py"},
-        "build": {
-            "engine": "nuitka",
-            "include": ["requests", "rich"]
-        },
+        "build": {"engine": "nuitka", "include": ["requests", "rich"]},
     }
     with patch("pycompiler_ark.Core.Locking.get_git_commit_hash") as mock_git:
         mock_git.return_value = "git_hash_123"

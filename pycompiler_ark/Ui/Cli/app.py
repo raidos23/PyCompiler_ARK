@@ -137,7 +137,9 @@ def _build_impl(
         # Pre-resolve command for auto-mapping persistence (Phase 3)
         resolved_command = None
         try:
-            from pycompiler_ark.Core.Compiler.engine_runner import resolve_engine_command
+            from pycompiler_ark.Core.Compiler.engine_runner import (
+                resolve_engine_command,
+            )
             from pycompiler_ark.Core.Locking import read_engine_config
 
             # Create a minimal bridge for resolution
@@ -294,17 +296,21 @@ def _build_impl(
             python_version=python_version,
         )
         rebuild_cache = cache_rebuild_lock(workspace, regenerated)
-        comparison_ok, diffs = compare_lock_payloads(lock_payload, regenerated, return_diff=True)
+        comparison_ok, diffs = compare_lock_payloads(
+            lock_payload, regenerated, return_diff=True
+        )
         comparison = comparison_ok
         if not comparison_ok:
             warnings.append("Lock mismatch")
             if not as_json and verbose:
                 from .output import warn
+
                 warn("Functional mismatch detected:")
                 for d in diffs:
                     info(f"  - {d}")
         elif not as_json and verbose:
             from .output import success
+
             success("Lock integrity confirmed (Functional Equivalence).")
     except Exception as exc:
         warnings.append(f"Unable to regenerate comparison lock: {exc}")
@@ -394,7 +400,10 @@ def build_cli():
         if payload.get("apply_internal"):
             detected = payload.get("internal_modules", [])
             if detected:
-                info("Internal modules to apply: " + ", ".join(str(item) for item in detected))
+                info(
+                    "Internal modules to apply: "
+                    + ", ".join(str(item) for item in detected)
+                )
                 if payload.get("internal_modules_applied"):
                     info("build.include updated automatically.")
                 else:

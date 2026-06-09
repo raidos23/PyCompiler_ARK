@@ -224,12 +224,13 @@ class WorkspaceDialog:
 
             added_count = 0
             excluded_count = 0
-            
+
             # Optimization: collect items and add them in batches to avoid UI overhead
             to_add_relative = []
             to_add_absolute = []
 
             import time
+
             last_pump = time.monotonic()
 
             for full_path in files:
@@ -242,7 +243,7 @@ class WorkspaceDialog:
                 to_add_relative.append(relative_path)
 
                 added_count += 1
-                
+
                 # Periodically process events to keep UI responsive during heavy filtering
                 if added_count % 500 == 0:
                     if time.monotonic() - last_pump > 0.05:
@@ -251,7 +252,7 @@ class WorkspaceDialog:
 
             # Apply to GUI state
             gui_instance.python_files.extend(to_add_absolute)
-            
+
             # Batch update the UI list widget
             if hasattr(gui_instance, "file_list"):
                 # Disabling updates during batch addition for performance
@@ -316,7 +317,9 @@ class WorkspaceDialog:
 
             # Étape 8: recharger les configs engines
             try:
-                from pycompiler_ark.Core.engine.ConfigManager import apply_engine_configs_for_workspace
+                from pycompiler_ark.Core.engine.ConfigManager import (
+                    apply_engine_configs_for_workspace,
+                )
 
                 apply_engine_configs_for_workspace(gui_instance, folder)
             except Exception:

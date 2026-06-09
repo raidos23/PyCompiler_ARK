@@ -118,7 +118,7 @@ class CXFreezeEngine(CompilerEngine):
 
         for mapping in context.data_mappings:
             source = str((mapping or {}).get("source") or "").strip()
-            # CX_FREEZE CLI HACK: 
+            # CX_FREEZE CLI HACK:
             # 1. Remove trailing slashes which confuse path resolution
             # 2. Avoid ':' destination mapping in CLI as it is often misinterpreted
             #    as part of the filename. Default behavior preserves the name.
@@ -189,10 +189,10 @@ class CXFreezeEngine(CompilerEngine):
             build_layout.setSpacing(6)
 
             # Windowed option
-            self._cx_windowed = QCheckBox( "No console")
+            self._cx_windowed = QCheckBox("No console")
             self._cx_windowed.setObjectName("cx_windowed_dynamic")
             self._cx_windowed.setToolTip("Disable the console window.")
-            
+
             build_group.setLayout(build_layout)
 
             diagnostics_group = QGroupBox("Diagnostics", tab)

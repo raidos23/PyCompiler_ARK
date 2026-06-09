@@ -249,7 +249,9 @@ class CompilerEngine:
 
                     if missing_system:
                         # Check internet connection before attempting installation
-                        from pycompiler_ark.Core.Compiler.utils import check_internet_connection
+                        from pycompiler_ark.Core.Compiler.utils import (
+                            check_internet_connection,
+                        )
 
                         log_i18n_level(
                             gui,
@@ -528,7 +530,9 @@ class CompilerEngine:
                             missing_python.append(tool)
                     if missing_python:
                         # Check internet connection before attempting installation
-                        from pycompiler_ark.Core.Compiler.utils import check_internet_connection
+                        from pycompiler_ark.Core.Compiler.utils import (
+                            check_internet_connection,
+                        )
 
                         log_i18n_level(
                             gui,
@@ -603,7 +607,9 @@ class CompilerEngine:
                                 missing_python.append(tool)
                         if missing_python:
                             # Check internet connection before attempting installation
-                            from pycompiler_ark.Core.Compiler.utils import check_internet_connection
+                            from pycompiler_ark.Core.Compiler.utils import (
+                                check_internet_connection,
+                            )
 
                             log_i18n_level(
                                 gui,

@@ -311,7 +311,9 @@ class UiFeatures:
             return
         try:
             import pycompiler_ark.Core.engine as engines_loader
-            from pycompiler_ark.Core.engine.ConfigManager import save_engine_config_for_gui
+            from pycompiler_ark.Core.engine.ConfigManager import (
+                save_engine_config_for_gui,
+            )
 
             engine_ids = list(engines_loader.available_engines())
             if not engine_ids:
@@ -675,7 +677,9 @@ class UiFeatures:
 
     def _apply_main_app_translations(self, tr: dict) -> None:
         """Apply translations to main UI elements."""
-        from pycompiler_ark.Ui.i18n import _apply_main_app_translations as _i18n_apply_translations
+        from pycompiler_ark.Ui.i18n import (
+            _apply_main_app_translations as _i18n_apply_translations,
+        )
 
         _i18n_apply_translations(self, tr)
 
@@ -697,7 +701,9 @@ class UiFeatures:
             return
 
         try:
-            from pycompiler_ark.Ui.Gui.Dialogs.AdvancedConfigEditor import AdvancedConfigEditor
+            from pycompiler_ark.Ui.Gui.Dialogs.AdvancedConfigEditor import (
+                AdvancedConfigEditor,
+            )
 
             dlg = AdvancedConfigEditor(self)
             dlg.setModal(True)
