@@ -1,0 +1,83 @@
+# Specification: DepsAnalyser (Dependency Analyzer)
+
+## Overview
+The `DepsAnalyser` is a core module of PyCompiler ARK responsible for identifying all third-party dependencies required by a Python project. It uses a hybrid approach combining configuration file scanning and static code analysis to ensure a complete and accurate `requirements.txt` generation.
+
+## Core Objectives
+- **Precision**: Differentiate between standard library, internal project modules, and third-party dependencies.
+- **Robustness**: Handle various project layouts (standard, `src/`, etc.) and modern Python syntax.
+- **Transparency**: "No Magic" philosophy — explicit classification and predictable output.
+- **Performance**: Use caching and optimized scanning to minimize analysis time.
+
+## 1. Discovery & Analysis Strategy
+
+The analyzer follows a multi-step priority-based discovery process:
+
+### A. Configuration File Scanning (High Priority)
+The analyzer first looks for explicit dependency declarations. This is considered the "ground truth" and often allows skipping the expensive code scan.
+- **`requirements.txt` / `requirements.in`**: Parsed line-by-line, ignoring comments and flags.
+- **`pyproject.toml`**: 
+    - **PEP 621**: `[project.dependencies]`
+    - **Poetry**: `[tool.poetry.dependencies]` and `[tool.poetry.group.dev.dependencies]`
+- **`setup.py`**: Static analysis via regex to match `install_requires=[...]` blocks without executing the script.
+- **`Pipfile`**: Parsed to extract package names from the `[packages]` section.
+
+### B. Static Code Analysis (Deep Scanning)
+When no configuration is found, or if full validation is required, every `.py` file (excluding ignored directories) is analyzed.
+
+#### 1. AST Parsing
+The primary method uses Python's `ast` module to walk the Abstract Syntax Tree.
+- `ast.Import`: Extracts modules from `import x, y as z`.
+- `ast.ImportFrom`: Extracts modules from `from x.y import z`. Handles relative imports by resolving the `level` attribute against the file's position in the workspace.
+
+#### 2. Regex Fallback (The "Summit" Robustness)
+If `ast.parse` fails (e.g., syntax error, or file uses Python 3.14 features while analyzer runs on 3.13), a regex engine takes over:
+- **Pattern `import`**: `^\s*import\s+([\w\.,\s]+)` (Handles comma-separated imports).
+- **Pattern `from`**: `^\s*from\s+([\w\.]+)\s+import` (Extracts the base module).
+- This ensures that a single "broken" or "too new" file doesn't stop the entire dependency discovery process.
+
+#### 3. Dynamic Import Detection
+Specific regex patterns detect:
+- `__import__('module')`
+- `importlib.import_module('module')`
+
+## 2. The Classification Engine
+Every detected string is normalized and passed through the classifier:
+
+| Category | Resolution Logic | Action |
+| :--- | :--- | :--- |
+| **stdlib** | Cross-references `sys.builtin_module_names`, `sysconfig.get_path("stdlib")`, and `importlib.util.find_spec`. | Ignored |
+| **internal** | Resolved if the module root contains an `__init__.py` within the workspace or matches a source root (`src/`, `lib/`). | Ignored |
+| **third_party**| Resolved if found in `site-packages` or if it has a valid distribution metadata via `importlib.metadata`. | Added to Requirements |
+| **unknown** | Fallback for modules that exist in code but aren't installed or local. | Added to Requirements |
+
+### Performance Optimization: LRU Cache
+The `_is_stdlib_module` function uses an `@functools.lru_cache(maxsize=256)` to avoid repeated expensive filesystem and metadata lookups for common modules like `os`, `sys`, or `json`.
+
+## 3. Advanced Exclusion Logic
+
+### Magic & Runtime Modules
+Strict exclusion of modules that are part of the Python runtime environment but should never be in a `requirements.txt`:
+- `__future__`: Compiler directives.
+- `__main__`: The entry point script name.
+- `__builtins__`: Implicitly available objects.
+
+### Directory White-listing
+The analyzer automatically skips:
+- Virtual environments: `.venv`, `venv`, `.env`, `env`.
+- Version control: `.git`.
+- Build artifacts: `build`, `dist`, `__pycache__`.
+- Test suites (optional): `tests`, `test`.
+
+## 4. Workspace Layout Support
+The analyzer is "layout-aware":
+1. **Flat Layout**: Packages at the root.
+2. **Src Layout**: Detects `src/`, `lib/`, or `python/` as root aliases.
+3. **Internal Module Tracking**: Before classifying, it builds a map of all local packages by looking for directories containing `__init__.py`. This prevents a local package named `utils` from being confused with a hypothetical third-party `utils` package.
+
+## 5. Requirements Generation
+The `write_requirements_txt` function:
+- **Normalizes**: Converts all module names to lower-case and replaces `_` with `-` where appropriate for PyPI compatibility.
+- **Sorts**: Alphabetical sorting for clean diffs.
+- **De-duplicates**: Ensures no package is listed twice.
+- **Comments**: Adds a header identifying the file as "Auto-generated by PyCompiler ARK".
