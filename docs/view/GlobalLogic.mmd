@@ -3,71 +3,94 @@ graph TD
     classDef ui fill:#e1f5fe,stroke:#01579b,stroke-width:2px,color:#01579b;
     classDef core fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px,color:#1b5e20;
     classDef engine fill:#fff3e0,stroke:#e65100,stroke-width:2px,color:#e65100;
-    classDef plugin fill:#f3e5f5,stroke:#4a148c,stroke-width:2px,color:#4a148c;
+    classDef bcasl fill:#f3e5f5,stroke:#4a148c,stroke-width:2px,color:#4a148c;
     classDef system fill:#ffebee,stroke:#b71c1c,stroke-width:2px,color:#b71c1c;
+    classDef storage fill:#ffffff,stroke:#616161,stroke-width:1px,stroke-dasharray: 5 5;
 
-    subgraph UI_Layer ["🎨 Couche Interface (Ui)"]
-        GUI["<b>Gui.py</b><br/>Fenêtre principale"]:::ui
-        CLI["<b>Cli/</b><br/>Interface terminal"]:::ui
-        I18N["<b>i18n.py</b><br/>Traductions FR/EN"]:::ui
-        PREF["<b>PreferencesManager.py</b><br/>Gestion config utilisateur"]:::ui
+    %% 1. COUCHE INTERFACE
+    subgraph UI ["🎨 Interface Utilisateur"]
+        GUI["<b>Gui.py</b><br/>Vue Principale"]:::ui
+        CLI["<b>Cli/</b><br/>Mode Terminal"]:::ui
     end
 
-    subgraph CORE_Layer ["⚙️ Couche Logique (Core)"]
-        WSM["<b>WorkSpaceManager/</b><br/>Initialisation & Scan"]:::core
-        VENV["<b>Venv_Manager/</b><br/>Isolation Python"]:::core
-        DEPS["<b>deps_analyser/</b><br/>Analyse imports"]:::core
-        BC_CTX["<b>BuildContext</b><br/>État partagé build"]:::core
-        SDM["<b>SysDependencyManager.py</b><br/>Élévation native"]:::core
+    %% 2. COUCHE INITIALISATION
+    subgraph INIT ["⚙️ Initialisation (WorkSpaceManager)"]
+        WSM["<b>WorkSpaceManager</b><br/>Orchestrateur Scan"]:::core
+        CFG["<b>Configs/</b><br/>Gestion ark.yml / Global"]:::core
+        DEPS["<b>deps_analyser/</b><br/>Analyse AST & Imports"]:::core
     end
 
-    subgraph ENGINE_Layer ["🚀 Moteurs de Compilation (Engines)"]
-        ENG_REG["<b>Registry</b><br/>Découverte moteurs"]:::engine
-        ENG_RUN["<b>EngineRunner</b><br/>Orchestrateur"]:::engine
-        NUITKA["Nuitka"]:::engine
-        PYINST["PyInstaller"]:::engine
-        CXF["cx_Freeze"]:::engine
+    %% 3. LE COEUR (ÉTAT)
+    subgraph CONTEXT ["📦 Contexte & Vérité"]
+        BC_CTX["<b>BuildContext</b><br/>Objet d'état partagé"]:::core
+        LOCK["<b>Locking/</b><br/>Garant de reproductibilité"]:::core
     end
 
-    subgraph EXTENSION_Layer ["🧩 Extensions & SDK"]
-        PLG_MGR["<b>PluginLoader</b>"]:::plugin
-        PLG_CLEAN["Cleaner / OutputCleaner"]:::plugin
-        ENG_SDK["<b>Engine SDK</b><br/>Base Classes"]:::engine
-        PLG_SDK["<b>Plugins SDK</b><br/>Contexts"]:::plugin
+    %% 4. COUCHE BCASL (INTERCEPTION PRE-BUILD)
+    subgraph BCASL_SYS ["🧩 Système BCASL (Plugins)"]
+        BCASL_L["<b>Loader</b><br/>Détection & Ordre"]:::bcasl
+        BCASL_E["<b>Executor</b><br/>Sandbox & Orchestration"]:::bcasl
+        BCASL_P["<b>Phases</b><br/>Cleanup, Lint, Obfuscation..."]:::bcasl
     end
 
-    subgraph OS_Layer ["💻 Système d'Exploitation"]
-        LINUX["<b>Linux</b><br/>(pkexec / apt / dnf)"]:::system
-        WIN["<b>Windows</b><br/>(UAC / winget)"]:::system
+    %% 5. COUCHE COMPILATION
+    subgraph ENGINE_SYS ["🚀 Moteur de Build (EngineRunner)"]
+        RUNNER["<b>EngineRunner</b><br/>Pipeline 1-2-3"]:::engine
+        AUTO["<b>Auto_Command_Builder</b><br/>Génération Flags via Mapping"]:::engine
+        MOTEURS["<b>Engines</b><br/>Nuitka / PyInstaller / cx_Freeze"]:::engine
     end
 
-    %% Interactions UI -> Core
-    GUI --> WSM
-    GUI --> ENG_RUN
-    CLI --> WSM
-    GUI -.-> I18N
+    %% 6. COUCHE SYSTEME
+    subgraph OS_SYS ["💻 Système d'Exploitation"]
+        SDM["<b>SysDependencyManager</b><br/>Elévation Native"]:::core
+        LINUX["<b>Linux</b> (pkexec)"]:::system
+        WIN["<b>Windows</b> (UAC)"]:::system
+        VENV["<b>VenvManager</b><br/>Isolation Python"]:::core
+    end
 
-    %% Flux de Compilation
+    %% 7. PERSISTANCE
+    subgraph DATA ["📁 Stockage (.ark/)"]
+        ARK_YML["ark.yml"]:::storage
+        BCASL_YML["bcasl.yml"]:::storage
+        LOCK_YML["latest.lock.yml"]:::storage
+    end
+
+    %% --- FLUX LOGIQUE ---
+
+    %% Phase 1: Entrée & Config
+    GUI & CLI --> WSM
+    WSM --> CFG
+    CFG <--> ARK_YML
+    CFG --> BC_CTX
+
+    %% Phase 2: Analyse
     WSM --> DEPS
     DEPS --> BC_CTX
-    BC_CTX --> ENG_RUN
-    ENG_RUN --> ENG_REG
-    ENG_REG --> NUITKA
-    ENG_REG --> PYINST
-    ENG_REG --> CXF
 
-    %% Interaction SysDependency (Le pont refactorisé)
-    NUITKA -- "Besoin de GCC" --> SDM
-    PYINST -- "Besoin de Patchelf" --> SDM
-    SDM -- "Délégation Native" --> LINUX
-    SDM -- "Délégation Native" --> WIN
+    %% Phase 3: Reproductibilité
+    BC_CTX <--> LOCK
+    LOCK <--> LOCK_YML
 
-    %% Plugins & Venv
-    ENG_RUN --> PLG_MGR
-    PLG_MGR --> PLG_CLEAN
-    ENG_RUN --> VENV
+    %% Phase 4: Interception BCASL (Avant Compilation)
+    BC_CTX ==> BCASL_L
+    BCASL_L -- "Lit config" --> BCASL_YML
+    BCASL_L --> BCASL_E
+    BCASL_E --> BCASL_P
+    BCASL_P ==> RUNNER
 
-    %% Notes de flux
-    linkStyle 0,1,2,3 stroke:#01579b,stroke-width:2px;
-    linkStyle 4,5,6,7,8,9,10 stroke:#1b5e20,stroke-width:2px;
-    linkStyle 11,12,13,14 stroke:#b71c1c,stroke-width:2px,stroke-dasharray: 5 5;
+    %% Phase 5: Orchestration Compilation
+    RUNNER --> VENV
+    RUNNER --> SDM
+    RUNNER --> AUTO
+    AUTO -- "Mapping" --> MOTEURS
+    
+    %% Phase 6: Exécution & OS
+    SDM ==> LINUX & WIN
+    MOTEURS --> OS_SYS
+
+    %% --- STYLISATION DES LIENS ---
+    linkStyle 0,1,2,3,4,5 stroke:#01579b,stroke-width:2px;
+    linkStyle 6,7,8,9 stroke:#1b5e20,stroke-width:2px;
+    linkStyle 10,11,12,13,14 stroke:#4a148c,stroke-width:3px;
+    linkStyle 15,16,17,18 stroke:#e65100,stroke-width:2px;
+    linkStyle 19,20 stroke:#b71c1c,stroke-width:2px;
