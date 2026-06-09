@@ -177,3 +177,15 @@ Executes the pre-compilation pipeline manually.
 
 ---
 *End of Specification v1.0.0*
+
+#### **`pycompiler_ark scaffold engine <name> [--path <dir>]`**
+#### **`pycompiler_ark scaffold plugin-bcasl <name> [--path <dir>]`**
+
+Generates starter templates for engines or plugins.
+
+- **Path Resolution**: 
+    1. If `--path` is provided, it is used as the base directory.
+    2. If a developer directory is explicitly configured (via `set dev-engine-dir` or `set dev-plugin-dir`), the template is created directly inside that folder.
+    3. Otherwise, the CLI will interactively prompt for a destination path.
+- **Interactive Prompt**: The command will wait for user input unless in a non-interactive environment or bypassed with a path/config.
+- **Structure**: Templates are created with the correct directory structure (`engines/<name>` or `Plugins/<name>`) unless created inside a `dev` directory, where they are placed at the root of that directory.
