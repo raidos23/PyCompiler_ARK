@@ -30,8 +30,6 @@ from typing import Optional
 from pycompiler_ark.engine_sdk import (
     BuildContext,
     CompilerEngine,
-    add_form_checkbox,
-    add_output_dir,
     engine_register,
 )
 from pycompiler_ark.engine_sdk.utils import log_with_level
@@ -191,10 +189,10 @@ class CXFreezeEngine(CompilerEngine):
             build_layout.setSpacing(6)
 
             # Windowed option
-            self._cx_windowed = add_form_checkbox(
-                build_layout, "Console:", "No console", "cx_windowed_dynamic"
-            )
+            self._cx_windowed = QCheckBox( "No console")
+            self._cx_windowed.setObjectName("cx_windowed_dynamic")
             self._cx_windowed.setToolTip("Disable the console window.")
+            
             build_group.setLayout(build_layout)
 
             diagnostics_group = QGroupBox("Diagnostics", tab)

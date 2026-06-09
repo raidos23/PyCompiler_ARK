@@ -30,7 +30,6 @@ from typing import Optional
 from pycompiler_ark.engine_sdk import (
     BuildContext,
     CompilerEngine,
-    add_form_checkbox,
     engine_register,
 )
 from pycompiler_ark.engine_sdk.utils import log_with_level
@@ -191,14 +190,15 @@ class PyInstallerEngine(CompilerEngine):
             build_layout.setSpacing(6)
 
             # Onefile option
-            self._opt_onefile = add_form_checkbox(
-                build_layout, "Mode:", "Onefile", "opt_onefile_dynamic"
-            )
+            self._opt_onefile = QCheckBox("Onefile")
+            self._opt_onefile.setObjectName("opt_onefile_dynamic")
+            build_layout.addRow("Mode:", self._opt_onefile)
 
             # Windowed option
-            self._opt_windowed = add_form_checkbox(
-                build_layout, "Console:", "Windowed", "opt_windowed_dynamic"
-            )
+            self._opt_windowed = QCheckBox( "Windowed")
+            self._opt_windowed.setObjectName("opt_windowed_dynamic")
+
+            
             build_group.setLayout(build_layout)
 
             hint = QLabel(
