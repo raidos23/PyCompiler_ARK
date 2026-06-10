@@ -13,17 +13,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Backward-compatible import wrapper for the SystemDepsManager package."""
+"""Internal system dependency management package."""
 
-from pycompiler_ark.Core.SystemDepsManager import (
-    SysDependencyManager,
-    check_system_packages,
+from pycompiler_ark.Core.SystemDepsManager.detection import (
     detect_linux_package_manager,
     detect_macos_package_manager,
     get_install_command,
-    install_system_packages,
     which,
 )
+from pycompiler_ark.Core.SystemDepsManager.headless import (
+    check_system_packages,
+    install_system_packages,
+)
+from pycompiler_ark.Core.SystemDepsManager.manager import SysDependencyManager
 
 __all__ = [
     "SysDependencyManager",
