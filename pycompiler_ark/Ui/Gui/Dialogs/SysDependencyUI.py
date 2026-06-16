@@ -81,6 +81,10 @@ class SysDependencyUI(SysDependencyManager):
         else:
             method(*args)
 
+    def tr(self, fr: str, en: str) -> str:
+        """Translation helper."""
+        return self._ui_tr(fr, en)
+
     def msg_error(self, fr: str, en: str) -> None:
         def _show():
             QMessageBox.critical(self.parent_widget, self.tr("Erreur", "Error"), self.tr(fr, en))

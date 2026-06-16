@@ -14,7 +14,7 @@
 # limitations under the License.
 
 """
-AdvancedConfigEditor — Structured GUI for project configuration (ark.yml).
+ConfigEditor — Structured GUI for project configuration (ark.yml).
 """
 
 from __future__ import annotations
@@ -46,7 +46,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from pycompiler_ark.Core.AdvancedConfigEditor import validate_ark_payload
+from pycompiler_ark.Core.ConfigEditor import validate_ark_payload
 from pycompiler_ark.Core.Configs import load_ark_config, write_ark_config
 from pycompiler_ark.Core.engine.registry import available_engines
 
@@ -76,7 +76,7 @@ def _apply_themed_icon(widget: QPushButton, icon_name: str, size: int = 16) -> N
         pass
 
 
-class AdvancedConfigEditor(QDialog):
+class ConfigEditor(QDialog):
     """Structured editor for ark.yml configuration."""
 
     def __init__(self, gui):
