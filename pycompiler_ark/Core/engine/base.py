@@ -230,7 +230,7 @@ class CompilerEngine:
             if system_tools:
                 try:
                     # Import and use SysDependencyManager directly for full GUI support
-                    from pycompiler_ark.Core.SysDependencyManager import (
+                    from pycompiler_ark.Core.SystemDepsManager import (
                         SysDependencyManager,
                         check_system_packages,
                     )
@@ -344,7 +344,7 @@ class CompilerEngine:
                                         system_install_ok = False
                             else:
                                 # Fallback to headless installation for CLI/CI
-                                from pycompiler_ark.Core.SysDependencyManager import (
+                                from pycompiler_ark.Core.SystemDepsManager import (
                                     install_system_packages,
                                 )
 

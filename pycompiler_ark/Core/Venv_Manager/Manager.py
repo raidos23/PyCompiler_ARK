@@ -9,7 +9,7 @@ import sys
 from PySide6.QtCore import QProcess, QTimer
 
 import pycompiler_ark.Core.deps_analyser.analyser as deps_analyser
-import pycompiler_ark.Core.SysDependencyManager as sys_deps
+import pycompiler_ark.Core.SystemDepsManager as sys_deps
 
 
 class VenvManager:
