@@ -701,11 +701,11 @@ class UiFeatures:
             return
 
         try:
-            from pycompiler_ark.Ui.Gui.Dialogs.AdvancedConfigEditor import (
-                AdvancedConfigEditor,
+            from pycompiler_ark.Ui.Gui.Dialogs.ConfigEditor import (
+                ConfigEditor,
             )
 
-            dlg = AdvancedConfigEditor(self)
+            dlg = ConfigEditor(self)
             dlg.setModal(True)
             dlg.exec()
         except Exception as e:

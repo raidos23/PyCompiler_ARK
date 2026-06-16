@@ -39,9 +39,9 @@ class TestSysDependencyManager:
 class TestSysDependencyUI:
     @patch("pycompiler_ark.Ui.Gui.Dialogs.SysDependencyUI.ProgressDialog")
     @patch("platform.system", return_value="Linux")
-    @patch.object(SysDependencyUI, "detect_linux_package_manager", return_value="apt")
+    @patch("pycompiler_ark.Ui.Gui.Dialogs.SysDependencyUI.SysDependencyUI.get_install_command", return_value="apt install -y gcc make")
     @patch.object(SysDependencyUI, "run_elevated_shell")
-    def test_install_packages_linux(self, mock_elevated, mock_detect, mock_system, mock_dlg):
+    def test_install_packages_linux(self, mock_elevated, mock_get_cmd, mock_system, mock_dlg):
         ui = SysDependencyUI()
         ui.install_packages_linux(["gcc", "make"])
         
