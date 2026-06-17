@@ -70,5 +70,7 @@ include = [
     "pycompiler_ark",
     "README.md",
     "LICENSE",
+    "NOTICE",
+    "CODEOWNERS",
     "requirements.txt"
 ]
