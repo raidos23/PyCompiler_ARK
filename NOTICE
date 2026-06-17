@@ -1,0 +1,59 @@
+PyCompiler_ARK
+Copyright 2026 Samuel Amen Ague
+
+This product includes software developed by third parties.
+See licenses below for details.
+
+================================================================================
+THIRD-PARTY SOFTWARE LICENSES
+================================================================================
+
+1. PySide6 & shiboken6
+   - License: LGPL v3
+   - URL: https://www.qt.io/qt-for-python
+   - Description: Python bindings for Qt framework
+
+2. PyYAML
+   - License: MIT
+   - URL: https://pyyaml.org/
+   - Description: YAML parser and emitter
+
+3. click
+   - License: BSD 3-Clause
+   - URL: https://click.palletsprojects.com/
+   - Description: Python package for creating command-line interfaces
+
+4. rich
+   - License: MIT
+   - URL: https://rich.readthedocs.io/
+   - Description: Library for rich text and beautiful formatting in the terminal
+
+5. psutil
+   - License: BSD 3-Clause
+   - URL: https://github.com/giampaolo/psutil
+   - Description: Cross-platform library for retrieving information on running processes
+
+6. colorama
+   - License: BSD 3-Clause
+   - URL: https://github.com/tartley/colorama
+   - Description: Simple cross-platform colored terminal text
+
+7. jsonschema
+   - License: MIT
+   - URL: https://python-jsonschema.readthedocs.io/
+   - Description: JSON schema validation library
+
+8. tomli
+   - License: MIT
+   - URL: https://github.com/hukkin/tomli
+   - Description: TOML parser for Python
+
+9. hatchling
+   - License: MIT
+   - URL: https://hatch.pypa.io/latest/build/
+   - Description: Modern, extensible Python build backend
+
+================================================================================
+
+For full license texts, visit the respective project URLs above.
+Detailed license information is also available in the installed packages.
