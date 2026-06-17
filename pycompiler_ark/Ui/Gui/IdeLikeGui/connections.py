@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-# Copyright 2026 Ague Samuel Amen
+# Copyright 2026 Samuel Amen Ague
 
 """Connections for `Ui/Forms/ide_main_window.ui`.
 

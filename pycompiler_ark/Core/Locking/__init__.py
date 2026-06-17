@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-# Copyright 2026 Ague Samuel Amen
+# Copyright 2026 Samuel Amen Ague
 
 from __future__ import annotations
 

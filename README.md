@@ -36,7 +36,10 @@ git clone https://github.com/raidos23/PyCompiler_ARK.git
 cd PyCompiler_ARK
 pip install -e .
 ```
-
+## Install latest version via pip
+```bash
+pip install pycompiler-ark
+```
 ### Launch Gui
 
 ```bash

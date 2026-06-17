@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-# Copyright 2026 Ague Samuel Amen
+# Copyright 2026 Samuel Amen Ague
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -74,4 +74,4 @@ __all__ = [
     "get_engine_sdk_version",
 ]
 __version__ = "1.0.1"
-__author__ = "Ague Samuel Amen"
+__author__ = "Samuel Amen Ague"
