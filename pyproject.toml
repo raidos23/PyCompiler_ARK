@@ -24,7 +24,7 @@ keywords = [
 ]
 
 authors = [
-  { name = "Ague Samuel Amen", email = "ague.samuel27@gmail.com" },
+  { name = "Samuel Amen Ague", email = "ague.samuel27@gmail.com" },
 ]
 classifiers = [
   "Development Status :: 4 - Beta",
@@ -35,6 +35,8 @@ classifiers = [
   "License :: OSI Approved :: Apache Software License",
   "Operating System :: OS Independent",
   "Intended Audience :: Developers",
+  "Intended Audience :: DevOps",
+  "Intended Audience :: End Users/Desktop",
   "Topic :: Software Development :: Build Tools",
 ]
 dependencies = [
