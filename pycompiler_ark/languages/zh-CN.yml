@@ -3,6 +3,7 @@ code: zh-CN
 _meta:
   code: zh-CN
   name: 简体中文
+# Traductions visibles des boutons et des libellés
 select_folder: 选择工作区
 select_files: 添加文件
 build_all: 编译
@@ -38,6 +39,8 @@ choose_language_button: 语言
 select_theme: 主题
 choose_theme_button: 主题
 choose_theme_system_button: 主题（系统）
+
+# Infobulles des boutons
 tt_select_folder: 选择工作区文件夹。
 tt_select_files: 添加要编译的文件。
 tt_build_all: 开始编译。
@@ -72,6 +75,8 @@ label_tools: 工具
 label_options_section: 编译选项
 label_progress: 编译进度
 venv_label_system: 已选择 Venv：系统 Python
+
+# Messages de dialogue
 msg_venv_choice_title: Venv 配置
 msg_venv_choice_text: 自动创建 venv 或选择 venv（包含系统 Python）。
 msg_no_workspace_title: 工作区缺失
@@ -82,6 +87,8 @@ msg_no_workspace_or_venv_title: 工作区或 venv 缺失
 msg_no_workspace_or_venv_text: 请选择工作区或 Venv 以分析依赖。
 msg_invalid_venv_title: Venv 无效
 msg_invalid_venv_text: 所选文件夹不是有效的 venv。重试或创建 venv？
+
+# Actions des dialogues
 action_select_workspace: 选择工作区
 action_add_files: 添加文件
 action_select_venv: 选择 Venv

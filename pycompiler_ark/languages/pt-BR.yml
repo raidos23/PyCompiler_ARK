@@ -3,6 +3,7 @@ code: pt-BR
 _meta:
   code: pt-BR
   name: Português (Brasil)
+# Traductions visibles des boutons et des libellés
 select_folder: Escolher a área de trabalho
 select_files: Adicionar arquivos
 build_all: Compilar
@@ -43,6 +44,8 @@ choose_language_button: Idioma
 select_theme: Tema
 choose_theme_button: Tema
 choose_theme_system_button: Tema (Sistema)
+
+# Infobulles des boutons
 tt_select_folder: Selecionar a pasta da área de trabalho.
 tt_select_files: Adicionar arquivos para compilar.
 tt_build_all: Iniciar a compilação.
@@ -77,6 +80,8 @@ label_tools: Ferramentas
 label_options_section: Opções de compilação
 label_progress: Progresso da compilação
 venv_label_system: 'Venv selecionado: Python do sistema'
+
+# Messages de dialogue
 msg_venv_choice_title: Configuração do Venv
 msg_venv_choice_text: Criar um venv automaticamente ou selecionar um venv (Python
   do sistema incluído).
@@ -89,6 +94,8 @@ msg_no_workspace_or_venv_text: Selecione um Workspace ou um Venv para analisar d
 msg_invalid_venv_title: Venv inválido
 msg_invalid_venv_text: A pasta selecionada não é um venv válido. Tentar novamente
   ou criar um venv?
+
+# Actions des dialogues
 action_select_workspace: Selecionar Workspace
 action_add_files: Adicionar arquivos
 action_select_venv: Selecionar Venv
