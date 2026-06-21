@@ -103,7 +103,7 @@ class PyInstallerEngine(CompilerEngine):
         if output_name:
             cmd.extend(["--name", output_name])
 
-        for pattern in context.exclude_patterns:
+        for pattern in context.exclude_packages:
             module = (
                 str(pattern)
                 .replace("/**/*", "")

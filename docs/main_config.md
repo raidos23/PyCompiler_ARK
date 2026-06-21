@@ -123,7 +123,7 @@ The fields in `ark.yml` are mapped directly to the `BuildContext` data structure
 | `project.name` | `project_name` |
 | `project.entry` | `entry_point` |
 | `build.include` | `include_packages` |
-| `build.exclude` | `exclude_patterns` |
+| `build.exclude` | `exclude_packages` |
 | `build.output` | `output_dir` |
 | `build.data` | `data_mappings` |
 | `build.icon` | `icon` |

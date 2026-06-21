@@ -48,8 +48,8 @@ project:
 
 workspace:
   exclude_patterns:        # Workspace filter snapshot
-    - tkinter
-    - unittest
+    - tests/**
+    - "**/__pycache__/**" 
 
 build:
   output: dist/            # Copied from build.output
