@@ -48,11 +48,6 @@ THIRD-PARTY SOFTWARE LICENSES
    - URL: https://github.com/hukkin/tomli
    - Description: TOML parser for Python
 
-9. hatchling
-   - License: MIT
-   - URL: https://hatch.pypa.io/latest/build/
-   - Description: Modern, extensible Python build backend
-
 ================================================================================
 
 For full license texts, visit the respective project URLs above.
