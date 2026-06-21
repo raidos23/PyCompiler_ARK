@@ -1,0 +1,9 @@
+ui_safety: 안전
+ui_targets: 대상
+ui_confirm: 정리 전에 확인
+ui_pyc: .pyc 파일 제거
+ui_pycache: __pycache__ 폴더 제거
+ui_tip: '팁: 삭제하지 않을 항목은 비활성화하세요.'
+dlg_confirm: workspace를 정리할까요 (.pyc 및 __pycache__)?
+log_cancel: 사용자가 정리를 취소했습니다
+log_noop: 'Cleaner: 할 일이 없습니다(두 옵션 모두 비활성화됨)'

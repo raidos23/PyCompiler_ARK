@@ -26,7 +26,7 @@ class BuildContext:
     project_name: str
     entry_point: str
     output_dir: str
-    exclude_patterns: list[str]
+    exclude_packages: list[str]
     include_packages: list[str]
     data_mappings: list[
         dict[str, Any]

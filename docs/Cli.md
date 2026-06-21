@@ -122,7 +122,8 @@ build:
   engine: nuitka
   output: dist/
   exclude:
-    - "tests/**/*"
+    - "tkinter"
+    - "unittest"  
   include:
     - "requests"
     - "custom_package"

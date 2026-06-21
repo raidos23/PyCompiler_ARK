@@ -15,9 +15,14 @@
 
 from __future__ import annotations
 
-import json
 import os
+from pathlib import Path
 from typing import Any, Callable, Optional
+
+try:
+    import yaml
+except ImportError:  # pragma: no cover - dépendance attendue mais on reste tolérant
+    yaml = None
 
 _GLOBAL_TR: dict[str, Any] = {}
 _GLOBAL_LANG: str = "en"
@@ -145,30 +150,32 @@ def apply_translations(gui, tr: dict) -> None:
 
 
 def load_plugin_language_file(plugin_package: str, code: str) -> dict:
-    """Load language file for a plugin from its package's languages folder."""
+    """Charger un fichier de langue YAML pour un plugin."""
     try:
         import importlib.resources as ilr
 
-        lang_data = {}
         if not plugin_package:
             return {}
-        lang_dir = "languages"
         normalized = normalize_language_code(code)
         candidates = [
-            f"{normalized}.json",
-            f"{normalized.lower()}.json",
-            "en.json",
+            f"{normalized}.yml",
+            f"{normalized.lower()}.yml",
+            "en.yml",
         ]
         for name in candidates:
             try:
-                with ilr.open_text(plugin_package, f"{lang_dir}/{name}") as f:
-                    data = json.load(f)
+                ref = ilr.files(plugin_package).joinpath("languages", name)
+                if not ref.is_file():
+                    continue
+                if yaml is None:
+                    return {}
+                with ilr.as_file(ref) as p:
+                    data = yaml.safe_load(Path(p).read_text(encoding="utf-8"))
                 if isinstance(data, dict):
-                    lang_data.update(data)
-                    break
+                    return data
             except Exception:
                 continue
-        return lang_data
+        return {}
     except Exception:
         return {}
 
@@ -192,9 +199,9 @@ def _load_plugin_languages_from_fs(plugins_dir: str, code: str) -> dict[str, dic
     data: dict[str, dict] = {}
     normalized = normalize_language_code(code)
     candidates = [
-        f"{normalized}.json",
-        f"{normalized.lower()}.json",
-        "en.json",
+        f"{normalized}.yml",
+        f"{normalized.lower()}.yml",
+        "en.yml",
     ]
     try:
         for entry in os.listdir(plugins_dir):
@@ -212,8 +219,10 @@ def _load_plugin_languages_from_fs(plugins_dir: str, code: str) -> dict[str, dic
                 if not os.path.isfile(p):
                     continue
                 try:
+                    if yaml is None:
+                        continue
                     with open(p, encoding="utf-8") as f:
-                        content = json.load(f)
+                        content = yaml.safe_load(f)
                     if isinstance(content, dict):
                         payload.update(content)
                         break

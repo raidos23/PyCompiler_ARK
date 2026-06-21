@@ -1,0 +1,9 @@
+ui_safety: Segurança
+ui_targets: Alvos
+ui_confirm: Pedir confirmação antes da limpeza
+ui_pyc: Remover arquivos .pyc
+ui_pycache: Remover pastas __pycache__
+ui_tip: 'Dica: desative o que não quiser excluir.'
+dlg_confirm: Deseja limpar o workspace (.pyc e __pycache__)?
+log_cancel: Limpeza cancelada pelo usuário
+log_noop: 'Cleaner: nada a fazer (ambas as opções desativadas)'
