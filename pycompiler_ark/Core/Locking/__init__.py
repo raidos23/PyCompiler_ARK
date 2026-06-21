@@ -199,7 +199,8 @@ def build_lock_payload(
 ) -> dict[str, Any]:
     config = normalize_ark_config(config)
     build = config.get("build") or {}
-    exclude_patterns = list(build.get("exclude") or [])
+    ws = config.get("workspace") or {}
+    exclude_packages = list(build.get("exclude") or [])
     include_packages = list(build.get("include") or [])
     project = config.get("project") or {}
     ensure_workspace_layout(workspace)
@@ -207,6 +208,7 @@ def build_lock_payload(
     build_id = next_build_id(lock_dir)
     git_commit = get_git_commit_hash(workspace)
     git_branch = get_git_branch(workspace)
+    exclude_patterns = list(ws.get("exclude") or [])
 
     return {
         "build_id": build_id,
@@ -221,7 +223,7 @@ def build_lock_payload(
         "build": {
             "output": build.get("output"),
             "data": list(build.get("data") or []),
-            "exclude": exclude_patterns,
+            "exclude": exclude_packages,
             "include": include_packages,
             **({"icon": build.get("icon")} if build.get("icon") else {}),
         },
@@ -348,7 +350,7 @@ def build_context_from_ark_config(config: dict[str, Any]) -> BuildContext:
         project_name=str(project.get("name") or ""),
         entry_point=str(project.get("entry") or ""),
         output_dir=str(build.get("output") or ""),
-        exclude_patterns=list(build.get("exclude") or []),
+        exclude_packages=list(build.get("exclude") or []),
         include_packages=list(build.get("include") or []),
         data_mappings=list(build.get("data") or []),
         icon=str(build.get("icon")) if build.get("icon") else None,
@@ -360,16 +362,11 @@ def build_context_from_lock(lock_payload: dict[str, Any]) -> BuildContext:
     build = lock_payload.get("build") or {}
     workspace_cfg = lock_payload.get("workspace") or {}
 
-    # Check build.exclude (new) then workspace.exclude_patterns (legacy)
-    exclude_patterns = list(build.get("exclude") or [])
-    if not exclude_patterns:
-        exclude_patterns = list(workspace_cfg.get("exclude_patterns") or [])
-
     return BuildContext(
         project_name=str(project.get("name") or ""),
         entry_point=str(project.get("entry") or ""),
         output_dir=str(build.get("output") or ""),
-        exclude_patterns=exclude_patterns,
+        exclude_packages=list(build.get("exclude") or []),
         include_packages=list(build.get("include") or []),
         data_mappings=list(build.get("data") or []),
         icon=str(build.get("icon")) if build.get("icon") else None,

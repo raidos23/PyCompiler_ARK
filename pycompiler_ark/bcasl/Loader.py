@@ -474,27 +474,7 @@ def _load_workspace_config(workspace_root: Path) -> dict[str, Any]:
             "venv/**",
             ".venv/**",
         ]
-
-        try:
-            from pycompiler_ark.Core.Configs import load_ark_config
-
-            ark_config = load_ark_config(str(workspace_root))
-
-            # On privilégie build: exclude pour les actions pré-compilation
-            build_cfg = ark_config.get("build", {})
-            if isinstance(build_cfg, dict) and "exclude" in build_cfg:
-                exclude_patterns = build_cfg.get("exclude", exclude_patterns)
-            else:
-                # Fallback legacy ou si build: exclude est absent (peu probable avec normalization)
-                workspace_cfg = ark_config.get("workspace", {})
-                if isinstance(workspace_cfg, dict):
-                    exclude_patterns = workspace_cfg.get("exclude", exclude_patterns)
-
-            # inclusion_patterns n'est plus supporté (l'exclusion suffit)
-
-        except Exception:
-            pass
-
+        
         # Default phases (all enabled)
         default_phases = {
             "Cleanup": True,

@@ -1,0 +1,25 @@
+_meta:
+  code: zh-CN
+  name: 中文（简体）
+tab_label: PyInstaller
+mode_label: 模式：
+onefile_checkbox: Onefile
+console_label: 控制台：
+windowed_checkbox: Windowed
+confirmation_label: 确认：
+noconfirm_checkbox: Noconfirm
+cleanup_label: 清理：
+clean_checkbox: Clean
+compression_label: 压缩：
+noupx_checkbox: No UPX
+files_label: 文件：
+main_only_checkbox: 仅编译 main.py 或 app.py
+icon_button: 🎨 选择图标 (.ico)
+debug_checkbox: 调试模式 (--debug)
+add_data_button: add_data
+output_placeholder: 输出目录 (--distpath)。留空则使用 ./dist
+tt_noconfirm: Overwrite output without confirmation.
+tt_clean: Clean build caches before compiling.
+tt_noupx: Disable UPX compression.
+tt_main_only: Build only main.py or app.py if present.
+tt_debug: Enable debug mode in the build.

@@ -182,3 +182,4 @@ sys
 temp/
 tmp/
 *.tmp
+prototype/
