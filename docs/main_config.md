@@ -63,13 +63,13 @@ Determines which **Python packages/modules** are ignored by the compiler.
 - **Purpose**: Prevent specific Python libraries from being bundled.
 - **Restriction**: This is **NOT** a general folder excluder. It should **NEVER** contain technical patterns like `*.pyc`, `__pycache__`, or `.git`. These are handled automatically by the Core or should be hidden via `workspace.exclude`.
 
-⚠️ **CRITICAL WARNING: Name Collisions**
+> ⚠️ **CRITICAL WARNING: Name Collisions**
 Entries in `build.exclude` are passed to engines (like Nuitka or PyInstaller) as **logical package exclusions**. 
 
-If you have a local folder named `venv` (your virtual environment) and you add `venv` to `build.exclude` thinking you are excluding a directory, you are actually telling the compiler: *"Do not bundle the Python package named 'venv'"*. 
-If your project or any dependency uses `import venv` (the standard library), your application **will crash** because the library was removed from the bundle. 
+> If you have a local folder named `venv` (your virtual environment) and you add `venv` to `build.exclude` thinking you are excluding a directory, you are actually telling the compiler: *"Do not bundle the Python package named 'venv'"*. 
+> If your project or any dependency uses `import venv` (the standard library), your application **will crash** because the library was removed from the bundle. 
 
-**Rule of thumb**: Only use `build.exclude` for real Python packages you want to remove (e.g., `tkinter`, `unittest`, or a specific large sub-package). For everything else, use `workspace.exclude`.
+> **Rule of thumb**: Only use `build.exclude` for real Python packages you want to remove (e.g., `tkinter`, `unittest`, or a specific large sub-package). For everything else, use `workspace.exclude`.
 
 ## Build Inclusions vs Build Exclusions
 
