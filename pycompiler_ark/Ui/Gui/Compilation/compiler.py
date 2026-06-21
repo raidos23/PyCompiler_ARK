@@ -356,7 +356,7 @@ class CompilerCore(QObject):
             project_name=os.path.basename(file_path),
             entry_point=os.path.basename(file_path),
             output_dir="dist/",
-            exclude_patterns=[],
+            exclude_packages=[],
             include_packages=[],
             data_mappings=[],
         )
