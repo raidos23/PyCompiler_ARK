@@ -516,48 +516,32 @@ def load_engine_language_file(engine_package: str, code: str) -> dict:
     """
     try:
         import importlib.resources as ilr
-        import json
-
-        lang_data = {}
-
-        # Try exact code first
         try:
-            with ilr.as_file(
-                ilr.files(engine_package).joinpath("languages", f"{code}.json")
-            ) as p:
-                if os.path.isfile(str(p)):
-                    with open(str(p), encoding="utf-8") as f:
-                        lang_data = json.load(f) or {}
-                    return lang_data
-        except Exception:
-            pass
+            import yaml
+        except ImportError:  # pragma: no cover - PyYAML attendu dans le projet
+            return {}
 
-        # Fallback to base language (e.g., "fr" from "fr-CA")
+        candidates = [code]
         if "-" in code:
-            base = code.split("-", 1)[0]
-            try:
-                with ilr.as_file(
-                    ilr.files(engine_package).joinpath("languages", f"{base}.json")
-                ) as p:
-                    if os.path.isfile(str(p)):
+            candidates.append(code.split("-", 1)[0])
+        candidates.append("en")
+
+        for candidate in candidates:
+            for ext in (".yml", ".yaml"):
+                try:
+                    ref = ilr.files(engine_package).joinpath(
+                        "languages", f"{candidate}{ext}"
+                    )
+                    if not ref.is_file():
+                        continue
+                    with ilr.as_file(ref) as p:
                         with open(str(p), encoding="utf-8") as f:
-                            lang_data = json.load(f) or {}
+                            lang_data = yaml.safe_load(f) or {}
+                    if isinstance(lang_data, dict):
                         return lang_data
-            except Exception:
-                pass
-
-        # Final fallback to English
-        try:
-            with ilr.as_file(
-                ilr.files(engine_package).joinpath("languages", "en.json")
-            ) as p:
-                if os.path.isfile(str(p)):
-                    with open(str(p), encoding="utf-8") as f:
-                        lang_data = json.load(f) or {}
-        except Exception:
-            pass
-
-        return lang_data
+                except Exception:
+                    continue
+        return {}
     except Exception:
         return {}
 

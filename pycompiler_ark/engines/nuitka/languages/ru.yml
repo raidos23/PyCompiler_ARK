@@ -1,0 +1,17 @@
+_meta:
+  code: ru
+  name: Русский
+tab_label: Nuitka
+mode_label: 'Режим:'
+onefile_checkbox: Один файл (--onefile)
+type_label: 'Тип:'
+standalone_checkbox: Автономный (--standalone)
+console_label: 'Консоль:'
+disable_console_checkbox: Отключить консоль Windows (--windows-disable-console)
+progress_label: 'Прогресс:'
+show_progress_checkbox: Показать прогресс (--show-progress)
+add_data_button: add_data
+output_placeholder: Выходной каталог (--output-dir)
+icon_button: 🎨 Выбрать иконку (.ico) Nuitka
+tt_disable_console: Disable console window for Windows builds.
+tt_show_progress: Show compilation progress.

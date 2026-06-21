@@ -1,0 +1,20 @@
+_meta:
+  code: ru
+  name: Русский
+tab_label: PyInstaller
+mode_label: 'Режим:'
+onefile_checkbox: Один файл
+windowed_checkbox: Оконный
+noconfirm_checkbox: Без подтверждения
+clean_checkbox: Очистка
+noupx_checkbox: Без UPX
+main_only_checkbox: Компилировать только main.py или app.py
+debug_checkbox: Режим отладки (--debug)
+add_data_button: add_data
+output_placeholder: Выходная папка (--distpath). Оставьте пустым для ./dist
+icon_button: 🎨 Выбрать иконку (.ico)
+tt_noconfirm: Overwrite output without confirmation.
+tt_clean: Clean build caches before compiling.
+tt_noupx: Disable UPX compression.
+tt_main_only: Build only main.py or app.py if present.
+tt_debug: Enable debug mode in the build.
