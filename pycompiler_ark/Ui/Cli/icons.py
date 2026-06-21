@@ -8,7 +8,7 @@ from .runtime import ROOT_DIR
 
 def _get_logo_path() -> Optional[str]:
     try:
-        candidate = os.path.join(ROOT_DIR, "images", "logo.png")
+        candidate = os.path.join(ROOT_DIR, "images", "logo3.png")
         if os.path.isfile(candidate):
             return candidate
     except Exception:
