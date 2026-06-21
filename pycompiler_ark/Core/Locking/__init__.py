@@ -18,26 +18,108 @@ import yaml
 from pycompiler_ark.Core.Configs import normalize_ark_config
 from pycompiler_ark.Core.engine.build_context import BuildContext
 
+ARK_DIRNAME = ".ark"
+LOCK_DIRNAME = "lock"
+CACHE_DIRNAME = "cache"
+BUILD_DIRNAME = "build"
+LOGS_DIRNAME = "logs"
+LOCK_FILE_SUFFIX = ".lock.yml"
+LATEST_LOCK_FILENAME = "latest.lock.yml"
+WORKSPACE_GITIGNORE = "pref.json\ncache/\nlogs/\nbuild/\nvenv/\n.venv/\n"
+
 
 class LockingError(RuntimeError):
     """Raised when a lock file operation cannot satisfy the expected contract."""
 
 
-def ensure_workspace_layout(workspace: Path) -> None:
-    # Create subdirectories
-    for path in (
-        workspace / ".ark" / "lock",
-        workspace / ".ark" / "cache",
-        workspace / ".ark" / "build",
-        workspace / ".ark" / "logs",
-    ):
-        path.mkdir(parents=True, exist_ok=True)
+def _ark_path(workspace: Path, *parts: str) -> Path:
+    return workspace / ARK_DIRNAME / Path(*parts)
 
-    # Create .ark/.gitignore to ignore local/transient files
-    gitignore_path = workspace / ".ark" / ".gitignore"
-    if not gitignore_path.exists():
-        content = "pref.json\ncache/\nlogs/\nbuild/\nvenv/\n.venv/\n"
-        gitignore_path.write_text(content, encoding="utf-8")
+
+def _lock_dir(workspace: Path) -> Path:
+    return _ark_path(workspace, LOCK_DIRNAME)
+
+
+def _cache_dir(workspace: Path) -> Path:
+    return _ark_path(workspace, CACHE_DIRNAME)
+
+
+def _workspace_subdir_paths(workspace: Path) -> tuple[Path, ...]:
+    return (
+        _lock_dir(workspace),
+        _cache_dir(workspace),
+        _ark_path(workspace, BUILD_DIRNAME),
+        _ark_path(workspace, LOGS_DIRNAME),
+    )
+
+
+def _as_list(value: Any) -> list[Any]:
+    return list(value or [])
+
+
+def _write_text_if_missing(path: Path, content: str) -> None:
+    if not path.exists():
+        path.write_text(content, encoding="utf-8")
+
+
+def _build_section(build: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "output": build.get("output"),
+        "data": _as_list(build.get("data")),
+        "exclude": _as_list(build.get("exclude")),
+        "include": _as_list(build.get("include")),
+        **({"icon": build.get("icon")} if build.get("icon") else {}),
+    }
+
+
+def _project_section(
+    project: dict[str, Any], git_commit: str | None, git_branch: str | None
+) -> dict[str, Any]:
+    return {
+        "name": project.get("name"),
+        "version": project.get("version"),
+        "entry": project.get("entry"),
+        "git_commit": git_commit,
+        "git_branch": git_branch,
+    }
+
+
+def _engine_section(
+    engine_id: str,
+    engine_version: str,
+    workspace: Path,
+    resolved_command: dict[str, Any] | None,
+) -> dict[str, Any]:
+    section = {
+        "name": engine_id,
+        "version": engine_version,
+        "config": read_engine_config(workspace, engine_id),
+    }
+    if resolved_command:
+        section["resolved_command"] = resolved_command
+    return section
+
+
+def _platform_section(python_version: str | None = None) -> dict[str, Any]:
+    return {
+        "os": sys.platform,
+        "arch": platform.machine(),
+        "python_version": python_version or platform.python_version(),
+    }
+
+
+def _dependencies_section(dependencies: dict[str, str] | None) -> dict[str, str]:
+    return dependencies or installed_distributions_snapshot()
+
+
+def _payload_text(payload: dict[str, Any]) -> str:
+    return yaml.safe_dump(payload, allow_unicode=True, sort_keys=False)
+
+
+def ensure_workspace_layout(workspace: Path) -> None:
+    for path in _workspace_subdir_paths(workspace):
+        path.mkdir(parents=True, exist_ok=True)
+    _write_text_if_missing(_ark_path(workspace, ".gitignore"), WORKSPACE_GITIGNORE)
 
 
 def load_yaml_file(path: Path) -> dict[str, Any]:
@@ -50,7 +132,7 @@ def load_yaml_file(path: Path) -> dict[str, Any]:
 
 
 def engine_config_path(workspace: Path, engine_id: str) -> Path:
-    return workspace / ".ark" / engine_id / "config.json"
+    return _ark_path(workspace, engine_id, "config.json")
 
 
 def read_engine_config(workspace: Path, engine_id: str) -> dict[str, Any]:
@@ -92,7 +174,7 @@ def included_workspace_files(
     ws_str = str(workspace.resolve())
 
     # Prune list for os.walk
-    prune_dirs = {".git", ".ark", "__pycache__", "venv", ".venv", "build", "dist"}
+    prune_dirs = {".git", ARK_DIRNAME, "__pycache__", "venv", ".venv", "build", "dist"}
 
     import os
 
@@ -180,7 +262,7 @@ def next_build_id(lock_dir: Path) -> str:
     prefix = f"ARK_{today}_"
     seq = 1
     if lock_dir.exists():
-        for path in lock_dir.glob(f"{prefix}*.lock.yml"):
+        for path in lock_dir.glob(f"{prefix}*{LOCK_FILE_SUFFIX}"):
             suffix = path.stem.replace(prefix, "").replace(".lock", "")
             if suffix.isdigit():
                 seq = max(seq, int(suffix) + 1)
@@ -199,69 +281,44 @@ def build_lock_payload(
 ) -> dict[str, Any]:
     config = normalize_ark_config(config)
     build = config.get("build") or {}
-    ws = config.get("workspace") or {}
-    exclude_packages = list(build.get("exclude") or [])
-    include_packages = list(build.get("include") or [])
+    workspace_cfg = config.get("workspace") or {}
     project = config.get("project") or {}
     ensure_workspace_layout(workspace)
-    lock_dir = workspace / ".ark" / "lock"
+    lock_dir = _lock_dir(workspace)
     build_id = next_build_id(lock_dir)
     git_commit = get_git_commit_hash(workspace)
     git_branch = get_git_branch(workspace)
-    exclude_patterns = list(ws.get("exclude") or [])
+    exclude_patterns = _as_list(workspace_cfg.get("exclude"))
 
     return {
         "build_id": build_id,
-        "project": {
-            "name": project.get("name"),
-            "version": project.get("version"),
-            "entry": project.get("entry"),
-            "git_commit": git_commit,
-            "git_branch": git_branch,
-        },
+        "project": _project_section(project, git_commit, git_branch),
         "workspace": {"exclude_patterns": exclude_patterns},
-        "build": {
-            "output": build.get("output"),
-            "data": list(build.get("data") or []),
-            "exclude": exclude_packages,
-            "include": include_packages,
-            **({"icon": build.get("icon")} if build.get("icon") else {}),
-        },
-        "engine": {
-            "name": engine_id,
-            "version": engine_version,
-            "config": read_engine_config(workspace, engine_id),
-            **({"resolved_command": resolved_command} if resolved_command else {}),
-        },
-        "platform": {
-            "os": sys.platform,
-            "arch": platform.machine(),
-            "python_version": python_version or platform.python_version(),
-        },
-        "dependencies": dependencies or installed_distributions_snapshot(),
+        "build": _build_section(build),
+        "engine": _engine_section(engine_id, engine_version, workspace, resolved_command),
+        "platform": _platform_section(python_version),
+        "dependencies": _dependencies_section(dependencies),
     }
 
 
 def write_lock_files(workspace: Path, payload: dict[str, Any]) -> dict[str, str]:
-    lock_dir = workspace / ".ark" / "lock"
     ensure_workspace_layout(workspace)
     build_id = str(payload.get("build_id") or "ARK_UNKNOWN")
-    target = lock_dir / f"{build_id}.lock.yml"
-    latest = lock_dir / "latest.lock.yml"
-    text = yaml.safe_dump(payload, allow_unicode=True, sort_keys=False)
+    lock_dir = _lock_dir(workspace)
+    text = _payload_text(payload)
+    target = lock_dir / f"{build_id}{LOCK_FILE_SUFFIX}"
+    latest = lock_dir / LATEST_LOCK_FILENAME
     target.write_text(text, encoding="utf-8")
     latest.write_text(text, encoding="utf-8")
     return {"lock": str(target), "latest": str(latest)}
 
 
 def cache_rebuild_lock(workspace: Path, payload: dict[str, Any]) -> str:
-    cache_dir = workspace / ".ark" / "cache" / "rebuild.lock"
+    cache_dir = _cache_dir(workspace) / "rebuild.lock"
     cache_dir.mkdir(parents=True, exist_ok=True)
     build_id = str(payload.get("build_id") or "ARK_UNKNOWN")
-    target = cache_dir / f"{build_id}.lock.yml"
-    target.write_text(
-        yaml.safe_dump(payload, allow_unicode=True, sort_keys=False), encoding="utf-8"
-    )
+    target = cache_dir / f"{build_id}{LOCK_FILE_SUFFIX}"
+    target.write_text(_payload_text(payload), encoding="utf-8")
     return str(target)
 
 
@@ -339,7 +396,7 @@ def compare_lock_payloads(
 
 
 def default_lock_path(workspace: Path) -> Path:
-    return workspace / ".ark" / "lock" / "latest.lock.yml"
+    return _lock_dir(workspace) / LATEST_LOCK_FILENAME
 
 
 def build_context_from_ark_config(config: dict[str, Any]) -> BuildContext:
