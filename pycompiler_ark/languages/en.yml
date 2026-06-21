@@ -3,6 +3,7 @@ code: en
 _meta:
   code: en
   name: English
+# Traductions visibles des boutons et des libellés
 select_folder: Choose workspace
 select_files: Add files
 build_all: Compile
@@ -42,6 +43,8 @@ choose_language_button: Language
 select_theme: Theme
 choose_theme_button: Theme
 choose_theme_system_button: Theme (System)
+
+# Infobulles des boutons
 tt_select_folder: Select the Workspace folder.
 tt_select_files: Add files to compile.
 tt_build_all: Start compilation.
@@ -76,6 +79,8 @@ label_tools: Tools
 label_options_section: Compilation options
 label_progress: Compilation progress
 venv_label_system: 'Venv selected: System Python'
+
+# Messages de dialogue
 msg_venv_choice_title: Venv setup
 msg_venv_choice_text: Create a venv automatically or select a venv (System Python
   included).
@@ -88,6 +93,8 @@ msg_no_workspace_or_venv_text: Select a Workspace or a Venv to analyze dependenc
 msg_invalid_venv_title: Invalid Venv
 msg_invalid_venv_text: The selected folder is not a valid venv. Retry or create a
   venv?
+
+# Actions des dialogues
 action_select_workspace: Select Workspace
 action_add_files: Add files
 action_select_venv: Select Venv

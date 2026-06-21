@@ -3,6 +3,7 @@ code: ru
 _meta:
   code: ru
   name: Русский
+# Traductions visibles des boutons et des libellés
 select_folder: Выбрать рабочее пространство
 select_files: Добавить файлы
 build_all: Скомпилировать
@@ -44,6 +45,8 @@ choose_language_button: Язык
 select_theme: Тема
 choose_theme_button: Тема
 choose_theme_system_button: Тема (Система)
+
+# Infobulles des boutons
 tt_select_folder: Выбрать папку рабочего пространства.
 tt_select_files: Добавить файлы для компиляции.
 tt_build_all: Запустить компиляцию.
@@ -78,6 +81,8 @@ label_tools: Инструменты
 label_options_section: Параметры компиляции
 label_progress: Ход компиляции
 venv_label_system: 'Venv выбран: системный Python'
+
+# Messages de dialogue
 msg_venv_choice_title: Настройка venv
 msg_venv_choice_text: Создать venv автоматически или выбрать venv (системный Python
   включён).
@@ -90,6 +95,8 @@ msg_no_workspace_or_venv_text: Выберите Workspace или Venv для а�
 msg_invalid_venv_title: Недопустимый venv
 msg_invalid_venv_text: Выбранная папка не является корректным venv. Повторить или
   создать venv?
+
+# Actions des dialogues
 action_select_workspace: Выбрать Workspace
 action_add_files: Добавить файлы
 action_select_venv: Выбрать Venv
