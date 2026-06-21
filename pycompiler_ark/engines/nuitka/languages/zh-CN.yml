@@ -1,0 +1,17 @@
+_meta:
+  code: zh-CN
+  name: 中文 (简体)
+tab_label: Nuitka
+mode_label: '模式:'
+onefile_checkbox: Onefile (--onefile)
+type_label: '类型:'
+standalone_checkbox: Standalone (--standalone)
+console_label: '控制台:'
+disable_console_checkbox: 禁用 Windows 控制台 (--windows-disable-console)
+progress_label: '进度:'
+show_progress_checkbox: 显示进度 (--show-progress)
+add_data_button: add_data
+output_placeholder: 输出目录 (--output-dir)
+icon_button: 🎨 选择图标 (.ico) Nuitka
+tt_disable_console: Disable console window for Windows builds.
+tt_show_progress: Show compilation progress.

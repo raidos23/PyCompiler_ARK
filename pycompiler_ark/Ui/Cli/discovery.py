@@ -1,9 +1,13 @@
 from __future__ import annotations
 
-import json
 import re
 from pathlib import Path
 from typing import Any
+
+try:
+    import yaml
+except ImportError:  # pragma: no cover - la génération peut échouer proprement
+    yaml = None
 
 
 def _project_root() -> Path:
@@ -273,10 +277,15 @@ def scaffold_engine(
         + "\n",
         encoding="utf-8",
     )
-    (engine_dir / "languages" / "en.json").write_text(
-        json.dumps({"tab_title": safe.title().replace("_", " ")}, indent=2) + "\n",
-        encoding="utf-8",
-    )
+    if yaml is not None:
+        (engine_dir / "languages" / "en.yml").write_text(
+            yaml.safe_dump(
+                {"tab_title": safe.title().replace("_", " ")},
+                allow_unicode=True,
+                sort_keys=False,
+            ),
+            encoding="utf-8",
+        )
     (engine_dir / "mapping.json").write_text(
         '{\n  "imports": {}\n}\n', encoding="utf-8"
     )
@@ -316,8 +325,13 @@ def scaffold_plugin(
         + "\n",
         encoding="utf-8",
     )
-    (plugin_dir / "languages" / "en.json").write_text(
-        json.dumps({"plugin_name": safe}, indent=2) + "\n",
-        encoding="utf-8",
-    )
+    if yaml is not None:
+        (plugin_dir / "languages" / "en.yml").write_text(
+            yaml.safe_dump(
+                {"plugin_name": safe},
+                allow_unicode=True,
+                sort_keys=False,
+            ),
+            encoding="utf-8",
+        )
     return {"created": True, "path": str(plugin_dir)}
