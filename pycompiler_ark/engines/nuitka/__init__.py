@@ -119,7 +119,7 @@ class NuitkaEngine(CompilerEngine):
         if icon_path:
             cmd.append(f"--windows-icon-from-ico={icon_path}")
 
-        for pattern in context.exclude_patterns:
+        for pattern in context.exclude_packages:
             module = (
                 str(pattern)
                 .replace("/**/*", "")
