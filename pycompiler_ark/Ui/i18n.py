@@ -22,6 +22,11 @@ import os
 import re
 from typing import Any
 
+try:
+    import yaml
+except ImportError:  # pragma: no cover - secours si PyYAML manque
+    yaml = None
+
 # Built-in fallback for English if language files are missing
 FALLBACK_EN: dict[str, Any] = {
     "name": "English",
@@ -105,6 +110,7 @@ FALLBACK_EN: dict[str, Any] = {
 _TRANSLATION_CACHE: dict[str, dict[str, Any]] = {}
 _LANGUAGES_CACHE: list[dict[str, str]] | None = None
 _CACHE_LOCK = asyncio.Lock()
+_LANGUAGE_EXTENSIONS = (".yml", ".yaml")
 
 
 def _project_root() -> str:
@@ -123,6 +129,18 @@ def _languages_dir() -> str:
         return os.path.abspath(os.path.join(_project_root(), "languages"))
     except Exception:
         return "languages"
+
+
+def _load_language_data_sync(path: str) -> dict[str, Any] | None:
+    """Charger un fichier de langue YAML."""
+    try:
+        with open(path, encoding="utf-8") as f:
+            if yaml is None:
+                return None
+            data = yaml.safe_load(f)
+        return data if isinstance(data, dict) else None
+    except Exception:
+        return None
 
 
 # Normalization helper must be pure (no I/O or system lookups)
@@ -168,7 +186,7 @@ def _resolve_system_language_sync() -> str:
 
 
 def _load_language_file_sync(code: str) -> tuple[str | None, dict[str, Any] | None]:
-    """Load a language JSON file with flexible code matching.
+    """Charger un fichier de langue YAML/JSON avec résolution souple.
 
     Returns (resolved_code, data) or (None, None) if not found/invalid.
     """
@@ -216,29 +234,29 @@ def _load_language_file_sync(code: str) -> tuple[str | None, dict[str, Any] | No
 
     # Try direct file matches first
     for cand in candidates:
-        fpath = os.path.join(lang_dir, f"{cand}.json")
-        if os.path.isfile(fpath):
-            try:
-                with open(fpath, encoding="utf-8") as f:
-                    return os.path.splitext(os.path.basename(fpath))[0], json.load(f)
-            except Exception:
-                return None, None
+        for ext in _LANGUAGE_EXTENSIONS:
+            fpath = os.path.join(lang_dir, f"{cand}{ext}")
+            if os.path.isfile(fpath):
+                data = _load_language_data_sync(fpath)
+                if data is not None:
+                    return os.path.splitext(os.path.basename(fpath))[0], data
 
     # Case-insensitive fallback
     try:
-        files = [f for f in os.listdir(lang_dir) if f.endswith(".json")]
+        files = [
+            f
+            for f in os.listdir(lang_dir)
+            if os.path.splitext(f)[1].lower() in _LANGUAGE_EXTENSIONS
+        ]
         lower_map = {f.lower(): f for f in files}
         for cand in candidates:
-            target = f"{cand}.json".lower()
-            if target in lower_map:
-                fpath = os.path.join(lang_dir, lower_map[target])
-                try:
-                    with open(fpath, encoding="utf-8") as f:
-                        return os.path.splitext(os.path.basename(fpath))[0], json.load(
-                            f
-                        )
-                except Exception:
-                    return None, None
+            for ext in _LANGUAGE_EXTENSIONS:
+                target = f"{cand}{ext}".lower()
+                if target in lower_map:
+                    fpath = os.path.join(lang_dir, lower_map[target])
+                    data = _load_language_data_sync(fpath)
+                    if data is not None:
+                        return os.path.splitext(os.path.basename(fpath))[0], data
     except Exception:
         pass
 
@@ -256,34 +274,33 @@ def _available_languages_sync() -> list[dict[str, str]]:
                     "name": FALLBACK_EN["_meta"]["name"],
                 }
             ]
+        preferred: dict[str, dict[str, str]] = {}
         for fname in sorted(os.listdir(path)):
-            if not fname.endswith(".json"):
+            ext = os.path.splitext(fname)[1].lower()
+            if ext not in _LANGUAGE_EXTENSIONS:
                 continue
             default_code = os.path.splitext(fname)[0]
             fpath = os.path.join(path, fname)
-            try:
-                with open(fpath, encoding="utf-8") as f:
-                    data = json.load(f)
-                meta = data.get("_meta", {}) if isinstance(data, dict) else {}
-                name = None
-                code = None
-                if isinstance(data, dict):
-                    name = data.get("name") or (
-                        meta.get("name") if isinstance(meta, dict) else None
-                    )
-                    code = data.get("code") or (
-                        meta.get("code") if isinstance(meta, dict) else None
-                    )
-                langs.append(
-                    {
-                        "code": code or default_code,
-                        "name": name or default_code,
-                    }
+            data = _load_language_data_sync(fpath)
+            meta = data.get("_meta", {}) if isinstance(data, dict) else {}
+            name = None
+            code = None
+            if isinstance(data, dict):
+                name = data.get("name") or (
+                    meta.get("name") if isinstance(meta, dict) else None
                 )
-            except Exception:
-                langs.append({"code": default_code, "name": default_code})
+                code = data.get("code") or (
+                    meta.get("code") if isinstance(meta, dict) else None
+                )
+            entry = {
+                "code": code or default_code,
+                "name": name or default_code,
+            }
+            if entry["code"] not in preferred:
+                preferred[entry["code"]] = entry
     except Exception:
         pass
+    langs = list(preferred.values())
     if not langs:
         langs = [
             {"code": FALLBACK_EN["_meta"]["code"], "name": FALLBACK_EN["_meta"]["name"]}
