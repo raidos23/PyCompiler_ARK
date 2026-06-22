@@ -27,36 +27,12 @@ from pycompiler_ark.Plugins_SDK.BcPluginContext import (
 )
 from pycompiler_ark.Plugins_SDK.GeneralContext import (
     Dialog,
-    get_language_code,
-    load_plugin_language_file,
-    register_i18n_handler,
-    register_plugin_translations,
     translate,
 )
 
-# Create instances of Dialog for logging and user interaction
-# These now automatically execute in the main Qt thread, ensuring theme inheritance
-# and proper UI integration with the main application
+# Create instances of Dialog for logging and user interaction.
 log = Dialog()
 dialog = Dialog()
-
-
-def _load_i18n() -> None:
-    try:
-        lang_code = get_language_code()
-        data = load_plugin_language_file(__package__, lang_code)
-        if isinstance(data, dict) and data:
-            register_plugin_translations("cleaner", data)
-    except Exception:
-        pass
-
-
-# Load translations now and refresh on language changes
-_load_i18n()
-try:
-    register_i18n_handler(lambda _gui, _tr: _load_i18n())
-except Exception:
-    pass
 
 # Plugin metadata
 PLUGIN_META = PluginMeta(

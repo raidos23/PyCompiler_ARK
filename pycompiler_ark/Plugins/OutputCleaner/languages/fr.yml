@@ -1,0 +1,12 @@
+_meta:
+  code: fr
+  name: Français
+dialog_title: "Nettoyeur de sortie"
+warn_no_build_context: "OutputCleaner: Aucun BuildContext disponible. Impossible d'identifier le dossier de sortie."
+warn_no_output_dir: "OutputCleaner: Aucun output_dir défini dans BuildContext."
+info_output_missing: "OutputCleaner: Le dossier de sortie n'existe pas : {output_dir}"
+info_cleaning: "OutputCleaner: Nettoyage du dossier de sortie : {output_dir}"
+question_delete: "Voulez-vous supprimer tout le contenu de {output_dir} ?"
+success_cleaned: "OutputCleaner: Nettoyage réussi de {output_dir}"
+error_failed: "OutputCleaner: Échec du nettoyage de {output_dir} : {error}"
+error_generic: "OutputCleaner error: {error}"

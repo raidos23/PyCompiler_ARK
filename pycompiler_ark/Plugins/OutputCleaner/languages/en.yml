@@ -1,0 +1,12 @@
+_meta:
+  code: en
+  name: English
+dialog_title: "Output Cleaner"
+warn_no_build_context: "OutputCleaner: No BuildContext available. Cannot identify output directory."
+warn_no_output_dir: "OutputCleaner: No output_dir defined in BuildContext."
+info_output_missing: "OutputCleaner: Output directory does not exist: {output_dir}"
+info_cleaning: "OutputCleaner: Cleaning output directory: {output_dir}"
+question_delete: "Do you want to delete all contents in {output_dir}?"
+success_cleaned: "OutputCleaner: Successfully cleaned {output_dir}"
+error_failed: "OutputCleaner: Failed to clean {output_dir}: {error}"
+error_generic: "OutputCleaner error: {error}"

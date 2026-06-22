@@ -30,6 +30,7 @@ from pycompiler_ark.engine_sdk import (
     BuildContext,
     CompilerEngine,
     engine_register,
+    translate,
 )
 from pycompiler_ark.engine_sdk.utils import log_with_level
 
@@ -204,31 +205,45 @@ class NuitkaEngine(CompilerEngine):
             layout.setSpacing(8)
             layout.setContentsMargins(8, 8, 8, 8)
 
-            build_group = QGroupBox("Build", tab)
+            build_group = QGroupBox(translate(self.id, "build_group", "Build"), tab)
             build_layout = QFormLayout()
             build_layout.setSpacing(6)
 
             # Onefile option
-            self._nuitka_onefile = QCheckBox("Onefile (--onefile)")
+            self._nuitka_onefile = QCheckBox(
+                translate(self.id, "onefile_checkbox", "Onefile (--onefile)")
+            )
             self._nuitka_onefile.setObjectName("nuitka_onefile_dynamic")
-            build_layout.addRow("Mode:", self._nuitka_onefile)
+            build_layout.addRow(translate(self.id, "mode_label", "Mode:"), self._nuitka_onefile)
 
             # Standalone option
-            self._nuitka_standalone = QCheckBox("Standalone (--standalone)")
+            self._nuitka_standalone = QCheckBox(
+                translate(self.id, "standalone_checkbox", "Standalone (--standalone)")
+            )
             self._nuitka_standalone.setObjectName("nuitka_standalone_dynamic")
-            build_layout.addRow("Type:", self._nuitka_standalone)
+            build_layout.addRow(translate(self.id, "type_label", "Type:"), self._nuitka_standalone)
 
             # Disable console option
-            self._nuitka_disable_console = QCheckBox("Disable console")
+            self._nuitka_disable_console = QCheckBox(
+                translate(self.id, "disable_console_checkbox", "Disable console")
+            )
             self._nuitka_disable_console.setObjectName("nuitka_disable_console_dynamic")
             self._nuitka_disable_console.setToolTip(
-                "Disable console window for Windows builds."
+                translate(
+                    self.id,
+                    "tt_disable_console",
+                    "Disable console window for Windows builds.",
+                )
             )
-            build_layout.addRow("Console:", self._nuitka_disable_console)
+            build_layout.addRow(translate(self.id, "console_label", "Console:"), self._nuitka_disable_console)
             build_group.setLayout(build_layout)
 
             hint = QLabel(
-                "Tip: combine standalone or onefile modes carefully. Global icon and output are managed in ark.yml.",
+                translate(
+                    self.id,
+                    "hint_text",
+                    "Tip: combine standalone or onefile modes carefully. Global icon and output are managed in ark.yml.",
+                ),
                 tab,
             )
             hint.setStyleSheet("color: #888; font-size: 11px;")
@@ -241,7 +256,7 @@ class NuitkaEngine(CompilerEngine):
             # Store references in the engine instance for build_command access
             self._gui = gui
 
-            return tab, "Nuitka"
+            return tab, translate(self.id, "tab_label", "Nuitka")
 
         except Exception as e:
             try:
@@ -311,29 +326,6 @@ class NuitkaEngine(CompilerEngine):
 
     def get_log_prefix(self, file_basename: str) -> str:
         return f"Nuitka ({self.version})"
-
-    def apply_i18n(self, gui, tr: dict) -> None:
-        """Apply internationalization translations to the engine UI."""
-        try:
-            # Apply translations to UI elements if they exist
-            if hasattr(self, "_nuitka_onefile"):
-                self._nuitka_onefile.setText(
-                    self.engine_translate("onefile_checkbox", "Onefile")
-                )
-            if hasattr(self, "_nuitka_standalone"):
-                self._nuitka_standalone.setText(
-                    self.engine_translate("standalone_checkbox", "Standalone")
-                )
-            if hasattr(self, "_nuitka_disable_console"):
-                self._nuitka_disable_console.setText(
-                    self.engine_translate("disable_console_checkbox", "Disable console")
-                )
-            if hasattr(self, "_nuitka_disable_console"):
-                self._nuitka_disable_console.setToolTip(
-                    self.engine_translate("tt_disable_console", "")
-                )
-        except Exception:
-            pass
 
     def select_icon(self) -> None:
         """Legacy select_icon method. Global icon is now managed in ark.yml."""

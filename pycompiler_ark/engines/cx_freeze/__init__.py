@@ -31,6 +31,7 @@ from pycompiler_ark.engine_sdk import (
     BuildContext,
     CompilerEngine,
     engine_register,
+    translate,
 )
 from pycompiler_ark.engine_sdk.utils import log_with_level
 
@@ -184,34 +185,53 @@ class CXFreezeEngine(CompilerEngine):
             layout.setSpacing(8)
             layout.setContentsMargins(8, 8, 8, 8)
 
-            build_group = QGroupBox("Build", tab)
+            build_group = QGroupBox(translate(self.id, "build_group", "Build"), tab)
             build_layout = QFormLayout()
             build_layout.setSpacing(6)
 
             # Windowed option
-            self._cx_windowed = QCheckBox("No console")
+            self._cx_windowed = QCheckBox(
+                translate(self.id, "windowed_checkbox", "No console")
+            )
             self._cx_windowed.setObjectName("cx_windowed_dynamic")
-            self._cx_windowed.setToolTip("Disable the console window.")
+            self._cx_windowed.setToolTip(
+                translate(self.id, "tt_windowed", "Disable the console window.")
+            )
+            build_layout.addRow(self._cx_windowed)
 
             build_group.setLayout(build_layout)
 
-            diagnostics_group = QGroupBox("Diagnostics", tab)
+            diagnostics_group = QGroupBox(
+                translate(self.id, "diagnostics_group", "Diagnostics"), tab
+            )
             diagnostics_layout = QVBoxLayout()
             diagnostics_layout.setSpacing(4)
 
-            self._cx_debug = QCheckBox("Debug")
+            self._cx_debug = QCheckBox(
+                translate(self.id, "debug_checkbox", "Debug")
+            )
             self._cx_debug.setObjectName("cx_debug_dynamic")
-            self._cx_debug.setToolTip("Enable debug output.")
+            self._cx_debug.setToolTip(
+                translate(self.id, "tt_debug", "Enable debug output.")
+            )
             diagnostics_layout.addWidget(self._cx_debug)
 
-            self._cx_verbose = QCheckBox("Verbose")
+            self._cx_verbose = QCheckBox(
+                translate(self.id, "verbose_checkbox", "Verbose")
+            )
             self._cx_verbose.setObjectName("cx_verbose_dynamic")
-            self._cx_verbose.setToolTip("Enable verbose output.")
+            self._cx_verbose.setToolTip(
+                translate(self.id, "tt_verbose", "Enable verbose output.")
+            )
             diagnostics_layout.addWidget(self._cx_verbose)
             diagnostics_group.setLayout(diagnostics_layout)
 
             hint = QLabel(
-                "Tip: use the console visibility option. Global icon and output are managed in ark.yml.",
+                translate(
+                    self.id,
+                    "hint_text",
+                    "Tip: use the console visibility option. Global icon and output are managed in ark.yml.",
+                ),
                 tab,
             )
             hint.setStyleSheet("color: #888; font-size: 11px;")
@@ -225,7 +245,7 @@ class CXFreezeEngine(CompilerEngine):
             # Store references in the engine instance for build_command access
             self._gui = gui
 
-            return tab, "CX_Freeze"
+            return tab, translate(self.id, "tab_label", "CX_Freeze")
 
         except Exception as e:
             try:
@@ -305,31 +325,6 @@ class CXFreezeEngine(CompilerEngine):
 
     def get_log_prefix(self, file_basename: str) -> str:
         return f"CX_Freeze ({self.version})"
-
-    def apply_i18n(self, gui, tr: dict) -> None:
-        """Apply internationalization translations to the engine UI."""
-        try:
-            # Apply translations to UI elements if they exist
-            if hasattr(self, "_cx_windowed"):
-                self._cx_windowed.setText(
-                    self.engine_translate("windowed_checkbox", "Windowed")
-                )
-            if hasattr(self, "_cx_windowed"):
-                self._cx_windowed.setToolTip(self.engine_translate("tt_windowed", ""))
-            if hasattr(self, "_cx_debug"):
-                self._cx_debug.setText(
-                    self.engine_translate("debug_checkbox", "Debug mode")
-                )
-            if hasattr(self, "_cx_debug"):
-                self._cx_debug.setToolTip(self.engine_translate("tt_debug", ""))
-            if hasattr(self, "_cx_verbose"):
-                self._cx_verbose.setText(
-                    self.engine_translate("verbose_checkbox", "Verbose output")
-                )
-            if hasattr(self, "_cx_verbose"):
-                self._cx_verbose.setToolTip(self.engine_translate("tt_verbose", ""))
-        except Exception:
-            pass
 
     def select_icon(self) -> None:
         """Legacy select_icon method. Global icon is now managed in ark.yml."""

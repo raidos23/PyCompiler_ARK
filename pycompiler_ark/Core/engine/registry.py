@@ -193,7 +193,7 @@ def _refresh_all_engine_translations(code: str) -> None:
     _refresh_engine_translations_for_ids(list(_ORDER), code)
 
 
-def engine_translate(engine_or_id: Any, key: str, default: Optional[str] = None) -> str:
+def translate(engine_or_id: Any, key: str, default: Optional[str] = None) -> str:
     """Translate an engine-local key with fallback to host translations and defaults."""
     engine_id = None
     try:
@@ -328,6 +328,13 @@ def bind_tabs(gui) -> None:
         if not tabs:
             return
 
+        try:
+            tr = getattr(gui, "_tr", None)
+            set_translations(gui, tr if isinstance(tr, dict) else None)
+            _refresh_all_engine_translations(get_language_code())
+        except Exception:
+            pass
+
         # Get the Hello tab if it exists
         hello_tab = getattr(gui, "tab_hello", None)
         hello_tab_index = -1
@@ -428,17 +435,6 @@ def bind_tabs(gui) -> None:
                 else:
                     idx = tabs.addTab(widget, label)
                     _TAB_INDEX[eid] = int(idx)
-                # Apply engine i18n immediately if GUI already has active translations
-                try:
-                    tr = getattr(gui, "_tr", None)
-                    fn = getattr(engine, "apply_i18n", None)
-                    if isinstance(tr, dict):
-                        set_translations(gui, tr)
-                        _refresh_engine_translations_for_ids([eid], get_language_code())
-                    if callable(fn) and isinstance(tr, dict):
-                        fn(gui, tr)
-                except Exception:
-                    pass
             except Exception as exc:
                 _log_tab_load_issue(
                     eid,
@@ -479,17 +475,10 @@ def show_hello_tab(gui) -> None:
 
 
 def apply_translations(gui, tr: dict) -> None:
-    """Propagate i18n translations to all engines that expose 'apply_i18n(gui, tr)'."""
+    """Propagate i18n translations to the shared engine translation cache."""
     try:
         set_translations(gui, tr)
         _refresh_all_engine_translations(get_language_code())
-        for eid, inst in list(_INSTANCES.items()):
-            try:
-                fn = getattr(inst, "apply_i18n", None)
-                if callable(fn) and isinstance(tr, dict):
-                    fn(gui, tr)
-            except Exception:
-                continue
     except Exception:
         pass
 
