@@ -24,36 +24,19 @@ from pycompiler_ark.Plugins_SDK.BcPluginContext import (
     bc_register,
     PreCompileContext,
 )
-from pycompiler_ark.Plugins_SDK.GeneralContext import (
-    Dialog,
-    get_language_code,
-    load_plugin_language_file,
-    register_i18n_handler,
-    register_plugin_translations,
-    translate,
-)
+from pycompiler_ark.Plugins_SDK.GeneralContext import Dialog, translate
 
-# Create instances of Dialog for logging and user interaction
+# Create instances of Dialog for logging and user interaction.
 log = Dialog()
 dialog = Dialog()
 
 
-def _load_i18n() -> None:
+def _tr(key: str, default: str, **values: object) -> str:
     try:
-        lang_code = get_language_code()
-        data = load_plugin_language_file(__package__, lang_code)
-        if isinstance(data, dict) and data:
-            register_plugin_translations("outputcleaner", data)
+        text = translate("outputcleaner", key, default)
+        return text.format(**values) if values else text
     except Exception:
-        pass
-
-
-# Load translations now and refresh on language changes
-_load_i18n()
-try:
-    register_i18n_handler(lambda _gui, _tr: _load_i18n())
-except Exception:
-    pass
+        return default
 
 # Plugin metadata
 PLUGIN_META = PluginMeta(
@@ -99,13 +82,21 @@ class OutputCleaner(BcPluginBase):
         try:
             if not ctx.build_context:
                 log.log_warn(
-                    "OutputCleaner: No BuildContext available. Cannot identify output directory."
+                    _tr(
+                        "warn_no_build_context",
+                        "OutputCleaner: No BuildContext available. Cannot identify output directory.",
+                    )
                 )
                 return
 
             output_dir_str = getattr(ctx.build_context, "output_dir", None)
             if not output_dir_str:
-                log.log_warn("OutputCleaner: No output_dir defined in BuildContext.")
+                log.log_warn(
+                    _tr(
+                        "warn_no_output_dir",
+                        "OutputCleaner: No output_dir defined in BuildContext.",
+                    )
+                )
                 return
 
             output_dir = Path(output_dir_str)
@@ -114,18 +105,32 @@ class OutputCleaner(BcPluginBase):
 
             if not output_dir.exists():
                 log.log_info(
-                    f"OutputCleaner: Output directory does not exist: {output_dir}"
+                    _tr(
+                        "info_output_missing",
+                        "OutputCleaner: Output directory does not exist: {output_dir}",
+                        output_dir=output_dir,
+                    )
                 )
                 return
 
-            log.log_info(f"OutputCleaner: Cleaning output directory: {output_dir}")
+            log.log_info(
+                _tr(
+                    "info_cleaning",
+                    "OutputCleaner: Cleaning output directory: {output_dir}",
+                    output_dir=output_dir,
+                )
+            )
 
             # Simple confirmation if configured
             cfg = self._get_config(ctx)
             if bool(cfg.get("confirm", True)):
                 response = dialog.msg_question(
-                    title="Output Cleaner",
-                    text=f"Do you want to delete all contents in {output_dir}?",
+                    title=_tr("dialog_title", "Output Cleaner"),
+                    text=_tr(
+                        "question_delete",
+                        "Do you want to delete all contents in {output_dir}?",
+                        output_dir=output_dir,
+                    ),
                     default_yes=True,
                 )
                 if not response:
@@ -135,9 +140,24 @@ class OutputCleaner(BcPluginBase):
             try:
                 shutil.rmtree(output_dir)
                 output_dir.mkdir(parents=True, exist_ok=True)
-                log.log_info(f"OutputCleaner: Successfully cleaned {output_dir}")
+                log.log_info(
+                    _tr(
+                        "success_cleaned",
+                        "OutputCleaner: Successfully cleaned {output_dir}",
+                        output_dir=output_dir,
+                    )
+                )
             except Exception as e:
-                log.log_error(f"OutputCleaner: Failed to clean {output_dir}: {e}")
+                log.log_error(
+                    _tr(
+                        "error_failed",
+                        "OutputCleaner: Failed to clean {output_dir}: {error}",
+                        output_dir=output_dir,
+                        error=e,
+                    )
+                )
 
         except Exception as e:
-            log.log_error(f"OutputCleaner error: {e}")
+            log.log_error(
+                _tr("error_generic", "OutputCleaner error: {error}", error=e)
+            )
