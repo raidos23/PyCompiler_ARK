@@ -30,6 +30,7 @@ from typing import Optional
 from pycompiler_ark.engine_sdk import (
     BuildContext,
     CompilerEngine,
+    EngineMeta,
     engine_register,
     translate,
 )
@@ -59,11 +60,11 @@ class PyInstallerEngine(CompilerEngine):
     - Icon specification
     """
 
-    id: str = "pyinstaller"
-    name: str = "PyInstaller"
-    version: str = "1.1.0"
-    required_core_version: str = "1.0.0"
-    required_sdk_version: str = "1.0.0"
+    meta = EngineMeta(
+        id="pyinstaller",
+        name="PyInstaller",
+        version="1.1.0",
+    )
 
     @property
     def required_tools(self) -> dict[str, list[str]]:

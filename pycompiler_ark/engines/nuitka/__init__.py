@@ -29,6 +29,7 @@ from typing import Optional
 from pycompiler_ark.engine_sdk import (
     BuildContext,
     CompilerEngine,
+    EngineMeta,
     engine_register,
     translate,
 )
@@ -55,11 +56,11 @@ class NuitkaEngine(CompilerEngine):
     - Icon specification
     """
 
-    id: str = "nuitka"
-    name: str = "Nuitka"
-    version: str = "1.1.0"
-    required_core_version: str = "1.0.0"
-    required_sdk_version: str = "1.0.0"
+    meta = EngineMeta(
+        id="nuitka",
+        name="Nuitka",
+        version="1.1.0",
+    )
 
     @property
     def required_tools(self) -> dict[str, list[str]]:
