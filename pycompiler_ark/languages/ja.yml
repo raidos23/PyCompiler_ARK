@@ -3,7 +3,6 @@ code: ja
 _meta:
   code: ja
   name: 日本語
-# Traductions visibles des boutons et des libellés
 select_folder: ワークスペースを選択
 select_files: ファイルを追加
 build_all: コンパイル
@@ -25,6 +24,7 @@ show_stats: 統計
 select_lang: 言語
 advanced_config: 高度な設定
 save_engine_configs: エンジン設定を保存
+lock_manager: ロックマネージャー
 venv_button: venv フォルダーを選択
 label_workspace_section: ワークスペース
 venv_label: 'Venv 選択: なし'
@@ -40,8 +40,6 @@ choose_language_button: 言語
 select_theme: テーマ
 choose_theme_button: テーマ
 choose_theme_system_button: テーマ（システム）
-
-# Infobulles des boutons
 tt_select_folder: ワークスペースのフォルダーを選択します。
 tt_select_files: コンパイルするファイルを追加します。
 tt_build_all: コンパイルを開始します。
@@ -75,9 +73,24 @@ cx_console: Console
 label_tools: ツール
 label_options_section: コンパイルオプション
 label_progress: コンパイル進行状況
+action_init_project: プロジェクトを初期化
+init_project_title: Initialize project
+init_project_entry: 'Entry point:'
+init_project_gen_reqs: Generate requirements.txt
+init_project_create_venv: Create virtual environment (venv)
+init_project_install_reqs: Install dependencies
+init_project_note: 'Note: This will create an ark.yml file and configure the project
+  structure.'
+init_project_success: Project initialized successfully!
+bc_loader: BC Plugins Loader
+tt_select_icon: Choose the application icon.
+tt_select_lang: Choose the interface language.
+tt_select_theme: Choose the interface theme.
+tt_output_dir: Select the output directory.
+choose_theme_title: Choose theme
+choose_theme_label: 'Theme:'
+status_ready: Ready
 venv_label_system: 'venv 選択: システム Python'
-
-# Messages de dialogue
 msg_venv_choice_title: Venv 設定
 msg_venv_choice_text: venv を自動作成するか、venv を選択します（システム Python を含む）。
 msg_no_workspace_title: ワークスペース未選択
@@ -88,8 +101,6 @@ msg_no_workspace_or_venv_title: ワークスペースまたは venv 未選択
 msg_no_workspace_or_venv_text: 依存関係を解析するにはワークスペースまたは venv を選択してください。
 msg_invalid_venv_title: 無効な venv
 msg_invalid_venv_text: 選択したフォルダーは有効な venv ではありません。再試行しますか、venv を作成しますか？
-
-# Actions des dialogues
 action_select_workspace: ワークスペースを選択
 action_add_files: ファイルを追加
 action_select_venv: venv を選択

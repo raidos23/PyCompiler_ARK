@@ -28,7 +28,6 @@ from PySide6.QtWidgets import QMainWindow, QMessageBox
 
 from pycompiler_ark.Ui.Gui.Globals import (
     _latest_gui_instance,
-    _run_coro_async,
     _workspace_dir_cache,
     _workspace_dir_lock,
 )
@@ -37,11 +36,9 @@ from pycompiler_ark.Ui.Gui.Dialogs.WorkspaceDialog import WorkspaceDialog
 from pycompiler_ark.Ui.Gui.UiFeatures import UiFeatures as UiFeatures
 from pycompiler_ark.Ui.Gui.WorkspaceManipulation import WorkspaceAdvancedManipulation
 from pycompiler_ark.Ui.i18n import (
-    get_translations,
     is_french_language,
     log_i18n_level,
     log_with_level,
-    resolve_system_language,
     tr_fr_en,
 )
 
@@ -76,6 +73,9 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
         super().__init__()
         global _latest_gui_instance
         _latest_gui_instance = self
+
+        # Identifiant stable utilisé par l'API i18n centrale.
+        self.id = "ui"
 
         self.setWindowTitle("PyCompiler ARK")
         self.setGeometry(100, 100, 1280, 720)
@@ -156,37 +156,6 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
         chosen_lang = sys_lang if pref_lang == "System" else pref_lang
         self.apply_language(chosen_lang)
         self.language_pref = pref_lang
-
-        # Afficher le mode de langue sur le bouton
-        try:
-            if self.select_lang:
-
-                async def _fetch_tr():
-                    effective_code = (
-                        await resolve_system_language()
-                        if pref_lang == "System"
-                        else pref_lang
-                    )
-                    return await get_translations(effective_code)
-
-                def _apply_label(tr):
-                    try:
-                        key = (
-                            "choose_language_system_button"
-                            if pref_lang == "System"
-                            else "choose_language_button"
-                        )
-                        self.select_lang.setText(
-                            (tr.get(key) if isinstance(tr, dict) else "")
-                            or (tr.get("select_lang") if isinstance(tr, dict) else "")
-                            or ""
-                        )
-                    except Exception:
-                        pass
-
-                _run_coro_async(_fetch_tr(), _apply_label, ui_owner=self)
-        except Exception:
-            pass
 
     # =========================================================================
     # DÉLÉGATION UI À UiFeatures

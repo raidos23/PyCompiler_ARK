@@ -16,7 +16,7 @@ A PyCompiler ARK engine is a Python package placed in `pycompiler_ark/engines/<e
 ### **Package Layout**
 
 - `pycompiler_ark/engines/<engine_id>/__init__.py`: engine code, registration, UI.
-- `pycompiler_ark/engines/<engine_id>/languages/<code>.json`: optional translations.
+- `pycompiler_ark/engines/<engine_id>/languages/<code>.yml`: optional translations.
 - `pycompiler_ark/engines/<engine_id>/mapping.json`: optional mapping used by the core auto-mapping system.
 - Optional internal modules, assets, helpers.
 
@@ -84,8 +84,8 @@ Core methods.
 UI and i18n.
 
 - `create_tab(self, gui) -> (QWidget, label) | None`: adds a tab.
-- `engine_translate(self_or_id, key, default=None)`: simple engine-local translation lookup.
-- `apply_i18n(self, gui, tr)`: update text on language change.
+- `translate(self.id, key, default=None)`: engine-local translation lookup.
+- The host refreshes the engine UI when the language changes, so the engine only needs to declare translation keys on its widgets and use `translate(...)` when building the UI.
 
 Tools and dependencies.
 
@@ -253,40 +253,49 @@ represented in `BuildContext` and managed globally.
 
 **I18n**
 
-- Add `languages/en.json`, `languages/fr.json`, etc. in your engine package.
-- Two supported approaches:
-  - simple mode with `engine_translate(...)` for direct key lookup
-  - advanced mode with `apply_i18n(...)` for explicit widget refresh on language changes
-- The host keeps engine translations synchronized automatically when the language changes.
+- Add `languages/en.yml`, `languages/fr.yml`, etc. in your engine package.
+- Keep engine strings inside the engine package only.
+- Use `translate(self.id, key, default)` when building widgets, labels, tooltips, placeholders, and tab titles.
+- Declare translation keys on widgets with the same i18n properties used by the host when you want live refresh:
+  - `i18n_text_key`
+  - `i18n_tooltip_key`
+  - `i18n_placeholder_key`
+  - `i18n_tab_key`
+- Do not duplicate engine keys in the global application catalogs.
+- Do not add a custom translation refresh hook; the host handles refresh centrally.
 - See `pycompiler_ark/engines/pyinstaller`, `pycompiler_ark/engines/nuitka`, `pycompiler_ark/engines/cx_freeze` for patterns.
-Concrete example (files + code).
+Concrete example.
 
-`pycompiler_ark/engines/my_engine/languages/en.json`
+`pycompiler_ark/engines/my_engine/languages/en.yml`
 
-```json
-{
-  "tab_title": "My Engine",
-  "opt_onefile": "Onefile",
-  "opt_clean": "Clean build",
-  "btn_action": "Action"
-}
+```yaml
+_meta:
+  code: en
+  name: English
+tab_label: My Engine
+opt_onefile: Onefile
+opt_clean: Clean build
+btn_action: Action
 ```
 
-`pycompiler_ark/engines/my_engine/languages/fr.json`
+`pycompiler_ark/engines/my_engine/languages/fr.yml`
 
-```json
-{
-  "tab_title": "Mon Moteur",
-  "opt_onefile": "Un seul fichier",
-  "opt_clean": "Build propre",
-  "btn_action": "Action"
-}
+```yaml
+_meta:
+  code: fr
+  name: Français
+tab_label: Mon moteur
+opt_onefile: Un seul fichier
+opt_clean: Build propre
+btn_action: Action
 ```
 
-`pycompiler_ark/engines/my_engine/__init__.py` (simple mode + live refresh).
+`pycompiler_ark/engines/my_engine/__init__.py`
 
 ```python
-from pycompiler_ark.engine_sdk import CompilerEngine, engine_register, engine_translate
+from PySide6.QtWidgets import QCheckBox, QFormLayout, QPushButton, QVBoxLayout, QWidget
+
+from pycompiler_ark.engine_sdk import CompilerEngine, engine_register, translate
 
 
 @engine_register
@@ -297,29 +306,21 @@ class MyEngine(CompilerEngine):
     def create_tab(self, gui):
         tab = QWidget()
         layout = QVBoxLayout(tab)
-        self._opt_onefile = QCheckBox()
-        self._opt_clean = QCheckBox()
-        self._btn_action = QPushButton()
+        self._opt_onefile = QCheckBox(translate(self.id, "opt_onefile", "Onefile"), tab)
+        self._opt_clean = QCheckBox(translate(self.id, "opt_clean", "Clean build"), tab)
+        self._btn_action = QPushButton(translate(self.id, "btn_action", "Action"), tab)
         form = QFormLayout()
         form.addRow("", self._opt_onefile)
         form.addRow("", self._opt_clean)
         form.addRow("", self._btn_action)
         layout.addLayout(form)
-
-        self.apply_i18n(gui, getattr(gui, "_tr", {}))
-
-        return tab, engine_translate(self, "tab_title", self.name)
-
-    def apply_i18n(self, gui, tr):
-        self._opt_onefile.setText(self.engine_translate("opt_onefile", "Onefile"))
-        self._opt_clean.setText(self.engine_translate("opt_clean", "Clean build"))
-        self._btn_action.setText(self.engine_translate("btn_action", "Action"))
+        return tab, translate(self.id, "tab_label", self.name)
 ```
 
 Notes.
 
-- `engine_translate(...)` reads the active engine translation cache and falls back safely.
-- `apply_i18n(...)` remains the right place to refresh existing widgets after a language switch.
+- `translate(...)` reads the active engine translation cache and falls back safely.
+- Keep the refresh generic on the host side; the engine should only declare keys and read them.
 - `load_engine_language_file(engine_package, lang)` is still available if you need custom/manual loading.
 - If a key is missing, always provide a safe fallback string.
 
@@ -637,36 +638,16 @@ Notes.
 
 - Avoid freezing the app.
 
-1. I18n: translate labels with gui.tr.
+1. I18n: translate labels with `translate(self.id, ...)`.
 
 ```python
-self._opt_onefile.setText(gui.tr("Un seul fichier", "Onefile"))
+self._opt_onefile.setText(translate(self.id, "opt_onefile", "Onefile"))
 ```
 
 Notes.
 
 - Works even if no language file exists.
-
-1. I18n: simple lookup with engine_translate.
-
-```python
-self._opt_onefile.setText(self.engine_translate("onefile_checkbox", "Onefile"))
-```
-
-Notes.
-
 - Best default for engine-local labels and placeholders.
-
-1. I18n: apply_i18n hook.
-
-```python
-def apply_i18n(self, gui, tr):
-    self._opt_onefile.setText(self.engine_translate("onefile", "Onefile"))
-```
-
-Notes.
-
-- Keep this hook for live widget refresh; host synchronization stays automatic.
 
 1. Logging with GUI.
 

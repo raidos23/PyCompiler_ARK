@@ -19,6 +19,7 @@ from pycompiler_ark.Core.engine.build_context import BuildContext
 
 # Re-export the base interface used by the host
 from .base import CompilerEngine
+from pycompiler_ark.Core.engine.registry import translate
 from .utils import resolve_executable  # executable resolution helper (SDK)
 from .utils import open_path
 
@@ -32,5 +33,6 @@ __all__ = [
     "CompilerEngine",
     "resolve_executable",
     "open_path",
+    "translate",
     "BuildContext",
 ]

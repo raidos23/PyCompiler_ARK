@@ -3,7 +3,6 @@ code: es
 _meta:
   code: es
   name: Español
-# Traductions visibles des boutons et des libellés
 select_folder: Elegir el espacio de trabajo
 select_files: Agregar archivos
 build_all: Compilar
@@ -30,6 +29,7 @@ show_stats: Estadísticas
 select_lang: Idioma
 advanced_config: Configuración avanzada
 save_engine_configs: Guardar configuraciones de motores
+lock_manager: Gestor de bloqueo
 venv_button: Elegir carpeta venv
 label_workspace_section: Espacio de trabajo
 venv_label: 'Venv seleccionado: Ninguno'
@@ -45,8 +45,6 @@ choose_language_button: Idioma
 select_theme: Tema
 choose_theme_button: Tema
 choose_theme_system_button: Tema (Sistema)
-
-# Infobulles des boutons
 tt_select_folder: Seleccionar la carpeta de trabajo.
 tt_select_files: Agregar archivos a compilar.
 tt_build_all: Iniciar la compilación.
@@ -80,9 +78,24 @@ cx_console: Console
 label_tools: Herramientas
 label_options_section: Opciones de compilación
 label_progress: Progreso de la compilación
+action_init_project: Inicializar proyecto
+init_project_title: Initialize project
+init_project_entry: 'Entry point:'
+init_project_gen_reqs: Generate requirements.txt
+init_project_create_venv: Create virtual environment (venv)
+init_project_install_reqs: Install dependencies
+init_project_note: 'Note: This will create an ark.yml file and configure the project
+  structure.'
+init_project_success: Project initialized successfully!
+bc_loader: BC Plugins Loader
+tt_select_icon: Choose the application icon.
+tt_select_lang: Choose the interface language.
+tt_select_theme: Choose the interface theme.
+tt_output_dir: Select the output directory.
+choose_theme_title: Choose theme
+choose_theme_label: 'Theme:'
+status_ready: Ready
 venv_label_system: 'Venv seleccionado: Python del sistema'
-
-# Messages de dialogue
 msg_venv_choice_title: Configuración de Venv
 msg_venv_choice_text: Crear un venv automáticamente o seleccionar un venv (Python
   del sistema incluido).
@@ -95,8 +108,6 @@ msg_no_workspace_or_venv_text: Seleccione un Workspace o un Venv para analizar d
 msg_invalid_venv_title: Venv inválido
 msg_invalid_venv_text: La carpeta seleccionada no es un venv válido. ¿Reintentar o
   crear un venv?
-
-# Actions des dialogues
 action_select_workspace: Elegir Workspace
 action_add_files: Agregar archivos
 action_select_venv: Elegir Venv

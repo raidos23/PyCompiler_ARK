@@ -3,7 +3,6 @@ code: fr
 _meta:
   code: fr
   name: Français
-# Traductions visibles des boutons et des libellés
 select_folder: Choisir le Workspace
 select_files: Ajouter des fichiers
 build_all: Compiler
@@ -30,6 +29,7 @@ show_stats: Statistiques
 select_lang: Langue
 advanced_config: Configurations avancées
 save_engine_configs: Enregistrer les configs engines
+lock_manager: Gestionnaire de verrouillage
 venv_button: Choisir un dossier venv
 label_workspace_section: Workspace
 venv_label: 'Venv sélectionné : Aucun'
@@ -45,8 +45,6 @@ choose_language_button: Langue
 select_theme: Thème
 choose_theme_button: Thème
 choose_theme_system_button: Thème (Système)
-
-# Infobulles des boutons
 tt_select_folder: Sélectionner le Workspace.
 tt_select_files: Ajouter des fichiers à compiler
 tt_build_all: Démarrer la compilation
@@ -56,10 +54,18 @@ tt_cancel_all: Annuler la compilation en cours
 tt_remove_file: Supprimer le(s) fichier(s) sélectionné(s) de la liste.
 tt_help: Afficher l'aide
 tt_bc_loader: Ouvrir BC Plugins Loader
+bc_loader: BC Plugins Loader
 tt_venv_button: Sélectionner manuellement un dossier venv à utiliser pour la compilation.
+tt_select_icon: Choisir l'icône de l'application.
 tt_suggest_deps: Analyser les dépendances du projet
 tt_show_stats: Afficher les statistiques de compilation
+tt_select_lang: Choisir la langue de l'interface.
+tt_select_theme: Choisir le thème de l'interface.
 tt_more_actions: Plus d'actions.
+tt_output_dir: Sélectionner le dossier de sortie.
+choose_theme_title: Choisir un thème
+choose_theme_label: 'Thème :'
+status_ready: Prêt
 label_workspace_status: 'Workspace : {path}'
 label_workspace_status_none: 'Workspace : Aucun'
 file_filter_placeholder: Filtrer la liste…
@@ -81,8 +87,6 @@ label_tools: Outils
 label_options_section: Options de compilation
 label_progress: Progression de la compilation
 venv_label_system: 'Venv sélectionné : Python système'
-
-# Messages de dialogue
 msg_venv_choice_title: Configuration du Venv
 msg_venv_choice_text: Créer un venv automatiquement ou sélectionner un venv (Python
   système inclus).
@@ -96,8 +100,6 @@ msg_no_workspace_or_venv_text: Sélectionnez un Workspace ou un Venv pour analys
 msg_invalid_venv_title: Venv invalide
 msg_invalid_venv_text: Le dossier sélectionné n'est pas un venv valide. Réessayer
   ou créer un venv ?
-
-# Actions des dialogues
 action_select_workspace: Choisir Workspace
 action_add_files: Ajouter des fichiers
 action_select_venv: Choisir un Venv

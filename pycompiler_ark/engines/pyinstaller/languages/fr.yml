@@ -2,6 +2,10 @@ _meta:
   code: fr
   name: Français
 tab_label: PyInstaller
+
+build_group: Build
+hint_text: 'Tip: choose one packaging mode. Global icon and output are managed in
+  ark.yml.'
 mode_label: 'Mode :'
 onefile_checkbox: Onefile
 console_label: 'Console :'

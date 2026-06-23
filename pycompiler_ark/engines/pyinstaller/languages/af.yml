@@ -2,6 +2,15 @@ _meta:
   code: af
   name: Afrikaans
 tab_label: PyInstaller
+
+build_group: Build
+hint_text: 'Tip: choose one packaging mode. Global icon and output are managed in
+  ark.yml.'
+console_label: 'Console:'
+confirmation_label: 'Confirmation:'
+cleanup_label: 'Cleanup:'
+compression_label: 'Compression:'
+files_label: 'Files:'
 mode_label: 'Modus:'
 onefile_checkbox: Een lêer
 windowed_checkbox: Venster

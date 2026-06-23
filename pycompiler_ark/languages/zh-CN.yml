@@ -3,7 +3,6 @@ code: zh-CN
 _meta:
   code: zh-CN
   name: 简体中文
-# Traductions visibles des boutons et des libellés
 select_folder: 选择工作区
 select_files: 添加文件
 build_all: 编译
@@ -24,6 +23,7 @@ show_stats: 统计
 select_lang: 语言
 advanced_config: 高级配置
 save_engine_configs: 保存引擎配置
+lock_manager: 锁管理器
 venv_button: 选择 venv 文件夹
 label_workspace_section: 工作区
 venv_label: 已选择 Venv：无
@@ -39,8 +39,6 @@ choose_language_button: 语言
 select_theme: 主题
 choose_theme_button: 主题
 choose_theme_system_button: 主题（系统）
-
-# Infobulles des boutons
 tt_select_folder: 选择工作区文件夹。
 tt_select_files: 添加要编译的文件。
 tt_build_all: 开始编译。
@@ -74,9 +72,24 @@ cx_console: Console
 label_tools: 工具
 label_options_section: 编译选项
 label_progress: 编译进度
+action_init_project: 初始化项目
+init_project_title: Initialize project
+init_project_entry: 'Entry point:'
+init_project_gen_reqs: Generate requirements.txt
+init_project_create_venv: Create virtual environment (venv)
+init_project_install_reqs: Install dependencies
+init_project_note: 'Note: This will create an ark.yml file and configure the project
+  structure.'
+init_project_success: Project initialized successfully!
+bc_loader: BC Plugins Loader
+tt_select_icon: Choose the application icon.
+tt_select_lang: Choose the interface language.
+tt_select_theme: Choose the interface theme.
+tt_output_dir: Select the output directory.
+choose_theme_title: Choose theme
+choose_theme_label: 'Theme:'
+status_ready: Ready
 venv_label_system: 已选择 Venv：系统 Python
-
-# Messages de dialogue
 msg_venv_choice_title: Venv 配置
 msg_venv_choice_text: 自动创建 venv 或选择 venv（包含系统 Python）。
 msg_no_workspace_title: 工作区缺失
@@ -87,8 +100,6 @@ msg_no_workspace_or_venv_title: 工作区或 venv 缺失
 msg_no_workspace_or_venv_text: 请选择工作区或 Venv 以分析依赖。
 msg_invalid_venv_title: Venv 无效
 msg_invalid_venv_text: 所选文件夹不是有效的 venv。重试或创建 venv？
-
-# Actions des dialogues
 action_select_workspace: 选择工作区
 action_add_files: 添加文件
 action_select_venv: 选择 Venv
