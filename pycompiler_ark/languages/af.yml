@@ -3,7 +3,6 @@ code: af
 _meta:
   code: af
   name: Afrikaans
-# Traductions visibles des boutons et des libellés
 select_folder: Kies die werkruimte
 select_files: Voeg lêers by
 build_all: Kompileer
@@ -44,8 +43,6 @@ choose_language_button: Taal
 select_theme: Tema
 choose_theme_button: Tema
 choose_theme_system_button: Tema (Stelsel)
-
-# Infobulles des boutons
 tt_select_folder: Kies die werkruimte-lêergids.
 tt_select_files: Voeg lêers by om te kompileer.
 tt_build_all: Begin kompilasie.
@@ -79,9 +76,24 @@ cx_console: Console
 label_tools: Gereedskap
 label_options_section: Kompilasie-opsies
 label_progress: Kompilasievordering
+action_init_project: Initialize project
+init_project_title: Initialize project
+init_project_entry: 'Entry point:'
+init_project_gen_reqs: Generate requirements.txt
+init_project_create_venv: Create virtual environment (venv)
+init_project_install_reqs: Install dependencies
+init_project_note: 'Note: This will create an ark.yml file and configure the project
+  structure.'
+init_project_success: Project initialized successfully!
+bc_loader: BC Plugins Loader
+tt_select_icon: Choose the application icon.
+tt_select_lang: Choose the interface language.
+tt_select_theme: Choose the interface theme.
+tt_output_dir: Select the output directory.
+choose_theme_title: Choose theme
+choose_theme_label: 'Theme:'
+status_ready: Ready
 venv_label_system: 'Venv gekies: Stelsel-Python'
-
-# Messages de dialogue
 msg_venv_choice_title: Venv-opstelling
 msg_venv_choice_text: Skep 'n venv outomaties of kies 'n venv (Stelsel-Python ingesluit).
 msg_no_workspace_title: Werkruimte ontbreek
@@ -93,8 +105,6 @@ msg_no_workspace_or_venv_text: Kies 'n Werkruimte of Venv om afhanklikhede te on
 msg_invalid_venv_title: Ongeldige venv
 msg_invalid_venv_text: Die gekose gids is nie 'n geldige venv nie. Probeer weer of
   skep 'n venv?
-
-# Actions des dialogues
 action_select_workspace: Kies Werkruimte
 action_add_files: Voeg lêers by
 action_select_venv: Kies Venv

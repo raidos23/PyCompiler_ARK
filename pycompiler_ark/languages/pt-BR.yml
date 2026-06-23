@@ -3,7 +3,6 @@ code: pt-BR
 _meta:
   code: pt-BR
   name: Português (Brasil)
-# Traductions visibles des boutons et des libellés
 select_folder: Escolher a área de trabalho
 select_files: Adicionar arquivos
 build_all: Compilar
@@ -44,8 +43,6 @@ choose_language_button: Idioma
 select_theme: Tema
 choose_theme_button: Tema
 choose_theme_system_button: Tema (Sistema)
-
-# Infobulles des boutons
 tt_select_folder: Selecionar a pasta da área de trabalho.
 tt_select_files: Adicionar arquivos para compilar.
 tt_build_all: Iniciar a compilação.
@@ -79,9 +76,24 @@ cx_console: Console
 label_tools: Ferramentas
 label_options_section: Opções de compilação
 label_progress: Progresso da compilação
+action_init_project: Initialize project
+init_project_title: Initialize project
+init_project_entry: 'Entry point:'
+init_project_gen_reqs: Generate requirements.txt
+init_project_create_venv: Create virtual environment (venv)
+init_project_install_reqs: Install dependencies
+init_project_note: 'Note: This will create an ark.yml file and configure the project
+  structure.'
+init_project_success: Project initialized successfully!
+bc_loader: BC Plugins Loader
+tt_select_icon: Choose the application icon.
+tt_select_lang: Choose the interface language.
+tt_select_theme: Choose the interface theme.
+tt_output_dir: Select the output directory.
+choose_theme_title: Choose theme
+choose_theme_label: 'Theme:'
+status_ready: Ready
 venv_label_system: 'Venv selecionado: Python do sistema'
-
-# Messages de dialogue
 msg_venv_choice_title: Configuração do Venv
 msg_venv_choice_text: Criar um venv automaticamente ou selecionar um venv (Python
   do sistema incluído).
@@ -94,8 +106,6 @@ msg_no_workspace_or_venv_text: Selecione um Workspace ou um Venv para analisar d
 msg_invalid_venv_title: Venv inválido
 msg_invalid_venv_text: A pasta selecionada não é um venv válido. Tentar novamente
   ou criar um venv?
-
-# Actions des dialogues
 action_select_workspace: Selecionar Workspace
 action_add_files: Adicionar arquivos
 action_select_venv: Selecionar Venv
