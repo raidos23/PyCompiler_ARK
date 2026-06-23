@@ -33,7 +33,7 @@ try:
 except Exception:
     QSvgRenderer = None  # type: ignore[assignment]
 
-from pycompiler_ark.Ui.i18n import show_language_dialog, translate
+from pycompiler_ark.Ui.i18n import _declare_i18n, show_language_dialog, translate
 
 
 def _detect_system_color_scheme() -> str:
@@ -215,16 +215,6 @@ def _setup_sidebar_logo(self) -> None:
     logo_label.setPixmap(pixmap)
     logo_label.setAlignment(Qt.AlignCenter)
     logo_label.setScaledContents(True)
-
-
-def _declare_i18n(widget, **props) -> None:
-    if widget is None:
-        return
-    for key, value in props.items():
-        try:
-            widget.setProperty(key, value)
-        except Exception:
-            pass
 
 
 def _auto_resize_for_screen(self) -> None:
