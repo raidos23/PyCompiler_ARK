@@ -53,6 +53,8 @@ class CXFreezeEngine(CompilerEngine):
         id="cx_freeze",
         name="CX_Freeze",
         version="1.1.0",
+        required_core_version="1.0.0",
+        required_sdk_version="1.0.0",
     )
 
     @property
