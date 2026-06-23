@@ -16,6 +16,6 @@
 from __future__ import annotations
 
 # Stable re-export of the host base class
-from pycompiler_ark.Core.engine.base import CompilerEngine  # type: ignore[F401]
+from pycompiler_ark.Core.engine.base import EngineMeta, CompilerEngine  # type: ignore[F401]
 
-__all__ = ["CompilerEngine"]
+__all__ = ["CompilerEngine", "EngineMeta"]

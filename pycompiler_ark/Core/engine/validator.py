@@ -26,6 +26,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import List, Tuple
 
+from pycompiler_ark.Core.engine.base import resolve_engine_meta
+
 
 @dataclass
 class EngineCompatibilityCheckResult:
@@ -90,13 +92,14 @@ def check_engine_compatibility(
     Returns:
         EngineCompatibilityCheckResult with compatibility information
     """
-    engine_id = getattr(engine_class, "id", "unknown")
-    engine_name = getattr(engine_class, "name", "Unknown Engine")
+    meta = resolve_engine_meta(engine_class)
+    engine_id = meta.id
+    engine_name = meta.name
     missing_requirements = []
 
-    # Get required versions from engine class
-    required_core_version = getattr(engine_class, "required_core_version", "1.0.0")
-    required_sdk_version = getattr(engine_class, "required_sdk_version", "1.0.0")
+    # Get required versions from engine metadata
+    required_core_version = meta.required_core_version
+    required_sdk_version = meta.required_sdk_version
 
     # Check Core compatibility: current >= required (accept equal or higher versions)
     current_core = parse_version(core_version)
@@ -154,29 +157,28 @@ def validate_engines_compatibility(
         try:
             # In strict mode, reject engines that don't specify requirements
             if strict_mode:
+                meta = resolve_engine_meta(engine)
                 has_explicit_requirements = (
-                    getattr(engine, "required_core_version", "1.0.0") != "1.0.0"
-                    or getattr(engine, "required_sdk_version", "1.0.0") != "1.0.0"
+                    meta.required_core_version != "1.0.0"
+                    or meta.required_sdk_version != "1.0.0"
                 )
 
                 if not has_explicit_requirements:
                     result = EngineCompatibilityCheckResult(
-                        engine_id=getattr(engine, "id", "unknown"),
-                        engine_name=getattr(engine, "name", "Unknown"),
+                        engine_id=meta.id,
+                        engine_name=meta.name,
                         is_compatible=False,
                         missing_requirements=[
                             "No explicit version requirements specified"
                         ],
-                        error_message=f"Engine '{getattr(engine, 'name', 'Unknown')}' ({getattr(engine, 'id', 'unknown')}) does not specify version requirements. "
-                        f"Please add required_core_version and required_sdk_version class attributes.",
+                        error_message=f"Engine '{meta.name}' ({meta.id}) does not specify version requirements. "
+                        f"Please add an EngineMeta with required_core_version and required_sdk_version.",
                     )
                     incompatible_results.append(result)
                     continue
 
             # Check compatibility
-            result = check_engine_compatibility(
-                engine, core_version, engine_sdk_version
-            )
+            result = check_engine_compatibility(engine, core_version, engine_sdk_version)
 
             if result.is_compatible:
                 compatible_engines.append(engine)
@@ -184,9 +186,10 @@ def validate_engines_compatibility(
                 incompatible_results.append(result)
 
         except Exception as e:
+            meta = resolve_engine_meta(engine)
             result = EngineCompatibilityCheckResult(
-                engine_id=getattr(engine, "id", "unknown"),
-                engine_name=getattr(engine, "name", "Unknown"),
+                engine_id=meta.id,
+                engine_name=meta.name,
                 is_compatible=False,
                 missing_requirements=[],
                 error_message=f"Error validating engine: {str(e)}",
@@ -207,8 +210,9 @@ def print_engine_compatibility_report(
 
     print(f"\n✓ Compatible: {len(compatible_engines)}")
     for engine in compatible_engines:
-        engine_name = getattr(engine, "name", "Unknown")
-        engine_id = getattr(engine, "id", "unknown")
+        meta = resolve_engine_meta(engine)
+        engine_name = meta.name
+        engine_id = meta.id
         print(f"  - {engine_name} ({engine_id})")
 
     print(f"\n✗ Incompatible: {len(incompatible_results)}")

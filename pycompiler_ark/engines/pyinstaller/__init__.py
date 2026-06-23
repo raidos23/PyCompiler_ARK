@@ -30,20 +30,11 @@ from typing import Optional
 from pycompiler_ark.engine_sdk import (
     BuildContext,
     CompilerEngine,
+    EngineMeta,
     engine_register,
     translate,
 )
 from pycompiler_ark.engine_sdk.utils import log_with_level
-
-
-def _declare_i18n(widget, **props) -> None:
-    if widget is None:
-        return
-    for key, value in props.items():
-        try:
-            widget.setProperty(key, value)
-        except Exception:
-            pass
 
 
 @engine_register
@@ -59,11 +50,13 @@ class PyInstallerEngine(CompilerEngine):
     - Icon specification
     """
 
-    id: str = "pyinstaller"
-    name: str = "PyInstaller"
-    version: str = "1.1.0"
-    required_core_version: str = "1.0.0"
-    required_sdk_version: str = "1.0.0"
+    meta = EngineMeta(
+        id="pyinstaller",
+        name="PyInstaller",
+        version="1.1.0",
+        required_core_version="1.0.0",
+        required_sdk_version="1.0.0",
+    )
 
     @property
     def required_tools(self) -> dict[str, list[str]]:
@@ -189,8 +182,8 @@ class PyInstallerEngine(CompilerEngine):
 
             # Create the tab widget
             tab = QWidget()
-            tab.setObjectName("tab_pyinstaller_dynamic")
-            _declare_i18n(tab, i18n_tab_key="tab_label")
+            tab.setObjectName(getattr(self, "name", self.id))
+            tab.setProperty("i18n_tab_key", "tab_label")
 
             # Create main layout
             layout = QVBoxLayout(tab)
@@ -198,7 +191,7 @@ class PyInstallerEngine(CompilerEngine):
             layout.setContentsMargins(8, 8, 8, 8)
 
             build_group = QGroupBox(translate(self.id, "build_group", "Build"), tab)
-            _declare_i18n(build_group, i18n_text_key="build_group")
+            build_group.setObjectName("build_group")
             build_layout = QFormLayout()
             build_layout.setSpacing(6)
 
@@ -206,18 +199,16 @@ class PyInstallerEngine(CompilerEngine):
             self._opt_onefile = QCheckBox(
                 translate(self.id, "onefile_checkbox", "Onefile")
             )
-            self._opt_onefile.setObjectName("opt_onefile_dynamic")
-            _declare_i18n(self._opt_onefile, i18n_text_key="onefile_checkbox")
+            self._opt_onefile.setObjectName("onefile_checkbox")
             mode_label = QLabel(translate(self.id, "mode_label", "Mode:"), tab)
-            _declare_i18n(mode_label, i18n_text_key="mode_label")
+            mode_label.setObjectName("mode_label")
             build_layout.addRow(mode_label, self._opt_onefile)
 
             # Windowed option
             self._opt_windowed = QCheckBox(
                 translate(self.id, "windowed_checkbox", "Windowed")
             )
-            self._opt_windowed.setObjectName("opt_windowed_dynamic")
-            _declare_i18n(self._opt_windowed, i18n_text_key="windowed_checkbox")
+            self._opt_windowed.setObjectName("windowed_checkbox")
             build_layout.addRow(self._opt_windowed)
 
             build_group.setLayout(build_layout)
@@ -230,7 +221,7 @@ class PyInstallerEngine(CompilerEngine):
                 ),
                 tab,
             )
-            _declare_i18n(hint, i18n_text_key="hint_text")
+            hint.setObjectName("hint_text")
             hint.setStyleSheet("color: #888; font-size: 11px;")
             hint.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
 
@@ -242,7 +233,7 @@ class PyInstallerEngine(CompilerEngine):
             self._gui = gui
             self._tab_widget = tab
 
-            return tab, translate(self.id, "tab_label", "PyInstaller")
+            return tab, translate(self.id, "tab_label", getattr(self, "name", self.id))
 
         except Exception as e:
             try:
