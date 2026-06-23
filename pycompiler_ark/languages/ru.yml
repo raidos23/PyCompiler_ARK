@@ -29,6 +29,7 @@ show_stats: Статистика
 select_lang: Язык
 advanced_config: Расширенная конфигурация
 save_engine_configs: Сохранить конфигурации движков
+lock_manager: Менеджер блокировок
 venv_button: Выбрать папку venv
 label_workspace_section: Рабочее пространство
 venv_label: 'Venv выбран: Нет'
@@ -77,7 +78,7 @@ cx_console: Console
 label_tools: Инструменты
 label_options_section: Параметры компиляции
 label_progress: Ход компиляции
-action_init_project: Initialize project
+action_init_project: Инициализировать проект
 init_project_title: Initialize project
 init_project_entry: 'Entry point:'
 init_project_gen_reqs: Generate requirements.txt

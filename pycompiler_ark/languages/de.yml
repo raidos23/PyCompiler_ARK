@@ -29,6 +29,7 @@ show_stats: Statistiken
 select_lang: Sprache
 advanced_config: Erweiterte Konfiguration
 save_engine_configs: Engine-Konfigurationen speichern
+lock_manager: Sperrverwaltung
 venv_button: venv-Ordner wählen
 label_workspace_section: Arbeitsbereich
 venv_label: 'Venv ausgewählt: Keiner'
@@ -77,7 +78,7 @@ cx_console: Console
 label_tools: Werkzeuge
 label_options_section: Kompilierungsoptionen
 label_progress: Kompilierungsfortschritt
-action_init_project: Initialize project
+action_init_project: Projekt initialisieren
 init_project_title: Initialize project
 init_project_entry: 'Entry point:'
 init_project_gen_reqs: Generate requirements.txt

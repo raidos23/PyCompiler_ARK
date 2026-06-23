@@ -29,6 +29,7 @@ show_stats: Statistiques
 select_lang: Langue
 advanced_config: Configurations avancées
 save_engine_configs: Enregistrer les configs engines
+lock_manager: Gestionnaire de verrouillage
 venv_button: Choisir un dossier venv
 label_workspace_section: Workspace
 venv_label: 'Venv sélectionné : Aucun'

@@ -24,6 +24,7 @@ show_stats: 統計
 select_lang: 言語
 advanced_config: 高度な設定
 save_engine_configs: エンジン設定を保存
+lock_manager: ロックマネージャー
 venv_button: venv フォルダーを選択
 label_workspace_section: ワークスペース
 venv_label: 'Venv 選択: なし'
@@ -72,7 +73,7 @@ cx_console: Console
 label_tools: ツール
 label_options_section: コンパイルオプション
 label_progress: コンパイル進行状況
-action_init_project: Initialize project
+action_init_project: プロジェクトを初期化
 init_project_title: Initialize project
 init_project_entry: 'Entry point:'
 init_project_gen_reqs: Generate requirements.txt
