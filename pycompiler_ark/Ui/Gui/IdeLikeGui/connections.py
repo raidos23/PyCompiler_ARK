@@ -48,7 +48,6 @@ from pycompiler_ark.Ui.Gui.UiConnection import (
     _apply_initial_theme,
     _auto_resize_for_screen,
     _connect_dialogs_to_app,
-    _declare_i18n,
 )
 from pycompiler_ark.Ui.Gui.UiConnection import (
     _connect_signals as _connect_classic_signals,
@@ -59,6 +58,7 @@ from pycompiler_ark.Ui.Gui.UiConnection import (
     show_theme_dialog,
     themed_svg_icon,
 )
+from pycompiler_ark.Ui.i18n import translate
 
 
 def _prime_expected_attrs(self) -> None:
@@ -220,34 +220,6 @@ def _map_ide_like_widgets(self) -> None:
         )
     except Exception:
         self.status_hint = None
-    _declare_i18n(self.btn_select_folder, i18n_text_key="select_folder", i18n_tooltip_key="tt_select_folder")
-    _declare_i18n(self.venv_button, i18n_text_key="venv_button", i18n_tooltip_key="tt_venv_button")
-    _declare_i18n(self.venv_label, i18n_text_key="venv_label", i18n_text_system_key="venv_label_system", i18n_system_attr="use_system_python")
-    _declare_i18n(self.label_folder, i18n_text_key="label_folder")
-    _declare_i18n(self.label_workspace_status, i18n_text_key="label_workspace_status", i18n_none_key="label_workspace_status_none", i18n_format_attr="workspace_dir")
-    _declare_i18n(self.label_workspace_section, i18n_text_key="label_workspace_section")
-    _declare_i18n(self.label_files_section, i18n_text_key="label_files_section")
-    _declare_i18n(self.label_tools, i18n_text_key="label_tools")
-    _declare_i18n(self.label_options_section, i18n_text_key="label_options_section")
-    _declare_i18n(self.label_logs_section, i18n_text_key="label_logs_section")
-    _declare_i18n(self.label_progress, i18n_text_key="label_progress")
-    _declare_i18n(self.btn_select_files, i18n_text_key="select_files", i18n_tooltip_key="tt_select_files")
-    _declare_i18n(self.btn_remove_file, i18n_text_key="btn_remove_file", i18n_tooltip_key="tt_remove_file")
-    _declare_i18n(self.btn_clear_workspace, i18n_text_key="btn_clear_workspace", i18n_tooltip_key="tt_clear_workspace")
-    _declare_i18n(self.btn_bc_loader, i18n_text_key="bc_loader", i18n_tooltip_key="tt_bc_loader")
-    _declare_i18n(self.compile_btn, i18n_text_key="build_all", i18n_tooltip_key="tt_build_all")
-    _declare_i18n(self.cancel_btn, i18n_text_key="cancel_all", i18n_tooltip_key="tt_cancel_all")
-    _declare_i18n(self.btn_help, i18n_text_key="help", i18n_tooltip_key="tt_help")
-    _declare_i18n(self.btn_suggest_deps, i18n_text_key="suggest_deps", i18n_tooltip_key="tt_suggest_deps")
-    _declare_i18n(self.activity_btn_deps, i18n_tooltip_key="tt_suggest_deps")
-    _declare_i18n(self.btn_bc_loader, i18n_tooltip_key="tt_bc_loader")
-    _declare_i18n(self.btn_acasl_loader, i18n_tooltip_key="tt_bc_loader")
-    _declare_i18n(self.btn_show_stats, i18n_text_key="show_stats", i18n_tooltip_key="tt_show_stats")
-    _declare_i18n(self.advanced_cfg_btn, i18n_text_key="advanced_config")
-    _declare_i18n(self.select_lang, i18n_text_key="choose_language_button", i18n_text_system_key="choose_language_system_button", i18n_system_attr="language_pref", i18n_tooltip_key="tt_select_lang")
-    _declare_i18n(self.select_theme, i18n_text_key="choose_theme_button", i18n_text_system_key="choose_theme_system_button", i18n_system_attr="theme", i18n_tooltip_key="tt_select_theme")
-    _declare_i18n(self.status_hint, i18n_text_key="status_ready")
-    _declare_i18n(self.file_filter_input, i18n_placeholder_key="file_filter_placeholder")
     _setup_status_bar(self)
 
 
@@ -344,104 +316,98 @@ def _setup_more_tools_menu(self) -> None:
         return
 
     try:
-        _declare_i18n(more_btn, i18n_tooltip_key="tt_more_actions")
+        more_btn.setToolTip(translate(self, "tt_more_actions", more_btn.toolTip()))
         menu = QMenu(more_btn)
         self._ide_more_tools_menu = menu
 
-        act_workspace = QAction(menu)
+        act_workspace = QAction(translate(self, "action_select_workspace", "Select Workspace"), menu)
+        act_workspace.setObjectName("action_select_workspace")
         act_workspace.triggered.connect(
             lambda: getattr(self, "select_workspace", lambda: None)()
         )
-        _declare_i18n(act_workspace, i18n_text_key="action_select_workspace")
         menu.addAction(act_workspace)
 
-        act_init = QAction(menu)
+        act_init = QAction(translate(self, "action_init_project", "Initialise Project"), menu)
+        act_init.setObjectName("action_init_project")
         act_init.triggered.connect(
             lambda: getattr(self, "open_init_workspace_dialog", lambda: None)()
         )
-        _declare_i18n(act_init, i18n_text_key="action_init_project")
         menu.addAction(act_init)
 
-        act_venv = QAction(menu)
+        act_venv = QAction(translate(self, "action_select_venv", "Select Venv"), menu)
+        act_venv.setObjectName("action_select_venv")
         act_venv.triggered.connect(
             lambda: getattr(self, "select_venv_manually", lambda: None)()
         )
-        _declare_i18n(act_venv, i18n_text_key="action_select_venv")
         menu.addAction(act_venv)
 
-        act_add_files = QAction(menu)
+        act_add_files = QAction(translate(self, "action_add_files", "Add Files"), menu)
+        act_add_files.setObjectName("action_add_files")
         act_add_files.triggered.connect(
             lambda: getattr(self, "select_files_manually", lambda: None)()
         )
-        _declare_i18n(act_add_files, i18n_text_key="action_add_files")
         menu.addAction(act_add_files)
 
-        act_clear_workspace = QAction(menu)
+        act_clear_workspace = QAction(translate(self, "btn_clear_workspace", "Clear Workspace"), menu)
+        act_clear_workspace.setObjectName("btn_clear_workspace")
         act_clear_workspace.triggered.connect(
             lambda: getattr(self, "clear_workspace", lambda: None)()
         )
-        _declare_i18n(act_clear_workspace, i18n_text_key="btn_clear_workspace")
         menu.addAction(act_clear_workspace)
 
-        act_stats = QAction(menu)
+        act_stats = QAction(translate(self, "show_stats", "Show Stats"), menu)
+        act_stats.setObjectName("show_stats")
         act_stats.triggered.connect(
             lambda: getattr(self, "show_statistics", lambda: None)()
         )
-        _declare_i18n(act_stats, i18n_text_key="show_stats")
         menu.addAction(act_stats)
 
         menu.addSeparator()
 
-        act_language = QAction(menu)
+        act_language = QAction(
+            translate(self, "choose_language_button", "Language"), menu
+        )
+        act_language.setObjectName("act_language")
         act_language.triggered.connect(
             lambda: getattr(self, "show_language_dialog", lambda: None)()
         )
-        _declare_i18n(
-            act_language,
-            i18n_text_key="choose_language_button",
-            i18n_text_system_key="choose_language_system_button",
-            i18n_system_attr="language_pref",
-        )
         menu.addAction(act_language)
 
-        act_theme = QAction(menu)
+        act_theme = QAction(translate(self, "choose_theme_button", "Theme"), menu)
+        act_theme.setObjectName("act_theme")
         act_theme.triggered.connect(lambda: _open_theme_dialog(self))
-        _declare_i18n(
-            act_theme,
-            i18n_text_key="choose_theme_button",
-            i18n_text_system_key="choose_theme_system_button",
-            i18n_system_attr="theme",
-        )
         menu.addAction(act_theme)
 
         menu.addSeparator()
 
-        act_advanced = QAction(menu)
+        act_advanced = QAction(translate(self, "advanced_config", "Advanced Config"), menu)
+        act_advanced.setObjectName("advanced_config")
         act_advanced.triggered.connect(
             lambda: getattr(self, "open_advanced_config_editor", lambda: None)()
         )
-        _declare_i18n(act_advanced, i18n_text_key="advanced_config")
         menu.addAction(act_advanced)
 
-        act_lock = QAction(menu)
+        act_lock = QAction(translate(self, "lock_manager", "Lock Manager"), menu)
+        act_lock.setObjectName("lock_manager")
         act_lock.triggered.connect(
             lambda: getattr(self, "open_lock_dialog", lambda: None)()
         )
-        _declare_i18n(act_lock, i18n_text_key="lock_manager")
         menu.addAction(act_lock)
 
-        act_save_engines = QAction(menu)
+        act_save_engines = QAction(
+            translate(self, "save_engine_configs", "Save Engine Configs"), menu
+        )
+        act_save_engines.setObjectName("save_engine_configs")
         act_save_engines.triggered.connect(
             lambda: getattr(self, "save_all_engine_configs", lambda: None)()
         )
-        _declare_i18n(act_save_engines, i18n_text_key="save_engine_configs")
         menu.addAction(act_save_engines)
 
-        act_help = QAction(menu)
+        act_help = QAction(translate(self, "help", "Help"), menu)
+        act_help.setObjectName("help")
         act_help.triggered.connect(
             lambda: getattr(self, "show_help_dialog", lambda: None)()
         )
-        _declare_i18n(act_help, i18n_text_key="help")
         menu.addAction(act_help)
 
         self._ide_more_menu_actions = {
@@ -640,7 +606,7 @@ def _setup_status_bar(self) -> None:
     try:
         self.status_hint = QLabel("Ready")
         self.status_hint.setObjectName("status_hint")
-        _declare_i18n(self.status_hint, i18n_text_key="status_ready")
+        self.status_hint.setText(translate(self, "status_ready", "Ready"))
         self.statusbar.addPermanentWidget(self.status_hint, 1)
     except Exception:
         pass

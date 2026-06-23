@@ -99,32 +99,38 @@ class Cleaner(BcPluginBase):
             return None
 
         w = QWidget(parent)
+        w.setObjectName("plugin_cleaner")
         lay = QVBoxLayout(w)
         lay.setSpacing(8)
         lay.setContentsMargins(8, 8, 8, 8)
 
         # Safety
         safety_group = QGroupBox(translate("cleaner", "ui_safety", "Safety"), w)
+        safety_group.setObjectName("ui_safety")
         safety_layout = QVBoxLayout()
         safety_layout.setSpacing(4)
         chk_confirm = QCheckBox(
             translate("cleaner", "ui_confirm", "Ask confirmation before cleaning"),
             safety_group,
         )
+        chk_confirm.setObjectName("ui_confirm")
         safety_layout.addWidget(chk_confirm)
         safety_group.setLayout(safety_layout)
 
         # Targets
         targets_group = QGroupBox(translate("cleaner", "ui_targets", "Targets"), w)
+        targets_group.setObjectName("ui_targets")
         targets_layout = QFormLayout()
         targets_layout.setSpacing(6)
         chk_pyc = QCheckBox(
             translate("cleaner", "ui_pyc", "Remove .pyc files"), targets_group
         )
+        chk_pyc.setObjectName("ui_pyc")
         chk_pycache = QCheckBox(
             translate("cleaner", "ui_pycache", "Remove __pycache__ folders"),
             targets_group,
         )
+        chk_pycache.setObjectName("ui_pycache")
         targets_layout.addRow(chk_pyc)
         targets_layout.addRow(chk_pycache)
         targets_group.setLayout(targets_layout)
@@ -142,6 +148,7 @@ class Cleaner(BcPluginBase):
             ),
             w,
         )
+        hint.setObjectName("ui_tip")
         hint.setStyleSheet("color: #888; font-size: 11px;")
         hint.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         lay.addWidget(hint)
@@ -153,7 +160,7 @@ class Cleaner(BcPluginBase):
             cfg["clean_pycache"] = bool(chk_pycache.isChecked())
             return cfg
 
-        return ("Cleaner", w, on_save)
+        return (translate("cleaner", "tab_title", "Cleaner"), w, on_save)
 
     def on_pre_compile(self, ctx: PreCompileContext) -> None:
         """Nettoie le workspace avant la compilation."""

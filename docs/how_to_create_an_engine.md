@@ -85,7 +85,9 @@ UI and i18n.
 
 - `create_tab(self, gui) -> (QWidget, label) | None`: adds a tab.
 - `translate(self.id, key, default=None)`: engine-local translation lookup.
-- The host refreshes the engine UI when the language changes, so the engine only needs to declare translation keys on its widgets and use `translate(...)` when building the UI.
+- The host refreshes the engine UI when the language changes.
+- Set stable widget `objectName()` values and, when needed, i18n properties such as `i18n_text_key`, `i18n_tooltip_key`, `i18n_placeholder_key`, and `i18n_tab_key`.
+- Use `translate(...)` when building the UI and let the host reapply the active catalog at runtime.
 
 Tools and dependencies.
 
@@ -107,6 +109,7 @@ Tools and dependencies.
 - **IMPORTANT**: Do not include UI components for **Icon** selection or **Output directory** in your engine tab. These are globally managed in `ark.yml` and carried by `BuildContext`. Focus only on engine-specific flags and options.
 - Prefer grouping options with `QGroupBox` sections and compact hints, following the built-in engines layout style.
 - Keep widget attribute names stable once they are used by config persistence or compilation logic.
+- Do not import application UI modules from an engine. Use the engine SDK only.
 
 ### **Engine Config (get_config / set_config)**
 
@@ -118,6 +121,7 @@ Flow:
 - `get_config(gui)` returns a JSON‑serializable dict of current UI state.
 - `set_config(gui, cfg)` applies a config dict back to the widgets.
 - The Core saves configs on compile and reloads them when a workspace is applied.
+- The host can refresh translated text live without recreating the engine, so keep the widget tree stable.
 
 #### Minimal example
 

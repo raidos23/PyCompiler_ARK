@@ -35,16 +35,6 @@ from pycompiler_ark.engine_sdk import (
 from pycompiler_ark.engine_sdk.utils import log_with_level
 
 
-def _declare_i18n(widget, **props) -> None:
-    if widget is None:
-        return
-    for key, value in props.items():
-        try:
-            widget.setProperty(key, value)
-        except Exception:
-            pass
-
-
 @engine_register
 class NuitkaEngine(CompilerEngine):
     """
@@ -208,8 +198,8 @@ class NuitkaEngine(CompilerEngine):
 
             # Create the tab widget
             tab = QWidget()
-            tab.setObjectName("tab_nuitka_dynamic")
-            _declare_i18n(tab, i18n_tab_key="tab_label")
+            tab.setObjectName(getattr(self, "name", self.id))
+            tab.setProperty("i18n_tab_key", "tab_label")
 
             # Create main layout
             layout = QVBoxLayout(tab)
@@ -217,7 +207,7 @@ class NuitkaEngine(CompilerEngine):
             layout.setContentsMargins(8, 8, 8, 8)
 
             build_group = QGroupBox(translate(self.id, "build_group", "Build"), tab)
-            _declare_i18n(build_group, i18n_text_key="build_group")
+            build_group.setObjectName("build_group")
             build_layout = QFormLayout()
             build_layout.setSpacing(6)
 
@@ -225,28 +215,25 @@ class NuitkaEngine(CompilerEngine):
             self._nuitka_onefile = QCheckBox(
                 translate(self.id, "onefile_checkbox", "Onefile (--onefile)")
             )
-            self._nuitka_onefile.setObjectName("nuitka_onefile_dynamic")
-            _declare_i18n(self._nuitka_onefile, i18n_text_key="onefile_checkbox")
+            self._nuitka_onefile.setObjectName("onefile_checkbox")
             mode_label = QLabel(translate(self.id, "mode_label", "Mode:"), tab)
-            _declare_i18n(mode_label, i18n_text_key="mode_label")
+            mode_label.setObjectName("mode_label")
             build_layout.addRow(mode_label, self._nuitka_onefile)
 
             # Standalone option
             self._nuitka_standalone = QCheckBox(
                 translate(self.id, "standalone_checkbox", "Standalone (--standalone)")
             )
-            self._nuitka_standalone.setObjectName("nuitka_standalone_dynamic")
-            _declare_i18n(self._nuitka_standalone, i18n_text_key="standalone_checkbox")
+            self._nuitka_standalone.setObjectName("standalone_checkbox")
             type_label = QLabel(translate(self.id, "type_label", "Type:"), tab)
-            _declare_i18n(type_label, i18n_text_key="type_label")
+            type_label.setObjectName("type_label")
             build_layout.addRow(type_label, self._nuitka_standalone)
 
             # Disable console option
             self._nuitka_disable_console = QCheckBox(
                 translate(self.id, "disable_console_checkbox", "Disable console")
             )
-            self._nuitka_disable_console.setObjectName("nuitka_disable_console_dynamic")
-            _declare_i18n(self._nuitka_disable_console, i18n_text_key="disable_console_checkbox", i18n_tooltip_key="tt_disable_console")
+            self._nuitka_disable_console.setObjectName("disable_console_checkbox")
             self._nuitka_disable_console.setToolTip(
                 translate(
                     self.id,
@@ -255,7 +242,7 @@ class NuitkaEngine(CompilerEngine):
                 )
             )
             console_label = QLabel(translate(self.id, "console_label", "Console:"), tab)
-            _declare_i18n(console_label, i18n_text_key="console_label")
+            console_label.setObjectName("console_label")
             build_layout.addRow(console_label, self._nuitka_disable_console)
             build_group.setLayout(build_layout)
 
@@ -267,7 +254,7 @@ class NuitkaEngine(CompilerEngine):
                 ),
                 tab,
             )
-            _declare_i18n(hint, i18n_text_key="hint_text")
+            hint.setObjectName("hint_text")
             hint.setStyleSheet("color: #888; font-size: 11px;")
             hint.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
 
@@ -279,7 +266,7 @@ class NuitkaEngine(CompilerEngine):
             self._gui = gui
             self._tab_widget = tab
 
-            return tab, translate(self.id, "tab_label", "Nuitka")
+            return tab, translate(self.id, "tab_label", getattr(self, "name", self.id))
 
         except Exception as e:
             try:

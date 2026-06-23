@@ -223,6 +223,16 @@ def translate(domain: object | None, key: str, default: str | None = None) -> st
     return default if default is not None else str(key)
 
 
+def _object_name(obj: Any) -> str:
+    try:
+        name = getattr(obj, "objectName", lambda: "")()
+        if isinstance(name, str):
+            return name.strip()
+    except Exception:
+        pass
+    return ""
+
+
 # Public async Plugins with real-time caching and error handling
 
 
@@ -767,9 +777,6 @@ def i18n_synchro(self, lang_pref: str, tr: dict[str, Any]) -> str:
 
     _apply_main_app_translations(self, tr)
 
-    for cb in getattr(self, "_language_refresh_callbacks", []) or []:
-        cb()
-
     from pycompiler_ark.Ui.Gui.IdeLikeGui.connections import (
         _retranslate_ide_like_actions,
     )
@@ -785,6 +792,9 @@ def i18n_synchro(self, lang_pref: str, tr: dict[str, Any]) -> str:
     )
 
     sdk_apply_tr(self, tr)
+
+    for cb in getattr(self, "_language_refresh_callbacks", []) or []:
+        cb()
 
     if hasattr(self, "save_preferences"):
         self.save_preferences()
@@ -834,6 +844,86 @@ def _apply_main_app_translations(self, tr: dict[str, object]) -> None:
     def _is_system_value(value: Any) -> bool:
         return str(value).strip().lower() == "system"
 
+    def _binding_for_name(name: str) -> str:
+        if not name:
+            return ""
+        return {
+            "select_lang": "choose_language_button",
+            "select_theme": "choose_theme_button",
+            "act_language": "choose_language_button",
+            "act_theme": "choose_theme_button",
+            "btn_show_stats": "show_stats",
+            "btn_suggest_deps": "suggest_deps",
+            "btn_help": "help",
+            "btn_bc_loader": "bc_loader",
+            "btn_acasl_loader": "bc_loader",
+            "status_hint": "status_ready",
+            "act_workspace": "action_select_workspace",
+            "act_init": "action_init_project",
+            "act_venv": "action_select_venv",
+            "act_add_files": "action_add_files",
+            "act_clear_workspace": "btn_clear_workspace",
+            "act_stats": "show_stats",
+            "act_language": "choose_language_button",
+            "act_theme": "choose_theme_button",
+            "act_advanced": "advanced_config",
+            "act_lock": "lock_manager",
+            "act_save_engines": "save_engine_configs",
+            "act_help": "help",
+        }.get(name, name)
+
+    def _tooltip_for_name(name: str) -> str:
+        if not name:
+            return ""
+        if name in {
+            "btn_select_folder",
+            "btn_select_files",
+            "compile_btn",
+            "cancel_btn",
+            "btn_remove_file",
+            "btn_select_icon",
+            "btn_nuitka_icon",
+            "btn_help",
+            "btn_bc_loader",
+            "btn_suggest_deps",
+            "btn_show_stats",
+            "btn_clear_workspace",
+            "venv_button",
+        }:
+            return f"tt_{name[4:]}" if name.startswith("btn_") else f"tt_{name}"
+        if name == "activity_btn_deps":
+            return "tt_suggest_deps"
+        if name == "btn_acasl_loader":
+            return "tt_bc_loader"
+        if name == "select_lang":
+            return "tt_select_lang"
+        if name == "select_theme":
+            return "tt_select_theme"
+        if name == "act_language":
+            return "tt_select_lang"
+        if name == "act_theme":
+            return "tt_select_theme"
+        if name in {"toolButton_more", "more_btn", "btn_more_actions"}:
+            return "tt_more_actions"
+        if name == "output_dir_input":
+            return "tt_output_dir"
+        if name == "windowed_checkbox":
+            return "tt_windowed"
+        if name == "disable_console_checkbox":
+            return "tt_disable_console"
+        if name == "debug_checkbox":
+            return "tt_debug"
+        if name == "verbose_checkbox":
+            return "tt_verbose"
+        return f"tt_{name}" if name.startswith("opt_") else ""
+
+    def _placeholder_for_name(name: str) -> str:
+        if name == "file_filter_input":
+            return "file_filter_placeholder"
+        if name == "nuitka_output_dir":
+            return "nuitka_output_dir"
+        return ""
+
     def _iter_objects(root: Any):
         stack = [root]
         seen: set[int] = set()
@@ -881,7 +971,8 @@ def _apply_main_app_translations(self, tr: dict[str, object]) -> None:
             parent = getattr(parent, "parent", lambda: None)()
 
     for obj in _iter_objects(self):
-        text_key = _prop(obj, "i18n_text_key")
+        name = _object_name(obj)
+        text_key = _prop(obj, "i18n_text_key") or _binding_for_name(name)
         if text_key:
             system_key = _prop(obj, "i18n_text_system_key")
             system_attr = _prop(obj, "i18n_system_attr")
@@ -890,6 +981,20 @@ def _apply_main_app_translations(self, tr: dict[str, object]) -> None:
             current = obj.text() if hasattr(obj, "text") else None
 
             chosen_key = str(text_key)
+            if not _prop(obj, "i18n_text_key"):
+                if name in {"select_lang", "act_language"}:
+                    system_key = "choose_language_system_button"
+                    system_attr = "language_pref"
+                elif name in {"select_theme", "act_theme"}:
+                    system_key = "choose_theme_system_button"
+                    system_attr = "theme"
+                elif name == "venv_label":
+                    system_key = "venv_label_system"
+                    system_attr = "use_system_python"
+                elif name == "label_workspace_status":
+                    format_attr = "workspace_dir"
+                    none_key = "label_workspace_status_none"
+
             if system_key and system_attr and _is_system_value(getattr(self, str(system_attr), None)):
                 chosen_key = str(system_key)
 
@@ -907,19 +1012,19 @@ def _apply_main_app_translations(self, tr: dict[str, object]) -> None:
 
             _apply_text(obj, chosen_key, current if isinstance(current, str) else None)
 
-        tooltip_key = _prop(obj, "i18n_tooltip_key")
+        tooltip_key = _prop(obj, "i18n_tooltip_key") or _tooltip_for_name(name)
         if tooltip_key:
             current = obj.toolTip() if hasattr(obj, "toolTip") else None
             _apply_tooltip(obj, str(tooltip_key), current if isinstance(current, str) else None)
 
-        placeholder_key = _prop(obj, "i18n_placeholder_key")
+        placeholder_key = _prop(obj, "i18n_placeholder_key") or _placeholder_for_name(name)
         if placeholder_key:
             current = obj.placeholderText() if hasattr(obj, "placeholderText") else None
             _apply_placeholder(
                 obj, str(placeholder_key), current if isinstance(current, str) else None
             )
 
-        tab_key = _prop(obj, "i18n_tab_key")
+        tab_key = _prop(obj, "i18n_tab_key") or (name if name.startswith("tab_") else "")
         if tab_key:
             current = obj.text() if hasattr(obj, "text") else None
             _apply_tab_text(obj, str(tab_key), current if isinstance(current, str) else None)
