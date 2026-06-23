@@ -3,7 +3,6 @@ code: de
 _meta:
   code: de
   name: Deutsch
-# Traductions visibles des boutons et des libellés
 select_folder: Arbeitsbereich auswählen
 select_files: Dateien hinzufügen
 build_all: Kompilieren
@@ -45,8 +44,6 @@ choose_language_button: Sprache
 select_theme: Thema
 choose_theme_button: Thema
 choose_theme_system_button: Thema (System)
-
-# Infobulles des boutons
 tt_select_folder: Arbeitsbereich-Ordner auswählen.
 tt_select_files: Zu kompilierende Dateien hinzufügen.
 tt_build_all: Kompilierung starten.
@@ -80,9 +77,24 @@ cx_console: Console
 label_tools: Werkzeuge
 label_options_section: Kompilierungsoptionen
 label_progress: Kompilierungsfortschritt
+action_init_project: Initialize project
+init_project_title: Initialize project
+init_project_entry: 'Entry point:'
+init_project_gen_reqs: Generate requirements.txt
+init_project_create_venv: Create virtual environment (venv)
+init_project_install_reqs: Install dependencies
+init_project_note: 'Note: This will create an ark.yml file and configure the project
+  structure.'
+init_project_success: Project initialized successfully!
+bc_loader: BC Plugins Loader
+tt_select_icon: Choose the application icon.
+tt_select_lang: Choose the interface language.
+tt_select_theme: Choose the interface theme.
+tt_output_dir: Select the output directory.
+choose_theme_title: Choose theme
+choose_theme_label: 'Theme:'
+status_ready: Ready
 venv_label_system: 'Venv ausgewählt: System-Python'
-
-# Messages de dialogue
 msg_venv_choice_title: Venv-Einrichtung
 msg_venv_choice_text: Venv automatisch erstellen oder ein Venv auswählen (System-Python
   inklusive).
@@ -96,8 +108,6 @@ msg_no_workspace_or_venv_text: Workspace oder Venv auswählen, um Abhängigkeite
 msg_invalid_venv_title: Ungültiges Venv
 msg_invalid_venv_text: Der ausgewählte Ordner ist kein gültiges Venv. Erneut versuchen
   oder ein Venv erstellen?
-
-# Actions des dialogues
 action_select_workspace: Workspace wählen
 action_add_files: Dateien hinzufügen
 action_select_venv: Venv wählen

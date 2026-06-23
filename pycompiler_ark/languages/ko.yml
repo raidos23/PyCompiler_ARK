@@ -3,7 +3,6 @@ code: ko
 _meta:
   code: ko
   name: 한국어
-# Traductions visibles des boutons et des libellés
 select_folder: 워크스페이스 선택
 select_files: 파일 추가
 build_all: 컴파일
@@ -41,8 +40,6 @@ choose_language_button: 언어
 select_theme: 테마
 choose_theme_button: 테마
 choose_theme_system_button: 테마(시스템)
-
-# Infobulles des boutons
 tt_select_folder: 워크스페이스 폴더를 선택합니다.
 tt_select_files: 컴파일할 파일을 추가합니다.
 tt_build_all: 컴파일을 시작합니다.
@@ -76,9 +73,24 @@ cx_console: Console
 label_tools: 도구
 label_options_section: 컴파일 옵션
 label_progress: 컴파일 진행
+action_init_project: Initialize project
+init_project_title: Initialize project
+init_project_entry: 'Entry point:'
+init_project_gen_reqs: Generate requirements.txt
+init_project_create_venv: Create virtual environment (venv)
+init_project_install_reqs: Install dependencies
+init_project_note: 'Note: This will create an ark.yml file and configure the project
+  structure.'
+init_project_success: Project initialized successfully!
+bc_loader: BC Plugins Loader
+tt_select_icon: Choose the application icon.
+tt_select_lang: Choose the interface language.
+tt_select_theme: Choose the interface theme.
+tt_output_dir: Select the output directory.
+choose_theme_title: Choose theme
+choose_theme_label: 'Theme:'
+status_ready: Ready
 venv_label_system: '선택된 Venv: 시스템 Python'
-
-# Messages de dialogue
 msg_venv_choice_title: Venv 설정
 msg_venv_choice_text: venv를 자동으로 만들거나 venv를 선택합니다(시스템 Python 포함).
 msg_no_workspace_title: 워크스페이스 없음
@@ -89,8 +101,6 @@ msg_no_workspace_or_venv_title: 워크스페이스 또는 venv 없음
 msg_no_workspace_or_venv_text: 의존성 분석을 위해 워크스페이스 또는 Venv를 선택하세요.
 msg_invalid_venv_title: 잘못된 venv
 msg_invalid_venv_text: 선택한 폴더는 유효한 venv가 아닙니다. 다시 시도하거나 venv를 만들까요?
-
-# Actions des dialogues
 action_select_workspace: 워크스페이스 선택
 action_add_files: 파일 추가
 action_select_venv: Venv 선택

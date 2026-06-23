@@ -3,7 +3,6 @@ code: ru
 _meta:
   code: ru
   name: Русский
-# Traductions visibles des boutons et des libellés
 select_folder: Выбрать рабочее пространство
 select_files: Добавить файлы
 build_all: Скомпилировать
@@ -45,8 +44,6 @@ choose_language_button: Язык
 select_theme: Тема
 choose_theme_button: Тема
 choose_theme_system_button: Тема (Система)
-
-# Infobulles des boutons
 tt_select_folder: Выбрать папку рабочего пространства.
 tt_select_files: Добавить файлы для компиляции.
 tt_build_all: Запустить компиляцию.
@@ -80,9 +77,24 @@ cx_console: Console
 label_tools: Инструменты
 label_options_section: Параметры компиляции
 label_progress: Ход компиляции
+action_init_project: Initialize project
+init_project_title: Initialize project
+init_project_entry: 'Entry point:'
+init_project_gen_reqs: Generate requirements.txt
+init_project_create_venv: Create virtual environment (venv)
+init_project_install_reqs: Install dependencies
+init_project_note: 'Note: This will create an ark.yml file and configure the project
+  structure.'
+init_project_success: Project initialized successfully!
+bc_loader: BC Plugins Loader
+tt_select_icon: Choose the application icon.
+tt_select_lang: Choose the interface language.
+tt_select_theme: Choose the interface theme.
+tt_output_dir: Select the output directory.
+choose_theme_title: Choose theme
+choose_theme_label: 'Theme:'
+status_ready: Ready
 venv_label_system: 'Venv выбран: системный Python'
-
-# Messages de dialogue
 msg_venv_choice_title: Настройка venv
 msg_venv_choice_text: Создать venv автоматически или выбрать venv (системный Python
   включён).
@@ -95,8 +107,6 @@ msg_no_workspace_or_venv_text: Выберите Workspace или Venv для а�
 msg_invalid_venv_title: Недопустимый venv
 msg_invalid_venv_text: Выбранная папка не является корректным venv. Повторить или
   создать venv?
-
-# Actions des dialogues
 action_select_workspace: Выбрать Workspace
 action_add_files: Добавить файлы
 action_select_venv: Выбрать Venv

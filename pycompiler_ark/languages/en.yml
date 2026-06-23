@@ -3,7 +3,6 @@ code: en
 _meta:
   code: en
   name: English
-# Traductions visibles des boutons et des libellés
 select_folder: Choose workspace
 select_files: Add files
 build_all: Compile
@@ -43,8 +42,6 @@ choose_language_button: Language
 select_theme: Theme
 choose_theme_button: Theme
 choose_theme_system_button: Theme (System)
-
-# Infobulles des boutons
 tt_select_folder: Select the Workspace folder.
 tt_select_files: Add files to compile.
 tt_build_all: Start compilation.
@@ -54,10 +51,18 @@ tt_cancel_all: Cancel the current compilation.
 tt_remove_file: Remove the selected file(s) from the list.
 tt_help: Show help.
 tt_bc_loader: Open BC Plugins Loader.
+bc_loader: BC Plugins Loader
 tt_venv_button: Manually select a venv directory to use for compilation.
+tt_select_icon: Choose the application icon.
 tt_suggest_deps: Analyze project dependencies.
 tt_show_stats: Show compilation statistics.
+tt_select_lang: Choose the interface language.
+tt_select_theme: Choose the interface theme.
 tt_more_actions: More actions.
+tt_output_dir: Select the output directory.
+choose_theme_title: Choose theme
+choose_theme_label: 'Theme:'
+status_ready: Ready
 label_workspace_status: 'Workspace: {path}'
 label_workspace_status_none: 'Workspace: None'
 file_filter_placeholder: Filter list…
@@ -79,8 +84,6 @@ label_tools: Tools
 label_options_section: Compilation options
 label_progress: Compilation progress
 venv_label_system: 'Venv selected: System Python'
-
-# Messages de dialogue
 msg_venv_choice_title: Venv setup
 msg_venv_choice_text: Create a venv automatically or select a venv (System Python
   included).
@@ -93,11 +96,18 @@ msg_no_workspace_or_venv_text: Select a Workspace or a Venv to analyze dependenc
 msg_invalid_venv_title: Invalid Venv
 msg_invalid_venv_text: The selected folder is not a valid venv. Retry or create a
   venv?
-
-# Actions des dialogues
 action_select_workspace: Select Workspace
 action_add_files: Add files
 action_select_venv: Select Venv
+action_init_project: Initialize project
 action_create_venv: Create venv
 action_retry: Retry
 action_cancel: Cancel
+init_project_title: Initialize project
+init_project_entry: 'Entry point:'
+init_project_gen_reqs: Generate requirements.txt
+init_project_create_venv: Create virtual environment (venv)
+init_project_install_reqs: Install dependencies
+init_project_note: 'Note: This will create an ark.yml file and configure the project
+  structure.'
+init_project_success: Project initialized successfully!
