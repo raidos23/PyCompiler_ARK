@@ -53,16 +53,6 @@ _GLOBAL_LANG: str = "en"
 _ENGINE_TR: dict[str, dict[str, Any]] = {}
 
 
-def _declare_i18n(widget, **props) -> None:
-    if widget is None:
-        return
-    for key, value in props.items():
-        try:
-            widget.setProperty(key, value)
-        except Exception:
-            pass
-
-
 def _iter_i18n_roots(engine: CompilerEngine):
     seen: set[int] = set()
     try:
@@ -82,6 +72,48 @@ def _iter_i18n_roots(engine: CompilerEngine):
             yield value
         except Exception:
             continue
+
+
+def _object_name(obj: Any) -> str:
+    try:
+        name = getattr(obj, "objectName", lambda: "")()
+        if isinstance(name, str):
+            return name.strip()
+    except Exception:
+        pass
+    return ""
+
+
+def _binding_for_name(name: str) -> str:
+    if not name:
+        return ""
+    return {
+        "build_group": "build_group",
+        "onefile_checkbox": "onefile_checkbox",
+        "windowed_checkbox": "windowed_checkbox",
+        "standalone_checkbox": "standalone_checkbox",
+        "disable_console_checkbox": "disable_console_checkbox",
+        "debug_checkbox": "debug_checkbox",
+        "verbose_checkbox": "verbose_checkbox",
+        "mode_label": "mode_label",
+        "type_label": "type_label",
+        "console_label": "console_label",
+        "diagnostics_group": "diagnostics_group",
+        "hint_text": "hint_text",
+    }.get(name, "")
+
+
+def _tooltip_for_name(name: str) -> str:
+    return {
+        "windowed_checkbox": "tt_windowed",
+        "disable_console_checkbox": "tt_disable_console",
+        "debug_checkbox": "tt_debug",
+        "verbose_checkbox": "tt_verbose",
+    }.get(name, "")
+
+
+def _placeholder_for_name(name: str) -> str:
+    return ""
 
 
 def _apply_engine_i18n(root: Any, engine_id: str) -> None:
@@ -145,7 +177,8 @@ def _apply_engine_i18n(root: Any, engine_id: str) -> None:
             parent = getattr(parent, "parent", lambda: None)()
 
     for obj in _iter_objects(root):
-        text_key = _prop(obj, "i18n_text_key")
+        name = _object_name(obj)
+        text_key = _prop(obj, "i18n_text_key") or _binding_for_name(name)
         if text_key:
             system_key = _prop(obj, "i18n_text_system_key")
             system_attr = _prop(obj, "i18n_system_attr")
@@ -154,6 +187,22 @@ def _apply_engine_i18n(root: Any, engine_id: str) -> None:
             current = obj.text() if hasattr(obj, "text") else None
 
             chosen_key = str(text_key)
+            if not _prop(obj, "i18n_text_key"):
+                if name == "hint_text":
+                    chosen_key = "hint_text"
+                elif name == "build_group":
+                    chosen_key = "build_group"
+                elif name == "diagnostics_group":
+                    chosen_key = "diagnostics_group"
+                elif name == "mode_label":
+                    chosen_key = "mode_label"
+                elif name == "type_label":
+                    chosen_key = "type_label"
+                elif name == "console_label":
+                    chosen_key = "console_label"
+                elif name in {"windowed_checkbox", "disable_console_checkbox", "debug_checkbox", "verbose_checkbox", "onefile_checkbox", "standalone_checkbox"}:
+                    chosen_key = name
+
             if system_key and system_attr and _is_system_value(getattr(root, str(system_attr), None)):
                 chosen_key = str(system_key)
 
@@ -169,12 +218,12 @@ def _apply_engine_i18n(root: Any, engine_id: str) -> None:
 
             _apply_text(obj, chosen_key, current if isinstance(current, str) else None)
 
-        tooltip_key = _prop(obj, "i18n_tooltip_key")
+        tooltip_key = _prop(obj, "i18n_tooltip_key") or _tooltip_for_name(name)
         if tooltip_key:
             current = obj.toolTip() if hasattr(obj, "toolTip") else None
             _apply_tooltip(obj, str(tooltip_key), current if isinstance(current, str) else None)
 
-        placeholder_key = _prop(obj, "i18n_placeholder_key")
+        placeholder_key = _prop(obj, "i18n_placeholder_key") or _placeholder_for_name(name)
         if placeholder_key:
             current = obj.placeholderText() if hasattr(obj, "placeholderText") else None
             _apply_placeholder(

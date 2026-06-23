@@ -221,6 +221,7 @@ Notes.
 - `on_save(config_dict)` can return an updated dict.
 - Each plugin entry stores its config in the `config` field inside the `plugins` collection in `bcasl.yml`.
 - `create_tab(...)` may return a widget, a `(title, widget)` tuple, a `(title, widget, on_save)` tuple, or a dict with `title`, `widget`, and `on_save`.
+- Keep the widget tree stable and assign meaningful `objectName()` values so the host can refresh translations in place.
 
 **Plugin i18n (GeneralContext)**
 
@@ -251,8 +252,10 @@ Notes.
 - Keep plugin-specific keys inside the plugin package only.
 - Use `translate(...)` directly in the plugin UI code.
 - Do not add a custom i18n refresh hook inside the plugin package; the host handles language synchronization.
+- When building a plugin tab, attach i18n properties such as `i18n_text_key`, `i18n_tooltip_key`, `i18n_placeholder_key`, or `i18n_title_key` to the widgets that need refresh.
 - The SDK also accepts the plugin folder name as ID (case-insensitive).
 - If a key is missing, `translate()` falls back to the default you pass in.
+- Avoid importing application UI modules from a plugin. Keep the dependency boundary inside `Plugins_SDK` and the standard library.
 
 **Sandbox and Resource Limits**
 

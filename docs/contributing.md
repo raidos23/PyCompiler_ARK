@@ -19,6 +19,8 @@ If you are extending PyCompiler ARK, start with:
 - **Creating a Compilation Engine**: [how_to_create_an_engine.md](https://github.com/raidos23/PyCompiler_ARK/blob/main/docs/how_to_create_an_engine.md)
 - **Creating a Pre-Compile Plugin**: [how_to_create_a_bc_plugin.md](https://github.com/raidos23/PyCompiler_ARK/blob/main/docs/how_to_create_a_bc_plugin.md)
 
+For translation work, read the application guide first, then the engine or plugin guide that matches the area you are changing.
+
 ## **Core References**
 
 - **BuildContext Spec**: [BuildContext.md](https://github.com/raidos23/PyCompiler_ARK/blob/main/docs/BuildContext.md)
