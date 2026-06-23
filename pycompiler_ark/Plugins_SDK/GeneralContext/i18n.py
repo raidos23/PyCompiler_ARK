@@ -84,6 +84,10 @@ def set_translations(gui, tr: dict) -> None:
         _GLOBAL_LANG = resolve_language_code(gui, tr)
     except Exception:
         _GLOBAL_LANG = "en"
+    try:
+        _load_all_plugin_languages(_GLOBAL_LANG)
+    except Exception:
+        pass
 
 
 def get_translations() -> dict[str, Any]:
@@ -138,10 +142,6 @@ def unregister_i18n_handler(fn: Callable[[Any, dict], None]) -> None:
 
 def apply_translations(gui, tr: dict) -> None:
     set_translations(gui, tr)
-    try:
-        _load_all_plugin_languages(get_language_code())
-    except Exception:
-        pass
     for fn in list(_HANDLERS):
         try:
             fn(gui, tr)

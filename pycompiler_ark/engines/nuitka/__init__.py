@@ -30,8 +30,19 @@ from pycompiler_ark.engine_sdk import (
     BuildContext,
     CompilerEngine,
     engine_register,
+    translate,
 )
 from pycompiler_ark.engine_sdk.utils import log_with_level
+
+
+def _declare_i18n(widget, **props) -> None:
+    if widget is None:
+        return
+    for key, value in props.items():
+        try:
+            widget.setProperty(key, value)
+        except Exception:
+            pass
 
 
 @engine_register
@@ -198,39 +209,65 @@ class NuitkaEngine(CompilerEngine):
             # Create the tab widget
             tab = QWidget()
             tab.setObjectName("tab_nuitka_dynamic")
+            _declare_i18n(tab, i18n_tab_key="tab_label")
 
             # Create main layout
             layout = QVBoxLayout(tab)
             layout.setSpacing(8)
             layout.setContentsMargins(8, 8, 8, 8)
 
-            build_group = QGroupBox("Build", tab)
+            build_group = QGroupBox(translate(self.id, "build_group", "Build"), tab)
+            _declare_i18n(build_group, i18n_text_key="build_group")
             build_layout = QFormLayout()
             build_layout.setSpacing(6)
 
             # Onefile option
-            self._nuitka_onefile = QCheckBox("Onefile (--onefile)")
+            self._nuitka_onefile = QCheckBox(
+                translate(self.id, "onefile_checkbox", "Onefile (--onefile)")
+            )
             self._nuitka_onefile.setObjectName("nuitka_onefile_dynamic")
-            build_layout.addRow("Mode:", self._nuitka_onefile)
+            _declare_i18n(self._nuitka_onefile, i18n_text_key="onefile_checkbox")
+            mode_label = QLabel(translate(self.id, "mode_label", "Mode:"), tab)
+            _declare_i18n(mode_label, i18n_text_key="mode_label")
+            build_layout.addRow(mode_label, self._nuitka_onefile)
 
             # Standalone option
-            self._nuitka_standalone = QCheckBox("Standalone (--standalone)")
+            self._nuitka_standalone = QCheckBox(
+                translate(self.id, "standalone_checkbox", "Standalone (--standalone)")
+            )
             self._nuitka_standalone.setObjectName("nuitka_standalone_dynamic")
-            build_layout.addRow("Type:", self._nuitka_standalone)
+            _declare_i18n(self._nuitka_standalone, i18n_text_key="standalone_checkbox")
+            type_label = QLabel(translate(self.id, "type_label", "Type:"), tab)
+            _declare_i18n(type_label, i18n_text_key="type_label")
+            build_layout.addRow(type_label, self._nuitka_standalone)
 
             # Disable console option
-            self._nuitka_disable_console = QCheckBox("Disable console")
-            self._nuitka_disable_console.setObjectName("nuitka_disable_console_dynamic")
-            self._nuitka_disable_console.setToolTip(
-                "Disable console window for Windows builds."
+            self._nuitka_disable_console = QCheckBox(
+                translate(self.id, "disable_console_checkbox", "Disable console")
             )
-            build_layout.addRow("Console:", self._nuitka_disable_console)
+            self._nuitka_disable_console.setObjectName("nuitka_disable_console_dynamic")
+            _declare_i18n(self._nuitka_disable_console, i18n_text_key="disable_console_checkbox", i18n_tooltip_key="tt_disable_console")
+            self._nuitka_disable_console.setToolTip(
+                translate(
+                    self.id,
+                    "tt_disable_console",
+                    "Disable console window for Windows builds.",
+                )
+            )
+            console_label = QLabel(translate(self.id, "console_label", "Console:"), tab)
+            _declare_i18n(console_label, i18n_text_key="console_label")
+            build_layout.addRow(console_label, self._nuitka_disable_console)
             build_group.setLayout(build_layout)
 
             hint = QLabel(
-                "Tip: combine standalone or onefile modes carefully. Global icon and output are managed in ark.yml.",
+                translate(
+                    self.id,
+                    "hint_text",
+                    "Tip: combine standalone or onefile modes carefully. Global icon and output are managed in ark.yml.",
+                ),
                 tab,
             )
+            _declare_i18n(hint, i18n_text_key="hint_text")
             hint.setStyleSheet("color: #888; font-size: 11px;")
             hint.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
 
@@ -240,8 +277,9 @@ class NuitkaEngine(CompilerEngine):
 
             # Store references in the engine instance for build_command access
             self._gui = gui
+            self._tab_widget = tab
 
-            return tab, "Nuitka"
+            return tab, translate(self.id, "tab_label", "Nuitka")
 
         except Exception as e:
             try:
@@ -311,29 +349,6 @@ class NuitkaEngine(CompilerEngine):
 
     def get_log_prefix(self, file_basename: str) -> str:
         return f"Nuitka ({self.version})"
-
-    def apply_i18n(self, gui, tr: dict) -> None:
-        """Apply internationalization translations to the engine UI."""
-        try:
-            # Apply translations to UI elements if they exist
-            if hasattr(self, "_nuitka_onefile"):
-                self._nuitka_onefile.setText(
-                    self.engine_translate("onefile_checkbox", "Onefile")
-                )
-            if hasattr(self, "_nuitka_standalone"):
-                self._nuitka_standalone.setText(
-                    self.engine_translate("standalone_checkbox", "Standalone")
-                )
-            if hasattr(self, "_nuitka_disable_console"):
-                self._nuitka_disable_console.setText(
-                    self.engine_translate("disable_console_checkbox", "Disable console")
-                )
-            if hasattr(self, "_nuitka_disable_console"):
-                self._nuitka_disable_console.setToolTip(
-                    self.engine_translate("tt_disable_console", "")
-                )
-        except Exception:
-            pass
 
     def select_icon(self) -> None:
         """Legacy select_icon method. Global icon is now managed in ark.yml."""
