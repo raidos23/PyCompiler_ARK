@@ -33,17 +33,8 @@ from pycompiler_ark.engine_sdk import (
     engine_register,
     translate,
 )
+from pycompiler_ark.Ui.i18n import _declare_i18n
 from pycompiler_ark.engine_sdk.utils import log_with_level
-
-
-def _declare_i18n(widget, **props) -> None:
-    if widget is None:
-        return
-    for key, value in props.items():
-        try:
-            widget.setProperty(key, value)
-        except Exception:
-            pass
 
 
 @engine_register

@@ -94,19 +94,10 @@ class UiFeatures:
     def show_help_dialog(self):
         """Show the localized help dialog."""
         try:
-            from pycompiler_ark.Ui.i18n import FALLBACK_EN, is_french_language
+            from pycompiler_ark.Ui.i18n import translate
 
-            if is_french_language(self):
-                tr = getattr(self, "_tr", None)
-                if isinstance(tr, dict):
-                    help_title = tr.get("help_title", "Aide")
-                    help_text = tr.get("help_text", FALLBACK_EN.get("help_text", ""))
-                else:
-                    help_title = "Aide"
-                    help_text = FALLBACK_EN.get("help_text", "")
-            else:
-                help_title = FALLBACK_EN.get("help_title", "Help")
-                help_text = FALLBACK_EN.get("help_text", "")
+            help_title = translate(self, "help_title", "Help")
+            help_text = translate(self, "help_text", "")
         except Exception:
             help_title = "Help"
             help_text = ""

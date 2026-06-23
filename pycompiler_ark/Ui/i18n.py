@@ -223,6 +223,21 @@ def translate(domain: object | None, key: str, default: str | None = None) -> st
     return default if default is not None else str(key)
 
 
+def _declare_i18n(widget, **props) -> None:
+    """Attach i18n properties to a Qt object.
+
+    This helper is centralised here so UI code, engines, and host widgets all use
+    the same property-setting behavior.
+    """
+    if widget is None:
+        return
+    for key, value in props.items():
+        try:
+            widget.setProperty(key, value)
+        except Exception:
+            pass
+
+
 # Public async Plugins with real-time caching and error handling
 
 

@@ -53,16 +53,6 @@ _GLOBAL_LANG: str = "en"
 _ENGINE_TR: dict[str, dict[str, Any]] = {}
 
 
-def _declare_i18n(widget, **props) -> None:
-    if widget is None:
-        return
-    for key, value in props.items():
-        try:
-            widget.setProperty(key, value)
-        except Exception:
-            pass
-
-
 def _iter_i18n_roots(engine: CompilerEngine):
     seen: set[int] = set()
     try:
