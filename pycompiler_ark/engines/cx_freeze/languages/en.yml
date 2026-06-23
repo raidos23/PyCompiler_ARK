@@ -2,6 +2,9 @@ _meta:
   code: en
   name: English
 tab_label: CX_Freeze
+build_group: Build
+diagnostics_group: Diagnostics
+hint_text: "Tip: use the console visibility and diagnostics options. Global icon and output are managed in ark.yml."
 console_label: 'Console:'
 windowed_checkbox: No console
 icon_button: Choose icon (.ico)

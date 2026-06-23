@@ -2,6 +2,10 @@ _meta:
   code: fr
   name: Français
 tab_label: Nuitka
+
+build_group: Build
+hint_text: 'Tip: combine standalone or onefile modes carefully. Global icon and output
+  are managed in ark.yml.'
 mode_label: 'Mode :'
 onefile_checkbox: Onefile (--onefile)
 type_label: 'Type :'

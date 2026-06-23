@@ -53,6 +53,151 @@ _GLOBAL_LANG: str = "en"
 _ENGINE_TR: dict[str, dict[str, Any]] = {}
 
 
+def _declare_i18n(widget, **props) -> None:
+    if widget is None:
+        return
+    for key, value in props.items():
+        try:
+            widget.setProperty(key, value)
+        except Exception:
+            pass
+
+
+def _iter_i18n_roots(engine: CompilerEngine):
+    seen: set[int] = set()
+    try:
+        values = list(vars(engine).values())
+    except Exception:
+        values = []
+    for value in values:
+        try:
+            if value is None:
+                continue
+            if not hasattr(value, "children") and not hasattr(value, "setProperty"):
+                continue
+            oid = id(value)
+            if oid in seen:
+                continue
+            seen.add(oid)
+            yield value
+        except Exception:
+            continue
+
+
+def _apply_engine_i18n(root: Any, engine_id: str) -> None:
+    def _prop(obj: Any, name: str) -> Any:
+        if hasattr(obj, "property"):
+            val = obj.property(name)
+            if val is not None:
+                return val
+        return getattr(obj, name, None)
+
+    def _is_system_value(value: Any) -> bool:
+        return str(value).strip().lower() == "system"
+
+    def _iter_objects(root_obj: Any):
+        stack = [root_obj]
+        seen: set[int] = set()
+        while stack:
+            obj = stack.pop()
+            if obj is None:
+                continue
+            oid = id(obj)
+            if oid in seen:
+                continue
+            seen.add(oid)
+            yield obj
+            try:
+                children = list(obj.children())
+            except Exception:
+                children = []
+            for child in reversed(children):
+                stack.append(child)
+
+    def _apply_text(obj: Any, key: str, default: str | None = None) -> None:
+        if hasattr(obj, "setText"):
+            value = translate(engine_id, key, default)
+            if isinstance(value, str) and value:
+                obj.setText(value)
+
+    def _apply_tooltip(obj: Any, key: str, default: str | None = None) -> None:
+        if hasattr(obj, "setToolTip"):
+            value = translate(engine_id, key, default)
+            if isinstance(value, str) and value:
+                obj.setToolTip(value)
+
+    def _apply_placeholder(obj: Any, key: str, default: str | None = None) -> None:
+        if hasattr(obj, "setPlaceholderText"):
+            value = translate(engine_id, key, default)
+            if isinstance(value, str) and value:
+                obj.setPlaceholderText(value)
+
+    def _apply_tab_text(obj: Any, key: str, default: str | None = None) -> None:
+        parent = getattr(obj, "parent", lambda: None)()
+        while parent is not None:
+            if hasattr(parent, "indexOf") and hasattr(parent, "setTabText"):
+                idx = parent.indexOf(obj)
+                if idx >= 0:
+                    value = translate(engine_id, key, default)
+                    if isinstance(value, str) and value:
+                        parent.setTabText(idx, value)
+                break
+            parent = getattr(parent, "parent", lambda: None)()
+
+    for obj in _iter_objects(root):
+        text_key = _prop(obj, "i18n_text_key")
+        if text_key:
+            system_key = _prop(obj, "i18n_text_system_key")
+            system_attr = _prop(obj, "i18n_system_attr")
+            format_attr = _prop(obj, "i18n_format_attr")
+            none_key = _prop(obj, "i18n_none_key")
+            current = obj.text() if hasattr(obj, "text") else None
+
+            chosen_key = str(text_key)
+            if system_key and system_attr and _is_system_value(getattr(root, str(system_attr), None)):
+                chosen_key = str(system_key)
+
+            if format_attr:
+                ctx = getattr(root, str(format_attr), None)
+                if ctx:
+                    value = translate(engine_id, chosen_key, current if isinstance(current, str) else None)
+                    if isinstance(value, str) and value:
+                        obj.setText(value.replace("{path}", str(ctx)))
+                elif none_key:
+                    _apply_text(obj, str(none_key), current if isinstance(current, str) else None)
+                continue
+
+            _apply_text(obj, chosen_key, current if isinstance(current, str) else None)
+
+        tooltip_key = _prop(obj, "i18n_tooltip_key")
+        if tooltip_key:
+            current = obj.toolTip() if hasattr(obj, "toolTip") else None
+            _apply_tooltip(obj, str(tooltip_key), current if isinstance(current, str) else None)
+
+        placeholder_key = _prop(obj, "i18n_placeholder_key")
+        if placeholder_key:
+            current = obj.placeholderText() if hasattr(obj, "placeholderText") else None
+            _apply_placeholder(
+                obj, str(placeholder_key), current if isinstance(current, str) else None
+            )
+
+        tab_key = _prop(obj, "i18n_tab_key")
+        if tab_key:
+            current = obj.text() if hasattr(obj, "text") else None
+            _apply_tab_text(obj, str(tab_key), current if isinstance(current, str) else None)
+
+
+def _refresh_live_engine_widgets(gui) -> None:
+    for engine in list(_INSTANCES.values()):
+        if engine is None:
+            continue
+        engine_id = str(getattr(engine, "id", "") or "")
+        if not engine_id:
+            continue
+        for root in _iter_i18n_roots(engine):
+            _apply_engine_i18n(root, engine_id)
+
+
 def normalize_language_code(code: Optional[str]) -> str:
     """Normalize language code with fallback chain.
 
@@ -160,9 +305,8 @@ def _engine_package_for_class(engine_cls: type[CompilerEngine]) -> str | None:
         module_name = str(getattr(engine_cls, "__module__", "") or "")
         if not module_name:
             return None
-        parts = module_name.split(".")
-        if len(parts) >= 2:
-            return ".".join(parts[:2])
+        if module_name.endswith(".__init__"):
+            module_name = module_name[: -len(".__init__")]
         return module_name
     except Exception:
         return None
@@ -476,11 +620,9 @@ def show_hello_tab(gui) -> None:
 
 def apply_translations(gui, tr: dict) -> None:
     """Propagate i18n translations to the shared engine translation cache."""
-    try:
-        set_translations(gui, tr)
-        _refresh_all_engine_translations(get_language_code())
-    except Exception:
-        pass
+    set_translations(gui, tr)
+    _refresh_all_engine_translations(get_language_code())
+    _refresh_live_engine_widgets(gui)
 
 
 def get_engine_for_tab(index: int) -> Optional[str]:

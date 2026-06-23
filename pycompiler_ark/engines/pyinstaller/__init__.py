@@ -36,6 +36,16 @@ from pycompiler_ark.engine_sdk import (
 from pycompiler_ark.engine_sdk.utils import log_with_level
 
 
+def _declare_i18n(widget, **props) -> None:
+    if widget is None:
+        return
+    for key, value in props.items():
+        try:
+            widget.setProperty(key, value)
+        except Exception:
+            pass
+
+
 @engine_register
 class PyInstallerEngine(CompilerEngine):
     """
@@ -180,6 +190,7 @@ class PyInstallerEngine(CompilerEngine):
             # Create the tab widget
             tab = QWidget()
             tab.setObjectName("tab_pyinstaller_dynamic")
+            _declare_i18n(tab, i18n_tab_key="tab_label")
 
             # Create main layout
             layout = QVBoxLayout(tab)
@@ -187,6 +198,7 @@ class PyInstallerEngine(CompilerEngine):
             layout.setContentsMargins(8, 8, 8, 8)
 
             build_group = QGroupBox(translate(self.id, "build_group", "Build"), tab)
+            _declare_i18n(build_group, i18n_text_key="build_group")
             build_layout = QFormLayout()
             build_layout.setSpacing(6)
 
@@ -195,13 +207,17 @@ class PyInstallerEngine(CompilerEngine):
                 translate(self.id, "onefile_checkbox", "Onefile")
             )
             self._opt_onefile.setObjectName("opt_onefile_dynamic")
-            build_layout.addRow(translate(self.id, "mode_label", "Mode:"), self._opt_onefile)
+            _declare_i18n(self._opt_onefile, i18n_text_key="onefile_checkbox")
+            mode_label = QLabel(translate(self.id, "mode_label", "Mode:"), tab)
+            _declare_i18n(mode_label, i18n_text_key="mode_label")
+            build_layout.addRow(mode_label, self._opt_onefile)
 
             # Windowed option
             self._opt_windowed = QCheckBox(
                 translate(self.id, "windowed_checkbox", "Windowed")
             )
             self._opt_windowed.setObjectName("opt_windowed_dynamic")
+            _declare_i18n(self._opt_windowed, i18n_text_key="windowed_checkbox")
             build_layout.addRow(self._opt_windowed)
 
             build_group.setLayout(build_layout)
@@ -214,6 +230,7 @@ class PyInstallerEngine(CompilerEngine):
                 ),
                 tab,
             )
+            _declare_i18n(hint, i18n_text_key="hint_text")
             hint.setStyleSheet("color: #888; font-size: 11px;")
             hint.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
 
@@ -223,6 +240,7 @@ class PyInstallerEngine(CompilerEngine):
 
             # Store references in the engine instance for build_command access
             self._gui = gui
+            self._tab_widget = tab
 
             return tab, translate(self.id, "tab_label", "PyInstaller")
 
