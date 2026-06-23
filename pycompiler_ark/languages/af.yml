@@ -28,6 +28,7 @@ show_stats: Statistiek
 select_lang: Taal
 advanced_config: Gevorderde konfigurasie
 save_engine_configs: Stoor engine-konfigurasies
+lock_manager: Sluitbestuurder
 venv_button: Kies venv-lêergids
 label_workspace_section: Werkruimte
 venv_label: 'Venv gekies: Geen'
@@ -76,7 +77,7 @@ cx_console: Console
 label_tools: Gereedskap
 label_options_section: Kompilasie-opsies
 label_progress: Kompilasievordering
-action_init_project: Initialize project
+action_init_project: Inisialiseer projek
 init_project_title: Initialize project
 init_project_entry: 'Entry point:'
 init_project_gen_reqs: Generate requirements.txt

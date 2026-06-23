@@ -23,6 +23,7 @@ show_stats: 统计
 select_lang: 语言
 advanced_config: 高级配置
 save_engine_configs: 保存引擎配置
+lock_manager: 锁管理器
 venv_button: 选择 venv 文件夹
 label_workspace_section: 工作区
 venv_label: 已选择 Venv：无
@@ -71,7 +72,7 @@ cx_console: Console
 label_tools: 工具
 label_options_section: 编译选项
 label_progress: 编译进度
-action_init_project: Initialize project
+action_init_project: 初始化项目
 init_project_title: Initialize project
 init_project_entry: 'Entry point:'
 init_project_gen_reqs: Generate requirements.txt

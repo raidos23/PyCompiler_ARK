@@ -25,6 +25,7 @@ show_stats: 통계
 select_lang: 언어
 advanced_config: 고급 설정
 save_engine_configs: 엔진 설정 저장
+lock_manager: 잠금 관리자
 venv_button: venv 폴더 선택
 label_workspace_section: 워크스페이스
 venv_label: '선택된 Venv: 없음'
@@ -73,7 +74,7 @@ cx_console: Console
 label_tools: 도구
 label_options_section: 컴파일 옵션
 label_progress: 컴파일 진행
-action_init_project: Initialize project
+action_init_project: 프로젝트 초기화
 init_project_title: Initialize project
 init_project_entry: 'Entry point:'
 init_project_gen_reqs: Generate requirements.txt
