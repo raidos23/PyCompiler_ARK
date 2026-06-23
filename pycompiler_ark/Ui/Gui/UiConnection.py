@@ -33,7 +33,7 @@ try:
 except Exception:
     QSvgRenderer = None  # type: ignore[assignment]
 
-from pycompiler_ark.Ui.i18n import _declare_i18n, show_language_dialog, translate
+from pycompiler_ark.Ui.i18n import show_language_dialog, translate
 
 
 def _detect_system_color_scheme() -> str:
@@ -470,35 +470,6 @@ def _setup_widgets(self) -> None:
     if self.btn_acasl_loader:
         self.btn_acasl_loader.hide()
         self.btn_acasl_loader.setEnabled(False)
-
-    for widget, props in (
-        (self.btn_select_folder, {"i18n_text_key": "select_folder", "i18n_tooltip_key": "tt_select_folder"}),
-        (self.btn_select_files, {"i18n_text_key": "select_files", "i18n_tooltip_key": "tt_select_files"}),
-        (self.compile_btn, {"i18n_text_key": "build_all", "i18n_tooltip_key": "tt_build_all"}),
-        (self.cancel_btn, {"i18n_text_key": "cancel_all", "i18n_tooltip_key": "tt_cancel_all"}),
-        (self.btn_suggest_deps, {"i18n_text_key": "suggest_deps", "i18n_tooltip_key": "tt_suggest_deps"}),
-        (self.btn_help, {"i18n_text_key": "help", "i18n_tooltip_key": "tt_help"}),
-        (self.btn_show_stats, {"i18n_text_key": "show_stats", "i18n_tooltip_key": "tt_show_stats"}),
-        (self.advanced_cfg_btn, {"i18n_text_key": "advanced_config"}),
-        (self.btn_remove_file, {"i18n_text_key": "btn_remove_file", "i18n_tooltip_key": "tt_remove_file"}),
-        (self.btn_clear_workspace, {"i18n_text_key": "btn_clear_workspace", "i18n_tooltip_key": "tt_clear_workspace"}),
-        (self.btn_bc_loader, {"i18n_text_key": "bc_loader", "i18n_tooltip_key": "tt_bc_loader"}),
-        (self.venv_button, {"i18n_text_key": "venv_button", "i18n_tooltip_key": "tt_venv_button"}),
-        (self.label_workspace_section, {"i18n_text_key": "label_workspace_section"}),
-        (self.venv_label, {"i18n_text_key": "venv_label", "i18n_text_system_key": "venv_label_system", "i18n_system_attr": "use_system_python"}),
-        (self.label_folder, {"i18n_text_key": "label_folder"}),
-        (self.label_files_section, {"i18n_text_key": "label_files_section"}),
-        (self.label_tools, {"i18n_text_key": "label_tools"}),
-        (self.label_options_section, {"i18n_text_key": "label_options_section"}),
-        (self.label_logs_section, {"i18n_text_key": "label_logs_section"}),
-        (self.label_progress, {"i18n_text_key": "label_progress"}),
-        (self.select_lang, {"i18n_text_key": "choose_language_button", "i18n_text_system_key": "choose_language_system_button", "i18n_system_attr": "language_pref", "i18n_tooltip_key": "tt_select_lang"}),
-        (self.select_theme, {"i18n_text_key": "choose_theme_button", "i18n_text_system_key": "choose_theme_system_button", "i18n_system_attr": "theme", "i18n_tooltip_key": "tt_select_theme"}),
-        (self.label_workspace_status, {"i18n_text_key": "label_workspace_status", "i18n_none_key": "label_workspace_status_none", "i18n_format_attr": "workspace_dir"}),
-        (self.file_filter_input, {"i18n_placeholder_key": "file_filter_placeholder"}),
-    ):
-        _declare_i18n(widget, **props)
-
 
 def _setup_compiler_tabs(self) -> None:
     """Initialize compiler tabs and bind available engines."""
