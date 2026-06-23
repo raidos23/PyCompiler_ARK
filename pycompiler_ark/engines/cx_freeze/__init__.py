@@ -36,16 +36,6 @@ from pycompiler_ark.engine_sdk import (
 from pycompiler_ark.engine_sdk.utils import log_with_level
 
 
-def _declare_i18n(widget, **props) -> None:
-    if widget is None:
-        return
-    for key, value in props.items():
-        try:
-            widget.setProperty(key, value)
-        except Exception:
-            pass
-
-
 @engine_register
 class CXFreezeEngine(CompilerEngine):
     """
@@ -188,8 +178,8 @@ class CXFreezeEngine(CompilerEngine):
 
             # Create the tab widget
             tab = QWidget()
-            tab.setObjectName("tab_cx_freeze_dynamic")
-            _declare_i18n(tab, i18n_tab_key="tab_label")
+            tab.setObjectName(getattr(self, "name", self.id))
+            tab.setProperty("i18n_tab_key", "tab_label")
 
             # Create main layout
             layout = QVBoxLayout(tab)
@@ -197,7 +187,7 @@ class CXFreezeEngine(CompilerEngine):
             layout.setContentsMargins(8, 8, 8, 8)
 
             build_group = QGroupBox(translate(self.id, "build_group", "Build"), tab)
-            _declare_i18n(build_group, i18n_text_key="build_group")
+            build_group.setObjectName("build_group")
             build_layout = QFormLayout()
             build_layout.setSpacing(6)
 
@@ -205,8 +195,7 @@ class CXFreezeEngine(CompilerEngine):
             self._cx_windowed = QCheckBox(
                 translate(self.id, "windowed_checkbox", "No console")
             )
-            self._cx_windowed.setObjectName("cx_windowed_dynamic")
-            _declare_i18n(self._cx_windowed, i18n_text_key="windowed_checkbox", i18n_tooltip_key="tt_windowed")
+            self._cx_windowed.setObjectName("windowed_checkbox")
             self._cx_windowed.setToolTip(
                 translate(self.id, "tt_windowed", "Disable the console window.")
             )
@@ -217,15 +206,14 @@ class CXFreezeEngine(CompilerEngine):
             diagnostics_group = QGroupBox(
                 translate(self.id, "diagnostics_group", "Diagnostics"), tab
             )
-            _declare_i18n(diagnostics_group, i18n_text_key="diagnostics_group")
+            diagnostics_group.setObjectName("diagnostics_group")
             diagnostics_layout = QVBoxLayout()
             diagnostics_layout.setSpacing(4)
 
             self._cx_debug = QCheckBox(
                 translate(self.id, "debug_checkbox", "Debug")
             )
-            self._cx_debug.setObjectName("cx_debug_dynamic")
-            _declare_i18n(self._cx_debug, i18n_text_key="debug_checkbox", i18n_tooltip_key="tt_debug")
+            self._cx_debug.setObjectName("debug_checkbox")
             self._cx_debug.setToolTip(
                 translate(self.id, "tt_debug", "Enable debug output.")
             )
@@ -234,8 +222,7 @@ class CXFreezeEngine(CompilerEngine):
             self._cx_verbose = QCheckBox(
                 translate(self.id, "verbose_checkbox", "Verbose")
             )
-            self._cx_verbose.setObjectName("cx_verbose_dynamic")
-            _declare_i18n(self._cx_verbose, i18n_text_key="verbose_checkbox", i18n_tooltip_key="tt_verbose")
+            self._cx_verbose.setObjectName("verbose_checkbox")
             self._cx_verbose.setToolTip(
                 translate(self.id, "tt_verbose", "Enable verbose output.")
             )
@@ -250,7 +237,7 @@ class CXFreezeEngine(CompilerEngine):
                 ),
                 tab,
             )
-            _declare_i18n(hint, i18n_text_key="hint_text")
+            hint.setObjectName("hint_text")
             hint.setStyleSheet("color: #888; font-size: 11px;")
             hint.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
 
@@ -263,7 +250,7 @@ class CXFreezeEngine(CompilerEngine):
             self._gui = gui
             self._tab_widget = tab
 
-            return tab, translate(self.id, "tab_label", "CX_Freeze")
+            return tab, translate(self.id, "tab_label", getattr(self, "name", self.id))
 
         except Exception as e:
             try:

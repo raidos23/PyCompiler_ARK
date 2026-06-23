@@ -4,6 +4,7 @@ ui_confirm: Demander confirmation avant le nettoyage
 ui_pyc: Supprimer les fichiers .pyc
 ui_pycache: Supprimer les dossiers __pycache__
 ui_tip: 'Astuce : désactivez ce que vous ne voulez pas supprimer.'
+tab_title: Nettoyeur
 dlg_confirm: Voulez-vous nettoyer le workspace (.pyc et __pycache__) ?
 log_cancel: Nettoyage annulé par l'utilisateur
 log_noop: 'Cleaner : rien à faire (options désactivées)'

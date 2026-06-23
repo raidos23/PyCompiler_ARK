@@ -1,6 +1,10 @@
 _meta:
   code: en
   name: English
+tab_title: "Output Cleaner"
+ui_safety: "Safety"
+ui_confirm: "Ask confirmation before cleaning the output directory"
+ui_hint: "This plugin removes the build output before compilation."
 dialog_title: "Output Cleaner"
 warn_no_build_context: "OutputCleaner: No BuildContext available. Cannot identify output directory."
 warn_no_output_dir: "OutputCleaner: No output_dir defined in BuildContext."

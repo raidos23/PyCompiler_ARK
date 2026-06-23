@@ -128,6 +128,114 @@ def translate(plugin_id: str, key: str, default: Optional[str] = None) -> str:
     return default if default is not None else str(key)
 
 
+def _object_name(obj: Any) -> str:
+    try:
+        name = getattr(obj, "objectName", lambda: "")()
+        if isinstance(name, str):
+            return name.strip()
+    except Exception:
+        pass
+    return ""
+
+
+def refresh_widget_translations(root: Any, plugin_id: str) -> None:
+    """Apply the active plugin catalog to an existing widget tree."""
+    def _iter_objects(root_obj: Any):
+        stack = [root_obj]
+        seen: set[int] = set()
+        while stack:
+            obj = stack.pop()
+            if obj is None:
+                continue
+            oid = id(obj)
+            if oid in seen:
+                continue
+            seen.add(oid)
+            yield obj
+            try:
+                children = list(obj.children())
+            except Exception:
+                children = []
+            for child in reversed(children):
+                stack.append(child)
+
+    def _prop(obj: Any, name: str) -> str:
+        try:
+            value = getattr(obj, name, None)
+            if isinstance(value, str) and value.strip():
+                return value.strip()
+        except Exception:
+            pass
+        try:
+            value = obj.property(name) if hasattr(obj, "property") else None
+            if isinstance(value, str) and value.strip():
+                return value.strip()
+        except Exception:
+            pass
+        return ""
+
+    def _apply_text(obj: Any, key: str, default: str | None = None) -> None:
+        if not hasattr(obj, "setText"):
+            return
+        value = translate(plugin_id, key, default)
+        if isinstance(value, str) and value:
+            obj.setText(value)
+
+    def _apply_title(obj: Any, key: str, default: str | None = None) -> None:
+        if not hasattr(obj, "setTitle"):
+            return
+        value = translate(plugin_id, key, default)
+        if isinstance(value, str) and value:
+            obj.setTitle(value)
+
+    def _apply_placeholder(obj: Any, key: str, default: str | None = None) -> None:
+        if not hasattr(obj, "setPlaceholderText"):
+            return
+        value = translate(plugin_id, key, default)
+        if isinstance(value, str) and value:
+            obj.setPlaceholderText(value)
+
+    def _apply_tooltip(obj: Any, key: str, default: str | None = None) -> None:
+        if not hasattr(obj, "setToolTip"):
+            return
+        value = translate(plugin_id, key, default)
+        if isinstance(value, str) and value:
+            obj.setToolTip(value)
+
+    for obj in _iter_objects(root):
+        name = _object_name(obj)
+        if not name:
+            continue
+
+        title_key = _prop(obj, "i18n_title_key") or name
+        text_key = _prop(obj, "i18n_text_key") or name
+        tooltip_key = _prop(obj, "i18n_tooltip_key")
+        placeholder_key = _prop(obj, "i18n_placeholder_key")
+
+        if hasattr(obj, "setTitle"):
+            current = obj.title() if hasattr(obj, "title") else None
+            _apply_title(obj, title_key, current if isinstance(current, str) else None)
+            continue
+
+        if hasattr(obj, "setText"):
+            current = obj.text() if hasattr(obj, "text") else None
+            _apply_text(obj, text_key, current if isinstance(current, str) else None)
+
+        if tooltip_key:
+            current = obj.toolTip() if hasattr(obj, "toolTip") else None
+            _apply_tooltip(
+                obj, tooltip_key, current if isinstance(current, str) else None
+            )
+
+        if placeholder_key:
+            current = (
+                obj.placeholderText() if hasattr(obj, "placeholderText") else None
+            )
+            _apply_placeholder(
+                obj, placeholder_key, current if isinstance(current, str) else None
+            )
+
+
 def register_i18n_handler(fn: Callable[[Any, dict], None]) -> None:
     if callable(fn):
         _HANDLERS.add(fn)
