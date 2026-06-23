@@ -2,6 +2,10 @@ _meta:
   code: zh-CN
   name: 中文（简体）
 tab_label: PyInstaller
+
+build_group: Build
+hint_text: 'Tip: choose one packaging mode. Global icon and output are managed in
+  ark.yml.'
 mode_label: 模式：
 onefile_checkbox: Onefile
 console_label: 控制台：

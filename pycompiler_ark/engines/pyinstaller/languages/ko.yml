@@ -2,6 +2,15 @@ _meta:
   code: ko
   name: 한국어
 tab_label: PyInstaller
+
+build_group: Build
+hint_text: 'Tip: choose one packaging mode. Global icon and output are managed in
+  ark.yml.'
+console_label: 'Console:'
+confirmation_label: 'Confirmation:'
+cleanup_label: 'Cleanup:'
+compression_label: 'Compression:'
+files_label: 'Files:'
 mode_label: '모드:'
 onefile_checkbox: 단일 파일
 windowed_checkbox: 창 모드

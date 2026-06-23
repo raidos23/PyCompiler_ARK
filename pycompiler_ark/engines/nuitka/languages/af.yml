@@ -2,6 +2,10 @@ _meta:
   code: af
   name: Afrikaans
 tab_label: Nuitka
+
+build_group: Build
+hint_text: 'Tip: combine standalone or onefile modes carefully. Global icon and output
+  are managed in ark.yml.'
 mode_label: 'Modus:'
 onefile_checkbox: Een lêer (--onefile)
 type_label: 'Tipe:'

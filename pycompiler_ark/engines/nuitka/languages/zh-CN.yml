@@ -2,6 +2,10 @@ _meta:
   code: zh-CN
   name: 中文 (简体)
 tab_label: Nuitka
+
+build_group: Build
+hint_text: 'Tip: combine standalone or onefile modes carefully. Global icon and output
+  are managed in ark.yml.'
 mode_label: '模式:'
 onefile_checkbox: Onefile (--onefile)
 type_label: '类型:'
