@@ -77,6 +77,67 @@ class OutputCleaner(BcPluginBase):
         except Exception:
             return {}
 
+    def create_tab(self, parent, ctx: PreCompileContext, config: dict):
+        try:
+            from PySide6.QtWidgets import (
+                QCheckBox,
+                QGroupBox,
+                QLabel,
+                QSizePolicy,
+                QVBoxLayout,
+                QWidget,
+            )
+        except Exception:
+            return None
+
+        widget = QWidget(parent)
+        widget.setObjectName("plugin_outputcleaner")
+        layout = QVBoxLayout(widget)
+        layout.setSpacing(8)
+        layout.setContentsMargins(8, 8, 8, 8)
+
+        safety_group = QGroupBox(
+            _tr("ui_safety", "Safety"), widget
+        )
+        safety_group.setObjectName("ui_safety")
+        safety_layout = QVBoxLayout(safety_group)
+        safety_layout.setSpacing(4)
+
+        chk_confirm = QCheckBox(
+            _tr(
+                "ui_confirm",
+                "Ask confirmation before cleaning the output directory",
+            ),
+            safety_group,
+        )
+        chk_confirm.setObjectName("ui_confirm")
+        safety_layout.addWidget(chk_confirm)
+
+        hint = QLabel(
+            _tr(
+                "ui_hint",
+                "This plugin removes the build output before compilation.",
+            ),
+            widget,
+        )
+        hint.setObjectName("ui_hint")
+        hint.setWordWrap(True)
+        hint.setStyleSheet("color: #888; font-size: 11px;")
+        hint.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+
+        safety_group.setLayout(safety_layout)
+        layout.addWidget(safety_group)
+        layout.addWidget(hint)
+        layout.addStretch(1)
+
+        chk_confirm.setChecked(bool(config.get("confirm", True)))
+
+        def on_save(cfg: dict):
+            cfg["confirm"] = bool(chk_confirm.isChecked())
+            return cfg
+
+        return (_tr("tab_title", "Output Cleaner"), widget, on_save)
+
     def on_pre_compile(self, ctx: PreCompileContext) -> None:
         """Nettoie le dossier output avant la compilation."""
         try:
