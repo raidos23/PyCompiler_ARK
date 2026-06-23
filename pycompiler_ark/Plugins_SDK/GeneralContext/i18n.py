@@ -128,6 +128,51 @@ def translate(plugin_id: str, key: str, default: Optional[str] = None) -> str:
     return default if default is not None else str(key)
 
 
+def _object_name(obj: Any) -> str:
+    try:
+        name = getattr(obj, "objectName", lambda: "")()
+        if isinstance(name, str):
+            return name.strip()
+    except Exception:
+        pass
+    return ""
+
+
+def refresh_widget_translations(root: Any, plugin_id: str) -> None:
+    """Apply the active plugin catalog to an existing widget tree."""
+    def _iter_objects(root_obj: Any):
+        stack = [root_obj]
+        seen: set[int] = set()
+        while stack:
+            obj = stack.pop()
+            if obj is None:
+                continue
+            oid = id(obj)
+            if oid in seen:
+                continue
+            seen.add(oid)
+            yield obj
+            try:
+                children = list(obj.children())
+            except Exception:
+                children = []
+            for child in reversed(children):
+                stack.append(child)
+
+    def _apply_text(obj: Any, key: str, default: str | None = None) -> None:
+        if hasattr(obj, "setText"):
+            value = translate(plugin_id, key, default)
+            if isinstance(value, str) and value:
+                obj.setText(value)
+
+    for obj in _iter_objects(root):
+        name = _object_name(obj)
+        text_key = name
+        if text_key:
+            current = obj.text() if hasattr(obj, "text") else None
+            _apply_text(obj, text_key, current if isinstance(current, str) else None)
+
+
 def register_i18n_handler(fn: Callable[[Any, dict], None]) -> None:
     if callable(fn):
         _HANDLERS.add(fn)
