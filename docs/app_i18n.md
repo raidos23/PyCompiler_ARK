@@ -15,7 +15,7 @@ That module owns:
 - refreshing translated widgets when the language changes
 
 The public lookup API is `translate(self.id, key, default)`.
-The app UI should use that API everywhere a label, tooltip, placeholder, or tab title needs a translated value.
+The app UI should use that API everywhere a label, tooltip, placeholder, action text, or tab title needs a translated value.
 
 ## **Language Files**
 
@@ -52,17 +52,7 @@ The recommended pattern is:
 1. create the widget
 2. attach i18n properties to it
 3. let `pycompiler_ark/Ui/i18n.py` resolve the active language
-4. call `translate(self.id, ...)` when reading text dynamically
-
-For standard widgets, use the helper already used in the codebase:
-
-```python
-_declare_i18n(
-    self.compile_btn,
-    i18n_text_key="build_all",
-    i18n_tooltip_key="tt_build_all",
-)
-```
+4. let the generic walker read the widget properties and call `translate(self.id, ...)`
 
 If you need to attach properties manually, use:
 
@@ -84,6 +74,13 @@ widget.setProperty("i18n_tooltip_key", "tt_build_all")
 - `i18n_format_attr`
 - `i18n_none_key`
 
+The walker is generic:
+
+- `QGroupBox` uses `setTitle(...)`
+- `QAction`, buttons, labels, and checkboxes use `setText(...)`
+- line edits and similar widgets use `setPlaceholderText(...)`
+- tooltips are applied when `i18n_tooltip_key` is present
+
 Typical use cases:
 
 - `i18n_text_key`: button text, label text, action text
@@ -102,7 +99,7 @@ When the user changes the language:
 2. `get_translations()` loads the selected YAML file.
 3. `i18n_synchro()` stores the active catalog.
 4. `_apply_main_app_translations()` walks the UI tree and reapplies texts.
-5. The IDE-like actions, engine registry, and plugin SDK are refreshed through their generic host hooks.
+5. The engine registry and plugin SDK are refreshed through generic host hooks.
 
 This is why the application should not hardcode translated strings inside the refresh path.
 The refresh path must stay generic and data-driven.
