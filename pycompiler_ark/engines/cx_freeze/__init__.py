@@ -30,6 +30,7 @@ from typing import Optional
 from pycompiler_ark.engine_sdk import (
     BuildContext,
     CompilerEngine,
+    EngineMeta,
     engine_register,
     translate,
 )
@@ -48,11 +49,11 @@ class CXFreezeEngine(CompilerEngine):
     - Icon specification
     """
 
-    id: str = "cx_freeze"
-    name: str = "CX_Freeze"
-    version: str = "1.1.0"
-    required_core_version: str = "1.0.0"
-    required_sdk_version: str = "1.0.0"
+    meta = EngineMeta(
+        id="cx_freeze",
+        name="CX_Freeze",
+        version="1.1.0",
+    )
 
     @property
     def required_tools(self) -> dict[str, list[str]]:
