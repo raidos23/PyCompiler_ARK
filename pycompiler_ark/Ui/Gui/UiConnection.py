@@ -33,7 +33,7 @@ try:
 except Exception:
     QSvgRenderer = None  # type: ignore[assignment]
 
-from pycompiler_ark.Ui.i18n import show_language_dialog
+from pycompiler_ark.Ui.i18n import show_language_dialog, translate
 
 
 def _detect_system_color_scheme() -> str:
@@ -215,6 +215,16 @@ def _setup_sidebar_logo(self) -> None:
     logo_label.setPixmap(pixmap)
     logo_label.setAlignment(Qt.AlignCenter)
     logo_label.setScaledContents(True)
+
+
+def _declare_i18n(widget, **props) -> None:
+    if widget is None:
+        return
+    for key, value in props.items():
+        try:
+            widget.setProperty(key, value)
+        except Exception:
+            pass
 
 
 def _auto_resize_for_screen(self) -> None:
@@ -471,19 +481,33 @@ def _setup_widgets(self) -> None:
         self.btn_acasl_loader.hide()
         self.btn_acasl_loader.setEnabled(False)
 
-    if self.label_workspace_status:
-        try:
-            ws = getattr(self, "workspace_dir", None)
-            if ws:
-                self.label_workspace_status.setText(
-                    self.tr(f"Workspace : {ws}", f"Workspace: {ws}")
-                )
-            else:
-                self.label_workspace_status.setText(
-                    self.tr("Workspace : Aucun", "Workspace: None")
-                )
-        except Exception:
-            pass
+    for widget, props in (
+        (self.btn_select_folder, {"i18n_text_key": "select_folder", "i18n_tooltip_key": "tt_select_folder"}),
+        (self.btn_select_files, {"i18n_text_key": "select_files", "i18n_tooltip_key": "tt_select_files"}),
+        (self.compile_btn, {"i18n_text_key": "build_all", "i18n_tooltip_key": "tt_build_all"}),
+        (self.cancel_btn, {"i18n_text_key": "cancel_all", "i18n_tooltip_key": "tt_cancel_all"}),
+        (self.btn_suggest_deps, {"i18n_text_key": "suggest_deps", "i18n_tooltip_key": "tt_suggest_deps"}),
+        (self.btn_help, {"i18n_text_key": "help", "i18n_tooltip_key": "tt_help"}),
+        (self.btn_show_stats, {"i18n_text_key": "show_stats", "i18n_tooltip_key": "tt_show_stats"}),
+        (self.advanced_cfg_btn, {"i18n_text_key": "advanced_config"}),
+        (self.btn_remove_file, {"i18n_text_key": "btn_remove_file", "i18n_tooltip_key": "tt_remove_file"}),
+        (self.btn_clear_workspace, {"i18n_text_key": "btn_clear_workspace", "i18n_tooltip_key": "tt_clear_workspace"}),
+        (self.btn_bc_loader, {"i18n_text_key": "bc_loader", "i18n_tooltip_key": "tt_bc_loader"}),
+        (self.venv_button, {"i18n_text_key": "venv_button", "i18n_tooltip_key": "tt_venv_button"}),
+        (self.label_workspace_section, {"i18n_text_key": "label_workspace_section"}),
+        (self.venv_label, {"i18n_text_key": "venv_label", "i18n_text_system_key": "venv_label_system", "i18n_system_attr": "use_system_python"}),
+        (self.label_folder, {"i18n_text_key": "label_folder"}),
+        (self.label_files_section, {"i18n_text_key": "label_files_section"}),
+        (self.label_tools, {"i18n_text_key": "label_tools"}),
+        (self.label_options_section, {"i18n_text_key": "label_options_section"}),
+        (self.label_logs_section, {"i18n_text_key": "label_logs_section"}),
+        (self.label_progress, {"i18n_text_key": "label_progress"}),
+        (self.select_lang, {"i18n_text_key": "choose_language_button", "i18n_text_system_key": "choose_language_system_button", "i18n_system_attr": "language_pref", "i18n_tooltip_key": "tt_select_lang"}),
+        (self.select_theme, {"i18n_text_key": "choose_theme_button", "i18n_text_system_key": "choose_theme_system_button", "i18n_system_attr": "theme", "i18n_tooltip_key": "tt_select_theme"}),
+        (self.label_workspace_status, {"i18n_text_key": "label_workspace_status", "i18n_none_key": "label_workspace_status_none", "i18n_format_attr": "workspace_dir"}),
+        (self.file_filter_input, {"i18n_placeholder_key": "file_filter_placeholder"}),
+    ):
+        _declare_i18n(widget, **props)
 
 
 def _setup_compiler_tabs(self) -> None:
@@ -551,13 +575,9 @@ def _connect_signals(self) -> None:
     _connect_clicked(self.btn_help, self.show_help_dialog)
 
     if self.btn_show_stats:
-        self.btn_show_stats.setToolTip(
-            "Afficher les statistiques de compilation (temps, nombre de fichiers, mémoire)"
-        )
         _connect_clicked(self.btn_show_stats, self.show_statistics)
 
     if self.select_lang:
-        self.select_lang.setToolTip("Choisir la langue de l'interface utilisateur.")
         _connect_clicked(self.select_lang, lambda: show_language_dialog(self))
 
     if self.select_theme:
@@ -876,18 +896,16 @@ def apply_theme(self, pref: str) -> None:
         self.theme = pref or "System"
         if hasattr(self, "select_theme") and self.select_theme:
             try:
-                tr = getattr(self, "_tr", None)
-                if isinstance(tr, dict):
-                    if self.theme == "System":
-                        val = (
-                            tr.get("choose_theme_system_button")
-                            or tr.get("choose_theme_button")
-                            or tr.get("select_theme")
-                        )
-                    else:
-                        val = tr.get("choose_theme_button") or tr.get("select_theme")
-                    if isinstance(val, str) and val:
-                        self.select_theme.setText(val)
+                if self.theme == "System":
+                    val = translate(
+                        self.id,
+                        "choose_theme_system_button",
+                        translate(self.id, "choose_theme_button", "Theme"),
+                    )
+                else:
+                    val = translate(self.id, "choose_theme_button", "Theme")
+                if isinstance(val, str) and val:
+                    self.select_theme.setText(val)
             except Exception:
                 pass
         try:
@@ -942,8 +960,14 @@ def show_theme_dialog(self) -> None:
         start_index = options.index(current) if current in options else 0
     except Exception:
         start_index = 0
-    title = self.tr("Choisir un thème", "Choose theme")
-    label = self.tr("Thème :", "Theme:")
+    title = translate(
+        self.id, "choose_theme_title", getattr(self, "windowTitle", lambda: "")()
+    )
+    label = translate(
+        self.id,
+        "choose_theme_label",
+        getattr(getattr(self, "select_theme", None), "text", lambda: "")(),
+    )
     choice, ok = QInputDialog.getItem(self, title, label, options, start_index, False)
     if ok and choice:
         self.theme = choice

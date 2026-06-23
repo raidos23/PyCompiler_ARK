@@ -22,125 +22,31 @@ import os
 import re
 from typing import Any
 
-try:
-    import yaml
-except ImportError:  # pragma: no cover - secours si PyYAML manque
-    yaml = None
-
-# Built-in fallback for English if language files are missing
-FALLBACK_EN: dict[str, Any] = {
-    "name": "English",
-    "code": "en",
-    "_meta": {"code": "en", "name": "English"},
-    "select_folder": "Choose workspace",
-    "select_files": "Add files",
-    "build_all": "Compile",
-    "cancel_all": "Cancel",
-    "suggest_deps": "Dependencies",
-    "help": "Help",
-    "help_title": "Help",
-    "help_text": "<b>PyCompiler ARK — Quick Help</b><br><ul><li>1) Select the Workspace and add your .py files.</li><li>2) Configure pre‑compile plugins via <b>Bc Plugins Loader</b> (BCASL).</li><li>3) Configure options in the <b>PyInstaller</b>, <b>Nuitka</b> or <b>CX_Freeze</b> tab.</li><li>4) Click <b>Build</b> and follow the logs.</li></ul><b>Notes</b><br><ul><li>When a build starts, all action controls are disabled (including Bc Plugins Loader) until it finishes or is canceled.</li><li>Pre‑compilation (BCASL) completes before compilation.</li><li>A <i>venv</i> can be created automatically; requirements.txt is installed if present; tools are installed into the venv as needed.</li><li>Plugins‑initiated workspace changes are auto‑applied; running builds are canceled before switching.</li></ul><b>License</b>: Apache-2.0 — <a href='https://www.apache.org/licenses/LICENSE-2.0'>apache.org/licenses/LICENSE-2.0</a><br><b>Author</b>: Samuel Amen Ague<br>© 2026 Samuel Amen Ague",
-    "show_stats": "Statistics",
-    "select_lang": "Language",
-    "advanced_config": "Advanced config",
-    "save_engine_configs": "Save engine configs",
-    "venv_button": "Choose venv folder",
-    "label_workspace_section": "Workspace",
-    "venv_label": "Venv selected: None",
-    "venv_label_system": "Venv selected: System Python",
-    "label_folder": "No folder selected",
-    "label_files_section": "Files to compile",
-    "btn_remove_file": "Remove",
-    "label_logs_section": "Compilation log",
-    "msg_venv_choice_title": "Venv setup",
-    "msg_venv_choice_text": "Create a venv automatically or select a venv (System Python included).",
-    "msg_no_workspace_title": "Workspace missing",
-    "msg_no_workspace_text": "Select a Workspace to continue.",
-    "msg_no_files_title": "No files to compile",
-    "msg_no_files_text": "Add files or choose a Workspace.",
-    "msg_no_workspace_or_venv_title": "Workspace or venv missing",
-    "msg_no_workspace_or_venv_text": "Select a Workspace or a Venv to analyze dependencies.",
-    "msg_invalid_venv_title": "Invalid Venv",
-    "msg_invalid_venv_text": "The selected folder is not a valid venv. Retry or create a venv?",
-    "action_select_workspace": "Select Workspace",
-    "action_init_project": "Initialize Project",
-    "action_add_files": "Add files",
-    "action_select_venv": "Select Venv",
-    "action_create_venv": "Create venv",
-    "action_retry": "Retry",
-    "action_cancel": "Cancel",
-    "label_tools": "Tools",
-    "label_options_section": "Compilation options",
-    "label_progress": "Compilation progress",
-    "label_workspace_status": "Workspace: {path}",
-    "label_workspace_status_none": "Workspace: None",
-    "file_filter_placeholder": "Filter list…",
-    "btn_clear_workspace": "Clear workspace",
-    "init_project_title": "Initialize Project",
-    "init_project_entry": "Entry Point:",
-    "init_project_gen_reqs": "Generate requirements.txt",
-    "init_project_create_venv": "Create virtual environment (venv)",
-    "init_project_install_reqs": "Install requirements",
-    "init_project_note": "Note: This will create an ark.yml file and setup the project structure.",
-    "init_project_success": "Project initialized successfully!",
-    "choose_language_title": "Choose language",
-    "choose_language_label": "Language:",
-    "choose_language_system": "System",
-    "choose_language_system_button": "Language (System)",
-    "choose_language_button": "Language",
-    "select_theme": "Theme",
-    "choose_theme_button": "Theme",
-    "choose_theme_system_button": "Theme (System)",
-    "tt_select_folder": "Select the workspace folder.",
-    "tt_select_files": "Add files to compile.",
-    "tt_build_all": "Start compilation.",
-    "tt_cancel_all": "Cancel the current compilation.",
-    "tt_remove_file": "Remove the selected file(s) from the list.",
-    "tt_help": "Show help.",
-    "tt_bc_loader": "Open BC Plugins Loader.",
-    "tt_venv_button": "Manually select a venv directory to use for compilation.",
-    "tt_suggest_deps": "Analyze project dependencies.",
-    "tt_show_stats": "Show compilation statistics.",
-    "tt_more_actions": "More actions.",
-    "tt_clear_workspace": "Clear the file list and reset the selection.",
-}
-
+import yaml
 
 # Cache global pour les traductions chargées (évite les rechargements)
 _TRANSLATION_CACHE: dict[str, dict[str, Any]] = {}
 _LANGUAGES_CACHE: list[dict[str, str]] | None = None
 _CACHE_LOCK = asyncio.Lock()
 _LANGUAGE_EXTENSIONS = (".yml", ".yaml")
+_ACTIVE_TRANSLATIONS: dict[str, Any] = {}
 
 
 def _project_root() -> str:
     """Return project root path (sync, no blocking I/O)."""
-    try:
-        return os.path.abspath(
-            os.path.join(os.path.dirname(os.path.abspath(__file__)), os.pardir)
-        )
-    except Exception:
-        return os.getcwd()
+    return os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), os.pardir))
 
 
 def _languages_dir() -> str:
     """Return `languages` directory path (sync, no blocking I/O)."""
-    try:
-        return os.path.abspath(os.path.join(_project_root(), "languages"))
-    except Exception:
-        return "languages"
+    return os.path.abspath(os.path.join(_project_root(), "languages"))
 
 
 def _load_language_data_sync(path: str) -> dict[str, Any] | None:
     """Charger un fichier de langue YAML."""
-    try:
-        with open(path, encoding="utf-8") as f:
-            if yaml is None:
-                return None
-            data = yaml.safe_load(f)
-        return data if isinstance(data, dict) else None
-    except Exception:
-        return None
+    with open(path, encoding="utf-8") as f:
+        data = yaml.safe_load(f)
+    return data if isinstance(data, dict) else None
 
 
 # Normalization helper must be pure (no I/O or system lookups)
@@ -148,10 +54,7 @@ def _load_language_data_sync(path: str) -> dict[str, Any] | None:
 async def normalize_lang_pref(pref: str | None) -> str:
     if pref is None:
         return "System"
-    try:
-        pref = str(pref).strip()
-    except Exception:
-        return "System"
+    pref = str(pref).strip()
     if not pref:
         return "System"
     if pref.lower() in ("system", "auto", "default"):
@@ -169,20 +72,15 @@ async def normalize_lang_pref(pref: str | None) -> str:
 
 
 def _resolve_system_language_sync() -> str:
-    try:
-        # Python 3.15+: avoid deprecated locale.getdefaultlocale().
-        loc = (locale.getlocale()[0] or "").strip()
-        if not loc:
-            # Fallback env-based locale resolution for non-initialized locale contexts.
-            loc = (
-                os.environ.get("LC_ALL")
-                or os.environ.get("LC_MESSAGES")
-                or os.environ.get("LANG")
-                or ""
-            ).strip()
-        return "fr" if loc.lower().startswith(("fr", "fr_")) else "en"
-    except Exception:
-        return "en"
+    loc = (locale.getlocale()[0] or "").strip()
+    if not loc:
+        loc = (
+            os.environ.get("LC_ALL")
+            or os.environ.get("LC_MESSAGES")
+            or os.environ.get("LANG")
+            or ""
+        ).strip()
+    return "fr" if loc.lower().startswith(("fr", "fr_")) else "en"
 
 
 def _load_language_file_sync(code: str) -> tuple[str | None, dict[str, Any] | None]:
@@ -190,10 +88,7 @@ def _load_language_file_sync(code: str) -> tuple[str | None, dict[str, Any] | No
 
     Returns (resolved_code, data) or (None, None) if not found/invalid.
     """
-    try:
-        raw = str(code or "").strip()
-    except Exception:
-        raw = ""
+    raw = str(code or "").strip()
     if not raw:
         return None, None
 
@@ -204,10 +99,7 @@ def _load_language_file_sync(code: str) -> tuple[str | None, dict[str, Any] | No
     candidates: list[str] = []
 
     def _add(candidate: str) -> None:
-        try:
-            cand = str(candidate).strip()
-        except Exception:
-            return
+        cand = str(candidate).strip()
         if cand and cand not in candidates:
             candidates.append(cand)
 
@@ -217,20 +109,14 @@ def _load_language_file_sync(code: str) -> tuple[str | None, dict[str, Any] | No
     _add(raw.replace("-", "_"))
 
     # Case normalization for locale-like codes (pt-BR, zh-CN, en-US, ...)
-    try:
-        norm = raw.replace("_", "-")
-        parts = [p for p in norm.split("-") if p]
-        if len(parts) >= 2:
-            _add(f"{parts[0].lower()}-{parts[1].upper()}")
-    except Exception:
-        pass
+    norm = raw.replace("_", "-")
+    parts = [p for p in norm.split("-") if p]
+    if len(parts) >= 2:
+        _add(f"{parts[0].lower()}-{parts[1].upper()}")
 
     # Base language (e.g., fr_FR -> fr)
-    try:
-        base = raw.replace("_", "-").split("-")[0]
-        _add(base)
-    except Exception:
-        pass
+    base = raw.replace("_", "-").split("-")[0]
+    _add(base)
 
     # Try direct file matches first
     for cand in candidates:
@@ -242,69 +128,50 @@ def _load_language_file_sync(code: str) -> tuple[str | None, dict[str, Any] | No
                     return os.path.splitext(os.path.basename(fpath))[0], data
 
     # Case-insensitive fallback
-    try:
-        files = [
-            f
-            for f in os.listdir(lang_dir)
-            if os.path.splitext(f)[1].lower() in _LANGUAGE_EXTENSIONS
-        ]
-        lower_map = {f.lower(): f for f in files}
-        for cand in candidates:
-            for ext in _LANGUAGE_EXTENSIONS:
-                target = f"{cand}{ext}".lower()
-                if target in lower_map:
-                    fpath = os.path.join(lang_dir, lower_map[target])
-                    data = _load_language_data_sync(fpath)
-                    if data is not None:
-                        return os.path.splitext(os.path.basename(fpath))[0], data
-    except Exception:
-        pass
+    files = [
+        f
+        for f in os.listdir(lang_dir)
+        if os.path.splitext(f)[1].lower() in _LANGUAGE_EXTENSIONS
+    ]
+    lower_map = {f.lower(): f for f in files}
+    for cand in candidates:
+        for ext in _LANGUAGE_EXTENSIONS:
+            target = f"{cand}{ext}".lower()
+            if target in lower_map:
+                fpath = os.path.join(lang_dir, lower_map[target])
+                data = _load_language_data_sync(fpath)
+                if data is not None:
+                    return os.path.splitext(os.path.basename(fpath))[0], data
 
     return None, None
 
 
 def _available_languages_sync() -> list[dict[str, str]]:
     langs: list[dict[str, str]] = []
-    try:
-        path = _languages_dir()
-        if not os.path.isdir(path):
-            return [
-                {
-                    "code": FALLBACK_EN["_meta"]["code"],
-                    "name": FALLBACK_EN["_meta"]["name"],
-                }
-            ]
-        preferred: dict[str, dict[str, str]] = {}
-        for fname in sorted(os.listdir(path)):
-            ext = os.path.splitext(fname)[1].lower()
-            if ext not in _LANGUAGE_EXTENSIONS:
-                continue
-            default_code = os.path.splitext(fname)[0]
-            fpath = os.path.join(path, fname)
-            data = _load_language_data_sync(fpath)
-            meta = data.get("_meta", {}) if isinstance(data, dict) else {}
-            name = None
-            code = None
-            if isinstance(data, dict):
-                name = data.get("name") or (
-                    meta.get("name") if isinstance(meta, dict) else None
-                )
-                code = data.get("code") or (
-                    meta.get("code") if isinstance(meta, dict) else None
-                )
-            entry = {
-                "code": code or default_code,
-                "name": name or default_code,
-            }
-            if entry["code"] not in preferred:
-                preferred[entry["code"]] = entry
-    except Exception:
-        pass
+    path = _languages_dir()
+    if not os.path.isdir(path):
+        return []
+    preferred: dict[str, dict[str, str]] = {}
+    for fname in sorted(os.listdir(path)):
+        ext = os.path.splitext(fname)[1].lower()
+        if ext not in _LANGUAGE_EXTENSIONS:
+            continue
+        default_code = os.path.splitext(fname)[0]
+        fpath = os.path.join(path, fname)
+        data = _load_language_data_sync(fpath)
+        meta = data.get("_meta", {}) if isinstance(data, dict) else {}
+        name = None
+        code = None
+        if isinstance(data, dict):
+            name = data.get("name") or (meta.get("name") if isinstance(meta, dict) else None)
+            code = data.get("code") or (meta.get("code") if isinstance(meta, dict) else None)
+        entry = {
+            "code": code or default_code,
+            "name": name or default_code,
+        }
+        if entry["code"] not in preferred:
+            preferred[entry["code"]] = entry
     langs = list(preferred.values())
-    if not langs:
-        langs = [
-            {"code": FALLBACK_EN["_meta"]["code"], "name": FALLBACK_EN["_meta"]["name"]}
-        ]
     return langs
 
 
@@ -325,12 +192,35 @@ def _merge_translations(
                 continue
             if isinstance(val, str) and val.strip():
                 merged[key] = val
-        # Preserve metadata if provided
         if isinstance(override.get("_meta"), dict):
             merged["_meta"] = dict(override.get("_meta", {}))
 
     # Ensure metadata is normalized and consistent
     return _normalize_translation_meta(merged, code)
+
+
+def set_active_translations(tr: dict[str, Any] | None) -> None:
+    """Définit le catalogue actif utilisé par l'API publique `translate()`."""
+    global _ACTIVE_TRANSLATIONS
+    _ACTIVE_TRANSLATIONS = dict(tr) if isinstance(tr, dict) else {}
+
+
+def get_active_translations() -> dict[str, Any]:
+    """Retourne le catalogue actif courant."""
+    return dict(_ACTIVE_TRANSLATIONS) if isinstance(_ACTIVE_TRANSLATIONS, dict) else {}
+
+
+def translate(domain: object | None, key: str, default: str | None = None) -> str:
+    """Retourne la traduction active pour une clé donnée.
+
+    `domain` est conservé pour garder la même signature que les engines et les plugins.
+    """
+    tr = get_active_translations()
+    if isinstance(tr, dict):
+        value = tr.get(key)
+        if isinstance(value, str) and value.strip():
+            return value
+    return default if default is not None else str(key)
 
 
 # Public async Plugins with real-time caching and error handling
@@ -383,13 +273,17 @@ async def get_translations(lang_pref: str | None) -> dict[str, Any]:
         # Charger depuis le disque en thread pool (avec résolution flexible)
         resolved_code, data = await asyncio.to_thread(_load_language_file_sync, code)
 
+        # Charger l'anglais depuis les fichiers de langue comme base commune
+        _, base_en = await asyncio.to_thread(_load_language_file_sync, "en")
+        base_catalog = base_en if isinstance(base_en, dict) else {}
+
         # Si un code résolu différent est déjà en cache, le réutiliser
         if resolved_code and resolved_code in _TRANSLATION_CACHE:
             return _TRANSLATION_CACHE[resolved_code]
 
-        # Merge robuste avec fallback anglais
+        # Merge à partir du catalogue anglais chargé sur disque
         merged = _merge_translations(
-            FALLBACK_EN, data if isinstance(data, dict) else None, resolved_code or code
+            base_catalog, data if isinstance(data, dict) else None, resolved_code or code
         )
 
         # Mettre en cache de manière thread-safe (code demandé + code résolu)
@@ -401,8 +295,8 @@ async def get_translations(lang_pref: str | None) -> dict[str, Any]:
         return merged
 
     except Exception:
-        # Fallback ultime: retourner l'anglais avec métadonnées normalisées
-        return _normalize_translation_meta(FALLBACK_EN.copy(), "en")
+        # Fallback ultime: retourner un catalogue vide avec métadonnées normalisées
+        return _normalize_translation_meta({}, "en")
 
 
 def _normalize_translation_meta(data: dict[str, Any], code: str) -> dict[str, Any]:
@@ -859,6 +753,54 @@ def log_i18n_level(
     log_with_level(gui, level, msg, redact=redact, clamp=clamp)
 
 
+def i18n_synchro(self, lang_pref: str, tr: dict[str, Any]) -> str:
+    """Synchronise la langue active sur l'UI, les engines et les plugins."""
+    meta = tr.get("_meta", {}) if isinstance(tr, dict) else {}
+    lang_name = meta.get("name", lang_pref) if isinstance(meta, dict) else lang_pref
+
+    setattr(self, "_tr", tr)
+    set_active_translations(tr)
+
+    self.current_language = lang_name
+    self.language = lang_pref
+    self.language_pref = lang_pref
+
+    _apply_main_app_translations(self, tr)
+
+    for cb in getattr(self, "_language_refresh_callbacks", []) or []:
+        cb()
+
+    from pycompiler_ark.Ui.Gui.IdeLikeGui.connections import (
+        _retranslate_ide_like_actions,
+    )
+
+    _retranslate_ide_like_actions(self)
+
+    import pycompiler_ark.Core.engine as engines_loader
+
+    engines_loader.registry.apply_translations(self, tr)
+
+    from pycompiler_ark.Plugins_SDK.GeneralContext import (
+        apply_translations as sdk_apply_tr,
+    )
+
+    sdk_apply_tr(self, tr)
+
+    if hasattr(self, "save_preferences"):
+        self.save_preferences()
+
+    self.current_language = lang_name
+
+    log_i18n_level(
+        self,
+        "info",
+        f"Langue appliquée : {lang_name}",
+        f"Language applied: {lang_name}",
+    )
+
+    return str(lang_name)
+
+
 def apply_language(self, lang_display: str) -> None:
     """Apply selected language through centralized i18n flow."""
     from pycompiler_ark.Ui.Gui.Globals import _run_coro_async
@@ -876,389 +818,133 @@ def apply_language(self, lang_display: str) -> None:
         if isinstance(res, Exception):
             return
         code, tr = res
-        meta = tr.get("_meta", {})
-        try:
-            setattr(self, "_tr", tr)
-        except Exception:
-            pass
-        try:
-            self.current_language = meta.get("name", lang_display)
-            self.language = lang_display
-            self.language_pref = lang_display
-        except Exception:
-            pass
-        _apply_main_app_translations(self, tr)
-        # Notifier les moteurs pour rafraîchir leurs libellés
-        try:
-            for cb in getattr(self, "_language_refresh_callbacks", []) or []:
-                try:
-                    cb()
-                except Exception:
-                    pass
-            # Ensure IDE-like overflow menu labels update immediately (no restart required).
-            try:
-                from pycompiler_ark.Ui.Gui.IdeLikeGui.connections import (
-                    _retranslate_ide_like_actions,
-                )
-
-                _retranslate_ide_like_actions(self)
-            except Exception:
-                pass
-            try:
-                import pycompiler_ark.Core.engine as engines_loader
-
-                engines_loader.registry.apply_translations(self, tr)
-            except Exception:
-                pass
-            # Propagate translations to plugin SDK (independent from BCASL)
-            try:
-                from pycompiler_ark.Plugins_SDK.GeneralContext import (
-                    apply_translations as sdk_apply_tr,
-                )
-
-                sdk_apply_tr(self, tr)
-            except Exception:
-                pass
-        except Exception:
-            pass
-        try:
-            self.save_preferences()
-        except Exception:
-            pass
-        try:
-            log_i18n_level(
-                self,
-                "info",
-                f"Langue appliquée : {self.current_language}",
-                f"Language applied: {self.current_language}",
-            )
-        except Exception:
-            pass
+        i18n_synchro(self, lang_display, tr)
 
     _run_coro_async(_do(), _on_result, ui_owner=self)
 
 
-# PyCompiler ARK main GUI translation - FUSED VERSION
 def _apply_main_app_translations(self, tr: dict[str, object]) -> None:
-    """Apply translations to main app UI elements.
-
-    This is a fused version combining the best features from both implementations.
-    Uses the _set helper pattern for cleaner code while maintaining comprehensive coverage.
-    """
-
-    # Internal helper for setting widget text with fallback
-    def _set(attr: str, key: str, method: str = "setText"):
-        try:
-            widget = getattr(self, attr, None)
-            value = tr.get(key)
-            if widget is not None and value:
-                getattr(widget, method)(value)
-        except Exception:
-            pass
-
-    # Internal helper for tooltips with fallback
-    def _tt(key: str, current: str) -> str:
-        try:
-            val = tr.get(key)
-            if isinstance(val, str) and val.strip():
+    def _prop(obj: Any, name: str) -> Any:
+        if hasattr(obj, "property"):
+            val = obj.property(name)
+            if val is not None:
                 return val
-        except Exception:
-            pass
-        return current
+        return getattr(obj, name, None)
 
-    try:
-        # === BUTTONS ===
-        # Sidebar & main buttons
-        _set("btn_select_folder", "select_folder")
-        _set("btn_select_files", "select_files")
-        _set("compile_btn", "build_all")
-        _set("cancel_btn", "cancel_all")
-        _set("btn_suggest_deps", "suggest_deps")
-        _set("btn_help", "help")
-        _set("btn_show_stats", "show_stats")
-        _set("advanced_cfg_btn", "advanced_config")
-        _set("btn_remove_file", "btn_remove_file")
-        _set("btn_clear_workspace", "btn_clear_workspace")
+    def _is_system_value(value: Any) -> bool:
+        return str(value).strip().lower() == "system"
 
-        # Bouton de langue (variante System vs simple), sans valeur de secours
-        try:
-            if getattr(self, "select_lang", None):
-                if (
-                    getattr(self, "language_pref", getattr(self, "language", "System"))
-                    == "System"
-                ):
-                    val = tr.get("choose_language_system_button") or tr.get(
-                        "choose_language_button"
+    def _iter_objects(root: Any):
+        stack = [root]
+        seen: set[int] = set()
+        while stack:
+            obj = stack.pop()
+            if obj is None:
+                continue
+            oid = id(obj)
+            if oid in seen:
+                continue
+            seen.add(oid)
+            yield obj
+            children = list(obj.children())
+            for child in reversed(children):
+                stack.append(child)
+
+    def _apply_text(obj: Any, key: str, default: str | None = None) -> None:
+        if hasattr(obj, "setText"):
+            value = translate(self.id, key, default)
+            if isinstance(value, str) and value:
+                obj.setText(value)
+
+    def _apply_tooltip(obj: Any, key: str, default: str | None = None) -> None:
+        if hasattr(obj, "setToolTip"):
+            value = translate(self.id, key, default)
+            if isinstance(value, str) and value:
+                obj.setToolTip(value)
+
+    def _apply_placeholder(obj: Any, key: str, default: str | None = None) -> None:
+        if hasattr(obj, "setPlaceholderText"):
+            value = translate(self.id, key, default)
+            if isinstance(value, str) and value:
+                obj.setPlaceholderText(value)
+
+    def _apply_tab_text(obj: Any, key: str, default: str | None = None) -> None:
+        parent = getattr(obj, "parent", lambda: None)()
+        while parent is not None:
+            if hasattr(parent, "indexOf") and hasattr(parent, "setTabText"):
+                idx = parent.indexOf(obj)
+                if idx >= 0:
+                    value = translate(self.id, key, default)
+                    if isinstance(value, str) and value:
+                        parent.setTabText(idx, value)
+                break
+            parent = getattr(parent, "parent", lambda: None)()
+
+    for obj in _iter_objects(self):
+        text_key = _prop(obj, "i18n_text_key")
+        if text_key:
+            system_key = _prop(obj, "i18n_text_system_key")
+            system_attr = _prop(obj, "i18n_system_attr")
+            format_attr = _prop(obj, "i18n_format_attr")
+            none_key = _prop(obj, "i18n_none_key")
+            current = obj.text() if hasattr(obj, "text") else None
+
+            chosen_key = str(text_key)
+            if system_key and system_attr and _is_system_value(getattr(self, str(system_attr), None)):
+                chosen_key = str(system_key)
+
+            if format_attr:
+                ctx = getattr(self, str(format_attr), None)
+                if ctx:
+                    value = translate(
+                        self.id, chosen_key, current if isinstance(current, str) else None
                     )
-                else:
-                    val = tr.get("choose_language_button")
-                if val:
-                    self.select_lang.setText(val)
-        except Exception:
-            pass
+                    if isinstance(value, str) and value:
+                        obj.setText(value.replace("{path}", str(ctx)))
+                elif none_key:
+                    _apply_text(obj, str(none_key), current if isinstance(current, str) else None)
+                continue
 
-        # Bouton de thème (variante System vs simple), sans valeur de secours
-        try:
-            if getattr(self, "select_theme", None):
-                if getattr(self, "theme", "System") == "System":
-                    val = tr.get("choose_theme_system_button") or tr.get(
-                        "choose_theme_button"
-                    )
-                else:
-                    val = tr.get("choose_theme_button")
-                if val:
-                    self.select_theme.setText(val)
-        except Exception:
-            pass
+            _apply_text(obj, chosen_key, current if isinstance(current, str) else None)
 
-        # Venv button and icon buttons
-        _set("venv_button", "venv_button")
-        _set("btn_select_icon", "btn_select_icon")
-        _set("btn_nuitka_icon", "btn_nuitka_icon")
+        tooltip_key = _prop(obj, "i18n_tooltip_key")
+        if tooltip_key:
+            current = obj.toolTip() if hasattr(obj, "toolTip") else None
+            _apply_tooltip(obj, str(tooltip_key), current if isinstance(current, str) else None)
 
-        # === LABELS ===
-        _set("label_workspace_section", "label_workspace_section")
-        if getattr(self, "use_system_python", False) and getattr(
-            self, "venv_label", None
-        ):
-            val = tr.get("venv_label_system") if isinstance(tr, dict) else None
-            if not val:
-                try:
-                    val = self.tr(
-                        "Venv sélectionné : Python système",
-                        "Venv selected: System Python",
-                    )
-                except Exception:
-                    val = "Venv selected: System Python"
-            try:
-                self.venv_label.setText(val)
-            except Exception:
-                pass
-        else:
-            _set("venv_label", "venv_label")
-        _set("label_folder", "label_folder")
-        _set("label_files_section", "label_files_section")
-        _set("label_tools", "label_tools")
-        _set("label_options_section", "label_options_section")
-        _set("label_logs_section", "label_logs_section")
-        _set("label_progress", "label_progress")
-
-        # Workspace status label (dynamic path if available)
-        if getattr(self, "label_workspace_status", None):
-            try:
-                ws = getattr(self, "workspace_dir", None)
-                if ws:
-                    tmpl = tr.get("label_workspace_status") or "Workspace: {path}"
-                    self.label_workspace_status.setText(
-                        str(tmpl).replace("{path}", str(ws))
-                    )
-                else:
-                    val = tr.get("label_workspace_status_none") or "Workspace: None"
-                    self.label_workspace_status.setText(str(val))
-            except Exception:
-                pass
-
-        # === TABS ===
-        if getattr(self, "compiler_tabs", None):
-            try:
-                if getattr(self, "tab_pyinstaller", None):
-                    idx = self.compiler_tabs.indexOf(self.tab_pyinstaller)
-                    if idx >= 0:
-                        self.compiler_tabs.setTabText(
-                            idx,
-                            str(
-                                tr.get(
-                                    "tab_pyinstaller", self.compiler_tabs.tabText(idx)
-                                )
-                            ),
-                        )
-                if getattr(self, "tab_nuitka", None):
-                    idx2 = self.compiler_tabs.indexOf(self.tab_nuitka)
-                    if idx2 >= 0:
-                        self.compiler_tabs.setTabText(
-                            idx2,
-                            str(tr.get("tab_nuitka", self.compiler_tabs.tabText(idx2))),
-                        )
-                # CX_Freeze tab if exists
-                if getattr(self, "tab_cx_freeze", None):
-                    idx3 = self.compiler_tabs.indexOf(self.tab_cx_freeze)
-                    if idx3 >= 0:
-                        self.compiler_tabs.setTabText(
-                            idx3,
-                            str(
-                                tr.get(
-                                    "tab_cx_freeze", self.compiler_tabs.tabText(idx3)
-                                )
-                            ),
-                        )
-            except Exception:
-                pass
-
-        # === CHECKBOXES/OPTIONS ===
-        # PyInstaller options
-        _set("opt_onefile", "opt_onefile")
-        _set("opt_windowed", "opt_windowed")
-        _set("opt_noconfirm", "opt_noconfirm")
-        _set("opt_clean", "opt_clean")
-        _set("opt_noupx", "opt_noupx")
-        _set("opt_main_only", "opt_main_only")
-        _set("opt_debug", "opt_debug")
-        _set("opt_auto_install", "opt_auto_install")
-        _set("opt_silent_errors", "opt_silent_errors")
-
-        # Nuitka options
-        _set("nuitka_onefile", "nuitka_onefile")
-        _set("nuitka_standalone", "nuitka_standalone")
-        _set("nuitka_disable_console", "nuitka_disable_console")
-        _set("nuitka_show_progress", "nuitka_show_progress")
-
-        # CX_Freeze options (if exists)
-        _set("cx_onefile", "cx_onefile")
-        _set("cx_console", "cx_console")
-
-        # === PLACEHOLDERS ===
-        if getattr(self, "nuitka_output_dir", None):
-            try:
-                ph = tr.get("nuitka_output_dir")
-                if isinstance(ph, str) and ph.strip():
-                    self.nuitka_output_dir.setPlaceholderText(ph)
-            except Exception:
-                pass
-        if getattr(self, "file_filter_input", None):
-            try:
-                ph = tr.get("file_filter_placeholder")
-                if isinstance(ph, str) and ph.strip():
-                    self.file_filter_input.setPlaceholderText(ph)
-            except Exception:
-                pass
-
-        # === TOOLTIPS ===
-        # Main buttons tooltips
-        if getattr(self, "btn_select_folder", None):
-            self.btn_select_folder.setToolTip(
-                _tt("tt_select_folder", self.btn_select_folder.toolTip())
-            )
-        if getattr(self, "btn_select_files", None):
-            self.btn_select_files.setToolTip(
-                _tt("tt_select_files", self.btn_select_files.toolTip())
-            )
-        if getattr(self, "compile_btn", None):
-            self.compile_btn.setToolTip(_tt("tt_build_all", self.compile_btn.toolTip()))
-        if getattr(self, "cancel_btn", None):
-            self.cancel_btn.setToolTip(_tt("tt_cancel_all", self.cancel_btn.toolTip()))
-        if getattr(self, "btn_remove_file", None):
-            self.btn_remove_file.setToolTip(
-                _tt("tt_remove_file", self.btn_remove_file.toolTip())
-            )
-        if getattr(self, "btn_select_icon", None):
-            self.btn_select_icon.setToolTip(
-                _tt("tt_select_icon", self.btn_select_icon.toolTip())
-            )
-        if getattr(self, "btn_nuitka_icon", None):
-            self.btn_nuitka_icon.setToolTip(
-                _tt("tt_nuitka_icon", self.btn_nuitka_icon.toolTip())
-            )
-        if getattr(self, "btn_help", None):
-            self.btn_help.setToolTip(_tt("tt_help", self.btn_help.toolTip()))
-        if getattr(self, "btn_bc_loader", None):
-            self.btn_bc_loader.setToolTip(
-                _tt("tt_bc_loader", self.btn_bc_loader.toolTip())
-            )
-        if getattr(self, "venv_button", None):
-            self.venv_button.setToolTip(
-                _tt("tt_venv_button", self.venv_button.toolTip())
-            )
-        if getattr(self, "btn_suggest_deps", None):
-            self.btn_suggest_deps.setToolTip(
-                _tt("tt_suggest_deps", self.btn_suggest_deps.toolTip())
-            )
-        if getattr(self, "activity_btn_deps", None):
-            self.activity_btn_deps.setToolTip(
-                _tt("tt_suggest_deps", self.activity_btn_deps.toolTip())
-            )
-        if getattr(self, "btn_show_stats", None):
-            self.btn_show_stats.setToolTip(
-                _tt("tt_show_stats", self.btn_show_stats.toolTip())
-            )
-        if getattr(self, "btn_clear_workspace", None):
-            self.btn_clear_workspace.setToolTip(
-                _tt("tt_clear_workspace", self.btn_clear_workspace.toolTip())
+        placeholder_key = _prop(obj, "i18n_placeholder_key")
+        if placeholder_key:
+            current = obj.placeholderText() if hasattr(obj, "placeholderText") else None
+            _apply_placeholder(
+                obj, str(placeholder_key), current if isinstance(current, str) else None
             )
 
-        # Output directory tooltip
-        if getattr(self, "output_dir_input", None):
-            self.output_dir_input.setToolTip(
-                _tt("tt_output_dir", self.output_dir_input.toolTip())
-            )
-
-        # Options checkboxes tooltips
-        if getattr(self, "opt_onefile", None):
-            self.opt_onefile.setToolTip(
-                _tt("tt_opt_onefile", self.opt_onefile.toolTip())
-            )
-        if getattr(self, "opt_windowed", None):
-            self.opt_windowed.setToolTip(
-                _tt("tt_opt_windowed", self.opt_windowed.toolTip())
-            )
-        if getattr(self, "opt_noconfirm", None):
-            self.opt_noconfirm.setToolTip(
-                _tt("tt_opt_noconfirm", self.opt_noconfirm.toolTip())
-            )
-        if getattr(self, "opt_clean", None):
-            self.opt_clean.setToolTip(_tt("tt_opt_clean", self.opt_clean.toolTip()))
-        if getattr(self, "opt_noupx", None):
-            self.opt_noupx.setToolTip(_tt("tt_opt_noupx", self.opt_noupx.toolTip()))
-        if getattr(self, "opt_main_only", None):
-            self.opt_main_only.setToolTip(
-                _tt("tt_opt_main_only", self.opt_main_only.toolTip())
-            )
-        if getattr(self, "opt_debug", None):
-            self.opt_debug.setToolTip(_tt("tt_opt_debug", self.opt_debug.toolTip()))
-        if getattr(self, "opt_auto_install", None):
-            self.opt_auto_install.setToolTip(
-                _tt("tt_opt_auto_install", self.opt_auto_install.toolTip())
-            )
-        if getattr(self, "opt_silent_errors", None):
-            self.opt_silent_errors.setToolTip(
-                _tt("tt_opt_silent_errors", self.opt_silent_errors.toolTip())
-            )
-
-        # Nuitka specific tooltips
-        if getattr(self, "nuitka_disable_console", None):
-            self.nuitka_disable_console.setToolTip(
-                _tt("tt_nuitka_disable_console", self.nuitka_disable_console.toolTip())
-            )
-
-    except Exception:
-        pass
+        tab_key = _prop(obj, "i18n_tab_key")
+        if tab_key:
+            current = obj.text() if hasattr(obj, "text") else None
+            _apply_tab_text(obj, str(tab_key), current if isinstance(current, str) else None)
 
 
 # LANGUAGE DIALOG and all ARK language's system translations propagation
 def show_language_dialog(self):
     from PySide6.QtWidgets import QInputDialog
 
-    try:
-        langs = asyncio.run(available_languages())
-    except Exception:
-        langs = [{"code": "en", "name": "English"}, {"code": "fr", "name": "Français"}]
+    langs = asyncio.run(available_languages())
     # Build options list with 'System' at top
     options = ["System"] + [str(x.get("name", x.get("code", ""))) for x in langs]
     # Determine current index
     current_pref = getattr(self, "language", "System")
-    try:
-        if current_pref == "System":
-            start_index = 0
-        else:
-            # map code->index
-            codes = [str(x.get("code", "")) for x in langs]
-            try:
-                start_index = 1 + codes.index(current_pref)
-            except Exception:
-                start_index = 0
-    except Exception:
+    if current_pref == "System":
         start_index = 0
-    title = tr_fr_en(self, "Choisir la langue", "Choose language")
-    label = tr_fr_en(self, "Langue :", "Language:")
+    else:
+        codes = [str(x.get("code", "")) for x in langs]
+        start_index = 1 + codes.index(current_pref) if current_pref in codes else 0
+    title = translate(self.id, "choose_language_title", getattr(self, "windowTitle", lambda: "")())
+    label = translate(
+        self.id,
+        "choose_language_label",
+        getattr(getattr(self, "select_lang", None), "text", lambda: "")(),
+    )
     choice, ok = QInputDialog.getItem(self, title, label, options, start_index, False)
     if ok and choice:
         lang_pref = (
@@ -1273,62 +959,8 @@ def show_language_dialog(self):
                 "en",
             )
         )
-        try:
-            # Apply initial language from preference using async i18n
-            tr = asyncio.run(get_translations(lang_pref))
-            _apply_main_app_translations(self, tr)
-            try:
-                setattr(self, "_tr", tr)
-            except Exception:
-                pass
-            # Propagate translations to all engines so their UI matches the app language immediately
-            try:
-                import pycompiler_ark.Core.engine as engines_loader
-
-                engines_loader.registry.apply_translations(self, tr)
-            except Exception:
-                pass
-            # Propagate translations to plugin SDK (independent from BCASL)
-            try:
-                from pycompiler_ark.Plugins_SDK.GeneralContext import (
-                    apply_translations as sdk_apply_tr,
-                )
-
-                sdk_apply_tr(self, tr)
-            except Exception:
-                pass
-            # Update language preference markers
-            try:
-                self.language_pref = lang_pref
-            except Exception:
-                pass
-            self.language = lang_pref
-            try:
-                if hasattr(self, "save_preferences"):
-                    self.save_preferences()
-            except Exception:
-                pass
-            meta = tr.get("_meta", {}) if isinstance(tr, dict) else {}
-            lang_name = (
-                meta.get("name", lang_pref) if isinstance(meta, dict) else lang_pref
-            )
-            try:
-                self.current_language = lang_name
-            except Exception:
-                pass
-            log_i18n_level(
-                self,
-                "info",
-                f"Langue appliquée: {lang_name}",
-                f"Language applied: {lang_name}",
-            )
-        except Exception as e:
-            log_i18n_level(
-                self,
-                "warning",
-                f"Échec application de la langue: {e}",
-                f"Failed to apply language: {e}",
-            )
+        tr = asyncio.run(get_translations(lang_pref))
+        i18n_synchro(self, lang_pref, tr)
     else:
         log_i18n_level(
             self,
