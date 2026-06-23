@@ -622,6 +622,17 @@ class UiFeatures:
         except Exception:
             pass
 
+    def unregister_language_refresh(self, callback: Callable) -> None:
+        """Unregister a previously registered language refresh callback."""
+        try:
+            callbacks = getattr(self, "_language_refresh_callbacks", None)
+            if not callbacks:
+                return
+            if callback in callbacks:
+                callbacks.remove(callback)
+        except Exception:
+            pass
+
     def log_i18n(self, fr: str, en: str) -> None:
         """Append a localized message to the log."""
         try:
