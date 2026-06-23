@@ -1,6 +1,10 @@
 _meta:
   code: fr
   name: Français
+tab_title: "Nettoyeur de sortie"
+ui_safety: "Sécurité"
+ui_confirm: "Demander confirmation avant de nettoyer le dossier de sortie"
+ui_hint: "Ce plugin supprime la sortie de compilation avant la compilation."
 dialog_title: "Nettoyeur de sortie"
 warn_no_build_context: "OutputCleaner: Aucun BuildContext disponible. Impossible d'identifier le dossier de sortie."
 warn_no_output_dir: "OutputCleaner: Aucun output_dir défini dans BuildContext."
