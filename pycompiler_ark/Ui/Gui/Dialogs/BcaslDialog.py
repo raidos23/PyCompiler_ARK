@@ -53,6 +53,10 @@ from PySide6.QtWidgets import (
 )
 
 from pycompiler_ark.Core.Configs import load_ark_config, save_ark_config
+from pycompiler_ark.Plugins_SDK.GeneralContext import (
+    refresh_widget_translations,
+    translate,
+)
 
 # ---------------------------------------------------------------------------
 # Helpers Thème
@@ -453,14 +457,17 @@ class BcaslPipelineDialog(QDialog):
 
         self._sections: list[_SectionWidget] = []
         self._plugin_ui_state: dict[str, dict[str, Any]] = {}
+        self._language_refresh_cb = self._refresh_i18n
 
         self.setWindowTitle(gui.tr("BCASL Pipeline", "BCASL Pipeline"))
         self.resize(860, 680)
         self.setModal(False)
 
         self._build_ui()
+        self._register_language_refresh()
         self._install_shortcuts()
         self._push_undo()  # état initial
+        self._refresh_i18n()
 
     # ------------------------------------------------------------------
     # Construction UI
@@ -558,6 +565,10 @@ class BcaslPipelineDialog(QDialog):
             )
         else:
             self._tabs.setToolTip("")
+
+    def closeEvent(self, event) -> None:
+        self._unregister_language_refresh()
+        super().closeEvent(event)
 
     def _populate_sections(self) -> None:
         """Grouper les plugins par section et les insérer."""
@@ -677,12 +688,72 @@ class BcaslPipelineDialog(QDialog):
                     widget = tab_res
                 if widget is None:
                     continue
+                try:
+                    if hasattr(widget, "setObjectName"):
+                        widget.setObjectName(f"plugin_{pid}")
+                    if hasattr(widget, "setProperty"):
+                        widget.setProperty("i18n_domain", pid)
+                except Exception:
+                    pass
                 if not title:
                     title = getattr(getattr(plugin, "meta", None), "name", None) or pid
                 self._tabs.addTab(widget, str(title))
-                self._plugin_ui_state[pid] = {"config": base_cfg, "on_save": on_save}
+                self._plugin_ui_state[pid] = {
+                    "config": base_cfg,
+                    "on_save": on_save,
+                    "widget": widget,
+                    "title_default": str(title),
+                }
             except Exception:
                 continue
+
+    def _register_language_refresh(self) -> None:
+        try:
+            if hasattr(self._gui, "register_language_refresh"):
+                self._gui.register_language_refresh(self._language_refresh_cb)
+        except Exception:
+            pass
+
+    def _unregister_language_refresh(self) -> None:
+        try:
+            if hasattr(self._gui, "unregister_language_refresh"):
+                self._gui.unregister_language_refresh(self._language_refresh_cb)
+        except Exception:
+            pass
+
+    def _refresh_i18n(self) -> None:
+        try:
+            self.setWindowTitle(self._gui.tr("BCASL Pipeline", "BCASL Pipeline"))
+        except Exception:
+            pass
+        try:
+            if hasattr(self, "_chk_bcasl_enabled"):
+                self._chk_bcasl_enabled.setText(
+                    self._gui.tr("Activer BCASL", "Enable BCASL")
+                )
+        except Exception:
+            pass
+        try:
+            if hasattr(self, "_tabs"):
+                self._tabs.setTabText(0, self._gui.tr("Pipeline", "Pipeline"))
+        except Exception:
+            pass
+        for pid, state in self._plugin_ui_state.items():
+            widget = state.get("widget")
+            if widget is not None:
+                try:
+                    refresh_widget_translations(widget, pid)
+                except Exception:
+                    pass
+            idx = self._tabs.indexOf(widget) if widget is not None else -1
+            if idx >= 0:
+                title_default = str(state.get("title_default", pid))
+                try:
+                    self._tabs.setTabText(
+                        idx, translate(pid, "tab_title", title_default)
+                    )
+                except Exception:
+                    pass
 
     # ------------------------------------------------------------------
     # Raccourcis clavier
