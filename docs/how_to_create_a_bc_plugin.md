@@ -223,9 +223,10 @@ Notes.
 - `create_tab(...)` may return a widget, a `(title, widget)` tuple, a `(title, widget, on_save)` tuple, or a dict with `title`, `widget`, and `on_save`.
 
 **Plugin i18n (GeneralContext)**
+
 Plugins can use the SDK i18n system with a `languages/` folder in the plugin package.
-The Core propagates language changes to the Plugin SDK, and the SDK loads
-translations for plugins found in `pycompiler_ark/Plugins/` by folder name.
+The host propagates language changes to the Plugin SDK, and the plugin reads the
+active catalog through `translate(...)`.
 
 Example layout:
 
@@ -233,31 +234,24 @@ Example layout:
 pycompiler_ark/Plugins/MyPlugin/
   __init__.py
   languages/
-    en.json
-    fr.json
+    en.yml
+    fr.yml
 ```
 
-Load and use, with live updates when the language changes:
+Recommended usage:
 
 ```python
-from pycompiler_ark.Plugins_SDK.GeneralContext import (
-    get_language_code, load_plugin_language_file,
-    register_plugin_translations, register_i18n_handler, translate,
-)
-
-def _load_i18n():
-    data = load_plugin_language_file(__package__, get_language_code())
-    register_plugin_translations("my.plugin.id", data)
-
-_load_i18n()
-register_i18n_handler(lambda gui, tr: _load_i18n())
+from pycompiler_ark.Plugins_SDK.GeneralContext import translate
 
 label = translate("my.plugin.id", "ui_title", "Default title")
 ```
 
 Notes.
 
-- The SDK also accepts the plugin folder name as ID (case‑insensitive).
+- Keep plugin-specific keys inside the plugin package only.
+- Use `translate(...)` directly in the plugin UI code.
+- Do not add a custom i18n refresh hook inside the plugin package; the host handles language synchronization.
+- The SDK also accepts the plugin folder name as ID (case-insensitive).
 - If a key is missing, `translate()` falls back to the default you pass in.
 
 **Sandbox and Resource Limits**

@@ -6,6 +6,8 @@ Thank you for your interest in contributing to PyCompiler ARK! This workshop is 
 
 If you are a developer looking to extend PyCompiler ARK's functionality, please refer to the following guides:
 
+- **Application i18n**: [app_i18n.md](https://github.com/raidos23/PyCompiler_ARK/blob/main/docs/app_i18n.md)
+  Learn how the main app UI declares translation keys and refreshes widgets.
 - **Creating a Compilation Engine**: [how_to_create_an_engine.md](https://github.com/raidos23/PyCompiler_ARK/blob/main/docs/how_to_create_an_engine.md)
   Learn how to package and register a new compiler (e.g., Py2Exe).
 - **Creating a Pre-Compile Plugin**: [how_to_create_a_bc_plugin.md](https://github.com/raidos23/PyCompiler_ARK/blob/main/docs/how_to_create_a_bc_plugin.md)
