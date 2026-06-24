@@ -376,61 +376,6 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
     # JOURNALISATION
     # =========================================================================
 
-    def _infer_log_level(self, text) -> str:
-        try:
-            s = str(text or "").strip()
-        except Exception:
-            s = ""
-        if not s:
-            return "info"
-        emoji_levels = {
-            "❌": "error",
-            "⚠️": "warning",
-            "✅": "success",
-            "ℹ️": "info",
-            "📝": "state",
-            "📋": "state",
-            "🔍": "state",
-            "🔧": "state",
-            "🔨": "state",
-            "➡️": "state",
-            "📦": "state",
-            "🗑️": "state",
-        }
-        for emoji, lvl in emoji_levels.items():
-            if s.startswith(emoji):
-                return lvl
-        low = s.lower()
-        if any(
-            tok in low
-            for tok in (
-                "error",
-                "erreur",
-                "échec",
-                "echec",
-                "failed",
-                "invalid",
-                "refus",
-            )
-        ):
-            return "error"
-        if any(tok in low for tok in ("warning", "avert", "warn", "attention")):
-            return "warning"
-        if any(tok in low for tok in ("success", "succès", "reussi", "réussi")):
-            return "success"
-        if any(tok in low for tok in ("state", "status", "état", "etat")):
-            return "state"
-        return "info"
-
-    def _safe_log(self, text):
-        """Write a log line with safe fallback behavior."""
-        try:
-            level = self._infer_log_level(text)
-            log_with_level(self, level, text)
-            return
-        except Exception:
-            pass
-
     # =========================================================================
     # TÂCHES EN ARRIÈRE-PLAN
     # =========================================================================

@@ -284,10 +284,12 @@ def run_engine_compile_streaming(
                     # message is already formatted by log_i18n_level
                     self.log_cb("", message)
 
-                def _safe_log(self, text, text_en=None, level=None):
-                    # Fallback for VenvManager
-                    msg = text_en if text_en else text
-                    self.log_cb("", msg)
+                def log_i18n(self, fr: str, en: str, level: str | None = None):
+                    from pycompiler_ark.Ui.i18n import log_i18n
+                    log_i18n(self, fr, en, level)
+
+                def log_i18n_level(self, level: str, fr: str, en: str):
+                    self.log_i18n(fr, en, level)
 
                 def tr(self, fr, en):
                     return en  # Simple fallback

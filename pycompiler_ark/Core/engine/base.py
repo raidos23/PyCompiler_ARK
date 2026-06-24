@@ -96,6 +96,13 @@ def resolve_engine_meta(engine_or_cls: object) -> EngineMeta:
 def log_i18n_level(gui, level: str, fr: str, en: str) -> None:
     """Minimal i18n log helper to avoid engine loader <-> engine_sdk circular imports."""
     try:
+        from pycompiler_ark.Ui.i18n import log_i18n
+        log_i18n(gui, fr, en, level)
+        return
+    except Exception:
+        pass
+
+    try:
         if hasattr(gui, "tr") and callable(getattr(gui, "tr")):
             msg = gui.tr(fr, en)
         else:
