@@ -234,6 +234,13 @@ def _map_ide_like_widgets(self) -> None:
     if self.label_workspace_status:
         self.label_workspace_status.setProperty("i18n_format_attr", "workspace_dir")
         self.label_workspace_status.setProperty("i18n_none_key", "label_workspace_status_none")
+    if self.file_filter_input:
+        self.file_filter_input.setProperty("i18n_placeholder_key", "file_filter_placeholder")
+    if self.btn_acasl_loader:
+        self.btn_acasl_loader.setProperty("i18n_text_key", "bc_loader")
+        self.btn_acasl_loader.setProperty("i18n_tooltip_key", "tt_bc_loader")
+    if self.activity_btn_deps:
+        self.activity_btn_deps.setProperty("i18n_tooltip_key", "tt_suggest_deps")
 
     _setup_status_bar(self)
 
