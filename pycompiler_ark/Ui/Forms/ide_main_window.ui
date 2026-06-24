@@ -42,14 +42,14 @@ QPushButton {
   padding: 4px 10px;
 }
 QPushButton:hover { background: #454545; }
-QPushButton#compile_btn {
+QPushButton#btn_build_all {
   background: #0e639c;
   border-color: #0e639c;
   color: #ffffff;
   font-weight: 600;
 }
-QPushButton#compile_btn:hover { background: #1177bb; }
-QPushButton#cancel_btn {
+QPushButton#btn_build_all:hover { background: #1177bb; }
+QPushButton#btn_cancel_all {
   background: #5a1d1d;
   border-color: #6a2a2a;
   color: #f2b8b8;
@@ -143,30 +143,30 @@ QProgressBar::chunk { background: #0e639c; }</string>
         </spacer>
        </item>
        <item>
-        <widget class="QPushButton" name="compile_btn">
-         <property name="minimumSize">
-          <size>
-           <width>124</width>
-           <height>34</height>
-          </size>
-         </property>
-         <property name="text">
-          <string>Build</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QPushButton" name="cancel_btn">
-         <property name="minimumSize">
-          <size>
-           <width>124</width>
-           <height>34</height>
-          </size>
-         </property>
-         <property name="text">
-          <string>Cancel</string>
-         </property>
-        </widget>
+        <widget class="QPushButton" name="btn_build_all">
+          <property name="minimumSize">
+           <size>
+            <width>124</width>
+            <height>34</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>Build</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="btn_cancel_all">
+          <property name="minimumSize">
+           <size>
+            <width>124</width>
+            <height>34</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>Cancel</string>
+          </property>
+         </widget>
        </item>
       </layout>
      </widget>
@@ -215,34 +215,34 @@ QProgressBar::chunk { background: #0e639c; }</string>
          <number>8</number>
         </property>
         <item>
-         <widget class="QToolButton" name="toolButton_more">
-          <property name="minimumSize">
-           <size>
-            <width>28</width>
-            <height>28</height>
-           </size>
-          </property>
-          <property name="toolTip">
-           <string>More tools</string>
-          </property>
-          <property name="text">
-           <string>...</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QToolButton" name="activity_btn_deps">
-          <property name="minimumSize">
-           <size>
-            <width>28</width>
-            <height>28</height>
-           </size>
-          </property>
-          <property name="toolTip">
-           <string>Analyser dépendances</string>
-          </property>
-          <property name="text">
-           <string/>
+          <widget class="QToolButton" name="btn_more_actions">
+           <property name="minimumSize">
+            <size>
+             <width>28</width>
+             <height>28</height>
+            </size>
+           </property>
+           <property name="toolTip">
+            <string>More tools</string>
+           </property>
+           <property name="text">
+            <string>...</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QToolButton" name="btn_activity_deps">
+           <property name="minimumSize">
+            <size>
+             <width>28</width>
+             <height>28</height>
+            </size>
+           </property>
+           <property name="toolTip">
+            <string>Analyser dépendances</string>
+           </property>
+           <property name="text">
+            <string/>
           </property>
          </widget>
         </item>
@@ -313,11 +313,11 @@ QProgressBar::chunk { background: #0e639c; }</string>
            </widget>
           </item>
           <item>
-           <widget class="QPushButton" name="venv_button">
-            <property name="text">
-             <string>Venv</string>
-            </property>
-           </widget>
+            <widget class="QPushButton" name="btn_venv_button">
+             <property name="text">
+              <string>Venv</string>
+             </property>
+            </widget>
           </item>
          </layout>
         </item>
@@ -462,40 +462,40 @@ QProgressBar::chunk { background: #0e639c; }</string>
            </widget>
           </item>
           <item>
-           <widget class="QPushButton" name="advanced_cfg_btn">
-            <property name="text">
-             <string>Advanced Config</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QPushButton" name="btn_help">
-            <property name="text">
-             <string>Help</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QPushButton" name="btn_show_stats">
-            <property name="text">
-             <string>Stats</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QPushButton" name="select_lang">
-
-            <property name="text">
-             <string>Language</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QPushButton" name="select_theme">
-            <property name="text">
-             <string>Theme</string>
-            </property>
-           </widget>
+           <widget class="QPushButton" name="btn_advanced_config">
+             <property name="text">
+              <string>Advanced Config</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="btn_help">
+             <property name="text">
+              <string>Help</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="btn_show_stats">
+             <property name="text">
+              <string>Stats</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="btn_select_lang">
+ 
+             <property name="text">
+              <string>Language</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="btn_select_theme">
+             <property name="text">
+              <string>Theme</string>
+             </property>
+            </widget>
           </item>
           <item>
            <widget class="QPushButton" name="btn_acasl_loader">

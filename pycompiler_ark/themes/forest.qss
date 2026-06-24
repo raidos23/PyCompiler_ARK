@@ -63,34 +63,34 @@ QPushButton:disabled {
 }
 
 /* Boutons principaux */
-QPushButton#compile_btn {
+QPushButton#btn_build_all {
   background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #38AF76, stop:1 #2FA36B);
   color: #ffffff;
   border-color: #2FA36B;
   font-weight: 600;
 }
-QPushButton#compile_btn:hover { 
+QPushButton#btn_build_all:hover { 
   background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #4ABA84, stop:1 #3CAA75);
   border-color: #38AF76;
 }
-QPushButton#compile_btn:pressed { 
+QPushButton#btn_build_all:pressed { 
   background: #258A5F; 
 }
-QPushButton#compile_btn:disabled {
+QPushButton#btn_build_all:disabled {
   background: #1A1D21;
   color: #55595F;
   border-color: #1F2329;
 }
-QPushButton#cancel_btn {
+QPushButton#btn_cancel_all {
   background: #3A2023;
   color: #ffb3ba;
   border: 1px solid #5A2A30;
 }
-QPushButton#cancel_btn:hover { 
+QPushButton#btn_cancel_all:hover { 
   background: #44262A;
   border-color: #6A3A40;
 }
-QPushButton#cancel_btn:disabled {
+QPushButton#btn_cancel_all:disabled {
   background: #1A1D21;
   color: #55595F;
   border-color: #1F2329;

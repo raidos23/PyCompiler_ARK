@@ -304,7 +304,7 @@ def _apply_button_icons(self) -> None:
             def _colors(text: str) -> list[str]:
                 return re.findall(r"#[0-9a-fA-F]{3,6}", text)
 
-            for selector in ("QPushButton#compile_btn", "#compile_btn"):
+            for selector in ("QPushButton#btn_build_all", "#btn_build_all"):
                 block = _block(selector)
                 if block:
                     colors = _colors(block)
@@ -421,7 +421,7 @@ def _setup_widgets(self) -> None:
         return self.ui.findChild(cls, name)
 
     self.btn_select_folder = _find(QPushButton, "btn_select_folder")
-    self.venv_button = _find(QPushButton, "venv_button")
+    self.venv_button = _find(QPushButton, "btn_venv_button")
     self.venv_label = _find(QLabel, "venv_label")
     self.label_folder = _find(QLabel, "label_folder")
     self.label_workspace_status = _find(QLabel, "label_workspace_status")
@@ -439,8 +439,8 @@ def _setup_widgets(self) -> None:
     self.btn_remove_file = _find(QPushButton, "btn_remove_file")
     self.btn_clear_workspace = _find(QPushButton, "btn_clear_workspace")
 
-    self.compile_btn = _find(QPushButton, "compile_btn")
-    self.cancel_btn = _find(QPushButton, "cancel_btn")
+    self.compile_btn = _find(QPushButton, "btn_build_all")
+    self.cancel_btn = _find(QPushButton, "btn_cancel_all")
     self.btn_help = _find(QPushButton, "btn_help")
 
     self.btn_suggest_deps = _find(QPushButton, "btn_suggest_deps")
@@ -451,9 +451,9 @@ def _setup_widgets(self) -> None:
     self.progress = _find(QProgressBar, "progress")
     self.log = _find(QTextEdit, "log")
     self.btn_show_stats = _find(QPushButton, "btn_show_stats")
-    self.advanced_cfg_btn = _find(QPushButton, "advanced_cfg_btn")
-    self.select_lang = _find(QPushButton, "select_lang")
-    self.select_theme = _find(QPushButton, "select_theme")
+    self.advanced_cfg_btn = _find(QPushButton, "btn_advanced_config")
+    self.select_lang = _find(QPushButton, "btn_select_lang")
+    self.select_theme = _find(QPushButton, "btn_select_theme")
 
     for _lbl in (self.label_folder, self.venv_label):
         if _lbl is None:
@@ -711,7 +711,7 @@ def _extract_accent_color_for_icons(css_text: str) -> str | None:
         def _colors(text: str) -> list[str]:
             return re.findall(r"#[0-9a-fA-F]{3,6}", text)
 
-        for selector in ("QPushButton#compile_btn", "#compile_btn"):
+        for selector in ("QPushButton#btn_build_all", "#btn_build_all"):
             block = _block(selector)
             if block:
                 colors = _colors(block)
