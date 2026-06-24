@@ -81,11 +81,11 @@ class SafeGuiBridge(QObject):
         except Exception:
             return en
 
-    def _safe_log(self, text, text_en=None, level=None):
-        if text_en:
-            self.log_i18n_triggered.emit(level or "info", text, text_en)
-        else:
-            self.log_triggered.emit(level or "info", text)
+    def log_i18n(self, fr: str, en: str, level: str | None = None) -> None:
+        self.log_i18n_triggered.emit(level or "info", fr, en)
+
+    def log_i18n_level(self, level: str, fr: str, en: str) -> None:
+        self.log_i18n_triggered.emit(level, fr, en)
 
     @property
     def log(self):

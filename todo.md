@@ -1,5 +1,5 @@
-# refactor
-- [] cnetraliser toute les `def _declare_i18n` dans Ui/i18n.py cat il sont tous identique.recherche dabord parotut avant de faire la centralisation.
-- [] appliquer le i18n à help_text dans uifeatures.
-- [] les engine ne doivent avoir access que a leur sdk de meme que les plugins.
-- [] pour tous les i18n analyser pour voir si il nest pas possible de inteegre le declare i18n dna stranslate pour que on est plus beoin de declarer et on fera juste `translate(self.id, key, default)`.
+# Refactor Status
+
+- [x] Centraliser tout les `def log_i18n` dans `pycompiler_ark/Ui/i18n.py` comme seule méthode pour le logging i18n de l'app.
+- [x] Retirer l'utilisation des `safe_logs` et `_safe_log` dans toute l'appli pour privilégier l'usage de `log_i18n`.
+- [x] Éviter le hardcoding dans i18n en nettoyant les noms des boutons et en exploitant la convention de traduction automatique par `tt_*`, `btn_*`, `tab_*` du système i18n et les propriétés dynamiques Qt.
