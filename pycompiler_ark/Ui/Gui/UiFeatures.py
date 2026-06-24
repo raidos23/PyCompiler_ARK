@@ -636,29 +636,8 @@ class UiFeatures:
     def log_i18n(self, fr: str, en: str) -> None:
         """Append a localized message to the log."""
         try:
-            from pycompiler_ark.Ui.i18n import log_i18n_level
-
-            lvl = "info"
-            for emo, lv in (
-                ("❌", "error"),
-                ("⚠️", "warning"),
-                ("❗", "warning"),
-                ("✅", "success"),
-                ("ℹ️", "info"),
-                ("⏩", "state"),
-                ("📝", "state"),
-                ("📋", "state"),
-                ("🔍", "state"),
-                ("🔧", "state"),
-                ("🔨", "state"),
-                ("➡️", "state"),
-                ("📦", "state"),
-                ("🗑️", "state"),
-            ):
-                if str(fr).startswith(emo) or str(en).startswith(emo):
-                    lvl = lv
-                    break
-            log_i18n_level(self, lvl, fr, en)
+            from pycompiler_ark.Ui.i18n import log_i18n
+            log_i18n(self, fr, en)
         except Exception:
             try:
                 msg = self.tr(fr, en)
@@ -666,7 +645,6 @@ class UiFeatures:
                 msg = en
             try:
                 from pycompiler_ark.Ui.i18n import log_with_level
-
                 log_with_level(self, "info", msg)
             except Exception:
                 pass

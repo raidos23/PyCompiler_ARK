@@ -747,6 +747,47 @@ def log_with_level(
     _console_log(lvl, label, msg)
 
 
+def log_i18n(
+    gui: Any,
+    fr: str,
+    en: str,
+    level: str | None = None,
+    *,
+    redact: bool = True,
+    clamp: bool = True,
+) -> None:
+    """Translate and log a message, automatically inferring the level from emojis if not provided."""
+    lvl = level
+    if lvl is None:
+        lvl = "info"
+        fr_str = str(fr)
+        en_str = str(en)
+        for emo, lv in (
+            ("❌", "error"),
+            ("⚠️", "warning"),
+            ("❗", "warning"),
+            ("✅", "success"),
+            ("ℹ️", "info"),
+            ("⏩", "state"),
+            ("📝", "state"),
+            ("📋", "state"),
+            ("🔍", "state"),
+            ("🔧", "state"),
+            ("🔨", "state"),
+            ("➡️", "state"),
+            ("📦", "state"),
+            ("🗑️", "state"),
+        ):
+            if fr_str.startswith(emo) or en_str.startswith(emo):
+                lvl = lv
+                break
+
+    fr2 = _strip_emoji_prefix(fr)
+    en2 = _strip_emoji_prefix(en)
+    msg = tr(gui, fr2, en2)
+    log_with_level(gui, lvl, msg, redact=redact, clamp=clamp)
+
+
 def log_i18n_level(
     gui: Any,
     level: str,
@@ -757,10 +798,7 @@ def log_i18n_level(
     clamp: bool = True,
 ) -> None:
     """Translate then log a level-tagged message."""
-    fr2 = _strip_emoji_prefix(fr)
-    en2 = _strip_emoji_prefix(en)
-    msg = tr(gui, fr2, en2)
-    log_with_level(gui, level, msg, redact=redact, clamp=clamp)
+    log_i18n(gui, fr, en, level, redact=redact, clamp=clamp)
 
 
 def i18n_synchro(self, lang_pref: str, tr: dict[str, Any]) -> str:
@@ -847,81 +885,42 @@ def _apply_main_app_translations(self, tr: dict[str, object]) -> None:
     def _binding_for_name(name: str) -> str:
         if not name:
             return ""
-        return {
-            "select_lang": "choose_language_button",
-            "select_theme": "choose_theme_button",
-            "act_language": "choose_language_button",
-            "act_theme": "choose_theme_button",
-            "btn_show_stats": "show_stats",
-            "btn_suggest_deps": "suggest_deps",
-            "btn_help": "help",
-            "btn_bc_loader": "bc_loader",
-            "btn_acasl_loader": "bc_loader",
-            "status_hint": "status_ready",
-            "act_workspace": "action_select_workspace",
-            "act_init": "action_init_project",
-            "act_venv": "action_select_venv",
-            "act_add_files": "action_add_files",
-            "act_clear_workspace": "btn_clear_workspace",
-            "act_stats": "show_stats",
-            "act_language": "choose_language_button",
-            "act_theme": "choose_theme_button",
-            "act_advanced": "advanced_config",
-            "act_lock": "lock_manager",
-            "act_save_engines": "save_engine_configs",
-            "act_help": "help",
-        }.get(name, name)
+        if name in tr:
+            return name
+        for prefix in ("btn_", "action_", "tab_", "lbl_", "label_"):
+            if name.startswith(prefix):
+                key = name[len(prefix):]
+                if key in tr:
+                    return key
+        return name
 
     def _tooltip_for_name(name: str) -> str:
         if not name:
             return ""
-        if name in {
-            "btn_select_folder",
-            "btn_select_files",
-            "compile_btn",
-            "cancel_btn",
-            "btn_remove_file",
-            "btn_select_icon",
-            "btn_nuitka_icon",
-            "btn_help",
-            "btn_bc_loader",
-            "btn_suggest_deps",
-            "btn_show_stats",
-            "btn_clear_workspace",
-            "venv_button",
-        }:
-            return f"tt_{name[4:]}" if name.startswith("btn_") else f"tt_{name}"
-        if name == "activity_btn_deps":
-            return "tt_suggest_deps"
-        if name == "btn_acasl_loader":
-            return "tt_bc_loader"
-        if name == "select_lang":
-            return "tt_select_lang"
-        if name == "select_theme":
-            return "tt_select_theme"
-        if name == "act_language":
-            return "tt_select_lang"
-        if name == "act_theme":
-            return "tt_select_theme"
-        if name in {"toolButton_more", "more_btn", "btn_more_actions"}:
-            return "tt_more_actions"
-        if name == "output_dir_input":
-            return "tt_output_dir"
-        if name == "windowed_checkbox":
-            return "tt_windowed"
-        if name == "disable_console_checkbox":
-            return "tt_disable_console"
-        if name == "debug_checkbox":
-            return "tt_debug"
-        if name == "verbose_checkbox":
-            return "tt_verbose"
-        return f"tt_{name}" if name.startswith("opt_") else ""
+        if name.startswith("btn_"):
+            candidate = f"tt_{name[4:]}"
+            if candidate in tr:
+                return candidate
+        candidate = f"tt_{name}"
+        if candidate in tr:
+            return candidate
+        if name.startswith("opt_"):
+            candidate = f"tt_{name}"
+            if candidate in tr:
+                return candidate
+        return ""
 
     def _placeholder_for_name(name: str) -> str:
-        if name == "file_filter_input":
-            return "file_filter_placeholder"
-        if name == "nuitka_output_dir":
-            return "nuitka_output_dir"
+        if not name:
+            return ""
+        candidate = f"{name}_placeholder"
+        if candidate in tr:
+            return candidate
+        for prefix in ("btn_", "action_", "tab_", "lbl_", "label_"):
+            if name.startswith(prefix):
+                candidate = f"{name[len(prefix):]}_placeholder"
+                if candidate in tr:
+                    return candidate
         return ""
 
     def _iter_objects(root: Any):
@@ -981,19 +980,6 @@ def _apply_main_app_translations(self, tr: dict[str, object]) -> None:
             current = obj.text() if hasattr(obj, "text") else None
 
             chosen_key = str(text_key)
-            if not _prop(obj, "i18n_text_key"):
-                if name in {"select_lang", "act_language"}:
-                    system_key = "choose_language_system_button"
-                    system_attr = "language_pref"
-                elif name in {"select_theme", "act_theme"}:
-                    system_key = "choose_theme_system_button"
-                    system_attr = "theme"
-                elif name == "venv_label":
-                    system_key = "venv_label_system"
-                    system_attr = "use_system_python"
-                elif name == "label_workspace_status":
-                    format_attr = "workspace_dir"
-                    none_key = "label_workspace_status_none"
 
             if system_key and system_attr and _is_system_value(getattr(self, str(system_attr), None)):
                 chosen_key = str(system_key)

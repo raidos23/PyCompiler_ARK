@@ -179,7 +179,7 @@ def _map_ide_like_widgets(self) -> None:
         return self.ui.findChild(cls, name)
 
     self.btn_select_folder = _find(QPushButton, "btn_select_folder")
-    self.venv_button = _find(QPushButton, "venv_button")
+    self.venv_button = _find(QPushButton, "btn_venv_button")
     self.venv_label = _find(QLabel, "venv_label")
     self.label_folder = _find(QLabel, "label_folder")
     self.label_workspace_status = _find(QLabel, "label_workspace_status")
@@ -193,33 +193,55 @@ def _map_ide_like_widgets(self) -> None:
     self.compiler_tabs = _find(QTabWidget, "compiler_tabs")
     self.tab_hello = _find(QWidget, "tab_hello")
     self.file_list = _find(QListWidget, "file_list")
-    self.compile_btn = _find(QPushButton, "compile_btn")
-    self.cancel_btn = _find(QPushButton, "cancel_btn")
+    self.compile_btn = _find(QPushButton, "btn_build_all")
+    self.cancel_btn = _find(QPushButton, "btn_cancel_all")
     self.btn_help = _find(QPushButton, "btn_help")
     self.btn_suggest_deps = _find(QPushButton, "btn_suggest_deps")
-    self.activity_btn_deps = _find(QToolButton, "activity_btn_deps")
+    self.activity_btn_deps = _find(QToolButton, "btn_activity_deps")
     self.btn_bc_loader = _find(QPushButton, "btn_bc_loader")
     self.btn_acasl_loader = _find(QPushButton, "btn_acasl_loader")
     self.btn_show_stats = _find(QPushButton, "btn_show_stats")
-    self.select_lang = _find(QPushButton, "select_lang")
-    self.select_theme = _find(QPushButton, "select_theme")
-    self.advanced_cfg_btn = _find(QPushButton, "advanced_cfg_btn")
+    self.select_lang = _find(QPushButton, "btn_select_lang")
+    self.select_theme = _find(QPushButton, "btn_select_theme")
+    self.advanced_cfg_btn = _find(QPushButton, "btn_advanced_config")
     self.btn_select_files = _find(QPushButton, "btn_select_files")
     self.btn_remove_file = _find(QPushButton, "btn_remove_file")
     self.btn_clear_workspace = _find(QPushButton, "btn_clear_workspace")
     self.btn_select_icon = None
     self.btn_nuitka_icon = None
-    self.toolButton_more = _find(QToolButton, "toolButton_more")
+    self.toolButton_more = _find(QToolButton, "btn_more_actions")
     self.log = _find(QTextEdit, "log")
     self.progress = _find(QProgressBar, "progress")
     self.statusbar = self.findChild(QStatusBar, "statusbar")
     self.status_hint = None
     try:
         self.status_hint = (
-            self.statusbar.findChild(QLabel, "status_hint") if self.statusbar else None
+            self.statusbar.findChild(QLabel, "status_ready") if self.statusbar else None
         )
     except Exception:
         self.status_hint = None
+
+    # Set properties for dynamic i18n
+    if self.select_lang:
+        self.select_lang.setProperty("i18n_text_system_key", "choose_language_system_button")
+        self.select_lang.setProperty("i18n_system_attr", "language_pref")
+    if self.select_theme:
+        self.select_theme.setProperty("i18n_text_system_key", "choose_theme_system_button")
+        self.select_theme.setProperty("i18n_system_attr", "theme")
+    if self.venv_label:
+        self.venv_label.setProperty("i18n_text_system_key", "venv_label_system")
+        self.venv_label.setProperty("i18n_system_attr", "use_system_python")
+    if self.label_workspace_status:
+        self.label_workspace_status.setProperty("i18n_format_attr", "workspace_dir")
+        self.label_workspace_status.setProperty("i18n_none_key", "label_workspace_status_none")
+    if self.file_filter_input:
+        self.file_filter_input.setProperty("i18n_placeholder_key", "file_filter_placeholder")
+    if self.btn_acasl_loader:
+        self.btn_acasl_loader.setProperty("i18n_text_key", "bc_loader")
+        self.btn_acasl_loader.setProperty("i18n_tooltip_key", "tt_bc_loader")
+    if self.activity_btn_deps:
+        self.activity_btn_deps.setProperty("i18n_tooltip_key", "tt_suggest_deps")
+
     _setup_status_bar(self)
 
 
@@ -367,14 +389,14 @@ def _setup_more_tools_menu(self) -> None:
         act_language = QAction(
             translate(self, "choose_language_button", "Language"), menu
         )
-        act_language.setObjectName("act_language")
+        act_language.setObjectName("btn_select_lang")
         act_language.triggered.connect(
             lambda: getattr(self, "show_language_dialog", lambda: None)()
         )
         menu.addAction(act_language)
 
         act_theme = QAction(translate(self, "choose_theme_button", "Theme"), menu)
-        act_theme.setObjectName("act_theme")
+        act_theme.setObjectName("btn_select_theme")
         act_theme.triggered.connect(lambda: _open_theme_dialog(self))
         menu.addAction(act_theme)
 
@@ -605,7 +627,7 @@ def _setup_status_bar(self) -> None:
             return
     try:
         self.status_hint = QLabel("Ready")
-        self.status_hint.setObjectName("status_hint")
+        self.status_hint.setObjectName("status_ready")
         self.status_hint.setText(translate(self, "status_ready", "Ready"))
         self.statusbar.addPermanentWidget(self.status_hint, 1)
     except Exception:
@@ -623,7 +645,7 @@ def _apply_status_bar_theme(self, dark: bool, fg: str, border: str) -> None:
         f"border-top: 1px solid {border};"
         "}"
         "QStatusBar::item { border: none; }"
-        "QLabel#status_hint { padding: 2px 8px; }"
+        "QLabel#status_ready { padding: 2px 8px; }"
     )
     try:
         self.statusbar.setStyleSheet(style)

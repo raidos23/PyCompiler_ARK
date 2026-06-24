@@ -49,10 +49,14 @@ tt_build_all: Démarrer la compilation
 
 The recommended pattern is:
 
-1. create the widget
-2. attach i18n properties to it
-3. let `pycompiler_ark/Ui/i18n.py` resolve the active language
-4. let the generic walker read the widget properties and call `translate(self.id, ...)`
+1. **Naming Convention (Automatic)**:
+   Name your widget using one of the following prefixes to have it translated automatically:
+   - `btn_<key>` (e.g. `btn_select_folder` translates using `select_folder` and resolves its tooltip as `tt_select_folder`).
+   - `action_<key>` (e.g. `action_select_workspace`).
+   - `tab_<key>` (e.g. `tab_hello`).
+
+2. **Explicit Properties**:
+   Attach explicit `i18n_*` properties to the widget (via PySide's `.setProperty()` or inside the `.ui` file) if you want to override the default convention lookup.
 
 If you need to attach properties manually, use:
 
@@ -90,6 +94,20 @@ Typical use cases:
 - `i18n_text_system_key` + `i18n_system_attr`: switch to a different label when the app is on `System`
 - `i18n_format_attr`: value inserted into a translated template, such as a workspace path
 - `i18n_none_key`: fallback text when the dynamic attribute is empty
+
+## **When to Use What**
+
+- **Naming Conventions (`btn_*`, `action_*`, `tab_*`)**:
+  - **When**: Building standard persistent UI elements like buttons, actions, and tab widgets.
+  - **Why**: Zero configuration. Just name the widget correctly and the system translates the text and tooltip automatically.
+
+- **Explicit Properties (`i18n_text_key`, `i18n_format_attr`, etc.)**:
+  - **When**: Surcharging standard convention lookups, setting up line edit placeholder keys, formatting strings with dynamic values (like `{path}` via `i18n_format_attr`), or handling system preference toggles.
+  - **Why**: Allows advanced dynamic text formatting and fallback keys (`i18n_none_key`).
+
+- **Direct API `translate(self.id, key, default)`**:
+  - **When**: Translating non-persistent text dynamically in Python code (e.g. dialog messages, warning/error popups, dynamic log outputs).
+  - **Why**: Best for ad-hoc strings that do not belong to static UI widgets.
 
 ## **Language Change Flow**
 
