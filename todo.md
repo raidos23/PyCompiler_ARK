@@ -1,4 +1,5 @@
-# refactor
-- centraliser tout les `def log_i18n` dans `Ui/Gui/i18n.py` comme seul method pour le logging i18n de l'app. 
-- retirer lutilisation des `safe_logs` et `_safe_log`  dans  toute l'appli pour priviligier l'usage de log_i18n.
-- pour evitr le hard codding dans i18n avec tout les `if name in ...` il faut mettre au propreles nom de buton dans l'ui pour etre clair une bonne fois pour toute dans `Ui/Forms` et `Ui/Gui/`. cela evitatera de faire des tonnes de condition hard coder au profit de l'usage de `translate()`. Éviter l'ambiguité des if etc jsute midifer l'ui pour avoir des nom uiuqment pour chacunrespectanrt la convention de tranduction auto par tt_*, btn_*, tab_* du system i18n .  il suffit de faire auisnsi pour que tout soit nickel.
+# Refactor Status
+
+- [x] Centraliser tout les `def log_i18n` dans `pycompiler_ark/Ui/i18n.py` comme seule méthode pour le logging i18n de l'app.
+- [x] Retirer l'utilisation des `safe_logs` et `_safe_log` dans toute l'appli pour privilégier l'usage de `log_i18n`.
+- [x] Éviter le hardcoding dans i18n en nettoyant les noms des boutons et en exploitant la convention de traduction automatique par `tt_*`, `btn_*`, `tab_*` du système i18n et les propriétés dynamiques Qt.

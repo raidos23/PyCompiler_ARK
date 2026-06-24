@@ -747,6 +747,47 @@ def log_with_level(
     _console_log(lvl, label, msg)
 
 
+def log_i18n(
+    gui: Any,
+    fr: str,
+    en: str,
+    level: str | None = None,
+    *,
+    redact: bool = True,
+    clamp: bool = True,
+) -> None:
+    """Translate and log a message, automatically inferring the level from emojis if not provided."""
+    lvl = level
+    if lvl is None:
+        lvl = "info"
+        fr_str = str(fr)
+        en_str = str(en)
+        for emo, lv in (
+            ("❌", "error"),
+            ("⚠️", "warning"),
+            ("❗", "warning"),
+            ("✅", "success"),
+            ("ℹ️", "info"),
+            ("⏩", "state"),
+            ("📝", "state"),
+            ("📋", "state"),
+            ("🔍", "state"),
+            ("🔧", "state"),
+            ("🔨", "state"),
+            ("➡️", "state"),
+            ("📦", "state"),
+            ("🗑️", "state"),
+        ):
+            if fr_str.startswith(emo) or en_str.startswith(emo):
+                lvl = lv
+                break
+
+    fr2 = _strip_emoji_prefix(fr)
+    en2 = _strip_emoji_prefix(en)
+    msg = tr(gui, fr2, en2)
+    log_with_level(gui, lvl, msg, redact=redact, clamp=clamp)
+
+
 def log_i18n_level(
     gui: Any,
     level: str,
@@ -757,10 +798,7 @@ def log_i18n_level(
     clamp: bool = True,
 ) -> None:
     """Translate then log a level-tagged message."""
-    fr2 = _strip_emoji_prefix(fr)
-    en2 = _strip_emoji_prefix(en)
-    msg = tr(gui, fr2, en2)
-    log_with_level(gui, level, msg, redact=redact, clamp=clamp)
+    log_i18n(gui, fr, en, level, redact=redact, clamp=clamp)
 
 
 def i18n_synchro(self, lang_pref: str, tr: dict[str, Any]) -> str:
