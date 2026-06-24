@@ -961,19 +961,6 @@ def _apply_main_app_translations(self, tr: dict[str, object]) -> None:
             current = obj.text() if hasattr(obj, "text") else None
 
             chosen_key = str(text_key)
-            if not _prop(obj, "i18n_text_key"):
-                if name in {"btn_select_lang", "select_lang", "act_language"}:
-                    system_key = "choose_language_system_button"
-                    system_attr = "language_pref"
-                elif name in {"btn_select_theme", "select_theme", "act_theme"}:
-                    system_key = "choose_theme_system_button"
-                    system_attr = "theme"
-                elif name == "venv_label":
-                    system_key = "venv_label_system"
-                    system_attr = "use_system_python"
-                elif name == "label_workspace_status":
-                    format_attr = "workspace_dir"
-                    none_key = "label_workspace_status_none"
 
             if system_key and system_attr and _is_system_value(getattr(self, str(system_attr), None)):
                 chosen_key = str(system_key)

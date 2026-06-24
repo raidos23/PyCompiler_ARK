@@ -455,6 +455,20 @@ def _setup_widgets(self) -> None:
     self.select_lang = _find(QPushButton, "btn_select_lang")
     self.select_theme = _find(QPushButton, "btn_select_theme")
 
+    # Set properties for dynamic i18n
+    if self.select_lang:
+        self.select_lang.setProperty("i18n_text_system_key", "choose_language_system_button")
+        self.select_lang.setProperty("i18n_system_attr", "language_pref")
+    if self.select_theme:
+        self.select_theme.setProperty("i18n_text_system_key", "choose_theme_system_button")
+        self.select_theme.setProperty("i18n_system_attr", "theme")
+    if self.venv_label:
+        self.venv_label.setProperty("i18n_text_system_key", "venv_label_system")
+        self.venv_label.setProperty("i18n_system_attr", "use_system_python")
+    if self.label_workspace_status:
+        self.label_workspace_status.setProperty("i18n_format_attr", "workspace_dir")
+        self.label_workspace_status.setProperty("i18n_none_key", "label_workspace_status_none")
+
     for _lbl in (self.label_folder, self.venv_label):
         if _lbl is None:
             continue
