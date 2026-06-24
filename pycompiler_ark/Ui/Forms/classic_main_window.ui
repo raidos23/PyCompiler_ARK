@@ -76,20 +76,20 @@ QPushButton:hover { background: #454545; border-color: #454545; }
 QPushButton:pressed { background: #2A2A2A; }
 QPushButton:disabled { color: #8A8A8A; background: #2B2B2B; border-color: #2B2B2B; }
 
-QPushButton#compile_btn {
+QPushButton#btn_build_all {
   background: #0E639C;
   color: #FFFFFF;
   border-color: #0E639C;
   font-weight: 600;
 }
-QPushButton#compile_btn:hover { background: #1177BB; border-color: #1177BB; }
-QPushButton#compile_btn:pressed { background: #0B4F7A; }
-QPushButton#cancel_btn {
+QPushButton#btn_build_all:hover { background: #1177BB; border-color: #1177BB; }
+QPushButton#btn_build_all:pressed { background: #0B4F7A; }
+QPushButton#btn_cancel_all {
   background: #5A1D1D;
   color: #F2B8B8;
   border: 1px solid #6A2A2A;
 }
-QPushButton#cancel_btn:hover { background: #6A2727; border-color: #7A3030; }
+QPushButton#btn_cancel_all:hover { background: #6A2727; border-color: #7A3030; }
 
 /* Checkboxes &amp; Radio */
 QCheckBox { color: #D4D4D4; }
@@ -356,7 +356,7 @@ QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal { width: 0; }
          <number>0</number>
         </property>
         <item>
-         <widget class="QPushButton" name="select_lang">
+         <widget class="QPushButton" name="btn_select_lang">
           <property name="toolTip">
            <string>Choisir la langue de l'interface</string>
           </property>
@@ -366,7 +366,7 @@ QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal { width: 0; }
          </widget>
         </item>
         <item>
-         <widget class="QPushButton" name="select_theme">
+         <widget class="QPushButton" name="btn_select_theme">
           <property name="toolTip">
            <string>Choisir le thème de l'interface</string>
           </property>
@@ -376,7 +376,7 @@ QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal { width: 0; }
          </widget>
         </item>
         <item>
-         <widget class="QPushButton" name="compile_btn">
+         <widget class="QPushButton" name="btn_build_all">
           <property name="toolTip">
            <string>Démarrer la compilation</string>
           </property>
@@ -386,7 +386,7 @@ QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal { width: 0; }
          </widget>
         </item>
         <item>
-         <widget class="QPushButton" name="cancel_btn">
+         <widget class="QPushButton" name="btn_cancel_all">
           <property name="toolTip">
            <string>Annuler la compilation en cours</string>
           </property>
@@ -396,7 +396,7 @@ QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal { width: 0; }
          </widget>
         </item>
         <item>
-         <widget class="QPushButton" name="advanced_cfg_btn">
+         <widget class="QPushButton" name="btn_advanced_config">
           <property name="text">
            <string>Configurations avancées</string>
           </property>
@@ -476,7 +476,7 @@ QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal { width: 0; }
             <layout class="QVBoxLayout" name="verticalLayout_2"/>
            </item>
            <item row="13" column="1">
-            <widget class="QPushButton" name="venv_button">
+            <widget class="QPushButton" name="btn_venv_button">
              <property name="text">
               <string>Choisir un dossier venv</string>
              </property>
