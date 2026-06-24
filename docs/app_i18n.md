@@ -95,6 +95,20 @@ Typical use cases:
 - `i18n_format_attr`: value inserted into a translated template, such as a workspace path
 - `i18n_none_key`: fallback text when the dynamic attribute is empty
 
+## **When to Use What**
+
+- **Naming Conventions (`btn_*`, `action_*`, `tab_*`)**:
+  - **When**: Building standard persistent UI elements like buttons, actions, and tab widgets.
+  - **Why**: Zero configuration. Just name the widget correctly and the system translates the text and tooltip automatically.
+
+- **Explicit Properties (`i18n_text_key`, `i18n_format_attr`, etc.)**:
+  - **When**: Surcharging standard convention lookups, setting up line edit placeholder keys, formatting strings with dynamic values (like `{path}` via `i18n_format_attr`), or handling system preference toggles.
+  - **Why**: Allows advanced dynamic text formatting and fallback keys (`i18n_none_key`).
+
+- **Direct API `translate(self.id, key, default)`**:
+  - **When**: Translating non-persistent text dynamically in Python code (e.g. dialog messages, warning/error popups, dynamic log outputs).
+  - **Why**: Best for ad-hoc strings that do not belong to static UI widgets.
+
 ## **Language Change Flow**
 
 When the user changes the language:
