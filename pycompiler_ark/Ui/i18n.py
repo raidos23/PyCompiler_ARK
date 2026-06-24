@@ -892,13 +892,6 @@ def _apply_main_app_translations(self, tr: dict[str, object]) -> None:
                 key = name[len(prefix):]
                 if key in tr:
                     return key
-        legacy = {
-            "btn_acasl_loader": "bc_loader",
-            "btn_advanced_cfg_btn": "advanced_config",
-            "btn_venv_button": "venv_button",
-        }
-        if name in legacy:
-            return legacy[name]
         return name
 
     def _tooltip_for_name(name: str) -> str:
@@ -915,13 +908,6 @@ def _apply_main_app_translations(self, tr: dict[str, object]) -> None:
             candidate = f"tt_{name}"
             if candidate in tr:
                 return candidate
-        legacy_tooltips = {
-            "btn_acasl_loader": "tt_bc_loader",
-            "btn_activity_deps": "tt_suggest_deps",
-            "btn_more_actions": "tt_more_actions",
-        }
-        if name in legacy_tooltips:
-            return legacy_tooltips[name]
         return ""
 
     def _placeholder_for_name(name: str) -> str:
@@ -935,11 +921,6 @@ def _apply_main_app_translations(self, tr: dict[str, object]) -> None:
                 candidate = f"{name[len(prefix):]}_placeholder"
                 if candidate in tr:
                     return candidate
-        legacy_placeholders = {
-            "file_filter_input": "file_filter_placeholder",
-        }
-        if name in legacy_placeholders:
-            return legacy_placeholders[name]
         return ""
 
     def _iter_objects(root: Any):

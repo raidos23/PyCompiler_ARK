@@ -468,6 +468,11 @@ def _setup_widgets(self) -> None:
     if self.label_workspace_status:
         self.label_workspace_status.setProperty("i18n_format_attr", "workspace_dir")
         self.label_workspace_status.setProperty("i18n_none_key", "label_workspace_status_none")
+    if self.file_filter_input:
+        self.file_filter_input.setProperty("i18n_placeholder_key", "file_filter_placeholder")
+    if self.btn_acasl_loader:
+        self.btn_acasl_loader.setProperty("i18n_text_key", "bc_loader")
+        self.btn_acasl_loader.setProperty("i18n_tooltip_key", "tt_bc_loader")
 
     for _lbl in (self.label_folder, self.venv_label):
         if _lbl is None:
