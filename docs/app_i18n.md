@@ -49,10 +49,14 @@ tt_build_all: Démarrer la compilation
 
 The recommended pattern is:
 
-1. create the widget
-2. attach i18n properties to it
-3. let `pycompiler_ark/Ui/i18n.py` resolve the active language
-4. let the generic walker read the widget properties and call `translate(self.id, ...)`
+1. **Naming Convention (Automatic)**:
+   Name your widget using one of the following prefixes to have it translated automatically:
+   - `btn_<key>` (e.g. `btn_select_folder` translates using `select_folder` and resolves its tooltip as `tt_select_folder`).
+   - `action_<key>` (e.g. `action_select_workspace`).
+   - `tab_<key>` (e.g. `tab_hello`).
+
+2. **Explicit Properties**:
+   Attach explicit `i18n_*` properties to the widget (via PySide's `.setProperty()` or inside the `.ui` file) if you want to override the default convention lookup.
 
 If you need to attach properties manually, use:
 
