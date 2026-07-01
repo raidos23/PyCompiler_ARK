@@ -97,7 +97,7 @@ Global user settings are stored in text files under `~/.pycompiler_ark/cfg/`:
 
 A initialized workspace contains a hidden `.ark/` directory:
 
-- `lock/`: Immutable build snapshots and `latest.lock.yml`.
+- `lock/`: Immutable build snapshots and `latest.lock`.
 - `cache/`: Internal build cache and rebuild comparison data.
 - `build/`: Temporary engine build artifacts.
 - `logs/`: Compilation and pipeline execution logs.
@@ -157,7 +157,7 @@ Initializes the current directory as a PyCompiler ARK workspace.
 - **Auto-Confirm**: `-y` or `--yes` bypasses all interactive prompts (Git alignment, BCASL plugin confirmations).
 - **Interactive Prompts**: `init --apply-internal` uses the same prompt flow and requires confirmation unless `-y` is provided.
 - **Engine Override**: `--engine <id>` uses a temporary engine without modifying `ark.yml`.
-- **Reproducible Rebuild**: `--lock [file]` rebuilds strictly from a lock file (default: `.ark/lock/latest.lock.yml`).
+- **Reproducible Rebuild**: `--lock [file]` rebuilds strictly from a lock file (default: `.ark/lock/latest.lock`).
   - **Git State**: Automatically verifies if the current branch and commit match the lock. Offers automatic checkout on Linux.
   - **Integrity Check**: PyCompiler ARK generates a shadow lock from the rebuild environment and performs a **Functional Equivalence** comparison. Detailed diffs are displayed in case of mismatch.
 - **Constraint**: `--engine` and `--lock` cannot be used together.

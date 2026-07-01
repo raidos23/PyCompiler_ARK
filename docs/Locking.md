@@ -24,12 +24,12 @@ It guarantees **Functional Reproducibility**: same technical parameters -> funct
 
 ```
 .ark/lock/
-├── ARK_YYYY_MM_DD_NNN.lock.yml
-└── latest.lock.yml
+├── ARK_YYYY_MM_DD_NNN.lock
+└── latest.lock
 ```
 
-- **`ARK_*.lock.yml`**: Immutable historical snapshots (should be versioned).
-- **`latest.lock.yml`**: Alias to the most recent successful build lock.
+- **`ARK_*.lock`**: Immutable historical snapshots (should be versioned).
+- **`latest.lock`**: Alias to the most recent successful build lock.
 
 ---
 
@@ -116,7 +116,7 @@ A build is considered equivalent if the following sections match exactly:
 ### **7. Fundamental Rules**
 
 - **L1**: No volatile timestamps are included in the functional sections.
-- **L2**: `latest.lock.yml` should be tracked in source control.
+- **L2**: `latest.lock` should be tracked in source control.
 - **L3**: The Git commit hash ensures the source code consistency when using Git.
 - **L4**: The engine configuration is completely captured, ensuring identical compiler flags.
 - **L5**: The lock is the **sole source of truth** during a `--lock` build.

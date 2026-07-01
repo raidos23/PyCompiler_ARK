@@ -42,7 +42,7 @@ from pycompiler_ark.Core.Locking import load_yaml_file
 
 
 class LockDialog(QDialog):
-    """Dialog pour lister les fichiers .lock.yml et relancer un build."""
+    """Dialog pour lister les fichiers .lock et relancer un build."""
 
     def __init__(self, gui):
         super().__init__(gui)
@@ -106,7 +106,7 @@ class LockDialog(QDialog):
             return
 
         locks = sorted(
-            lock_dir.glob("*.lock.yml"), key=lambda p: p.stat().st_mtime, reverse=True
+            lock_dir.glob("*.lock"), key=lambda p: p.stat().st_mtime, reverse=True
         )
         for path in locks:
             item = QListWidgetItem(path.name)
