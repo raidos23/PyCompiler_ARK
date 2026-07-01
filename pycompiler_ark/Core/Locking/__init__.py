@@ -35,8 +35,8 @@ LOCK_DIRNAME = "lock"
 CACHE_DIRNAME = "cache"
 BUILD_DIRNAME = "build"
 LOGS_DIRNAME = "logs"
-LOCK_FILE_SUFFIX = ".lock.yml"
-LATEST_LOCK_FILENAME = "latest.lock.yml"
+LOCK_FILE_SUFFIX = ".lock"
+LATEST_LOCK_FILENAME = "latest.lock"
 WORKSPACE_GITIGNORE = "pref.json\ncache/\nlogs/\nbuild/\nvenv/\n.venv/\n"
 
 
