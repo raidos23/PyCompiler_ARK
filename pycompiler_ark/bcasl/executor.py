@@ -360,28 +360,24 @@ def _run_plugin_sequential(
             _unregister_worker_pid(p.pid)
             _cleanup_queue(q)
     else:
-        try:
-            plg.on_pre_compile(ctx)
-            duration_ms = (time.perf_counter() - start) * 1000.0
-            _add_report_item(
-                report,
-                plugin_id=plg.meta.id,
-                name=plg.meta.name,
-                success=True,
-                duration_ms=duration_ms,
-            )
-            return True
-        except Exception as exc:
-            duration_ms = (time.perf_counter() - start) * 1000.0
-            _add_report_item(
-                report,
-                plugin_id=plg.meta.id,
-                name=plg.meta.name,
-                success=False,
-                duration_ms=duration_ms,
-                error=str(exc),
-            )
-            return False
+        from pycompiler_ark.Core.utils.executor import executor
+
+        res = executor(
+            plg.on_pre_compile,
+            ctx,
+            name=plg.meta.name,
+            stop_requested=stop_requested,
+            catch_exceptions=True,
+        )
+        _add_report_item(
+            report,
+            plugin_id=plg.meta.id,
+            name=res.name or plg.meta.name,
+            success=res.success,
+            duration_ms=res.duration_ms,
+            error=res.error,
+        )
+        return res.success
 
 
 def _configure_worker_env(config: dict[str, Any]) -> None:
@@ -862,10 +858,15 @@ def _plugin_worker(
                 config=dict(config or {}),
                 build_context=build_context,
             )
-            t0 = _time.perf_counter()
-            plg.on_pre_compile(ctx)
-            dur = (_time.perf_counter() - t0) * 1000.0
-            q.put({"ok": True, "error": "", "duration_ms": dur})
+            from pycompiler_ark.Core.utils.executor import executor as _executor
+
+            res = _executor(
+                plg.on_pre_compile,
+                ctx,
+                name=plg.meta.name,
+                catch_exceptions=True,
+            )
+            q.put({"ok": res.success, "error": res.error, "duration_ms": res.duration_ms})
         except Exception:
             q.put({"ok": False, "error": _tb.format_exc(), "duration_ms": 0.0})
     finally:
