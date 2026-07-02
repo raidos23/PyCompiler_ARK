@@ -16,7 +16,7 @@
 from __future__ import annotations
 
 import logging
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Optional
@@ -96,6 +96,37 @@ class BcPluginBase:
         self.meta = meta
         self.requires = tuple(str(r).strip() for r in requires if str(r).strip())
         self.priority = int(priority)
+
+    @property
+    def required_tools(self) -> dict[str, list[str]]:
+        """Outils requis par ce plugin.
+
+        Structure identique à CompilerEngine.required_tools :
+          {"python": ["black", "mypy"], "system": ["gcc"]}
+        Les plugins n'ayant pas besoin d'outils supplémentaires
+        n'ont pas besoin de surcharger cette propriété.
+        """
+        return {"python": [], "system": []}
+
+    def ensure_tools(
+        self,
+        stop_signal: Callable[[], bool] | None = None,
+        log_cb: Callable[[str], None] | None = None,
+    ) -> bool:
+        """Vérifie et installe les outils requis déclarés dans required_tools.
+
+        Délègue vers l'utilitaire universel Core.utils.ensure_tools.
+        Retourne True si tous les outils sont disponibles, False sinon.
+        """
+        tools = self.required_tools
+        if not tools.get("python") and not tools.get("system"):
+            return True
+        from pycompiler_ark.Core.utils.ensure_tools import (
+            ensure_tools as _ensure_tools,
+        )
+
+        result = _ensure_tools(tools, stop_signal=stop_signal, log_cb=log_cb)
+        return result.ok
 
     def on_pre_compile(self, ctx: PreCompileContext) -> None:
         """Méthode à surcharger par le plugin."""

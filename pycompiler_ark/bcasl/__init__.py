@@ -26,6 +26,9 @@ from __future__ import annotations
 
 from pycompiler_ark.bcasl.PreCompileContext import PreCompileContext
 
+# Utilitaire universel d'installation d'outils
+from pycompiler_ark.Core.utils.ensure_tools import ToolsCheckResult
+
 # Coeur BCASL (moteur de plugins et contexte)
 from pycompiler_ark.bcasl.Base import (
     BCASL_PLUGIN_REGISTER_FUNC,

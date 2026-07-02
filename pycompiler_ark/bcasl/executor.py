@@ -305,6 +305,22 @@ def _run_plugin_sequential(
 ) -> bool:
     plg = rec.plugin
     start = time.perf_counter()
+
+    # Vérification et installation des outils requis par le plugin
+    tools = getattr(plg, "required_tools", {})
+    if tools.get("python") or tools.get("system"):
+        log_cb = getattr(ctx, "_log_cb", None)
+        if not plg.ensure_tools(stop_signal=stop_requested, log_cb=log_cb):
+            _add_report_item(
+                report,
+                plugin_id=plg.meta.id,
+                name=plg.meta.name,
+                success=False,
+                duration_ms=(time.perf_counter() - start) * 1000.0,
+                error="Outils requis manquants ou installation échouée",
+            )
+            return False
+
     if eff_sandbox and getattr(rec, "module_path", None):
         _ctx = mp.get_context("spawn")
         q = _ctx.Queue()
