@@ -33,7 +33,7 @@ try:
 except Exception:
     QSvgRenderer = None  # type: ignore[assignment]
 
-from pycompiler_ark.Ui.i18n import show_language_dialog, translate
+from .Dialogs.i18nDialog import show_language_dialog, translate
 
 
 def _detect_system_color_scheme() -> str:
