@@ -651,7 +651,7 @@ class UiFeatures:
 
     def show_language_dialog(self) -> None:
         """Open language selection dialog."""
-        from pycompiler_ark.Ui.i18n import show_language_dialog as _i18n_show_dialog
+        from .Dialogs.i18nDialog import show_language_dialog as _i18n_show_dialog
 
         _i18n_show_dialog(self)
 
