@@ -19,7 +19,7 @@ import logging
 import os
 from typing import Any, Optional
 
-from .base import CompilerEngine, log_i18n_level
+from .base import CompilerEngine
 
 logger = logging.getLogger(__name__)
 
@@ -544,7 +544,9 @@ def bind_tabs(gui) -> None:
             eid: str, fr: str, en: str, exc: Exception | None = None
         ) -> None:
             try:
-                log_i18n_level(gui, "warning", fr, en)
+                from pycompiler_ark.Ui import output
+
+                output.warn((fr, en), gui=gui)
             except Exception:
                 pass
             try:

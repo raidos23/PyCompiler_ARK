@@ -21,7 +21,7 @@ import os
 import re
 from typing import Optional
 
-from pycompiler_ark.Ui.i18n import log_i18n_level, log_with_level
+from pycompiler_ark.Ui import output
 
 # Optional access to registered engines for discovery
 try:
@@ -466,21 +466,23 @@ def _write_report_if_enabled(self, report: dict):
             except Exception:
                 pass
         try:
-            log_i18n_level(
-                self,
-                "info",
-                f"Rapport auto-modules écrit: {out_path}",
-                f"Auto-modules report written: {out_path}",
+            output.info(
+                (
+                    f"Rapport auto-modules écrit: {out_path}",
+                    f"Auto-modules report written: {out_path}",
+                ),
+                gui=self,
             )
         except Exception:
             pass
     except Exception as e:
         try:
-            log_i18n_level(
-                self,
-                "warning",
-                f"Échec écriture rapport auto-modules: {e}",
-                f"Failed to write auto-modules report: {e}",
+            output.warn(
+                (
+                    f"Échec écriture rapport auto-modules: {e}",
+                    f"Failed to write auto-modules report: {e}",
+                ),
+                gui=self,
             )
         except Exception:
             pass
@@ -763,28 +765,30 @@ def compute_auto_for_engine(self, engine_id: str) -> list[str]:
         mapping = dict(eng_mapping)
         try:
             if eng_used_path:
-                log_i18n_level(
-                    self,
-                    "info",
-                    f"Mapping spécifique moteur ({engine_id}): {eng_used_path}",
-                    f"Engine-specific mapping ({engine_id}): {eng_used_path}",
+                output.info(
+                    (
+                        f"Mapping spécifique moteur ({engine_id}): {eng_used_path}",
+                        f"Engine-specific mapping ({engine_id}): {eng_used_path}",
+                    ),
+                    gui=self,
                 )
             # Emit any validation warnings collected during mapping load
             while _VALIDATION_WARNINGS:
                 w = _VALIDATION_WARNINGS.pop(0)
                 try:
-                    log_with_level(self, "warning", w)
+                    output.warn(w, gui=self)
                 except Exception:
                     pass
         except Exception:
             pass
     except Exception as e:
         try:
-            log_i18n_level(
-                self,
-                "warning",
-                f"Mapping hooks/plugins introuvable: {e}",
-                f"Mapping hooks/plugins not found: {e}",
+            output.warn(
+                (
+                    f"Mapping hooks/plugins introuvable: {e}",
+                    f"Mapping hooks/plugins not found: {e}",
+                ),
+                gui=self,
             )
         except Exception:
             pass
@@ -795,11 +799,12 @@ def compute_auto_for_engine(self, engine_id: str) -> list[str]:
     builder = _ENGINE_BUILDERS.get(engine_id) or _default_builder_for_engine(engine_id)
     try:
         if engine_id not in _ENGINE_BUILDERS:
-            log_i18n_level(
-                self,
-                "info",
-                f"Builder générique utilisé pour le moteur '{engine_id}'.",
-                f"Generic builder used for engine '{engine_id}'.",
+            output.info(
+                (
+                    f"Builder générique utilisé pour le moteur '{engine_id}'.",
+                    f"Generic builder used for engine '{engine_id}'.",
+                ),
+                gui=self,
             )
     except Exception:
         pass
@@ -809,56 +814,60 @@ def compute_auto_for_engine(self, engine_id: str) -> list[str]:
     except Exception as e:
         args = []
         try:
-            log_i18n_level(
-                self,
-                "warning",
-                f"Erreur constructeur auto-args pour '{engine_id}': {e}",
-                f"Auto-args builder error for '{engine_id}': {e}",
+            output.warn(
+                (
+                    f"Erreur constructeur auto-args pour '{engine_id}': {e}",
+                    f"Auto-args builder error for '{engine_id}': {e}",
+                ),
+                gui=self,
             )
         except Exception:
             pass
 
     # Logging
     try:
-        log_i18n_level(
-            self,
-            "info",
-            f"Auto-détection des modules sensibles ({engine_id}) activée.",
-            f"Auto-detection of sensitive modules ({engine_id}) enabled.",
+        output.info(
+            (
+                f"Auto-détection des modules sensibles ({engine_id}) activée.",
+                f"Auto-detection of sensitive modules ({engine_id}) enabled.",
+            ),
+            gui=self,
         )
-        log_i18n_level(
-            self,
-            "info",
-            f"   Source détection: {source}",
-            f"   Detection source: {source}",
+        output.info(
+            (f"   Source détection: {source}", f"   Detection source: {source}"),
+            gui=self,
         )
         if detected:
-            log_i18n_level(
-                self,
-                "info",
-                "   Modules détectés: " + ", ".join(sorted(detected)),
-                "   Detected modules: " + ", ".join(sorted(detected)),
+            output.info(
+                (
+                    "   Modules détectés: " + ", ".join(sorted(detected)),
+                    "   Detected modules: " + ", ".join(sorted(detected)),
+                ),
+                gui=self,
             )
         else:
-            log_i18n_level(
-                self,
-                "info",
-                "   Aucun module externe détecté.",
-                "   No external modules detected.",
+            output.info(
+                (
+                    "   Aucun module externe détecté.",
+                    "   No external modules detected.",
+                ),
+                gui=self,
             )
         if args:
-            log_i18n_level(
-                self,
-                "info",
-                f"   Options {engine_id} ajoutées: " + " ".join(args),
-                f"   {engine_id} options added: " + " ".join(args),
+            output.info(
+                (
+                    f"   Options {engine_id} ajoutées: " + " ".join(args),
+                    f"   {engine_id} options added: " + " ".join(args),
+                ),
+                gui=self,
             )
         else:
-            log_i18n_level(
-                self,
-                "info",
-                f"   Aucune option {engine_id} supplémentaire requise d'après le mapping.",
-                f"   No additional {engine_id} options required from mapping.",
+            output.info(
+                (
+                    f"   Aucune option {engine_id} supplémentaire requise d'après le mapping.",
+                    f"   No additional {engine_id} options required from mapping.",
+                ),
+                gui=self,
             )
     except Exception:
         pass

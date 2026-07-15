@@ -34,6 +34,8 @@ import time
 from pathlib import Path
 from typing import Any, Callable, Optional
 
+from pycompiler_ark.Ui import output
+
 # BuildContext lives in engine_sdk; imported here so callers of this module
 # only need to import from pycompiler_ark.Core.Compiler.
 from pycompiler_ark.Core.engine.build_context import BuildContext
@@ -267,7 +269,7 @@ def run_engine_compile_streaming(
         else:
             from PySide6.QtCore import QObject
 
-            # We pass a dummy 'gui' object that supports log_i18n_level-like logging
+            # We pass a dummy 'gui' object that supports output-style logging
             class LogBridge(QObject):
                 def __init__(self, log_cb, workspace_path: Path, verbose: bool = False):
                     super().__init__()
@@ -281,15 +283,22 @@ def run_engine_compile_streaming(
                     self._sys_deps_manager = None
 
                 def append(self, message: str):
-                    # message is already formatted by log_i18n_level
                     self.log_cb("", message)
 
-                def log_i18n(self, fr: str, en: str, level: str | None = None):
-                    from pycompiler_ark.Ui.i18n import log_i18n
-                    log_i18n(self, fr, en, level)
+                def log_message(self, fr: str, en: str, level: str | None = None):
+                    lvl = (level or "info").lower().strip()
+                    message = (fr, en)
+                    if lvl in ("error",):
+                        output.error(message, gui=self)
+                    elif lvl in ("warning", "warn"):
+                        output.warn(message, gui=self)
+                    elif lvl in ("success",):
+                        output.success(message, gui=self)
+                    else:
+                        output.info(message, gui=self)
 
-                def log_i18n_level(self, level: str, fr: str, en: str):
-                    self.log_i18n(fr, en, level)
+                def log_message_level(self, level: str, fr: str, en: str):
+                    self.log_message(fr, en, level)
 
                 def tr(self, fr, en):
                     return en  # Simple fallback

@@ -454,7 +454,7 @@ class VenvManager:
             from pycompiler_ark.Core.Compiler.utils import check_internet_connection
 
             if not check_internet_connection():
-                self.log_i18n(
+                self._emit_output(
                     "🛑 [ERROR] Pas de connexion internet. Installation des outils annulée.",
                     "🛑 [ERROR] No internet connection. Tool installation cancelled.",
                     level="error",
@@ -513,7 +513,7 @@ class VenvManager:
                 loop.exec()
                 self._venv_check_loop = None
         except Exception as e:
-            self.log_i18n(
+            self._emit_output(
                 f"[ERROR] {self._tools_stage_prefix()}Erreur ensure_tools_installed: {e}"
             )
 
@@ -523,7 +523,7 @@ class VenvManager:
             from pycompiler_ark.Core.Compiler.utils import check_internet_connection
 
             if not check_internet_connection():
-                self.log_i18n(
+                self._emit_output(
                     "🛑 [ERROR] Pas de connexion internet. Installation système annulée.",
                     "🛑 [ERROR] No internet connection. System installation cancelled.",
                     level="error",
@@ -586,7 +586,7 @@ class VenvManager:
                 loop.exec()
                 self._venv_check_loop = None
         except Exception as e:
-            self.log_i18n(
+            self._emit_output(
                 f"[ERROR] {self._tools_stage_prefix()}Erreur ensure_tools_installed_system: {e}"
             )
 
@@ -653,34 +653,30 @@ class VenvManager:
             return "state"
         return "info"
 
-    def log_i18n(
+    def _emit_output(
         self, text: str, text_en: str | None = None, level: str | None = None
     ):
-        """Log a localized message via UI callback or fallback to host log."""
+        """Emit a localized message through `pycompiler_ark.Ui.output`."""
         en_val = text_en if text_en is not None else text
-        try:
-            from pycompiler_ark.Ui.i18n import log_i18n
-            log_i18n(self.parent, text, en_val, level)
-            return
-        except Exception:
-            pass
-
         lvl = level or self._infer_log_level(en_val)
 
-        # Try primary UI callback for i18n logging
-        if text_en is not None:
-            res = self._call_ui("log_i18n", lvl, text, text_en)
-            if res is not None:
-                return
-        else:
-            res = self._call_ui("log", lvl, text)
-            if res is not None:
-                return
-
-        # Fallback to parent methods if available
         try:
-            if hasattr(self.parent, "log_i18n"):
-                self.parent.log_i18n(text, en_val, level)
+            from pycompiler_ark.Ui import output
+
+            func_map = {
+                "error": getattr(output, "error"),
+                "warning": getattr(output, "warn"),
+                "warn": getattr(output, "warn"),
+                "info": getattr(output, "info"),
+                "success": getattr(output, "success"),
+                "state": getattr(output, "info"),
+            }
+            fn = func_map.get(lvl, output.info)
+            try:
+                fn((text, en_val), gui=self.parent)
+                return
+            except Exception:
+                output.log(lvl, (text, en_val), gui=self.parent)
                 return
         except Exception:
             pass
@@ -705,11 +701,18 @@ class VenvManager:
             return
         self._cancel_requested = True
         suffix = f" ({action_label})" if action_label else ""
-        self.log_i18n(
-            f"[CANCEL] Annulation demandee par l'utilisateur{suffix}.",
-            f"[CANCEL] Cancellation requested by user{suffix}.",
-            level="warning",
-        )
+        try:
+            from pycompiler_ark.Ui import output
+
+            output.warn(
+                (
+                    f"[CANCEL] Annulation demandee par l'utilisateur{suffix}.",
+                    f"[CANCEL] Cancellation requested by user{suffix}.",
+                ),
+                gui=self.parent,
+            )
+        except Exception:
+            pass
         self.terminate_tasks()
 
     def _bind_cancel_for_progress(self, progress_id: str, action_label: str) -> None:
@@ -735,9 +738,15 @@ class VenvManager:
                     except Exception:
                         pass
                 else:
-                    self.log_i18n(
-                        f"[WARNING] Failed to remove {path} after {max_retries} attempts: {e}"
-                    )
+                    try:
+                        from pycompiler_ark.Ui import output
+
+                        output.warn(
+                            f"[WARNING] Failed to remove {path} after {max_retries} attempts: {e}",
+                            gui=self.parent,
+                        )
+                    except Exception:
+                        pass
                     return False
         return False
 
@@ -747,7 +756,15 @@ class VenvManager:
             os.makedirs(path, exist_ok=True)
             return True
         except Exception as e:
-            self.log_i18n(f"[WARNING] Failed to create directory {path}: {e}")
+            try:
+                from pycompiler_ark.Ui import output
+
+                output.warn(
+                    f"[WARNING] Failed to create directory {path}: {e}",
+                    gui=self.parent,
+                )
+            except Exception:
+                pass
             return False
 
     def _prompt_recreate_invalid_venv(self, venv_root: str, reason: str) -> bool:
@@ -761,7 +778,12 @@ class VenvManager:
         # Business logic: delete the bad venv
         try:
             shutil.rmtree(venv_root)
-            self.log_i18n(f"[DELETE] Deleted invalid venv: {venv_root}")
+            try:
+                from pycompiler_ark.Ui import output
+
+                output.info(f"[DELETE] Deleted invalid venv: {venv_root}", gui=self.parent)
+            except Exception:
+                pass
         except Exception as e:
             self._call_ui(
                 "show_error_dialog",
@@ -899,7 +921,12 @@ class VenvManager:
             self._reset_cancel_state()
             ok, reason = self.validate_venv_strict(venv_path)
             if not ok:
-                self.log_i18n(f"[ERROR] Invalid venv: {reason}")
+                try:
+                    from pycompiler_ark.Ui import output
+
+                    output.error(f"[ERROR] Invalid venv: {reason}", gui=self.parent)
+                except Exception:
+                    pass
                 # Offer to delete and recreate
                 self._prompt_recreate_invalid_venv(venv_path, reason)
                 return
@@ -908,9 +935,15 @@ class VenvManager:
             def _after_binding(ok_bind: bool):
                 """Execute _after_binding logic for this component."""
                 if not ok_bind:
-                    self.log_i18n(
-                        "[ERROR] Invalid venv binding: python/pip do not point to the selected venv."
-                    )
+                    try:
+                        from pycompiler_ark.Ui import output
+
+                        output.error(
+                            "[ERROR] Invalid venv binding: python/pip do not point to the selected venv.",
+                            gui=self.parent,
+                        )
+                    except Exception:
+                        pass
                     self._prompt_recreate_invalid_venv(
                         venv_path, "Python/pip do not point to the selected venv"
                     )
@@ -928,21 +961,42 @@ class VenvManager:
                         if not sys_deps.check_system_packages([t])
                     ]
                     if missing_sys:
-                        self.log_i18n(
-                            f"[WARNING] Outils systeme manquants : {', '.join(missing_sys)}",
-                            f"[WARNING] Missing system tools: {', '.join(missing_sys)}",
-                        )
+                        try:
+                            from pycompiler_ark.Ui import output
+
+                            output.warn(
+                                (
+                                    f"[WARNING] Outils systeme manquants : {', '.join(missing_sys)}",
+                                    f"[WARNING] Missing system tools: {', '.join(missing_sys)}",
+                                ),
+                                gui=self.parent,
+                            )
+                        except Exception:
+                            pass
                         # On pourrait proposer l'installation, mais on laisse les engines gérer
                         # ou on affiche juste l'avertissement.
                     else:
-                        self.log_i18n("[OK] Outils systeme verifies.")
+                        try:
+                            from pycompiler_ark.Ui import output
+
+                            output.success("[OK] Outils systeme verifies.", gui=self.parent)
+                        except Exception:
+                            pass
 
                 # 2. Proceed with python tools in venv
                 if not python_tools:
-                    self.log_i18n(
-                        "[INFO] Aucun outil Python requis detecte depuis les engines.",
-                        "[INFO] No required Python tools detected from pycompiler_ark.engines.",
-                    )
+                    try:
+                        from pycompiler_ark.Ui import output
+
+                        output.info(
+                            (
+                                "[INFO] Aucun outil Python requis detecte depuis les engines.",
+                                "[INFO] No required Python tools detected from pycompiler_ark.engines.",
+                            ),
+                            gui=self.parent,
+                        )
+                    except Exception:
+                        pass
                     return
 
                 pip_exe, pip_args = deps_analyser._find_pip_executable(
@@ -979,7 +1033,15 @@ class VenvManager:
 
             self._verify_venv_binding_async(venv_path, _after_binding)
         except Exception as e:
-            self.log_i18n(f"[ERROR] Erreur lors de la verification du venv: {e}")
+            try:
+                from pycompiler_ark.Ui import output
+
+                output.error(
+                    f"[ERROR] Erreur lors de la verification du venv: {e}",
+                    gui=self.parent,
+                )
+            except Exception:
+                pass
 
     def _check_next_venv_pkg(self):
         """Execute _check_next_venv_pkg logic for this component."""
@@ -1037,11 +1099,11 @@ class VenvManager:
             return
         if code == 0:
             if self._venv_check_use_python:
-                self.log_i18n(
+                self._emit_output(
                     f"[OK] {self._tools_stage_prefix()}{pkg} deja installe (Python systeme)."
                 )
             else:
-                self.log_i18n(
+                self._emit_output(
                     f"[OK] {self._tools_stage_prefix()}{pkg} deja installe dans le venv."
                 )
             self._venv_check_index += 1
@@ -1066,7 +1128,7 @@ class VenvManager:
             from pycompiler_ark.Core.Compiler.utils import check_internet_connection
 
             if not check_internet_connection():
-                self.log_i18n(
+                self._emit_output(
                     f"🛑 [ERROR] Pas de connexion internet. Impossible d'installer {pkg}.",
                     f"🛑 [ERROR] No internet connection. Unable to install {pkg}.",
                     level="error",
@@ -1079,7 +1141,7 @@ class VenvManager:
                     loop.quit()
                 return
 
-            self.log_i18n(
+            self._emit_output(
                 f"[INSTALL] {self._tools_stage_prefix()}Installation automatique de {pkg}..."
             )
             self._call_ui(
@@ -1136,7 +1198,7 @@ class VenvManager:
                 for line in lines:
                     lvl = "warning" if error else "info"
                     # We use a slight indentation to make it clear it's sub-output
-                    self.log_i18n(f"  [pip] {line}", level=lvl)
+                    self._emit_output(f"  [pip] {line}", level=lvl)
 
     def verify_venv_binding(self, venv_root: str) -> bool:
         """Keep synchronous verification path for internal compatibility."""
@@ -1249,7 +1311,7 @@ class VenvManager:
                     """Handle the related event callback."""
                     try:
                         if process.state() != QProcess.NotRunning:
-                            self.log_i18n(
+                            self._emit_output(
                                 f"[TIMEOUT] Timeout exceeded for {label} ({timeout_ms} ms). Killing process..."
                             )
                             from pycompiler_ark.Core.process_killer import (
@@ -1382,25 +1444,50 @@ class VenvManager:
             venvs = self._find_all_venvs_in(workspace_dir)
 
             if not venvs:
-                self.log_i18n("[INFO] Aucun venv valide trouve dans le workspace.")
+                try:
+                    from pycompiler_ark.Ui import output
+
+                    output.info(
+                        "[INFO] Aucun venv valide trouve dans le workspace.",
+                        gui=self.parent,
+                    )
+                except Exception:
+                    pass
                 return None
 
             if len(venvs) == 1:
-                self.log_i18n(f"[OK] Un seul venv trouve: {venvs[0]}")
+                try:
+                    from pycompiler_ark.Ui import output
+
+                    output.success(f"[OK] Un seul venv trouve: {venvs[0]}", gui=self.parent)
+                except Exception:
+                    pass
                 return venvs[0]
 
             # Multiple venvs found - score and select the best
-            self.log_i18n(
-                f"[INFO] {len(venvs)} venv(s) trouve(s), selection du meilleur..."
-            )
+            try:
+                from pycompiler_ark.Ui import output
+
+                output.info(
+                    f"[INFO] {len(venvs)} venv(s) trouve(s), selection du meilleur...",
+                    gui=self.parent,
+                )
+            except Exception:
+                pass
 
             scored_venvs = []
             for venv_path in venvs:
                 score, reason = self._score_venv(venv_path, workspace_dir)
                 scored_venvs.append((score, venv_path, reason))
-                self.log_i18n(
-                    f"  - {os.path.basename(venv_path)}: score={score} ({reason})"
-                )
+                try:
+                    from pycompiler_ark.Ui import output
+
+                    output.info(
+                        f"  - {os.path.basename(venv_path)}: score={score} ({reason})",
+                        gui=self.parent,
+                    )
+                except Exception:
+                    pass
 
             # Sort by score (descending)
             scored_venvs.sort(key=lambda x: x[0], reverse=True)
@@ -1408,17 +1495,37 @@ class VenvManager:
             best_score, best_venv, best_reason = scored_venvs[0]
 
             if best_score == 0:
-                self.log_i18n("[ERROR] Aucun venv valide avec une bonne liaison.")
+                try:
+                    from pycompiler_ark.Ui import output
+
+                    output.error(
+                        "[ERROR] Aucun venv valide avec une bonne liaison.",
+                        gui=self.parent,
+                    )
+                except Exception:
+                    pass
                 return None
 
-            self.log_i18n(
-                f"[OK] Meilleur venv selectionne: {os.path.basename(best_venv)} (score={best_score})"
-            )
+            try:
+                from pycompiler_ark.Ui import output
+
+                output.success(
+                    f"[OK] Meilleur venv selectionne: {os.path.basename(best_venv)} (score={best_score})",
+                    gui=self.parent,
+                )
+            except Exception:
+                pass
             return best_venv
         except Exception as e:
-            self.log_i18n(
-                f"[WARNING] Erreur lors de la selection du meilleur venv: {e}"
-            )
+            try:
+                from pycompiler_ark.Ui import output
+
+                output.warn(
+                    f"[WARNING] Erreur lors de la selection du meilleur venv: {e}",
+                    gui=self.parent,
+                )
+            except Exception:
+                pass
             return None
 
     def _on_venv_pkg_installed(self, process, code, status, pkg):
@@ -1428,9 +1535,22 @@ class VenvManager:
         if self._is_cancel_requested():
             return
         if code == 0:
-            self.log_i18n(f"[OK] {pkg} installe dans le venv.")
+            try:
+                from pycompiler_ark.Ui import output
+
+                output.success(f"[OK] {pkg} installe dans le venv.", gui=self.parent)
+            except Exception:
+                pass
         else:
-            self.log_i18n(f"[ERROR] Erreur installation {pkg} (code {code})")
+            try:
+                from pycompiler_ark.Ui import output
+
+                output.error(
+                    f"[ERROR] Erreur installation {pkg} (code {code})",
+                    gui=self.parent,
+                )
+            except Exception:
+                pass
         self._venv_check_index += 1
         self._call_ui(
             "update_progress_progress",
@@ -1449,14 +1569,27 @@ class VenvManager:
             # Validate existing venv; if invalid, propose deletion/recreation
             ok, reason = self.validate_venv_strict(venv_path)
             if not ok:
-                self.log_i18n(f"[ERROR] Invalid venv detected: {reason}")
+                try:
+                    from pycompiler_ark.Ui import output
+
+                    output.error(
+                        f"[ERROR] Invalid venv detected: {reason}",
+                        gui=self.parent,
+                    )
+                except Exception:
+                    pass
                 recreated = self._prompt_recreate_invalid_venv(venv_path, reason)
                 if not recreated:
                     return
             else:
                 return
 
-        self.log_i18n("[CONFIG] Aucun venv trouve, creation automatique...")
+        try:
+            from pycompiler_ark.Ui import output
+
+            output.info("[CONFIG] Aucun venv trouve, creation automatique...", gui=self.parent)
+        except Exception:
+            pass
         try:
             self._reset_cancel_state()
             # Recherche d'un python embarque a cote de l'executable
@@ -1499,17 +1632,35 @@ class VenvManager:
                 python_candidate.startswith(exe_dir)
                 or "python_embedded" in python_candidate
             ):
-                self.log_i18n(
-                    f"[STATE] Utilisation de l'interpreteur Python embarque : {python_candidate}"
-                )
+                try:
+                    from pycompiler_ark.Ui import output
+
+                    output.info(
+                        f"[STATE] Utilisation de l'interpreteur Python embarque : {python_candidate}",
+                        gui=self.parent,
+                    )
+                except Exception:
+                    pass
             elif base in ("py", "py.exe") or shutil.which(base):
-                self.log_i18n(
-                    f"[STATE] Utilisation de l'interpreteur systeme : {python_candidate}"
-                )
+                try:
+                    from pycompiler_ark.Ui import output
+
+                    output.info(
+                        f"[STATE] Utilisation de l'interpreteur systeme : {python_candidate}",
+                        gui=self.parent,
+                    )
+                except Exception:
+                    pass
             else:
-                self.log_i18n(
-                    f"[STATE] Utilisation de sys.executable : {python_candidate}"
-                )
+                try:
+                    from pycompiler_ark.Ui import output
+
+                    output.info(
+                        f"[STATE] Utilisation de sys.executable : {python_candidate}",
+                        gui=self.parent,
+                    )
+                except Exception:
+                    pass
 
             self._call_ui(
                 "show_progress",
@@ -1549,9 +1700,15 @@ class VenvManager:
             # Safety timeout for venv creation (10 min)
             self._arm_process_timeout(process, 600_000, "venv creation")
         except Exception as e:
-            self.log_i18n(
-                f"[ERROR] Echec de creation du venv ou installation des outils : {e}"
-            )
+            try:
+                from pycompiler_ark.Ui import output
+
+                output.error(
+                    f"[ERROR] Echec de creation du venv ou installation des outils : {e}",
+                    gui=self.parent,
+                )
+            except Exception:
+                pass
 
     def _on_venv_output(self, process, error=False):
         """Handle the related event callback."""
@@ -1580,18 +1737,33 @@ class VenvManager:
             if is_verbose or error:
                 for line in lines:
                     lvl = "warning" if error else "info"
-                    self.log_i18n(f"  [venv] {line}", level=lvl)
+                    try:
+                        from pycompiler_ark.Ui import output
+
+                        output.log(lvl, f"  [venv] {line}", gui=self.parent)
+                    except Exception:
+                        pass
 
     def _on_venv_created(self, process, code, status, venv_path):
         """Handle the related event callback."""
         if getattr(self.parent, "_closing", False):
             return
         if self._is_cancel_requested():
-            self.log_i18n("[INFO] Creation du venv annulee.")
+            try:
+                from pycompiler_ark.Ui import output
+
+                output.info("[INFO] Creation du venv annulee.", gui=self.parent)
+            except Exception:
+                pass
             self._call_ui("close_progress", "venv_creation")
             return
         if code == 0:
-            self.log_i18n("[OK] Environnement virtuel cree avec succes.")
+            try:
+                from pycompiler_ark.Ui import output
+
+                output.success("[OK] Environnement virtuel cree avec succes.", gui=self.parent)
+            except Exception:
+                pass
             self._call_ui("update_progress_message", "venv_creation", "Venv cree.")
             self._call_ui("close_progress", "venv_creation")
 
@@ -1601,7 +1773,15 @@ class VenvManager:
             except Exception:
                 pass
         else:
-            self.log_i18n(f"[ERROR] Echec de creation du venv (code {code})")
+            try:
+                from pycompiler_ark.Ui import output
+
+                output.error(
+                    f"[ERROR] Echec de creation du venv (code {code})",
+                    gui=self.parent,
+                )
+            except Exception:
+                pass
             self._call_ui(
                 "update_progress_message",
                 "venv_creation",
@@ -1656,17 +1836,17 @@ class VenvManager:
                 return others[0]
 
             # 3. Use DepsAnalyser to generate requirements.txt from project analysis
-            self.log_i18n(
+            self._emit_output(
                 "[SEARCH] Analyse des dependances du projet via DepsAnalyser..."
             )
             generated = deps_analyser.write_requirements_txt(workspace_dir)
             if generated and os.path.isfile(generated):
-                self.log_i18n("[OK] requirements.txt genere via DepsAnalyser.")
+                self._emit_output("[OK] requirements.txt genere via DepsAnalyser.")
                 return generated
 
             return None
         except Exception as e:
-            self.log_i18n(
+            self._emit_output(
                 f"[WARNING] Erreur lors de la detection des requirements: {e}"
             )
             return None
@@ -1677,7 +1857,7 @@ class VenvManager:
         # Get or generate requirements file
         req_path = self._get_requirements_file(path)
         if not req_path:
-            self.log_i18n("[INFO] Aucun fichier de dependances trouve ou genere.")
+            self._emit_output("[INFO] Aucun fichier de dependances trouve ou genere.")
             return
 
         if self._using_system_python():
@@ -1699,7 +1879,7 @@ class VenvManager:
                 venv_root = existing2 or venv_root
         ok, reason = self.validate_venv_strict(venv_root)
         if not ok:
-            self.log_i18n(f"[WARNING] Invalid venv for requirements: {reason}")
+            self._emit_output(f"[WARNING] Invalid venv for requirements: {reason}")
             # Offer to delete and recreate, then retry installation
             if self._prompt_recreate_invalid_venv(venv_root, reason):
                 # if recreated, try install again
@@ -1710,7 +1890,7 @@ class VenvManager:
         def _after_binding(ok_bind: bool):
             """Execute _after_binding logic for this component."""
             if not ok_bind:
-                self.log_i18n(
+                self._emit_output(
                     "[WARNING] Liaison venv invalide (python/pip ne pointent pas vers le venv); installation ignoree."
                 )
                 return
@@ -1729,7 +1909,7 @@ class VenvManager:
         from pycompiler_ark.Core.Compiler.utils import check_internet_connection
 
         if not check_internet_connection():
-            self.log_i18n(
+            self._emit_output(
                 "🛑 [ERROR] Pas de connexion internet. Installation des dépendances annulée.",
                 "🛑 [ERROR] No internet connection. Dependencies installation cancelled.",
                 level="error",
@@ -1739,7 +1919,7 @@ class VenvManager:
         self._reset_cancel_state()
         py_exe = sys.executable if use_system_python else self.python_path(venv_root)
         if not os.path.isfile(py_exe):
-            self.log_i18n(
+            self._emit_output(
                 "[WARNING] python introuvable dans le venv; installation requirements ignoree."
             )
             return
@@ -1749,7 +1929,7 @@ class VenvManager:
                 data = f.read()
             req_hash = hashlib.sha256(data).hexdigest()
         except Exception as e:
-            self.log_i18n(
+            self._emit_output(
                 f"[WARNING] Impossible de calculer le hash de requirements.txt: {e}"
             )
             req_hash = None
@@ -1766,13 +1946,13 @@ class VenvManager:
                 with open(marker_path, encoding="utf-8") as mf:
                     current = mf.read().strip()
                 if current == req_hash:
-                    self.log_i18n(
+                    self._emit_output(
                         "[OK] requirements.txt deja installe (aucun changement detecte)."
                     )
                     return
             except Exception:
                 pass
-        self.log_i18n(
+        self._emit_output(
             "[INSTALL] Installation des dependances a partir de requirements.txt..."
         )
         try:
@@ -1818,7 +1998,7 @@ class VenvManager:
             # Safety timeout for ensurepip (3 min)
             self._arm_process_timeout(process, 180_000, "ensurepip")
         except Exception as e:
-            self.log_i18n(f"[ERROR] Echec installation requirements.txt : {e}")
+            self._emit_output(f"[ERROR] Echec installation requirements.txt : {e}")
 
     def _on_pip_output(self, process, error=False):
         """Handle the related event callback."""
@@ -1846,14 +2026,14 @@ class VenvManager:
             if is_verbose or error:
                 for line in lines:
                     lvl = "warning" if error else "info"
-                    self.log_i18n(f"  [pip] {line}", level=lvl)
+                    self._emit_output(f"  [pip] {line}", level=lvl)
 
     def _on_pip_finished(self, process, code, status):
         """Handle the related event callback."""
         if getattr(self.parent, "_closing", False):
             return
         if self._is_cancel_requested():
-            self.log_i18n("[INFO] Installation des dependances annulee.")
+            self._emit_output("[INFO] Installation des dependances annulee.")
             self._call_ui("close_progress", "reqs_install")
             return
         phase = self._pip_phase
@@ -1931,7 +2111,7 @@ class VenvManager:
                 )
                 return
             else:
-                self.log_i18n(
+                self._emit_output(
                     f"[ERROR] Echec mise a niveau pip/setuptools/wheel (code {code})"
                 )
                 self._call_ui(
@@ -1941,7 +2121,7 @@ class VenvManager:
                 )
         else:
             if code == 0:
-                self.log_i18n("[OK] requirements.txt installe.")
+                self._emit_output("[OK] requirements.txt installe.")
                 # Write/update marker if we computed it
                 try:
                     if getattr(self, "_req_marker_path", None) and getattr(
@@ -1958,7 +2138,7 @@ class VenvManager:
                     "update_progress_message", "reqs_install", "Installation terminee."
                 )
             else:
-                self.log_i18n(
+                self._emit_output(
                     f"[ERROR] Echec installation requirements.txt (code {code})"
                 )
                 self._call_ui(
@@ -1999,7 +2179,7 @@ class VenvManager:
                 pass
 
         if had_active:
-            self.log_i18n(
+            self._emit_output(
                 "[CANCEL] Operations venv interrompues.",
                 "[CANCEL] Venv operations interrupted.",
                 level="warning",
@@ -2043,7 +2223,7 @@ class VenvManager:
             if not existing_env:
                 self.create_venv_if_needed(workspace_dir)
             else:
-                self.log_i18n(f"[OK] Venv existant detecte: {existing_env}")
+                self._emit_output(f"[OK] Venv existant detecte: {existing_env}")
 
             # Check and install tools if requested
             if check_tools:
@@ -2054,18 +2234,18 @@ class VenvManager:
 
                         def _after_binding(ok_bind: bool):
                             if ok_bind:
-                                self.log_i18n(
+                                self._emit_output(
                                     "[SEARCH] Verification des outils de compilation..."
                                 )
                                 self.check_tools_in_venv(existing_check)
                             else:
-                                self.log_i18n(
+                                self._emit_output(
                                     "[WARNING] Liaison venv invalide, verification des outils ignoree."
                                 )
 
                         self._verify_venv_binding_async(existing_check, _after_binding)
                     else:
-                        self.log_i18n(
+                        self._emit_output(
                             f"[WARNING] Venv invalide, verification des outils ignoree: {reason}"
                         )
 
@@ -2074,13 +2254,13 @@ class VenvManager:
                 from pycompiler_ark.Core.Configs import create_default_ark_config
 
                 if create_default_ark_config(workspace_dir):
-                    self.log_i18n("[STATE] Fichier ark.yml cree dans le workspace.")
+                    self._emit_output("[STATE] Fichier ark.yml cree dans le workspace.")
             except Exception as e:
-                self.log_i18n(f"[WARNING] Impossible de creer ark.yml: {e}")
+                self._emit_output(f"[WARNING] Impossible de creer ark.yml: {e}")
 
             return True
         except Exception as e:
-            self.log_i18n(f"[ERROR] Erreur lors de la configuration du workspace: {e}")
+            self._emit_output(f"[ERROR] Erreur lors de la configuration du workspace: {e}")
             return False
 
     def get_manager_info(self, workspace_dir: str) -> dict:
