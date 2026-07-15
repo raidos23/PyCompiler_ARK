@@ -35,12 +35,8 @@ from pycompiler_ark.Ui.Gui.Dialogs.VenvDialog import VenvManagerUI
 from pycompiler_ark.Ui.Gui.Dialogs.WorkspaceDialog import WorkspaceDialog
 from pycompiler_ark.Ui.Gui.UiFeatures import UiFeatures as UiFeatures
 from pycompiler_ark.Ui.Gui.WorkspaceManipulation import WorkspaceAdvancedManipulation
-from pycompiler_ark.Ui.i18n import (
-    is_french_language,
-    log_i18n_level,
-    log_with_level,
-    tr_fr_en,
-)
+from pycompiler_ark.Ui import output
+from pycompiler_ark.Ui.i18n import is_french_language, tr_fr_en
 
 
 def get_selected_workspace() -> Optional[str]:
@@ -129,11 +125,12 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
                 self._ui_variant_active = "ide2"
             except Exception:
                 self._ui_variant_active = "classic"
-                log_i18n_level(
-                    self,
-                    "warning",
-                    "UI IDE-like indisponible, bascule vers l'interface classique.",
-                    "IDE-like UI unavailable, falling back to classic UI.",
+                output.warn(
+                    (
+                        "UI IDE-like indisponible, bascule vers l'interface classique.",
+                        "IDE-like UI unavailable, falling back to classic UI.",
+                    ),
+                    gui=self,
                 )
                 self.init_ui()
         else:
@@ -171,7 +168,6 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
     show_statistics = UiFeatures.show_statistics
     apply_language = UiFeatures.apply_language
     register_language_refresh = UiFeatures.register_language_refresh
-    log_i18n = UiFeatures.log_i18n
     show_language_dialog = UiFeatures.show_language_dialog
     _apply_main_app_translations = UiFeatures._apply_main_app_translations
 

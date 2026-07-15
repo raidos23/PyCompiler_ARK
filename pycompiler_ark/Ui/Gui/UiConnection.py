@@ -33,6 +33,7 @@ try:
 except Exception:
     QSvgRenderer = None  # type: ignore[assignment]
 
+from pycompiler_ark.Ui import output
 from .Dialogs.i18nDialog import show_language_dialog, translate
 
 
@@ -889,21 +890,21 @@ def apply_theme(self, pref: str) -> None:
             except Exception:
                 pass
         try:
-            from pycompiler_ark.Ui.i18n import log_i18n_level
-
             if chosen_path:
-                log_i18n_level(
-                    self,
-                    "info",
-                    f"Thème appliqué : {chosen_name} ({os.path.basename(chosen_path)})",
-                    f"Theme applied: {chosen_name} ({os.path.basename(chosen_path)})",
+                output.info(
+                    (
+                        f"Thème appliqué : {chosen_name} ({os.path.basename(chosen_path)})",
+                        f"Theme applied: {chosen_name} ({os.path.basename(chosen_path)})",
+                    ),
+                    gui=self,
                 )
             else:
-                log_i18n_level(
-                    self,
-                    "warning",
-                    "Aucun thème appliqué (aucun fichier .qss trouvé dans themes)",
-                    "No theme applied (no .qss file found in themes)",
+                output.warn(
+                    (
+                        "Aucun thème appliqué (aucun fichier .qss trouvé dans themes)",
+                        "No theme applied (no .qss file found in themes)",
+                    ),
+                    gui=self,
                 )
         except Exception:
             pass
@@ -911,20 +912,15 @@ def apply_theme(self, pref: str) -> None:
         try:
             if hasattr(self, "log") and self.log:
                 try:
-                    from pycompiler_ark.Ui.i18n import log_i18n_level
-
-                    log_i18n_level(
-                        self,
-                        "warning",
-                        f"Échec d'application du thème: {e}",
-                        f"Failed to apply theme: {e}",
+                    output.warn(
+                        (
+                            f"Échec d'application du thème: {e}",
+                            f"Failed to apply theme: {e}",
+                        ),
+                        gui=self,
                     )
                 except Exception:
-                    from pycompiler_ark.Ui.i18n import log_with_level
-
-                    log_with_level(
-                        self, "warning", f"Échec d'application du thème: {e}"
-                    )
+                    output.warn(f"Échec d'application du thème: {e}", gui=self)
         except Exception:
             pass
 
@@ -959,13 +955,9 @@ def show_theme_dialog(self) -> None:
             pass
     else:
         try:
-            from pycompiler_ark.Ui.i18n import log_i18n_level
-
-            log_i18n_level(
-                self,
-                "info",
-                "Sélection du thème annulée.",
-                "Theme selection cancelled.",
+            output.info(
+                ("Sélection du thème annulée.", "Theme selection cancelled."),
+                gui=self,
             )
         except Exception:
             pass

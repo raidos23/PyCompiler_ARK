@@ -183,13 +183,20 @@ def show_msgbox(
     Show a message box if a Qt toolkit is available; fallback to console output otherwise.
     Executes in the main Qt thread to ensure theme inheritance and proper UI integration.
     """
-    if _use_rich_dialogs() or QApplication.instance() is None:
+        if _use_rich_dialogs() or QApplication.instance() is None:
         if str(kind or "").lower() != "question":
             try:
-                from pycompiler_ark.Ui.i18n import log_with_level
+                from pycompiler_ark.Ui import output
 
                 lvl = "warning" if kind in ("warning", "error") else "info"
-                log_with_level(None, lvl, f"[MSGBOX:{kind}] {title}: {text}")
+                try:
+                    output.log(lvl, f"[MSGBOX:{kind}] {title}: {text}", gui=None)
+                except Exception:
+                    # fallback to helpers
+                    if lvl in ("warning", "error"):
+                        output.warn(f"[MSGBOX:{kind}] {title}: {text}", gui=None)
+                    else:
+                        output.info(f"[MSGBOX:{kind}] {title}: {text}", gui=None)
             except Exception:
                 pass
         return _show_rich_msgbox(kind, title, text, default=default)
@@ -225,14 +232,20 @@ def show_msgbox(
                 mb.setDefaultButton(ok)
                 _ = mb.exec_() if hasattr(mb, "exec_") else mb.exec()
                 return None
-        except Exception:
-            try:
-                from pycompiler_ark.Ui.i18n import log_with_level
-
-                lvl = "warning" if kind in ("warning", "error") else "info"
-                log_with_level(None, lvl, f"[MSGBOX:{kind}] {title}: {text}")
             except Exception:
-                pass
+                try:
+                    from pycompiler_ark.Ui import output
+
+                    lvl = "warning" if kind in ("warning", "error") else "info"
+                    try:
+                        output.log(lvl, f"[MSGBOX:{kind}] {title}: {text}", gui=None)
+                    except Exception:
+                        if lvl in ("warning", "error"):
+                            output.warn(f"[MSGBOX:{kind}] {title}: {text}", gui=None)
+                        else:
+                            output.info(f"[MSGBOX:{kind}] {title}: {text}", gui=None)
+                except Exception:
+                    pass
             return _show_rich_msgbox(kind, title, text, default=default)
 
     return _invoke_in_main_thread(_show_in_main_thread)
@@ -350,13 +363,13 @@ def sys_msgbox_for_installing(
             return InstallAuth("sudo", pwd) if pwd else None
         except Exception:
             pass
-    try:
         try:
-            from pycompiler_ark.Ui.i18n import log_with_level
+            try:
+                from pycompiler_ark.Ui import output
 
-            log_with_level(None, "info", f"[INSTALL] {title}: {msg}")
-        except Exception:
-            pass
+                output.log("info", f"[INSTALL] {title}: {msg}", gui=None)
+            except Exception:
+                pass
         ans = (
             input("Continuer ? [y/N] " if is_fr else "Continue? [y/N] ").strip().lower()
         )

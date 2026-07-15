@@ -24,7 +24,7 @@ from __future__ import annotations
 from typing import Any, Optional
 
 from pycompiler_ark.Ui.Gui.Compilation.mainprocess import MainProcess
-from pycompiler_ark.Ui.i18n import log_i18n_level
+from pycompiler_ark.Ui import output
 
 # Singleton MainProcess (initialised on first use)
 _main_process: Optional[MainProcess] = None
@@ -88,11 +88,12 @@ def run_bcasl_before_compile(
 
     if not enabled:
         try:
-            log_i18n_level(
-                gui_instance,
-                "info",
-                "BCASL désactivé dans ark.yml. Exécution ignorée.",
-                "BCASL disabled in ark.yml. Skipping execution.",
+            output.info(
+                (
+                    "BCASL désactivé dans ark.yml. Exécution ignorée.",
+                    "BCASL disabled in ark.yml. Skipping execution.",
+                ),
+                gui=gui_instance,
             )
         except Exception:
             pass
@@ -101,11 +102,9 @@ def run_bcasl_before_compile(
         return
 
     try:
-        log_i18n_level(
-            gui_instance,
-            "info",
-            "Pré-compilation (BCASL)...",
-            "Pre-compilation (BCASL)...",
+        output.info(
+            ("Pré-compilation (BCASL)...", "Pre-compilation (BCASL)..."),
+            gui=gui_instance,
         )
     except Exception:
         pass
@@ -172,11 +171,12 @@ def bcasl_report_allows_compile(gui_instance, report) -> bool:
 
     except Exception:
         try:
-            log_i18n_level(
-                gui_instance,
-                "error",
-                "Erreur lors de la validation du rapport BCASL. Compilation bloquée.",
-                "Error while validating BCASL report. Compilation blocked.",
+            output.error(
+                (
+                    "Erreur lors de la validation du rapport BCASL. Compilation bloquée.",
+                    "Error while validating BCASL report. Compilation blocked.",
+                ),
+                gui=gui_instance,
             )
         except Exception:
             pass

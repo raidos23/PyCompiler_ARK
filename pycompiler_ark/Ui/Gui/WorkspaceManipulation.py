@@ -24,6 +24,7 @@ import os
 
 from PySide6.QtGui import QDropEvent
 from PySide6.QtWidgets import QFileDialog, QMessageBox
+from pycompiler_ark.Ui import output
 
 
 class WorkspaceAdvancedManipulation:
@@ -76,14 +77,20 @@ class WorkspaceAdvancedManipulation:
                     pass
 
             if added > 0:
-                gui_instance.log_i18n(
-                    f"✅ {added} fichier(s) sélectionné(s) manuellement.\n",
-                    f"✅ {added} file(s) selected manually.\n",
+                output.info(
+                    (
+                        f"✅ {added} fichier(s) sélectionné(s) manuellement.\n",
+                        f"✅ {added} file(s) selected manually.\n",
+                    ),
+                    gui=gui_instance,
                 )
                 if excluded > 0:
-                    gui_instance.log_i18n(
-                        f"⏩ Exclusion appliquée : {excluded} fichier(s) ignoré(s) (ark.yml).",
-                        f"⏩ Exclusion applied: {excluded} file(s) ignored (ark.yml).",
+                    output.info(
+                        (
+                            f"⏩ Exclusion appliquée : {excluded} fichier(s) ignoré(s) (ark.yml).",
+                            f"⏩ Exclusion applied: {excluded} file(s) ignored (ark.yml).",
+                        ),
+                        gui=gui_instance,
                     )
 
                 # Update UI list widget
@@ -173,21 +180,30 @@ class WorkspaceAdvancedManipulation:
                     workspace_dir
                     and os.path.commonpath([f, workspace_dir]) != workspace_dir
                 ):
-                    gui_instance.log_i18n(
-                        f"⚠️ Ignoré (hors workspace): {f}",
-                        f"⚠️ Ignored (outside workspace): {f}",
+                    output.warn(
+                        (
+                            f"⚠️ Ignoré (hors workspace): {f}",
+                            f"⚠️ Ignored (outside workspace): {f}",
+                        ),
+                        gui=gui_instance,
                     )
             except Exception:
                 pass
 
-        gui_instance.log_i18n(
-            f"✅ {added} fichier(s) ajouté(s) via drag & drop.",
-            f"✅ {added} file(s) added via drag & drop.",
+        output.info(
+            (
+                f"✅ {added} fichier(s) ajouté(s) via drag & drop.",
+                f"✅ {added} file(s) added via drag & drop.",
+            ),
+            gui=gui_instance,
         )
         if excluded > 0:
-            gui_instance.log_i18n(
-                f"⏩ Exclusion appliquée : {excluded} fichier(s) ignoré(s) (ark.yml).",
-                f"⏩ Exclusion applied: {excluded} file(s) ignored (ark.yml).",
+            output.info(
+                (
+                    f"⏩ Exclusion appliquée : {excluded} fichier(s) ignoré(s) (ark.yml).",
+                    f"⏩ Exclusion applied: {excluded} file(s) ignored (ark.yml).",
+                ),
+                gui=gui_instance,
             )
         try:
             if hasattr(gui_instance, "apply_file_filter"):
@@ -267,8 +283,11 @@ class WorkspaceAdvancedManipulation:
             return True
 
         except Exception as e:
-            gui_instance.log_i18n(
-                f"❌ Erreur lors de l'effacement du workspace: {e}",
-                f"❌ Error clearing workspace: {e}",
+            output.error(
+                (
+                    f"❌ Erreur lors de l'effacement du workspace: {e}",
+                    f"❌ Error clearing workspace: {e}",
+                ),
+                gui=gui_instance,
             )
             return False

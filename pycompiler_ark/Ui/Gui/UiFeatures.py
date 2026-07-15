@@ -27,6 +27,8 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QIcon, QPixmap
 from PySide6.QtWidgets import QApplication, QFileDialog, QMenu, QMessageBox
 
+from pycompiler_ark.Ui import output
+
 
 class UiFeatures:
     """Mixin UI helper utilisé par la fenêtre principale."""
@@ -43,8 +45,9 @@ class UiFeatures:
         )
         if file:
             self.icon_path = file
-            self.log_i18n(
-                f"🎨 Icône sélectionnée : {file}", f"🎨 Icon selected: {file}"
+            output.info(
+                (f"🎨 Icône sélectionnée : {file}", f"🎨 Icon selected: {file}"),
+                gui=self,
             )
             pixmap = QPixmap(file)
             if not pixmap.isNull():
@@ -79,9 +82,12 @@ class UiFeatures:
         )
         if file:
             self.nuitka_icon_path = file
-            self.log_i18n(
-                f"🎨 Icône Nuitka sélectionnée : {file}",
-                f"🎨 Nuitka icon selected: {file}",
+            output.info(
+                (
+                    f"🎨 Icône Nuitka sélectionnée : {file}",
+                    f"🎨 Nuitka icon selected: {file}",
+                ),
+                gui=self,
             )
         else:
             self.nuitka_icon_path = None
@@ -233,9 +239,12 @@ class UiFeatures:
             return
         abs_path = os.path.join(workspace_dir, rel_path)
         if not os.path.isfile(abs_path):
-            self.log_i18n(
-                f"⚠️ Point d'entrée introuvable: {abs_path}",
-                f"⚠️ Entrypoint not found: {abs_path}",
+            output.warn(
+                (
+                    f"⚠️ Point d'entrée introuvable: {abs_path}",
+                    f"⚠️ Entrypoint not found: {abs_path}",
+                ),
+                gui=self,
             )
             return
         try:
@@ -248,14 +257,20 @@ class UiFeatures:
             self._entrypoint_relpath = rel_path
             self.entrypoint_file = abs_path
             self._refresh_entrypoint_marker()
-            self.log_i18n(
-                f"✅ Point d'entrée défini : {rel_path}",
-                f"✅ Entrypoint set: {rel_path}",
+            output.success(
+                (
+                    f"✅ Point d'entrée défini : {rel_path}",
+                    f"✅ Entrypoint set: {rel_path}",
+                ),
+                gui=self,
             )
         else:
-            self.log_i18n(
-                "❌ Impossible de sauvegarder le point d'entrée.",
-                "❌ Unable to save entrypoint.",
+            output.error(
+                (
+                    "❌ Impossible de sauvegarder le point d'entrée.",
+                    "❌ Unable to save entrypoint.",
+                ),
+                gui=self,
             )
 
     def clear_entrypoint(self) -> None:
@@ -273,11 +288,14 @@ class UiFeatures:
             self._entrypoint_relpath = None
             self.entrypoint_file = None
             self._refresh_entrypoint_marker()
-            self.log_i18n("✅ Point d'entrée effacé.", "✅ Entrypoint cleared.")
+            output.success(("✅ Point d'entrée effacé.", "✅ Entrypoint cleared."), gui=self)
         else:
-            self.log_i18n(
-                "❌ Impossible d'effacer le point d'entrée.",
-                "❌ Unable to clear entrypoint.",
+            output.error(
+                (
+                    "❌ Impossible d'effacer le point d'entrée.",
+                    "❌ Unable to clear entrypoint.",
+                ),
+                gui=self,
             )
 
     # =========================================================================
@@ -288,8 +306,9 @@ class UiFeatures:
         """Save configuration for all registered engines in one click."""
         workspace_dir = getattr(self, "workspace_dir", None)
         if not workspace_dir:
-            self.log_i18n(
-                "❌ Aucun workspace sélectionné.", "❌ No workspace selected."
+            output.error(
+                ("❌ Aucun workspace sélectionné.", "❌ No workspace selected."),
+                gui=self,
             )
             QMessageBox.warning(
                 self,
@@ -308,7 +327,7 @@ class UiFeatures:
 
             engine_ids = list(engines_loader.available_engines())
             if not engine_ids:
-                self.log_i18n("⚠️ Aucun moteur chargé.", "⚠️ No engine loaded.")
+                output.warn(("⚠️ Aucun moteur chargé.", "⚠️ No engine loaded."), gui=self)
                 return
 
             saved = 0
@@ -323,19 +342,28 @@ class UiFeatures:
                     failed.append(str(engine_id))
 
             if failed:
-                self.log_i18n(
-                    f"⚠️ Configs engines sauvegardées: {saved}/{len(engine_ids)}. Échecs: {', '.join(failed)}",
-                    f"⚠️ Engine configs saved: {saved}/{len(engine_ids)}. Failed: {', '.join(failed)}",
+                output.warn(
+                    (
+                        f"⚠️ Configs engines sauvegardées: {saved}/{len(engine_ids)}. Échecs: {', '.join(failed)}",
+                        f"⚠️ Engine configs saved: {saved}/{len(engine_ids)}. Failed: {', '.join(failed)}",
+                    ),
+                    gui=self,
                 )
             else:
-                self.log_i18n(
-                    f"✅ Configs engines sauvegardées: {saved}/{len(engine_ids)}",
-                    f"✅ Engine configs saved: {saved}/{len(engine_ids)}",
+                output.success(
+                    (
+                        f"✅ Configs engines sauvegardées: {saved}/{len(engine_ids)}",
+                        f"✅ Engine configs saved: {saved}/{len(engine_ids)}",
+                    ),
+                    gui=self,
                 )
         except Exception as e:
-            self.log_i18n(
-                f"❌ Erreur sauvegarde configs engines: {e}",
-                f"❌ Error saving engine configs: {e}",
+            output.error(
+                (
+                    f"❌ Erreur sauvegarde configs engines: {e}",
+                    f"❌ Error saving engine configs: {e}",
+                ),
+                gui=self,
             )
 
     def update_command_preview(self):
@@ -633,22 +661,6 @@ class UiFeatures:
         except Exception:
             pass
 
-    def log_i18n(self, fr: str, en: str) -> None:
-        """Append a localized message to the log."""
-        try:
-            from pycompiler_ark.Ui.i18n import log_i18n
-            log_i18n(self, fr, en)
-        except Exception:
-            try:
-                msg = self.tr(fr, en)
-            except Exception:
-                msg = en
-            try:
-                from pycompiler_ark.Ui.i18n import log_with_level
-                log_with_level(self, "info", msg)
-            except Exception:
-                pass
-
     def show_language_dialog(self) -> None:
         """Open language selection dialog."""
         from .Dialogs.i18nDialog import show_language_dialog as _i18n_show_dialog
@@ -667,8 +679,9 @@ class UiFeatures:
         """Open the advanced config editor dialog."""
         workspace_dir = getattr(self, "workspace_dir", None)
         if not workspace_dir:
-            self.log_i18n(
-                "❌ Aucun workspace sélectionné.", "❌ No workspace selected."
+            output.error(
+                ("❌ Aucun workspace sélectionné.", "❌ No workspace selected."),
+                gui=self,
             )
             QMessageBox.warning(
                 self,
@@ -690,9 +703,12 @@ class UiFeatures:
             dlg.exec()
         except Exception as e:
             try:
-                self.log_i18n(
-                    f"Erreur ouverture configurations avancées: {e}",
-                    f"Failed to open advanced configurations: {e}",
+                output.error(
+                    (
+                        f"Erreur ouverture configurations avancées: {e}",
+                        f"Failed to open advanced configurations: {e}",
+                    ),
+                    gui=self,
                 )
             except Exception:
                 pass

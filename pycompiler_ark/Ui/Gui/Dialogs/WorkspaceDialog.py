@@ -27,6 +27,7 @@ from typing import Optional
 
 from PySide6.QtWidgets import QApplication, QFileDialog, QMessageBox
 
+from pycompiler_ark.Ui import output
 from pycompiler_ark.Ui.Gui.Globals import _workspace_dir_lock
 from pycompiler_ark.Core.WorkSpaceManager.SetupWorkspace import SetupWorkspace
 from pycompiler_ark.Ui.Gui.WidgetsCreator import CompilationProcessDialog
@@ -131,9 +132,12 @@ class WorkspaceDialog:
             # Étape 2: valider/préparer le dossier workspace (via Core).
             if not folder:
                 try:
-                    gui_instance.log_i18n(
-                        "⚠️ Chemin de workspace vide fourni; aucune modification appliquée (accepté).",
-                        "⚠️ Empty workspace path provided; no changes applied (accepted).",
+                    output.warn(
+                        (
+                            "⚠️ Chemin de workspace vide fourni; aucune modification appliquée (accepté).",
+                            "⚠️ Empty workspace path provided; no changes applied (accepted).",
+                        ),
+                        gui=gui_instance,
                     )
                 except Exception:
                     pass
@@ -145,22 +149,31 @@ class WorkspaceDialog:
             if not os.path.isdir(folder):
                 try:
                     os.makedirs(folder, exist_ok=True)
-                    gui_instance.log_i18n(
-                        f"📁 Dossier créé automatiquement: {folder}",
-                        f"📁 Folder created automatically: {folder}",
+                    output.info(
+                        (
+                            f"📁 Dossier créé automatiquement: {folder}",
+                            f"📁 Folder created automatically: {folder}",
+                        ),
+                        gui=gui_instance,
                     )
                 except Exception as e:
-                    gui_instance.log_i18n(
-                        f"⚠️ Impossible de créer le dossier: {e}",
-                        f"⚠️ Unable to create folder: {e}",
+                    output.warn(
+                        (
+                            f"⚠️ Impossible de créer le dossier: {e}",
+                            f"⚠️ Unable to create folder: {e}",
+                        ),
+                        gui=gui_instance,
                     )
 
             # Étape 3: stopper proprement les compilations actives.
             if hasattr(gui_instance, "processes") and gui_instance.processes:
                 label = "Plugins" if str(source).lower() == "plugin" else "UI"
-                gui_instance.log_i18n(
-                    f"⛔ Arrêt des compilations en cours pour changer de workspace ({label}).",
-                    f"⛔ Stopping ongoing builds to switch workspace ({label}).",
+                output.warn(
+                    (
+                        f"⛔ Arrêt des compilations en cours pour changer de workspace ({label}).",
+                        f"⛔ Stopping ongoing builds to switch workspace ({label}).",
+                    ),
+                    gui=gui_instance,
                 )
                 try:
                     gui_instance.cancel_all_compilations()
@@ -263,9 +276,12 @@ class WorkspaceDialog:
                     gui_instance.file_list.setUpdatesEnabled(True)
 
             if excluded_count > 0:
-                gui_instance.log_i18n(
-                    f"⏩ Exclusion appliquée : {excluded_count} fichier(s) exclu(s) selon ark.yml",
-                    f"⏩ Exclusion applied: {excluded_count} file(s) excluded according to ark.yml",
+                output.info(
+                    (
+                        f"⏩ Exclusion appliquée : {excluded_count} fichier(s) exclu(s) selon ark.yml",
+                        f"⏩ Exclusion applied: {excluded_count} file(s) excluded according to ark.yml",
+                    ),
+                    gui=gui_instance,
                 )
 
             # Rafraîchir les autres composants UI
@@ -331,9 +347,12 @@ class WorkspaceDialog:
             return True
 
         except Exception as e:
-            gui_instance.log_i18n(
-                f"❌ Échec application workspace: {e}",
-                f"❌ Failed to apply workspace: {e}",
+            output.error(
+                (
+                    f"❌ Échec application workspace: {e}",
+                    f"❌ Failed to apply workspace: {e}",
+                ),
+                gui=gui_instance,
             )
             if loading_dialog:
                 loading_dialog.close()
@@ -363,8 +382,9 @@ class WorkspaceDialog:
                 from pycompiler_ark.Core.Configs import create_default_ark_config
 
                 if create_default_ark_config(workspace_dir):
-                    gui_instance.log_i18n(
-                        "📋 Fichier ark.yml créé.", "📋 ark.yml file created."
+                    output.info(
+                        ("📋 Fichier ark.yml créé.", "📋 ark.yml file created."),
+                        gui=gui_instance,
                     )
             except Exception as e:
                 QMessageBox.critical(
@@ -390,8 +410,9 @@ class WorkspaceDialog:
                 subprocess.run(["open", config_path])
             else:
                 subprocess.run(["xdg-open", config_path])
-            gui_instance.log_i18n(
-                f"📝 Ouverture de {config_path}", f"📝 Opening {config_path}"
+            output.info(
+                (f"📝 Ouverture de {config_path}", f"📝 Opening {config_path}"),
+                gui=gui_instance,
             )
         except Exception as e:
             QMessageBox.warning(

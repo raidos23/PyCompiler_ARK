@@ -62,7 +62,7 @@ class SafeGuiBridge(QObject):
     """
 
     log_triggered = Signal(str, str)  # level, message
-    log_i18n_triggered = Signal(str, str, str)  # level, fr, en
+    log_message_triggered = Signal(str, str, str)  # level, fr, en
 
     def __init__(self, original_gui: Any):
         super().__init__()
@@ -81,11 +81,11 @@ class SafeGuiBridge(QObject):
         except Exception:
             return en
 
-    def log_i18n(self, fr: str, en: str, level: str | None = None) -> None:
-        self.log_i18n_triggered.emit(level or "info", fr, en)
+    def log_message(self, fr: str, en: str, level: str | None = None) -> None:
+        self.log_message_triggered.emit(level or "info", fr, en)
 
-    def log_i18n_level(self, level: str, fr: str, en: str) -> None:
-        self.log_i18n_triggered.emit(level, fr, en)
+    def log_message_level(self, level: str, fr: str, en: str) -> None:
+        self.log_message_triggered.emit(level, fr, en)
 
     @property
     def log(self):
@@ -135,7 +135,9 @@ class CompilationThread(QThread):
         if self.bridge:
             # Connect bridge signals to emit via the thread
             self.bridge.log_triggered.connect(self._handle_bridge_log)
-            self.bridge.log_i18n_triggered.connect(self._handle_bridge_log_i18n)
+            self.bridge.log_message_triggered.connect(
+                self._handle_bridge_log_message
+            )
 
         self.cancel_requested = False
         self.start_time: Optional[datetime] = None
@@ -143,7 +145,7 @@ class CompilationThread(QThread):
     def _handle_bridge_log(self, level, message):
         self.log_requested.emit(level, message)
 
-    def _handle_bridge_log_i18n(self, level, fr, en):
+    def _handle_bridge_log_message(self, level, fr, en):
         # Use simple translation for the signal
         msg = self.bridge.tr(fr, en) if self.bridge else en
         self.log_requested.emit(level, msg)
