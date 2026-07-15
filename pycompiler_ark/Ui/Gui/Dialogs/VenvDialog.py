@@ -27,6 +27,7 @@ import os
 from PySide6.QtWidgets import QApplication, QFileDialog, QMessageBox
 
 from pycompiler_ark.Core.Venv_Manager.Manager import VenvManager
+from pycompiler_ark.Ui import output
 from pycompiler_ark.Ui.Gui.WidgetsCreator import ProgressDialog
 
 
@@ -51,7 +52,7 @@ class VenvManagerUI(VenvManager):
             {
                 "tr": self._ui_tr,
                 "log": self._ui_log,
-                "log_i18n": self._ui_log_i18n,
+                "log_message": self._ui_log_message,
                 "on_pref_applied": self._on_pref_applied,
                 "update_venv_label": self._update_venv_label,
                 "update_venv_path_edit": self._update_venv_path_edit,
@@ -83,18 +84,14 @@ class VenvManagerUI(VenvManager):
     def _ui_log(self, level: str, text: str) -> None:
         """Log a message via the UI logging system."""
         try:
-            from pycompiler_ark.Ui.i18n import log_with_level
-
-            log_with_level(self.parent, level, text)
+            output.log(level, text, gui=self.parent)
         except Exception:
             pass
 
-    def _ui_log_i18n(self, level: str, text_fr: str, text_en: str) -> None:
+    def _ui_log_message(self, level: str, text_fr: str, text_en: str) -> None:
         """Log an internationalized message via the UI logging system."""
         try:
-            from pycompiler_ark.Ui.i18n import log_i18n_level
-
-            log_i18n_level(self.parent, level, text_fr, text_en)
+            output.log(level, (text_fr, text_en), gui=self.parent)
         except Exception:
             pass
 

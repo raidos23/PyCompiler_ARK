@@ -69,12 +69,11 @@ def ask_yes_no(prompt: str, *, default_yes: bool = True) -> bool:
         if _is_noninteractive_env():
             return default_yes
         try:
-            from pycompiler_ark.Ui.i18n import log_with_level
+            from pycompiler_ark.Ui import output
 
-            log_with_level(
-                None,
-                "warning",
+            output.warn(
                 "[PROMPT] Terminal non interactif — action refusee (reponse: non).",
+                gui=None,
             )
         except Exception:
             pass

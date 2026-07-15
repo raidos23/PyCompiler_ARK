@@ -1,7 +1,6 @@
-
-
 import asyncio
-from ...i18n import available_languages, get_translations, i18n_synchro, log_i18n_level, translate
+from ...i18n import available_languages, get_translations, i18n_synchro, translate
+from ... import output
 
 
 def show_language_dialog(self):
@@ -40,9 +39,4 @@ def show_language_dialog(self):
         tr = asyncio.run(get_translations(lang_pref))
         i18n_synchro(self, lang_pref, tr)
     else:
-        log_i18n_level(
-            self,
-            "info",
-            "Sélection de la langue annulée.",
-            "Language selection cancelled.",
-        )
+        output.info(("Sélection de la langue annulée.", "Language selection cancelled."), gui=self)

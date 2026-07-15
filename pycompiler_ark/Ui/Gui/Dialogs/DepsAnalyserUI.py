@@ -35,7 +35,7 @@ from pycompiler_ark.Core.deps_analyser.analyser import (
     _find_pip_executable,
 )
 from pycompiler_ark.Ui.Gui.WidgetsCreator import ProgressDialog
-from pycompiler_ark.Ui.i18n import log_with_level
+from pycompiler_ark.Ui import output
 
 
 def _log_append(gui, msg: str) -> None:
@@ -56,7 +56,7 @@ def _log_append(gui, msg: str) -> None:
             level = lvl
             text = text[len(emo) :].lstrip()
             break
-    log_with_level(gui, level, text)
+    output.log(level, text, gui=gui)
 
 
 def suggest_missing_dependencies(self):

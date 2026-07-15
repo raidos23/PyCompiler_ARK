@@ -41,7 +41,7 @@ from pycompiler_ark.Ui.Gui.Compilation.helpers import (
     run_bcasl_before_compile,
 )
 from pycompiler_ark.Ui.Gui.Compilation.mainprocess import ProcessState
-from pycompiler_ark.Ui.i18n import log_i18n_level, log_with_level
+from pycompiler_ark.Ui import output
 
 # Shared helpers from CLI for exact code alignment
 from pycompiler_ark.Ui.Cli.helpers import (
@@ -164,8 +164,9 @@ def compile_all(self) -> None:
             return en
 
     if not self.workspace_dir:
-        log_i18n_level(
-            self, "warning", "Aucun workspace sélectionné.", "No workspace selected."
+        output.warn(
+            ("Aucun workspace sélectionné.", "No workspace selected."),
+            gui=self,
         )
         try:
             box = QMessageBox(self)
@@ -206,7 +207,7 @@ def compile_all(self) -> None:
         config = load_ark_config(ws)
         validated = validate_ark_config(ws, config)
     except Exception as e:
-        log_i18n_level(self, "error", f"Erreur config: {e}", f"Config error: {e}")
+        output.error((f"Erreur config: {e}", f"Config error: {e}"), gui=self)
         return
 
     _set_progress_indeterminate(self)
@@ -242,11 +243,9 @@ def compile_all(self) -> None:
 
         engine_config = read_engine_config(ws, engine_id)
     except Exception as e:
-        log_i18n_level(
-            self,
-            "error",
-            f"Erreur préparation compilation: {e}",
-            f"Build prep error: {e}",
+        output.error(
+            (f"Erreur préparation compilation: {e}", f"Build prep error: {e}"),
+            gui=self,
         )
         return
 
@@ -267,11 +266,12 @@ def compile_all(self) -> None:
 
     self.set_controls_enabled(False)
 
-    log_i18n_level(
-        self,
-        "info",
-        "🔍 Lancement de la phase de pré-compilation (BCASL)...",
-        "🔍 Starting pre-compilation phase (BCASL)...",
+    output.info(
+        (
+            "🔍 Lancement de la phase de pré-compilation (BCASL)...",
+            "🔍 Starting pre-compilation phase (BCASL)...",
+        ),
+        gui=self,
     )
 
     def _after_bcasl(_report=None) -> None:
@@ -283,20 +283,22 @@ def compile_all(self) -> None:
 
         if getattr(self, "_cancel_requested_during_precompile", False):
             self.set_controls_enabled(True)
-            log_i18n_level(
-                self,
-                "info",
-                "Compilation annulée avant le démarrage (phase BCASL).",
-                "Compilation cancelled before start (BCASL phase).",
+            output.info(
+                (
+                    "Compilation annulée avant le démarrage (phase BCASL).",
+                    "Compilation cancelled before start (BCASL phase).",
+                ),
+                gui=self,
             )
             return
 
         if not bcasl_report_allows_compile(self, _report):
-            log_i18n_level(
-                self,
-                "error",
-                "❌ Échec de la validation BCASL. La compilation ne peut pas continuer.",
-                "❌ BCASL validation failed. Compilation cannot continue.",
+            output.error(
+                (
+                    "❌ Échec de la validation BCASL. La compilation ne peut pas continuer.",
+                    "❌ BCASL validation failed. Compilation cannot continue.",
+                ),
+                gui=self,
             )
             try:
                 from pycompiler_ark.Ui.Gui.Dialogs.BcaslDialog import (
@@ -309,19 +311,21 @@ def compile_all(self) -> None:
             self.set_controls_enabled(True)
             return
 
-        log_i18n_level(
-            self,
-            "success",
-            "✅ Phase BCASL terminée avec succès.",
-            "✅ BCASL phase completed successfully.",
+        output.success(
+            (
+                "✅ Phase BCASL terminée avec succès.",
+                "✅ BCASL phase completed successfully.",
+            ),
+            gui=self,
         )
 
         try:
-            log_i18n_level(
-                self,
-                "info",
-                f"Démarrage de la compilation avec {engine_name}...",
-                f"Starting compilation with {engine_name}...",
+            output.info(
+                (
+                    f"Démarrage de la compilation avec {engine_name}...",
+                    f"Starting compilation with {engine_name}...",
+                ),
+                gui=self,
             )
 
             # Start compilation using the EngineRunner path
@@ -368,11 +372,9 @@ def compile_all(self) -> None:
 
         except Exception as e:
             self.set_controls_enabled(True)
-            log_i18n_level(
-                self,
-                "error",
-                f"Erreur démarrage compilation : {e}",
-                f"Compilation start error: {e}",
+            output.error(
+                (f"Erreur démarrage compilation : {e}", f"Compilation start error: {e}"),
+                gui=self,
             )
 
     self._active_bcasl_callback = _after_bcasl
@@ -399,11 +401,12 @@ def rebuild_from_lock(self, lock_path: Path) -> None:
     try:
         from pycompiler_ark.Core.Locking import load_yaml_file
 
-        log_i18n_level(
-            self,
-            "info",
-            f"🔒 Chargement du verrou: {lock_path.name}",
-            f"🔒 Loading lock file: {lock_path.name}",
+        output.info(
+            (
+                f"🔒 Chargement du verrou: {lock_path.name}",
+                f"🔒 Loading lock file: {lock_path.name}",
+            ),
+            gui=self,
         )
         lock_payload = load_yaml_file(lock_path)
         engine_id = str(((lock_payload.get("engine") or {}).get("name")) or "").strip()
@@ -444,19 +447,18 @@ def rebuild_from_lock(self, lock_path: Path) -> None:
                 return ans == QMessageBox.Yes
 
             if not ensure_correct_git_commit(ws, lock_payload, confirm_cb=_confirm):
-                log_i18n_level(
-                    self,
-                    "warning",
-                    "Compilation annulée: Mismatch Git non résolu.",
-                    "Compilation cancelled: Git mismatch not resolved.",
+                output.warn(
+                    (
+                        "Compilation annulée: Mismatch Git non résolu.",
+                        "Compilation cancelled: Git mismatch not resolved.",
+                    ),
+                    gui=self,
                 )
                 return
         except Exception as e:
-            log_i18n_level(
-                self,
-                "warning",
-                f"Échec vérification Git: {e}",
-                f"Git verification failed: {e}",
+            output.warn(
+                (f"Échec vérification Git: {e}", f"Git verification failed: {e}"),
+                gui=self,
             )
 
         engine_config = engine_config_from_lock(lock_payload)
@@ -497,11 +499,12 @@ def rebuild_from_lock(self, lock_path: Path) -> None:
         _set_progress_indeterminate(self)
 
         # BCASL PRE-COMPILE (Aligned with CLI)
-        log_i18n_level(
-            self,
-            "info",
-            "🔍 Lancement de la phase de pré-compilation (BCASL)...",
-            "🔍 Starting pre-compilation phase (BCASL)...",
+        output.info(
+            (
+                "🔍 Lancement de la phase de pré-compilation (BCASL)...",
+                "🔍 Starting pre-compilation phase (BCASL)...",
+            ),
+            gui=self,
         )
 
         def _after_bcasl(_report=None) -> None:
@@ -523,11 +526,12 @@ def rebuild_from_lock(self, lock_path: Path) -> None:
                 self.set_controls_enabled(True)
                 return
 
-            log_i18n_level(
-                self,
-                "info",
-                f"Démarrage de la reconstruction avec {engine_name}...",
-                f"Starting rebuild with {engine_name}...",
+            output.info(
+                (
+                    f"Démarrage de la reconstruction avec {engine_name}...",
+                    f"Starting rebuild with {engine_name}...",
+                ),
+                gui=self,
             )
 
             main_process = get_main_process()
@@ -567,11 +571,9 @@ def rebuild_from_lock(self, lock_path: Path) -> None:
         run_bcasl_before_compile(self, _after_bcasl, build_context=context)
 
     except Exception as e:
-        log_i18n_level(
-            self,
-            "error",
-            f"Erreur lors de la reconstruction: {e}",
-            f"Rebuild error: {e}",
+        output.error(
+            (f"Erreur lors de la reconstruction: {e}", f"Rebuild error: {e}"),
+            gui=self,
         )
         self.set_controls_enabled(True)
 
@@ -595,7 +597,7 @@ def start_compilation_process(self, engine_id: str, file_path: str) -> bool:
         cfg = load_ark_config(ws)
         validated = validate_ark_config(ws, cfg)
     except Exception as e:
-        log_i18n_level(self, "error", f"Erreur config: {e}", f"Config error: {e}")
+        output.error((f"Erreur config: {e}", f"Config error: {e}"), gui=self)
         return False
 
     # Housekeeping: Save GUI tab settings to disk
@@ -627,11 +629,9 @@ def start_compilation_process(self, engine_id: str, file_path: str) -> bool:
         engine_config = read_engine_config(ws, engine_id)
 
     except Exception as e:
-        log_i18n_level(
-            self,
-            "error",
-            f"Erreur préparation compilation: {e}",
-            f"Build prep error: {e}",
+        output.error(
+            (f"Erreur préparation compilation: {e}", f"Build prep error: {e}"),
+            gui=self,
         )
         return False
 
@@ -654,11 +654,12 @@ def start_compilation_process(self, engine_id: str, file_path: str) -> bool:
     _set_progress_indeterminate(self)
 
     # 3. BCASL (GUI async)
-    log_i18n_level(
-        self,
-        "info",
-        "🔍 Lancement de la phase de pré-compilation (BCASL)...",
-        "🔍 Starting pre-compilation phase (BCASL)...",
+    output.info(
+        (
+            "🔍 Lancement de la phase de pré-compilation (BCASL)...",
+            "🔍 Starting pre-compilation phase (BCASL)...",
+        ),
+        gui=self,
     )
 
     def _after_bcasl(_report=None) -> None:
@@ -670,19 +671,21 @@ def start_compilation_process(self, engine_id: str, file_path: str) -> bool:
 
         if getattr(self, "_cancel_requested_during_precompile", False):
             self.set_controls_enabled(True)
-            log_i18n_level(
-                self,
-                "info",
-                "Compilation annulée avant le démarrage (phase BCASL).",
-                "Compilation cancelled before start (BCASL phase).",
+            output.info(
+                (
+                    "Compilation annulée avant le démarrage (phase BCASL).",
+                    "Compilation cancelled before start (BCASL phase).",
+                ),
+                gui=self,
             )
             return
         if not bcasl_report_allows_compile(self, _report):
-            log_i18n_level(
-                self,
-                "error",
-                "❌ Échec de la validation BCASL. La compilation ne peut pas continuer.",
-                "❌ BCASL validation failed. Compilation cannot continue.",
+            output.error(
+                (
+                    "❌ Échec de la validation BCASL. La compilation ne peut pas continuer.",
+                    "❌ BCASL validation failed. Compilation cannot continue.",
+                ),
+                gui=self,
             )
             try:
                 from pycompiler_ark.Ui.Gui.Dialogs.BcaslDialog import (
@@ -695,19 +698,21 @@ def start_compilation_process(self, engine_id: str, file_path: str) -> bool:
             self.set_controls_enabled(True)
             return
 
-        log_i18n_level(
-            self,
-            "success",
-            "✅ Phase BCASL terminée avec succès.",
-            "✅ BCASL phase completed successfully.",
+        output.success(
+            (
+                "✅ Phase BCASL terminée avec succès.",
+                "✅ BCASL phase completed successfully.",
+            ),
+            gui=self,
         )
 
         try:
-            log_i18n_level(
-                self,
-                "info",
-                f"Démarrage {engine_name} pour {os.path.basename(file_path)}...",
-                f"Starting {engine_name} for {os.path.basename(file_path)}...",
+            output.info(
+                (
+                    f"Démarrage {engine_name} pour {os.path.basename(file_path)}...",
+                    f"Starting {engine_name} for {os.path.basename(file_path)}...",
+                ),
+                gui=self,
             )
 
             # OPTIMIZATION: Disable expensive auto-scan for GUI builds
@@ -749,11 +754,9 @@ def start_compilation_process(self, engine_id: str, file_path: str) -> bool:
 
         except Exception as e:
             self.set_controls_enabled(True)
-            log_i18n_level(
-                self,
-                "error",
-                f"Erreur démarrage compilation : {e}",
-                f"Compilation start error: {e}",
+            output.error(
+                (f"Erreur démarrage compilation : {e}", f"Compilation start error: {e}"),
+                gui=self,
             )
 
     self._active_bcasl_callback = _after_bcasl
@@ -768,9 +771,7 @@ def start_compilation_process(self, engine_id: str, file_path: str) -> bool:
 def try_start_processes(self) -> bool:
     """Try to start compilation for all selected files."""
     if not self.python_files:
-        log_i18n_level(
-            self, "warning", "Aucun fichier à compiler.", "No files to compile."
-        )
+        output.warn(("Aucun fichier à compiler.", "No files to compile."), gui=self)
         return False
 
     engine_id = None
@@ -814,7 +815,7 @@ def cancel_all_compilations(self) -> None:
 
     # 3. Enable controls
     self.set_controls_enabled(True)
-    log_i18n_level(self, "info", "Annulation demandée.", "Cancellation requested.")
+    output.info(("Annulation demandée.", "Cancellation requested."), gui=self)
 
 
 def handle_stdout(self, message: str) -> None:
@@ -840,13 +841,13 @@ def try_install_missing_modules(self, engine_id: str) -> None:
 def _handle_output(self, message: str) -> None:
     """Handle stdout output from MainProcess."""
     if message:
-        log_with_level(self, "info", message)
+        output.info(message, gui=self)
 
 
 def _handle_error(self, message: str) -> None:
     """Handle stderr output from MainProcess."""
     if message:
-        log_with_level(self, "error", message)
+        output.error(message, gui=self)
 
 
 def _handle_progress(self, progress: int, message: str) -> None:
@@ -856,7 +857,7 @@ def _handle_progress(self, progress: int, message: str) -> None:
 
 def _handle_log(self, level: str, message: str) -> None:
     """Handle log messages from MainProcess."""
-    log_with_level(self, level, message)
+    output.log(level, message, gui=self)
 
 
 def _handle_compilation_started(self, info: dict) -> None:
@@ -872,11 +873,12 @@ def _handle_compilation_started(self, info: dict) -> None:
     except Exception:
         pass
     if file_path and engine:
-        log_i18n_level(
-            self,
-            "info",
-            f"Démarrage compilation: {os.path.basename(file_path)} avec {engine}",
-            f"Starting compilation: {os.path.basename(file_path)} with {engine}",
+        output.info(
+            (
+                f"Démarrage compilation: {os.path.basename(file_path)} avec {engine}",
+                f"Starting compilation: {os.path.basename(file_path)} with {engine}",
+            ),
+            gui=self,
         )
 
 
@@ -1015,11 +1017,9 @@ def handle_finished(self, return_code: int, info: dict) -> None:
             pass
 
     if return_code == 0:
-        log_i18n_level(
-            self,
-            "success",
-            "Compilation terminée avec succès!",
-            "Compilation completed successfully!",
+        output.success(
+            ("Compilation terminée avec succès!", "Compilation completed successfully!"),
+            gui=self,
         )
 
         # Integrity Check (Aligned with CLI)
@@ -1031,11 +1031,12 @@ def handle_finished(self, return_code: int, info: dict) -> None:
                     return
                 ws = Path(self.workspace_dir)
 
-                log_i18n_level(
-                    self,
-                    "info",
-                    "Vérification de l'intégrité du verrou après compilation...",
-                    "Performing lock integrity check after compilation...",
+                output.info(
+                    (
+                        "Vérification de l'intégrité du verrou après compilation...",
+                        "Performing lock integrity check after compilation...",
+                    ),
+                    gui=self,
                 )
                 current_config = load_ark_config(ws)
                 validated = validate_ark_config(ws, current_config)
@@ -1052,35 +1053,39 @@ def handle_finished(self, return_code: int, info: dict) -> None:
                 )
 
                 if not comparison_ok:
-                    log_i18n_level(
-                        self,
-                        "warning",
-                        "⚠️ Mismatch fonctionnel détecté : le verrou actuel diffère de celui utilisé pour le rebuild.",
-                        "⚠️ Functional mismatch detected: the current configuration differs from the one in the lock file.",
+                    output.warn(
+                        (
+                            "⚠️ Mismatch fonctionnel détecté : le verrou actuel diffère de celui utilisé pour le rebuild.",
+                            "⚠️ Functional mismatch detected: the current configuration differs from the one in the lock file.",
+                        ),
+                        gui=self,
                     )
                     for d in diffs:
-                        log_with_level(self, "info", f"  - {d}")
+                        output.info(f"  - {d}", gui=self)
 
                     if rebuild_cache:
-                        log_i18n_level(
-                            self,
-                            "info",
-                            f"Verrou de comparaison généré : {rebuild_cache}",
-                            f"Comparison lock generated: {rebuild_cache}",
+                        output.info(
+                            (
+                                f"Verrou de comparaison généré : {rebuild_cache}",
+                                f"Comparison lock generated: {rebuild_cache}",
+                            ),
+                            gui=self,
                         )
                 else:
-                    log_i18n_level(
-                        self,
-                        "success",
-                        "✅ Intégrité du verrou confirmée (Équivalence Fonctionnelle).",
-                        "✅ Lock integrity confirmed (Functional Equivalence).",
+                    output.success(
+                        (
+                            "✅ Intégrité du verrou confirmée (Équivalence Fonctionnelle).",
+                            "✅ Lock integrity confirmed (Functional Equivalence).",
+                        ),
+                        gui=self,
                     )
             except Exception as exc:
-                log_i18n_level(
-                    self,
-                    "warning",
-                    f"Impossible de regénérer le verrou de comparaison: {exc}",
-                    f"Unable to regenerate comparison lock: {exc}",
+                output.warn(
+                    (
+                        f"Impossible de regénérer le verrou de comparaison: {exc}",
+                        f"Unable to regenerate comparison lock: {exc}",
+                    ),
+                    gui=self,
                 )
 
         engine_id = info.get("engine")
@@ -1095,22 +1100,21 @@ def handle_finished(self, return_code: int, info: dict) -> None:
                     try:
                         engine.on_success(self, fp)
                     except Exception as e:
-                        log_i18n_level(
-                            self,
-                            "warning",
-                            f"Erreur on_success: {e}",
-                            f"on_success error: {e}",
+                        output.warn(
+                            (f"Erreur on_success: {e}", f"on_success error: {e}"),
+                            gui=self,
                         )
 
         _continue_compile_all(self)
     elif return_code == -1:
-        log_i18n_level(self, "info", "Compilation annulée.", "Compilation cancelled.")
+        output.info(("Compilation annulée.", "Compilation cancelled."), gui=self)
     else:
-        log_i18n_level(
-            self,
-            "error",
-            f"Compilation échouée (code: {return_code})",
-            f"Compilation failed (code: {return_code})",
+        output.error(
+            (
+                f"Compilation échouée (code: {return_code})",
+                f"Compilation failed (code: {return_code})",
+            ),
+            gui=self,
         )
 
 
@@ -1125,4 +1129,4 @@ def _handle_state_changed(self, state: ProcessState) -> None:
         ProcessState.ERROR: "Erreur",
     }
     state_name = state_names.get(state, str(state))
-    log_with_level(self, "state", f"État: {state_name}")
+    output.log("state", f"État: {state_name}", gui=self)

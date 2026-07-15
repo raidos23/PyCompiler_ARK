@@ -130,21 +130,14 @@ def save_preferences(self):
             pass
     except Exception as e:
         try:
-            from pycompiler_ark.Ui.i18n import log_i18n_level
+            from pycompiler_ark.Ui import output
 
-            log_i18n_level(
-                self,
-                "warning",
-                f"Impossible de sauvegarder les préférences : {e}",
-                f"Unable to save preferences: {e}",
-            )
+            output.warn((f"Impossible de sauvegarder les préférences : {e}", f"Unable to save preferences: {e}"), gui=self)
         except Exception:
             try:
-                from pycompiler_ark.Ui.i18n import log_with_level
+                from pycompiler_ark.Ui import output
 
-                log_with_level(
-                    self, "warning", f"Impossible de sauvegarder les préférences : {e}"
-                )
+                output.warn(f"Impossible de sauvegarder les préférences : {e}", gui=self)
             except Exception:
                 pass
 
