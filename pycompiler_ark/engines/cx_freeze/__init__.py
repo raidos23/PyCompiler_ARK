@@ -34,7 +34,7 @@ from pycompiler_ark.engine_sdk import (
     engine_register,
     translate,
 )
-from pycompiler_ark.engine_sdk.utils import log_with_level
+from pycompiler_ark.Ui import output
 
 
 @engine_register
@@ -154,12 +154,7 @@ class CXFreezeEngine(CompilerEngine):
     def on_success(self, gui, file: str) -> None:
         """Handle successful compilation."""
         try:
-            if hasattr(gui, "log"):
-                log_with_level(
-                    gui,
-                    "success",
-                    "Compilation CX_Freeze terminée avec succès.",
-                )
+            output.success("Compilation CX_Freeze terminée avec succès.", gui=gui)
         except Exception:
             pass
 
@@ -257,10 +252,7 @@ class CXFreezeEngine(CompilerEngine):
 
         except Exception as e:
             try:
-                if hasattr(gui, "log"):
-                    log_with_level(
-                        gui, "error", f"Erreur création onglet CX_Freeze: {e}"
-                    )
+                output.error(f"Erreur création onglet CX_Freeze: {e}", gui=gui)
             except Exception:
                 pass
             return None
