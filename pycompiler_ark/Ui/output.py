@@ -86,7 +86,12 @@ def plain(message: str, err: bool = False) -> None:
     _emit(message, err=err)
 
 
-def log(level: str, message: str, err: bool | None = None) -> None:
+def log(level: str, message: str | tuple, err: bool | None = None, gui: object | None = None) -> None:
+    """Emit a log line.
+
+    `message` may be a plain string or a (fr, en) tuple. When a tuple is
+    provided and a GUI is available, attempt translation via `pycompiler_ark.Ui.i18n.tr`.
+    """
     lvl = level.upper().strip()
 
     # Map level to theme styles
@@ -101,21 +106,40 @@ def log(level: str, message: str, err: bool | None = None) -> None:
     style = style_map.get(lvl, "info")
     prefix = f"[prefix][{lvl}][/prefix]"
 
+    # Support optional translation: message can be (fr, en)
+    try:
+        if isinstance(message, (tuple, list)) and len(message) >= 2:
+            fr = str(message[0])
+            en = str(message[1])
+            try:
+                from pycompiler_ark.Ui.i18n import tr
+
+                message = tr(gui, fr, en)
+            except Exception:
+                message = en
+        else:
+            message = str(message)
+    except Exception:
+        try:
+            message = str(message)
+        except Exception:
+            message = ""
+
     out_err = err if err is not None else lvl in ("ERROR", "WARN", "WARNING")
     _emit(f"{prefix} {message}", err=out_err, style=style)
 
 
-def info(message: str) -> None:
-    log("INFO", message, err=False)
+def info(message: str | tuple, gui: object | None = None) -> None:
+    log("INFO", message, err=False, gui=gui)
 
 
-def warn(message: str) -> None:
-    log("WARN", message, err=True)
+def warn(message: str | tuple, gui: object | None = None) -> None:
+    log("WARN", message, err=True, gui=gui)
 
 
-def error(message: str) -> None:
-    log("ERROR", message, err=True)
+def error(message: str | tuple, gui: object | None = None) -> None:
+    log("ERROR", message, err=True, gui=gui)
 
 
-def success(message: str) -> None:
-    log("SUCCESS", message, err=False)
+def success(message: str | tuple, gui: object | None = None) -> None:
+    log("SUCCESS", message, err=False, gui=gui)
