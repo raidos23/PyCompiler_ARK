@@ -93,54 +93,6 @@ def resolve_engine_meta(engine_or_cls: object) -> EngineMeta:
     )
 
 
-def log_i18n_level(gui, level: str, fr: str, en: str) -> None:
-    """Minimal i18n log helper to avoid engine loader <-> engine_sdk circular imports."""
-    try:
-        from pycompiler_ark.Ui.i18n import log_i18n
-        log_i18n(gui, fr, en, level)
-        return
-    except Exception:
-        pass
-
-    try:
-        if hasattr(gui, "tr") and callable(getattr(gui, "tr")):
-            msg = gui.tr(fr, en)
-        else:
-            cur = getattr(gui, "current_language", "")
-            if isinstance(cur, str) and cur.lower().startswith("fr"):
-                msg = fr
-            else:
-                msg = en
-    except Exception:
-        msg = en
-
-    labels = {
-        "info": "INFO",
-        "warning": "WARN",
-        "error": "ERROR",
-        "success": "SUCCESS",
-        "state": "STATE",
-    }
-    try:
-        lvl = str(level).lower()
-    except Exception:
-        lvl = "info"
-    label = labels.get(lvl, str(level).upper())
-    line = f"[{label}] {msg}"
-    try:
-        if hasattr(gui, "log"):
-            log_obj = getattr(gui, "log")
-            if hasattr(log_obj, "append"):
-                log_obj.append(line)
-                return
-    except Exception:
-        pass
-    try:
-        print(line)
-    except Exception:
-        pass
-
-
 def _tools_stage_message(stage: str, fr: str, en: str) -> tuple[str, str]:
     prefix = f"[tools:{stage}] "
     return prefix + fr, prefix + en
@@ -219,8 +171,8 @@ class CompilerEngine:
             return
 
         import os
-
-        from pycompiler_ark.engine_sdk.utils import log_with_level, open_path
+        from pycompiler_ark.Ui import output
+        from pycompiler_ark.engine_sdk.utils import open_path
 
         path = output_dir
         if not os.path.isabs(path):
@@ -238,7 +190,7 @@ class CompilerEngine:
             # Log attempt to open
             gui = getattr(self, "_gui", None)
             if gui:
-                log_with_level(gui, "info", f"Ouverture du dossier de sortie : {path}")
+                output.info(f"Ouverture du dossier de sortie : {path}", gui=gui)
             open_path(path)
 
     def create_tab(self, gui):

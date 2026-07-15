@@ -36,6 +36,8 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any
 
+from pycompiler_ark.Ui import output
+
 __all__ = ["ToolsCheckResult", "ensure_tools"]
 
 
@@ -47,38 +49,6 @@ class ToolsCheckResult:
     missing_system: list[str] = field(default_factory=list)
     missing_python: list[str] = field(default_factory=list)
     errors: list[str] = field(default_factory=list)
-
-
-def log_i18n_level(gui: Any, level: str, fr: str, en: str) -> None:
-    """Minimal i18n log helper to avoid engine loader <-> engine_sdk circular imports."""
-    try:
-        from pycompiler_ark.Ui.i18n import log_i18n
-        log_i18n(gui, fr, en, level)
-        return
-    except Exception:
-        pass
-
-    try:
-        if hasattr(gui, "tr") and callable(getattr(gui, "tr")):
-            msg = gui.tr(fr, en)
-        else:
-            cur = getattr(gui, "current_language", "")
-            if isinstance(cur, str) and cur.lower().startswith("fr"):
-                msg = fr
-            else:
-                msg = en
-    except Exception:
-        msg = en
-
-    labels = {
-        "info": "INFO",
-        "warning": "WARN",
-        "error": "ERROR",
-        "success": "SUCCESS",
-    }
-    label = labels.get(level, "INFO")
-    sys.stderr.write(f"[{label}] {msg}\n")
-    sys.stderr.flush()
 
 
 def _tools_stage_message(stage: str, fr: str, en: str) -> tuple[str, str]:
@@ -106,29 +76,31 @@ def ensure_tools(
         ToolsCheckResult avec ok=True si tout est disponible après installation.
     """
 
-    def _log_i18n(level: str, fr: str, en: str) -> None:
-        if gui is not None:
-            log_i18n_level(gui, level, fr, en)
-        else:
-            # Fallback to log_cb or sys.stderr
-            msg = en
-            try:
-                cur = getattr(gui, "current_language", "")
-                if isinstance(cur, str) and cur.lower().startswith("fr"):
-                    msg = fr
-                else:
-                    msg = en
-            except Exception:
-                msg = en
-
-            if callable(log_cb):
-                try:
-                    log_cb(msg)
-                except Exception:
-                    pass
+    def _emit_output(level: str, fr: str, en: str) -> None:
+        level_key = str(level).lower().strip()
+        message = (fr, en)
+        try:
+            if level_key in ("error",):
+                output.error(message, gui=gui)
+            elif level_key in ("warning", "warn"):
+                output.warn(message, gui=gui)
+            elif level_key in ("success",):
+                output.success(message, gui=gui)
             else:
-                sys.stderr.write(f"[{level.upper()}] {msg}\n")
-                sys.stderr.flush()
+                output.info(message, gui=gui)
+            return
+        except Exception:
+            pass
+
+        msg = en
+        if callable(log_cb):
+            try:
+                log_cb(msg)
+                return
+            except Exception:
+                pass
+        sys.stderr.write(f"[{level_key.upper() or 'INFO'}] {msg}\n")
+        sys.stderr.flush()
 
     missing_system: list[str] = []
     missing_python: list[str] = []
@@ -168,7 +140,7 @@ def ensure_tools(
                         missing_system.append(tool)
 
                 if missing_system:
-                    _log_i18n(
+                    _emit_output(
                         "info",
                         *_tools_stage_message(
                             "system",
@@ -180,7 +152,7 @@ def ensure_tools(
                     if not check_internet_connection(timeout=4.0):
                         err_fr = "Pas de connexion Internet. Impossible d'installer les outils systeme manquants."
                         err_en = "No Internet connection. Cannot install missing system tools."
-                        _log_i18n(
+                        _emit_output(
                             "error",
                             *_tools_stage_message("system", err_fr, err_en),
                         )
@@ -192,7 +164,7 @@ def ensure_tools(
                             errors=errors,
                         )
 
-                    _log_i18n(
+                    _emit_output(
                         "info",
                         *_tools_stage_message(
                             "system",
@@ -227,7 +199,7 @@ def ensure_tools(
                                     )
                                 elapsed += interval
                                 if elapsed >= timeout_total:
-                                    _log_i18n(
+                                    _emit_output(
                                         "warning",
                                         *_tools_stage_message(
                                             "system",
@@ -240,7 +212,7 @@ def ensure_tools(
 
                             if system_install_ok:
                                 if process.exitCode() == 0:
-                                    _log_i18n(
+                                    _emit_output(
                                         "success",
                                         *_tools_stage_message(
                                             "system",
@@ -250,7 +222,7 @@ def ensure_tools(
                                     )
                                     missing_system = []
                                 else:
-                                    _log_i18n(
+                                    _emit_output(
                                         "error",
                                         *_tools_stage_message(
                                             "system",
@@ -262,7 +234,7 @@ def ensure_tools(
                         else:
                             # Fallback to headless
                             from pycompiler_ark.Core.SystemDepsManager import install_system_packages
-                            _log_i18n(
+                            _emit_output(
                                 "info",
                                 *_tools_stage_message(
                                     "system",
@@ -271,7 +243,7 @@ def ensure_tools(
                                 ),
                             )
                             if install_system_packages(missing_system):
-                                _log_i18n(
+                                _emit_output(
                                     "success",
                                     *_tools_stage_message(
                                         "system",
@@ -281,7 +253,7 @@ def ensure_tools(
                                 )
                                 missing_system = []
                             else:
-                                _log_i18n(
+                                _emit_output(
                                     "error",
                                     *_tools_stage_message(
                                         "system",
@@ -329,7 +301,7 @@ def ensure_tools(
                                         )
                                     elapsed += interval
                                     if elapsed >= timeout_total:
-                                        _log_i18n(
+                                        _emit_output(
                                             "warning",
                                             *_tools_stage_message(
                                                 "system",
@@ -342,7 +314,7 @@ def ensure_tools(
 
                                 if system_install_ok:
                                     if process.exitCode() == 0:
-                                        _log_i18n(
+                                        _emit_output(
                                             "success",
                                             *_tools_stage_message(
                                                 "system",
@@ -352,7 +324,7 @@ def ensure_tools(
                                         )
                                         missing_system = []
                                     else:
-                                        _log_i18n(
+                                        _emit_output(
                                             "error",
                                             *_tools_stage_message(
                                                 "system",
@@ -362,7 +334,7 @@ def ensure_tools(
                                         )
                                         system_install_ok = False
                             else:
-                                _log_i18n(
+                                _emit_output(
                                     "warning",
                                     *_tools_stage_message(
                                         "system",
@@ -376,7 +348,7 @@ def ensure_tools(
                                     pass
                                 system_install_ok = False
                         else:
-                            _log_i18n(
+                            _emit_output(
                                 "warning",
                                 *_tools_stage_message(
                                     "system",
@@ -386,7 +358,7 @@ def ensure_tools(
                             )
                             system_install_ok = False
                     else:
-                        _log_i18n(
+                        _emit_output(
                             "warning",
                             *_tools_stage_message(
                                 "system",
@@ -400,7 +372,7 @@ def ensure_tools(
                         errors.append(f"Échec installation outils système: {missing_system}")
 
                 else:
-                    _log_i18n(
+                    _emit_output(
                         "success",
                         *_tools_stage_message(
                             "system",
@@ -411,7 +383,7 @@ def ensure_tools(
 
             except Exception as e:
                 err_msg = f"Erreur lors de la verification/installation des outils systeme: {e}"
-                _log_i18n(
+                _emit_output(
                     "warning",
                     *_tools_stage_message(
                         "system",
@@ -432,7 +404,7 @@ def ensure_tools(
             except ImportError as exc:
                 err = f"[ensure_tools] Import headless impossible : {exc}"
                 errors.append(err)
-                _log_i18n("error", err, err)
+                _emit_output("error", err, err)
                 return ToolsCheckResult(ok=False, errors=errors)
 
             for tool in system_tools:
@@ -448,12 +420,12 @@ def ensure_tools(
                     missing_system.append(tool)
 
             if missing_system:
-                _log_i18n(
+                _emit_output(
                     "info",
                     f"[ensure_tools:system] Outils manquants : {missing_system}",
                     f"[ensure_tools:system] Missing tools: {missing_system}",
                 )
-                _log_i18n(
+                _emit_output(
                     "info",
                     "[ensure_tools:system] Vérification de la connexion Internet…",
                     "[ensure_tools:system] Checking Internet connection...",
@@ -462,7 +434,7 @@ def ensure_tools(
                 if not check_internet_connection(timeout=4.0):
                     err = "[ensure_tools:system] Pas de connexion Internet — installation impossible."
                     errors.append(err)
-                    _log_i18n("error", err, err)
+                    _emit_output("error", err, err)
                     return ToolsCheckResult(
                         ok=False,
                         missing_system=missing_system,
@@ -470,13 +442,13 @@ def ensure_tools(
                         errors=errors,
                     )
 
-                _log_i18n(
+                _emit_output(
                     "info",
                     f"[ensure_tools:system] Installation de {missing_system}…",
                     f"[ensure_tools:system] Installing {missing_system}...",
                 )
                 if install_system_packages(missing_system):
-                    _log_i18n(
+                    _emit_output(
                         "success",
                         "[ensure_tools:system] Installation réussie.",
                         "[ensure_tools:system] Installation successful.",
@@ -485,9 +457,9 @@ def ensure_tools(
                 else:
                     err = f"[ensure_tools:system] Échec installation : {missing_system}"
                     errors.append(err)
-                    _log_i18n("error", err, err)
+                    _emit_output("error", err, err)
             else:
-                _log_i18n(
+                _emit_output(
                     "success",
                     f"[ensure_tools:system] Tous présents : {system_tools}",
                     f"[ensure_tools:system] All present: {system_tools}",
@@ -508,7 +480,7 @@ def ensure_tools(
                             missing_python.append(tool)
 
                     if missing_python:
-                        _log_i18n(
+                        _emit_output(
                             "info",
                             *_tools_stage_message(
                                 "python",
@@ -518,7 +490,7 @@ def ensure_tools(
                         )
 
                         if not check_internet_connection(timeout=4.0):
-                            _log_i18n(
+                            _emit_output(
                                 "error",
                                 *_tools_stage_message(
                                     "python",
@@ -534,7 +506,7 @@ def ensure_tools(
                                 errors=errors,
                             )
 
-                        _log_i18n(
+                        _emit_output(
                             "info",
                             *_tools_stage_message(
                                 "python",
@@ -572,7 +544,7 @@ def ensure_tools(
                             elapsed += interval
 
                         if not all_done:
-                            _log_i18n(
+                            _emit_output(
                                 "warning",
                                 *_tools_stage_message(
                                     "python",
@@ -592,7 +564,7 @@ def ensure_tools(
                                 missing_python.append(tool)
 
                         if missing_python:
-                            _log_i18n(
+                            _emit_output(
                                 "info",
                                 *_tools_stage_message(
                                     "python",
@@ -602,7 +574,7 @@ def ensure_tools(
                             )
 
                             if not check_internet_connection(timeout=4.0):
-                                _log_i18n(
+                                _emit_output(
                                     "error",
                                     *_tools_stage_message(
                                         "python",
@@ -618,7 +590,7 @@ def ensure_tools(
                                     errors=errors,
                                 )
 
-                            _log_i18n(
+                            _emit_output(
                                 "info",
                                 *_tools_stage_message(
                                     "python",
@@ -656,7 +628,7 @@ def ensure_tools(
                                 elapsed += interval
 
                             if not all_done:
-                                _log_i18n(
+                                _emit_output(
                                     "warning",
                                     *_tools_stage_message(
                                         "python",
@@ -670,7 +642,7 @@ def ensure_tools(
                                 missing_python = []
             except Exception as e:
                 err_msg = f"Erreur lors de la verification/installation des outils Python: {e}"
-                _log_i18n(
+                _emit_output(
                     "warning",
                     *_tools_stage_message(
                         "python",
@@ -695,7 +667,7 @@ def ensure_tools(
                     missing_python.append(tool)
 
             if missing_python:
-                _log_i18n(
+                _emit_output(
                     "info",
                     f"[ensure_tools:python] Paquets manquants : {missing_python}",
                     f"[ensure_tools:python] Missing packages: {missing_python}",
@@ -703,7 +675,7 @@ def ensure_tools(
 
                 try:
                     from pycompiler_ark.Core.Compiler.utils import check_internet_connection
-                    _log_i18n(
+                    _emit_output(
                         "info",
                         "[ensure_tools:python] Vérification de la connexion Internet…",
                         "[ensure_tools:python] Checking Internet connection...",
@@ -711,7 +683,7 @@ def ensure_tools(
                     if not check_internet_connection(timeout=4.0):
                         err = "[ensure_tools:python] Pas de connexion Internet — installation impossible."
                         errors.append(err)
-                        _log_i18n("error", err, err)
+                        _emit_output("error", err, err)
                         return ToolsCheckResult(
                             ok=False,
                             missing_system=missing_system,
@@ -731,7 +703,7 @@ def ensure_tools(
                             missing_python=still_missing + missing_python[len(still_missing):],
                             errors=errors,
                         )
-                    _log_i18n(
+                    _emit_output(
                         "info",
                         f"[ensure_tools:python] pip install {pkg}…",
                         f"[ensure_tools:python] pip install {pkg}...",
@@ -744,7 +716,7 @@ def ensure_tools(
                             timeout=timeout_s,
                         )
                         if result.returncode == 0:
-                            _log_i18n(
+                            _emit_output(
                                 "success",
                                 f"[ensure_tools:python] {pkg} installé avec succès.",
                                 f"[ensure_tools:python] {pkg} installed successfully.",
@@ -752,22 +724,22 @@ def ensure_tools(
                         else:
                             err = f"[ensure_tools:python] Échec pip install {pkg} : {result.stderr.strip()}"
                             errors.append(err)
-                            _log_i18n("error", err, err)
+                            _emit_output("error", err, err)
                             still_missing.append(pkg)
                     except subprocess.TimeoutExpired:
                         err = f"[ensure_tools:python] Timeout pip install {pkg}"
                         errors.append(err)
-                        _log_i18n("error", err, err)
+                        _emit_output("error", err, err)
                         still_missing.append(pkg)
                     except Exception as exc:
                         err = f"[ensure_tools:python] Erreur pip install {pkg} : {exc}"
                         errors.append(err)
-                        _log_i18n("error", err, err)
+                        _emit_output("error", err, err)
                         still_missing.append(pkg)
 
                 missing_python = still_missing
             else:
-                _log_i18n(
+                _emit_output(
                     "success",
                     f"[ensure_tools:python] Tous présents : {python_tools}",
                     f"[ensure_tools:python] All present: {python_tools}",
