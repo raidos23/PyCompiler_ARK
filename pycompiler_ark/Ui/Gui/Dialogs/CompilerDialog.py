@@ -373,7 +373,10 @@ def compile_all(self) -> None:
         except Exception as e:
             self.set_controls_enabled(True)
             output.error(
-                (f"Erreur démarrage compilation : {e}", f"Compilation start error: {e}"),
+                (
+                    f"Erreur démarrage compilation : {e}",
+                    f"Compilation start error: {e}",
+                ),
                 gui=self,
             )
 
@@ -755,7 +758,10 @@ def start_compilation_process(self, engine_id: str, file_path: str) -> bool:
         except Exception as e:
             self.set_controls_enabled(True)
             output.error(
-                (f"Erreur démarrage compilation : {e}", f"Compilation start error: {e}"),
+                (
+                    f"Erreur démarrage compilation : {e}",
+                    f"Compilation start error: {e}",
+                ),
                 gui=self,
             )
 
@@ -1018,7 +1024,10 @@ def handle_finished(self, return_code: int, info: dict) -> None:
 
     if return_code == 0:
         output.success(
-            ("Compilation terminée avec succès!", "Compilation completed successfully!"),
+            (
+                "Compilation terminée avec succès!",
+                "Compilation completed successfully!",
+            ),
             gui=self,
         )
 

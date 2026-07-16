@@ -31,6 +31,7 @@ from typing import Any, Optional, Union
 
 Pathish = Union[str, Path]
 
+
 # -------------------------------
 # Executable resolution helper
 # -------------------------------

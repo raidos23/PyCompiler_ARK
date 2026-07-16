@@ -781,7 +781,9 @@ class VenvManager:
             try:
                 from pycompiler_ark.Ui import output
 
-                output.info(f"[DELETE] Deleted invalid venv: {venv_root}", gui=self.parent)
+                output.info(
+                    f"[DELETE] Deleted invalid venv: {venv_root}", gui=self.parent
+                )
             except Exception:
                 pass
         except Exception as e:
@@ -979,7 +981,9 @@ class VenvManager:
                         try:
                             from pycompiler_ark.Ui import output
 
-                            output.success("[OK] Outils systeme verifies.", gui=self.parent)
+                            output.success(
+                                "[OK] Outils systeme verifies.", gui=self.parent
+                            )
                         except Exception:
                             pass
 
@@ -1459,7 +1463,9 @@ class VenvManager:
                 try:
                     from pycompiler_ark.Ui import output
 
-                    output.success(f"[OK] Un seul venv trouve: {venvs[0]}", gui=self.parent)
+                    output.success(
+                        f"[OK] Un seul venv trouve: {venvs[0]}", gui=self.parent
+                    )
                 except Exception:
                     pass
                 return venvs[0]
@@ -1587,7 +1593,9 @@ class VenvManager:
         try:
             from pycompiler_ark.Ui import output
 
-            output.info("[CONFIG] Aucun venv trouve, creation automatique...", gui=self.parent)
+            output.info(
+                "[CONFIG] Aucun venv trouve, creation automatique...", gui=self.parent
+            )
         except Exception:
             pass
         try:
@@ -1761,7 +1769,9 @@ class VenvManager:
             try:
                 from pycompiler_ark.Ui import output
 
-                output.success("[OK] Environnement virtuel cree avec succes.", gui=self.parent)
+                output.success(
+                    "[OK] Environnement virtuel cree avec succes.", gui=self.parent
+                )
             except Exception:
                 pass
             self._call_ui("update_progress_message", "venv_creation", "Venv cree.")
@@ -2260,7 +2270,9 @@ class VenvManager:
 
             return True
         except Exception as e:
-            self._emit_output(f"[ERROR] Erreur lors de la configuration du workspace: {e}")
+            self._emit_output(
+                f"[ERROR] Erreur lors de la configuration du workspace: {e}"
+            )
             return False
 
     def get_manager_info(self, workspace_dir: str) -> dict:

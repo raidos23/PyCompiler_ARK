@@ -259,9 +259,7 @@ def suggest_missing_dependencies(self):
             venv_path=self.venv_path_manuel, workspace_dir=self.workspace_dir
         )
     try:
-        _log_append(
-            self, f"ℹ️ Utilisation de pip: {pip_program} {' '.join(pip_prefix)}"
-        )
+        _log_append(self, f"ℹ️ Utilisation de pip: {pip_program} {' '.join(pip_prefix)}")
     except Exception:
         pass
     # Vérification des modules avec progression (préférer un seul pip list pour limiter le blocage UI)

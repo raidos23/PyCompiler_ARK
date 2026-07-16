@@ -36,8 +36,6 @@ from pathlib import Path
 from typing import Any, Dict, Iterator, List, Optional, Pattern, Set, Tuple, Union
 
 
-
-
 @dataclass
 class DependencyInfo:
     """Information about project dependencies."""

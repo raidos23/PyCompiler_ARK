@@ -47,18 +47,25 @@ class TestSysDependencyManager:
         manager = SysDependencyManager()
         with patch.object(manager, "shell_run") as mock_shell_run:
             manager.run_elevated_shell("winget install dummy")
-            mock_shell_run.assert_called_once_with("winget install dummy", None, None, None)
+            mock_shell_run.assert_called_once_with(
+                "winget install dummy", None, None, None
+            )
 
 
 class TestSysDependencyUI:
     @patch("pycompiler_ark.Ui.Gui.Dialogs.SysDependencyUI.ProgressDialog")
     @patch("platform.system", return_value="Linux")
-    @patch("pycompiler_ark.Ui.Gui.Dialogs.SysDependencyUI.SysDependencyUI.get_install_command", return_value="apt install -y gcc make")
+    @patch(
+        "pycompiler_ark.Ui.Gui.Dialogs.SysDependencyUI.SysDependencyUI.get_install_command",
+        return_value="apt install -y gcc make",
+    )
     @patch.object(SysDependencyUI, "run_elevated_shell")
-    def test_install_packages_linux(self, mock_elevated, mock_get_cmd, mock_system, mock_dlg):
+    def test_install_packages_linux(
+        self, mock_elevated, mock_get_cmd, mock_system, mock_dlg
+    ):
         ui = SysDependencyUI()
         ui.install_packages_linux(["gcc", "make"])
-        
+
         mock_elevated.assert_called_once()
         cmd = mock_elevated.call_args[0][0]
         assert "apt install -y gcc make" in cmd
@@ -67,10 +74,12 @@ class TestSysDependencyUI:
     @patch("shutil.which", return_value="/usr/bin/winget")
     @patch("platform.system", return_value="Windows")
     @patch.object(SysDependencyUI, "shell_run")
-    def test_install_packages_windows(self, mock_shell_run, mock_system, mock_which, mock_dlg):
+    def test_install_packages_windows(
+        self, mock_shell_run, mock_system, mock_which, mock_dlg
+    ):
         ui = SysDependencyUI()
         ui.install_packages_windows([{"id": "Git.Git"}, {"id": "Python.Python.3"}])
-        
+
         mock_shell_run.assert_called_once()
         cmd = mock_shell_run.call_args[0][0]
         assert "winget install --id Git.Git" in cmd

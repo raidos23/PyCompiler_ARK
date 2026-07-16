@@ -288,7 +288,9 @@ class UiFeatures:
             self._entrypoint_relpath = None
             self.entrypoint_file = None
             self._refresh_entrypoint_marker()
-            output.success(("✅ Point d'entrée effacé.", "✅ Entrypoint cleared."), gui=self)
+            output.success(
+                ("✅ Point d'entrée effacé.", "✅ Entrypoint cleared."), gui=self
+            )
         else:
             output.error(
                 (

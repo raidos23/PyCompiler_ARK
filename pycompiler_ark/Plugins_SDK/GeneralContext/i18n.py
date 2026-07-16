@@ -140,6 +140,7 @@ def _object_name(obj: Any) -> str:
 
 def refresh_widget_translations(root: Any, plugin_id: str) -> None:
     """Apply the active plugin catalog to an existing widget tree."""
+
     def _iter_objects(root_obj: Any):
         stack = [root_obj]
         seen: set[int] = set()
@@ -228,9 +229,7 @@ def refresh_widget_translations(root: Any, plugin_id: str) -> None:
             )
 
         if placeholder_key:
-            current = (
-                obj.placeholderText() if hasattr(obj, "placeholderText") else None
-            )
+            current = obj.placeholderText() if hasattr(obj, "placeholderText") else None
             _apply_placeholder(
                 obj, placeholder_key, current if isinstance(current, str) else None
             )

@@ -458,19 +458,27 @@ def _setup_widgets(self) -> None:
 
     # Set properties for dynamic i18n
     if self.select_lang:
-        self.select_lang.setProperty("i18n_text_system_key", "choose_language_system_button")
+        self.select_lang.setProperty(
+            "i18n_text_system_key", "choose_language_system_button"
+        )
         self.select_lang.setProperty("i18n_system_attr", "language_pref")
     if self.select_theme:
-        self.select_theme.setProperty("i18n_text_system_key", "choose_theme_system_button")
+        self.select_theme.setProperty(
+            "i18n_text_system_key", "choose_theme_system_button"
+        )
         self.select_theme.setProperty("i18n_system_attr", "theme")
     if self.venv_label:
         self.venv_label.setProperty("i18n_text_system_key", "venv_label_system")
         self.venv_label.setProperty("i18n_system_attr", "use_system_python")
     if self.label_workspace_status:
         self.label_workspace_status.setProperty("i18n_format_attr", "workspace_dir")
-        self.label_workspace_status.setProperty("i18n_none_key", "label_workspace_status_none")
+        self.label_workspace_status.setProperty(
+            "i18n_none_key", "label_workspace_status_none"
+        )
     if self.file_filter_input:
-        self.file_filter_input.setProperty("i18n_placeholder_key", "file_filter_placeholder")
+        self.file_filter_input.setProperty(
+            "i18n_placeholder_key", "file_filter_placeholder"
+        )
     if self.btn_acasl_loader:
         self.btn_acasl_loader.setProperty("i18n_text_key", "bc_loader")
         self.btn_acasl_loader.setProperty("i18n_tooltip_key", "tt_bc_loader")
@@ -490,6 +498,7 @@ def _setup_widgets(self) -> None:
     if self.btn_acasl_loader:
         self.btn_acasl_loader.hide()
         self.btn_acasl_loader.setEnabled(False)
+
 
 def _setup_compiler_tabs(self) -> None:
     """Initialize compiler tabs and bind available engines."""

@@ -86,7 +86,9 @@ def plain(message: str, err: bool = False) -> None:
     _emit(message, err=err)
 
 
-def log(level: str, message: str | tuple, err: bool | None = None, gui: object | None = None) -> None:
+def log(
+    level: str, message: str | tuple, err: bool | None = None, gui: object | None = None
+) -> None:
     """Emit a log line.
 
     `message` may be a plain string or a (fr, en) tuple. When a tuple is

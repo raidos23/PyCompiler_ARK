@@ -183,7 +183,7 @@ def show_msgbox(
     Show a message box if a Qt toolkit is available; fallback to console output otherwise.
     Executes in the main Qt thread to ensure theme inheritance and proper UI integration.
     """
-        if _use_rich_dialogs() or QApplication.instance() is None:
+    if _use_rich_dialogs() or QApplication.instance() is None:
         if str(kind or "").lower() != "question":
             try:
                 from pycompiler_ark.Ui import output

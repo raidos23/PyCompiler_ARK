@@ -178,7 +178,9 @@ def validate_engines_compatibility(
                     continue
 
             # Check compatibility
-            result = check_engine_compatibility(engine, core_version, engine_sdk_version)
+            result = check_engine_compatibility(
+                engine, core_version, engine_sdk_version
+            )
 
             if result.is_compatible:
                 compatible_engines.append(engine)

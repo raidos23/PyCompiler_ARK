@@ -38,6 +38,7 @@ def _tr(key: str, default: str, **values: object) -> str:
     except Exception:
         return default
 
+
 # Plugin metadata
 PLUGIN_META = PluginMeta(
     # pyrefly: ignore [unexpected-keyword]
@@ -96,9 +97,7 @@ class OutputCleaner(BcPluginBase):
         layout.setSpacing(8)
         layout.setContentsMargins(8, 8, 8, 8)
 
-        safety_group = QGroupBox(
-            _tr("ui_safety", "Safety"), widget
-        )
+        safety_group = QGroupBox(_tr("ui_safety", "Safety"), widget)
         safety_group.setObjectName("ui_safety")
         safety_layout = QVBoxLayout(safety_group)
         safety_layout.setSpacing(4)
@@ -219,6 +218,4 @@ class OutputCleaner(BcPluginBase):
                 )
 
         except Exception as e:
-            log.log_error(
-                _tr("error_generic", "OutputCleaner error: {error}", error=e)
-            )
+            log.log_error(_tr("error_generic", "OutputCleaner error: {error}", error=e))

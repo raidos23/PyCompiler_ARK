@@ -884,7 +884,9 @@ def _plugin_worker(
                 name=plg.meta.name,
                 catch_exceptions=True,
             )
-            q.put({"ok": res.success, "error": res.error, "duration_ms": res.duration_ms})
+            q.put(
+                {"ok": res.success, "error": res.error, "duration_ms": res.duration_ms}
+            )
         except Exception:
             q.put({"ok": False, "error": _tb.format_exc(), "duration_ms": 0.0})
     finally:

@@ -135,9 +135,7 @@ class CompilationThread(QThread):
         if self.bridge:
             # Connect bridge signals to emit via the thread
             self.bridge.log_triggered.connect(self._handle_bridge_log)
-            self.bridge.log_message_triggered.connect(
-                self._handle_bridge_log_message
-            )
+            self.bridge.log_message_triggered.connect(self._handle_bridge_log_message)
 
         self.cancel_requested = False
         self.start_time: Optional[datetime] = None

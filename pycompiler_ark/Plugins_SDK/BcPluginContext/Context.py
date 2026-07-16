@@ -100,7 +100,6 @@ except Exception:
     VenvInfo = None
     PythonFileInfo = None
     GitInfo = None
-    
 
 
 # -----------------------------
