@@ -34,6 +34,7 @@ import time
 from pathlib import Path
 from typing import Any, Callable, Optional
 
+from pycompiler_ark.Core.utils.ensure_tools import ensure_tools
 from pycompiler_ark.Ui import output
 
 # BuildContext lives in engine_sdk; imported here so callers of this module
@@ -355,10 +356,10 @@ def run_engine_compile_streaming(
         if on_stdout:
             on_stdout(f"⚙️ Environnement : {env_display}")
 
-        if hasattr(engine_instance, "ensure_tools_installed"):
-            if not engine_instance.ensure_tools_installed(
-                bridge, stop_signal=stop_signal
-            ):
+        required_tools = getattr(engine_instance, "required_tools", {}) or {}
+        if required_tools.get("python") or required_tools.get("system"):
+            result = ensure_tools(required_tools, stop_signal=stop_signal, gui=bridge)
+            if not result.ok:
                 if stop_signal and stop_signal():
                     return _failure("Compilation annulee par l'utilisateur.")
                 return _failure(

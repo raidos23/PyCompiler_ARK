@@ -108,26 +108,6 @@ class BcPluginBase:
         """
         return {"python": [], "system": []}
 
-    def ensure_tools(
-        self,
-        stop_signal: Callable[[], bool] | None = None,
-        log_cb: Callable[[str], None] | None = None,
-    ) -> bool:
-        """Vérifie et installe les outils requis déclarés dans required_tools.
-
-        Délègue vers l'utilitaire universel Core.utils.ensure_tools.
-        Retourne True si tous les outils sont disponibles, False sinon.
-        """
-        tools = self.required_tools
-        if not tools.get("python") and not tools.get("system"):
-            return True
-        from pycompiler_ark.Core.utils.ensure_tools import (
-            ensure_tools as _ensure_tools,
-        )
-
-        result = _ensure_tools(tools, stop_signal=stop_signal, log_cb=log_cb)
-        return result.ok
-
     def on_pre_compile(self, ctx: PreCompileContext) -> None:
         """Méthode à surcharger par le plugin."""
         raise NotImplementedError
