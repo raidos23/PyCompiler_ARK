@@ -387,7 +387,7 @@ def _install_next_dependency(self):
         _log_append(self, "✅ Tous les modules manquants ont été installés.")
         return
     module = self._dep_install_list[self._dep_install_index]
-    msg = f"Installation de {module}... ({self._dep_install_index+1}/{len(self._dep_install_list)})"
+    msg = f"Installation de {module}... ({self._dep_install_index + 1}/{len(self._dep_install_list)})"
     self.dep_progress_dialog.set_message(msg)
     self.dep_progress_dialog.progress.setRange(
         0, 0

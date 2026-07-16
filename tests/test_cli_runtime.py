@@ -21,7 +21,6 @@ from pycompiler_ark.Ui.Cli.runtime import _platform_log_dir
 
 
 class TestCliRuntime(unittest.TestCase):
-
     @patch("pycompiler_ark.Ui.PreferencesManager._user_config_dir")
     def test_platform_log_dir_from_prefs(self, mock_user_dir):
         mock_user_dir.return_value = "/tmp/fake_ark_home"

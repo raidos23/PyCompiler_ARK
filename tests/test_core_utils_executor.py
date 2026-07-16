@@ -22,7 +22,6 @@ from pycompiler_ark.Core.utils.executor import ExecutionResult, executor
 
 
 class TestCoreUtilsExecutor(unittest.TestCase):
-
     def test_executor_success(self):
         def add(a, b):
             return a + b

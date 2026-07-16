@@ -33,7 +33,7 @@ def _iter_engine_module_names(base_path: str, namespace_package: str) -> list[st
     """Return top-level engine package names under the configured namespace."""
     if not os.path.isdir(base_path):
         return []
-    prefix = f"{namespace_package.rstrip('.') }."
+    prefix = f"{namespace_package.rstrip('.')}."
     return [
         name
         for _finder, name, ispkg in pkgutil.iter_modules([base_path], prefix=prefix)

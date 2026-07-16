@@ -103,8 +103,9 @@ def launch_main_application(
                             screen = app.primaryScreen()
                             if screen:
                                 sgeo = screen.availableGeometry()
-                                max_w, max_h = int(sgeo.width() * 0.5), int(
-                                    sgeo.height() * 0.5
+                                max_w, max_h = (
+                                    int(sgeo.width() * 0.5),
+                                    int(sgeo.height() * 0.5),
                                 )
                                 if pix.width() > max_w or pix.height() > max_h:
                                     pix = pix.scaled(

@@ -29,7 +29,6 @@ from pycompiler_ark.Ui.Gui.WidgetsCreator import (
     ProgressDialog,
     _redact_secrets,
     show_msgbox,
-    
 )
 
 from .i18n import translate
