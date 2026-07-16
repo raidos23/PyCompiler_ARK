@@ -6,7 +6,6 @@ from pycompiler_ark.Ui import output
 
 
 class TestVenvManagerInternet(unittest.TestCase):
-
     def setUp(self):
         # Create a mock parent
         self.mock_parent = MagicMock()

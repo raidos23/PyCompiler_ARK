@@ -20,7 +20,6 @@ from pycompiler_ark.Core.Compiler.utils import check_internet_connection
 
 
 class TestUtils(unittest.TestCase):
-
     @patch("socket.create_connection")
     @patch("socket.gethostbyname")
     def test_check_internet_connection_success_ip(self, mock_dns, mock_create):

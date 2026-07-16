@@ -649,7 +649,7 @@ def _apply_main_app_translations(self, tr: dict[str, object]) -> None:
             return candidate
         for prefix in ("btn_", "action_", "tab_", "lbl_", "label_"):
             if name.startswith(prefix):
-                candidate = f"{name[len(prefix):]}_placeholder"
+                candidate = f"{name[len(prefix) :]}_placeholder"
                 if candidate in tr:
                     return candidate
         return ""
