@@ -22,6 +22,7 @@ from .base import CompilerEngine, EngineMeta
 from pycompiler_ark.Core.engine.registry import translate
 from .utils import resolve_executable  # executable resolution helper (SDK)
 from .utils import open_path
+from ..Ui import output
 
 __version__ = "1.0.0"
 
@@ -36,4 +37,5 @@ __all__ = [
     "open_path",
     "translate",
     "BuildContext",
+    "output",
 ]
