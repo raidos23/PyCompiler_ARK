@@ -200,20 +200,39 @@ def _apply_engine_i18n(root: Any, engine_id: str) -> None:
                     chosen_key = "type_label"
                 elif name == "console_label":
                     chosen_key = "console_label"
-                elif name in {"windowed_checkbox", "disable_console_checkbox", "debug_checkbox", "verbose_checkbox", "onefile_checkbox", "standalone_checkbox"}:
+                elif name in {
+                    "windowed_checkbox",
+                    "disable_console_checkbox",
+                    "debug_checkbox",
+                    "verbose_checkbox",
+                    "onefile_checkbox",
+                    "standalone_checkbox",
+                }:
                     chosen_key = name
 
-            if system_key and system_attr and _is_system_value(getattr(root, str(system_attr), None)):
+            if (
+                system_key
+                and system_attr
+                and _is_system_value(getattr(root, str(system_attr), None))
+            ):
                 chosen_key = str(system_key)
 
             if format_attr:
                 ctx = getattr(root, str(format_attr), None)
                 if ctx:
-                    value = translate(engine_id, chosen_key, current if isinstance(current, str) else None)
+                    value = translate(
+                        engine_id,
+                        chosen_key,
+                        current if isinstance(current, str) else None,
+                    )
                     if isinstance(value, str) and value:
                         obj.setText(value.replace("{path}", str(ctx)))
                 elif none_key:
-                    _apply_text(obj, str(none_key), current if isinstance(current, str) else None)
+                    _apply_text(
+                        obj,
+                        str(none_key),
+                        current if isinstance(current, str) else None,
+                    )
                 continue
 
             _apply_text(obj, chosen_key, current if isinstance(current, str) else None)
@@ -221,9 +240,13 @@ def _apply_engine_i18n(root: Any, engine_id: str) -> None:
         tooltip_key = _prop(obj, "i18n_tooltip_key") or _tooltip_for_name(name)
         if tooltip_key:
             current = obj.toolTip() if hasattr(obj, "toolTip") else None
-            _apply_tooltip(obj, str(tooltip_key), current if isinstance(current, str) else None)
+            _apply_tooltip(
+                obj, str(tooltip_key), current if isinstance(current, str) else None
+            )
 
-        placeholder_key = _prop(obj, "i18n_placeholder_key") or _placeholder_for_name(name)
+        placeholder_key = _prop(obj, "i18n_placeholder_key") or _placeholder_for_name(
+            name
+        )
         if placeholder_key:
             current = obj.placeholderText() if hasattr(obj, "placeholderText") else None
             _apply_placeholder(
@@ -233,7 +256,9 @@ def _apply_engine_i18n(root: Any, engine_id: str) -> None:
         tab_key = _prop(obj, "i18n_tab_key")
         if tab_key:
             current = obj.text() if hasattr(obj, "text") else None
-            _apply_tab_text(obj, str(tab_key), current if isinstance(current, str) else None)
+            _apply_tab_text(
+                obj, str(tab_key), current if isinstance(current, str) else None
+            )
 
 
 def _refresh_live_engine_widgets(gui) -> None:
@@ -698,6 +723,7 @@ def load_engine_language_file(engine_package: str, code: str) -> dict:
     """
     try:
         import importlib.resources as ilr
+
         try:
             import yaml
         except ImportError:  # pragma: no cover - PyYAML attendu dans le projet

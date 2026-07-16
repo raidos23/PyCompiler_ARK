@@ -474,7 +474,7 @@ def _load_workspace_config(workspace_root: Path) -> dict[str, Any]:
             "venv/**",
             ".venv/**",
         ]
-        
+
         # Default phases (all enabled)
         default_phases = {
             "Cleanup": True,

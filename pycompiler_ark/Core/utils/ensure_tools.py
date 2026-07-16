@@ -174,6 +174,7 @@ def ensure_tools(
                     )
 
                     import platform
+
                     system = platform.system().lower()
 
                     system_install_ok = True
@@ -185,12 +186,17 @@ def ensure_tools(
                             interval = 500  # 0.5s
                             while not process.waitForFinished(interval):
                                 if stop_signal and stop_signal():
-                                    from pycompiler_ark.Core.process_killer import kill_process_tree
+                                    from pycompiler_ark.Core.process_killer import (
+                                        kill_process_tree,
+                                    )
+
                                     try:
                                         kill_process_tree(process.processId())
                                     except Exception:
                                         pass
-                                    errors.append("Annulé par stop_signal pendant l'installation Linux")
+                                    errors.append(
+                                        "Annulé par stop_signal pendant l'installation Linux"
+                                    )
                                     return ToolsCheckResult(
                                         ok=False,
                                         missing_system=missing_system,
@@ -233,7 +239,10 @@ def ensure_tools(
                                     system_install_ok = False
                         else:
                             # Fallback to headless
-                            from pycompiler_ark.Core.SystemDepsManager import install_system_packages
+                            from pycompiler_ark.Core.SystemDepsManager import (
+                                install_system_packages,
+                            )
+
                             _emit_output(
                                 "info",
                                 *_tools_stage_message(
@@ -267,9 +276,15 @@ def ensure_tools(
                         winget_packages = []
                         for tool in missing_system:
                             winget_map = {
-                                "build-essential": [{"id": "Microsoft.VisualStudio.2022.BuildTools"}],
-                                "gcc": [{"id": "Microsoft.VisualStudio.2022.BuildTools"}],
-                                "g++": [{"id": "Microsoft.VisualStudio.2022.BuildTools"}],
+                                "build-essential": [
+                                    {"id": "Microsoft.VisualStudio.2022.BuildTools"}
+                                ],
+                                "gcc": [
+                                    {"id": "Microsoft.VisualStudio.2022.BuildTools"}
+                                ],
+                                "g++": [
+                                    {"id": "Microsoft.VisualStudio.2022.BuildTools"}
+                                ],
                                 "python3-dev": [{"id": "Python.Python.3"}],
                                 "libpython3-dev": [{"id": "Python.Python.3"}],
                                 "patchelf": [],
@@ -280,19 +295,26 @@ def ensure_tools(
                                 winget_packages.append({"id": tool})
 
                         if winget_packages:
-                            process = sys_manager.install_packages_windows(winget_packages)
+                            process = sys_manager.install_packages_windows(
+                                winget_packages
+                            )
                             if process:
                                 timeout_total = 600000  # 10 minutes
                                 elapsed = 0
                                 interval = 500  # 0.5s
                                 while not process.waitForFinished(interval):
                                     if stop_signal and stop_signal():
-                                        from pycompiler_ark.Core.process_killer import kill_process_tree
+                                        from pycompiler_ark.Core.process_killer import (
+                                            kill_process_tree,
+                                        )
+
                                         try:
                                             kill_process_tree(process.processId())
                                         except Exception:
                                             pass
-                                        errors.append("Annulé par stop_signal pendant l'installation Windows")
+                                        errors.append(
+                                            "Annulé par stop_signal pendant l'installation Windows"
+                                        )
                                         return ToolsCheckResult(
                                             ok=False,
                                             missing_system=missing_system,
@@ -343,7 +365,11 @@ def ensure_tools(
                                     ),
                                 )
                                 try:
-                                    sys_manager.open_urls(["https://learn.microsoft.com/en-us/windows/package-manager/winget/"])
+                                    sys_manager.open_urls(
+                                        [
+                                            "https://learn.microsoft.com/en-us/windows/package-manager/winget/"
+                                        ]
+                                    )
                                 except Exception:
                                     pass
                                 system_install_ok = False
@@ -369,7 +395,9 @@ def ensure_tools(
                         system_install_ok = False
 
                     if not system_install_ok:
-                        errors.append(f"Échec installation outils système: {missing_system}")
+                        errors.append(
+                            f"Échec installation outils système: {missing_system}"
+                        )
 
                 else:
                     _emit_output(
@@ -472,6 +500,7 @@ def ensure_tools(
         if gui is not None and hasattr(gui, "venv_manager") and gui.venv_manager:
             try:
                 from pycompiler_ark.Core.Compiler.utils import check_internet_connection
+
                 use_system = bool(getattr(gui, "use_system_python", False))
 
                 if use_system:
@@ -498,7 +527,9 @@ def ensure_tools(
                                     "No Internet connection. Cannot install missing Python tools.",
                                 ),
                             )
-                            errors.append("Pas de connexion Internet (outils Python système)")
+                            errors.append(
+                                "Pas de connexion Internet (outils Python système)"
+                            )
                             return ToolsCheckResult(
                                 ok=False,
                                 missing_system=missing_system,
@@ -523,7 +554,9 @@ def ensure_tools(
                         all_done = False
                         while elapsed < timeout_total:
                             if stop_signal and stop_signal():
-                                errors.append("Annulé par stop_signal pendant l'installation Python (système)")
+                                errors.append(
+                                    "Annulé par stop_signal pendant l'installation Python (système)"
+                                )
                                 return ToolsCheckResult(
                                     ok=False,
                                     missing_system=missing_system,
@@ -552,8 +585,14 @@ def ensure_tools(
                                     "Timeout or failure installing system Python tools",
                                 ),
                             )
-                            errors.append("Timeout ou échec de l'installation des outils Python (système)")
-                            missing_python = [t for t in missing_python if not gui.venv_manager.is_tool_installed_system(t)]
+                            errors.append(
+                                "Timeout ou échec de l'installation des outils Python (système)"
+                            )
+                            missing_python = [
+                                t
+                                for t in missing_python
+                                if not gui.venv_manager.is_tool_installed_system(t)
+                            ]
                         else:
                             missing_python = []
                 else:
@@ -582,7 +621,9 @@ def ensure_tools(
                                         "No Internet connection. Cannot install missing Python tools.",
                                     ),
                                 )
-                                errors.append("Pas de connexion Internet (outils Python venv)")
+                                errors.append(
+                                    "Pas de connexion Internet (outils Python venv)"
+                                )
                                 return ToolsCheckResult(
                                     ok=False,
                                     missing_system=missing_system,
@@ -598,7 +639,9 @@ def ensure_tools(
                                     f"Installing missing Python tools: {missing_python}",
                                 ),
                             )
-                            gui.venv_manager.ensure_tools_installed(venv_path, missing_python)
+                            gui.venv_manager.ensure_tools_installed(
+                                venv_path, missing_python
+                            )
 
                             # Wait for Python tools to be installed
                             timeout_total = 600000  # 10 minutes
@@ -607,7 +650,9 @@ def ensure_tools(
                             all_done = False
                             while elapsed < timeout_total:
                                 if stop_signal and stop_signal():
-                                    errors.append("Annulé par stop_signal pendant l'installation Python (venv)")
+                                    errors.append(
+                                        "Annulé par stop_signal pendant l'installation Python (venv)"
+                                    )
                                     return ToolsCheckResult(
                                         ok=False,
                                         missing_system=missing_system,
@@ -618,7 +663,9 @@ def ensure_tools(
                                 # Check if all are installed
                                 all_done = True
                                 for tool in missing_python:
-                                    if not gui.venv_manager.is_tool_installed(venv_path, tool):
+                                    if not gui.venv_manager.is_tool_installed(
+                                        venv_path, tool
+                                    ):
                                         all_done = False
                                         break
                                 if all_done:
@@ -636,8 +683,16 @@ def ensure_tools(
                                         "Timeout or failure installing Python tools",
                                     ),
                                 )
-                                errors.append("Timeout ou échec de l'installation des outils Python (venv)")
-                                missing_python = [t for t in missing_python if not gui.venv_manager.is_tool_installed(venv_path, t)]
+                                errors.append(
+                                    "Timeout ou échec de l'installation des outils Python (venv)"
+                                )
+                                missing_python = [
+                                    t
+                                    for t in missing_python
+                                    if not gui.venv_manager.is_tool_installed(
+                                        venv_path, t
+                                    )
+                                ]
                             else:
                                 missing_python = []
             except Exception as e:
@@ -674,7 +729,10 @@ def ensure_tools(
                 )
 
                 try:
-                    from pycompiler_ark.Core.Compiler.utils import check_internet_connection
+                    from pycompiler_ark.Core.Compiler.utils import (
+                        check_internet_connection,
+                    )
+
                     _emit_output(
                         "info",
                         "[ensure_tools:python] Vérification de la connexion Internet…",
@@ -700,7 +758,8 @@ def ensure_tools(
                         return ToolsCheckResult(
                             ok=False,
                             missing_system=missing_system,
-                            missing_python=still_missing + missing_python[len(still_missing):],
+                            missing_python=still_missing
+                            + missing_python[len(still_missing) :],
                             errors=errors,
                         )
                     _emit_output(

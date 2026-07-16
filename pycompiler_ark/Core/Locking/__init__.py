@@ -307,7 +307,9 @@ def build_lock_payload(
         "project": _project_section(project, git_commit, git_branch),
         "workspace": {"exclude_patterns": exclude_patterns},
         "build": _build_section(build),
-        "engine": _engine_section(engine_id, engine_version, workspace, resolved_command),
+        "engine": _engine_section(
+            engine_id, engine_version, workspace, resolved_command
+        ),
         "platform": _platform_section(python_version),
         "dependencies": _dependencies_section(dependencies),
     }

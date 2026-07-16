@@ -223,19 +223,27 @@ def _map_ide_like_widgets(self) -> None:
 
     # Set properties for dynamic i18n
     if self.select_lang:
-        self.select_lang.setProperty("i18n_text_system_key", "choose_language_system_button")
+        self.select_lang.setProperty(
+            "i18n_text_system_key", "choose_language_system_button"
+        )
         self.select_lang.setProperty("i18n_system_attr", "language_pref")
     if self.select_theme:
-        self.select_theme.setProperty("i18n_text_system_key", "choose_theme_system_button")
+        self.select_theme.setProperty(
+            "i18n_text_system_key", "choose_theme_system_button"
+        )
         self.select_theme.setProperty("i18n_system_attr", "theme")
     if self.venv_label:
         self.venv_label.setProperty("i18n_text_system_key", "venv_label_system")
         self.venv_label.setProperty("i18n_system_attr", "use_system_python")
     if self.label_workspace_status:
         self.label_workspace_status.setProperty("i18n_format_attr", "workspace_dir")
-        self.label_workspace_status.setProperty("i18n_none_key", "label_workspace_status_none")
+        self.label_workspace_status.setProperty(
+            "i18n_none_key", "label_workspace_status_none"
+        )
     if self.file_filter_input:
-        self.file_filter_input.setProperty("i18n_placeholder_key", "file_filter_placeholder")
+        self.file_filter_input.setProperty(
+            "i18n_placeholder_key", "file_filter_placeholder"
+        )
     if self.btn_acasl_loader:
         self.btn_acasl_loader.setProperty("i18n_text_key", "bc_loader")
         self.btn_acasl_loader.setProperty("i18n_tooltip_key", "tt_bc_loader")
@@ -342,14 +350,18 @@ def _setup_more_tools_menu(self) -> None:
         menu = QMenu(more_btn)
         self._ide_more_tools_menu = menu
 
-        act_workspace = QAction(translate(self, "action_select_workspace", "Select Workspace"), menu)
+        act_workspace = QAction(
+            translate(self, "action_select_workspace", "Select Workspace"), menu
+        )
         act_workspace.setObjectName("action_select_workspace")
         act_workspace.triggered.connect(
             lambda: getattr(self, "select_workspace", lambda: None)()
         )
         menu.addAction(act_workspace)
 
-        act_init = QAction(translate(self, "action_init_project", "Initialise Project"), menu)
+        act_init = QAction(
+            translate(self, "action_init_project", "Initialise Project"), menu
+        )
         act_init.setObjectName("action_init_project")
         act_init.triggered.connect(
             lambda: getattr(self, "open_init_workspace_dialog", lambda: None)()
@@ -370,7 +382,9 @@ def _setup_more_tools_menu(self) -> None:
         )
         menu.addAction(act_add_files)
 
-        act_clear_workspace = QAction(translate(self, "btn_clear_workspace", "Clear Workspace"), menu)
+        act_clear_workspace = QAction(
+            translate(self, "btn_clear_workspace", "Clear Workspace"), menu
+        )
         act_clear_workspace.setObjectName("btn_clear_workspace")
         act_clear_workspace.triggered.connect(
             lambda: getattr(self, "clear_workspace", lambda: None)()
@@ -402,7 +416,9 @@ def _setup_more_tools_menu(self) -> None:
 
         menu.addSeparator()
 
-        act_advanced = QAction(translate(self, "advanced_config", "Advanced Config"), menu)
+        act_advanced = QAction(
+            translate(self, "advanced_config", "Advanced Config"), menu
+        )
         act_advanced.setObjectName("advanced_config")
         act_advanced.triggered.connect(
             lambda: getattr(self, "open_advanced_config_editor", lambda: None)()
@@ -568,7 +584,10 @@ def _apply_activity_buttons_theme(self) -> None:
 def _retranslate_ide_like_actions(self) -> None:
     """Refresh IDE-specific actions using the generic i18n traversal."""
     try:
-        from pycompiler_ark.Ui.i18n import _apply_main_app_translations, get_active_translations
+        from pycompiler_ark.Ui.i18n import (
+            _apply_main_app_translations,
+            get_active_translations,
+        )
 
         _apply_main_app_translations(self, get_active_translations())
     except Exception:

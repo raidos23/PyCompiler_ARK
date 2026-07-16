@@ -251,9 +251,7 @@ def bcasl_doctor_payload(workspace: str | None = None) -> dict[str, Any]:
     }
 
 
-def scaffold_engine(
-    target_name: str, root_dir: str | None = None
-) -> dict[str, Any]:
+def scaffold_engine(target_name: str, root_dir: str | None = None) -> dict[str, Any]:
     safe = str(target_name).strip().replace("-", "_").replace(" ", "_").lower()
     base_root = Path(root_dir or Path.cwd())
     engine_dir = base_root / safe
@@ -304,9 +302,7 @@ def scaffold_engine(
     return {"created": True, "path": str(engine_dir)}
 
 
-def scaffold_plugin(
-    target_name: str, root_dir: str | None = None
-) -> dict[str, Any]:
+def scaffold_plugin(target_name: str, root_dir: str | None = None) -> dict[str, Any]:
     safe = str(target_name).strip().replace("-", "_").replace(" ", "_")
     base_root = Path(root_dir or Path.cwd())
     plugin_dir = base_root / safe

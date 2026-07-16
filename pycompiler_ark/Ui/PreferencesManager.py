@@ -132,12 +132,20 @@ def save_preferences(self):
         try:
             from pycompiler_ark.Ui import output
 
-            output.warn((f"Impossible de sauvegarder les préférences : {e}", f"Unable to save preferences: {e}"), gui=self)
+            output.warn(
+                (
+                    f"Impossible de sauvegarder les préférences : {e}",
+                    f"Unable to save preferences: {e}",
+                ),
+                gui=self,
+            )
         except Exception:
             try:
                 from pycompiler_ark.Ui import output
 
-                output.warn(f"Impossible de sauvegarder les préférences : {e}", gui=self)
+                output.warn(
+                    f"Impossible de sauvegarder les préférences : {e}", gui=self
+                )
             except Exception:
                 pass
 

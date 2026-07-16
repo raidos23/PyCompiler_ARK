@@ -50,8 +50,16 @@ class EngineMeta:
         object.__setattr__(self, "id", nid)
         object.__setattr__(self, "name", nname)
         object.__setattr__(self, "version", nversion)
-        object.__setattr__(self, "required_core_version", str(self.required_core_version or "1.0.0").strip() or "1.0.0")
-        object.__setattr__(self, "required_sdk_version", str(self.required_sdk_version or "1.0.0").strip() or "1.0.0")
+        object.__setattr__(
+            self,
+            "required_core_version",
+            str(self.required_core_version or "1.0.0").strip() or "1.0.0",
+        )
+        object.__setattr__(
+            self,
+            "required_sdk_version",
+            str(self.required_sdk_version or "1.0.0").strip() or "1.0.0",
+        )
         object.__setattr__(self, "description", str(self.description or "").strip())
         object.__setattr__(self, "author", str(self.author or "").strip())
 
@@ -66,8 +74,12 @@ def resolve_engine_meta(engine_or_cls: object) -> EngineMeta:
     if isinstance(meta, dict):
         return EngineMeta(
             id=str(meta.get("id") or getattr(engine_or_cls, "id", "") or "base"),
-            name=str(meta.get("name") or getattr(engine_or_cls, "name", "") or "BaseEngine"),
-            version=str(meta.get("version") or getattr(engine_or_cls, "version", "") or "1.0.0"),
+            name=str(
+                meta.get("name") or getattr(engine_or_cls, "name", "") or "BaseEngine"
+            ),
+            version=str(
+                meta.get("version") or getattr(engine_or_cls, "version", "") or "1.0.0"
+            ),
             required_core_version=str(
                 meta.get("required_core_version")
                 or getattr(engine_or_cls, "required_core_version", "1.0.0")
@@ -93,6 +105,7 @@ def resolve_engine_meta(engine_or_cls: object) -> EngineMeta:
         description=str(getattr(engine_or_cls, "description", "") or ""),
         author=str(getattr(engine_or_cls, "author", "") or ""),
     )
+
 
 class CompilerEngine:
     """

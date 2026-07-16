@@ -34,7 +34,9 @@ _ACTIVE_TRANSLATIONS: dict[str, Any] = {}
 
 def _project_root() -> str:
     """Return project root path (sync, no blocking I/O)."""
-    return os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), os.pardir))
+    return os.path.abspath(
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), os.pardir)
+    )
 
 
 def _languages_dir() -> str:
@@ -163,8 +165,12 @@ def _available_languages_sync() -> list[dict[str, str]]:
         name = None
         code = None
         if isinstance(data, dict):
-            name = data.get("name") or (meta.get("name") if isinstance(meta, dict) else None)
-            code = data.get("code") or (meta.get("code") if isinstance(meta, dict) else None)
+            name = data.get("name") or (
+                meta.get("name") if isinstance(meta, dict) else None
+            )
+            code = data.get("code") or (
+                meta.get("code") if isinstance(meta, dict) else None
+            )
         entry = {
             "code": code or default_code,
             "name": name or default_code,
@@ -293,7 +299,9 @@ async def get_translations(lang_pref: str | None) -> dict[str, Any]:
 
         # Merge à partir du catalogue anglais chargé sur disque
         merged = _merge_translations(
-            base_catalog, data if isinstance(data, dict) else None, resolved_code or code
+            base_catalog,
+            data if isinstance(data, dict) else None,
+            resolved_code or code,
         )
 
         # Mettre en cache de manière thread-safe (code demandé + code résolu)
@@ -520,6 +528,7 @@ def tr(gui: Any, fr: str, en: str) -> str:
 
 essential_log_max_len = 10000
 
+
 def i18n_synchro(self, lang_pref: str, tr: dict[str, Any]) -> str:
     """Synchronise la langue active sur l'UI, les engines et les plugins."""
     meta = tr.get("_meta", {}) if isinstance(tr, dict) else {}
@@ -561,7 +570,10 @@ def i18n_synchro(self, lang_pref: str, tr: dict[str, Any]) -> str:
     try:
         from pycompiler_ark.Ui import output
 
-        output.info((f"Langue appliquée : {lang_name}", f"Language applied: {lang_name}"), gui=self)
+        output.info(
+            (f"Langue appliquée : {lang_name}", f"Language applied: {lang_name}"),
+            gui=self,
+        )
     except Exception:
         pass
 
@@ -608,7 +620,7 @@ def _apply_main_app_translations(self, tr: dict[str, object]) -> None:
             return name
         for prefix in ("btn_", "action_", "tab_", "lbl_", "label_"):
             if name.startswith(prefix):
-                key = name[len(prefix):]
+                key = name[len(prefix) :]
                 if key in tr:
                     return key
         return name
@@ -700,19 +712,29 @@ def _apply_main_app_translations(self, tr: dict[str, object]) -> None:
 
             chosen_key = str(text_key)
 
-            if system_key and system_attr and _is_system_value(getattr(self, str(system_attr), None)):
+            if (
+                system_key
+                and system_attr
+                and _is_system_value(getattr(self, str(system_attr), None))
+            ):
                 chosen_key = str(system_key)
 
             if format_attr:
                 ctx = getattr(self, str(format_attr), None)
                 if ctx:
                     value = translate(
-                        self.id, chosen_key, current if isinstance(current, str) else None
+                        self.id,
+                        chosen_key,
+                        current if isinstance(current, str) else None,
                     )
                     if isinstance(value, str) and value:
                         obj.setText(value.replace("{path}", str(ctx)))
                 elif none_key:
-                    _apply_text(obj, str(none_key), current if isinstance(current, str) else None)
+                    _apply_text(
+                        obj,
+                        str(none_key),
+                        current if isinstance(current, str) else None,
+                    )
                 continue
 
             _apply_text(obj, chosen_key, current if isinstance(current, str) else None)
@@ -720,17 +742,24 @@ def _apply_main_app_translations(self, tr: dict[str, object]) -> None:
         tooltip_key = _prop(obj, "i18n_tooltip_key") or _tooltip_for_name(name)
         if tooltip_key:
             current = obj.toolTip() if hasattr(obj, "toolTip") else None
-            _apply_tooltip(obj, str(tooltip_key), current if isinstance(current, str) else None)
+            _apply_tooltip(
+                obj, str(tooltip_key), current if isinstance(current, str) else None
+            )
 
-        placeholder_key = _prop(obj, "i18n_placeholder_key") or _placeholder_for_name(name)
+        placeholder_key = _prop(obj, "i18n_placeholder_key") or _placeholder_for_name(
+            name
+        )
         if placeholder_key:
             current = obj.placeholderText() if hasattr(obj, "placeholderText") else None
             _apply_placeholder(
                 obj, str(placeholder_key), current if isinstance(current, str) else None
             )
 
-        tab_key = _prop(obj, "i18n_tab_key") or (name if name.startswith("tab_") else "")
+        tab_key = _prop(obj, "i18n_tab_key") or (
+            name if name.startswith("tab_") else ""
+        )
         if tab_key:
             current = obj.text() if hasattr(obj, "text") else None
-            _apply_tab_text(obj, str(tab_key), current if isinstance(current, str) else None)
-
+            _apply_tab_text(
+                obj, str(tab_key), current if isinstance(current, str) else None
+            )

@@ -44,9 +44,7 @@ class ExecutionResult:
     name: str = ""
 
 
-def _emit_log(
-    log_callback: Optional[Callable[[str], None]], message: str
-) -> None:
+def _emit_log(log_callback: Optional[Callable[[str], None]], message: str) -> None:
     """Emit a log line via callback if one was provided."""
     if log_callback is None:
         return

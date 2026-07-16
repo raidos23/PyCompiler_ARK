@@ -65,8 +65,12 @@ class ProcessBridge:
                 proc.setProgram(cmd[0])
                 proc.setArguments(cmd[1:])
             else:
-                proc.setProgram("/bin/bash" if platform.system() != "Windows" else "cmd.exe")
-                proc.setArguments(["-lc", cmd] if platform.system() != "Windows" else ["/c", cmd])
+                proc.setProgram(
+                    "/bin/bash" if platform.system() != "Windows" else "cmd.exe"
+                )
+                proc.setArguments(
+                    ["-lc", cmd] if platform.system() != "Windows" else ["/c", cmd]
+                )
 
             def _read_output():
                 raw = proc.readAllStandardOutput().data().decode(errors="replace")
@@ -101,7 +105,9 @@ class ProcessBridge:
         on_finished: Optional[Callable[[int, QProcess.ExitStatus], None]] = None,
     ) -> Optional[QProcess]:
         if platform.system() == "Linux":
-            return self.shell_run(f"pkexec bash -lc '{cmd_str}'", cwd, on_output, on_finished)
+            return self.shell_run(
+                f"pkexec bash -lc '{cmd_str}'", cwd, on_output, on_finished
+            )
         if platform.system() == "Windows":
             return self.shell_run(cmd_str, cwd, on_output, on_finished)
         return None

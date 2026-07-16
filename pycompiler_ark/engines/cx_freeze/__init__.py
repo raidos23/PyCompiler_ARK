@@ -208,9 +208,7 @@ class CXFreezeEngine(CompilerEngine):
             diagnostics_layout = QVBoxLayout()
             diagnostics_layout.setSpacing(4)
 
-            self._cx_debug = QCheckBox(
-                translate(self.id, "debug_checkbox", "Debug")
-            )
+            self._cx_debug = QCheckBox(translate(self.id, "debug_checkbox", "Debug"))
             self._cx_debug.setObjectName("debug_checkbox")
             self._cx_debug.setToolTip(
                 translate(self.id, "tt_debug", "Enable debug output.")

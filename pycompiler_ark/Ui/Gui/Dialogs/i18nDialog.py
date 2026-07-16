@@ -1,3 +1,18 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 Samuel Amen Ague
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import asyncio
 from ...i18n import available_languages, get_translations, i18n_synchro, translate
 from ... import output
@@ -16,7 +31,9 @@ def show_language_dialog(self):
     else:
         codes = [str(x.get("code", "")) for x in langs]
         start_index = 1 + codes.index(current_pref) if current_pref in codes else 0
-    title = translate(self.id, "choose_language_title", getattr(self, "windowTitle", lambda: "")())
+    title = translate(
+        self.id, "choose_language_title", getattr(self, "windowTitle", lambda: "")()
+    )
     label = translate(
         self.id,
         "choose_language_label",
@@ -39,4 +56,7 @@ def show_language_dialog(self):
         tr = asyncio.run(get_translations(lang_pref))
         i18n_synchro(self, lang_pref, tr)
     else:
-        output.info(("Sélection de la langue annulée.", "Language selection cancelled."), gui=self)
+        output.info(
+            ("Sélection de la langue annulée.", "Language selection cancelled."),
+            gui=self,
+        )

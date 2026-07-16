@@ -37,36 +37,54 @@ class SysDependencyUI(SysDependencyManager):
 
     def __init__(self, parent_widget=None):
         super().__init__(parent_widget)
-        self._ui_callbacks.update({
-            "tr": self._ui_tr,
-            "register_task": self._ui_register_task,
-            "unregister_task": self._ui_unregister_task,
-        })
+        self._ui_callbacks.update(
+            {
+                "tr": self._ui_tr,
+                "register_task": self._ui_register_task,
+                "unregister_task": self._ui_unregister_task,
+            }
+        )
         # Internal storage for progress dialog
         self._progress_dlg = None
 
     def _ui_tr(self, fr: str, en: str) -> str:
         try:
             from pycompiler_ark.Ui.i18n import tr_fr_en
+
             return tr_fr_en(self.parent_widget, fr, en)
         except Exception:
             return en
 
-    def _ui_register_task(self, proc: QProcess, dlg: Optional[Any], label_fr: str, label_en: str) -> None:
-        if self.parent_widget is None: return
+    def _ui_register_task(
+        self, proc: QProcess, dlg: Optional[Any], label_fr: str, label_en: str
+    ) -> None:
+        if self.parent_widget is None:
+            return
         # Task registration is generally thread-safe for list operations
         try:
             tasks = getattr(self.parent_widget, "_sysdep_tasks", [])
-            tasks.append({"process": proc, "dialog": dlg, "label_fr": label_fr, "label_en": label_en})
+            tasks.append(
+                {
+                    "process": proc,
+                    "dialog": dlg,
+                    "label_fr": label_fr,
+                    "label_en": label_en,
+                }
+            )
             setattr(self.parent_widget, "_sysdep_tasks", tasks)
         except Exception:
             pass
 
     def _ui_unregister_task(self, proc: QProcess) -> None:
-        if self.parent_widget is None: return
+        if self.parent_widget is None:
+            return
         try:
             tasks = getattr(self.parent_widget, "_sysdep_tasks", [])
-            setattr(self.parent_widget, "_sysdep_tasks", [t for t in tasks if t.get("process") is not proc])
+            setattr(
+                self.parent_widget,
+                "_sysdep_tasks",
+                [t for t in tasks if t.get("process") is not proc],
+            )
         except Exception:
             pass
 
@@ -87,25 +105,34 @@ class SysDependencyUI(SysDependencyManager):
 
     def msg_error(self, fr: str, en: str) -> None:
         def _show():
-            QMessageBox.critical(self.parent_widget, self.tr("Erreur", "Error"), self.tr(fr, en))
+            QMessageBox.critical(
+                self.parent_widget, self.tr("Erreur", "Error"), self.tr(fr, en)
+            )
+
         self._invoke_gui(_show)
 
     def _show_progress(self, title_fr: str, title_en: str, msg_fr: str, msg_en: str):
         def _create():
             # Close existing one if any
             if self._progress_dlg:
-                try: self._progress_dlg.close()
-                except Exception: pass
-            
-            self._progress_dlg = ProgressDialog(self.tr(title_fr, title_en), self.parent_widget)
+                try:
+                    self._progress_dlg.close()
+                except Exception:
+                    pass
+
+            self._progress_dlg = ProgressDialog(
+                self.tr(title_fr, title_en), self.parent_widget
+            )
             self._progress_dlg.set_message(self.tr(msg_fr, msg_en))
             self._progress_dlg.show()
+
         self._invoke_gui(_create)
 
     def _update_progress(self, msg: str):
         def _upd():
             if self._progress_dlg:
                 self._progress_dlg.set_message(msg)
+
         self._invoke_gui(_upd)
 
     def _close_progress(self):
@@ -143,9 +170,7 @@ class SysDependencyUI(SysDependencyManager):
         def _on_finished(ec, es):
             self._close_progress()
             if ec != 0:
-                self.msg_error(
-                    "L'installation a échoué.", "Installation failed."
-                )
+                self.msg_error("L'installation a échoué.", "Installation failed.")
 
         # Elevation is required for system packages
         proc = self.run_elevated_shell(
