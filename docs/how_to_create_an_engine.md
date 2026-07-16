@@ -403,7 +403,8 @@ Notes.
 ```python
 def preflight(self, gui, file):
     if not os.path.isfile(file):
-        log_i18n_level(gui, "error", "Fichier non trouvé", "File not found")
+        from pycompiler_ark.engine_sdk  import output
+        output.error(("Fichier non trouvé", "File not found"), gui=gui)
         return False
     return True
 ```
@@ -454,7 +455,8 @@ Notes.
 def on_success(self, gui, file):
     # ARK already opens the output directory.
     # Use this for additional engine-specific messages.
-    log_i18n_level(gui, "success", "Build terminé!", "Build finished!")
+    from pycompiler_ark.engine_sdk import output
+    output.success(("Build terminé!", "Build finished!"), gui=gui)
 ```
 
 Notes.
