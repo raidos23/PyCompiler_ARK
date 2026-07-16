@@ -19,6 +19,8 @@ import time
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Callable, Optional
 
+from pycompiler_ark.Ui import output
+
 if TYPE_CHECKING:
     from pycompiler_ark.Core.engine.build_context import BuildContext
 
@@ -91,12 +93,6 @@ def resolve_engine_meta(engine_or_cls: object) -> EngineMeta:
         description=str(getattr(engine_or_cls, "description", "") or ""),
         author=str(getattr(engine_or_cls, "author", "") or ""),
     )
-
-
-def _tools_stage_message(stage: str, fr: str, en: str) -> tuple[str, str]:
-    prefix = f"[tools:{stage}] "
-    return prefix + fr, prefix + en
-
 
 class CompilerEngine:
     """
@@ -250,17 +246,6 @@ class CompilerEngine:
         Example: {'python': ['<tool_name>'], 'system': ['<system_package>']}
         """
         return {"python": [], "system": []}
-
-    def ensure_tools_installed(
-        self, gui, stop_signal: Optional[Callable[[], bool]] = None
-    ) -> bool:
-        """
-        Check if all required tools are installed, and install missing ones.
-        Delegates to the universal ensure_tools utility.
-        """
-        from pycompiler_ark.Core.utils.ensure_tools import ensure_tools
-        res = ensure_tools(self.required_tools, stop_signal=stop_signal, gui=gui)
-        return res.ok
 
     def get_log_prefix(self, file_basename: str) -> str:
         """

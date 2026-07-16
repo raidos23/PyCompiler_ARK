@@ -25,6 +25,7 @@ from typing import Any, Optional
 
 from pycompiler_ark.bcasl.PreCompileContext import PreCompileContext
 
+from pycompiler_ark.Core.utils.ensure_tools import ensure_tools
 from pycompiler_ark.bcasl.Base import (
     BCASL_PLUGIN_REGISTER_FUNC,
     BcPluginBase,
@@ -310,7 +311,8 @@ def _run_plugin_sequential(
     tools = getattr(plg, "required_tools", {})
     if tools.get("python") or tools.get("system"):
         log_cb = getattr(ctx, "_log_cb", None)
-        if not plg.ensure_tools(stop_signal=stop_requested, log_cb=log_cb):
+        result = ensure_tools(tools, stop_signal=stop_requested, log_cb=log_cb)
+        if not result.ok:
             _add_report_item(
                 report,
                 plugin_id=plg.meta.id,
