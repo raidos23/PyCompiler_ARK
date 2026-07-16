@@ -232,20 +232,20 @@ def show_msgbox(
                 mb.setDefaultButton(ok)
                 _ = mb.exec_() if hasattr(mb, "exec_") else mb.exec()
                 return None
-            except Exception:
-                try:
-                    from pycompiler_ark.Ui import output
+        except Exception:
+            try:
+                from pycompiler_ark.Ui import output
 
-                    lvl = "warning" if kind in ("warning", "error") else "info"
-                    try:
-                        output.log(lvl, f"[MSGBOX:{kind}] {title}: {text}", gui=None)
-                    except Exception:
-                        if lvl in ("warning", "error"):
-                            output.warn(f"[MSGBOX:{kind}] {title}: {text}", gui=None)
-                        else:
-                            output.info(f"[MSGBOX:{kind}] {title}: {text}", gui=None)
+                lvl = "warning" if kind in ("warning", "error") else "info"
+                try:
+                    output.log(lvl, f"[MSGBOX:{kind}] {title}: {text}", gui=None)
                 except Exception:
-                    pass
+                    if lvl in ("warning", "error"):
+                        output.warn(f"[MSGBOX:{kind}] {title}: {text}", gui=None)
+                    else:
+                        output.info(f"[MSGBOX:{kind}] {title}: {text}", gui=None)
+            except Exception:
+                pass
             return _show_rich_msgbox(kind, title, text, default=default)
 
     return _invoke_in_main_thread(_show_in_main_thread)
@@ -303,87 +303,6 @@ def _show_rich_msgbox(
             return ask_yes_no(prompt, default_yes=default_yes)
 
     return None
-
-
-def sys_msgbox_for_installing(
-    subject: str, explanation: Optional[str] = None, title: str = "Installation requise"
-) -> Optional[InstallAuth]:
-    """Interactive prompt for multi-OS installation authorization."""
-    is_windows = platform.system().lower().startswith("win")
-    try:
-        from pycompiler_ark.Ui.i18n import is_french_language, tr_fr_en
-
-        if title == "Installation requise":
-            title = tr_fr_en(None, "Installation requise", "Installation required")
-        is_fr = is_french_language(None)
-    except Exception:
-        is_fr = True
-
-    if is_fr:
-        msg = (
-            f"L'installation de '{subject}' nécessite des privilèges administrateur.\n"
-            + (f"\n{explanation}\n" if explanation else "")
-            + (
-                "\nSur Windows, une élévation UAC sera demandée."
-                if is_windows
-                else "\nSur Linux/macOS, votre mot de passe sudo est requis."
-            )
-        )
-    else:
-        msg = (
-            f"Installing '{subject}' requires administrator privileges.\n"
-            + (f"\n{explanation}\n" if explanation else "")
-            + (
-                "\nOn Windows, a UAC elevation will be requested."
-                if is_windows
-                else "\nOn Linux/macOS, your sudo password is required."
-            )
-        )
-    if QApplication.instance() is not None and not _use_rich_dialogs():
-        try:
-            parent = _qt_active_parent()
-            proceed = show_msgbox("question", title, msg, default="Yes")
-            if not proceed:
-                return None
-            if is_windows:
-                return InstallAuth("uac", None)
-            pwd, ok = QInputDialog.getText(
-                parent,
-                title,
-                (
-                    "Entrez votre mot de passe (sudo):"
-                    if is_fr
-                    else "Enter your password (sudo):"
-                ),
-                QLineEdit.Password,
-            )
-            if not ok:
-                return None
-            pwd = str(pwd)
-            return InstallAuth("sudo", pwd) if pwd else None
-        except Exception:
-            pass
-        try:
-            try:
-                from pycompiler_ark.Ui import output
-
-                output.log("info", f"[INSTALL] {title}: {msg}", gui=None)
-            except Exception:
-                pass
-        ans = (
-            input("Continuer ? [y/N] " if is_fr else "Continue? [y/N] ").strip().lower()
-        )
-        if ans not in ("y", "yes", "o", "oui"):
-            return None
-    except Exception:
-        pass
-    if is_windows:
-        return InstallAuth("uac", None)
-    try:
-        pwd = getpass.getpass("Mot de passe (sudo): " if is_fr else "Password (sudo): ")
-        return InstallAuth("sudo", pwd) if pwd else None
-    except Exception:
-        return None
 
 
 class ProgressDialog(QDialog):

@@ -29,7 +29,7 @@ from pycompiler_ark.Ui.Gui.WidgetsCreator import (
     ProgressDialog,
     _redact_secrets,
     show_msgbox,
-    sys_msgbox_for_installing,
+    
 )
 
 from .i18n import translate
@@ -168,15 +168,6 @@ class Dialog:
     def log_error(self, message: str) -> None:
         """Log an error message."""
         self.console.print(f"❌ [bold red][ERROR][/bold red] {message}")
-
-    def sys_msgbox_for_installing(
-        self,
-        subject: str,
-        explanation: Optional[str] = None,
-        title: str = "Installation requise",
-    ) -> Optional[InstallAuth]:
-        """Show a system installation authorization dialog using Core.dialogs."""
-        return sys_msgbox_for_installing(subject, explanation=explanation, title=title)
 
     def progress(
         self, title: str, text: str = "", maximum: int = 0, cancelable: bool = False
