@@ -120,7 +120,7 @@ pycompiler_ark init --entry main.py --json
 
 ## Documentation
 
-- [Contributing guide](https://github.com/raidos23/PyCompiler_ARK/blob/main/docs/contributing.md)
+- [Contributing guide](https://github.com/raidos23/PyCompiler_ARK/blob/main/contributing.md)
 - [How to create an engine](https://github.com/raidos23/PyCompiler_ARK/blob/main/docs/how_to_create_an_engine.md)
 - [How to create a BC plugin](https://github.com/raidos23/PyCompiler_ARK/blob/main/docs/how_to_create_a_bc_plugin.md)
 
