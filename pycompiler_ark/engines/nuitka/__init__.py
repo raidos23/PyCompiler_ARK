@@ -32,8 +32,8 @@ from pycompiler_ark.engine_sdk import (
     EngineMeta,
     engine_register,
     translate,
+    output
 )
-from pycompiler_ark.Ui import output
 
 
 @engine_register
