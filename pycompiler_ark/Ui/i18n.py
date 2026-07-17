@@ -623,7 +623,10 @@ def _apply_main_app_translations(self, tr: dict[str, object]) -> None:
                 key = name[len(prefix) :]
                 if key in tr:
                     return key
-        return name
+        # Do not fall back to the object name: content widgets like QTextEdit
+        # named "log" have setText() but no text(), so translate() would write
+        # the name into the widget permanently.
+        return ""
 
     def _tooltip_for_name(name: str) -> str:
         if not name:
@@ -670,7 +673,14 @@ def _apply_main_app_translations(self, tr: dict[str, object]) -> None:
             for child in reversed(children):
                 stack.append(child)
 
+    def _is_content_edit(obj: Any) -> bool:
+        """True for multiline editors that must not receive i18n setText()."""
+        cls_name = type(obj).__name__
+        return cls_name in ("QTextEdit", "QPlainTextEdit")
+
     def _apply_text(obj: Any, key: str, default: str | None = None) -> None:
+        if _is_content_edit(obj):
+            return
         if hasattr(obj, "setText"):
             value = translate(self.id, key, default)
             if isinstance(value, str) and value:
@@ -703,7 +713,7 @@ def _apply_main_app_translations(self, tr: dict[str, object]) -> None:
     for obj in _iter_objects(self):
         name = _object_name(obj)
         text_key = _prop(obj, "i18n_text_key") or _binding_for_name(name)
-        if text_key:
+        if text_key and not _is_content_edit(obj):
             system_key = _prop(obj, "i18n_text_system_key")
             system_attr = _prop(obj, "i18n_system_attr")
             format_attr = _prop(obj, "i18n_format_attr")
