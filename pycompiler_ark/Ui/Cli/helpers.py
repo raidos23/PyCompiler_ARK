@@ -227,11 +227,8 @@ from .discovery import (
     scaffold_engine,
     scaffold_plugin,
 )
+from .messages import CliMessage, CliSpecError, cli_click_exception, cli_text
 from .launchers import launch_main_application
-
-
-class CliSpecError(RuntimeError):
-    """Raised when a spec-level CLI rule is violated."""
 
 
 @dataclass(slots=True)
@@ -284,15 +281,30 @@ def init_workspace(
 ) -> dict[str, Any]:
     workspace = cwd.resolve()
     if not workspace.exists():
-        raise CliSpecError("Current directory does not exist.")
+        raise CliSpecError(
+            (
+                "Le répertoire courant n'existe pas.",
+                "Current directory does not exist.",
+            )
+        )
 
     entry_path = Path(entry).expanduser()
     if not entry_path.is_absolute():
         entry_path = workspace / entry_path
     if entry_path.is_dir():
-        raise CliSpecError("Entry point must be a file, not a directory.")
+        raise CliSpecError(
+            (
+                "Le point d'entrée doit être un fichier, pas un dossier.",
+                "Entry point must be a file, not a directory.",
+            )
+        )
     if not entry_path.is_file():
-        raise CliSpecError(f"Entry file '{entry}' not found.")
+        raise CliSpecError(
+            (
+                f"Fichier d'entrée '{entry}' introuvable.",
+                f"Entry file '{entry}' not found.",
+            )
+        )
 
     icon_value = None
     if icon:
@@ -300,7 +312,12 @@ def init_workspace(
         if not icon_path.is_absolute():
             icon_path = workspace / icon_path
         if not icon_path.is_file():
-            raise CliSpecError(f"Icon file '{icon}' not found.")
+            raise CliSpecError(
+                (
+                    f"Fichier icône '{icon}' introuvable.",
+                    f"Icon file '{icon}' not found.",
+                )
+            )
         icon_value = relative_to_workspace(workspace, icon_path)
 
     ensure_workspace_layout(workspace)
@@ -352,7 +369,10 @@ def init_workspace(
     if generate_requirements:
         if requirements_path.exists():
             raise CliSpecError(
-                "requirements.txt already exists. (--generate-requirements)"
+                (
+                    "requirements.txt existe déjà. (--generate-requirements)",
+                    "requirements.txt already exists. (--generate-requirements)",
+                )
             )
         from pycompiler_ark.Core.deps_analyser.analyser import write_requirements_txt
 
@@ -369,7 +389,12 @@ def init_workspace(
     if install_requirements:
         if not requirements_path.exists():
             raise CliSpecError(
-                "requirements.txt not found. Run 'pycompiler_ark init --generate-requirements' first."
+                (
+                    "requirements.txt introuvable. Lancez d'abord "
+                    "'pycompiler_ark init --generate-requirements'.",
+                    "requirements.txt not found. Run "
+                    "'pycompiler_ark init --generate-requirements' first.",
+                )
             )
         if not venv_path.exists():
             builder = venv.EnvBuilder(with_pip=True)
@@ -382,8 +407,13 @@ def init_workspace(
             text=True,
         )
         if result.returncode != 0:
+            stderr = result.stderr.strip()
             raise CliSpecError(
-                result.stderr.strip() or "requirements installation failed"
+                stderr
+                or (
+                    "Échec de l'installation des requirements.",
+                    "requirements installation failed",
+                )
             )
 
     # Initialize workspace preferences
@@ -436,13 +466,29 @@ def validate_ark_config(
         try:
             info = engine_info_payload(engine)
             if not info.get("found"):
-                errors.append(f"build.engine: unknown engine '{engine}'")
+                errors.append(
+                    (
+                        f"build.engine: moteur inconnu '{engine}'",
+                        f"build.engine: unknown engine '{engine}'",
+                    )
+                )
         except Exception:
             pass
 
     if errors:
-        joined = "\n".join(f"- {item}" for item in errors)
-        raise CliSpecError(f"Invalid ark.yml\n{joined}")
+        def _error_line(item: CliMessage, *, french: bool) -> str:
+            if isinstance(item, (tuple, list)) and len(item) >= 2:
+                return str(item[0] if french else item[1])
+            return str(item)
+
+        joined_fr = "\n".join(f"- {_error_line(item, french=True)}" for item in errors)
+        joined_en = "\n".join(f"- {_error_line(item, french=False)}" for item in errors)
+        raise CliSpecError(
+            (
+                f"ark.yml invalide\n{joined_fr}",
+                f"Invalid ark.yml\n{joined_en}",
+            )
+        )
 
     return PyCompilerArkValidationResult(config=result.config, warnings=warnings)
 
