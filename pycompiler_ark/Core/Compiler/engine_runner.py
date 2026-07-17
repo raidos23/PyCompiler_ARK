@@ -283,27 +283,6 @@ def run_engine_compile_streaming(
                     self._venv_manager = None
                     self._sys_deps_manager = None
 
-                def append(self, message: str):
-                    self.log_cb("", message)
-
-                def log_message(self, fr: str, en: str, level: str | None = None):
-                    lvl = (level or "info").lower().strip()
-                    message = (fr, en)
-                    if lvl in ("error",):
-                        output.error(message, gui=self)
-                    elif lvl in ("warning", "warn"):
-                        output.warn(message, gui=self)
-                    elif lvl in ("success",):
-                        output.success(message, gui=self)
-                    else:
-                        output.info(message, gui=self)
-
-                def log_message_level(self, level: str, fr: str, en: str):
-                    self.log_message(fr, en, level)
-
-                def tr(self, fr, en):
-                    return en  # Simple fallback
-
                 @property
                 def venv_manager(self):
                     if self._venv_manager is None:
