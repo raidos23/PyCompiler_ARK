@@ -19,10 +19,10 @@ import inspect
 from pathlib import Path
 from typing import Optional
 
-import colorama
 from rich.console import Console
 
 # Import des classes et fonctions de Core.dialogs
+from pycompiler_ark.Ui import output
 from pycompiler_ark.Ui.Cli.runtime import is_cli_mode, is_noninteractive
 from pycompiler_ark.Ui.Gui.WidgetsCreator import (
     InstallAuth,
@@ -30,6 +30,7 @@ from pycompiler_ark.Ui.Gui.WidgetsCreator import (
     _redact_secrets,
     show_msgbox,
 )
+from pycompiler_ark.Ui.output import get_console
 
 from .i18n import translate
 
@@ -38,8 +39,7 @@ class Dialog:
     """Dialog class for plugins - uses Core.dialogs classes for all UI operations."""
 
     def __init__(self):
-        colorama.init()
-        self.console = Console()
+        self.console = get_console() or Console()
         self.plugin_id: Optional[str] = None
         if not is_cli_mode() and not is_noninteractive():
             self._ensure_qt_context()
@@ -143,30 +143,34 @@ class Dialog:
             )
         )
 
+    def _prepare_log(self, message: str) -> str:
+        """Redact secrets when enabled."""
+        if getattr(self, "redact_logs", True):
+            return _redact_secrets(message)
+        return message
+
     def log(self, message: str) -> None:
-        """Log a message with optional redaction of secrets."""
-        msg = (
-            _redact_secrets(message) if getattr(self, "redact_logs", True) else message
-        )
+        """Log a plain message via Ui.output."""
+        msg = self._prepare_log(message)
         if hasattr(self, "log_fn") and self.log_fn:
             try:
                 self.log_fn(msg)
                 return
             except Exception:
                 pass
-        print(msg)
+        output.plain(msg)
 
     def log_info(self, message: str) -> None:
-        """Log an info message."""
-        self.console.print(f"ℹ️ [bold green][INFO][/bold green] {message}")
+        """Log an info message via Ui.output."""
+        output.info(self._prepare_log(message))
 
     def log_warn(self, message: str) -> None:
-        """Log a warning message."""
-        self.console.print(f"⚠️ [bold yellow][WARN][/bold yellow] {message}")
+        """Log a warning message via Ui.output."""
+        output.warn(self._prepare_log(message))
 
     def log_error(self, message: str) -> None:
-        """Log an error message."""
-        self.console.print(f"❌ [bold red][ERROR][/bold red] {message}")
+        """Log an error message via Ui.output."""
+        output.error(self._prepare_log(message))
 
     def progress(
         self, title: str, text: str = "", maximum: int = 0, cancelable: bool = False
