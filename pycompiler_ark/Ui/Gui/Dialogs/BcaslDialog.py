@@ -846,9 +846,9 @@ class BcaslPipelineDialog(QDialog):
         try:
             if "plugins" not in self._ark_cfg:
                 self._ark_cfg["plugins"] = {}
-            self._ark_cfg["plugins"]["bcasl_enabled"] = (
-                self._chk_bcasl_enabled.isChecked()
-            )
+            self._ark_cfg["plugins"][
+                "bcasl_enabled"
+            ] = self._chk_bcasl_enabled.isChecked()
             save_ark_config(str(self._workspace_root), self._ark_cfg)
         except Exception as e:
             QMessageBox.warning(

@@ -93,6 +93,7 @@ def plain(message: str, err: bool = False) -> None:
 # Global widget cache
 _log_widget = None
 
+
 def get_log_widget():
     global _log_widget
     if _log_widget is not None:
@@ -100,10 +101,11 @@ def get_log_widget():
 
     try:
         from PySide6.QtWidgets import QApplication
+
         app = QApplication.instance()
         if app:
             for window in app.topLevelWidgets():
-                if hasattr(window, 'log') and window.log is not None:
+                if hasattr(window, "log") and window.log is not None:
                     _log_widget = window.log
                     return _log_widget
     except Exception:
@@ -118,7 +120,7 @@ def log(
     gui: object | None = None,
 ) -> None:
     """Log principal avec append automatique"""
-    
+
     lvl = level.upper().strip()
 
     style_map = {
@@ -149,7 +151,7 @@ def log(
 
     # === Append AUTOMATIQUE dans le widget 'log' ===
     widget = get_log_widget()
-    if widget is None and gui is not None and hasattr(gui, 'log'):
+    if widget is None and gui is not None and hasattr(gui, "log"):
         widget = gui.log
 
     if widget is not None:

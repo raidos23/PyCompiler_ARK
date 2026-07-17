@@ -33,8 +33,9 @@ from pycompiler_ark.engine_sdk import (
     EngineMeta,
     engine_register,
     translate,
-    output
+    output,
 )
+
 
 @engine_register
 class PyInstallerEngine(CompilerEngine):

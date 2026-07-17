@@ -73,26 +73,6 @@ class UiFeatures:
         except Exception:
             pass
 
-    def select_nuitka_icon(self):
-        """Open a file dialog to select a Nuitka icon (Windows only)."""
-        if platform.system() != "Windows":
-            return
-        file, _ = QFileDialog.getOpenFileName(
-            self, "Choisir une icône .ico pour Nuitka", "", "Icon Files (*.ico)"
-        )
-        if file:
-            self.nuitka_icon_path = file
-            output.info(
-                (
-                    f"🎨 Icône Nuitka sélectionnée : {file}",
-                    f"🎨 Nuitka icon selected: {file}",
-                ),
-                gui=self,
-            )
-        else:
-            self.nuitka_icon_path = None
-        self.update_command_preview()
-
     # =========================================================================
     # DIALOGUE D'AIDE
     # =========================================================================

@@ -159,7 +159,6 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
     # =========================================================================
 
     select_icon = UiFeatures.select_icon
-    select_nuitka_icon = UiFeatures.select_nuitka_icon
     show_help_dialog = UiFeatures.show_help_dialog
 
     update_command_preview = UiFeatures.update_command_preview

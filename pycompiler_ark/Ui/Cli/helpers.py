@@ -476,6 +476,7 @@ def validate_ark_config(
             pass
 
     if errors:
+
         def _error_line(item: CliMessage, *, french: bool) -> str:
             if isinstance(item, (tuple, list)) and len(item) >= 2:
                 return str(item[0] if french else item[1])
