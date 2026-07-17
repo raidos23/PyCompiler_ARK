@@ -773,7 +773,7 @@ def compute_auto_for_engine(self, engine_id: str) -> list[str]:
             while _VALIDATION_WARNINGS:
                 w = _VALIDATION_WARNINGS.pop(0)
                 try:
-                    output.warn(w, gui=self)
+                    output.warn(w)
                 except Exception:
                     pass
         except Exception:
