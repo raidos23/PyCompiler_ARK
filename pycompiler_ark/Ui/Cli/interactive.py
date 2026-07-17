@@ -72,7 +72,10 @@ def ask_yes_no(prompt: str, *, default_yes: bool = True) -> bool:
             from pycompiler_ark.Ui import output
 
             output.warn(
-                "[PROMPT] Terminal non interactif — action refusee (reponse: non).",
+                (
+                    "[PROMPT] Terminal non interactif — action refusée (réponse: non).",
+                    "[PROMPT] Non-interactive terminal — action refused (answer: no).",
+                ),
                 gui=None,
             )
         except Exception:

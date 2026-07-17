@@ -169,7 +169,12 @@ def run_engine_compile(
             unregister_cli_status(status)
 
     if _CLI_CANCEL_EVENT.is_set():
-        error("Compilation cancelled by user (Ctrl+C).")
+        error(
+            (
+                "Compilation annulée par l'utilisateur (Ctrl+C).",
+                "Compilation cancelled by user (Ctrl+C).",
+            )
+        )
         result["success"] = False
         result["error"] = "Cancelled by user"
 
@@ -328,7 +333,12 @@ def init_workspace(
 
                 with cli_pause_for_user_input():
                     detected = ", ".join(internal_modules)
-                    info(f"Internal modules to apply: {detected}")
+                    info(
+                        (
+                            f"Modules internes à appliquer : {detected}",
+                            f"Internal modules to apply: {detected}",
+                        )
+                    )
                     if ask_yes_no(
                         "Apply these internal modules to build.include?",
                         default_yes=False,
@@ -386,7 +396,12 @@ def init_workspace(
         pref_data["venv_mode"] = "manual"
         pref_data["venv_path"] = str(venv_path)
     else:
-        info("No virtual environment created, using system Python by default.")
+        info(
+            (
+                "Aucun environnement virtuel créé, utilisation de Python système par défaut.",
+                "No virtual environment created, using system Python by default.",
+            )
+        )
 
     pref_path.write_text(json.dumps(pref_data, indent=2), encoding="utf-8")
 
@@ -546,13 +561,38 @@ def ensure_correct_git_commit(
 
     is_linux = platform.system().lower() == "linux"
 
-    warn(f"Git mismatch detected.")
+    warn(
+        (
+            "Désynchronisation Git détectée.",
+            "Git mismatch detected.",
+        )
+    )
     if not branch_match:
-        info(f" - Locked Branch : {locked_branch}")
-        info(f" - Current Branch : {current_branch}")
+        info(
+            (
+                f" - Branche verrouillée : {locked_branch}",
+                f" - Locked Branch : {locked_branch}",
+            )
+        )
+        info(
+            (
+                f" - Branche actuelle : {current_branch}",
+                f" - Current Branch : {current_branch}",
+            )
+        )
     if not commit_match:
-        info(f" - Locked Commit : {locked_commit[:8] if locked_commit else 'N/A'}")
-        info(f" - Current Commit : {current_commit[:8] if current_commit else 'N/A'}")
+        info(
+            (
+                f" - Commit verrouillé : {locked_commit[:8] if locked_commit else 'N/A'}",
+                f" - Locked Commit : {locked_commit[:8] if locked_commit else 'N/A'}",
+            )
+        )
+        info(
+            (
+                f" - Commit actuel : {current_commit[:8] if current_commit else 'N/A'}",
+                f" - Current Commit : {current_commit[:8] if current_commit else 'N/A'}",
+            )
+        )
 
     if is_linux:
         try:
@@ -566,7 +606,12 @@ def ensure_correct_git_commit(
 
             if not branch_match and locked_branch:
                 if _confirm(f"Perform automatic 'git checkout {locked_branch}'?"):
-                    info(f"Switching branch...")
+                    info(
+                        (
+                            "Changement de branche...",
+                            "Switching branch...",
+                        )
+                    )
                     subprocess.run(
                         ["git", "checkout", locked_branch],
                         cwd=str(workspace),
@@ -580,30 +625,70 @@ def ensure_correct_git_commit(
 
             if not commit_match and locked_commit:
                 if _confirm(f"Perform automatic 'git checkout {locked_commit[:8]}'?"):
-                    info(f"Aligning commit...")
+                    info(
+                        (
+                            "Alignement du commit...",
+                            "Aligning commit...",
+                        )
+                    )
                     subprocess.run(
                         ["git", "checkout", locked_commit],
                         cwd=str(workspace),
                         check=True,
                     )
-                    success("Workspace aligned.")
+                    success(
+                        (
+                            "Espace de travail aligné.",
+                            "Workspace aligned.",
+                        )
+                    )
                     return True
 
             if commit_match and branch_match:
-                success("Workspace aligned.")
+                success(
+                    (
+                        "Espace de travail aligné.",
+                        "Workspace aligned.",
+                    )
+                )
                 return True
             else:
-                warn("Build with mismatch (not recommended).")
+                warn(
+                    (
+                        "Build avec désynchronisation (non recommandé).",
+                        "Build with mismatch (not recommended).",
+                    )
+                )
                 return True
         except Exception as e:
-            error(f"Git alignment failed: {e}")
+            error(
+                (
+                    f"Échec de l'alignement Git : {e}",
+                    f"Git alignment failed: {e}",
+                )
+            )
             return False
     else:
-        warn("Automatic alignment not supported on this platform.")
+        warn(
+            (
+                "Alignement automatique non pris en charge sur cette plateforme.",
+                "Automatic alignment not supported on this platform.",
+            )
+        )
         if not branch_match and locked_branch:
-            info(f"Manual action required: git checkout {locked_branch}")
+            info(
+                (
+                    f"Action manuelle requise : git checkout {locked_branch}",
+                    f"Manual action required: git checkout {locked_branch}",
+                )
+            )
         if not commit_match and locked_commit:
-            info(f"Manual action required: git checkout {locked_commit}")
+            info(
+                (
+                    f"Action manuelle requise : git checkout {locked_commit}",
+                    f"Manual action required: git checkout {locked_commit}",
+                )
+            )
         from .interactive import ask_yes_no
 
         return ask_yes_no("Continue anyway?", default_yes=False)
@@ -714,7 +799,12 @@ def run_bcasl_before_compile_sync(
 
     host = CliBcaslHost(workspace, status)
 
-    info("Running BCASL pre-compile checks...")
+    info(
+        (
+            "Exécution des contrôles BCASL pré-compilation...",
+            "Running BCASL pre-compile checks...",
+        )
+    )
 
     # Register SIGINT handler
     _CLI_CANCEL_EVENT.clear()
@@ -728,7 +818,12 @@ def run_bcasl_before_compile_sync(
         if status:
             status.stop()
             unregister_cli_status(status)
-        error(f"BCASL execution failed: {exc}")
+        error(
+            (
+                f"Échec de l'exécution BCASL : {exc}",
+                f"BCASL execution failed: {exc}",
+            )
+        )
         return False
     finally:
         # Restore old handler
@@ -738,7 +833,12 @@ def run_bcasl_before_compile_sync(
             unregister_cli_status(status)
 
     if _CLI_CANCEL_EVENT.is_set():
-        error("BCASL cancelled by user (Ctrl+C).")
+        error(
+            (
+                "BCASL annulé par l'utilisateur (Ctrl+C).",
+                "BCASL cancelled by user (Ctrl+C).",
+            )
+        )
         return False
 
     if report is None:
@@ -758,10 +858,20 @@ def run_bcasl_before_compile_sync(
 
     if hasattr(report, "ok"):
         if not getattr(report, "ok"):
-            error("BCASL reported security or validation failures.")
+            error(
+                (
+                    "BCASL a signalé des échecs de sécurité ou de validation.",
+                    "BCASL reported security or validation failures.",
+                )
+            )
             return False
         if verbose:
-            success("BCASL checks passed.")
+            success(
+                (
+                    "Contrôles BCASL réussis.",
+                    "BCASL checks passed.",
+                )
+            )
         return True
 
     return True
@@ -837,7 +947,12 @@ def run_bcasl_headless(args: list[str], verbose: bool = False) -> int:
 
     host = CliBcaslHost(workspace, status)
 
-    info(f"Running BCASL headless in {workspace}...")
+    info(
+        (
+            f"Exécution BCASL headless dans {workspace}...",
+            f"Running BCASL headless in {workspace}...",
+        )
+    )
 
     # Register SIGINT handler
     _CLI_CANCEL_EVENT.clear()
@@ -851,26 +966,46 @@ def run_bcasl_headless(args: list[str], verbose: bool = False) -> int:
             if status:
                 status.stop()
                 unregister_cli_status(status)
-            error("BCASL cancelled by user (Ctrl+C).")
+            error(
+                (
+                    "BCASL annulé par l'utilisateur (Ctrl+C).",
+                    "BCASL cancelled by user (Ctrl+C).",
+                )
+            )
             return 1
 
         if report and hasattr(report, "ok") and not getattr(report, "ok"):
             if status:
                 status.stop()
                 unregister_cli_status(status)
-            error("\nBCASL found issues.")
+            error(
+                (
+                    "\nBCASL a trouvé des problèmes.",
+                    "\nBCASL found issues.",
+                )
+            )
             return 1
 
         if status:
             status.stop()
             unregister_cli_status(status)
-        success("\nBCASL completed successfully.")
+        success(
+            (
+                "\nBCASL terminé avec succès.",
+                "\nBCASL completed successfully.",
+            )
+        )
         return 0
     except Exception as exc:
         if status:
             status.stop()
             unregister_cli_status(status)
-        error(f"BCASL failed: {exc}")
+        error(
+            (
+                f"Échec BCASL : {exc}",
+                f"BCASL failed: {exc}",
+            )
+        )
         return 1
     finally:
         signal.signal(signal.SIGINT, old_handler)

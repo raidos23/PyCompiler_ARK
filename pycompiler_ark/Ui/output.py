@@ -132,10 +132,10 @@ def log(
     style = style_map.get(lvl, "info")
     prefix = f"[{lvl}]"
 
-    # Translation (fr, en)
+    # Translation (fr, en) — works with or without gui (CLI uses prefs/system lang)
     if isinstance(message, (tuple, list)) and len(message) >= 2:
         fr, en = str(message[0]), str(message[1])
-        if tr is not None and gui is not None:
+        if tr is not None:
             try:
                 message = tr(gui, fr, en)
             except Exception:

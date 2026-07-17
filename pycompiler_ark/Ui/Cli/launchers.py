@@ -168,5 +168,10 @@ def launch_main_application(
 
         return app.exec()
     except Exception as exc:
-        error(f"Failed to launch main application: {exc}")
+        error(
+            (
+                f"Échec du lancement de l'application principale : {exc}",
+                f"Failed to launch main application: {exc}",
+            )
+        )
         return 1
