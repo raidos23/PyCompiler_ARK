@@ -259,7 +259,14 @@ def scaffold_engine(target_name: str, root_dir: str | None = None) -> dict[str, 
     lang_dir = engine_dir / "languages"
     created: list[str] = []
     if engine_dir.exists():
-        return {"created": False, "path": str(engine_dir), "reason": "already exists"}
+        return {
+            "created": False,
+            "path": str(engine_dir),
+            "reason": (
+                "Le dossier existe déjà.",
+                "already exists",
+            ),
+        }
 
     lang_dir.mkdir(parents=True, exist_ok=True)
     created.extend([str(engine_dir), str(lang_dir)])
@@ -309,7 +316,14 @@ def scaffold_plugin(target_name: str, root_dir: str | None = None) -> dict[str, 
 
     lang_dir = plugin_dir / "languages"
     if plugin_dir.exists():
-        return {"created": False, "path": str(plugin_dir), "reason": "already exists"}
+        return {
+            "created": False,
+            "path": str(plugin_dir),
+            "reason": (
+                "Le dossier existe déjà.",
+                "already exists",
+            ),
+        }
 
     lang_dir.mkdir(parents=True, exist_ok=True)
     (plugin_dir / "__init__.py").write_text(
