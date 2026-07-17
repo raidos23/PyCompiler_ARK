@@ -470,8 +470,7 @@ def _write_report_if_enabled(self, report: dict):
                 (
                     f"Rapport auto-modules écrit: {out_path}",
                     f"Auto-modules report written: {out_path}",
-                ),
-                gui=self,
+                )
             )
         except Exception:
             pass
@@ -481,8 +480,7 @@ def _write_report_if_enabled(self, report: dict):
                 (
                     f"Échec écriture rapport auto-modules: {e}",
                     f"Failed to write auto-modules report: {e}",
-                ),
-                gui=self,
+                )
             )
         except Exception:
             pass
@@ -769,8 +767,7 @@ def compute_auto_for_engine(self, engine_id: str) -> list[str]:
                     (
                         f"Mapping spécifique moteur ({engine_id}): {eng_used_path}",
                         f"Engine-specific mapping ({engine_id}): {eng_used_path}",
-                    ),
-                    gui=self,
+                    )
                 )
             # Emit any validation warnings collected during mapping load
             while _VALIDATION_WARNINGS:
@@ -787,8 +784,7 @@ def compute_auto_for_engine(self, engine_id: str) -> list[str]:
                 (
                     f"Mapping hooks/plugins introuvable: {e}",
                     f"Mapping hooks/plugins not found: {e}",
-                ),
-                gui=self,
+                )
             )
         except Exception:
             pass
@@ -803,8 +799,7 @@ def compute_auto_for_engine(self, engine_id: str) -> list[str]:
                 (
                     f"Builder générique utilisé pour le moteur '{engine_id}'.",
                     f"Generic builder used for engine '{engine_id}'.",
-                ),
-                gui=self,
+                )
             )
     except Exception:
         pass
@@ -819,7 +814,6 @@ def compute_auto_for_engine(self, engine_id: str) -> list[str]:
                     f"Erreur constructeur auto-args pour '{engine_id}': {e}",
                     f"Auto-args builder error for '{engine_id}': {e}",
                 ),
-                gui=self,
             )
         except Exception:
             pass
@@ -830,44 +824,38 @@ def compute_auto_for_engine(self, engine_id: str) -> list[str]:
             (
                 f"Auto-détection des modules sensibles ({engine_id}) activée.",
                 f"Auto-detection of sensitive modules ({engine_id}) enabled.",
-            ),
-            gui=self,
+            )
         )
         output.info(
             (f"   Source détection: {source}", f"   Detection source: {source}"),
-            gui=self,
         )
         if detected:
             output.info(
                 (
                     "   Modules détectés: " + ", ".join(sorted(detected)),
                     "   Detected modules: " + ", ".join(sorted(detected)),
-                ),
-                gui=self,
+                )
             )
         else:
             output.info(
                 (
                     "   Aucun module externe détecté.",
                     "   No external modules detected.",
-                ),
-                gui=self,
+                )
             )
         if args:
             output.info(
                 (
                     f"   Options {engine_id} ajoutées: " + " ".join(args),
                     f"   {engine_id} options added: " + " ".join(args),
-                ),
-                gui=self,
+                )
             )
         else:
             output.info(
                 (
                     f"   Aucune option {engine_id} supplémentaire requise d'après le mapping.",
                     f"   No additional {engine_id} options required from mapping.",
-                ),
-                gui=self,
+                )
             )
     except Exception:
         pass
