@@ -110,7 +110,7 @@ def _build_impl(
         )
 
     if not as_json and verbose:
-        info(f"Workspace: {workspace}")
+        info((f"Espace de travail : {workspace}", f"Workspace: {workspace}"))
 
     # Shared Python version resolution for locking/comparison
     python_version = None
@@ -136,16 +136,21 @@ def _build_impl(
 
     if lock_file is None:
         if not as_json and verbose:
-            info("Loading ark.yml...")
+            info(("Chargement de ark.yml...", "Loading ark.yml..."))
         config = load_ark_config(workspace)
         if not as_json and verbose:
-            info("Validating configuration...")
+            info(("Validation de la configuration...", "Validating configuration..."))
         validated = validate_ark_config(workspace, config)
         engine_id = engine_override or str(validated.config["build"]["engine"])
         _ensure_engine_known(engine_id)
 
         if not as_json and verbose:
-            info(f"Generating lock payload for engine '{engine_id}'...")
+            info(
+                (
+                    f"Génération du payload de lock pour le moteur '{engine_id}'...",
+                    f"Generating lock payload for engine '{engine_id}'...",
+                )
+            )
 
         context = build_context_object_from_ark_config(validated.config)
 
@@ -178,7 +183,12 @@ def _build_impl(
             resolved_command = {"program": prog, "args": args, "env": env}
         except Exception as e:
             if verbose:
-                info(f"Auto-mapping resolution skipped for lock: {e}")
+                info(
+                    (
+                        f"Résolution auto-mapping ignorée pour le lock : {e}",
+                        f"Auto-mapping resolution skipped for lock: {e}",
+                    )
+                )
 
         # Point 3 alignment: build_lock_payload now correctly loads engine config via fixed path
         lock_payload = build_lock_payload(
@@ -189,7 +199,7 @@ def _build_impl(
             resolved_command=resolved_command,
         )
         if not as_json and verbose:
-            info("Writing lock files...")
+            info(("Écriture des fichiers de lock...", "Writing lock files..."))
         lock_paths = write_lock_files(workspace, lock_payload)
 
         # 1. BCASL Pre-compile check (Point 1 of mutation plan)
@@ -201,7 +211,12 @@ def _build_impl(
             return 1
 
         if not as_json and verbose:
-            info("Starting engine compilation...")
+            info(
+                (
+                    "Démarrage de la compilation du moteur...",
+                    "Starting engine compilation...",
+                )
+            )
         result = run_engine_compile(
             workspace=workspace,
             engine_id=engine_id,
@@ -225,10 +240,15 @@ def _build_impl(
             for warning in validated.warnings:
                 click.echo(_format_warning(warning))
             if verbose:
-                info(f"Engine: {engine_id}")
-                info(f"Lock: {lock_paths['lock']}")
+                info((f"Moteur : {engine_id}", f"Engine: {engine_id}"))
+                info((f"Lock : {lock_paths['lock']}", f"Lock: {lock_paths['lock']}"))
             if result.get("success"):
-                success("Build completed successfully.")
+                success(
+                    (
+                        "Build terminé avec succès.",
+                        "Build completed successfully.",
+                    )
+                )
             else:
                 raise CliSpecError(result.get("error") or "Build failed")
         return 0 if result.get("success") else 1
@@ -251,7 +271,12 @@ def _build_impl(
         raise CliSpecError(f"Lock file not found: {lock_path}")
 
     if not as_json:
-        info(f"Rebuilding from lock: {lock_path.name}")
+        info(
+            (
+                f"Reconstruction depuis le lock : {lock_path.name}",
+                f"Rebuilding from lock: {lock_path.name}",
+            )
+        )
 
     lock_payload = load_yaml_file(lock_path)
     engine_id = str(((lock_payload.get("engine") or {}).get("name")) or "").strip()
@@ -266,7 +291,7 @@ def _build_impl(
         )
 
     if not as_json and verbose:
-        info(f"Target engine: {engine_id}")
+        info((f"Moteur cible : {engine_id}", f"Target engine: {engine_id}"))
 
     # Alignement Git
     from .helpers import ensure_correct_git_commit
@@ -285,7 +310,12 @@ def _build_impl(
         return 1
 
     if not as_json:
-        info("Starting engine rebuild...")
+        info(
+            (
+                "Démarrage de la reconstruction du moteur...",
+                "Starting engine rebuild...",
+            )
+        )
 
     result = run_engine_compile(
         workspace=workspace,
@@ -301,7 +331,12 @@ def _build_impl(
     warnings: list[str] = []
     try:
         if not as_json and verbose:
-            info("Performing lock integrity check...")
+            info(
+                (
+                    "Vérification d'intégrité du lock...",
+                    "Performing lock integrity check...",
+                )
+            )
         current_config = load_ark_config(workspace)
         validated = validate_ark_config(workspace, current_config)
         regenerated = build_lock_payload(
@@ -320,13 +355,23 @@ def _build_impl(
             if not as_json and verbose:
                 from .output import warn
 
-                warn("Functional mismatch detected:")
+                warn(
+                    (
+                        "Désynchronisation fonctionnelle détectée :",
+                        "Functional mismatch detected:",
+                    )
+                )
                 for d in diffs:
-                    info(f"  - {d}")
+                    info((f"  - {d}", f"  - {d}"))
         elif not as_json and verbose:
             from .output import success
 
-            success("Lock integrity confirmed (Functional Equivalence).")
+            success(
+                (
+                    "Intégrité du lock confirmée (équivalence fonctionnelle).",
+                    "Lock integrity confirmed (Functional Equivalence).",
+                )
+            )
     except Exception as exc:
         warnings.append(f"Unable to regenerate comparison lock: {exc}")
 
@@ -346,11 +391,21 @@ def _build_impl(
         for warning in warnings:
             click.echo(_format_warning(warning))
         if verbose:
-            info(f"Lock: {lock_path}")
+            info((f"Lock : {lock_path}", f"Lock: {lock_path}"))
             if rebuild_cache:
-                info(f"Comparison lock: {rebuild_cache}")
+                info(
+                    (
+                        f"Lock de comparaison : {rebuild_cache}",
+                        f"Comparison lock: {rebuild_cache}",
+                    )
+                )
         if result.get("success"):
-            success("Rebuild completed successfully.")
+            success(
+                (
+                    "Reconstruction terminée avec succès.",
+                    "Rebuild completed successfully.",
+                )
+            )
         else:
             raise CliSpecError(result.get("error") or "Build failed")
     return 0 if result.get("success") else 1
@@ -410,23 +465,46 @@ def build_cli():
 
         from .output import success, info
 
-        success(f"Workspace initialized: {payload['workspace']}")
-        info(f"ark.yml: {payload['ark_yml']}")
+        success(
+            (
+                f"Espace de travail initialisé : {payload['workspace']}",
+                f"Workspace initialized: {payload['workspace']}",
+            )
+        )
+        info((f"ark.yml : {payload['ark_yml']}", f"ark.yml: {payload['ark_yml']}"))
         if payload.get("apply_internal"):
             detected = payload.get("internal_modules", [])
             if detected:
+                joined = ", ".join(str(item) for item in detected)
                 info(
-                    "Internal modules to apply: "
-                    + ", ".join(str(item) for item in detected)
+                    (
+                        f"Modules internes à appliquer : {joined}",
+                        f"Internal modules to apply: {joined}",
+                    )
                 )
                 if payload.get("internal_modules_applied"):
-                    info("build.include updated automatically.")
+                    info(
+                        (
+                            "build.include mis à jour automatiquement.",
+                            "build.include updated automatically.",
+                        )
+                    )
                 else:
-                    info("Pass -y to write them into build.include.")
+                    info(
+                        (
+                            "Passez -y pour les écrire dans build.include.",
+                            "Pass -y to write them into build.include.",
+                        )
+                    )
         if payload.get("venv"):
-            info(f"Venv: {payload['venv']}")
+            info((f"Venv : {payload['venv']}", f"Venv: {payload['venv']}"))
         if payload.get("requirements"):
-            info(f"Requirements: {payload['requirements']}")
+            info(
+                (
+                    f"Requirements : {payload['requirements']}",
+                    f"Requirements: {payload['requirements']}",
+                )
+            )
 
     @cli.command("build")
     @click.option("--engine", "engine_override", type=str)
