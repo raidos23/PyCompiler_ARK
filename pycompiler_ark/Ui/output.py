@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import sys
 import re
-from typing import Optional
+from typing import Optional, Any
 
 try:
     from rich.console import Console  # type: ignore
@@ -25,7 +25,11 @@ try:
 except Exception:  # pragma: no cover
     Console = None
     Theme = None
-
+# Import translation once (lazy)
+try:
+    from pycompiler_ark.Ui.i18n import tr
+except Exception:
+    tr = None
 try:
     import click  # type: ignore
 except ImportError:
@@ -86,17 +90,37 @@ def plain(message: str, err: bool = False) -> None:
     _emit(message, err=err)
 
 
-def log(
-    level: str, message: str | tuple, err: bool | None = None, gui: object | None = None
-) -> None:
-    """Emit a log line.
+# Global widget cache
+_log_widget = None
 
-    `message` may be a plain string or a (fr, en) tuple. When a tuple is
-    provided and a GUI is available, attempt translation via `pycompiler_ark.Ui.i18n.tr`.
-    """
+def get_log_widget():
+    global _log_widget
+    if _log_widget is not None:
+        return _log_widget
+
+    try:
+        from PySide6.QtWidgets import QApplication
+        app = QApplication.instance()
+        if app:
+            for window in app.topLevelWidgets():
+                if hasattr(window, 'log') and window.log is not None:
+                    _log_widget = window.log
+                    return _log_widget
+    except Exception:
+        pass
+    return None
+
+
+def log(
+    level: str,
+    message: str | tuple | list | Any,
+    err: bool | None = None,
+    gui: object | None = None,
+) -> None:
+    """Log principal avec append automatique"""
+    
     lvl = level.upper().strip()
 
-    # Map level to theme styles
     style_map = {
         "INFO": "info",
         "WARN": "warning",
@@ -106,42 +130,74 @@ def log(
     }
 
     style = style_map.get(lvl, "info")
-    prefix = f"[prefix][{lvl}][/prefix]"
+    prefix = f"[{lvl}]"
 
-    # Support optional translation: message can be (fr, en)
-    try:
-        if isinstance(message, (tuple, list)) and len(message) >= 2:
-            fr = str(message[0])
-            en = str(message[1])
+    # Translation (fr, en)
+    if isinstance(message, (tuple, list)) and len(message) >= 2:
+        fr, en = str(message[0]), str(message[1])
+        if tr is not None and gui is not None:
             try:
-                from pycompiler_ark.Ui.i18n import tr
-
                 message = tr(gui, fr, en)
             except Exception:
                 message = en
         else:
-            message = str(message)
-    except Exception:
-        try:
-            message = str(message)
-        except Exception:
-            message = ""
+            message = en
+    else:
+        message = str(message)
 
     out_err = err if err is not None else lvl in ("ERROR", "WARN", "WARNING")
-    _emit(f"{prefix} {message}", err=out_err, style=style)
+
+    # === Append AUTOMATIQUE dans le widget 'log' ===
+    widget = get_log_widget()
+    if widget is None and gui is not None and hasattr(gui, 'log'):
+        widget = gui.log
+
+    if widget is not None:
+        try:
+            from PySide6.QtGui import QTextCursor
+
+            colors = {
+                "info": "#00aaff",
+                "warning": "#ffaa00",
+                "error": "#ff4444",
+                "success": "#00cc66",
+            }
+            color = colors.get(style, "#ffffff")
+
+            html = f'<span style="color:{color};">{prefix} {message}</span><br>'
+
+            widget.moveCursor(QTextCursor.MoveOperation.End)
+            widget.insertHtml(html)
+            widget.ensureCursorVisible()
+
+        except Exception:
+            try:
+                widget.append(f"{prefix} {message}")
+            except Exception:
+                pass
+
+    # Appel sûr à _emit (sans exc_info)
+    try:
+        _emit(f"{prefix} {message}", err=out_err, style=style)
+    except TypeError:
+        # Si _emit a une autre signature
+        try:
+            _emit(f"{prefix} {message}", err=out_err)
+        except Exception:
+            pass  # dernier recours
 
 
-def info(message: str | tuple, gui: object | None = None) -> None:
+def info(message: str | tuple | list | Any, gui: object | None = None):
     log("INFO", message, err=False, gui=gui)
 
 
-def warn(message: str | tuple, gui: object | None = None) -> None:
+def warn(message: str | tuple | list | Any, gui: object | None = None):
     log("WARN", message, err=True, gui=gui)
 
 
-def error(message: str | tuple, gui: object | None = None) -> None:
+def error(message: str | tuple | list | Any, gui: object | None = None):
     log("ERROR", message, err=True, gui=gui)
 
 
-def success(message: str | tuple, gui: object | None = None) -> None:
+def success(message: str | tuple | list | Any, gui: object | None = None):
     log("SUCCESS", message, err=False, gui=gui)
