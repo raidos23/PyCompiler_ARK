@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import sys
 import re
-from typing import Optional, Any
+from typing import Optional, Any, Callable
 
 try:
     from rich.console import Console  # type: ignore
@@ -58,6 +58,16 @@ _EMOJI_RE = re.compile(
     re.UNICODE,
 )
 
+_LOG_COLORS = {
+    "info": "#00aaff",
+    "warning": "#ffaa00",
+    "error": "#ff4444",
+    "success": "#00cc66",
+}
+
+# Global widget cache
+_log_widget = None
+
 
 def strip_emojis(text: str) -> str:
     """Remove emojis from a string for cleaner terminal output."""
@@ -90,10 +100,6 @@ def plain(message: str, err: bool = False) -> None:
     _emit(message, err=err)
 
 
-# Global widget cache
-_log_widget = None
-
-
 def get_log_widget():
     global _log_widget
     if _log_widget is not None:
@@ -113,13 +119,108 @@ def get_log_widget():
     return None
 
 
+def _is_on_gui_thread() -> bool:
+    """Return True when there is no Qt app, or we are on the app's thread."""
+    try:
+        from PySide6.QtCore import QThread
+        from PySide6.QtWidgets import QApplication
+
+        app = QApplication.instance()
+        if app is None:
+            return True
+        return QThread.currentThread() == app.thread()
+    except Exception:
+        return True
+
+
+def _append_html_to_widget(widget: Any, html: str, plain_text: str) -> None:
+    """Mutate the log widget. Must only run on the Qt GUI thread."""
+    try:
+        from PySide6.QtGui import QTextCursor
+
+        widget.moveCursor(QTextCursor.MoveOperation.End)
+        widget.insertHtml(html)
+        widget.ensureCursorVisible()
+    except Exception:
+        try:
+            widget.append(plain_text)
+        except Exception:
+            pass
+
+
+def _post_to_gui_thread(fn: Callable[[], None]) -> bool:
+    """Queue *fn* on the Qt GUI thread. Returns False if posting is impossible."""
+    try:
+        from PySide6.QtCore import QTimer
+        from PySide6.QtWidgets import QApplication
+
+        app = QApplication.instance()
+        if app is None:
+            return False
+        # Context=app → functor runs on the application (GUI) thread.
+        QTimer.singleShot(0, app, fn)
+        return True
+    except Exception:
+        return False
+
+
+def _safe_append_to_widget(widget: Any, html: str, plain_text: str) -> None:
+    """Append to a Qt log widget from any thread without segfaulting."""
+    if widget is None:
+        return
+
+    # Bridge / non-QTextEdit objects expose a thread-safe append via signals.
+    try:
+        from PySide6.QtWidgets import QTextEdit
+
+        if not isinstance(widget, QTextEdit):
+            if callable(getattr(widget, "append", None)):
+                widget.append(plain_text)
+            return
+    except Exception:
+        # Qt unavailable: best-effort append
+        try:
+            if callable(getattr(widget, "append", None)):
+                widget.append(plain_text)
+        except Exception:
+            pass
+        return
+
+    if _is_on_gui_thread():
+        _append_html_to_widget(widget, html, plain_text)
+        return
+
+    # Off GUI thread: never touch QTextEdit directly (segfault).
+    posted = _post_to_gui_thread(
+        lambda w=widget, h=html, p=plain_text: _append_html_to_widget(w, h, p)
+    )
+    if not posted:
+        # No event loop / posting failed — skip widget; console _emit still runs.
+        return
+
+
+def _try_bridge_log(gui: object | None, level: str, message: str) -> bool:
+    """Route through SafeGuiBridge-style API when available (already thread-safe)."""
+    if gui is None:
+        return False
+    log_message_level = getattr(gui, "log_message_level", None)
+    if not callable(log_message_level):
+        return False
+    try:
+        # Message is already translated; pass twice for (fr, en).
+        log_message_level(level, message, message)
+        return True
+    except Exception:
+        return False
+
+
 def log(
     level: str,
     message: str | tuple | list | Any,
     err: bool | None = None,
     gui: object | None = None,
 ) -> None:
-    """Log principal avec append automatique"""
+    """Log principal avec append automatique (thread-safe pour le widget GUI)."""
 
     lvl = level.upper().strip()
 
@@ -148,43 +249,29 @@ def log(
         message = str(message)
 
     out_err = err if err is not None else lvl in ("ERROR", "WARN", "WARNING")
+    plain_line = f"{prefix} {message}"
 
-    # === Append AUTOMATIQUE dans le widget 'log' ===
-    widget = get_log_widget()
-    if widget is None and gui is not None and hasattr(gui, "log"):
-        widget = gui.log
+    # Prefer SafeGuiBridge (signals) when the caller passes one — avoids
+    # touching QTextEdit from a worker thread and prevents double-writes.
+    bridged = _try_bridge_log(gui, style, str(message))
 
-    if widget is not None:
-        try:
-            from PySide6.QtGui import QTextCursor
+    if not bridged:
+        widget = get_log_widget()
+        if widget is None and gui is not None and hasattr(gui, "log"):
+            widget = gui.log
 
-            colors = {
-                "info": "#00aaff",
-                "warning": "#ffaa00",
-                "error": "#ff4444",
-                "success": "#00cc66",
-            }
-            color = colors.get(style, "#ffffff")
-
-            html = f'<span style="color:{color};">{prefix} {message}</span><br>'
-
-            widget.moveCursor(QTextCursor.MoveOperation.End)
-            widget.insertHtml(html)
-            widget.ensureCursorVisible()
-
-        except Exception:
-            try:
-                widget.append(f"{prefix} {message}")
-            except Exception:
-                pass
+        if widget is not None:
+            color = _LOG_COLORS.get(style, "#ffffff")
+            html = f'<span style="color:{color};">{plain_line}</span><br>'
+            _safe_append_to_widget(widget, html, plain_line)
 
     # Appel sûr à _emit (sans exc_info)
     try:
-        _emit(f"{prefix} {message}", err=out_err, style=style)
+        _emit(plain_line, err=out_err, style=style)
     except TypeError:
         # Si _emit a une autre signature
         try:
-            _emit(f"{prefix} {message}", err=out_err)
+            _emit(plain_line, err=out_err)
         except Exception:
             pass  # dernier recours
 
