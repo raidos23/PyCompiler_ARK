@@ -23,11 +23,8 @@ class TestVenvManagerInternet(unittest.TestCase):
 
         # Should emit a localized error and return early
         self.output_error.assert_called_with(
-            (
-                "🛑 [ERROR] Pas de connexion internet. Installation des outils annulée.",
-                "🛑 [ERROR] No internet connection. Tool installation cancelled.",
-            ),
-            gui=self.mock_parent,
+            "Pas de connexion internet. Installation des outils annulée.",
+            "No internet connection. Tool installation cancelled.",
         )
         # Verify _reset_cancel_state was NOT called (it's the next line after the check)
         self.assertFalse(self.manager._reset_cancel_state.called)
@@ -40,11 +37,8 @@ class TestVenvManagerInternet(unittest.TestCase):
         self.manager.ensure_tools_installed_system(["tool"])
 
         self.output_error.assert_called_with(
-            (
-                "🛑 [ERROR] Pas de connexion internet. Installation système annulée.",
-                "🛑 [ERROR] No internet connection. System installation cancelled.",
-            ),
-            gui=self.mock_parent,
+            "Pas de connexion internet. Installation système annulée.",
+            "No internet connection. System installation cancelled.",
         )
         self.assertFalse(self.manager._reset_cancel_state.called)
 
