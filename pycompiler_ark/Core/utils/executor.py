@@ -31,6 +31,7 @@ from __future__ import annotations
 import time
 from dataclasses import dataclass
 from typing import Any, Callable, Optional
+from ...Ui import output as output
 
 
 @dataclass
@@ -42,16 +43,6 @@ class ExecutionResult:
     error: str = ""
     duration_ms: float = 0.0
     name: str = ""
-
-
-def _emit_log(log_callback: Optional[Callable[[str], None]], message: str) -> None:
-    """Emit a log line via callback if one was provided."""
-    if log_callback is None:
-        return
-    try:
-        log_callback(message)
-    except Exception:
-        pass
 
 
 def _check_stop(stop_requested: Optional[Callable[[], bool]]) -> bool:
@@ -74,8 +65,6 @@ def executor(
     **kwargs,
 ) -> ExecutionResult:
     """Execute ``func(*args, **kwargs)`` and return a structured result.
-
-    The executor is completely independent from BCASL or any other subsystem.
     It can be used to run any callable with uniform error handling, timing and
     logging.
 
@@ -99,22 +88,22 @@ def executor(
     task_name = name or getattr(func, "__name__", repr(func))
 
     if _check_stop(stop_requested):
-        _emit_log(log_callback, f"Cancelled before start: {task_name}")
+        output.info(log_callback, f"Cancelled before start: {task_name}")
         return ExecutionResult(
             success=False,
             error="Execution cancelled before start",
             name=task_name,
         )
 
-    _emit_log(log_callback, f"Start: {task_name}")
+    output.info(log_callback, f"Start: {task_name}")
     start = time.perf_counter()
 
     try:
         value = func(*args, **kwargs)
         duration_ms = (time.perf_counter() - start) * 1000.0
-        _emit_log(
+        output.success(
             log_callback,
-            f"Success: {task_name} ({duration_ms:.1f} ms)",
+            f" {task_name} ({duration_ms:.1f} ms)",
         )
         return ExecutionResult(
             success=True,
@@ -125,9 +114,9 @@ def executor(
     except Exception as exc:
         duration_ms = (time.perf_counter() - start) * 1000.0
         error_message = str(exc)
-        _emit_log(
+        output.error(
             log_callback,
-            f"Failure: {task_name} - {error_message}",
+            f" {task_name} - {error_message}",
         )
         if not catch_exceptions:
             raise
