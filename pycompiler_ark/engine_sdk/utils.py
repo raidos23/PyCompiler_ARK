@@ -30,6 +30,7 @@ from pathlib import Path
 from typing import Any, Optional, Union
 
 Pathish = Union[str, Path]
+from ..Core.utils.os_helpers import open_path as _open_path
 
 
 # -------------------------------
@@ -74,20 +75,4 @@ def resolve_executable(
 
 
 def open_path(path: Pathish) -> bool:
-    """Open a file or directory with the OS default handler. Returns True on attempt."""
-    try:
-        p = str(path)
-        sysname = platform.system()
-        if sysname == "Windows":
-            os.startfile(p)  # type: ignore[attr-defined]
-        elif sysname == "Linux":
-            import subprocess
-
-            subprocess.run(["xdg-open", p])
-        else:
-            import subprocess
-
-            subprocess.run(["open", p])
-        return True
-    except Exception:
-        return False
+    return _open_path(path)

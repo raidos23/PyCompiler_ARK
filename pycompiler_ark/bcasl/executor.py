@@ -23,10 +23,10 @@ import time
 from pathlib import Path
 from typing import Any, Optional
 
-from pycompiler_ark.bcasl.PreCompileContext import PreCompileContext
+from ..bcasl.PreCompileContext import PreCompileContext
 
-from pycompiler_ark.Core.utils.ensure_tools import ensure_tools
-from pycompiler_ark.bcasl.Base import (
+from ..Core.utils.ensure_tools import ensure_tools
+from ..bcasl.Base import (
     BCASL_PLUGIN_REGISTER_FUNC,
     BcPluginBase,
     ExecutionItem,
@@ -57,7 +57,7 @@ def _unregister_worker_pid(pid: int) -> None:
 
 
 def _kill_pid_tree(pid: int) -> None:
-    from pycompiler_ark.Core.process_killer import kill_process_tree
+    from ..Core.process_killer import kill_process_tree
 
     kill_process_tree(pid)
 
@@ -211,7 +211,7 @@ def _stop_process(proc, join_s: float = 1.0) -> None:
     except Exception:
         return
 
-    from pycompiler_ark.Core.process_killer import kill_process_tree
+    from ..Core.process_killer import kill_process_tree
 
     try:
         pid = getattr(proc, "pid", None)
@@ -378,7 +378,7 @@ def _run_plugin_sequential(
             _unregister_worker_pid(p.pid)
             _cleanup_queue(q)
     else:
-        from pycompiler_ark.Core.utils.executor import executor
+        from ..Core.utils.executor import executor
 
         res = executor(
             plg.on_pre_compile,
@@ -868,7 +868,7 @@ def _plugin_worker(
         _configure_worker_env(config)
         _apply_resource_limits(config)
         try:
-            from pycompiler_ark.bcasl.PreCompileContext import PreCompileContext as _PCC
+            from ..bcasl.PreCompileContext import PreCompileContext as _PCC
 
             plg = _load_plugin_instance(module_path, plugin_id, project_root, config)
             ctx = _PCC(
@@ -876,7 +876,7 @@ def _plugin_worker(
                 config=dict(config or {}),
                 build_context=build_context,
             )
-            from pycompiler_ark.Core.utils.executor import executor as _executor
+            from ..Core.utils.executor import executor as _executor
 
             res = _executor(
                 plg.on_pre_compile,

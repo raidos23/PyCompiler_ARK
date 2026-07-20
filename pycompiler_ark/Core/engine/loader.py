@@ -23,8 +23,8 @@ import pkgutil
 import sys
 from types import ModuleType
 
-from pycompiler_ark.Core.engine import registry as engine_registry
-from pycompiler_ark.Core.engine.base import CompilerEngine
+from . import registry as engine_registry
+from .base import CompilerEngine
 
 logger = logging.getLogger(__name__)
 

@@ -20,8 +20,8 @@ from __future__ import annotations
 import shutil
 import subprocess
 
-from pycompiler_ark.Core.Compiler.utils import check_internet_connection
-from pycompiler_ark.Core.SystemDepsManager.detection import detect_linux_package_manager
+from ..Compiler.utils import check_internet_connection
+from .detection import detect_linux_package_manager
 
 
 def check_system_packages(packages: list[str]) -> bool:
