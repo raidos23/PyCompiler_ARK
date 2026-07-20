@@ -46,6 +46,16 @@ class ExecutionResult:
     name: str = ""
 
 
+def _emit_log(log_callback: Optional[Callable[[str], None]], message: str) -> None:
+    """Emit a log line via callback if one was provided."""
+    if log_callback is None:
+        return
+    try:
+        log_callback(message)
+    except Exception:
+        pass
+
+
 def _check_stop(stop_requested: Optional[Callable[[], bool]]) -> bool:
     """Return True if the caller requested a stop."""
     if stop_requested is None:
@@ -89,21 +99,28 @@ def executor(
     task_name = name or getattr(func, "__name__", repr(func))
 
     if _check_stop(stop_requested):
-        output.info(log_callback, f"Cancelled before start: {task_name}")
+        msg = f"Cancelled before start: {task_name}"
+        _emit_log(log_callback, msg)
+        output.info(msg)
         return ExecutionResult(
             success=False,
             error="Execution cancelled before start",
             name=task_name,
         )
 
-    output.info(log_callback, f"Start: {task_name}")
+    msg = f"Start: {task_name}"
+    _emit_log(log_callback, msg)
+    output.info(msg)
     start = time.perf_counter()
 
     try:
         value = func(*args, **kwargs)
         duration_ms = (time.perf_counter() - start) * 1000.0
-        output.success(
+        _emit_log(
             log_callback,
+            f"Success: {task_name} ({duration_ms:.1f} ms)",
+        )
+        output.success(
             f" {task_name} ({duration_ms:.1f} ms)",
         )
         return ExecutionResult(
@@ -115,8 +132,11 @@ def executor(
     except Exception as exc:
         duration_ms = (time.perf_counter() - start) * 1000.0
         error_message = str(exc)
-        output.error(
+        _emit_log(
             log_callback,
+            f"Failure: {task_name} - {error_message}",
+        )
+        output.error(
             f" {task_name} - {error_message}",
         )
         if not catch_exceptions:
