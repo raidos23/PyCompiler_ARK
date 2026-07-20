@@ -19,7 +19,7 @@ PyCompiler ARK — Python Build Studio
 
 """
 
-from pycompiler_ark.Ui.Cli.entrypoint import main
+from .Ui.Cli.entrypoint import main
 
 __all__ = ["main"]
 

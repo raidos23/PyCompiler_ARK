@@ -21,7 +21,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Optional
 
-from pycompiler_ark.bcasl.PreCompileContext import PreCompileContext
+from ..bcasl.PreCompileContext import PreCompileContext
 
 __all__ = [
     "BcPluginBase",

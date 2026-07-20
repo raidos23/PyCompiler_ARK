@@ -20,6 +20,7 @@ import os
 from typing import Any, Optional
 
 from .base import CompilerEngine
+from ..globals import _GLOBAL_LANG, _GLOBAL_TR, _LANG_ALIASES
 
 logger = logging.getLogger(__name__)
 
@@ -33,23 +34,6 @@ _INSTANCES: dict[str, CompilerEngine] = {}
 # Default scroll behavior for engine tabs: wrap in a scroll area so large
 # option panels stay usable without bloating the overall UI.
 _ENGINE_TAB_SCROLL_MAX_HEIGHT: Optional[int] = None
-
-# Language code aliases for normalization
-_LANG_ALIASES: dict[str, str] = {
-    "en-us": "en",
-    "en_gb": "en",
-    "en-uk": "en",
-    "fr-fr": "fr",
-    "fr_ca": "fr",
-    "fr-ca": "fr",
-    "pt-br": "pt-BR",
-    "pt_br": "pt-BR",
-    "zh": "zh-CN",
-    "zh_cn": "zh-CN",
-    "zh-cn": "zh-CN",
-}
-_GLOBAL_TR: dict[str, Any] = {}
-_GLOBAL_LANG: str = "en"
 _ENGINE_TR: dict[str, dict[str, Any]] = {}
 
 

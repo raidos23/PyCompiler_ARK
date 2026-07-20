@@ -181,7 +181,7 @@ class CompilerEngine:
 
         import os
         from pycompiler_ark.Ui import output
-        from pycompiler_ark.engine_sdk.utils import open_path
+        from ..utils import open_path
 
         path = output_dir
         if not os.path.isabs(path):
