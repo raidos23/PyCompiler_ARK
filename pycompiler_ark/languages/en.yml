@@ -112,3 +112,11 @@ init_project_install_reqs: Install dependencies
 init_project_note: 'Note: This will create an ark.yml file and configure the project
   structure.'
 init_project_success: Project initialized successfully!
+tab_hello: "Welcome"
+welcome_title: "Welcome to PyCompiler ARK"
+welcome_desc: "A universal Python compilation and packaging tool."
+welcome_guide_title: "No compiler engines available"
+welcome_guide: "Please install a compiler engine to get started."
+btn_welcome_config: "Configure Engines"
+btn_welcome_help: "Help & Docs"
+
