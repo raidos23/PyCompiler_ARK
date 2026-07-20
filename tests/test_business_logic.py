@@ -24,6 +24,7 @@ from pycompiler_ark.Core.Locking import (
     included_workspace_files,
     installed_distributions_snapshot,
 )
+from pycompiler_ark.Core.globals import WORKSPACE_CONFIG_DIRNAME
 
 
 def test_normalize_ark_config_empty():
@@ -113,12 +114,12 @@ def test_check_internet_connection_failure():
 def test_ensure_workspace_layout(tmp_path):
     """Test that .ark subdirectories and .gitignore are created."""
     ensure_workspace_layout(tmp_path)
-    assert (tmp_path / ".ark" / "lock").is_dir()
-    assert (tmp_path / ".ark" / "cache").is_dir()
-    assert (tmp_path / ".ark" / "build").is_dir()
-    assert (tmp_path / ".ark" / "logs").is_dir()
+    assert (tmp_path / WORKSPACE_CONFIG_DIRNAME / "lock").is_dir()
+    assert (tmp_path / WORKSPACE_CONFIG_DIRNAME / "cache").is_dir()
+    assert (tmp_path / WORKSPACE_CONFIG_DIRNAME / "build").is_dir()
+    assert (tmp_path / WORKSPACE_CONFIG_DIRNAME / "logs").is_dir()
 
-    gitignore = tmp_path / ".ark" / ".gitignore"
+    gitignore = tmp_path / WORKSPACE_CONFIG_DIRNAME / ".gitignore"
     assert gitignore.is_file()
     content = gitignore.read_text()
     assert "pref.json" in content
@@ -133,8 +134,8 @@ def test_included_workspace_files(tmp_path):
     workspace = tmp_path
     (workspace / "main.py").touch()
     (workspace / "data.txt").touch()
-    (workspace / ".ark").mkdir()
-    (workspace / ".ark" / "secret.txt").touch()
+    (workspace / WORKSPACE_CONFIG_DIRNAME).mkdir()
+    (workspace / WORKSPACE_CONFIG_DIRNAME / "secret.txt").touch()
     (workspace / "node_modules").mkdir()
     (workspace / "node_modules" / "pkg.js").touch()
 

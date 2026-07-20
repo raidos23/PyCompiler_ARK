@@ -11,6 +11,7 @@ from PySide6.QtCore import QProcess, QTimer
 import pycompiler_ark.Core.deps_analyser.analyser as deps_analyser
 import pycompiler_ark.Core.SystemDepsManager as sys_deps
 from ...Ui import output as output
+from ..globals import WORKSPACE_CONFIG_DIRNAME
 
 
 class VenvManager:
@@ -112,7 +113,9 @@ class VenvManager:
     # ---------- Workspace pref management ----------
     def _workspace_pref_path(self, workspace_dir: str) -> str:
         """Return the resolved workspace path information."""
-        return os.path.join(os.path.abspath(workspace_dir), ".ark", "pref.json")
+        return os.path.join(
+            os.path.abspath(workspace_dir), WORKSPACE_CONFIG_DIRNAME, "pref.json"
+        )
 
     def _read_workspace_pref(self, workspace_dir: str) -> dict | None:
         """Execute _read_workspace_pref logic for this component."""
@@ -1854,7 +1857,9 @@ class VenvManager:
         marker_base = venv_root
         if use_system_python:
             try:
-                marker_base = os.path.join(path, ".ark", "system_python")
+                marker_base = os.path.join(
+                    path, WORKSPACE_CONFIG_DIRNAME, "system_python"
+                )
                 os.makedirs(marker_base, exist_ok=True)
             except Exception:
                 marker_base = path

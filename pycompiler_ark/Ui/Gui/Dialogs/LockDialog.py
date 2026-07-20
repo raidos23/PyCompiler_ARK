@@ -39,6 +39,7 @@ from PySide6.QtWidgets import (
 )
 
 from pycompiler_ark.Core.Locking import load_yaml_file
+from ....Core.globals import WORKSPACE_CONFIG_DIRNAME
 
 
 class LockDialog(QDialog):
@@ -97,7 +98,7 @@ class LockDialog(QDialog):
         ws = getattr(self.gui, "workspace_dir", None)
         if not ws:
             return None
-        return Path(ws) / ".ark" / "lock"
+        return Path(ws) / WORKSPACE_CONFIG_DIRNAME / "lock"
 
     def _refresh_list(self):
         self.list_widget.clear()

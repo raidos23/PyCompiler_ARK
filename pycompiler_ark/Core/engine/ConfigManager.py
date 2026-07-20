@@ -28,7 +28,9 @@ import re
 from datetime import datetime, timezone
 from typing import Any, Optional
 
-ENGINE_CONFIG_DIRNAME = ".ark"
+from pycompiler_ark.Core.globals import WORKSPACE_CONFIG_DIRNAME
+
+
 ENGINE_CONFIG_BASENAME = "config.json"
 ENGINE_CONFIG_VERSION = 1
 
@@ -44,7 +46,7 @@ def _safe_engine_id(engine_id: str) -> str:
 
 def _engine_config_dir(workspace_dir: str, engine_id: str) -> str:
     return os.path.join(
-        workspace_dir, ENGINE_CONFIG_DIRNAME, _safe_engine_id(engine_id)
+        workspace_dir, WORKSPACE_CONFIG_DIRNAME, _safe_engine_id(engine_id)
     )
 
 

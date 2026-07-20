@@ -27,10 +27,11 @@ from typing import Any
 
 import yaml
 
-from pycompiler_ark.Core.Configs import normalize_ark_config
-from pycompiler_ark.Core.engine.build_context import BuildContext
+from pycompiler_ark.Core.globals import WORKSPACE_CONFIG_DIRNAME
 
-ARK_DIRNAME = ".ark"
+from ..Configs import normalize_ark_config
+from ..engine.build_context import BuildContext
+
 LOCK_DIRNAME = "lock"
 CACHE_DIRNAME = "cache"
 BUILD_DIRNAME = "build"
@@ -45,7 +46,7 @@ class LockingError(RuntimeError):
 
 
 def _ark_path(workspace: Path, *parts: str) -> Path:
-    return workspace / ARK_DIRNAME / Path(*parts)
+    return workspace / WORKSPACE_CONFIG_DIRNAME / Path(*parts)
 
 
 def _lock_dir(workspace: Path) -> Path:
@@ -186,7 +187,15 @@ def included_workspace_files(
     ws_str = str(workspace.resolve())
 
     # Prune list for os.walk
-    prune_dirs = {".git", ARK_DIRNAME, "__pycache__", "venv", ".venv", "build", "dist"}
+    prune_dirs = {
+        ".git",
+        WORKSPACE_CONFIG_DIRNAME,
+        "__pycache__",
+        "venv",
+        ".venv",
+        "build",
+        "dist",
+    }
 
     import os
 
