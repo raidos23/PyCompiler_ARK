@@ -5,3 +5,15 @@ repos:
       - id: ruff
         args: [--fix]
       - id: ruff-format
+
+  - repo: local
+    hooks:
+      - id: run-tests
+        name: Run tests with pytest
+        entry: python -m pytest
+        language: system
+        pass_filenames: false
+        always_run: true
+        env:
+          QT_QPA_PLATFORM: minimal
+        args: ["-q", "--tb=no", "tests/"]
