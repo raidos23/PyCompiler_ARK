@@ -76,32 +76,6 @@ def ensure_tools(
         ToolsCheckResult avec ok=True si tout est disponible après installation.
     """
 
-    def _emit_output(level: str, fr: str, en: str) -> None:
-        level_key = str(level).lower().strip()
-        message = (fr, en)
-        try:
-            if level_key in ("error",):
-                output.error(message, gui=gui)
-            elif level_key in ("warning", "warn"):
-                output.warn(message, gui=gui)
-            elif level_key in ("success",):
-                output.success(message, gui=gui)
-            else:
-                output.info(message, gui=gui)
-            return
-        except Exception:
-            pass
-
-        msg = en
-        if callable(log_cb):
-            try:
-                log_cb(msg)
-                return
-            except Exception:
-                pass
-        sys.stderr.write(f"[{level_key.upper() or 'INFO'}] {msg}\n")
-        sys.stderr.flush()
-
     missing_system: list[str] = []
     missing_python: list[str] = []
     errors: list[str] = []
@@ -140,8 +114,7 @@ def ensure_tools(
                         missing_system.append(tool)
 
                 if missing_system:
-                    _emit_output(
-                        "info",
+                    output.info(
                         *_tools_stage_message(
                             "system",
                             "Vérification de la connexion Internet...",
@@ -152,8 +125,7 @@ def ensure_tools(
                     if not check_internet_connection(timeout=4.0):
                         err_fr = "Pas de connexion Internet. Impossible d'installer les outils systeme manquants."
                         err_en = "No Internet connection. Cannot install missing system tools."
-                        _emit_output(
-                            "error",
+                        output.error(
                             *_tools_stage_message("system", err_fr, err_en),
                         )
                         errors.append(f"[ensure_tools:system] {err_en}")
@@ -164,8 +136,7 @@ def ensure_tools(
                             errors=errors,
                         )
 
-                    _emit_output(
-                        "info",
+                    output.info(
                         *_tools_stage_message(
                             "system",
                             f"Installation des outils systeme manquants: {missing_system}",
@@ -205,8 +176,7 @@ def ensure_tools(
                                     )
                                 elapsed += interval
                                 if elapsed >= timeout_total:
-                                    _emit_output(
-                                        "warning",
+                                    output.warn(
                                         *_tools_stage_message(
                                             "system",
                                             "Timeout lors de l'installation des outils systeme",
@@ -218,8 +188,7 @@ def ensure_tools(
 
                             if system_install_ok:
                                 if process.exitCode() == 0:
-                                    _emit_output(
-                                        "success",
+                                    output.success(
                                         *_tools_stage_message(
                                             "system",
                                             f"Outils systeme installes avec succes: {missing_system}",
@@ -228,8 +197,7 @@ def ensure_tools(
                                     )
                                     missing_system = []
                                 else:
-                                    _emit_output(
-                                        "error",
+                                    output.error(
                                         *_tools_stage_message(
                                             "system",
                                             f"Echec installation outils systeme: {missing_system} (code: {process.exitCode()})",
@@ -243,8 +211,7 @@ def ensure_tools(
                                 install_system_packages,
                             )
 
-                            _emit_output(
-                                "info",
+                            output.info(
                                 *_tools_stage_message(
                                     "system",
                                     "Tentative d'installation systeme en mode headless...",
@@ -252,8 +219,7 @@ def ensure_tools(
                                 ),
                             )
                             if install_system_packages(missing_system):
-                                _emit_output(
-                                    "success",
+                                output.success(
                                     *_tools_stage_message(
                                         "system",
                                         "Installation systeme headless reussie.",
@@ -262,8 +228,7 @@ def ensure_tools(
                                 )
                                 missing_system = []
                             else:
-                                _emit_output(
-                                    "error",
+                                output.error(
                                     *_tools_stage_message(
                                         "system",
                                         "Echec de l'installation systeme headless.",
@@ -323,8 +288,7 @@ def ensure_tools(
                                         )
                                     elapsed += interval
                                     if elapsed >= timeout_total:
-                                        _emit_output(
-                                            "warning",
+                                        output.warn(
                                             *_tools_stage_message(
                                                 "system",
                                                 "Timeout lors de l'installation Windows",
@@ -336,8 +300,7 @@ def ensure_tools(
 
                                 if system_install_ok:
                                     if process.exitCode() == 0:
-                                        _emit_output(
-                                            "success",
+                                        output.success(
                                             *_tools_stage_message(
                                                 "system",
                                                 f"Outils Windows installes: {missing_system}",
@@ -346,8 +309,7 @@ def ensure_tools(
                                         )
                                         missing_system = []
                                     else:
-                                        _emit_output(
-                                            "error",
+                                        output.error(
                                             *_tools_stage_message(
                                                 "system",
                                                 f"Echec installation Windows: {missing_system}",
@@ -356,8 +318,7 @@ def ensure_tools(
                                         )
                                         system_install_ok = False
                             else:
-                                _emit_output(
-                                    "warning",
+                                output.warn(
                                     *_tools_stage_message(
                                         "system",
                                         "winget non disponible, installation manuelle requise",
@@ -374,8 +335,7 @@ def ensure_tools(
                                     pass
                                 system_install_ok = False
                         else:
-                            _emit_output(
-                                "warning",
+                            output.warn(
                                 *_tools_stage_message(
                                     "system",
                                     f"Aucun equivalent Windows pour: {missing_system}",
@@ -384,8 +344,7 @@ def ensure_tools(
                             )
                             system_install_ok = False
                     else:
-                        _emit_output(
-                            "warning",
+                        output.warn(
                             *_tools_stage_message(
                                 "system",
                                 "Plateforme non supportee pour l'installation automatique",
@@ -400,8 +359,7 @@ def ensure_tools(
                         )
 
                 else:
-                    _emit_output(
-                        "success",
+                    output.success(
                         *_tools_stage_message(
                             "system",
                             f"Tous les outils systeme sont deja installes: {system_tools}",
@@ -411,8 +369,7 @@ def ensure_tools(
 
             except Exception as e:
                 err_msg = f"Erreur lors de la verification/installation des outils systeme: {e}"
-                _emit_output(
-                    "warning",
+                output.warn(
                     *_tools_stage_message(
                         "system",
                         err_msg,
@@ -432,7 +389,7 @@ def ensure_tools(
             except ImportError as exc:
                 err = f"[ensure_tools] Import headless impossible : {exc}"
                 errors.append(err)
-                _emit_output("error", err, err)
+                output.error("error", err, err)
                 return ToolsCheckResult(ok=False, errors=errors)
 
             for tool in system_tools:
@@ -448,13 +405,11 @@ def ensure_tools(
                     missing_system.append(tool)
 
             if missing_system:
-                _emit_output(
-                    "info",
+                output.info(
                     f"[ensure_tools:system] Outils manquants : {missing_system}",
                     f"[ensure_tools:system] Missing tools: {missing_system}",
                 )
-                _emit_output(
-                    "info",
+                output.info(
                     "[ensure_tools:system] Vérification de la connexion Internet…",
                     "[ensure_tools:system] Checking Internet connection...",
                 )
@@ -462,7 +417,7 @@ def ensure_tools(
                 if not check_internet_connection(timeout=4.0):
                     err = "[ensure_tools:system] Pas de connexion Internet — installation impossible."
                     errors.append(err)
-                    _emit_output("error", err, err)
+                    output.error("error", err, err)
                     return ToolsCheckResult(
                         ok=False,
                         missing_system=missing_system,
@@ -470,14 +425,12 @@ def ensure_tools(
                         errors=errors,
                     )
 
-                _emit_output(
-                    "info",
+                output.info(
                     f"[ensure_tools:system] Installation de {missing_system}…",
                     f"[ensure_tools:system] Installing {missing_system}...",
                 )
                 if install_system_packages(missing_system):
-                    _emit_output(
-                        "success",
+                    output.success(
                         "[ensure_tools:system] Installation réussie.",
                         "[ensure_tools:system] Installation successful.",
                     )
@@ -485,10 +438,9 @@ def ensure_tools(
                 else:
                     err = f"[ensure_tools:system] Échec installation : {missing_system}"
                     errors.append(err)
-                    _emit_output("error", err, err)
+                    output.error("error", err, err)
             else:
-                _emit_output(
-                    "success",
+                output.success(
                     f"[ensure_tools:system] Tous présents : {system_tools}",
                     f"[ensure_tools:system] All present: {system_tools}",
                 )
@@ -509,8 +461,7 @@ def ensure_tools(
                             missing_python.append(tool)
 
                     if missing_python:
-                        _emit_output(
-                            "info",
+                        output.info(
                             *_tools_stage_message(
                                 "python",
                                 "Vérification de la connexion Internet...",
@@ -519,8 +470,7 @@ def ensure_tools(
                         )
 
                         if not check_internet_connection(timeout=4.0):
-                            _emit_output(
-                                "error",
+                            output.error(
                                 *_tools_stage_message(
                                     "python",
                                     "Pas de connexion Internet. Impossible d'installer les outils Python manquants.",
@@ -537,8 +487,7 @@ def ensure_tools(
                                 errors=errors,
                             )
 
-                        _emit_output(
-                            "info",
+                        output.info(
                             *_tools_stage_message(
                                 "python",
                                 f"Installation des outils Python manquants: {missing_python}",
@@ -577,8 +526,7 @@ def ensure_tools(
                             elapsed += interval
 
                         if not all_done:
-                            _emit_output(
-                                "warning",
+                            output.warn(
                                 *_tools_stage_message(
                                     "python",
                                     "Timeout ou echec de l'installation des outils Python (systeme)",
@@ -603,8 +551,7 @@ def ensure_tools(
                                 missing_python.append(tool)
 
                         if missing_python:
-                            _emit_output(
-                                "info",
+                            output.info(
                                 *_tools_stage_message(
                                     "python",
                                     "Vérification de la connexion Internet...",
@@ -613,8 +560,7 @@ def ensure_tools(
                             )
 
                             if not check_internet_connection(timeout=4.0):
-                                _emit_output(
-                                    "error",
+                                output.error(
                                     *_tools_stage_message(
                                         "python",
                                         "Pas de connexion Internet. Impossible d'installer les outils Python manquants.",
@@ -631,8 +577,7 @@ def ensure_tools(
                                     errors=errors,
                                 )
 
-                            _emit_output(
-                                "info",
+                            output.info(
                                 *_tools_stage_message(
                                     "python",
                                     f"Installation des outils Python manquants: {missing_python}",
@@ -675,8 +620,7 @@ def ensure_tools(
                                 elapsed += interval
 
                             if not all_done:
-                                _emit_output(
-                                    "warning",
+                                output.warn(
                                     *_tools_stage_message(
                                         "python",
                                         "Timeout ou echec de l'installation des outils Python",
@@ -697,8 +641,7 @@ def ensure_tools(
                                 missing_python = []
             except Exception as e:
                 err_msg = f"Erreur lors de la verification/installation des outils Python: {e}"
-                _emit_output(
-                    "warning",
+                output.warn(
                     *_tools_stage_message(
                         "python",
                         err_msg,
@@ -722,8 +665,7 @@ def ensure_tools(
                     missing_python.append(tool)
 
             if missing_python:
-                _emit_output(
-                    "info",
+                output.info(
                     f"[ensure_tools:python] Paquets manquants : {missing_python}",
                     f"[ensure_tools:python] Missing packages: {missing_python}",
                 )
@@ -733,15 +675,14 @@ def ensure_tools(
                         check_internet_connection,
                     )
 
-                    _emit_output(
-                        "info",
+                    output.info(
                         "[ensure_tools:python] Vérification de la connexion Internet…",
                         "[ensure_tools:python] Checking Internet connection...",
                     )
                     if not check_internet_connection(timeout=4.0):
                         err = "[ensure_tools:python] Pas de connexion Internet — installation impossible."
                         errors.append(err)
-                        _emit_output("error", err, err)
+                        output.error("error", err, err)
                         return ToolsCheckResult(
                             ok=False,
                             missing_system=missing_system,
@@ -762,8 +703,7 @@ def ensure_tools(
                             + missing_python[len(still_missing) :],
                             errors=errors,
                         )
-                    _emit_output(
-                        "info",
+                    output.info(
                         f"[ensure_tools:python] pip install {pkg}…",
                         f"[ensure_tools:python] pip install {pkg}...",
                     )
@@ -775,31 +715,29 @@ def ensure_tools(
                             timeout=timeout_s,
                         )
                         if result.returncode == 0:
-                            _emit_output(
-                                "success",
+                            output.success(
                                 f"[ensure_tools:python] {pkg} installé avec succès.",
                                 f"[ensure_tools:python] {pkg} installed successfully.",
                             )
                         else:
                             err = f"[ensure_tools:python] Échec pip install {pkg} : {result.stderr.strip()}"
                             errors.append(err)
-                            _emit_output("error", err, err)
+                            output.error("error", err, err)
                             still_missing.append(pkg)
                     except subprocess.TimeoutExpired:
                         err = f"[ensure_tools:python] Timeout pip install {pkg}"
                         errors.append(err)
-                        _emit_output("error", err, err)
+                        output.error("error", err, err)
                         still_missing.append(pkg)
                     except Exception as exc:
                         err = f"[ensure_tools:python] Erreur pip install {pkg} : {exc}"
                         errors.append(err)
-                        _emit_output("error", err, err)
+                        output.error("error", err, err)
                         still_missing.append(pkg)
 
                 missing_python = still_missing
             else:
-                _emit_output(
-                    "success",
+                output.success(
                     f"[ensure_tools:python] Tous présents : {python_tools}",
                     f"[ensure_tools:python] All present: {python_tools}",
                 )
