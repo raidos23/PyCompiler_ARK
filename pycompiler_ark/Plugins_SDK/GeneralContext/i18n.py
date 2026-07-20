@@ -18,26 +18,16 @@ from __future__ import annotations
 import os
 from pathlib import Path
 from typing import Any, Callable, Optional
+from ...Core.globals import _GLOBAL_LANG, _GLOBAL_TR, _LANG_ALIASES
 
 try:
     import yaml
-except ImportError:  # pragma: no cover - dépendance attendue mais on reste tolérant
+except ImportError:
     yaml = None
 
-_GLOBAL_TR: dict[str, Any] = {}
-_GLOBAL_LANG: str = "en"
+
 _PLUGIN_TR: dict[str, dict[str, Any]] = {}
 _HANDLERS: set[Callable[[Any, dict], None]] = set()
-
-_LANG_ALIASES = {
-    "en-us": "en",
-    "en_gb": "en",
-    "en-uk": "en",
-    "fr-fr": "fr",
-    "pt-br": "pt-BR",
-    "zh-cn": "zh-CN",
-    "zh-hans": "zh-CN",
-}
 
 
 def normalize_language_code(code: Optional[str]) -> str:
