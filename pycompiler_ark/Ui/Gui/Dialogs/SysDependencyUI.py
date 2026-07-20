@@ -22,11 +22,11 @@ import platform
 import shutil
 from typing import Any, Optional
 
-from PySide6.QtCore import QProcess, QObject, QTimer, Qt
+from PySide6.QtCore import QObject, QProcess, Qt, QTimer
 from PySide6.QtWidgets import QMessageBox
 
-from pycompiler_ark.Core.SysDependencyManager import SysDependencyManager
-from pycompiler_ark.Ui.Gui.WidgetsCreator import ProgressDialog
+from ....Core.SysDependencyManager import SysDependencyManager
+from ..WidgetsCreator import ProgressDialog
 
 
 class SysDependencyUI(SysDependencyManager):
@@ -49,7 +49,7 @@ class SysDependencyUI(SysDependencyManager):
 
     def _ui_tr(self, fr: str, en: str) -> str:
         try:
-            from pycompiler_ark.Ui.i18n import tr_fr_en
+            from ...i18n import tr_fr_en
 
             return tr_fr_en(self.parent_widget, fr, en)
         except Exception:

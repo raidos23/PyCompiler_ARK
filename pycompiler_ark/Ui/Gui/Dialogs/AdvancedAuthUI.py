@@ -17,7 +17,7 @@
 AdvancedAuthUI — GUI layer for AdvancedAuth service.
 """
 
-from pycompiler_ark.Ui.Gui.Dialogs.WorkspaceDialog import WorkspaceDialog
+from .WorkspaceDialog import WorkspaceDialog
 
 
 class AdvancedAuthUI:

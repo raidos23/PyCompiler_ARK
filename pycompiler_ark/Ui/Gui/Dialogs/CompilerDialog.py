@@ -35,26 +35,26 @@ from pathlib import Path
 from PySide6.QtWidgets import QFileDialog, QMessageBox
 
 from pycompiler_ark.Core.Compiler import create
-from pycompiler_ark.Ui.Gui.Compilation.helpers import (
+from pycompiler_ark.Ui import output
+
+# Shared helpers from CLI for exact code alignment
+from ...Cli.helpers import (
+    build_context_object_from_ark_config,
+    build_context_object_from_lock,
+    build_lock_payload,
+    cache_rebuild_lock,
+    compare_lock_payloads,
+    engine_config_from_lock,
+    load_ark_config,
+    validate_ark_config,
+    write_lock_files,
+)
+from ..Compilation.helpers import (
     bcasl_report_allows_compile,
     get_main_process,
     run_bcasl_before_compile,
 )
-from pycompiler_ark.Ui.Gui.Compilation.mainprocess import ProcessState
-from pycompiler_ark.Ui import output
-
-# Shared helpers from CLI for exact code alignment
-from pycompiler_ark.Ui.Cli.helpers import (
-    load_ark_config,
-    validate_ark_config,
-    build_lock_payload,
-    write_lock_files,
-    build_context_object_from_ark_config,
-    build_context_object_from_lock,
-    engine_config_from_lock,
-    cache_rebuild_lock,
-    compare_lock_payloads,
-)
+from ..Compilation.mainprocess import ProcessState
 
 # ============================================================================
 # DIALOG HELPERS
@@ -228,7 +228,7 @@ def compile_all(self) -> None:
 
     # Housekeeping: Save GUI tab settings to disk
     try:
-        from pycompiler_ark.Core.engine.ConfigManager import save_engine_config_for_gui
+        from ....Core.engine.ConfigManager import save_engine_config_for_gui
 
         save_engine_config_for_gui(self, engine_id)
     except Exception:
@@ -301,7 +301,7 @@ def compile_all(self) -> None:
                 gui=self,
             )
             try:
-                from pycompiler_ark.Ui.Gui.Dialogs.BcaslDialog import (
+                from .BcaslDialog import (
                     ensure_bcasl_thread_stopped,
                 )
 
@@ -436,7 +436,7 @@ def rebuild_from_lock(self, lock_path: Path) -> None:
 
         # Alignement Git (Exact CLI Logic)
         try:
-            from pycompiler_ark.Ui.Cli.helpers import ensure_correct_git_commit
+            from ...Cli.helpers import ensure_correct_git_commit
 
             def _confirm(msg: str) -> bool:
                 from PySide6.QtWidgets import QMessageBox
@@ -469,8 +469,8 @@ def rebuild_from_lock(self, lock_path: Path) -> None:
         # Shared Python version resolution for locking/comparison (Aligned with CLI)
         self._python_version = None
         try:
-            from pycompiler_ark.Core.Compiler.utils import get_interpreter_version_str
-            from pycompiler_ark.Core.Venv_Manager.Manager import VenvManager
+            from ....Core.Compiler.utils import get_interpreter_version_str
+            from ....Core.Venv_Manager.Manager import VenvManager
 
             vm = VenvManager(self)
             vpython = vm.resolve_project_venv()
@@ -519,7 +519,7 @@ def rebuild_from_lock(self, lock_path: Path) -> None:
 
             if not bcasl_report_allows_compile(self, _report):
                 try:
-                    from pycompiler_ark.Ui.Gui.Dialogs.BcaslDialog import (
+                    from .BcaslDialog import (
                         ensure_bcasl_thread_stopped,
                     )
 
@@ -605,7 +605,7 @@ def start_compilation_process(self, engine_id: str, file_path: str) -> bool:
 
     # Housekeeping: Save GUI tab settings to disk
     try:
-        from pycompiler_ark.Core.engine.ConfigManager import save_engine_config_for_gui
+        from ....Core.engine.ConfigManager import save_engine_config_for_gui
 
         save_engine_config_for_gui(self, engine_id)
     except Exception:
@@ -691,7 +691,7 @@ def start_compilation_process(self, engine_id: str, file_path: str) -> bool:
                 gui=self,
             )
             try:
-                from pycompiler_ark.Ui.Gui.Dialogs.BcaslDialog import (
+                from .BcaslDialog import (
                     ensure_bcasl_thread_stopped,
                 )
 
@@ -789,7 +789,7 @@ def try_start_processes(self) -> bool:
             engine_id = engines_loader.registry.get_engine_for_tab(idx)
     except Exception:
         pass
-    from pycompiler_ark.Ui.Gui.Compilation.helpers import resolve_default_engine_id
+    from ..Compilation.helpers import resolve_default_engine_id
 
     if not engine_id:
         engine_id = resolve_default_engine_id()
@@ -807,7 +807,7 @@ def cancel_all_compilations(self) -> None:
     # 1. Handle pre-compilation (BCASL) cancellation
     self._cancel_requested_during_precompile = True
     try:
-        from pycompiler_ark.Ui.Gui.Dialogs.BcaslDialog import (
+        from .BcaslDialog import (
             ensure_bcasl_thread_stopped,
         )
 

@@ -26,17 +26,17 @@ from typing import Optional
 from PySide6.QtGui import QDropEvent
 from PySide6.QtWidgets import QMainWindow, QMessageBox
 
-from pycompiler_ark.Ui.Gui.Globals import (
+from pycompiler_ark.Ui import output
+from .Dialogs.VenvDialog import VenvManagerUI
+from .Dialogs.WorkspaceDialog import WorkspaceDialog
+from .Globals import (
     _latest_gui_instance,
     _workspace_dir_cache,
     _workspace_dir_lock,
 )
-from pycompiler_ark.Ui.Gui.Dialogs.VenvDialog import VenvManagerUI
-from pycompiler_ark.Ui.Gui.Dialogs.WorkspaceDialog import WorkspaceDialog
-from pycompiler_ark.Ui.Gui.UiFeatures import UiFeatures as UiFeatures
-from pycompiler_ark.Ui.Gui.WorkspaceManipulation import WorkspaceAdvancedManipulation
-from pycompiler_ark.Ui import output
-from pycompiler_ark.Ui.i18n import is_french_language, tr_fr_en
+from .UiFeatures import UiFeatures as UiFeatures
+from .WorkspaceManipulation import WorkspaceAdvancedManipulation
+from ..i18n import is_french_language, tr_fr_en
 
 
 def get_selected_workspace() -> Optional[str]:
@@ -93,7 +93,7 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
         # Étape 2: brancher les services partagés (venv manager, sys deps).
         self.venv_manager = VenvManagerUI(self)
         try:
-            from pycompiler_ark.Ui.Gui.Dialogs.SysDependencyUI import SysDependencyUI
+            from .Dialogs.SysDependencyUI import SysDependencyUI
 
             self.sys_deps_manager = SysDependencyUI(self)
         except Exception:
@@ -101,8 +101,8 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
 
         # Enregistrement du handler AdvancedAuth pour les requêtes de plugins
         try:
-            from pycompiler_ark.Services.AdvancedAuth import Api as AuthApi
-            from pycompiler_ark.Ui.Gui.Dialogs.AdvancedAuthUI import AdvancedAuthUI
+            from ...Services.AdvancedAuth import Api as AuthApi
+            from .Dialogs.AdvancedAuthUI import AdvancedAuthUI
 
             AuthApi.register_workspace_change_handler(
                 lambda folder: AdvancedAuthUI.handle_workspace_change_request(
@@ -175,7 +175,7 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
     # =========================================================================
 
     from pycompiler_ark.Ui.Gui.IdeLikeGui import init_ide_like_ui
-    from pycompiler_ark.Ui.Gui.UiConnection import init_ui
+    from .UiConnection import init_ui
 
     # =========================================================================
     # GESTION DU WORKSPACE
@@ -191,7 +191,7 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
 
     def add_py_files_from_folder(self, folder):
         """Add Python files from a folder into the workspace list."""
-        from pycompiler_ark.Core.WorkSpaceManager.SetupWorkspace import SetupWorkspace
+        from ...Core.WorkSpaceManager.SetupWorkspace import SetupWorkspace
 
         files = SetupWorkspace.list_python_files(folder)
 
@@ -259,7 +259,7 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
 
     def open_init_workspace_dialog(self):
         """Open the project initialization dialog."""
-        from pycompiler_ark.Ui.Gui.Dialogs.InitWorkspaceDialog import (
+        from .Dialogs.InitWorkspaceDialog import (
             open_init_workspace_dialog,
         )
 
@@ -321,7 +321,7 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
     # COMPILATION (délégation à Ui/Gui/Compilation)
     # =========================================================================
 
-    from pycompiler_ark.Ui.Gui.Dialogs.DepsAnalyserUI import (
+    from .Dialogs.DepsAnalyserUI import (
         _install_next_dependency,
         _on_dep_pip_finished,
         _on_dep_pip_output,
@@ -330,11 +330,11 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
 
     def open_lock_dialog(self):
         """Open the build lock management dialog."""
-        from pycompiler_ark.Ui.Gui.Dialogs.LockDialog import open_lock_dialog
+        from .Dialogs.LockDialog import open_lock_dialog
 
         open_lock_dialog(self)
 
-    from pycompiler_ark.Ui.Gui.Dialogs.CompilerDialog import (
+    from .Dialogs.CompilerDialog import (
         _continue_compile_all,
         cancel_all_compilations,
         compile_all,
@@ -347,7 +347,7 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
         try_install_missing_modules,
         try_start_processes,
     )
-    from pycompiler_ark.Ui.PreferencesManager import load_preferences, save_preferences
+    from ..PreferencesManager import load_preferences, save_preferences
 
     # =========================================================================
     # PRÉFÉRENCES (délégation à Core/PreferencesManager)
@@ -415,7 +415,7 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
                 dlg = task.get("dialog") if isinstance(task, dict) else None
                 try:
                     if proc is not None and proc.state() != proc.NotRunning:
-                        from pycompiler_ark.Core.process_killer import kill_process_tree
+                        from ...Core.process_killer import kill_process_tree
 
                         kill_process_tree(proc.processId())
                 except Exception:
@@ -507,7 +507,7 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
                     self.cancel_all_compilations()
                 self._terminate_background_tasks()
                 try:
-                    from pycompiler_ark.Ui.Gui.Dialogs.BcaslDialog import (
+                    from .Dialogs.BcaslDialog import (
                         ensure_bcasl_thread_stopped,
                     )
 
@@ -519,7 +519,7 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
                 event.ignore()
         else:
             try:
-                from pycompiler_ark.Ui.Gui.Dialogs.BcaslDialog import (
+                from .Dialogs.BcaslDialog import (
                     ensure_bcasl_thread_stopped,
                 )
 

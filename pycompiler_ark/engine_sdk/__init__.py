@@ -15,19 +15,22 @@
 
 from __future__ import annotations
 
-from pycompiler_ark.Core.engine.build_context import BuildContext
+from ..Core.engine.build_context import BuildContext
+from ..Core.engine.registry import translate
+
+from ..Ui import output
 
 # Re-export the base interface used by the host
 from .base import CompilerEngine, EngineMeta
-from pycompiler_ark.Core.engine.registry import translate
-from .utils import resolve_executable  # executable resolution helper (SDK)
-from .utils import open_path
-from ..Ui import output
+from .utils import (
+    open_path,
+    resolve_executable,  # executable resolution helper (SDK)
+)
 
 __version__ = "1.0.0"
 
 
-from pycompiler_ark.Core.engine.registry import engine_register
+from ..Core.engine.registry import engine_register
 
 __all__ = [
     "engine_register",

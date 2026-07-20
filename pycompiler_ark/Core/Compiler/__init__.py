@@ -23,21 +23,14 @@ Qt-dependent classes have been moved to Ui/Gui/Compilation/.
 
 from __future__ import annotations
 
-from pycompiler_ark.Core.Compiler.engine_runner import (
+from .engine_runner import (
     BuildContext,
     EngineRunnerError,
     resolve_engine_command,
     run_engine_compile,
     run_engine_compile_streaming,
 )
-from pycompiler_ark.Core.process_killer import (
-    ProcessInfo,
-    ProcessKiller,
-    get_process_info,
-    kill_process,
-    kill_process_tree,
-)
-from pycompiler_ark.Core.Compiler.utils import (
+from .utils import (
     CommandBuilder,
     build_command,
     check_module_available,
@@ -47,7 +40,14 @@ from pycompiler_ark.Core.Compiler.utils import (
     sanitize_path,
     validate_command,
 )
-from pycompiler_ark.Core.engine.registry import create, get_engine
+from ..engine.registry import create, get_engine
+from ..process_killer import (
+    ProcessInfo,
+    ProcessKiller,
+    get_process_info,
+    kill_process,
+    kill_process_tree,
+)
 
 # ============================================================================
 # IMPORTS LOCAUX - Core.Compiler

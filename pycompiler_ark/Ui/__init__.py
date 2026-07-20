@@ -15,10 +15,10 @@
 
 """UI-facing modules for the next ARK command-line and GUI layers."""
 
+from . import output
 from .forms import ui_form_path
 from .i18n import translate
-from . import output
-from .output import info, warn, error, success, log, plain
+from .output import error, info, log, plain, success, warn
 
 __all__ = [
     "ui_form_path",

@@ -26,7 +26,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import List, Tuple
 
-from pycompiler_ark.Core.engine.base import resolve_engine_meta
+from .base import resolve_engine_meta
 
 
 @dataclass

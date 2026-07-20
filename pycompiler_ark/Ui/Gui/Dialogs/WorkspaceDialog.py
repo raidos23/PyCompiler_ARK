@@ -27,10 +27,10 @@ from typing import Optional
 
 from PySide6.QtWidgets import QApplication, QFileDialog, QMessageBox
 
+from ....Core.WorkSpaceManager.SetupWorkspace import SetupWorkspace
 from pycompiler_ark.Ui import output
-from pycompiler_ark.Ui.Gui.Globals import _workspace_dir_lock
-from pycompiler_ark.Core.WorkSpaceManager.SetupWorkspace import SetupWorkspace
-from pycompiler_ark.Ui.Gui.WidgetsCreator import CompilationProcessDialog
+from ..Globals import _workspace_dir_lock
+from ..WidgetsCreator import CompilationProcessDialog
 
 
 class WorkspaceDialog:
@@ -42,7 +42,7 @@ class WorkspaceDialog:
         Confirm workspace change with the user.
         """
         try:
-            from pycompiler_ark.Ui.Gui.WidgetsCreator import show_msgbox
+            from ..WidgetsCreator import show_msgbox
 
             title = "Confirmation"
             message = (
@@ -185,7 +185,7 @@ class WorkspaceDialog:
 
             # Étape 5: synchroniser le cache global thread-safe.
             try:
-                from pycompiler_ark.Ui.Gui.Globals import _workspace_dir_cache
+                from ..Globals import _workspace_dir_cache
 
                 with _workspace_dir_lock:
                     _workspace_dir_cache = folder
@@ -333,7 +333,7 @@ class WorkspaceDialog:
 
             # Étape 8: recharger les configs engines
             try:
-                from pycompiler_ark.Core.engine.ConfigManager import (
+                from ....Core.engine.ConfigManager import (
                     apply_engine_configs_for_workspace,
                 )
 

@@ -491,8 +491,8 @@ def check_internet_connection(timeout: float = 3.0, retries: int = 0) -> bool:
     Check if internet connection is available with high certainty.
     Prioritizes checking connectivity to essential services like PyPI.
     """
-    import socket
     import http.client
+    import socket
     import time
 
     # Essential hosts to verify connectivity for tool installation

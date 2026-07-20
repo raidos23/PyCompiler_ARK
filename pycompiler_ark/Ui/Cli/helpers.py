@@ -27,6 +27,7 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable, Optional
+
 from ...Core.globals import WORKSPACE_CONFIG_DIRNAME
 
 # Global event for CLI cancellation
@@ -82,8 +83,9 @@ def run_engine_compile(
     is_rebuild: bool = False,
 ) -> dict[str, Any]:
     """Execute a compilation with real-time output streaming to the CLI."""
-    from pycompiler_ark.Core.Compiler.engine_runner import run_engine_compile_streaming
-    from .output import plain, get_console, error
+    from ...Core.Compiler.engine_runner import run_engine_compile_streaming
+
+    from .output import error, get_console, plain
 
     captured_stdout = []
     captured_stderr = []
@@ -194,20 +196,22 @@ from pycompiler_ark.Core.Configs import (
     ArkConfigError,
     ArkConfigValidationResult,
     UserConfigError,
+    new_workspace_config,
+    resolve_config_value,
+    set_config_value,
+    unset_config_value,
+    write_ark_config,
 )
 from pycompiler_ark.Core.Configs import config_file_for as _config_file_for
 from pycompiler_ark.Core.Configs import config_home as _config_home
 from pycompiler_ark.Core.Configs import ensure_config_home as _ensure_config_home
 from pycompiler_ark.Core.Configs import load_ark_config as _load_ark_config
-from pycompiler_ark.Core.Configs import (
-    new_workspace_config,
-    resolve_config_value,
-    set_config_value,
-    unset_config_value,
-)
 from pycompiler_ark.Core.Configs import validate_ark_config as _validate_ark_config
-from pycompiler_ark.Core.Configs import write_ark_config
-from pycompiler_ark.Core.Locking import BuildContext
+from pycompiler_ark.Core.Locking import (
+    BuildContext,
+    ensure_workspace_layout,
+    load_yaml_file,
+)
 from pycompiler_ark.Core.Locking import (
     build_context_from_ark_config as _build_context_from_ark_config,
 )
@@ -218,7 +222,6 @@ from pycompiler_ark.Core.Locking import build_lock_payload as _build_lock_payloa
 from pycompiler_ark.Core.Locking import cache_rebuild_lock as _cache_rebuild_lock
 from pycompiler_ark.Core.Locking import compare_lock_payloads as _compare_lock_payloads
 from pycompiler_ark.Core.Locking import default_lock_path as _default_lock_path
-from pycompiler_ark.Core.Locking import ensure_workspace_layout, load_yaml_file
 from pycompiler_ark.Core.Locking import write_lock_files as _write_lock_files
 
 from .discovery import (
@@ -228,8 +231,8 @@ from .discovery import (
     scaffold_engine,
     scaffold_plugin,
 )
-from .messages import CliMessage, CliSpecError, cli_click_exception, cli_text
 from .launchers import launch_main_application
+from .messages import CliMessage, CliSpecError, cli_click_exception, cli_text
 
 
 @dataclass(slots=True)
@@ -335,7 +338,7 @@ def init_workspace(
     internal_modules: list[str] = []
     internal_modules_applied = False
     if apply_internal:
-        from pycompiler_ark.Core.deps_analyser.analyser import collect_internal_modules
+        from ...Core.deps_analyser.analyser import collect_internal_modules
 
         internal_modules = sorted(
             collect_internal_modules(str(workspace)),
@@ -375,7 +378,7 @@ def init_workspace(
                     "requirements.txt already exists. (--generate-requirements)",
                 )
             )
-        from pycompiler_ark.Core.deps_analyser.analyser import write_requirements_txt
+        from ...Core.deps_analyser.analyser import write_requirements_txt
 
         if not write_requirements_txt(str(workspace), str(requirements_path)):
             requirements_path.write_text(
@@ -592,7 +595,7 @@ def ensure_correct_git_commit(
     if not locked_commit and not locked_branch:
         return True
 
-    from pycompiler_ark.Core.Locking import get_git_commit_hash, get_git_branch
+    from pycompiler_ark.Core.Locking import get_git_branch, get_git_commit_hash
 
     current_commit = get_git_commit_hash(workspace)
     current_branch = get_git_branch(workspace)
@@ -603,9 +606,10 @@ def ensure_correct_git_commit(
     if commit_match and branch_match:
         return True
 
-    from .output import warn, info, error, success
     import platform
     import subprocess
+
+    from .output import error, info, success, warn
 
     is_linux = platform.system().lower() == "linux"
 
@@ -752,7 +756,7 @@ def list_plugins_payload() -> dict[str, Any]:
 
 def scaffold_engine_payload(name: str, root_dir: str | None = None) -> dict[str, Any]:
     from pycompiler_ark.Core.Configs import config_file_for, resolve_config_value
-    from pycompiler_ark.Ui.Cli.interactive import ask_path
+    from .interactive import ask_path
 
     if not root_dir:
         conf_path = config_file_for("dev-engine-dir", create_root=False)
@@ -769,7 +773,7 @@ def scaffold_engine_payload(name: str, root_dir: str | None = None) -> dict[str,
 
 def scaffold_plugin_payload(name: str, root_dir: str | None = None) -> dict[str, Any]:
     from pycompiler_ark.Core.Configs import config_file_for, resolve_config_value
-    from pycompiler_ark.Ui.Cli.interactive import ask_path
+    from .interactive import ask_path
 
     if not root_dir:
         conf_path = config_file_for("dev-plugin-dir", create_root=False)
@@ -792,15 +796,14 @@ def run_bcasl_before_compile_sync(
     Returns:
         True if compilation can proceed (success or BCASL disabled), False otherwise.
     """
-    from pycompiler_ark.bcasl.Loader import _is_bcasl_enabled, run_pre_compile
+    from ...bcasl.Loader import _is_bcasl_enabled, run_pre_compile
 
     # Quick check to avoid "blablabla inutile" when disabled
     if not _is_bcasl_enabled(workspace):
         return True
 
-    from .output import error, info, log, success, get_console
-
     from .interactive import register_cli_status, unregister_cli_status
+    from .output import error, get_console, info, log, success
 
     console = get_console()
     status = None
@@ -895,7 +898,7 @@ def run_bcasl_before_compile_sync(
 
     if isinstance(report, dict):
         try:
-            from pycompiler_ark.bcasl.Loader import is_bcasl_disabled_report
+            from ...bcasl.Loader import is_bcasl_disabled_report
 
             if is_bcasl_disabled_report(report):
                 return True
@@ -927,9 +930,9 @@ def run_bcasl_before_compile_sync(
 
 def run_bcasl_headless(args: list[str], verbose: bool = False) -> int:
     """Run BCASL in headless mode for the current workspace."""
-    from pycompiler_ark.bcasl.Loader import run_pre_compile
+    from ...bcasl.Loader import run_pre_compile
 
-    from .output import error, success, log, info, get_console
+    from .output import error, get_console, info, log, success
 
     if "list" in args:
         payload = list_plugins_payload()

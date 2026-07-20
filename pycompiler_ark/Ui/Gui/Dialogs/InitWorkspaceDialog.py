@@ -22,7 +22,7 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-from PySide6.QtCore import Qt, QSize
+from PySide6.QtCore import QSize, Qt
 from PySide6.QtWidgets import (
     QCheckBox,
     QDialog,
@@ -37,7 +37,7 @@ from PySide6.QtWidgets import (
 )
 
 from pycompiler_ark.Core.deps_analyser import collect_internal_modules
-from pycompiler_ark.Ui.Cli.helpers import init_workspace
+from ...Cli.helpers import init_workspace
 
 
 class InitWorkspaceDialog(QDialog):

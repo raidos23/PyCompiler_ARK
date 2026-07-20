@@ -18,8 +18,8 @@ from .Context import (
     BcPluginBase,
     Generate_Bc_Plugin_Template,
     PluginMeta,
-    bc_register,
     PreCompileContext,
+    bc_register,
 )
 
 __version__ = "1.0.0"

@@ -23,7 +23,7 @@ import os
 from pathlib import Path
 from typing import Any
 
-from PySide6.QtCore import Qt, QSize
+from PySide6.QtCore import QSize, Qt
 from PySide6.QtGui import QFont
 from PySide6.QtWidgets import (
     QCheckBox,
@@ -46,15 +46,15 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from pycompiler_ark.Core.ConfigEditor import validate_ark_payload
+from ....Core.ConfigEditor import validate_ark_payload
 from pycompiler_ark.Core.Configs import load_ark_config, write_ark_config
-from pycompiler_ark.Core.engine.registry import available_engines
+from ....Core.engine.registry import available_engines
 
 
 def _apply_themed_icon(widget: QPushButton, icon_name: str, size: int = 16) -> None:
     """Applique une icône SVG thémée au widget."""
     try:
-        from pycompiler_ark.Ui.Gui.UiConnection import themed_svg_icon
+        from ..UiConnection import themed_svg_icon
 
         # icons/ is at project root, which is 3 levels up from this file (Ui/Gui/Dialogs/)
         icon_path = os.path.abspath(

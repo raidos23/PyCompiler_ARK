@@ -24,11 +24,6 @@ have been moved to Ui.Gui.Dialogs.BcaslDialog to keep this package pure-Python.
 
 from __future__ import annotations
 
-from ..bcasl.PreCompileContext import PreCompileContext
-
-# Utilitaire universel d'installation d'outils
-from ..Core.utils.ensure_tools import ToolsCheckResult
-
 # Coeur BCASL (moteur de plugins et contexte)
 from ..bcasl.Base import (
     BCASL_PLUGIN_REGISTER_FUNC,
@@ -44,6 +39,7 @@ from ..bcasl.executor import BCASL
 from ..bcasl.Loader import (
     run_pre_compile,
 )
+from ..bcasl.PreCompileContext import PreCompileContext
 
 # Validateur de compatibilité
 from ..bcasl.validator import (
@@ -52,6 +48,9 @@ from ..bcasl.validator import (
     print_compatibility_report,
     validate_plugins_compatibility,
 )
+
+# Utilitaire universel d'installation d'outils
+from ..Core.utils.ensure_tools import ToolsCheckResult
 
 __version__ = "1.0.0"
 

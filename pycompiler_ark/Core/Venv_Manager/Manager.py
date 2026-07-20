@@ -10,6 +10,7 @@ from PySide6.QtCore import QProcess, QTimer
 
 import pycompiler_ark.Core.deps_analyser.analyser as deps_analyser
 import pycompiler_ark.Core.SystemDepsManager as sys_deps
+
 from ...Ui import output as output
 from ..globals import WORKSPACE_CONFIG_DIRNAME
 
@@ -455,7 +456,7 @@ class VenvManager:
     def ensure_tools_installed(self, venv_root: str, tools: list[str]) -> None:
         """Asynchronously check/install the provided tools list with progress dialog."""
         try:
-            from pycompiler_ark.Core.Compiler.utils import check_internet_connection
+            from ..Compiler.utils import check_internet_connection
 
             if not check_internet_connection():
                 output.error(
@@ -523,7 +524,7 @@ class VenvManager:
     def ensure_tools_installed_system(self, tools: list[str]) -> None:
         """Asynchronously check/install tools in system Python using pip."""
         try:
-            from pycompiler_ark.Core.Compiler.utils import check_internet_connection
+            from ..Compiler.utils import check_internet_connection
 
             if not check_internet_connection():
                 output.error(
@@ -1052,7 +1053,7 @@ class VenvManager:
             )
             self._check_next_venv_pkg()
         else:
-            from pycompiler_ark.Core.Compiler.utils import check_internet_connection
+            from ..Compiler.utils import check_internet_connection
 
             if not check_internet_connection():
                 output.error(
@@ -1240,7 +1241,7 @@ class VenvManager:
                             output.warn(
                                 f"Timeout exceeded for {label} ({timeout_ms} ms). Killing process..."
                             )
-                            from pycompiler_ark.Core.process_killer import (
+                            from ..process_killer import (
                                 kill_process_tree,
                             )
 
@@ -1830,7 +1831,7 @@ class VenvManager:
         use_system_python: bool = False,
     ):
         """Start the related asynchronous operation."""
-        from pycompiler_ark.Core.Compiler.utils import check_internet_connection
+        from ..Compiler.utils import check_internet_connection
 
         if not check_internet_connection():
             output.error(
@@ -2089,7 +2090,7 @@ class VenvManager:
             proc = getattr(self, attr, None)
             try:
                 if proc:
-                    from pycompiler_ark.Core.process_killer import kill_process_tree
+                    from ..process_killer import kill_process_tree
 
                     kill_process_tree(proc.processId())
             except Exception:

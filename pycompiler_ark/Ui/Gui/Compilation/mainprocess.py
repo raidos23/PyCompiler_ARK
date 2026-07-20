@@ -41,8 +41,8 @@ from pycompiler_ark.Core.Configs import (
     load_ark_config,
     should_exclude_file,
 )
-from pycompiler_ark.Core.engine.build_context import BuildContext
-from pycompiler_ark.Ui.Gui.Compilation.compiler import CompilationStatus, CompilerCore
+from ....Core.engine.build_context import BuildContext
+from .compiler import CompilationStatus, CompilerCore
 
 
 class ProcessState(Enum):

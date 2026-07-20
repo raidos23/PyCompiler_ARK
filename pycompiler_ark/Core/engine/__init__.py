@@ -17,10 +17,9 @@ from __future__ import annotations
 
 import os
 
-from .loader import _auto_discover
-
 from . import registry as registry  # re-export registry module
 from .base import CompilerEngine  # re-export base type
+from .loader import _auto_discover
 from .registry import available_engines as _registry_available_engines
 from .registry import bind_tabs as _registry_bind_tabs
 from .registry import create as _registry_create

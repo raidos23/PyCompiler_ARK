@@ -60,7 +60,7 @@ def _engine_sdk_version() -> str:
 
 
 def _compatibility_result(engine_class) -> Any:
-    from pycompiler_ark.Core.engine.validator import check_engine_compatibility
+    from ...Core.engine.validator import check_engine_compatibility
 
     return check_engine_compatibility(
         engine_class,
@@ -148,7 +148,7 @@ def engine_list_payload(workspace: str | None = None) -> dict[str, Any]:
     engine_ids = list(available_engines())
     if not engine_ids:
         try:
-            from pycompiler_ark.Core.engine.loader import _auto_discover
+            from ...Core.engine.loader import _auto_discover
 
             _auto_discover()
             engine_ids = list(available_engines())

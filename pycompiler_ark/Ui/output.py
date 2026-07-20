@@ -15,9 +15,9 @@
 
 from __future__ import annotations
 
-import sys
 import re
-from typing import Optional, Any, Callable
+import sys
+from typing import Any, Callable, Optional
 
 try:
     from rich.console import Console  # type: ignore
@@ -27,7 +27,7 @@ except Exception:  # pragma: no cover
     Theme = None
 # Import translation once (lazy)
 try:
-    from pycompiler_ark.Ui.i18n import tr
+    from .i18n import tr
 except Exception:
     tr = None
 try:

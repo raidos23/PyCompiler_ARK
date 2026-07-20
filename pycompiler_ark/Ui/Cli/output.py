@@ -15,15 +15,15 @@
 
 from __future__ import annotations
 
-from pycompiler_ark.Ui.output import (
-    strip_emojis,
-    get_console,
-    plain,
-    log,
-    info,
-    warn,
+from ..output import (
     error,
+    get_console,
+    info,
+    log,
+    plain,
+    strip_emojis,
     success,
+    warn,
 )
 
 __all__ = [

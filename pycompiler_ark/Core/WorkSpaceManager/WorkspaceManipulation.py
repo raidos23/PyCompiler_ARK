@@ -99,7 +99,7 @@ def resolve_dropped_files(paths: list[str]) -> list[str]:
     """
     Business logic to resolve a list of file/directory paths into a flat list of Python files.
     """
-    from pycompiler_ark.Core.WorkSpaceManager.SetupWorkspace import SetupWorkspace
+    from .SetupWorkspace import SetupWorkspace
 
     all_files = []
     for path in paths:

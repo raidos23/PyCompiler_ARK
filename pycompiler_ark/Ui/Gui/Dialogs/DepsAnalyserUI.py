@@ -19,23 +19,23 @@ DepsAnalyserUI — GUI layer for dependency analysis.
 
 import json
 import os
-import sys
 import subprocess
+import sys
 
 from PySide6.QtCore import QProcess
-from PySide6.QtWidgets import QMessageBox, QApplication
+from PySide6.QtWidgets import QApplication, QMessageBox
 
-from pycompiler_ark.Core.deps_analyser.analyser import (
-    _normalize_realpath,
-    _is_path_under,
-    _should_skip_analysis_path,
-    _extract_imported_modules_from_file,
-    _collect_workspace_module_roots,
+from ....Core.deps_analyser.analyser import (
     _classify_module_origin,
+    _collect_workspace_module_roots,
+    _extract_imported_modules_from_file,
     _find_pip_executable,
+    _is_path_under,
+    _normalize_realpath,
+    _should_skip_analysis_path,
 )
-from pycompiler_ark.Ui.Gui.WidgetsCreator import ProgressDialog
 from pycompiler_ark.Ui import output
+from ..WidgetsCreator import ProgressDialog
 
 
 def _log_append(gui, msg: str) -> None:
