@@ -27,7 +27,7 @@ from typing import Any
 
 import yaml
 
-from pycompiler_ark.Core.globals import WORKSPACE_CONFIG_DIRNAME
+from ..globals import WORKSPACE_CONFIG_DIRNAME
 
 from ..Configs import normalize_ark_config
 from ..engine.build_context import BuildContext

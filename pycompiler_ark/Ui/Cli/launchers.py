@@ -75,7 +75,7 @@ def launch_main_application(
         from PySide6.QtGui import QPixmap
         from PySide6.QtWidgets import QSplashScreen
 
-        from pycompiler_ark.Ui.Gui.Gui import PyCompilerArkGui
+        from ..Gui.Gui import PyCompilerArkGui
 
         app = _get_or_create_qapp()
         set_app_icon(app)

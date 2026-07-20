@@ -112,6 +112,10 @@ class BcPluginBase:
         """Méthode à surcharger par le plugin."""
         raise NotImplementedError
 
+    def create_tab(self, gui):
+        "Create a config tab for Bc Plugins"
+        return None
+
     def __repr__(self) -> str:
         return f"<Plugin {self.meta.id} v{self.meta.version} prio={self.priority}>"
 

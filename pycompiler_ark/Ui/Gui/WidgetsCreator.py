@@ -130,21 +130,21 @@ def _redact_secrets(text: str) -> str:
 
 def _is_noninteractive() -> bool:
     """Check if running in non-interactive mode."""
-    from pycompiler_ark.Ui.Cli.runtime import is_noninteractive
+    from ..Cli.runtime import is_noninteractive
 
     return is_noninteractive()
 
 
 def _is_cli_mode() -> bool:
     """True when ARK CLI is active: plugins/dialogs must use Rich, not Qt."""
-    from pycompiler_ark.Ui.Cli.runtime import is_cli_mode
+    from ..Cli.runtime import is_cli_mode
 
     return is_cli_mode()
 
 
 def _use_rich_dialogs() -> bool:
     """Use Rich console dialogs instead of Qt message boxes."""
-    from pycompiler_ark.Ui.Cli.runtime import use_rich_dialogs
+    from ..Cli.runtime import use_rich_dialogs
 
     return use_rich_dialogs()
 
@@ -255,7 +255,7 @@ def _show_rich_msgbox(
     kind: str, title: str, text: str, *, default: Optional[str] = None
 ) -> Optional[bool]:
     """Render a Rich message-box-style panel in CLI environments."""
-    from pycompiler_ark.Ui.Cli.interactive import cli_pause_for_user_input
+    from ..Cli.interactive import cli_pause_for_user_input
 
     kind_key = str(kind or "info").lower()
     icon = "ℹ"
@@ -293,12 +293,12 @@ def _show_rich_msgbox(
                 default and str(default).lower() in ("yes", "ok", "true", "1")
             )
             try:
-                from pycompiler_ark.Ui.i18n import is_french_language
+                from ..i18n import is_french_language
 
                 prompt = "Confirmer" if is_french_language(None) else "Confirm"
             except Exception:
                 prompt = "Confirm"
-            from pycompiler_ark.Ui.Cli.interactive import ask_yes_no
+            from ..Cli.interactive import ask_yes_no
 
             return ask_yes_no(prompt, default_yes=default_yes)
 

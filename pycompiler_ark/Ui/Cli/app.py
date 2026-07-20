@@ -16,10 +16,11 @@
 from __future__ import annotations
 
 import json
+import os
 import sys
 from pathlib import Path
 from typing import Any
-import os
+
 from .helpers import (
     CliSpecError,
     build_context_object_from_ark_config,
@@ -128,8 +129,8 @@ def _build_impl(
     # Shared Python version resolution for locking/comparison
     python_version = None
     try:
-        from pycompiler_ark.Core.Compiler.utils import get_interpreter_version_str
-        from pycompiler_ark.Core.Venv_Manager.Manager import VenvManager
+        from ...Core.Compiler.utils import get_interpreter_version_str
+        from ...Core.Venv_Manager.Manager import VenvManager
 
         # We create a dummy bridge for VenvManager
         class DummyBridge:
@@ -170,7 +171,7 @@ def _build_impl(
         # Pre-resolve command for auto-mapping persistence (Phase 3)
         resolved_command = None
         try:
-            from pycompiler_ark.Core.Compiler.engine_runner import (
+            from ...Core.Compiler.engine_runner import (
                 resolve_engine_command,
             )
             from pycompiler_ark.Core.Locking import read_engine_config
@@ -510,7 +511,7 @@ def build_cli():
             _echo_json(payload)
             return
 
-        from .output import success, info
+        from .output import info, success
 
         success(
             (
@@ -674,6 +675,7 @@ def build_cli():
             return
 
         from rich.table import Table
+
         from .output import get_console
 
         console = get_console()
@@ -699,6 +701,7 @@ def build_cli():
             return
 
         from rich.table import Table
+
         from .output import get_console
 
         console = get_console()

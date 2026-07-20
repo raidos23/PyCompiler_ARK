@@ -23,14 +23,14 @@ from rich.console import Console
 
 # Import des classes et fonctions de Core.dialogs
 from pycompiler_ark.Ui import output
-from pycompiler_ark.Ui.Cli.runtime import is_cli_mode, is_noninteractive
-from pycompiler_ark.Ui.Gui.WidgetsCreator import (
+from ...Ui.Cli.runtime import is_cli_mode, is_noninteractive
+from ...Ui.Gui.WidgetsCreator import (
     InstallAuth,
     ProgressDialog,
     _redact_secrets,
     show_msgbox,
 )
-from pycompiler_ark.Ui.output import get_console
+from ...Ui.output import get_console
 
 from .i18n import translate
 
@@ -47,8 +47,9 @@ class Dialog:
     def _ensure_qt_context(self) -> None:
         """Ensure a QApplication exists to allow showing Qt dialogs from plugins."""
         try:
-            from PySide6.QtWidgets import QApplication
             import os
+
+            from PySide6.QtWidgets import QApplication
 
             # CLI and headless runs must stay on Rich, never bootstrap Qt here.
             if is_cli_mode() or is_noninteractive():

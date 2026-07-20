@@ -44,11 +44,11 @@ try:
     from pycompiler_ark.bcasl import BcPluginBase as BcPluginBase
     from pycompiler_ark.bcasl import ExecutionReport as ExecutionReport
     from pycompiler_ark.bcasl import PluginMeta as PluginMeta
-    from pycompiler_ark.bcasl.PreCompileContext import (
-        PreCompileContext as PreCompileContext,
-    )
     from pycompiler_ark.bcasl import bc_register as _bc_register
     from pycompiler_ark.bcasl import register_plugin as register_plugin
+    from ...bcasl.PreCompileContext import (
+        PreCompileContext as PreCompileContext,
+    )
 except ImportError:
     # Dev fallback when BCASL is not importable (e.g. standalone SDK testing)
     class BcPluginBase:
@@ -94,7 +94,7 @@ __version__ = "1.0.0"
 # -----------------------------
 Pathish = Union[str, Path]
 try:
-    from Core.utils.data import DependencyInfo, VenvInfo, PythonFileInfo, GitInfo
+    from ...Core.utils.data import DependencyInfo, GitInfo, PythonFileInfo, VenvInfo
 except Exception:
     DependencyInfo = None
     VenvInfo = None
@@ -141,7 +141,7 @@ def set_selected_workspace(path: Pathish) -> bool:
         pass
     # Try to inform the GUI when running with UI; ignore result and accept by contract
     try:
-        from pycompiler_ark.Services.AdvancedAuth import (
+        from ...Services.AdvancedAuth import (
             request_workspace_change_from_BcPlugin,
         )  # type: ignore
 

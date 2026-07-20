@@ -66,7 +66,7 @@ from pycompiler_ark.Plugins_SDK.GeneralContext import (
 def _is_dark() -> bool:
     """Détermine si le thème actuel est sombre."""
     try:
-        from pycompiler_ark.Ui.Gui.UiConnection import _is_qss_dark
+        from ..UiConnection import _is_qss_dark
 
         app = QApplication.instance()
         return _is_qss_dark(app.styleSheet() if app else "")
@@ -105,7 +105,7 @@ def _apply_themed_icon(widget: QPushButton, icon_name: str, size: int = 18) -> N
     try:
         from PySide6.QtCore import QSize
 
-        from pycompiler_ark.Ui.Gui.UiConnection import themed_svg_icon
+        from ..UiConnection import themed_svg_icon
 
         # icons/ is at project root, which is 3 levels up from this file (Ui/Gui/Dialogs/)
         icon_path = os.path.abspath(
@@ -145,7 +145,9 @@ SECTION_PHASES: dict[int, tuple[str, str]] = {
 # Tag → score de phase
 _TAG_PRIORITY_MAP: dict[str, int] = {}
 try:
-    from pycompiler_ark.bcasl.tagging import TAG_PRIORITY_MAP as _TAG_PRIORITY_MAP  # type: ignore
+    from ....bcasl.tagging import (
+        TAG_PRIORITY_MAP as _TAG_PRIORITY_MAP,  # type: ignore
+    )
 except Exception:
     pass
 
@@ -647,8 +649,8 @@ class BcaslPipelineDialog(QDialog):
     def _build_plugin_config_tabs(self) -> None:
         """Crée les onglets de configuration per-plugin."""
         try:
-            from pycompiler_ark.bcasl.PreCompileContext import PreCompileContext
-            from pycompiler_ark.bcasl.Loader import _build_workspace_meta
+            from ....bcasl.Loader import _build_workspace_meta
+            from ....bcasl.PreCompileContext import PreCompileContext
 
             workspace_meta = _build_workspace_meta(self._workspace_root, self._cfg)
             ctx = PreCompileContext(
@@ -950,7 +952,7 @@ class _BCASLWorker(QObject):
     @Slot()
     def run(self) -> None:
         try:
-            from pycompiler_ark.bcasl.Loader import (
+            from ....bcasl.Loader import (
                 BCASL_DISABLED_REPORT,
                 _is_bcasl_enabled,
                 _load_workspace_config,
@@ -1005,7 +1007,7 @@ class _BCASLUiBridge(QObject):
     def on_finished(self, rep) -> None:
         try:
             try:
-                from pycompiler_ark.bcasl.Loader import is_bcasl_disabled_report
+                from ....bcasl.Loader import is_bcasl_disabled_report
             except Exception:
                 is_bcasl_disabled_report = lambda _r: False  # type: ignore[assignment,misc]
 
@@ -1052,7 +1054,7 @@ def _build_plugin_item(
     QListWidgetItem,
 ) -> Any:
     """Construit un QListWidgetItem pour un plugin BCASL."""
-    from pycompiler_ark.bcasl.tagging import get_tag_phase_name
+    from ....bcasl.tagging import get_tag_phase_name
 
     label = meta.get("name") or pid
     ver = meta.get("version") or ""
@@ -1078,7 +1080,7 @@ def _build_plugin_item(
     except Exception:
         pass
 
-    from pycompiler_ark.bcasl.Loader import _plugin_enabled
+    from ....bcasl.Loader import _plugin_enabled
 
     enabled = _plugin_enabled(plugins_cfg, pid)
     try:
@@ -1115,7 +1117,7 @@ def ensure_bcasl_thread_stopped(self, timeout_ms: int = 5000) -> None:
         except Exception:
             pass
         try:
-            from pycompiler_ark.bcasl.executor import kill_active_workers
+            from ....bcasl.executor import kill_active_workers
 
             kill_active_workers()
         except Exception:
@@ -1138,7 +1140,7 @@ def ensure_bcasl_thread_stopped(self, timeout_ms: int = 5000) -> None:
                         except Exception:
                             pass
                     try:
-                        from pycompiler_ark.bcasl.executor import kill_active_workers
+                        from ....bcasl.executor import kill_active_workers
 
                         kill_active_workers()
                     except Exception:
@@ -1181,7 +1183,7 @@ def open_bc_loader_dialog(self) -> None:
 
         workspace_root = Path(self.workspace_dir).resolve()
 
-        from pycompiler_ark.bcasl.Loader import (
+        from ....bcasl.Loader import (
             _discover_bcasl_meta,
             _discover_bcasl_plugins,
             _get_all_plugins_dirs,
@@ -1243,7 +1245,7 @@ def run_pre_compile_async(
             return
         workspace_root = Path(self.workspace_dir).resolve()
 
-        from pycompiler_ark.bcasl.Loader import (
+        from ....bcasl.Loader import (
             BCASL_DISABLED_REPORT,
             _get_all_plugins_dirs,
             _is_bcasl_enabled,

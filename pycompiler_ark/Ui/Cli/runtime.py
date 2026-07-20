@@ -98,7 +98,7 @@ def _platform_log_dir() -> Path:
     """
     try:
         # Try to use the global config directory defined in PreferencesManager
-        from pycompiler_ark.Ui.PreferencesManager import _user_config_dir
+        from ..PreferencesManager import _user_config_dir
 
         return Path(_user_config_dir()) / "logs"
     except Exception:

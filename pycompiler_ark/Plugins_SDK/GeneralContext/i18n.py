@@ -18,6 +18,7 @@ from __future__ import annotations
 import os
 from pathlib import Path
 from typing import Any, Callable, Optional
+
 from ...Core.globals import _GLOBAL_LANG, _GLOBAL_TR, _LANG_ALIASES
 
 try:

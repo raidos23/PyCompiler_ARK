@@ -34,13 +34,12 @@ import time
 from pathlib import Path
 from typing import Any, Callable, Optional
 
-from pycompiler_ark.Core.utils.ensure_tools import ensure_tools
-from pycompiler_ark.Ui import output
-
 # BuildContext lives in engine_sdk; imported here so callers of this module
 # only need to import from pycompiler_ark.Core.Compiler.
-from pycompiler_ark.Core.engine.build_context import BuildContext
-from pycompiler_ark.Core.process_security import hardened_popen_kwargs, secure_command
+from ..engine.build_context import BuildContext
+from ..process_security import hardened_popen_kwargs, secure_command
+from ..utils.ensure_tools import ensure_tools
+from pycompiler_ark.Ui import output
 
 
 class EngineRunnerError(RuntimeError):
@@ -286,7 +285,7 @@ def run_engine_compile_streaming(
                 @property
                 def venv_manager(self):
                     if self._venv_manager is None:
-                        from pycompiler_ark.Core.Venv_Manager.Manager import VenvManager
+                        from ..Venv_Manager.Manager import VenvManager
 
                         self._venv_manager = VenvManager(self)
                         # Automatically load workspace preferences if available
@@ -431,7 +430,7 @@ def run_engine_compile_streaming(
     try:
         while process.poll() is None:
             if stop_signal and stop_signal():
-                from pycompiler_ark.Core.process_killer import kill_process_tree
+                from ..process_killer import kill_process_tree
 
                 kill_process_tree(process.pid)
                 break

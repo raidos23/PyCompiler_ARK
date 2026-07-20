@@ -80,7 +80,7 @@ class UiFeatures:
     def show_help_dialog(self):
         """Show the localized help dialog."""
         try:
-            from pycompiler_ark.Ui.i18n import translate
+            from ..i18n import translate
 
             help_title = translate(self, "help_title", "Help")
             help_text = translate(self, "help_text", "")
@@ -155,7 +155,7 @@ class UiFeatures:
             if os.path.isfile(path):
                 icon = None
                 try:
-                    from pycompiler_ark.Ui.Gui.UiConnection import themed_svg_icon
+                    from .UiConnection import themed_svg_icon
 
                     icon = themed_svg_icon(path, size=16, css=css)
                 except Exception:
@@ -303,7 +303,7 @@ class UiFeatures:
             return
         try:
             import pycompiler_ark.Core.engine as engines_loader
-            from pycompiler_ark.Core.engine.ConfigManager import (
+            from ...Core.engine.ConfigManager import (
                 save_engine_config_for_gui,
             )
 
@@ -618,7 +618,7 @@ class UiFeatures:
 
     def apply_language(self, lang_display: str) -> None:
         """Apply the selected language."""
-        from pycompiler_ark.Ui.i18n import apply_language as _i18n_apply_language
+        from ..i18n import apply_language as _i18n_apply_language
 
         _i18n_apply_language(self, lang_display)
 
@@ -651,7 +651,7 @@ class UiFeatures:
 
     def _apply_main_app_translations(self, tr: dict) -> None:
         """Apply translations to main UI elements."""
-        from pycompiler_ark.Ui.i18n import (
+        from ..i18n import (
             _apply_main_app_translations as _i18n_apply_translations,
         )
 
@@ -676,7 +676,7 @@ class UiFeatures:
             return
 
         try:
-            from pycompiler_ark.Ui.Gui.Dialogs.ConfigEditor import (
+            from .Dialogs.ConfigEditor import (
                 ConfigEditor,
             )
 

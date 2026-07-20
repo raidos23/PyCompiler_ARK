@@ -90,11 +90,11 @@ def ensure_tools(
         if gui is not None:
             # GUI/Bridge system tools flow
             try:
+                from ..Compiler.utils import check_internet_connection
                 from pycompiler_ark.Core.SystemDepsManager import (
                     SysDependencyManager,
                     check_system_packages,
                 )
-                from pycompiler_ark.Core.Compiler.utils import check_internet_connection
 
                 if hasattr(gui, "sys_deps_manager") and gui.sys_deps_manager:
                     sys_manager = gui.sys_deps_manager
@@ -157,7 +157,7 @@ def ensure_tools(
                             interval = 500  # 0.5s
                             while not process.waitForFinished(interval):
                                 if stop_signal and stop_signal():
-                                    from pycompiler_ark.Core.process_killer import (
+                                    from ..process_killer import (
                                         kill_process_tree,
                                     )
 
@@ -269,7 +269,7 @@ def ensure_tools(
                                 interval = 500  # 0.5s
                                 while not process.waitForFinished(interval):
                                     if stop_signal and stop_signal():
-                                        from pycompiler_ark.Core.process_killer import (
+                                        from ..process_killer import (
                                             kill_process_tree,
                                         )
 
@@ -381,11 +381,11 @@ def ensure_tools(
         else:
             # Original headless system tools check & installation flow
             try:
-                from pycompiler_ark.Core.SystemDepsManager.headless import (
+                from ..Compiler.utils import check_internet_connection
+                from ..SystemDepsManager.headless import (
                     check_system_packages,
                     install_system_packages,
                 )
-                from pycompiler_ark.Core.Compiler.utils import check_internet_connection
             except ImportError as exc:
                 err = f"[ensure_tools] Import headless impossible : {exc}"
                 errors.append(err)
@@ -451,7 +451,7 @@ def ensure_tools(
     if python_tools:
         if gui is not None and hasattr(gui, "venv_manager") and gui.venv_manager:
             try:
-                from pycompiler_ark.Core.Compiler.utils import check_internet_connection
+                from ..Compiler.utils import check_internet_connection
 
                 use_system = bool(getattr(gui, "use_system_python", False))
 
@@ -671,7 +671,7 @@ def ensure_tools(
                 )
 
                 try:
-                    from pycompiler_ark.Core.Compiler.utils import (
+                    from ..Compiler.utils import (
                         check_internet_connection,
                     )
 

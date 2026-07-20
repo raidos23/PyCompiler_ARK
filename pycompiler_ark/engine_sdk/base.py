@@ -16,6 +16,6 @@
 from __future__ import annotations
 
 # Stable re-export of the host base class
-from ..Core.engine.base import EngineMeta, CompilerEngine  # type: ignore[F401]
+from ..Core.engine.base import CompilerEngine, EngineMeta  # type: ignore[F401]
 
 __all__ = ["CompilerEngine", "EngineMeta"]

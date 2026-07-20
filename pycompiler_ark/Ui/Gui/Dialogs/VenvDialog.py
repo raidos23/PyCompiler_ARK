@@ -26,9 +26,9 @@ import os
 
 from PySide6.QtWidgets import QApplication, QFileDialog, QMessageBox
 
-from pycompiler_ark.Core.Venv_Manager.Manager import VenvManager
+from ....Core.Venv_Manager.Manager import VenvManager
 from pycompiler_ark.Ui import output
-from pycompiler_ark.Ui.Gui.WidgetsCreator import ProgressDialog
+from ..WidgetsCreator import ProgressDialog
 
 
 class VenvManagerUI(VenvManager):

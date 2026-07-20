@@ -394,7 +394,7 @@ def get_current_language_sync() -> str:
     """Return current language from user preferences (sync)."""
     try:
         # Absolute import to avoid relative-import issues outside Core package
-        from pycompiler_ark.Ui.PreferencesManager import PREFS_FILE
+        from .PreferencesManager import PREFS_FILE
 
         if os.path.isfile(PREFS_FILE):
             with open(PREFS_FILE, encoding="utf-8") as f:
@@ -543,7 +543,7 @@ def i18n_synchro(self, lang_pref: str, tr: dict[str, Any]) -> str:
 
     _apply_main_app_translations(self, tr)
 
-    from pycompiler_ark.Ui.Gui.IdeLikeGui.connections import (
+    from .Gui.IdeLikeGui.connections import (
         _retranslate_ide_like_actions,
     )
 
@@ -582,7 +582,7 @@ def i18n_synchro(self, lang_pref: str, tr: dict[str, Any]) -> str:
 
 def apply_language(self, lang_display: str) -> None:
     """Apply selected language through centralized i18n flow."""
-    from pycompiler_ark.Ui.Gui.Globals import _run_coro_async
+    from .Gui.Globals import _run_coro_async
 
     async def _do():
         code = (

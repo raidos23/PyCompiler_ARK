@@ -19,8 +19,8 @@ import logging
 import os
 from typing import Any, Optional
 
-from .base import CompilerEngine
 from ..globals import _GLOBAL_LANG, _GLOBAL_TR, _LANG_ALIASES
+from .base import CompilerEngine
 
 logger = logging.getLogger(__name__)
 

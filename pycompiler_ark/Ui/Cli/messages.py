@@ -25,7 +25,7 @@ def cli_text(message: CliMessage) -> str:
     if isinstance(message, (tuple, list)) and len(message) >= 2:
         fr, en = str(message[0]), str(message[1])
         try:
-            from pycompiler_ark.Ui.i18n import tr_fr_en
+            from ..i18n import tr_fr_en
 
             return tr_fr_en(None, fr, en)
         except Exception:

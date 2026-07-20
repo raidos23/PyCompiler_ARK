@@ -29,7 +29,7 @@ _active_statuses: list[Any] = []
 
 def _is_noninteractive_env() -> bool:
     try:
-        from pycompiler_ark.Ui.Cli.runtime import is_noninteractive
+        from .runtime import is_noninteractive
 
         return is_noninteractive()
     except Exception:
@@ -58,7 +58,7 @@ def ask_yes_no(prompt: str, *, default_yes: bool = True) -> bool:
         return True
 
     try:
-        from pycompiler_ark.Ui.i18n import is_french_language
+        from ..i18n import is_french_language
 
         french = bool(is_french_language(None))
     except Exception:
@@ -218,7 +218,7 @@ def cli_pause_for_user_input() -> Iterator[Optional[Any]]:
     try:
         console = None
         try:
-            from pycompiler_ark.Ui.Cli.output import get_console
+            from .output import get_console
 
             console = get_console()
         except Exception:

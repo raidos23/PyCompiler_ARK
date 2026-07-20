@@ -18,12 +18,11 @@ import shutil
 from pathlib import Path
 from typing import Optional
 
-
 from pycompiler_ark.Plugins_SDK.BcPluginContext import (
     BcPluginBase,
     PluginMeta,
-    bc_register,
     PreCompileContext,
+    bc_register,
 )
 from pycompiler_ark.Plugins_SDK.GeneralContext import (
     Dialog,

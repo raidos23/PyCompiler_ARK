@@ -23,8 +23,8 @@ from __future__ import annotations
 
 from typing import Any, Optional
 
-from pycompiler_ark.Ui.Gui.Compilation.mainprocess import MainProcess
 from pycompiler_ark.Ui import output
+from .mainprocess import MainProcess
 
 # Singleton MainProcess (initialised on first use)
 _main_process: Optional[MainProcess] = None
@@ -62,9 +62,10 @@ def run_bcasl_before_compile(
     Optimized: Checks activation state before launching the async thread.
     """
     try:
-        from pycompiler_ark.bcasl.Loader import BCASL_DISABLED_REPORT, _is_bcasl_enabled
-        from pycompiler_ark.Ui.Gui.Dialogs.BcaslDialog import run_pre_compile_async
         from pathlib import Path
+
+        from ....bcasl.Loader import BCASL_DISABLED_REPORT, _is_bcasl_enabled
+        from ..Dialogs.BcaslDialog import run_pre_compile_async
     except Exception:
         if callable(on_done):
             on_done(None)
@@ -126,7 +127,8 @@ def bcasl_report_allows_compile(gui_instance, report) -> bool:
             # Fallback check if the thread returned nothing
             try:
                 from pathlib import Path
-                from pycompiler_ark.bcasl.Loader import _is_bcasl_enabled
+
+                from ....bcasl.Loader import _is_bcasl_enabled
 
                 ws = getattr(gui_instance, "workspace_dir", None)
                 if ws and not _is_bcasl_enabled(Path(ws).resolve()):
@@ -138,7 +140,7 @@ def bcasl_report_allows_compile(gui_instance, report) -> bool:
         # 1. Handle Disabled Report (Dict)
         if isinstance(report, dict):
             try:
-                from pycompiler_ark.bcasl.Loader import is_bcasl_disabled_report
+                from ....bcasl.Loader import is_bcasl_disabled_report
 
                 if is_bcasl_disabled_report(report):
                     return True

@@ -34,6 +34,7 @@ except Exception:
     QSvgRenderer = None  # type: ignore[assignment]
 
 from pycompiler_ark.Ui import output
+
 from .Dialogs.i18nDialog import show_language_dialog, translate
 
 
@@ -164,7 +165,7 @@ def _clear_inline_styles(self) -> None:
 def _connect_dialogs_to_app(self) -> None:
     """Connect helper dialogs to the app for theme synchronization."""
     try:
-        from pycompiler_ark.Ui.Gui.WidgetsCreator import connect_to_app
+        from .WidgetsCreator import connect_to_app
 
         connect_to_app(self)
     except Exception:
@@ -553,7 +554,7 @@ def _connect_signals(self) -> None:
 
     if self.btn_bc_loader:
         try:
-            from pycompiler_ark.Ui.Gui.Dialogs.BcaslDialog import open_bc_loader_dialog
+            from .Dialogs.BcaslDialog import open_bc_loader_dialog
 
             self.btn_bc_loader.clicked.connect(lambda: open_bc_loader_dialog(self))
         except Exception:
@@ -871,7 +872,7 @@ def apply_theme(self, pref: str) -> None:
         except Exception:
             pass
         try:
-            from pycompiler_ark.Ui.Gui.IdeLikeGui.connections import (
+            from .IdeLikeGui.connections import (
                 _apply_activity_buttons_theme,
             )
 

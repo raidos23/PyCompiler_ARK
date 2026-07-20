@@ -15,17 +15,17 @@
 
 """Internal system dependency management package."""
 
-from pycompiler_ark.Core.SystemDepsManager.detection import (
+from .detection import (
     detect_linux_package_manager,
     detect_macos_package_manager,
     get_install_command,
     which,
 )
-from pycompiler_ark.Core.SystemDepsManager.headless import (
+from .headless import (
     check_system_packages,
     install_system_packages,
 )
-from pycompiler_ark.Core.SystemDepsManager.manager import SysDependencyManager
+from .manager import SysDependencyManager
 
 __all__ = [
     "SysDependencyManager",

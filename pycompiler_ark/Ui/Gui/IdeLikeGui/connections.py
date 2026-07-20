@@ -43,22 +43,20 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from pycompiler_ark.Ui.Gui.UiConnection import (
+from ..UiConnection import (
     _apply_button_icons,
     _apply_initial_theme,
     _auto_resize_for_screen,
     _connect_dialogs_to_app,
-)
-from pycompiler_ark.Ui.Gui.UiConnection import (
-    _connect_signals as _connect_classic_signals,
-)
-from pycompiler_ark.Ui.Gui.UiConnection import (
     _is_qss_dark,
     _refresh_log_palette,
     show_theme_dialog,
     themed_svg_icon,
 )
-from pycompiler_ark.Ui.i18n import translate
+from ..UiConnection import (
+    _connect_signals as _connect_classic_signals,
+)
+from ...i18n import translate
 
 
 def _prime_expected_attrs(self) -> None:
@@ -584,7 +582,7 @@ def _apply_activity_buttons_theme(self) -> None:
 def _retranslate_ide_like_actions(self) -> None:
     """Refresh IDE-specific actions using the generic i18n traversal."""
     try:
-        from pycompiler_ark.Ui.i18n import (
+        from ...i18n import (
             _apply_main_app_translations,
             get_active_translations,
         )

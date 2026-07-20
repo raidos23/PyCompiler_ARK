@@ -24,23 +24,14 @@ Qt-dependent classes have been moved to Ui/Gui/Compilation/.
 from __future__ import annotations
 
 # Importations de allversion.py
-from pycompiler_ark.Core.allversion import (
+from .allversion import (
     get_bcasl_version,
     get_core_version,
     get_engine_sdk_version,
 )
 
-# Importations de process_killer.py
-from pycompiler_ark.Core.process_killer import (
-    ProcessInfo,
-    ProcessKiller,
-    get_process_info,
-    kill_process,
-    kill_process_tree,
-)
-
 # Importations de utils.py
-from pycompiler_ark.Core.Compiler.utils import (
+from .Compiler.utils import (
     CommandBuilder,
     build_command,
     check_module_available,
@@ -51,8 +42,17 @@ from pycompiler_ark.Core.Compiler.utils import (
     validate_command,
 )
 
+# Importations de process_killer.py
+from .process_killer import (
+    ProcessInfo,
+    ProcessKiller,
+    get_process_info,
+    kill_process,
+    kill_process_tree,
+)
+
 # Importations de Venv_Manager/Manager.py
-from pycompiler_ark.Core.Venv_Manager.Manager import VenvManager
+from .Venv_Manager.Manager import VenvManager
 
 __all__ = [
     "build_command",

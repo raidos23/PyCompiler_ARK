@@ -24,6 +24,7 @@ import os
 
 from PySide6.QtGui import QDropEvent
 from PySide6.QtWidgets import QFileDialog, QMessageBox
+
 from pycompiler_ark.Ui import output
 
 
@@ -53,7 +54,7 @@ class WorkspaceAdvancedManipulation:
             gui_instance.tr("Fichiers Python (*.py)", "Python Files (*.py)"),
         )
         if files:
-            from pycompiler_ark.Core.WorkSpaceManager.WorkspaceManipulation import (
+            from ...Core.WorkSpaceManager.WorkspaceManipulation import (
                 add_files,
             )
 
@@ -120,7 +121,7 @@ class WorkspaceAdvancedManipulation:
         if not selected_items:
             return
 
-        from pycompiler_ark.Core.WorkSpaceManager.WorkspaceManipulation import (
+        from ...Core.WorkSpaceManager.WorkspaceManipulation import (
             remove_files,
         )
 
@@ -151,7 +152,7 @@ class WorkspaceAdvancedManipulation:
     @staticmethod
     def handle_drop_event(gui_instance, event: QDropEvent):
         """Traiter l'événement drop et ajouter les fichiers/dossiers Python déposés."""
-        from pycompiler_ark.Core.WorkSpaceManager.WorkspaceManipulation import (
+        from ...Core.WorkSpaceManager.WorkspaceManipulation import (
             add_files,
             resolve_dropped_files,
         )
@@ -220,7 +221,7 @@ class WorkspaceAdvancedManipulation:
     def clear_workspace(gui_instance, keep_dir: bool = True) -> bool:
         """Vider l'état courant du workspace."""
         try:
-            from pycompiler_ark.Core.WorkSpaceManager.WorkspaceManipulation import (
+            from ...Core.WorkSpaceManager.WorkspaceManipulation import (
                 clear_workspace_data,
             )
 

@@ -14,8 +14,9 @@
 # limitations under the License.
 
 import asyncio
-from ...i18n import available_languages, get_translations, i18n_synchro, translate
+
 from ... import output
+from ...i18n import available_languages, get_translations, i18n_synchro, translate
 
 
 def show_language_dialog(self):

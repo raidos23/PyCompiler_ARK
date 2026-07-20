@@ -31,7 +31,7 @@ from typing import Any, Dict, List, Optional
 
 from PySide6.QtCore import QObject, QThread, Signal
 
-from pycompiler_ark.Core.Compiler.engine_runner import (
+from ....Core.Compiler.engine_runner import (
     BuildContext,
     run_engine_compile_streaming,
 )
@@ -165,19 +165,19 @@ class CompilationThread(QThread):
                 self.log_requested.emit(
                     "info", "🔒 Generating compilation lock file (background)..."
                 )
-                from pycompiler_ark.Ui.Cli.helpers import (
-                    build_lock_payload,
-                    write_lock_files,
-                    engine_config_from_lock,
-                    build_context_object_from_ark_config,
-                )
-                from pycompiler_ark.Core.Compiler.engine_runner import (
+                from ....Core.Compiler.engine_runner import (
                     resolve_engine_command,
                 )
-                from pycompiler_ark.Core.Compiler.utils import (
+                from ....Core.Compiler.utils import (
                     get_interpreter_version_str,
                 )
-                from pycompiler_ark.Core.Venv_Manager.Manager import VenvManager
+                from ....Core.Venv_Manager.Manager import VenvManager
+                from ...Cli.helpers import (
+                    build_context_object_from_ark_config,
+                    build_lock_payload,
+                    engine_config_from_lock,
+                    write_lock_files,
+                )
 
                 # 1. Resolve Python Version
                 python_version = None

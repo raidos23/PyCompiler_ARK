@@ -23,9 +23,6 @@ import time
 from pathlib import Path
 from typing import Any, Optional
 
-from ..bcasl.PreCompileContext import PreCompileContext
-
-from ..Core.utils.ensure_tools import ensure_tools
 from ..bcasl.Base import (
     BCASL_PLUGIN_REGISTER_FUNC,
     BcPluginBase,
@@ -35,6 +32,8 @@ from ..bcasl.Base import (
     _logger,
     _PluginRecord,
 )
+from ..bcasl.PreCompileContext import PreCompileContext
+from ..Core.utils.ensure_tools import ensure_tools
 
 _ACTIVE_WORKER_PIDS: set[int] = set()
 _ACTIVE_WORKER_LOCK = threading.Lock()
