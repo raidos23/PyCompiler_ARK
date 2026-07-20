@@ -27,6 +27,7 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable, Optional
+from ...Core.globals import WORKSPACE_CONFIG_DIRNAME
 
 # Global event for CLI cancellation
 _CLI_CANCEL_EVENT = threading.Event()
@@ -381,7 +382,7 @@ def init_workspace(
                 "# Add your runtime dependencies here.\n", encoding="utf-8"
             )
 
-    venv_path = workspace / ".ark" / "venv"
+    venv_path = workspace / WORKSPACE_CONFIG_DIRNAME / "venv"
     if with_venv and not venv_path.exists():
         builder = venv.EnvBuilder(with_pip=True)
         builder.create(str(venv_path))
@@ -419,7 +420,7 @@ def init_workspace(
     # Initialize workspace preferences
     from .output import info
 
-    pref_path = workspace / ".ark" / "pref.json"
+    pref_path = workspace / WORKSPACE_CONFIG_DIRNAME / "pref.json"
     pref_data = {"venv_mode": "system", "venv_path": None}
 
     if venv_path.exists():
