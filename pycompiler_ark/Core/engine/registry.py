@@ -537,8 +537,18 @@ def bind_tabs(gui) -> None:
         except Exception:
             pass
 
-        # Get the Hello tab if it exists
+        # Get the Hello tab if it exists, or create it dynamically
         hello_tab = getattr(gui, "tab_hello", None)
+        if hello_tab is None:
+            try:
+                from pycompiler_ark.Core.engine.hello_tab import create_hello_tab
+
+                hello_tab = create_hello_tab(gui)
+                if hello_tab is not None:
+                    setattr(gui, "tab_hello", hello_tab)
+            except Exception:
+                pass
+
         hello_tab_index = -1
         if hello_tab is not None:
             try:
@@ -648,10 +658,27 @@ def bind_tabs(gui) -> None:
                 )
                 continue
 
-        # Hide the Hello tab if any engine has created a tab
-        if any_engine_tab_created and hello_tab_index >= 0:
+        # Show/add or hide/remove the Hello tab depending on whether engine tabs exist
+        if hello_tab is not None:
             try:
-                tabs.tabBar().hideTab(hello_tab_index)
+                if any_engine_tab_created:
+                    if hello_tab_index >= 0:
+                        tabs.removeTab(hello_tab_index)
+                else:
+                    if hello_tab_index < 0:
+                        title = "Bienvenue"
+                        try:
+                            from pycompiler_ark.Ui.i18n import translate
+
+                            title = translate(
+                                gui.id if hasattr(gui, "id") else "ui",
+                                "tab_hello",
+                                "Bienvenue",
+                            )
+                        except Exception:
+                            pass
+                        tabs.insertTab(0, hello_tab, title)
+                    tabs.setCurrentWidget(hello_tab)
             except Exception:
                 pass
     except Exception:
@@ -669,9 +696,20 @@ def show_hello_tab(gui) -> None:
         if hello_tab is not None:
             try:
                 idx = tabs.indexOf(hello_tab)
-                if idx >= 0:
-                    tabs.tabBar().showTab(idx)
-                    tabs.setCurrentIndex(idx)
+                if idx < 0:
+                    title = "Bienvenue"
+                    try:
+                        from pycompiler_ark.Ui.i18n import translate
+
+                        title = translate(
+                            gui.id if hasattr(gui, "id") else "ui",
+                            "tab_hello",
+                            "Bienvenue",
+                        )
+                    except Exception:
+                        pass
+                    tabs.insertTab(0, hello_tab, title)
+                tabs.setCurrentWidget(hello_tab)
             except Exception:
                 pass
     except Exception:
