@@ -31,7 +31,10 @@ _LANG_ALIASES: dict[str, str] = {
     "zh_cn": "zh-CN",
     "zh-cn": "zh-CN",
 }
+
 _GLOBAL_TR: dict[str, Any] = {}
 _GLOBAL_LANG: str = "en"
 
 WORKSPACE_CONFIG_DIRNAME = ".ark"
+INTERNAL_ENGINES_DIR = "engines"
+INTERNAL_PLUGINS_DIR = "Plugins"

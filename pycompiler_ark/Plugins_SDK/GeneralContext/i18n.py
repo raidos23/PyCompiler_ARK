@@ -19,7 +19,12 @@ import os
 from pathlib import Path
 from typing import Any, Callable, Optional
 
-from ...Core.globals import _GLOBAL_LANG, _GLOBAL_TR, _LANG_ALIASES
+from ...Core.globals import (
+    _GLOBAL_LANG,
+    _GLOBAL_TR,
+    _LANG_ALIASES,
+    INTERNAL_PLUGINS_DIR,
+)
 
 try:
     import yaml
@@ -285,7 +290,7 @@ def _discover_plugins_dir() -> str | None:
                 os.path.dirname(os.path.abspath(__file__)), os.pardir, os.pardir
             )
         )
-        cand = os.path.join(base, "Plugins")
+        cand = os.path.join(base, INTERNAL_PLUGINS_DIR)
         if os.path.isdir(cand):
             return cand
     except Exception:

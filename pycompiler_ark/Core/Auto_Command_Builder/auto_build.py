@@ -21,7 +21,8 @@ import os
 import re
 from typing import Optional
 
-from pycompiler_ark.Ui import output
+from ...Ui import output
+from ..globals import INTERNAL_ENGINES_DIR
 
 # Optional access to registered engines for discovery
 try:
@@ -628,7 +629,7 @@ def compute_for_all(
                     os.path.dirname(os.path.abspath(__file__)), os.pardir, os.pardir
                 )
             )
-            engines_root = os.path.join(project_root, "engines")
+            engines_root = os.path.join(project_root, INTERNAL_ENGINES_DIR)
             if os.path.isdir(engines_root):
                 for name in sorted(os.listdir(engines_root)):
                     d = os.path.join(engines_root, name)
@@ -695,7 +696,9 @@ def _load_engine_package_mapping(
                 os.path.dirname(os.path.abspath(__file__)), os.pardir, os.pardir
             )
         )
-        engines_dir = os.path.join(project_root, "engines", engine_id, "mapping.json")
+        engines_dir = os.path.join(
+            project_root, INTERNAL_ENGINES_DIR, engine_id, "mapping.json"
+        )
         if os.path.isfile(engines_dir):
             try:
                 data_ext = _read_json_file(engines_dir)

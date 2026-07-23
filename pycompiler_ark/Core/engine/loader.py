@@ -23,6 +23,7 @@ import pkgutil
 import sys
 from types import ModuleType
 
+from ..globals import INTERNAL_ENGINES_DIR
 from . import registry as engine_registry
 from .base import CompilerEngine
 
@@ -84,7 +85,7 @@ def _import_module_tree(module_name: str) -> list[ModuleType]:
 def _sync_engine_sdk_registry() -> None:
     """Keep engine_sdk.registry aligned with the active engine registry module."""
     try:
-        import pycompiler_ark.engine_sdk as engine_sdk
+        from ... import engine_sdk as engine_sdk
 
         engine_sdk.registry = engine_registry
     except Exception:
@@ -94,7 +95,7 @@ def _sync_engine_sdk_registry() -> None:
 
 
 def _discover_external_plugins(
-    base_path: str, namespace_package: str = "engines"
+    base_path: str, namespace_package: str = INTERNAL_ENGINES_DIR
 ) -> None:
     """Import namespaced engine packages and register CompilerEngine classes dynamically."""
     try:
@@ -142,23 +143,25 @@ def _auto_discover() -> None:
                 os.path.dirname(os.path.abspath(__file__)), os.pardir, os.pardir
             )
         )
-        external_dir = os.path.join(project_root, "engines")
+        external_dir = os.path.join(project_root, INTERNAL_ENGINES_DIR)
         # Ensure directory exists for auto-discovery
         os.makedirs(external_dir, exist_ok=True)
-        _discover_external_plugins(external_dir, namespace_package="engines")
+        _discover_external_plugins(external_dir, namespace_package=INTERNAL_ENGINES_DIR)
     except Exception:
         logger.exception("Automatic engine discovery failed for project engines folder")
 
-    # 2. User-level and Dev-level engines folders (from pycompiler_ark.Core.Configs)
+    # 2. User-level and Dev-level engines folders
     try:
-        from pycompiler_ark.Core.Configs import resolve_config_value
+        from ..Configs import resolve_config_value
 
         for key in ("user-engine-dir", "dev-engine-dir"):
             try:
                 dir_path = resolve_config_value(key, create_default=False)
                 if dir_path and os.path.isdir(dir_path):
                     # We discover plugins in these external folders using 'engines' namespace
-                    _discover_external_plugins(dir_path, namespace_package="engines")
+                    _discover_external_plugins(
+                        dir_path, namespace_package=INTERNAL_ENGINES_DIR
+                    )
             except Exception:
                 logger.warning("Failed to discover engines from config key: %s", key)
     except Exception:

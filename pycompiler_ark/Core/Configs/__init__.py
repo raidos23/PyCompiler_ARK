@@ -60,6 +60,8 @@ from typing import Any, Optional
 
 import yaml
 
+from ..globals import INTERNAL_ENGINES_DIR, INTERNAL_PLUGINS_DIR
+
 # =============================================================================
 # WORKSPACE / PROJECT CONFIGURATION  (was Core.ArkConfig)
 # =============================================================================
@@ -554,8 +556,8 @@ CONFIG_KEYS: dict[str, str] = {
 #: Default sub-directory paths (relative to ``Path.home()``) created on first
 #: access for keys that have no explicit override.
 DEFAULT_USER_DIRS: dict[str, tuple[str, ...]] = {
-    "user-engine-dir": (".pycompiler_ark", "engines"),
-    "user-plugin-dir": (".pycompiler_ark", "plugins"),
+    "user-engine-dir": (".pycompiler_ark", INTERNAL_ENGINES_DIR),
+    "user-plugin-dir": (".pycompiler_ark", INTERNAL_PLUGINS_DIR),
 }
 
 
