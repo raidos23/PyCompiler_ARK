@@ -60,7 +60,7 @@ def _engine_sdk_version() -> str:
 
 
 def _compatibility_result(engine_class) -> Any:
-    from ...Core.engine.validator import check_engine_compatibility
+    from pycompiler_ark.Core.engine.validator import check_engine_compatibility
 
     return check_engine_compatibility(
         engine_class,
@@ -148,7 +148,7 @@ def engine_list_payload(workspace: str | None = None) -> dict[str, Any]:
     engine_ids = list(available_engines())
     if not engine_ids:
         try:
-            from ...Core.engine.loader import _auto_discover
+            from pycompiler_ark.Core.engine.loader import _auto_discover
 
             _auto_discover()
             engine_ids = list(available_engines())
@@ -259,14 +259,7 @@ def scaffold_engine(target_name: str, root_dir: str | None = None) -> dict[str, 
     lang_dir = engine_dir / "languages"
     created: list[str] = []
     if engine_dir.exists():
-        return {
-            "created": False,
-            "path": str(engine_dir),
-            "reason": (
-                "Le dossier existe déjà.",
-                "already exists",
-            ),
-        }
+        return {"created": False, "path": str(engine_dir), "reason": "already exists"}
 
     lang_dir.mkdir(parents=True, exist_ok=True)
     created.extend([str(engine_dir), str(lang_dir)])
@@ -316,14 +309,7 @@ def scaffold_plugin(target_name: str, root_dir: str | None = None) -> dict[str, 
 
     lang_dir = plugin_dir / "languages"
     if plugin_dir.exists():
-        return {
-            "created": False,
-            "path": str(plugin_dir),
-            "reason": (
-                "Le dossier existe déjà.",
-                "already exists",
-            ),
-        }
+        return {"created": False, "path": str(plugin_dir), "reason": "already exists"}
 
     lang_dir.mkdir(parents=True, exist_ok=True)
     (plugin_dir / "__init__.py").write_text(

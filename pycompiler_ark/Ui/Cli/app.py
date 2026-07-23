@@ -46,7 +46,6 @@ from .helpers import (
     validate_ark_config,
     write_lock_files,
 )
-from .messages import cli_click_exception, cli_text
 from .output import info, success
 from .runtime import install_runtime, should_enable_qt
 
@@ -90,12 +89,7 @@ def _ensure_engine_known(engine_id: str) -> None:
         if isinstance(item, dict)
     }
     if engine_id not in known_ids:
-        raise CliSpecError(
-            (
-                f"build.engine: moteur inconnu '{engine_id}'",
-                f"build.engine: unknown engine '{engine_id}'",
-            )
-        )
+        raise CliSpecError(f"build.engine: unknown engine '{engine_id}'")
 
 
 def _build_impl(
@@ -113,14 +107,7 @@ def _build_impl(
 
     if lock_file and engine_override:
         raise CliSpecError(
-            (
-                "--engine ne peut pas être utilisé avec --lock\n"
-                "Pour un autre moteur, créez un nouveau lock avec : "
-                "pycompiler_ark build --engine <engine_id>",
-                "--engine cannot be used with --lock\n"
-                "If you need a different engine, create a new lock with: "
-                "pycompiler_ark build --engine <engine_id>",
-            )
+            "--engine cannot be used with --lock\nIf you need a different engine, create a new lock with: pycompiler_ark build --engine <engine_id>"
         )
 
     if not as_json and verbose:
@@ -129,8 +116,8 @@ def _build_impl(
     # Shared Python version resolution for locking/comparison
     python_version = None
     try:
-        from ...Core.Compiler.utils import get_interpreter_version_str
-        from ...Core.Venv_Manager.Manager import VenvManager
+        from pycompiler_ark.Core.Compiler.utils import get_interpreter_version_str
+        from pycompiler_ark.Core.Venv_Manager.Manager import VenvManager
 
         # We create a dummy bridge for VenvManager
         class DummyBridge:
@@ -171,7 +158,7 @@ def _build_impl(
         # Pre-resolve command for auto-mapping persistence (Phase 3)
         resolved_command = None
         try:
-            from ...Core.Compiler.engine_runner import (
+            from pycompiler_ark.Core.Compiler.engine_runner import (
                 resolve_engine_command,
             )
             from pycompiler_ark.Core.Locking import read_engine_config
@@ -264,26 +251,14 @@ def _build_impl(
                     )
                 )
             else:
-                err = result.get("error")
-                if err:
-                    raise CliSpecError(str(err))
-                raise CliSpecError(
-                    (
-                        "Échec du build.",
-                        "Build failed",
-                    )
-                )
+                raise CliSpecError(result.get("error") or "Build failed")
         return 0 if result.get("success") else 1
 
     # Rebuild from lock
     if lock_file == "__default__":
         raise CliSpecError(
-            (
-                "Usage : pycompiler_ark build --lock <FILE_OR_LATEST>\n"
-                "Exemple : pycompiler_ark build --lock latest",
-                "Usage: pycompiler_ark build --lock <FILE_OR_LATEST>\n"
-                "Example: pycompiler_ark build --lock latest",
-            )
+            "Usage: pycompiler_ark build --lock <FILE_OR_LATEST>\n"
+            "Exemple: pycompiler_ark build --lock latest"
         )
 
     if lock_file == "latest":
@@ -294,12 +269,7 @@ def _build_impl(
             lock_path = workspace / lock_path
 
     if not lock_path.exists():
-        raise CliSpecError(
-            (
-                f"Fichier lock introuvable : {lock_path}",
-                f"Lock file not found: {lock_path}",
-            )
-        )
+        raise CliSpecError(f"Lock file not found: {lock_path}")
 
     if not as_json:
         info(
@@ -313,21 +283,12 @@ def _build_impl(
     engine_id = str(((lock_payload.get("engine") or {}).get("name")) or "").strip()
     entry_file = str(((lock_payload.get("project") or {}).get("entry")) or "").strip()
     if not engine_id or not entry_file:
-        raise CliSpecError(
-            (
-                "Fichier lock invalide : engine.name ou project.entry manquant.",
-                "Invalid lock file: missing engine.name or project.entry",
-            )
-        )
+        raise CliSpecError("Invalid lock file: missing engine.name or project.entry")
 
     entry_path = workspace / Path(entry_file)
     if not entry_path.is_file():
         raise CliSpecError(
-            (
-                f"Fichier lock invalide : project.entry '{entry_file}' "
-                "est manquant ou obsolète.",
-                f"Invalid lock file: project.entry '{entry_file}' is missing or obsolete",
-            )
+            f"Invalid lock file: project.entry '{entry_file}' is missing or obsolete"
         )
 
     if not as_json and verbose:
@@ -447,15 +408,7 @@ def _build_impl(
                 )
             )
         else:
-            err = result.get("error")
-            if err:
-                raise CliSpecError(str(err))
-            raise CliSpecError(
-                (
-                    "Échec du build.",
-                    "Build failed",
-                )
-            )
+            raise CliSpecError(result.get("error") or "Build failed")
     return 0 if result.get("success") else 1
 
 
@@ -506,7 +459,7 @@ def build_cli():
                 auto_confirm=auto_confirm,
             )
         except CliSpecError as exc:
-            raise cli_click_exception(exc.raw_message) from exc
+            raise click.ClickException(str(exc))
         if as_json:
             _echo_json(payload)
             return
@@ -585,7 +538,7 @@ def build_cli():
                 auto_confirm=auto_confirm,
             )
         except CliSpecError as exc:
-            raise cli_click_exception(exc.raw_message) from exc
+            raise click.ClickException(str(exc))
         raise click.exceptions.Exit(code)
 
     @cli.group("run")
@@ -732,14 +685,9 @@ def build_cli():
             _echo_json(payload)
             return
         if not payload.get("created"):
-            reason = payload.get(
-                "reason",
-                (
-                    "Impossible de créer le scaffold.",
-                    "Unable to create scaffold",
-                ),
+            raise click.ClickException(
+                payload.get("reason", "Unable to create scaffold")
             )
-            raise cli_click_exception(reason)
         click.echo(payload["path"])
 
     @scaffold_group.command("plugin-bcasl")
@@ -752,14 +700,9 @@ def build_cli():
             _echo_json(payload)
             return
         if not payload.get("created"):
-            reason = payload.get(
-                "reason",
-                (
-                    "Impossible de créer le scaffold.",
-                    "Unable to create scaffold",
-                ),
+            raise click.ClickException(
+                payload.get("reason", "Unable to create scaffold")
             )
-            raise cli_click_exception(reason)
         click.echo(payload["path"])
 
     return cli

@@ -28,8 +28,6 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable, Optional
 
-from ...Core.globals import WORKSPACE_CONFIG_DIRNAME
-
 # Global event for CLI cancellation
 _CLI_CANCEL_EVENT = threading.Event()
 
@@ -84,7 +82,6 @@ def run_engine_compile(
 ) -> dict[str, Any]:
     """Execute a compilation with real-time output streaming to the CLI."""
     from ...Core.Compiler.engine_runner import run_engine_compile_streaming
-
     from .output import error, get_console, plain
 
     captured_stdout = []
@@ -145,7 +142,7 @@ def run_engine_compile(
     old_handler = signal.signal(signal.SIGINT, _cli_sigint_handler)
 
     try:
-        # Use redirection to catch any direct print() calls from pycompiler_ark.engines or their dependencies
+        # Use redirection to catch any direct print() calls from ...engines or their dependencies
         with _redirect_output(not verbose):
             result = run_engine_compile_streaming(
                 workspace=workspace,
@@ -190,7 +187,7 @@ def run_engine_compile(
     return result
 
 
-from pycompiler_ark.Core.Configs import (
+from ...Core.Configs import (
     CONFIG_KEYS,
     DEFAULT_USER_DIRS,
     ArkConfigError,
@@ -202,28 +199,23 @@ from pycompiler_ark.Core.Configs import (
     unset_config_value,
     write_ark_config,
 )
-from pycompiler_ark.Core.Configs import config_file_for as _config_file_for
-from pycompiler_ark.Core.Configs import config_home as _config_home
-from pycompiler_ark.Core.Configs import ensure_config_home as _ensure_config_home
-from pycompiler_ark.Core.Configs import load_ark_config as _load_ark_config
-from pycompiler_ark.Core.Configs import validate_ark_config as _validate_ark_config
-from pycompiler_ark.Core.Locking import (
-    BuildContext,
-    ensure_workspace_layout,
-    load_yaml_file,
-)
-from pycompiler_ark.Core.Locking import (
+from ...Core.Configs import config_file_for as _config_file_for
+from ...Core.Configs import config_home as _config_home
+from ...Core.Configs import ensure_config_home as _ensure_config_home
+from ...Core.Configs import load_ark_config as _load_ark_config
+from ...Core.Configs import validate_ark_config as _validate_ark_config
+from ...Core.Locking import BuildContext, ensure_workspace_layout, load_yaml_file
+from ...Core.Locking import (
     build_context_from_ark_config as _build_context_from_ark_config,
 )
-from pycompiler_ark.Core.Locking import (
+from ...Core.Locking import (
     build_context_from_lock as _build_context_from_lock,
 )
-from pycompiler_ark.Core.Locking import build_lock_payload as _build_lock_payload
-from pycompiler_ark.Core.Locking import cache_rebuild_lock as _cache_rebuild_lock
-from pycompiler_ark.Core.Locking import compare_lock_payloads as _compare_lock_payloads
-from pycompiler_ark.Core.Locking import default_lock_path as _default_lock_path
-from pycompiler_ark.Core.Locking import write_lock_files as _write_lock_files
-
+from ...Core.Locking import build_lock_payload as _build_lock_payload
+from ...Core.Locking import cache_rebuild_lock as _cache_rebuild_lock
+from ...Core.Locking import compare_lock_payloads as _compare_lock_payloads
+from ...Core.Locking import default_lock_path as _default_lock_path
+from ...Core.Locking import write_lock_files as _write_lock_files
 from .discovery import (
     bcasl_list_payload,
     engine_info_payload,
@@ -232,7 +224,10 @@ from .discovery import (
     scaffold_plugin,
 )
 from .launchers import launch_main_application
-from .messages import CliMessage, CliSpecError, cli_click_exception, cli_text
+
+
+class CliSpecError(RuntimeError):
+    """Raised when a spec-level CLI rule is violated."""
 
 
 @dataclass(slots=True)
@@ -243,7 +238,7 @@ class PyCompilerArkValidationResult:
 
 # ── Thin CLI wrappers around Core.Configs (user config) ──────────────────────
 # resolve_config_value / set_config_value / unset_config_value are imported
-# directly from pycompiler_ark.Core.Configs above and re-exported as-is.
+# directly from ...Core.Configs above and re-exported as-is.
 
 
 def config_home() -> Path:
@@ -285,30 +280,15 @@ def init_workspace(
 ) -> dict[str, Any]:
     workspace = cwd.resolve()
     if not workspace.exists():
-        raise CliSpecError(
-            (
-                "Le répertoire courant n'existe pas.",
-                "Current directory does not exist.",
-            )
-        )
+        raise CliSpecError("Current directory does not exist.")
 
     entry_path = Path(entry).expanduser()
     if not entry_path.is_absolute():
         entry_path = workspace / entry_path
     if entry_path.is_dir():
-        raise CliSpecError(
-            (
-                "Le point d'entrée doit être un fichier, pas un dossier.",
-                "Entry point must be a file, not a directory.",
-            )
-        )
+        raise CliSpecError("Entry point must be a file, not a directory.")
     if not entry_path.is_file():
-        raise CliSpecError(
-            (
-                f"Fichier d'entrée '{entry}' introuvable.",
-                f"Entry file '{entry}' not found.",
-            )
-        )
+        raise CliSpecError(f"Entry file '{entry}' not found.")
 
     icon_value = None
     if icon:
@@ -316,12 +296,7 @@ def init_workspace(
         if not icon_path.is_absolute():
             icon_path = workspace / icon_path
         if not icon_path.is_file():
-            raise CliSpecError(
-                (
-                    f"Fichier icône '{icon}' introuvable.",
-                    f"Icon file '{icon}' not found.",
-                )
-            )
+            raise CliSpecError(f"Icon file '{icon}' not found.")
         icon_value = relative_to_workspace(workspace, icon_path)
 
     ensure_workspace_layout(workspace)
@@ -373,10 +348,7 @@ def init_workspace(
     if generate_requirements:
         if requirements_path.exists():
             raise CliSpecError(
-                (
-                    "requirements.txt existe déjà. (--generate-requirements)",
-                    "requirements.txt already exists. (--generate-requirements)",
-                )
+                "requirements.txt already exists. (--generate-requirements)"
             )
         from ...Core.deps_analyser.analyser import write_requirements_txt
 
@@ -385,7 +357,7 @@ def init_workspace(
                 "# Add your runtime dependencies here.\n", encoding="utf-8"
             )
 
-    venv_path = workspace / WORKSPACE_CONFIG_DIRNAME / "venv"
+    venv_path = workspace / ".ark" / "venv"
     if with_venv and not venv_path.exists():
         builder = venv.EnvBuilder(with_pip=True)
         builder.create(str(venv_path))
@@ -393,12 +365,7 @@ def init_workspace(
     if install_requirements:
         if not requirements_path.exists():
             raise CliSpecError(
-                (
-                    "requirements.txt introuvable. Lancez d'abord "
-                    "'pycompiler_ark init --generate-requirements'.",
-                    "requirements.txt not found. Run "
-                    "'pycompiler_ark init --generate-requirements' first.",
-                )
+                "requirements.txt not found. Run 'pycompiler_ark init --generate-requirements' first."
             )
         if not venv_path.exists():
             builder = venv.EnvBuilder(with_pip=True)
@@ -411,19 +378,14 @@ def init_workspace(
             text=True,
         )
         if result.returncode != 0:
-            stderr = result.stderr.strip()
             raise CliSpecError(
-                stderr
-                or (
-                    "Échec de l'installation des requirements.",
-                    "requirements installation failed",
-                )
+                result.stderr.strip() or "requirements installation failed"
             )
 
     # Initialize workspace preferences
     from .output import info
 
-    pref_path = workspace / WORKSPACE_CONFIG_DIRNAME / "pref.json"
+    pref_path = workspace / ".ark" / "pref.json"
     pref_data = {"venv_mode": "system", "venv_path": None}
 
     if venv_path.exists():
@@ -470,30 +432,13 @@ def validate_ark_config(
         try:
             info = engine_info_payload(engine)
             if not info.get("found"):
-                errors.append(
-                    (
-                        f"build.engine: moteur inconnu '{engine}'",
-                        f"build.engine: unknown engine '{engine}'",
-                    )
-                )
+                errors.append(f"build.engine: unknown engine '{engine}'")
         except Exception:
             pass
 
     if errors:
-
-        def _error_line(item: CliMessage, *, french: bool) -> str:
-            if isinstance(item, (tuple, list)) and len(item) >= 2:
-                return str(item[0] if french else item[1])
-            return str(item)
-
-        joined_fr = "\n".join(f"- {_error_line(item, french=True)}" for item in errors)
-        joined_en = "\n".join(f"- {_error_line(item, french=False)}" for item in errors)
-        raise CliSpecError(
-            (
-                f"ark.yml invalide\n{joined_fr}",
-                f"Invalid ark.yml\n{joined_en}",
-            )
-        )
+        joined = "\n".join(f"- {item}" for item in errors)
+        raise CliSpecError(f"Invalid ark.yml\n{joined}")
 
     return PyCompilerArkValidationResult(config=result.config, warnings=warnings)
 
@@ -595,7 +540,7 @@ def ensure_correct_git_commit(
     if not locked_commit and not locked_branch:
         return True
 
-    from pycompiler_ark.Core.Locking import get_git_branch, get_git_commit_hash
+    from ...Core.Locking import get_git_branch, get_git_commit_hash
 
     current_commit = get_git_commit_hash(workspace)
     current_branch = get_git_branch(workspace)
@@ -755,7 +700,7 @@ def list_plugins_payload() -> dict[str, Any]:
 
 
 def scaffold_engine_payload(name: str, root_dir: str | None = None) -> dict[str, Any]:
-    from pycompiler_ark.Core.Configs import config_file_for, resolve_config_value
+    from ...Core.Configs import config_file_for, resolve_config_value
     from .interactive import ask_path
 
     if not root_dir:
@@ -772,7 +717,7 @@ def scaffold_engine_payload(name: str, root_dir: str | None = None) -> dict[str,
 
 
 def scaffold_plugin_payload(name: str, root_dir: str | None = None) -> dict[str, Any]:
-    from pycompiler_ark.Core.Configs import config_file_for, resolve_config_value
+    from ...Core.Configs import config_file_for, resolve_config_value
     from .interactive import ask_path
 
     if not root_dir:
@@ -931,7 +876,6 @@ def run_bcasl_before_compile_sync(
 def run_bcasl_headless(args: list[str], verbose: bool = False) -> int:
     """Run BCASL in headless mode for the current workspace."""
     from ...bcasl.Loader import run_pre_compile
-
     from .output import error, get_console, info, log, success
 
     if "list" in args:
