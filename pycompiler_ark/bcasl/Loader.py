@@ -14,14 +14,14 @@
 # limitations under the License.
 
 """
-BCASL loader (simplifié)
+BCASL loader (simplified)
 
-Objectifs de simplification:
-- Config YML uniquement (bcasl.yml ou .bcasl.yml) - YML ONLY, NO YAML, NO JSON
-- Détection de plugins minimale: packages dans Plugins/ ayant __init__.py
-- Ordre: plugin_order depuis config sinon basé sur tags simples, sinon alphabétique
-- Journalisation concise dans self.log si disponible
-- Activation/désactivation gérée par ark.yml (plugins.bcasl_enabled)
+Simplification objectives:
+- YML ONLY config (bcasl.yml or .bcasl.yml) - YML ONLY, NO YAML, NO JSON
+- Minimal plugin detection: packages in Plugins/ with __init__.py
+- Order: plugin_order from config, otherwise based on simple tags, otherwise alphabetical
+- Concise logging in self.log if available
+- Activation/deactivation managed by ark.yml (plugins.bcasl_enabled)
 """
 
 from __future__ import annotations
@@ -32,11 +32,12 @@ from typing import Any, Optional
 
 import yaml
 
+from ..Core.Configs import load_ark_config
+from ..Core.globals import INTERNAL_PLUGINS_DIR
 from .Base import BcPluginBase
 from .executor import BCASL
 from .PreCompileContext import PreCompileContext
 from .tagging import compute_tag_order
-from pycompiler_ark.Core.Configs import load_ark_config
 
 BCASL_DISABLED_REPORT: dict[str, Any] = {"status": "disabled", "ok": True}
 
@@ -48,7 +49,7 @@ def is_bcasl_disabled_report(report: Any) -> bool:
     return str(report.get("status", "")).strip().lower() in {"disabled", "skipped"}
 
 
-# --- Utilitaires ---
+# --- Utilities ---
 
 
 def _has_bcasl_marker(pkg_dir: Path) -> bool:
@@ -59,9 +60,9 @@ def _has_bcasl_marker(pkg_dir: Path) -> bool:
 
 
 def _discover_bcasl_meta(Plugins_dir: Path) -> dict[str, dict[str, Any]]:
-    """Décopen les plugins en important chaque package et en appelant bcasl_register(manager).
-    Supporte également les plugins enregistrés avec le décorateur @bc_register.
-    Return un mapping plugin_id -> meta dict {id, name, version, description, author, requirements}
+    """Discover plugins by importing each package and calling bcasl_register(manager).
+    Also supports plugins registered with the @bc_register decorator.
+    Return a mapping plugin_id -> meta dict {id, name, version, description, author, requirements}
     """
     meta: dict[str, dict[str, Any]] = {}
     try:
@@ -289,15 +290,15 @@ def _get_all_plugins_dirs() -> list[Path]:
 
     # 1. Project local Plugins folder
     try:
-        project_plugins = Path(__file__).resolve().parents[1] / "Plugins"
+        project_plugins = Path(__file__).resolve().parents[1] / INTERNAL_PLUGINS_DIR
         project_plugins.mkdir(parents=True, exist_ok=True)
         dirs.append(project_plugins)
     except Exception:
         pass
 
-    # 2. User-level and Dev-level plugins folders (from pycompiler_ark.Core.Configs)
+    # 2. User-level and Dev-level plugins folders
     try:
-        from pycompiler_ark.Core.Configs import resolve_config_value
+        from ..Core.Configs import resolve_config_value
 
         for key in ("user-plugin-dir", "dev-plugin-dir"):
             try:
@@ -311,7 +312,7 @@ def _get_all_plugins_dirs() -> list[Path]:
 
     # Fallback/Default if nothing else worked
     if not dirs:
-        fallback = Path("Plugins")
+        fallback = Path(INTERNAL_PLUGINS_DIR)
         try:
             fallback.mkdir(parents=True, exist_ok=True)
         except Exception:
@@ -367,7 +368,7 @@ def _run_bcasl_sync(
     _apply_plugins_config(
         manager,
         cfg,
-        plugins_dirs[0] if plugins_dirs else Path("Plugins"),
+        plugins_dirs[0] if plugins_dirs else Path(INTERNAL_PLUGINS_DIR),
         log_cb=log_cb,
     )
 

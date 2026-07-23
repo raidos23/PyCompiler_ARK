@@ -23,6 +23,8 @@ from rich.console import Console
 
 # Import des classes et fonctions de Core.dialogs
 from pycompiler_ark.Ui import output
+
+from ...Core.globals import INTERNAL_PLUGINS_DIR
 from ...Ui.Cli.runtime import is_cli_mode, is_noninteractive
 from ...Ui.Gui.WidgetsCreator import (
     InstallAuth,
@@ -31,7 +33,6 @@ from ...Ui.Gui.WidgetsCreator import (
     show_msgbox,
 )
 from ...Ui.output import get_console
-
 from .i18n import translate
 
 
@@ -91,8 +92,8 @@ class Dialog:
                 if not filename:
                     continue
                 parts = Path(filename).parts
-                if "Plugins" in parts:
-                    idx = parts.index("Plugins")
+                if INTERNAL_PLUGINS_DIR in parts:
+                    idx = parts.index(INTERNAL_PLUGINS_DIR)
                     if idx + 1 < len(parts):
                         return str(parts[idx + 1])
         except Exception:
