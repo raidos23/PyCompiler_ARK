@@ -51,18 +51,6 @@ label_workspace_status_none: 'ワークスペース: なし'
 file_filter_placeholder: リストを絞り込み…
 btn_clear_workspace: ワークスペースをクリア
 tt_clear_workspace: ファイル一覧をクリアして選択をリセットします。
-btn_select_icon: Choose icon (.ico)
-opt_onefile: Onefile
-opt_windowed: Windowed
-opt_noconfirm: No confirm
-opt_clean: Clean build
-opt_noupx: No UPX
-opt_main_only: Main only
-opt_debug: Debug
-opt_auto_install: Auto install
-opt_silent_errors: Silent errors
-cx_onefile: Onefile
-cx_console: Console
 label_tools: ツール
 label_options_section: コンパイルオプション
 label_progress: コンパイル進行状況

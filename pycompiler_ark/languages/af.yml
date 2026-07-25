@@ -51,18 +51,6 @@ label_workspace_status_none: 'Werkruimte: Geen'
 file_filter_placeholder: Filter lys…
 btn_clear_workspace: Maak werkruimte leeg
 tt_clear_workspace: Maak die lêerlys leeg en stel die seleksie terug.
-btn_select_icon: Choose icon (.ico)
-opt_onefile: Onefile
-opt_windowed: Windowed
-opt_noconfirm: No confirm
-opt_clean: Clean build
-opt_noupx: No UPX
-opt_main_only: Main only
-opt_debug: Debug
-opt_auto_install: Auto install
-opt_silent_errors: Silent errors
-cx_onefile: Onefile
-cx_console: Console
 label_tools: Gereedskap
 label_options_section: Kompilasie-opsies
 label_progress: Kompilasievordering

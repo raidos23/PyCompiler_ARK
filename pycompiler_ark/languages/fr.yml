@@ -59,18 +59,6 @@ label_workspace_status_none: 'Workspace : Aucun'
 file_filter_placeholder: Filtrer la liste…
 btn_clear_workspace: Vider le Workspace
 tt_clear_workspace: Vider la liste des fichiers et réinitialiser la sélection.
-btn_select_icon: Choisir une icône (.ico)
-opt_onefile: Un seul fichier
-opt_windowed: Fenêtré
-opt_noconfirm: Sans confirmation
-opt_clean: Nettoyage
-opt_noupx: Sans UPX
-opt_main_only: Fichier principal
-opt_debug: Débogage
-opt_auto_install: Installation auto
-opt_silent_errors: Erreurs silencieuses
-cx_onefile: Un seul fichier
-cx_console: Console
 label_tools: Outils
 label_options_section: Options de compilation
 label_progress: Progression de la compilation
@@ -103,8 +91,8 @@ init_project_install_reqs: Installer les dépendances
 init_project_note: 'Note : Cela va créer un fichier ark.yml et configurer la structure
   du projet.'
 init_project_success: Projet initialisé avec succès !
-tab_hello: "Bienvenue"
-welcome_title: "Bienvenue dans PyCompiler ARK"
-welcome_desc: "Un outil de compilation et d'empaquetage universel pour vos applications Python."
-welcome_guide_title: "Aucun moteur de compilation disponible"
-welcome_guide: "Veuillez installer un moteur de compilation pour commencer."
+tab_hello: Bienvenue
+welcome_title: Bienvenue dans PyCompiler ARK
+welcome_desc: Un outil de compilation et d'empaquetage universel pour vos applications Python.
+welcome_guide_title: Aucun moteur de compilation disponible
+welcome_guide: Veuillez installer un moteur de compilation pour commencer.
