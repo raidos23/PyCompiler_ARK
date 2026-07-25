@@ -18,7 +18,7 @@ AdvancedAuth Service — Core service for handling authentication and workspace 
 """
 
 
-class Api:
+class AdvancedAuth:
     """API bridge helpers for Core integrations."""
 
     _workspace_change_handler = None
@@ -48,8 +48,8 @@ class Api:
 
 
 def request_workspace_change_from_BcPlugin(folder: str) -> bool:
-    """Backward-compatible function wrapper."""
-    return Api.request_workspace_change_from_BcPlugin(folder)
+    """Request a workspace change."""
+    return AdvancedAuth.request_workspace_change_from_BcPlugin(folder)
 
 
-__all__ = ["Api", "request_workspace_change_from_BcPlugin"]
+__all__ = ["AdvancedAuth", "request_workspace_change_from_BcPlugin"]

@@ -27,6 +27,8 @@ from PySide6.QtGui import QDropEvent
 from PySide6.QtWidgets import QMainWindow, QMessageBox
 
 from pycompiler_ark.Ui import output
+
+from ..i18n import is_french_language, tr_fr_en
 from .Dialogs.VenvDialog import VenvManagerUI
 from .Dialogs.WorkspaceDialog import WorkspaceDialog
 from .Globals import (
@@ -36,7 +38,6 @@ from .Globals import (
 )
 from .UiFeatures import UiFeatures as UiFeatures
 from .WorkspaceManipulation import WorkspaceAdvancedManipulation
-from ..i18n import is_french_language, tr_fr_en
 
 
 def get_selected_workspace() -> Optional[str]:
@@ -101,10 +102,10 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
 
         # Enregistrement du handler AdvancedAuth pour les requêtes de plugins
         try:
-            from ...Services.AdvancedAuth import Api as AuthApi
+            from ...Services.AdvancedAuth import AdvancedAuth as AuthAdvancedAuth
             from .Dialogs.AdvancedAuthUI import AdvancedAuthUI
 
-            AuthApi.register_workspace_change_handler(
+            AuthAdvancedAuth.register_workspace_change_handler(
                 lambda folder: AdvancedAuthUI.handle_workspace_change_request(
                     self, folder
                 )
@@ -175,6 +176,7 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
     # =========================================================================
 
     from pycompiler_ark.Ui.Gui.IdeLikeGui import init_ide_like_ui
+
     from .UiConnection import init_ui
 
     # =========================================================================
@@ -334,6 +336,7 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
 
         open_lock_dialog(self)
 
+    from ..PreferencesManager import load_preferences, save_preferences
     from .Dialogs.CompilerDialog import (
         _continue_compile_all,
         cancel_all_compilations,
@@ -347,7 +350,6 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
         try_install_missing_modules,
         try_start_processes,
     )
-    from ..PreferencesManager import load_preferences, save_preferences
 
     # =========================================================================
     # PRÉFÉRENCES (délégation à Core/PreferencesManager)
