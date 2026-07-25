@@ -51,18 +51,6 @@ label_workspace_status_none: 工作区：无
 file_filter_placeholder: 筛选列表…
 btn_clear_workspace: 清空工作区
 tt_clear_workspace: 清空文件列表并重置选择。
-btn_select_icon: Choose icon (.ico)
-opt_onefile: Onefile
-opt_windowed: Windowed
-opt_noconfirm: No confirm
-opt_clean: Clean build
-opt_noupx: No UPX
-opt_main_only: Main only
-opt_debug: Debug
-opt_auto_install: Auto install
-opt_silent_errors: Silent errors
-cx_onefile: Onefile
-cx_console: Console
 label_tools: 工具
 label_options_section: 编译选项
 label_progress: 编译进度

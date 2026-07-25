@@ -51,18 +51,6 @@ label_workspace_status_none: 'Spazio di lavoro: Nessuno'
 file_filter_placeholder: Filtra elenco…
 btn_clear_workspace: Svuota spazio di lavoro
 tt_clear_workspace: Svuotare l'elenco dei file e reimpostare la selezione.
-btn_select_icon: Choose icon (.ico)
-opt_onefile: Onefile
-opt_windowed: Windowed
-opt_noconfirm: No confirm
-opt_clean: Clean build
-opt_noupx: No UPX
-opt_main_only: Main only
-opt_debug: Debug
-opt_auto_install: Auto install
-opt_silent_errors: Silent errors
-cx_onefile: Onefile
-cx_console: Console
 label_tools: Strumenti
 label_options_section: Opzioni di compilazione
 label_progress: Avanzamento della compilazione
