@@ -25,6 +25,8 @@ import sys
 from PySide6.QtCore import QProcess
 from PySide6.QtWidgets import QApplication, QMessageBox
 
+from pycompiler_ark.Ui import output
+
 from ....Core.deps_analyser.analyser import (
     _classify_module_origin,
     _collect_workspace_module_roots,
@@ -34,7 +36,6 @@ from ....Core.deps_analyser.analyser import (
     _normalize_realpath,
     _should_skip_analysis_path,
 )
-from pycompiler_ark.Ui import output
 from ..WidgetsCreator import ProgressDialog
 
 

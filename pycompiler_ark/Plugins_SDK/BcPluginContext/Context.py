@@ -46,6 +46,7 @@ try:
     from pycompiler_ark.bcasl import PluginMeta as PluginMeta
     from pycompiler_ark.bcasl import bc_register as _bc_register
     from pycompiler_ark.bcasl import register_plugin as register_plugin
+
     from ...bcasl.PreCompileContext import (
         PreCompileContext as PreCompileContext,
     )
@@ -163,20 +164,12 @@ def set_selected_workspace(path: Pathish) -> bool:
 def Generate_Bc_Plugin_Template() -> str:
     """Generate a ready-to-use BC plugin template.
 
-    The template is compatible with the BCASL loader:
     - Exposes a plugin class with proper metadata
     - Provides the global PLUGIN variable for execution
     - Provides the bcasl_register(manager) function for direct registration
     - Includes Dialog Plugins for user interaction and logging
     - Includes proper version requirements
 
-    Returns:
-        str: Complete BC plugin template code
-
-    Example:
-        >>> template = Generate_Bc_Plugin_Template()
-        >>> with open("Plugins/my_plugin/__init__.py", "w") as f:
-        ...     f.write(template)
     """
 
     template = '''from __future__ import annotations

@@ -23,7 +23,7 @@ from __future__ import annotations
 
 from typing import Any, Optional
 
-from pycompiler_ark.Ui import output
+from ... import output
 from .mainprocess import MainProcess
 
 # Singleton MainProcess (initialised on first use)
@@ -41,7 +41,7 @@ def get_main_process() -> MainProcess:
 def resolve_default_engine_id() -> str:
     """Resolve a default engine dynamically from the registered engines."""
     try:
-        import pycompiler_ark.Core.engine as engines_loader
+        from ....Core import engine as engines_loader
 
         engine_ids = list(engines_loader.available_engines())
         if engine_ids:

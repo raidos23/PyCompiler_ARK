@@ -43,6 +43,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from ...i18n import translate
 from ..UiConnection import (
     _apply_button_icons,
     _apply_initial_theme,
@@ -56,7 +57,6 @@ from ..UiConnection import (
 from ..UiConnection import (
     _connect_signals as _connect_classic_signals,
 )
-from ...i18n import translate
 
 
 def _prime_expected_attrs(self) -> None:

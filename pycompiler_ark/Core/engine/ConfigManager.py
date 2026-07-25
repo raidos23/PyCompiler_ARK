@@ -147,7 +147,7 @@ def apply_engine_configs_for_workspace(gui, workspace_dir: str) -> None:
     if not workspace_dir:
         return
     try:
-        import pycompiler_ark.Core.engine as engines_loader
+        from .. import engine as engines_loader
 
         for eid in engines_loader.available_engines():
             try:
@@ -174,7 +174,7 @@ def save_engine_config_for_gui(gui, engine_id: str) -> bool:
         workspace_dir = getattr(gui, "workspace_dir", None)
         if not workspace_dir or not engine_id:
             return False
-        import pycompiler_ark.Core.engine as engines_loader
+        from .. import engine as engines_loader
 
         engine = engines_loader.registry.get_instance(engine_id)
         if not engine:

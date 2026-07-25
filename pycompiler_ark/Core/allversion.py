@@ -69,7 +69,7 @@ def get_core_version() -> str:
 def get_engine_sdk_version() -> str:
     """Get the version of the Engine SDK."""
     try:
-        import pycompiler_ark.engine_sdk as engine_sdk
+        from .. import engine_sdk as engine_sdk
 
         return engine_sdk.__version__
     except (ImportError, AttributeError):
@@ -79,7 +79,7 @@ def get_engine_sdk_version() -> str:
 def get_bcasl_version() -> str:
     """Get the version of the BCASL (Before-Compilation Actions System Loader)."""
     try:
-        import pycompiler_ark.bcasl as bcasl
+        from .. import bcasl as bcasl
 
         return bcasl.__version__
     except (ImportError, AttributeError):
@@ -89,7 +89,7 @@ def get_bcasl_version() -> str:
 def get_plugins_sdk_version() -> str:
     """Get the version of the Plugins SDK."""
     try:
-        from pycompiler_ark.Plugins_SDK import __version__
+        from ..Plugins_SDK import __version__
 
         return __version__
     except (ImportError, AttributeError):
@@ -99,7 +99,7 @@ def get_plugins_sdk_version() -> str:
 def get_bc_plugin_context_version() -> str:
     """Get the version of the BcPluginContext."""
     try:
-        from pycompiler_ark.Plugins_SDK.BcPluginContext import __version__
+        from ..Plugins_SDK.BcPluginContext import __version__
 
         return __version__
     except (ImportError, AttributeError):
@@ -109,7 +109,7 @@ def get_bc_plugin_context_version() -> str:
 def get_general_context_version() -> str:
     """Get the version of the GeneralContext."""
     try:
-        from pycompiler_ark.Plugins_SDK.GeneralContext import __version__
+        from ..Plugins_SDK.GeneralContext import __version__
 
         return __version__
     except (ImportError, AttributeError):

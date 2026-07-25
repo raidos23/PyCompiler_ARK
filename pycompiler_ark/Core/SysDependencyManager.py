@@ -15,7 +15,7 @@
 
 """Backward-compatible import wrapper for the SystemDepsManager package."""
 
-from pycompiler_ark.Core.SystemDepsManager import (
+from .SystemDepsManager import (
     SysDependencyManager,
     check_system_packages,
     detect_linux_package_manager,

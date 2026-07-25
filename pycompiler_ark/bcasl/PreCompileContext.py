@@ -22,9 +22,9 @@ from typing import Any, Optional
 
 @dataclass
 class PreCompileContext:
-    """Contexte passé aux plugins.
+    """Context passed to plugins.
 
-    Donne accès aux données du workspace et fournit des outils de recherche de fichiers.
+    Provides access to workspace data and file search utilities.
     """
 
     root: Path
@@ -37,7 +37,7 @@ class PreCompileContext:
 
     @property
     def project_root(self) -> Path:
-        """Alias pour root (compatibilité)."""
+        """Alias for root (compatibility)."""
         return self.root
 
     @property
@@ -46,13 +46,13 @@ class PreCompileContext:
 
     @property
     def file_patterns(self) -> tuple[str, ...]:
-        """Patterns d'inclusion (depuis bcasl.yml)."""
+        """Inclusion patterns (from bcasl.yml)."""
         patterns = self.config.get("file_patterns", ["**/*.py"])
         return tuple(patterns) if patterns else ("**/*.py",)
 
     @property
     def exclude_patterns(self) -> tuple[str, ...]:
-        """Patterns d'exclusion (depuis bcasl.yml)."""
+        """Exclusion patterns (from bcasl.yml)."""
         patterns = self.config.get("exclude_patterns", [])
         return tuple(patterns) if patterns else ()
 
@@ -61,9 +61,9 @@ class PreCompileContext:
         include: Optional[Iterable[str]] = None,
         exclude: Optional[Iterable[str]] = None,
     ) -> Iterable[Path]:
-        """Itère sur les fichiers du projet.
+        """Iterate over project files.
 
-        Par défaut, utilise les patterns de configuration (bcasl.yml).
+        By default, uses configuration patterns (bcasl.yml).
         """
         inc = tuple(include) if include is not None else self.file_patterns
         exc = tuple(exclude) if exclude is not None else self.exclude_patterns

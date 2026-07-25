@@ -36,7 +36,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any
 
-from pycompiler_ark.Ui import output
+from ...Ui import output
 
 __all__ = ["ToolsCheckResult", "ensure_tools"]
 
@@ -90,11 +90,12 @@ def ensure_tools(
         if gui is not None:
             # GUI/Bridge system tools flow
             try:
-                from ..Compiler.utils import check_internet_connection
                 from pycompiler_ark.Core.SystemDepsManager import (
                     SysDependencyManager,
                     check_system_packages,
                 )
+
+                from ..Compiler.utils import check_internet_connection
 
                 if hasattr(gui, "sys_deps_manager") and gui.sys_deps_manager:
                     sys_manager = gui.sys_deps_manager
