@@ -46,8 +46,9 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from ....Core.ConfigEditor import validate_ark_payload
 from pycompiler_ark.Core.Configs import load_ark_config, write_ark_config
+
+from ....Core.ConfigEditor import validate_ark_payload
 from ....Core.engine.registry import available_engines
 
 

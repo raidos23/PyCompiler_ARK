@@ -34,12 +34,10 @@ import time
 from pathlib import Path
 from typing import Any, Callable, Optional
 
-# BuildContext lives in engine_sdk; imported here so callers of this module
-# only need to import from pycompiler_ark.Core.Compiler.
+from ...Ui import output
 from ..engine.build_context import BuildContext
 from ..process_security import hardened_popen_kwargs, secure_command
 from ..utils.ensure_tools import ensure_tools
-from pycompiler_ark.Ui import output
 
 
 class EngineRunnerError(RuntimeError):
@@ -69,7 +67,7 @@ def resolve_engine_command(
                            BuildContext builds, or returns an empty command.
     """
     try:
-        import pycompiler_ark.Core.engine as engines_loader
+        from .. import engine as engines_loader
 
         engine = engines_loader.create(engine_id)
         if gui:
@@ -110,7 +108,7 @@ def resolve_engine_command(
         "yes",
     ):
         try:
-            from pycompiler_ark.Core.Auto_Command_Builder import compute_auto_for_engine
+            from ..Auto_Command_Builder import compute_auto_for_engine
 
             auto_args = compute_auto_for_engine(gui, engine_id)
             if auto_args:
@@ -255,7 +253,7 @@ def run_engine_compile_streaming(
         if on_stdout:
             on_stdout("Etape 1/3 : Verification et installation des outils requis...")
 
-        import pycompiler_ark.Core.engine as engines_loader
+        from .. import engine as engines_loader
 
         engine_instance = engines_loader.create(engine_id)
 
@@ -301,7 +299,7 @@ def run_engine_compile_streaming(
                 @property
                 def sys_deps_manager(self):
                     if self._sys_deps_manager is None:
-                        from pycompiler_ark.Core.SystemDepsManager import (
+                        from ..SystemDepsManager import (
                             SysDependencyManager,
                         )
 

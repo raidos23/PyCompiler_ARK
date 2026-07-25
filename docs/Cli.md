@@ -173,7 +173,7 @@ Executes the pre-compilation pipeline manually.
 
 - **CLI1**: Non-interactive by default when `-y` is provided.
 - **CLI2**: `pycompiler_ark init` only operates on the current working directory.
-- **CLI3**: All build artifacts and metadata stay inside the workspace `.ark/` folder.
+- **CLI3**: All build metadata stay inside the workspace `.ark/` folder.
 - **CLI4**: Engines and plugins follow a clear `dev > user > core` priority.
 
 ---

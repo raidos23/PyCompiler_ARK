@@ -14,8 +14,9 @@
 # limitations under the License.
 
 import unittest
-from unittest.mock import patch, MagicMock
-from pycompiler_ark.Core.utils.ensure_tools import ensure_tools, ToolsCheckResult
+from unittest.mock import MagicMock, patch
+
+from pycompiler_ark.Core.utils.ensure_tools import ToolsCheckResult, ensure_tools
 
 
 class TestEnsureToolsGui(unittest.TestCase):

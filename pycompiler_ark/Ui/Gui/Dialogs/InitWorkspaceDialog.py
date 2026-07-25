@@ -37,6 +37,7 @@ from PySide6.QtWidgets import (
 )
 
 from pycompiler_ark.Core.deps_analyser import collect_internal_modules
+
 from ...Cli.helpers import init_workspace
 
 

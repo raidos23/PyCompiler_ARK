@@ -43,7 +43,7 @@ BCASL_PLUGIN_REGISTER_FUNC = "bcasl_register"
 
 @dataclass(frozen=True)
 class PluginMeta:
-    """Métadonnées d'un plugin."""
+    """Metadata for a plugin."""
 
     id: str
     name: str
@@ -52,7 +52,7 @@ class PluginMeta:
     author: str = ""
     tags: tuple[str, ...] = ()
 
-    # Versions minimales requises
+    # Minimum required versions
     required_bcasl_version: str = "1.0.0"
     required_core_version: str = "1.0.0"
     required_plugins_sdk_version: str = "1.0.0"
@@ -82,7 +82,7 @@ class PluginMeta:
 
 
 class BcPluginBase:
-    """Classe de base pour les plugins BCASL."""
+    """Base class for BCASL plugins."""
 
     meta: PluginMeta
     requires: tuple[str, ...]
@@ -92,24 +92,18 @@ class BcPluginBase:
         self, meta: PluginMeta, requires: Iterable[str] = (), priority: int = 100
     ) -> None:
         if not meta or not meta.id:
-            raise ValueError("PluginMeta invalide: 'id' requis")
+            raise ValueError("Invalid PluginMeta: 'id' required")
         self.meta = meta
         self.requires = tuple(str(r).strip() for r in requires if str(r).strip())
         self.priority = int(priority)
 
     @property
     def required_tools(self) -> dict[str, list[str]]:
-        """Outils requis par ce plugin.
-
-        Structure identique à CompilerEngine.required_tools :
-          {"python": ["black", "mypy"], "system": ["gcc"]}
-        Les plugins n'ayant pas besoin d'outils supplémentaires
-        n'ont pas besoin de surcharger cette propriété.
-        """
+        """Tools required by this plugin."""
         return {"python": [], "system": []}
 
     def on_pre_compile(self, ctx: PreCompileContext) -> None:
-        """Méthode à surcharger par le plugin."""
+        """Method to be overridden by the plugin."""
         raise NotImplementedError
 
     def create_tab(self, gui):
@@ -131,7 +125,7 @@ class ExecutionItem:
 
 @dataclass
 class ExecutionReport:
-    """Rapport d'exécution agrégé."""
+    """Aggregated execution report."""
 
     items: list[ExecutionItem] = field(default_factory=list)
 
@@ -182,7 +176,7 @@ def bc_register(
     auto_instantiate: bool = True,
     priority: Optional[int] = None,
 ) -> Any:
-    """Décorateur pour enregistrer un plugin BCASL."""
+    """Decorator to register a BCASL plugin."""
 
     def decorator_inner(cls_to_decorate: type) -> Any:
         if not isinstance(cls_to_decorate, type):

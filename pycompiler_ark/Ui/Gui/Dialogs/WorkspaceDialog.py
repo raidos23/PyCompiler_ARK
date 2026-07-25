@@ -27,8 +27,9 @@ from typing import Optional
 
 from PySide6.QtWidgets import QApplication, QFileDialog, QMessageBox
 
-from ....Core.WorkSpaceManager.SetupWorkspace import SetupWorkspace
 from pycompiler_ark.Ui import output
+
+from ....Core.WorkSpaceManager.SetupWorkspace import SetupWorkspace
 from ..Globals import _workspace_dir_lock
 from ..WidgetsCreator import CompilationProcessDialog
 

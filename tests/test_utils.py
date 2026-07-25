@@ -13,9 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import unittest
-from unittest.mock import patch, MagicMock
 import socket
+import unittest
+from unittest.mock import MagicMock, patch
+
 from pycompiler_ark.Core.Compiler.utils import check_internet_connection
 
 

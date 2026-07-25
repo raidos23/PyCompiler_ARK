@@ -60,7 +60,7 @@ def _engine_sdk_version() -> str:
 
 
 def _compatibility_result(engine_class) -> Any:
-    from pycompiler_ark.Core.engine.validator import check_engine_compatibility
+    from ...Core.engine.validator import check_engine_compatibility
 
     return check_engine_compatibility(
         engine_class,
@@ -70,13 +70,13 @@ def _compatibility_result(engine_class) -> Any:
 
 
 def _headless_engine_class(engine_id: str):
-    from pycompiler_ark.Core.engine import get_engine
+    from ...Core.engine import get_engine
 
     return get_engine(engine_id)
 
 
 def _headless_engine_instance(engine_id: str):
-    from pycompiler_ark.Core.engine import create as create_engine
+    from ...Core.engine import create as create_engine
 
     return create_engine(engine_id)
 
@@ -143,12 +143,12 @@ def _plugin_candidates() -> list[dict[str, Any]]:
 
 
 def engine_list_payload(workspace: str | None = None) -> dict[str, Any]:
-    from pycompiler_ark.Core.engine import available_engines
+    from ...Core.engine import available_engines
 
     engine_ids = list(available_engines())
     if not engine_ids:
         try:
-            from pycompiler_ark.Core.engine.loader import _auto_discover
+            from ...Core.engine.loader import _auto_discover
 
             _auto_discover()
             engine_ids = list(available_engines())

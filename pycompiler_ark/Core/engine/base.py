@@ -19,7 +19,7 @@ import time
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Callable, Optional
 
-from pycompiler_ark.Ui import output
+from ...Ui import output
 
 if TYPE_CHECKING:
     from .build_context import BuildContext
@@ -180,8 +180,6 @@ class CompilerEngine:
             return
 
         import os
-
-        from pycompiler_ark.Ui import output
 
         from ..utils import open_path
 

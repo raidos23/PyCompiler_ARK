@@ -520,7 +520,7 @@ def bind_tabs(gui) -> None:
         # Ensure lazy discovery happened even when callers use `registry.bind_tabs`
         # directly instead of the top-level `bind_tabs` wrapper.
         try:
-            import pycompiler_ark.Core.engine as engines_loader
+            from .. import engine as engines_loader
 
             engines_loader.available_engines()
         except Exception:
@@ -541,7 +541,7 @@ def bind_tabs(gui) -> None:
         hello_tab = getattr(gui, "tab_hello", None)
         if hello_tab is None:
             try:
-                from pycompiler_ark.Core.engine.hello_tab import create_hello_tab
+                from ..engine.hello_tab import create_hello_tab
 
                 hello_tab = create_hello_tab(gui)
                 if hello_tab is not None:
@@ -563,7 +563,7 @@ def bind_tabs(gui) -> None:
             eid: str, fr: str, en: str, exc: Exception | None = None
         ) -> None:
             try:
-                from pycompiler_ark.Ui import output
+                from ...Ui import output
 
                 output.warn((fr, en), gui=gui)
             except Exception:
@@ -668,7 +668,7 @@ def bind_tabs(gui) -> None:
                     if hello_tab_index < 0:
                         title = "Bienvenue"
                         try:
-                            from pycompiler_ark.Ui.i18n import translate
+                            from ...Ui.i18n import translate
 
                             title = translate(
                                 gui.id if hasattr(gui, "id") else "ui",
@@ -699,7 +699,7 @@ def show_hello_tab(gui) -> None:
                 if idx < 0:
                     title = "Bienvenue"
                     try:
-                        from pycompiler_ark.Ui.i18n import translate
+                        from ...Ui.i18n import translate
 
                         title = translate(
                             gui.id if hasattr(gui, "id") else "ui",

@@ -14,8 +14,8 @@
 # limitations under the License.
 
 import unittest
-from unittest.mock import patch
 from pathlib import Path
+from unittest.mock import patch
 
 from pycompiler_ark.Ui.Cli.runtime import _platform_log_dir
 

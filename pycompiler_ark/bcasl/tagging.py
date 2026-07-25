@@ -15,7 +15,7 @@
 
 from typing import Any
 
-# Hiérarchie de priorité basée sur les tags (ordre d'exécution)
+# Priority hierarchy based on tags (execution order)
 TAG_PRIORITY_MAP = {
     # Phase 0: Workspace cleanup and hygiene
     "clean": 0,
@@ -75,26 +75,26 @@ DEFAULT_TAG_PRIORITY = 100
 
 
 def compute_tag_order(meta_map: dict[str, dict[str, Any]]) -> list[str]:
-    """Trie les plugins par score de tag (plus petit d'abord), puis par id.
+    """Sort plugins by tag score (smallest first), then by id.
 
-    Utilise TAG_PRIORITY_MAP pour determiner la priorité basée sur les tags.
-    Tags pris depuis meta_map[pid]["tags"]. Inconnu => DEFAULT_TAG_PRIORITY.
+    Uses TAG_PRIORITY_MAP to determine priority based on tags.
+    Tags taken from meta_map[pid]["tags"]. Unknown => DEFAULT_TAG_PRIORITY.
 
-    Phases d'exécution:
+    Execution phases:
     - 0: Cleanup (clean, cleanup, sanitize)
     - 10: Validation (check, requirements, verify)
     - 20: Preparation (prepare, generate, install, configure)
     - 30: Compliance (license, header, normalize, inject)
     - 40: Linting (lint, format, typecheck, style)
     - 50: Obfuscation (obfuscate, transpile, protect, encrypt)
-    - 100: Default (none tag reconnu)
+    - 100: Default (no recognized tag)
     """
 
     def _compute_score(pid: str) -> int:
-        """Calcule le score de priorité pour un plugin.
+        """Calculate priority score for a plugin.
 
-        Return le score minimum parmi tous les tags du plugin.
-        Si none tag, return DEFAULT_TAG_PRIORITY.
+        Return the minimum score among all tags of the plugin.
+        If no tag, return DEFAULT_TAG_PRIORITY.
         """
         try:
             tags = meta_map.get(pid, {}).get("tags")

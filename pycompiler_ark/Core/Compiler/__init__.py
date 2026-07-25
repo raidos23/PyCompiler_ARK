@@ -23,6 +23,14 @@ Qt-dependent classes have been moved to Ui/Gui/Compilation/.
 
 from __future__ import annotations
 
+from ..engine.registry import create, get_engine
+from ..process_killer import (
+    ProcessInfo,
+    ProcessKiller,
+    get_process_info,
+    kill_process,
+    kill_process_tree,
+)
 from .engine_runner import (
     BuildContext,
     EngineRunnerError,
@@ -39,14 +47,6 @@ from .utils import (
     get_interpreter_version,
     sanitize_path,
     validate_command,
-)
-from ..engine.registry import create, get_engine
-from ..process_killer import (
-    ProcessInfo,
-    ProcessKiller,
-    get_process_info,
-    kill_process,
-    kill_process_tree,
 )
 
 # ============================================================================

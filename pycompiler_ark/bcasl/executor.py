@@ -75,7 +75,7 @@ def kill_active_workers() -> int:
 
 
 def _normalize_tags(tags: Any) -> list[str]:
-    """Normalise les tags en liste de strings minuscules."""
+    """Normalize tags into a list of lowercase strings."""
     if not tags:
         return []
     if isinstance(tags, str):
@@ -88,7 +88,7 @@ def _normalize_tags(tags: Any) -> list[str]:
 
 
 def _tag_priority_from_tags(tags: Any) -> int:
-    """Calcule la priorité basée sur les tags."""
+    """Calculate priority based on tags."""
     try:
         from .tagging import DEFAULT_TAG_PRIORITY, TAG_PRIORITY_MAP
 

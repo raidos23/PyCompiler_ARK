@@ -16,10 +16,6 @@
 """
 BCASL - Before-Compilation Actions System Loader
 
-Point d'entrée du package: expose l'Plugins publique minimale et stable.
-
-Note: Qt-dependent functions (run_pre_compile_async, open_bc_loader_dialog, etc.)
-have been moved to Ui.Gui.Dialogs.BcaslDialog to keep this package pure-Python.
 """
 
 from __future__ import annotations
@@ -41,7 +37,7 @@ from ..bcasl.Loader import (
 )
 from ..bcasl.PreCompileContext import PreCompileContext
 
-# Validateur de compatibilité
+# Compatibility validator
 from ..bcasl.validator import (
     CompatibilityCheckResult,
     check_plugin_compatibility,
@@ -92,7 +88,7 @@ def check_plugin_compatibility(
 
 
 __all__ = [
-    # Coeur
+    # Core
     "executor",
     "BcPluginBase",
     "PluginMeta",
@@ -101,7 +97,6 @@ __all__ = [
     "bc_register",
     "register_plugin",
     "BCASL_PLUGIN_REGISTER_FUNC",
-    # Loader (Pure)
     "run_pre_compile",
     # Compatibility & Validation
     "check_plugin_compatibility",

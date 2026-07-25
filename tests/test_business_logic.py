@@ -15,8 +15,9 @@
 
 from unittest.mock import MagicMock, patch
 
-from pycompiler_ark.Core.Configs import normalize_ark_config, should_exclude_file
 from pycompiler_ark.Core.Compiler.utils import check_internet_connection
+from pycompiler_ark.Core.Configs import normalize_ark_config, should_exclude_file
+from pycompiler_ark.Core.globals import WORKSPACE_CONFIG_DIRNAME
 from pycompiler_ark.Core.Locking import (
     build_lock_payload,
     ensure_workspace_layout,
@@ -24,7 +25,6 @@ from pycompiler_ark.Core.Locking import (
     included_workspace_files,
     installed_distributions_snapshot,
 )
-from pycompiler_ark.Core.globals import WORKSPACE_CONFIG_DIRNAME
 
 
 def test_normalize_ark_config_empty():

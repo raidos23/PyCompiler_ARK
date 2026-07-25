@@ -17,7 +17,6 @@ from __future__ import annotations
 
 from ..Core.engine.build_context import BuildContext
 from ..Core.engine.registry import translate
-
 from ..Ui import output
 
 # Re-export the base interface used by the host
