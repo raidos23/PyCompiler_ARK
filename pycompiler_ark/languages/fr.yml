@@ -108,6 +108,3 @@ welcome_title: "Bienvenue dans PyCompiler ARK"
 welcome_desc: "Un outil de compilation et d'empaquetage universel pour vos applications Python."
 welcome_guide_title: "Aucun moteur de compilation disponible"
 welcome_guide: "Veuillez installer un moteur de compilation pour commencer."
-btn_welcome_config: "Configurer les moteurs"
-btn_welcome_help: "Aide & Documentation"
-

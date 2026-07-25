@@ -17,12 +17,12 @@ from __future__ import annotations
 
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
-    QWidget,
-    QVBoxLayout,
+    QFrame,
     QHBoxLayout,
     QLabel,
     QPushButton,
-    QFrame,
+    QVBoxLayout,
+    QWidget,
 )
 
 
@@ -97,48 +97,6 @@ class HelloTab(QWidget):
         btn_layout.setSpacing(10)
         btn_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        # Settings/Config Button
-        self.btn_config = QPushButton()
-        self.btn_config.setObjectName("btn_welcome_config")
-        self.btn_config.setMinimumSize(140, 30)
-        self.btn_config.setStyleSheet(
-            "QPushButton {"
-            "  background-color: #0e639c;"
-            "  color: #ffffff;"
-            "  font-weight: bold;"
-            "  font-size: 9pt;"
-            "  border: none;"
-            "  border-radius: 4px;"
-            "}"
-            "QPushButton:hover {"
-            "  background-color: #1177bb;"
-            "}"
-        )
-        if hasattr(self.gui, "open_advanced_config_editor"):
-            self.btn_config.clicked.connect(self.gui.open_advanced_config_editor)
-
-        # Help Button
-        self.btn_help = QPushButton()
-        self.btn_help.setObjectName("btn_welcome_help")
-        self.btn_help.setMinimumSize(140, 30)
-        self.btn_help.setStyleSheet(
-            "QPushButton {"
-            "  background-color: #3c3c3c;"
-            "  color: #ffffff;"
-            "  font-size: 9pt;"
-            "  border: 1px solid #555555;"
-            "  border-radius: 4px;"
-            "}"
-            "QPushButton:hover {"
-            "  background-color: #454545;"
-            "}"
-        )
-        if hasattr(self.gui, "show_help_dialog"):
-            self.btn_help.clicked.connect(self.gui.show_help_dialog)
-
-        btn_layout.addWidget(self.btn_config)
-        btn_layout.addWidget(self.btn_help)
-
         # Spacer to push elements into center-top vertical layout
         layout.addSpacing(10)
         layout.addWidget(self.title_label)
@@ -151,43 +109,29 @@ class HelloTab(QWidget):
         self.retranslate_ui()
 
     def retranslate_ui(self):
-        try:
-            from pycompiler_ark.Ui.i18n import translate
+        from ...Ui.i18n import translate
 
-            ctx = self.gui.id if hasattr(self.gui, "id") else "ui"
+        ctx = self.gui.id if hasattr(self.gui, "id") else "ui"
 
-            t_title = translate(ctx, "welcome_title", "Bienvenue dans PyCompiler ARK")
-            t_desc = translate(
-                ctx,
-                "welcome_desc",
-                "Un outil de compilation et d'empaquetage universel pour vos applications Python.",
-            )
-            t_guide_title = translate(
-                ctx, "welcome_guide_title", "Aucun moteur de compilation disponible"
-            )
-            t_guide_desc = translate(
-                ctx,
-                "welcome_guide",
-                "Veuillez installer un moteur de compilation pour commencer.",
-            )
-            t_btn_config = translate(
-                ctx, "btn_welcome_config", "Configurer les moteurs"
-            )
-            t_btn_help = translate(ctx, "btn_welcome_help", "Aide & Documentation")
-        except Exception:
-            t_title = "Bienvenue dans PyCompiler ARK"
-            t_desc = "Un outil de compilation et d'empaquetage universel pour vos applications Python."
-            t_guide_title = "Aucun moteur de compilation disponible"
-            t_guide_desc = "Veuillez installer un moteur de compilation pour commencer."
-            t_btn_config = "Configurer les moteurs"
-            t_btn_help = "Aide & Documentation"
+        t_title = translate(ctx, "welcome_title", "Bienvenue dans PyCompiler ARK")
+        t_desc = translate(
+            ctx,
+            "welcome_desc",
+            "Un outil de compilation et d'empaquetage universel pour vos applications Python.",
+        )
+        t_guide_title = translate(
+            ctx, "welcome_guide_title", "Aucun moteur de compilation disponible"
+        )
+        t_guide_desc = translate(
+            ctx,
+            "welcome_guide",
+            "Veuillez installer un moteur de compilation pour commencer.",
+        )
 
         self.title_label.setText(t_title)
         self.desc_label.setText(t_desc)
         self.guide_title.setText(t_guide_title)
         self.guide_desc.setText(t_guide_desc)
-        self.btn_config.setText(t_btn_config)
-        self.btn_help.setText(t_btn_help)
 
     def destroy(self, destroyWindow=True, destroySubWindows=True):
         if hasattr(self.gui, "unregister_language_refresh"):
