@@ -106,7 +106,10 @@ def _discover_external_plugins(
         if parent_dir not in sys.path:
             sys.path.insert(0, parent_dir)
 
-        for module_name in _iter_engine_module_names(base_path, namespace_package):
+        discovered_module_names = _iter_engine_module_names(
+            base_path, namespace_package
+        )
+        for module_name in discovered_module_names:
             try:
                 imported_modules = _import_module_tree(module_name)
             except Exception:
@@ -134,9 +137,61 @@ def _discover_external_plugins(
         _sync_engine_sdk_registry()
 
 
+def _discover_direct_engine_packages(base_path: str) -> None:
+    """Discover and register direct engine packages placed under base_path (for user/dev folders)."""
+    try:
+        if not os.path.isdir(base_path):
+            return
+
+        # Find direct package directories under base_path
+        direct_names = [
+            name for _finder, name, ispkg in pkgutil.iter_modules([base_path]) if ispkg
+        ]
+
+        if not direct_names:
+            return
+
+        # Temporarily ensure base_path is in sys.path for direct imports
+        added = False
+        try:
+            if base_path not in sys.path:
+                sys.path.insert(0, base_path)
+                added = True
+
+            for module_name in direct_names:
+                try:
+                    imported_modules = _import_module_tree(module_name)
+                except Exception:
+                    logger.debug(
+                        "Failed to import direct engine package %s", module_name
+                    )
+                    continue
+
+                registered_any = False
+                for module in imported_modules:
+                    try:
+                        if _register_engine_classes(module):
+                            registered_any = True
+                    except Exception:
+                        logger.debug(
+                            "Failed while introspecting engine module %s",
+                            getattr(module, "__name__", module_name),
+                        )
+        finally:
+            if added:
+                try:
+                    sys.path.remove(base_path)
+                except Exception:
+                    pass
+    except Exception:
+        logger.debug("Direct engine discovery failed for base path %s", base_path)
+    finally:
+        _sync_engine_sdk_registry()
+
+
 def _auto_discover() -> None:
     """Discover and register external engine plugins from multiple locations."""
-    # 1. Project local engines folder
+    # 1. Project local engines folder (using namespace prefix)
     try:
         project_root = os.path.abspath(
             os.path.join(
@@ -150,7 +205,7 @@ def _auto_discover() -> None:
     except Exception:
         logger.exception("Automatic engine discovery failed for project engines folder")
 
-    # 2. User-level and Dev-level engines folders
+    # 2. User-level and Dev-level engines folders (direct packages, no namespace)
     try:
         from ..Configs import resolve_config_value
 
@@ -158,10 +213,8 @@ def _auto_discover() -> None:
             try:
                 dir_path = resolve_config_value(key, create_default=False)
                 if dir_path and os.path.isdir(dir_path):
-                    # We discover plugins in these external folders using 'engines' namespace
-                    _discover_external_plugins(
-                        dir_path, namespace_package=INTERNAL_ENGINES_DIR
-                    )
+                    # Discover direct packages in user/dev folders (no namespace prefix)
+                    _discover_direct_engine_packages(dir_path)
             except Exception:
                 logger.warning("Failed to discover engines from config key: %s", key)
     except Exception:

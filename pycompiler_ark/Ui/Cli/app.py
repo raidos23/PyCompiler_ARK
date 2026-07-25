@@ -633,17 +633,46 @@ def build_cli():
 
         console = get_console()
         if console:
-            table = Table(title="Available Engines", box=None, header_style="bold cyan")
-            table.add_column("ID", style="bright_blue")
-            table.add_column("Version", style="green")
-            table.add_column("Name")
+            from collections import defaultdict
 
+            groups = defaultdict(list)
             for engine in payload.get("engines", []):
-                table.add_row(engine["id"], engine["version"], engine["name"])
-            console.print(table)
+                groups[engine.get("source", "embedded")].append(engine)
+
+            # Print sections in preferred order
+            for section_key, title in (
+                ("user", "User Engines"),
+                ("dev", "Dev Engines"),
+                ("internal", "Internal Engines"),
+                ("embedded", "Other Engines"),
+            ):
+                items = groups.get(section_key, [])
+                if not items:
+                    continue
+                table = Table(title=title, box=None, header_style="bold cyan")
+                table.add_column("ID", style="bright_blue")
+                table.add_column("Version", style="green")
+                table.add_column("Name")
+                for engine in items:
+                    table.add_row(engine["id"], engine["version"], engine["name"])
+                console.print(table)
         else:
-            for engine in payload.get("engines", []):
-                click.echo(f"{engine['id']} {engine['version']} {engine['name']}")
+            for section_key, title in (
+                ("user", "User Engines"),
+                ("dev", "Dev Engines"),
+                ("internal", "Internal Engines"),
+                ("embedded", "Other Engines"),
+            ):
+                items = [
+                    e
+                    for e in payload.get("engines", [])
+                    if e.get("source", "embedded") == section_key
+                ]
+                if not items:
+                    continue
+                click.echo(title + ":")
+                for engine in items:
+                    click.echo(f"  {engine['id']} {engine['version']} {engine['name']}")
 
     @list_group.command("plugins")
     @click.option("--json", "as_json", is_flag=True)

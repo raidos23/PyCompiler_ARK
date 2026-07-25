@@ -18,6 +18,9 @@ from __future__ import annotations
 import re
 from pathlib import Path
 from typing import Any
+import importlib
+import inspect
+import os
 
 try:
     import yaml
@@ -161,6 +164,46 @@ def engine_list_payload(workspace: str | None = None) -> dict[str, Any]:
         if engine_class is None:
             continue
         compat = _compatibility_result(engine_class)
+
+        # determine source (internal / dev / user / embedded)
+        def _determine_source(cls) -> str:
+            try:
+                mod_name = getattr(cls, "__module__", None)
+                if not mod_name:
+                    return "embedded"
+                module = importlib.import_module(mod_name)
+                mod_file = getattr(module, "__file__", None)
+                if not mod_file:
+                    return "embedded"
+                mod_path = Path(mod_file).resolve()
+                proj_internal = _project_root() / "engines"
+                try:
+                    if str(mod_path).startswith(str(proj_internal.resolve())):
+                        return "internal"
+                except Exception:
+                    pass
+                try:
+                    from ...Core.Configs import resolve_config_value
+
+                    for key, label in (
+                        ("dev-engine-dir", "dev"),
+                        ("user-engine-dir", "user"),
+                    ):
+                        try:
+                            dir_val = resolve_config_value(key, create_default=False)
+                            if dir_val:
+                                p = Path(dir_val).expanduser().resolve()
+                                if str(mod_path).startswith(str(p)):
+                                    return label
+                        except Exception:
+                            continue
+                except Exception:
+                    pass
+                return "embedded"
+            except Exception:
+                return "embedded"
+
+        source = _determine_source(engine_class)
         engines.append(
             {
                 "id": getattr(engine_class, "id", engine_id),
@@ -172,6 +215,7 @@ def engine_list_payload(workspace: str | None = None) -> dict[str, Any]:
                 "required_sdk": getattr(engine_class, "required_sdk_version", "1.0.0"),
                 "compatible": bool(getattr(compat, "is_compatible", False)),
                 "message": getattr(compat, "error_message", ""),
+                "source": source,
             }
         )
     return {"engines": engines, "count": len(engines), "workspace": workspace}
@@ -269,7 +313,7 @@ def scaffold_engine(target_name: str, root_dir: str | None = None) -> dict[str, 
                 "from __future__ import annotations",
                 "",
                 "import sys",
-                "from pycompiler_ark.engine_sdk import BuildContext, CompilerEngine, engine_register",
+                "from pycompiler_ark.engine_sdk import BuildContext, CompilerEngine, EngineMeta, engine_register",
                 "",
                 "",
                 "@engine_register",
@@ -279,6 +323,18 @@ def scaffold_engine(target_name: str, root_dir: str | None = None) -> dict[str, 
                 '    version = "0.1.0"',
                 '    required_core_version = "1.0.0"',
                 '    required_sdk_version = "1.0.0"',
+                "",
+                "    meta = EngineMeta(",
+                f'        id="{safe}",',
+                f'        name="{safe.title().replace("_", " ")}",',
+                '        version="0.1.0",',
+                '        required_core_version="1.0.0",',
+                '        required_sdk_version="1.0.0",',
+                "    )",
+                "",
+                "    @property",
+                "    def required_tools(self):",
+                '        return {"python": [], "system": []}',
                 "",
                 "    def build_command(self, context: BuildContext) -> list[str]:",
                 "        return [sys.executable, context.entry_point]",
