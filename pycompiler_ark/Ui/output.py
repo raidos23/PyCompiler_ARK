@@ -50,7 +50,9 @@ _THEME = (
 )
 
 _CONSOLE = Console(theme=_THEME) if Console is not None else None
-_CONSOLE_ERR = Console(stderr=True, theme=_THEME) if Console is not None else None
+_CONSOLE_ERR = (
+    Console(stderr=True, theme=_THEME) if Console is not None else None
+)
 
 # Common emojis to strip for a cleaner CLI look
 _EMOJI_RE = re.compile(

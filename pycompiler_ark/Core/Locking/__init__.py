@@ -120,7 +120,9 @@ def _platform_section(python_version: str | None = None) -> dict[str, Any]:
     }
 
 
-def _dependencies_section(dependencies: dict[str, str] | None) -> dict[str, str]:
+def _dependencies_section(
+    dependencies: dict[str, str] | None,
+) -> dict[str, str]:
     return dependencies or installed_distributions_snapshot()
 
 
@@ -131,7 +133,9 @@ def _payload_text(payload: dict[str, Any]) -> str:
 def ensure_workspace_layout(workspace: Path) -> None:
     for path in _workspace_subdir_paths(workspace):
         path.mkdir(parents=True, exist_ok=True)
-    _write_text_if_missing(_ark_path(workspace, ".gitignore"), WORKSPACE_GITIGNORE)
+    _write_text_if_missing(
+        _ark_path(workspace, ".gitignore"), WORKSPACE_GITIGNORE
+    )
 
 
 def load_yaml_file(path: Path) -> dict[str, Any]:
@@ -209,7 +213,8 @@ def included_workspace_files(
 
         if rel_root:
             if any(
-                _matches_exclude_pattern(rel_root + "/", p) for p in exclude_patterns
+                _matches_exclude_pattern(rel_root + "/", p)
+                for p in exclude_patterns
             ):
                 dirs[:] = []  # Stop recursion here
                 continue
@@ -217,7 +222,9 @@ def included_workspace_files(
         # 3. Process files
         for f in files:
             rel_path = os.path.join(rel_root, f) if rel_root else f
-            if any(_matches_exclude_pattern(rel_path, p) for p in exclude_patterns):
+            if any(
+                _matches_exclude_pattern(rel_path, p) for p in exclude_patterns
+            ):
                 continue
             included.append(Path(root) / f)
 
@@ -323,7 +330,9 @@ def build_lock_payload(
     }
 
 
-def write_lock_files(workspace: Path, payload: dict[str, Any]) -> dict[str, str]:
+def write_lock_files(
+    workspace: Path, payload: dict[str, Any]
+) -> dict[str, str]:
     ensure_workspace_layout(workspace)
     build_id = str(payload.get("build_id") or "ARK_UNKNOWN")
     lock_dir = _lock_dir(workspace)

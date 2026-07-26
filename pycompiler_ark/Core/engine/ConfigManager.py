@@ -97,7 +97,9 @@ def save_engine_config(
         }
         if engine_version:
             payload["meta"]["engine_version"] = str(engine_version)
-        _atomic_write_json(_engine_config_path(workspace_dir, engine_id), payload)
+        _atomic_write_json(
+            _engine_config_path(workspace_dir, engine_id), payload
+        )
         return True
     except Exception:
         return False
@@ -128,7 +130,9 @@ def _engine_policy(engine, gui) -> dict:
     return {}
 
 
-def _load_engine_config_for_engine(gui, engine, workspace_dir: str) -> dict[str, Any]:
+def _load_engine_config_for_engine(
+    gui, engine, workspace_dir: str
+) -> dict[str, Any]:
     policy = _engine_policy(engine, gui)
     if policy.get("read") is False:
         return {}
@@ -154,7 +158,9 @@ def apply_engine_configs_for_workspace(gui, workspace_dir: str) -> None:
                 engine = engines_loader.registry.get_instance(eid)
                 if not engine:
                     continue
-                data = _load_engine_config_for_engine(gui, engine, workspace_dir)
+                data = _load_engine_config_for_engine(
+                    gui, engine, workspace_dir
+                )
                 if data:
                     apply_engine_config(gui, engine, data)
             except Exception:

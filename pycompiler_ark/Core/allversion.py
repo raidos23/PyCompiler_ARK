@@ -28,7 +28,9 @@ from typing import Dict
 class VersionInfo:
     """Container for version information of a component."""
 
-    def __init__(self, name: str, version: str, component_type: str = "unknown"):
+    def __init__(
+        self, name: str, version: str, component_type: str = "unknown"
+    ):
         """
         Initialize version information.
 
@@ -121,9 +123,7 @@ def get_system_version() -> str:
     import platform
     import sys
 
-    python_version = (
-        f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
-    )
+    python_version = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
     system_info = f"{platform.system()} {platform.release()}"
     return f"Python {python_version} on {system_info}"
 
@@ -143,13 +143,17 @@ def get_all_versions() -> Dict[str, VersionInfo]:
 
     # SDKs
     engine_sdk_version = get_engine_sdk_version()
-    versions["engine_sdk"] = VersionInfo("Engine SDK", engine_sdk_version, "sdk")
+    versions["engine_sdk"] = VersionInfo(
+        "Engine SDK", engine_sdk_version, "sdk"
+    )
 
     bcasl_version = get_bcasl_version()
     versions["bcasl"] = VersionInfo("BCASL", bcasl_version, "sdk")
 
     plugins_sdk_version = get_plugins_sdk_version()
-    versions["plugins_sdk"] = VersionInfo("Plugins SDK", plugins_sdk_version, "sdk")
+    versions["plugins_sdk"] = VersionInfo(
+        "Plugins SDK", plugins_sdk_version, "sdk"
+    )
 
     bc_plugin_context_version = get_bc_plugin_context_version()
     versions["bc_plugin_context"] = VersionInfo(

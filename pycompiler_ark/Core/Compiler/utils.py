@@ -74,7 +74,9 @@ def build_command(
 
 
 def validate_command(
-    program: str, args: Optional[List[str]] = None, working_dir: Optional[str] = None
+    program: str,
+    args: Optional[List[str]] = None,
+    working_dir: Optional[str] = None,
 ) -> Tuple[bool, str]:
     """
     Validate a compilation command.
@@ -130,7 +132,10 @@ def validate_command(
     if args:
         for i, arg in enumerate(args):
             if not isinstance(arg, str):
-                return False, f"Invalid argument type at position {i}: {type(arg)}"
+                return (
+                    False,
+                    f"Invalid argument type at position {i}: {type(arg)}",
+                )
 
     return True, "Command is valid"
 
@@ -232,7 +237,9 @@ class CommandBuilder:
           `self` for fluent chaining.
         """
         sanitized = (
-            sanitize_path(arg) if any(c in arg for c in [" ", "(", ")", "&"]) else arg
+            sanitize_path(arg)
+            if any(c in arg for c in [" ", "(", ")", "&"])
+            else arg
         )
         self.args.append(sanitized)
         return self
@@ -287,7 +294,9 @@ class CommandBuilder:
             self.add_option(option, sanitized)
         return self
 
-    def add_directory_option(self, option: str, dir_path: str) -> "CommandBuilder":
+    def add_directory_option(
+        self, option: str, dir_path: str
+    ) -> "CommandBuilder":
         """
         Add a directory option with path validation.
 
@@ -363,7 +372,9 @@ class CommandBuilder:
 
         return cmd_str, full_env, self.working_dir
 
-    def build_for_execution(self) -> Tuple[List[str], Dict[str, str], Optional[str]]:
+    def build_for_execution(
+        self,
+    ) -> Tuple[List[str], Dict[str, str], Optional[str]]:
         """
         Build command for direct execution.
 
@@ -416,7 +427,9 @@ def detect_python_executable() -> str:
     return sys.executable
 
 
-def get_interpreter_version(python_path: Optional[str] = None) -> Tuple[int, int, int]:
+def get_interpreter_version(
+    python_path: Optional[str] = None,
+) -> Tuple[int, int, int]:
     """
     Return Python interpreter version.
 
@@ -431,16 +444,27 @@ def get_interpreter_version(python_path: Optional[str] = None) -> Tuple[int, int
 
     try:
         result = subprocess.run(
-            [python_path, "--version"], capture_output=True, text=True, timeout=5
+            [python_path, "--version"],
+            capture_output=True,
+            text=True,
+            timeout=5,
         )
         version_str = result.stdout or result.stderr
         match = re.search(r"(\d+)\.(\d+)\.(\d+)", version_str)
         if match:
-            return int(match.group(1)), int(match.group(2)), int(match.group(3))
+            return (
+                int(match.group(1)),
+                int(match.group(2)),
+                int(match.group(3)),
+            )
     except Exception:
         pass
 
-    return sys.version_info.major, sys.version_info.minor, sys.version_info.micro
+    return (
+        sys.version_info.major,
+        sys.version_info.minor,
+        sys.version_info.micro,
+    )
 
 
 def get_interpreter_version_str(python_path: Optional[str] = None) -> str:
@@ -457,7 +481,9 @@ def get_interpreter_version_str(python_path: Optional[str] = None) -> str:
     return f"{v[0]}.{v[1]}.{v[2]}"
 
 
-def check_module_available(module_name: str, python_path: Optional[str] = None) -> bool:
+def check_module_available(
+    module_name: str, python_path: Optional[str] = None
+) -> bool:
     """
     Check whether a Python module is available.
 

@@ -46,7 +46,10 @@ def is_bcasl_disabled_report(report: Any) -> bool:
     """Return True when BCASL was skipped because it is disabled in ark.yml."""
     if not isinstance(report, dict):
         return False
-    return str(report.get("status", "")).strip().lower() in {"disabled", "skipped"}
+    return str(report.get("status", "")).strip().lower() in {
+        "disabled",
+        "skipped",
+    }
 
 
 # --- Utilities ---
@@ -78,7 +81,9 @@ def _discover_bcasl_meta(Plugins_dir: Path) -> dict[str, dict[str, Any]]:
                     continue
                 mod_name = f"bcasl_meta_{pkg_dir.name}"
                 spec = _ilu.spec_from_file_location(
-                    mod_name, str(init_py), submodule_search_locations=[str(pkg_dir)]
+                    mod_name,
+                    str(init_py),
+                    submodule_search_locations=[str(pkg_dir)],
                 )
                 if spec is None or spec.loader is None:
                     continue
@@ -105,7 +110,9 @@ def _discover_bcasl_meta(Plugins_dir: Path) -> dict[str, dict[str, Any]]:
                             if not isinstance(attr, type):
                                 continue
                             # C'est une classe de plugin décorée avec @bc_register
-                            plugin_instance = getattr(attr, "_bcasl_instance_", None)
+                            plugin_instance = getattr(
+                                attr, "_bcasl_instance_", None
+                            )
                             if plugin_instance is None:
                                 try:
                                     plugin_instance = attr()
@@ -143,16 +150,27 @@ def _discover_bcasl_meta(Plugins_dir: Path) -> dict[str, dict[str, Any]]:
                                     f"BCASL >= {plg.meta.required_bcasl_version}"
                                 )
                             if plg.meta.required_core_version != "1.0.0":
-                                reqs.append(f"Core >= {plg.meta.required_core_version}")
-                            if plg.meta.required_plugins_sdk_version != "1.0.0":
+                                reqs.append(
+                                    f"Core >= {plg.meta.required_core_version}"
+                                )
+                            if (
+                                plg.meta.required_plugins_sdk_version
+                                != "1.0.0"
+                            ):
                                 reqs.append(
                                     f"Plugins SDK >= {plg.meta.required_plugins_sdk_version}"
                                 )
-                            if plg.meta.required_bc_plugin_context_version != "1.0.0":
+                            if (
+                                plg.meta.required_bc_plugin_context_version
+                                != "1.0.0"
+                            ):
                                 reqs.append(
                                     f"BcPluginContext >= {plg.meta.required_bc_plugin_context_version}"
                                 )
-                            if plg.meta.required_general_context_version != "1.0.0":
+                            if (
+                                plg.meta.required_general_context_version
+                                != "1.0.0"
+                            ):
                                 reqs.append(
                                     f"GeneralContext >= {plg.meta.required_general_context_version}"
                                 )
@@ -221,7 +239,9 @@ def _is_bcasl_enabled(workspace_root: Path) -> bool:
         return True
 
 
-def _build_workspace_meta(workspace_root: Path, cfg: dict[str, Any]) -> dict[str, Any]:
+def _build_workspace_meta(
+    workspace_root: Path, cfg: dict[str, Any]
+) -> dict[str, Any]:
     """Build les métadonnées du workspace pour BCASL."""
     return {
         "workspace_name": workspace_root.name,
@@ -235,7 +255,9 @@ def _resolve_order_list(cfg: dict[str, Any], plugins_dir: Path) -> list[str]:
     """Résout l'ordre des plugins (config > tags)."""
     order_list: list[str] = []
     try:
-        order_list = list(cfg.get("plugin_order", [])) if isinstance(cfg, dict) else []
+        order_list = (
+            list(cfg.get("plugin_order", [])) if isinstance(cfg, dict) else []
+        )
     except Exception:
         order_list = []
     if not order_list:
@@ -290,7 +312,9 @@ def _get_all_plugins_dirs() -> list[Path]:
 
     # 1. Project local Plugins folder
     try:
-        project_plugins = Path(__file__).resolve().parents[1] / INTERNAL_PLUGINS_DIR
+        project_plugins = (
+            Path(__file__).resolve().parents[1] / INTERNAL_PLUGINS_DIR
+        )
         project_plugins.mkdir(parents=True, exist_ok=True)
         dirs.append(project_plugins)
     except Exception:
@@ -386,7 +410,9 @@ def _run_bcasl_sync(
 
 
 def _resolve_ordered_plugin_ids(
-    plugin_ids: list[str], meta_map: dict[str, dict[str, Any]], cfg: dict[str, Any]
+    plugin_ids: list[str],
+    meta_map: dict[str, dict[str, Any]],
+    cfg: dict[str, Any],
 ) -> list[str]:
     order: list[str] = []
     try:
@@ -396,7 +422,9 @@ def _resolve_ordered_plugin_ids(
         order = []
     if not order:
         try:
-            order = [pid for pid in compute_tag_order(meta_map) if pid in plugin_ids]
+            order = [
+                pid for pid in compute_tag_order(meta_map) if pid in plugin_ids
+            ]
         except Exception:
             order = sorted(plugin_ids)
     remaining = [pid for pid in plugin_ids if pid not in order]
@@ -502,7 +530,9 @@ def _load_workspace_config(workspace_root: Path) -> dict[str, Any]:
         try:
             target = workspace_root / "bcasl.yml"
             target.write_text(
-                yaml.safe_dump(default_cfg, allow_unicode=True, sort_keys=False),
+                yaml.safe_dump(
+                    default_cfg, allow_unicode=True, sort_keys=False
+                ),
                 encoding="utf-8",
             )
         except Exception:
@@ -515,7 +545,9 @@ def _load_workspace_config(workspace_root: Path) -> dict[str, Any]:
 # Plugins
 
 
-def run_pre_compile(self, build_context: Optional[Any] = None) -> Optional[object]:
+def run_pre_compile(
+    self, build_context: Optional[Any] = None
+) -> Optional[object]:
     """Execute la phase BCASL de pre-compilation (path synchrone, simple)."""
     try:
         if not getattr(self, "workspace_dir", None):
@@ -527,7 +559,9 @@ def run_pre_compile(self, build_context: Optional[Any] = None) -> Optional[objec
         if not _is_bcasl_enabled(workspace_root):
             try:
                 if hasattr(self, "log") and self.log is not None:
-                    self.log.append("BCASL désactivé dans ark.yml. Exécution ignorée\n")
+                    self.log.append(
+                        "BCASL désactivé dans ark.yml. Exécution ignorée\n"
+                    )
             except Exception:
                 pass
             return dict(BCASL_DISABLED_REPORT)

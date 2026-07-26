@@ -47,7 +47,9 @@ def _iter_i18n_roots(engine: CompilerEngine):
         try:
             if value is None:
                 continue
-            if not hasattr(value, "children") and not hasattr(value, "setProperty"):
+            if not hasattr(value, "children") and not hasattr(
+                value, "setProperty"
+            ):
                 continue
             oid = id(value)
             if oid in seen:
@@ -142,13 +144,17 @@ def _apply_engine_i18n(root: Any, engine_id: str) -> None:
             if isinstance(value, str) and value:
                 obj.setToolTip(value)
 
-    def _apply_placeholder(obj: Any, key: str, default: str | None = None) -> None:
+    def _apply_placeholder(
+        obj: Any, key: str, default: str | None = None
+    ) -> None:
         if hasattr(obj, "setPlaceholderText"):
             value = translate(engine_id, key, default)
             if isinstance(value, str) and value:
                 obj.setPlaceholderText(value)
 
-    def _apply_tab_text(obj: Any, key: str, default: str | None = None) -> None:
+    def _apply_tab_text(
+        obj: Any, key: str, default: str | None = None
+    ) -> None:
         parent = getattr(obj, "parent", lambda: None)()
         while parent is not None:
             if hasattr(parent, "indexOf") and hasattr(parent, "setTabText"):
@@ -219,29 +225,41 @@ def _apply_engine_i18n(root: Any, engine_id: str) -> None:
                     )
                 continue
 
-            _apply_text(obj, chosen_key, current if isinstance(current, str) else None)
+            _apply_text(
+                obj, chosen_key, current if isinstance(current, str) else None
+            )
 
         tooltip_key = _prop(obj, "i18n_tooltip_key") or _tooltip_for_name(name)
         if tooltip_key:
             current = obj.toolTip() if hasattr(obj, "toolTip") else None
             _apply_tooltip(
-                obj, str(tooltip_key), current if isinstance(current, str) else None
+                obj,
+                str(tooltip_key),
+                current if isinstance(current, str) else None,
             )
 
-        placeholder_key = _prop(obj, "i18n_placeholder_key") or _placeholder_for_name(
-            name
-        )
+        placeholder_key = _prop(
+            obj, "i18n_placeholder_key"
+        ) or _placeholder_for_name(name)
         if placeholder_key:
-            current = obj.placeholderText() if hasattr(obj, "placeholderText") else None
+            current = (
+                obj.placeholderText()
+                if hasattr(obj, "placeholderText")
+                else None
+            )
             _apply_placeholder(
-                obj, str(placeholder_key), current if isinstance(current, str) else None
+                obj,
+                str(placeholder_key),
+                current if isinstance(current, str) else None,
             )
 
         tab_key = _prop(obj, "i18n_tab_key")
         if tab_key:
             current = obj.text() if hasattr(obj, "text") else None
             _apply_tab_text(
-                obj, str(tab_key), current if isinstance(current, str) else None
+                obj,
+                str(tab_key),
+                current if isinstance(current, str) else None,
             )
 
 
@@ -313,7 +331,9 @@ def resolve_language_code(gui, tr: Optional[dict]) -> str:
 
     if not code:
         try:
-            pref = getattr(gui, "language_pref", getattr(gui, "language", "System"))
+            pref = getattr(
+                gui, "language_pref", getattr(gui, "language", "System")
+            )
             if isinstance(pref, str) and pref != "System":
                 code = pref
         except Exception:
@@ -330,7 +350,9 @@ def set_translations(gui, tr: Optional[dict]) -> None:
     except Exception:
         _GLOBAL_TR = {}
     try:
-        _GLOBAL_LANG = resolve_language_code(gui, tr if isinstance(tr, dict) else None)
+        _GLOBAL_LANG = resolve_language_code(
+            gui, tr if isinstance(tr, dict) else None
+        )
     except Exception:
         _GLOBAL_LANG = "en"
 
@@ -370,7 +392,9 @@ def _engine_package_for_class(engine_cls: type[CompilerEngine]) -> str | None:
         return None
 
 
-def _refresh_engine_translations_for_ids(engine_ids: list[str], code: str) -> None:
+def _refresh_engine_translations_for_ids(
+    engine_ids: list[str], code: str
+) -> None:
     """Load and cache language files for selected engine ids."""
     for eid in engine_ids:
         try:
@@ -381,7 +405,9 @@ def _refresh_engine_translations_for_ids(engine_ids: list[str], code: str) -> No
             if not engine_package:
                 continue
             data = load_engine_language_file(engine_package, code)
-            register_engine_translations(eid, data if isinstance(data, dict) else {})
+            register_engine_translations(
+                eid, data if isinstance(data, dict) else {}
+            )
         except Exception:
             continue
 
@@ -395,7 +421,9 @@ def _refresh_all_engine_translations(code: str) -> None:
     _refresh_engine_translations_for_ids(list(_ORDER), code)
 
 
-def translate(engine_or_id: Any, key: str, default: Optional[str] = None) -> str:
+def translate(
+    engine_or_id: Any, key: str, default: Optional[str] = None
+) -> str:
     """Translate an engine-local key with fallback to host translations and defaults."""
     engine_id = None
     try:
@@ -591,11 +619,15 @@ def bind_tabs(gui) -> None:
                 scroll.setFrameShape(QFrame.Shape.NoFrame)
                 scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
                 scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
-                scroll.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+                scroll.setSizePolicy(
+                    QSizePolicy.Expanding, QSizePolicy.Expanding
+                )
 
                 if _ENGINE_TAB_SCROLL_MAX_HEIGHT:
                     try:
-                        scroll.setMaximumHeight(int(_ENGINE_TAB_SCROLL_MAX_HEIGHT))
+                        scroll.setMaximumHeight(
+                            int(_ENGINE_TAB_SCROLL_MAX_HEIGHT)
+                        )
                     except Exception:
                         pass
 

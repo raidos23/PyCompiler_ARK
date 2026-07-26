@@ -111,7 +111,9 @@ class SysDependencyUI(SysDependencyManager):
 
         self._invoke_gui(_show)
 
-    def _show_progress(self, title_fr: str, title_en: str, msg_fr: str, msg_en: str):
+    def _show_progress(
+        self, title_fr: str, title_en: str, msg_fr: str, msg_en: str
+    ):
         def _create():
             # Close existing one if any
             if self._progress_dlg:
@@ -170,7 +172,9 @@ class SysDependencyUI(SysDependencyManager):
         def _on_finished(ec, es):
             self._close_progress()
             if ec != 0:
-                self.msg_error("L'installation a échoué.", "Installation failed.")
+                self.msg_error(
+                    "L'installation a échoué.", "Installation failed."
+                )
 
         # Elevation is required for system packages
         proc = self.run_elevated_shell(
@@ -183,11 +187,15 @@ class SysDependencyUI(SysDependencyManager):
 
         return proc
 
-    def install_packages_linux(self, packages: list[str]) -> Optional[QProcess]:
+    def install_packages_linux(
+        self, packages: list[str]
+    ) -> Optional[QProcess]:
         # Deprecated: use install_packages
         return self.install_packages(packages)
 
-    def install_packages_windows(self, packages: list[dict]) -> Optional[QProcess]:
+    def install_packages_windows(
+        self, packages: list[dict]
+    ) -> Optional[QProcess]:
         # Deprecated: use install_packages
         ids = [pkg.get("id") for pkg in packages if pkg.get("id")]
         return self.install_packages(ids)

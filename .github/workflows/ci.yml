@@ -20,7 +20,7 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: \( {{ github.workflow }}- \){{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -42,10 +42,10 @@ jobs:
           python -m pip install ruff
 
       - name: Code Formatting Check
-        run: ruff format --check .
+        run: ruff format --check . --exclude docs
 
       - name: Code Linting Check
-        run: ruff check .
+        run: ruff check . --exclude docs
 
   test:
     name: Test (${{ matrix.os }} - Python ${{ matrix.python-version }})

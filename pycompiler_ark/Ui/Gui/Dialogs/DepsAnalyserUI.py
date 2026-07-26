@@ -99,7 +99,11 @@ def suggest_missing_dependencies(self):
                 )
             )
             btn_ws = box.addButton(
-                _t("action_select_workspace", "Choisir Workspace", "Select Workspace"),
+                _t(
+                    "action_select_workspace",
+                    "Choisir Workspace",
+                    "Select Workspace",
+                ),
                 QMessageBox.ActionRole,
             )
             btn_venv = box.addButton(
@@ -107,7 +111,8 @@ def suggest_missing_dependencies(self):
                 QMessageBox.AcceptRole,
             )
             box.addButton(
-                _t("action_cancel", "Annuler", "Cancel"), QMessageBox.RejectRole
+                _t("action_cancel", "Annuler", "Cancel"),
+                QMessageBox.RejectRole,
             )
             box.exec()
             if box.clickedButton() == btn_ws:
@@ -135,11 +140,15 @@ def suggest_missing_dependencies(self):
     for f in files:
         abs_f = _normalize_realpath(f)
         try:
-            if venv_dir and _is_path_under(abs_f, _normalize_realpath(venv_dir)):
+            if venv_dir and _is_path_under(
+                abs_f, _normalize_realpath(venv_dir)
+            ):
                 continue
         except Exception:
             pass
-        if _should_skip_analysis_path(abs_f, getattr(self, "workspace_dir", None)):
+        if _should_skip_analysis_path(
+            abs_f, getattr(self, "workspace_dir", None)
+        ):
             continue
         filtered_files.append(abs_f)
 
@@ -150,7 +159,9 @@ def suggest_missing_dependencies(self):
             self.tr("Analyse des dépendances", "Analyzing dependencies"), self
         )
         analysis_progress.set_message(
-            self.tr("Analyse des fichiers Python...", "Analyzing Python files...")
+            self.tr(
+                "Analyse des fichiers Python...", "Analyzing Python files..."
+            )
         )
         analysis_progress.set_progress(0, len(filtered_files))
         analysis_progress.show()
@@ -165,9 +176,9 @@ def suggest_missing_dependencies(self):
             if analysis_progress:
                 file_name = os.path.basename(file)
                 analysis_progress.set_message(
-                    self.tr("Analyse de {file}...", "Analyzing {file}...").format(
-                        file=file_name
-                    )
+                    self.tr(
+                        "Analyse de {file}...", "Analyzing {file}..."
+                    ).format(file=file_name)
                 )
                 analysis_progress.set_progress(idx, len(filtered_files))
             if idx - last_pump >= 50:
@@ -180,12 +191,18 @@ def suggest_missing_dependencies(self):
                 )
             )
         except Exception as e:
-            _log_append(self, f"⚠️ Erreur analyse dépendances dans {file} : {e}")
+            _log_append(
+                self, f"⚠️ Erreur analyse dépendances dans {file} : {e}"
+            )
 
     # Fermer la barre de progression d'analyse
     if analysis_progress:
-        analysis_progress.set_message(self.tr("Analyse terminée", "Analysis completed"))
-        analysis_progress.set_progress(len(filtered_files), len(filtered_files))
+        analysis_progress.set_message(
+            self.tr("Analyse terminée", "Analysis completed")
+        )
+        analysis_progress.set_progress(
+            len(filtered_files), len(filtered_files)
+        )
     # Classify imports as stdlib/internal/third-party/unknown.
     ws_root = _normalize_realpath(getattr(self, "workspace_dir", None) or "")
     internal_modules = _collect_workspace_module_roots(filtered_files, ws_root)
@@ -196,7 +213,12 @@ def suggest_missing_dependencies(self):
         )
 
     suggestions = []
-    category_stats = {"stdlib": 0, "internal": 0, "third_party": 0, "unknown": 0}
+    category_stats = {
+        "stdlib": 0,
+        "internal": 0,
+        "third_party": 0,
+        "unknown": 0,
+    }
     for m in sorted(modules):
         if m in internal_modules:
             category = "internal"
@@ -238,7 +260,9 @@ def suggest_missing_dependencies(self):
                 _log_append(self, f"ℹ️ {msg}")
                 try:
                     QMessageBox.information(
-                        self, self.tr("tkinter manquant", "Missing tkinter"), msg
+                        self,
+                        self.tr("tkinter manquant", "Missing tkinter"),
+                        msg,
                     )
                 except Exception:
                     pass
@@ -260,7 +284,9 @@ def suggest_missing_dependencies(self):
             venv_path=self.venv_path_manuel, workspace_dir=self.workspace_dir
         )
     try:
-        _log_append(self, f"ℹ️ Utilisation de pip: {pip_program} {' '.join(pip_prefix)}")
+        _log_append(
+            self, f"ℹ️ Utilisation de pip: {pip_program} {' '.join(pip_prefix)}"
+        )
     except Exception:
         pass
     # Vérification des modules avec progression (préférer un seul pip list pour limiter le blocage UI)
@@ -268,7 +294,9 @@ def suggest_missing_dependencies(self):
     installed = set()
     try:
         cmd = [pip_program, *pip_prefix, "list", "--format=json"]
-        result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        result = subprocess.run(
+            cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        )
         if result.returncode == 0:
             try:
                 data = json.loads(
@@ -291,7 +319,8 @@ def suggest_missing_dependencies(self):
                 if analysis_progress:
                     analysis_progress.set_message(
                         self.tr(
-                            "Vérification de {module}...", "Checking {module}..."
+                            "Vérification de {module}...",
+                            "Checking {module}...",
                         ).format(module=module)
                     )
                     analysis_progress.set_progress(idx, len(suggestions))
@@ -302,7 +331,8 @@ def suggest_missing_dependencies(self):
                     not_installed.append(module)
             except Exception as e:
                 _log_append(
-                    self, f"⚠️ Erreur lors de la vérification du module {module} : {e}"
+                    self,
+                    f"⚠️ Erreur lors de la vérification du module {module} : {e}",
                 )
     else:
         for idx, module in enumerate(suggestions):
@@ -310,7 +340,8 @@ def suggest_missing_dependencies(self):
                 if analysis_progress:
                     analysis_progress.set_message(
                         self.tr(
-                            "Vérification de {module}...", "Checking {module}..."
+                            "Vérification de {module}...",
+                            "Checking {module}...",
                         ).format(module=module)
                     )
                     analysis_progress.set_progress(idx, len(suggestions))
@@ -325,7 +356,8 @@ def suggest_missing_dependencies(self):
                     not_installed.append(module)
             except Exception as e:
                 _log_append(
-                    self, f"⚠️ Erreur lors de la vérification du module {module} : {e}"
+                    self,
+                    f"⚠️ Erreur lors de la vérification du module {module} : {e}",
                 )
 
     # Fermer la barre de progression d'analyse
@@ -335,7 +367,8 @@ def suggest_missing_dependencies(self):
     if not_installed:
         _log_append(
             self,
-            "❗ Modules manquants dans le venv : " + ", ".join(sorted(not_installed)),
+            "❗ Modules manquants dans le venv : "
+            + ", ".join(sorted(not_installed)),
         )
         # Demande à l'utilisateur s'il souhaite installer automatiquement les modules manquants
         reply = QMessageBox.question(
@@ -358,7 +391,10 @@ def suggest_missing_dependencies(self):
                 self._dep_pip_program = sys.executable
                 self._dep_pip_prefix = ["-m", "pip"]
             self.dep_progress_dialog = ProgressDialog(
-                self.tr("Installation des dépendances", "Installing dependencies"), self
+                self.tr(
+                    "Installation des dépendances", "Installing dependencies"
+                ),
+                self,
             )
             self.dep_progress_dialog.set_message(
                 self.tr("Installation de {m}...", "Installing {m}...").format(
@@ -370,7 +406,8 @@ def suggest_missing_dependencies(self):
             _install_next_dependency(self)
     else:
         _log_append(
-            self, "✅ Tous les modules nécessaires sont déjà installés dans le venv."
+            self,
+            "✅ Tous les modules nécessaires sont déjà installés dans le venv.",
         )
 
 
@@ -405,7 +442,9 @@ def _install_next_dependency(self):
     prefix = list(getattr(self, "_dep_pip_prefix", ["-m", "pip"]))
     process.setProgram(program)
     process.setArguments(prefix + ["install", module])
-    process.readyReadStandardOutput.connect(lambda: _on_dep_pip_output(self, process))
+    process.readyReadStandardOutput.connect(
+        lambda: _on_dep_pip_output(self, process)
+    )
     process.readyReadStandardError.connect(
         lambda: _on_dep_pip_output(self, process, error=True)
     )

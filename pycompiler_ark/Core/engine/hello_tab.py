@@ -85,7 +85,9 @@ class HelloTab(QWidget):
 
         self.guide_desc = QLabel()
         self.guide_desc.setObjectName("welcome_guide")
-        self.guide_desc.setStyleSheet("font-size: 9pt; color: #d4d4d4; border: none;")
+        self.guide_desc.setStyleSheet(
+            "font-size: 9pt; color: #d4d4d4; border: none;"
+        )
         self.guide_desc.setWordWrap(True)
         self.guide_desc.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
@@ -113,14 +115,18 @@ class HelloTab(QWidget):
 
         ctx = self.gui.id if hasattr(self.gui, "id") else "ui"
 
-        t_title = translate(ctx, "welcome_title", "Bienvenue dans PyCompiler ARK")
+        t_title = translate(
+            ctx, "welcome_title", "Bienvenue dans PyCompiler ARK"
+        )
         t_desc = translate(
             ctx,
             "welcome_desc",
             "Un outil de compilation et d'empaquetage universel pour vos applications Python.",
         )
         t_guide_title = translate(
-            ctx, "welcome_guide_title", "Aucun moteur de compilation disponible"
+            ctx,
+            "welcome_guide_title",
+            "Aucun moteur de compilation disponible",
         )
         t_guide_desc = translate(
             ctx,

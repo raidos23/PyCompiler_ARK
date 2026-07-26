@@ -74,7 +74,10 @@ def _detect_system_color_scheme() -> str:
                     capture_output=True,
                     text=True,
                 )
-                if out.returncode == 0 and "dark" in out.stdout.strip().lower():
+                if (
+                    out.returncode == 0
+                    and "dark" in out.stdout.strip().lower()
+                ):
                     return "sombre"
             except Exception:
                 pass
@@ -113,7 +116,9 @@ def _detect_system_color_scheme() -> str:
             try:
                 kdeglobals = _os.path.expanduser("~/.config/kdeglobals")
                 if _os.path.isfile(kdeglobals):
-                    with open(kdeglobals, encoding="utf-8", errors="ignore") as f:
+                    with open(
+                        kdeglobals, encoding="utf-8", errors="ignore"
+                    ) as f:
                         txt = f.read().lower()
                     if "colorscheme" in txt and "dark" in txt:
                         return "sombre"
@@ -286,7 +291,11 @@ def _apply_button_icons(self) -> None:
         return
     icons_dir = os.path.abspath(
         os.path.join(
-            os.path.dirname(os.path.abspath(__file__)), "..", "..", "data", "icons"
+            os.path.dirname(os.path.abspath(__file__)),
+            "..",
+            "..",
+            "data",
+            "icons",
         )
     )
     if not os.path.isdir(icons_dir):
@@ -313,7 +322,9 @@ def _apply_button_icons(self) -> None:
                     if colors:
                         return colors[0]
 
-            match = re.search(r"--accent[^:]*:\\s*(#[0-9a-fA-F]{3,6})", css_text)
+            match = re.search(
+                r"--accent[^:]*:\\s*(#[0-9a-fA-F]{3,6})", css_text
+            )
             if match:
                 return match.group(1)
 
@@ -350,7 +361,11 @@ def _apply_button_icons(self) -> None:
             if accent:
                 return accent
             return "#FFFFFF" if _is_qss_dark(css) else "#111111"
-        return "#FFFFFF" if _detect_system_color_scheme() == "sombre" else "#111111"
+        return (
+            "#FFFFFF"
+            if _detect_system_color_scheme() == "sombre"
+            else "#111111"
+        )
 
     def _render_svg_icon(path: str, color: str, size: int) -> QIcon | None:
         if not os.path.isfile(path):
@@ -469,10 +484,14 @@ def _setup_widgets(self) -> None:
         )
         self.select_theme.setProperty("i18n_system_attr", "theme")
     if self.venv_label:
-        self.venv_label.setProperty("i18n_text_system_key", "venv_label_system")
+        self.venv_label.setProperty(
+            "i18n_text_system_key", "venv_label_system"
+        )
         self.venv_label.setProperty("i18n_system_attr", "use_system_python")
     if self.label_workspace_status:
-        self.label_workspace_status.setProperty("i18n_format_attr", "workspace_dir")
+        self.label_workspace_status.setProperty(
+            "i18n_format_attr", "workspace_dir"
+        )
         self.label_workspace_status.setProperty(
             "i18n_none_key", "label_workspace_status_none"
         )
@@ -556,7 +575,9 @@ def _connect_signals(self) -> None:
         try:
             from .Dialogs.BcaslDialog import open_bc_loader_dialog
 
-            self.btn_bc_loader.clicked.connect(lambda: open_bc_loader_dialog(self))
+            self.btn_bc_loader.clicked.connect(
+                lambda: open_bc_loader_dialog(self)
+            )
         except Exception:
             pass
 
@@ -586,11 +607,15 @@ def _connect_signals(self) -> None:
             pass
 
     if self.compiler_tabs:
-        self.compiler_tabs.currentChanged.connect(update_compiler_options_enabled)
+        self.compiler_tabs.currentChanged.connect(
+            update_compiler_options_enabled
+        )
         update_compiler_options_enabled()
 
     if self.btn_suggest_deps:
-        _connect_clicked(self.btn_suggest_deps, self.suggest_missing_dependencies)
+        _connect_clicked(
+            self.btn_suggest_deps, self.suggest_missing_dependencies
+        )
 
 
 def _show_initial_help_message(self) -> None:
@@ -636,7 +661,9 @@ def init_ui(self) -> None:
 def _themes_dir() -> str:
     """Return absolute path to the `themes` directory."""
     return os.path.abspath(
-        os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "themes")
+        os.path.join(
+            os.path.dirname(os.path.abspath(__file__)), "..", "..", "themes"
+        )
     )
 
 
@@ -701,10 +728,15 @@ def _is_qss_dark(css: str) -> bool:
                         for s in nums_str:
                             if s.endswith("%"):
                                 vals.append(
-                                    int(max(0.0, min(100.0, float(s[:-1]))) * 2.55)
+                                    int(
+                                        max(0.0, min(100.0, float(s[:-1])))
+                                        * 2.55
+                                    )
                                 )
                             else:
-                                vals.append(int(max(0.0, min(255.0, float(s)))))
+                                vals.append(
+                                    int(max(0.0, min(255.0, float(s))))
+                                )
                         return tuple(vals)
                     nums = [
                         int(max(0.0, min(255.0, float(x))))
@@ -723,7 +755,9 @@ def _is_qss_dark(css: str) -> bool:
                 rgbs.append(rgb)
         if not rgbs:
             return False
-        avg = sum(0.2126 * r + 0.7152 * g + 0.0722 * b for r, g, b in rgbs) / len(rgbs)
+        avg = sum(
+            0.2126 * r + 0.7152 * g + 0.0722 * b for r, g, b in rgbs
+        ) / len(rgbs)
         return avg < 128.0
     except Exception:
         return False
@@ -734,7 +768,9 @@ def _extract_accent_color_for_icons(css_text: str) -> str | None:
         import re
 
         def _block(selector: str) -> str | None:
-            pattern = re.compile(rf"{re.escape(selector)}\\s*\\{{([^}}]+)\\}}", re.S)
+            pattern = re.compile(
+                rf"{re.escape(selector)}\\s*\\{{([^}}]+)\\}}", re.S
+            )
             match = pattern.search(css_text)
             return match.group(1) if match else None
 
@@ -770,10 +806,14 @@ def _resolve_theme_icon_color(css: str | None = None) -> str:
         if accent:
             return accent
         return "#FFFFFF" if _is_qss_dark(css) else "#111111"
-    return "#FFFFFF" if _detect_system_color_scheme() == "sombre" else "#111111"
+    return (
+        "#FFFFFF" if _detect_system_color_scheme() == "sombre" else "#111111"
+    )
 
 
-def themed_svg_icon(path: str, size: int = 18, css: str | None = None) -> QIcon | None:
+def themed_svg_icon(
+    path: str, size: int = 18, css: str | None = None
+) -> QIcon | None:
     """Render an SVG icon tinted according to current app theme."""
     if not os.path.isfile(path):
         return None
@@ -844,10 +884,17 @@ def apply_theme(self, pref: str) -> None:
             if not chosen_path and candidates:
                 chosen_name, chosen_path = candidates[0]
         else:
-            norm = pref.lower().replace(" ", "").replace("-", "").replace("_", "")
+            norm = (
+                pref.lower().replace(" ", "").replace("-", "").replace("_", "")
+            )
             for disp, path in candidates:
                 stem = os.path.splitext(os.path.basename(path))[0]
-                stem_n = stem.lower().replace(" ", "").replace("-", "").replace("_", "")
+                stem_n = (
+                    stem.lower()
+                    .replace(" ", "")
+                    .replace("-", "")
+                    .replace("_", "")
+                )
                 if stem_n == norm:
                     chosen_name = disp
                     chosen_path = path
@@ -947,14 +994,18 @@ def show_theme_dialog(self) -> None:
     except Exception:
         start_index = 0
     title = translate(
-        self.id, "choose_theme_title", getattr(self, "windowTitle", lambda: "")()
+        self.id,
+        "choose_theme_title",
+        getattr(self, "windowTitle", lambda: "")(),
     )
     label = translate(
         self.id,
         "choose_theme_label",
         getattr(getattr(self, "select_theme", None), "text", lambda: "")(),
     )
-    choice, ok = QInputDialog.getItem(self, title, label, options, start_index, False)
+    choice, ok = QInputDialog.getItem(
+        self, title, label, options, start_index, False
+    )
     if ok and choice:
         self.theme = choice
         apply_theme(self, choice)

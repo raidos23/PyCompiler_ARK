@@ -112,7 +112,12 @@ class Dialog:
             return raw
 
     def show_msgbox(
-        self, kind: str, title: str, text: str, *, default: Optional[str] = None
+        self,
+        kind: str,
+        title: str,
+        text: str,
+        *,
+        default: Optional[str] = None,
     ) -> Optional[bool]:
         """Show a message box using Core.dialogs.show_msgbox."""
         return show_msgbox(
@@ -134,7 +139,9 @@ class Dialog:
         """Show an error message box."""
         show_msgbox("error", self._tr_text(title), self._tr_text(text))
 
-    def msg_question(self, title: str, text: str, default_yes: bool = True) -> bool:
+    def msg_question(
+        self, title: str, text: str, default_yes: bool = True
+    ) -> bool:
         """Show a question message box and return True if Yes, False otherwise."""
         return bool(
             show_msgbox(
@@ -175,7 +182,11 @@ class Dialog:
         output.error(self._prepare_log(message))
 
     def progress(
-        self, title: str, text: str = "", maximum: int = 0, cancelable: bool = False
+        self,
+        title: str,
+        text: str = "",
+        maximum: int = 0,
+        cancelable: bool = False,
     ) -> ProgressDialog:
         """Create and return a ProgressDialog from pycompiler_ark.Core.dialogs.
 
@@ -212,7 +223,9 @@ class Dialog:
                     console=console_obj,
                     transient=True,
                 )
-                self.task_id = self.progress.add_task(description=title_str, total=None)
+                self.task_id = self.progress.add_task(
+                    description=title_str, total=None
+                )
 
             def show(self):
                 self.progress.start()

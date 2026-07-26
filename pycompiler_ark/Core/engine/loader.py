@@ -30,14 +30,18 @@ from .base import CompilerEngine
 logger = logging.getLogger(__name__)
 
 
-def _iter_engine_module_names(base_path: str, namespace_package: str) -> list[str]:
+def _iter_engine_module_names(
+    base_path: str, namespace_package: str
+) -> list[str]:
     """Return top-level engine package names under the configured namespace."""
     if not os.path.isdir(base_path):
         return []
     prefix = f"{namespace_package.rstrip('.')}."
     return [
         name
-        for _finder, name, ispkg in pkgutil.iter_modules([base_path], prefix=prefix)
+        for _finder, name, ispkg in pkgutil.iter_modules(
+            [base_path], prefix=prefix
+        )
         if ispkg
     ]
 
@@ -49,7 +53,9 @@ def _register_engine_classes(module: ModuleType) -> list[str]:
         if not issubclass(obj, CompilerEngine) or obj is CompilerEngine:
             continue
         try:
-            if not str(getattr(obj, "__module__", "")).startswith(module.__name__):
+            if not str(getattr(obj, "__module__", "")).startswith(
+                module.__name__
+            ):
                 continue
             engine_registry.engine_register(obj)
             registered.append(getattr(obj, "id", obj.__name__))
@@ -113,7 +119,9 @@ def _discover_external_plugins(
             try:
                 imported_modules = _import_module_tree(module_name)
             except Exception:
-                logger.exception("Failed to import engine package %s", module_name)
+                logger.exception(
+                    "Failed to import engine package %s", module_name
+                )
                 continue
 
             registered_any = False
@@ -145,7 +153,9 @@ def _discover_direct_engine_packages(base_path: str) -> None:
 
         # Find direct package directories under base_path
         direct_names = [
-            name for _finder, name, ispkg in pkgutil.iter_modules([base_path]) if ispkg
+            name
+            for _finder, name, ispkg in pkgutil.iter_modules([base_path])
+            if ispkg
         ]
 
         if not direct_names:
@@ -163,7 +173,8 @@ def _discover_direct_engine_packages(base_path: str) -> None:
                     imported_modules = _import_module_tree(module_name)
                 except Exception:
                     logger.debug(
-                        "Failed to import direct engine package %s", module_name
+                        "Failed to import direct engine package %s",
+                        module_name,
                     )
                     continue
 
@@ -184,7 +195,9 @@ def _discover_direct_engine_packages(base_path: str) -> None:
                 except Exception:
                     pass
     except Exception:
-        logger.debug("Direct engine discovery failed for base path %s", base_path)
+        logger.debug(
+            "Direct engine discovery failed for base path %s", base_path
+        )
     finally:
         _sync_engine_sdk_registry()
 
@@ -195,15 +208,21 @@ def _auto_discover() -> None:
     try:
         project_root = os.path.abspath(
             os.path.join(
-                os.path.dirname(os.path.abspath(__file__)), os.pardir, os.pardir
+                os.path.dirname(os.path.abspath(__file__)),
+                os.pardir,
+                os.pardir,
             )
         )
         external_dir = os.path.join(project_root, INTERNAL_ENGINES_DIR)
         # Ensure directory exists for auto-discovery
         os.makedirs(external_dir, exist_ok=True)
-        _discover_external_plugins(external_dir, namespace_package=INTERNAL_ENGINES_DIR)
+        _discover_external_plugins(
+            external_dir, namespace_package=INTERNAL_ENGINES_DIR
+        )
     except Exception:
-        logger.exception("Automatic engine discovery failed for project engines folder")
+        logger.exception(
+            "Automatic engine discovery failed for project engines folder"
+        )
 
     # 2. User-level and Dev-level engines folders (direct packages, no namespace)
     try:
@@ -216,7 +235,9 @@ def _auto_discover() -> None:
                     # Discover direct packages in user/dev folders (no namespace prefix)
                     _discover_direct_engine_packages(dir_path)
             except Exception:
-                logger.warning("Failed to discover engines from config key: %s", key)
+                logger.warning(
+                    "Failed to discover engines from config key: %s", key
+                )
     except Exception:
         logger.exception("External engine discovery from user config failed")
     finally:

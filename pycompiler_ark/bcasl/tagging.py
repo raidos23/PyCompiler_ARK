@@ -144,11 +144,14 @@ def describe_plugin_priority(plugin_id: str, tags: list[str]) -> str:
     Exemple: "plugin_id (lint, format) -> Phase 4: Linting"
     """
     if not tags:
-        return f"{plugin_id} (aucun tag) -> Phase {DEFAULT_TAG_PRIORITY}: Default"
+        return (
+            f"{plugin_id} (aucun tag) -> Phase {DEFAULT_TAG_PRIORITY}: Default"
+        )
 
     tag_str = ", ".join(str(t).strip().lower() for t in tags)
     scores = [
-        TAG_PRIORITY_MAP.get(str(t).strip().lower(), DEFAULT_TAG_PRIORITY) for t in tags
+        TAG_PRIORITY_MAP.get(str(t).strip().lower(), DEFAULT_TAG_PRIORITY)
+        for t in tags
     ]
     min_score = min(scores) if scores else DEFAULT_TAG_PRIORITY
     phase_name = get_tag_phase_name(min_score)

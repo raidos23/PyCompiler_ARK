@@ -61,7 +61,9 @@ from ..Compilation.mainprocess import ProcessState
 # ============================================================================
 
 
-def _prompt_for_required_entrypoint(self, *, missing_path: str | None = None) -> None:
+def _prompt_for_required_entrypoint(
+    self, *, missing_path: str | None = None
+) -> None:
     """Show a blocking dialog when compilation has no valid entrypoint."""
 
     def _t(fr: str, en: str) -> str:
@@ -178,7 +180,8 @@ def compile_all(self) -> None:
                 )
             )
             btn_ws = box.addButton(
-                _t("Choisir Workspace", "Select Workspace"), QMessageBox.AcceptRole
+                _t("Choisir Workspace", "Select Workspace"),
+                QMessageBox.AcceptRole,
             )
             box.addButton(_t("Annuler", "Cancel"), QMessageBox.RejectRole)
             box.exec()
@@ -337,8 +340,12 @@ def compile_all(self) -> None:
 
             # Connection logic
             if not hasattr(main_process, "_gui_connected"):
-                main_process.output_ready.connect(lambda msg: _handle_output(self, msg))
-                main_process.error_ready.connect(lambda msg: _handle_error(self, msg))
+                main_process.output_ready.connect(
+                    lambda msg: _handle_output(self, msg)
+                )
+                main_process.error_ready.connect(
+                    lambda msg: _handle_error(self, msg)
+                )
                 main_process.progress_update.connect(
                     lambda pct, msg: _handle_progress(self, pct, msg)
                 )
@@ -382,7 +389,9 @@ def compile_all(self) -> None:
 
     self._active_bcasl_callback = _after_bcasl
     # Pass validated config to short-circuit if BCASL is disabled
-    ark_cfg = getattr(validated, "config", None) if "validated" in locals() else None
+    ark_cfg = (
+        getattr(validated, "config", None) if "validated" in locals() else None
+    )
     run_bcasl_before_compile(
         self, _after_bcasl, build_context=context, ark_config=ark_cfg
     )
@@ -412,7 +421,9 @@ def rebuild_from_lock(self, lock_path: Path) -> None:
             gui=self,
         )
         lock_payload = load_yaml_file(lock_path)
-        engine_id = str(((lock_payload.get("engine") or {}).get("name")) or "").strip()
+        engine_id = str(
+            ((lock_payload.get("engine") or {}).get("name")) or ""
+        ).strip()
 
         if not engine_id:
             raise ValueError("Invalid lock file: missing engine name")
@@ -449,7 +460,9 @@ def rebuild_from_lock(self, lock_path: Path) -> None:
                 )
                 return ans == QMessageBox.Yes
 
-            if not ensure_correct_git_commit(ws, lock_payload, confirm_cb=_confirm):
+            if not ensure_correct_git_commit(
+                ws, lock_payload, confirm_cb=_confirm
+            ):
                 output.warn(
                     (
                         "Compilation annulée: Mismatch Git non résolu.",
@@ -460,7 +473,10 @@ def rebuild_from_lock(self, lock_path: Path) -> None:
                 return
         except Exception as e:
             output.warn(
-                (f"Échec vérification Git: {e}", f"Git verification failed: {e}"),
+                (
+                    f"Échec vérification Git: {e}",
+                    f"Git verification failed: {e}",
+                ),
                 gui=self,
             )
 
@@ -539,8 +555,12 @@ def rebuild_from_lock(self, lock_path: Path) -> None:
 
             main_process = get_main_process()
             if not hasattr(main_process, "_gui_connected"):
-                main_process.output_ready.connect(lambda msg: _handle_output(self, msg))
-                main_process.error_ready.connect(lambda msg: _handle_error(self, msg))
+                main_process.output_ready.connect(
+                    lambda msg: _handle_output(self, msg)
+                )
+                main_process.error_ready.connect(
+                    lambda msg: _handle_error(self, msg)
+                )
                 main_process.progress_update.connect(
                     lambda pct, msg: _handle_progress(self, pct, msg)
                 )
@@ -723,8 +743,12 @@ def start_compilation_process(self, engine_id: str, file_path: str) -> bool:
 
             main_process = get_main_process()
             if not hasattr(main_process, "_gui_connected"):
-                main_process.output_ready.connect(lambda msg: _handle_output(self, msg))
-                main_process.error_ready.connect(lambda msg: _handle_error(self, msg))
+                main_process.output_ready.connect(
+                    lambda msg: _handle_output(self, msg)
+                )
+                main_process.error_ready.connect(
+                    lambda msg: _handle_error(self, msg)
+                )
                 main_process.progress_update.connect(
                     lambda pct, msg: _handle_progress(self, pct, msg)
                 )
@@ -767,7 +791,9 @@ def start_compilation_process(self, engine_id: str, file_path: str) -> bool:
 
     self._active_bcasl_callback = _after_bcasl
     # Pass validated config to short-circuit if BCASL is disabled
-    ark_cfg = getattr(validated, "config", None) if "validated" in locals() else None
+    ark_cfg = (
+        getattr(validated, "config", None) if "validated" in locals() else None
+    )
     run_bcasl_before_compile(
         self, _after_bcasl, build_context=context, ark_config=ark_cfg
     )
@@ -777,7 +803,9 @@ def start_compilation_process(self, engine_id: str, file_path: str) -> bool:
 def try_start_processes(self) -> bool:
     """Try to start compilation for all selected files."""
     if not self.python_files:
-        output.warn(("Aucun fichier à compiler.", "No files to compile."), gui=self)
+        output.warn(
+            ("Aucun fichier à compiler.", "No files to compile."), gui=self
+        )
         return False
 
     engine_id = None
@@ -930,7 +958,9 @@ def handle_finished(self, return_code: int, info: dict) -> None:
 
         stats = self._compilation_stats
         stats["total_count"] = int(stats.get("total_count", 0)) + 1
-        stats["total_time"] = float(stats.get("total_time", 0.0)) + float(duration)
+        stats["total_time"] = float(stats.get("total_time", 0.0)) + float(
+            duration
+        )
         min_time = stats.get("min_time")
         max_time = stats.get("max_time")
         stats["min_time"] = (
@@ -962,9 +992,9 @@ def handle_finished(self, return_code: int, info: dict) -> None:
                     "canceled": 0,
                 }
             eng_stats["count"] = int(eng_stats.get("count", 0)) + 1
-            eng_stats["total_time"] = float(eng_stats.get("total_time", 0.0)) + float(
-                duration
-            )
+            eng_stats["total_time"] = float(
+                eng_stats.get("total_time", 0.0)
+            ) + float(duration)
             if return_code == 0:
                 eng_stats["success"] = int(eng_stats.get("success", 0)) + 1
             elif return_code == -1:
@@ -984,17 +1014,21 @@ def handle_finished(self, return_code: int, info: dict) -> None:
                     "last_time": 0.0,
                 }
             fstats["count"] = int(fstats.get("count", 0)) + 1
-            fstats["total_time"] = float(fstats.get("total_time", 0.0)) + float(
-                duration
-            )
+            fstats["total_time"] = float(
+                fstats.get("total_time", 0.0)
+            ) + float(duration)
             fstats["last_time"] = float(duration)
             min_t = fstats.get("min_time")
             max_t = fstats.get("max_time")
             fstats["min_time"] = (
-                float(duration) if min_t is None else min(float(min_t), float(duration))
+                float(duration)
+                if min_t is None
+                else min(float(min_t), float(duration))
             )
             fstats["max_time"] = (
-                float(duration) if max_t is None else max(float(max_t), float(duration))
+                float(duration)
+                if max_t is None
+                else max(float(max_t), float(duration))
             )
             stats["files"][file_path] = fstats
 
@@ -1110,13 +1144,18 @@ def handle_finished(self, return_code: int, info: dict) -> None:
                         engine.on_success(self, fp)
                     except Exception as e:
                         output.warn(
-                            (f"Erreur on_success: {e}", f"on_success error: {e}"),
+                            (
+                                f"Erreur on_success: {e}",
+                                f"on_success error: {e}",
+                            ),
                             gui=self,
                         )
 
         _continue_compile_all(self)
     elif return_code == -1:
-        output.info(("Compilation annulée.", "Compilation cancelled."), gui=self)
+        output.info(
+            ("Compilation annulée.", "Compilation cancelled."), gui=self
+        )
     else:
         output.error(
             (

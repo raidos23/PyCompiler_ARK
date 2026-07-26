@@ -46,7 +46,10 @@ class UiFeatures:
         if file:
             self.icon_path = file
             output.info(
-                (f"🎨 Icône sélectionnée : {file}", f"🎨 Icon selected: {file}"),
+                (
+                    f"🎨 Icône sélectionnée : {file}",
+                    f"🎨 Icon selected: {file}",
+                ),
                 gui=self,
             )
             pixmap = QPixmap(file)
@@ -104,7 +107,9 @@ class UiFeatures:
         if not getattr(self, "file_list", None):
             return
         try:
-            self.file_list.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+            self.file_list.setContextMenuPolicy(
+                Qt.ContextMenuPolicy.CustomContextMenu
+            )
             self.file_list.customContextMenuRequested.connect(
                 self._show_entrypoint_menu
             )
@@ -145,11 +150,17 @@ class UiFeatures:
         except Exception:
             css = ""
         current_token = hash(css or "")
-        if token == current_token and isinstance(icon, QIcon) and not icon.isNull():
+        if (
+            token == current_token
+            and isinstance(icon, QIcon)
+            and not icon.isNull()
+        ):
             return icon
         try:
             base = os.path.abspath(
-                os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..")
+                os.path.join(
+                    os.path.dirname(os.path.abspath(__file__)), "..", ".."
+                )
             )
             path = os.path.join(base, "data", "icons", "check-circle.svg")
             if os.path.isfile(path):
@@ -191,7 +202,10 @@ class UiFeatures:
         if not workspace_dir:
             return
         try:
-            from pycompiler_ark.Core.Configs import get_entrypoint, load_ark_config
+            from pycompiler_ark.Core.Configs import (
+                get_entrypoint,
+                load_ark_config,
+            )
 
             cfg = load_ark_config(workspace_dir)
             entry_rel = get_entrypoint(cfg)
@@ -269,7 +283,8 @@ class UiFeatures:
             self.entrypoint_file = None
             self._refresh_entrypoint_marker()
             output.success(
-                ("✅ Point d'entrée effacé.", "✅ Entrypoint cleared."), gui=self
+                ("✅ Point d'entrée effacé.", "✅ Entrypoint cleared."),
+                gui=self,
             )
         else:
             output.error(
@@ -289,7 +304,10 @@ class UiFeatures:
         workspace_dir = getattr(self, "workspace_dir", None)
         if not workspace_dir:
             output.error(
-                ("❌ Aucun workspace sélectionné.", "❌ No workspace selected."),
+                (
+                    "❌ Aucun workspace sélectionné.",
+                    "❌ No workspace selected.",
+                ),
                 gui=self,
             )
             QMessageBox.warning(
@@ -310,7 +328,9 @@ class UiFeatures:
 
             engine_ids = list(engines_loader.available_engines())
             if not engine_ids:
-                output.warn(("⚠️ Aucun moteur chargé.", "⚠️ No engine loaded."), gui=self)
+                output.warn(
+                    ("⚠️ Aucun moteur chargé.", "⚠️ No engine loaded."), gui=self
+                )
                 return
 
             saved = 0
@@ -491,7 +511,8 @@ class UiFeatures:
         use_new = isinstance(stats, dict) and stats.get("total_count", 0) > 0
 
         if not use_new and (
-            not hasattr(self, "_compilation_times") or not self._compilation_times
+            not hasattr(self, "_compilation_times")
+            or not self._compilation_times
         ):
             QMessageBox.information(
                 self,
@@ -535,8 +556,12 @@ class UiFeatures:
             success = total_files
             failed = 0
             canceled = 0
-            min_time = min(self._compilation_times.values()) if total_files else None
-            max_time = max(self._compilation_times.values()) if total_files else None
+            min_time = (
+                min(self._compilation_times.values()) if total_files else None
+            )
+            max_time = (
+                max(self._compilation_times.values()) if total_files else None
+            )
             last_file = None
             last_duration = None
             engines = {}
@@ -561,9 +586,7 @@ class UiFeatures:
 
         msg = f"<b>{self.tr('Statistiques de compilation', 'Build statistics')}</b><br><br>"
         msg += f"{self.tr('Fichiers distincts', 'Distinct files')} : {total_files}<br>"
-        msg += (
-            f"{self.tr('Compilations totales', 'Total builds')} : {total_compiles}<br>"
-        )
+        msg += f"{self.tr('Compilations totales', 'Total builds')} : {total_compiles}<br>"
         msg += (
             f"{self.tr('Succès', 'Success')} : {success} | "
             f"{self.tr('Échecs', 'Failed')} : {failed} | "
@@ -610,7 +633,9 @@ class UiFeatures:
             msg += f"<br>{self.tr('Mémoire utilisée (GUI)', 'Memory usage (GUI)')} : {mem_info:.1f} Mo<br>"
 
         QMessageBox.information(
-            self, self.tr("Statistiques de compilation", "Build statistics"), msg
+            self,
+            self.tr("Statistiques de compilation", "Build statistics"),
+            msg,
         )
 
     # =========================================================================
@@ -646,7 +671,9 @@ class UiFeatures:
 
     def show_language_dialog(self) -> None:
         """Open language selection dialog."""
-        from .Dialogs.i18nDialog import show_language_dialog as _i18n_show_dialog
+        from .Dialogs.i18nDialog import (
+            show_language_dialog as _i18n_show_dialog,
+        )
 
         _i18n_show_dialog(self)
 
@@ -663,7 +690,10 @@ class UiFeatures:
         workspace_dir = getattr(self, "workspace_dir", None)
         if not workspace_dir:
             output.error(
-                ("❌ Aucun workspace sélectionné.", "❌ No workspace selected."),
+                (
+                    "❌ Aucun workspace sélectionné.",
+                    "❌ No workspace selected.",
+                ),
                 gui=self,
             )
             QMessageBox.warning(

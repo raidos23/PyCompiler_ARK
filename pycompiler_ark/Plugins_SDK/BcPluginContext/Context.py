@@ -30,7 +30,17 @@ import urllib.parse
 import urllib.request
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, Iterator, List, Optional, Pattern, Set, Tuple, Union
+from typing import (
+    Any,
+    Dict,
+    Iterator,
+    List,
+    Optional,
+    Pattern,
+    Set,
+    Tuple,
+    Union,
+)
 
 # -----------------------------
 # Plugin base (BCASL) and decorator
@@ -95,7 +105,12 @@ __version__ = "1.0.0"
 # -----------------------------
 Pathish = Union[str, Path]
 try:
-    from ...Core.utils.data import DependencyInfo, GitInfo, PythonFileInfo, VenvInfo
+    from ...Core.utils.data import (
+        DependencyInfo,
+        GitInfo,
+        PythonFileInfo,
+        VenvInfo,
+    )
 except Exception:
     DependencyInfo = None
     VenvInfo = None

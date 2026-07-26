@@ -91,13 +91,19 @@ class NuitkaEngine(CompilerEngine):
         cmd = [python_exe, "-m", "nuitka"]
 
         standalone_enabled = bool(cfg.get("standalone", False))
-        if hasattr(self, "_nuitka_standalone") and self._nuitka_standalone is not None:
+        if (
+            hasattr(self, "_nuitka_standalone")
+            and self._nuitka_standalone is not None
+        ):
             standalone_enabled = bool(self._nuitka_standalone.isChecked())
         if standalone_enabled:
             cmd.append("--standalone")
 
         onefile_enabled = bool(cfg.get("onefile", False))
-        if hasattr(self, "_nuitka_onefile") and self._nuitka_onefile is not None:
+        if (
+            hasattr(self, "_nuitka_onefile")
+            and self._nuitka_onefile is not None
+        ):
             onefile_enabled = bool(self._nuitka_onefile.isChecked())
         if onefile_enabled:
             cmd.append("--onefile")
@@ -141,7 +147,9 @@ class NuitkaEngine(CompilerEngine):
         for mapping in context.data_mappings:
             source = str((mapping or {}).get("source") or "").strip()
             destination = str((mapping or {}).get("destination") or "").strip()
-            mapping_type = str((mapping or {}).get("type") or "dir").strip().lower()
+            mapping_type = (
+                str((mapping or {}).get("type") or "dir").strip().lower()
+            )
 
             if source and destination:
                 if mapping_type == "file":
@@ -204,7 +212,9 @@ class NuitkaEngine(CompilerEngine):
             layout.setSpacing(8)
             layout.setContentsMargins(8, 8, 8, 8)
 
-            build_group = QGroupBox(translate(self.id, "build_group", "Build"), tab)
+            build_group = QGroupBox(
+                translate(self.id, "build_group", "Build"), tab
+            )
             build_group.setObjectName("build_group")
             build_layout = QFormLayout()
             build_layout.setSpacing(6)
@@ -220,7 +230,9 @@ class NuitkaEngine(CompilerEngine):
 
             # Standalone option
             self._nuitka_standalone = QCheckBox(
-                translate(self.id, "standalone_checkbox", "Standalone (--standalone)")
+                translate(
+                    self.id, "standalone_checkbox", "Standalone (--standalone)"
+                )
             )
             self._nuitka_standalone.setObjectName("standalone_checkbox")
             type_label = QLabel(translate(self.id, "type_label", "Type:"), tab)
@@ -229,9 +241,13 @@ class NuitkaEngine(CompilerEngine):
 
             # Disable console option
             self._nuitka_disable_console = QCheckBox(
-                translate(self.id, "disable_console_checkbox", "Disable console")
+                translate(
+                    self.id, "disable_console_checkbox", "Disable console"
+                )
             )
-            self._nuitka_disable_console.setObjectName("disable_console_checkbox")
+            self._nuitka_disable_console.setObjectName(
+                "disable_console_checkbox"
+            )
             self._nuitka_disable_console.setToolTip(
                 translate(
                     self.id,
@@ -239,7 +255,9 @@ class NuitkaEngine(CompilerEngine):
                     "Disable console window for Windows builds.",
                 )
             )
-            console_label = QLabel(translate(self.id, "console_label", "Console:"), tab)
+            console_label = QLabel(
+                translate(self.id, "console_label", "Console:"), tab
+            )
             console_label.setObjectName("console_label")
             build_layout.addRow(console_label, self._nuitka_disable_console)
             build_group.setLayout(build_layout)
@@ -264,7 +282,9 @@ class NuitkaEngine(CompilerEngine):
             self._gui = gui
             self._tab_widget = tab
 
-            return tab, translate(self.id, "tab_label", getattr(self, "name", self.id))
+            return tab, translate(
+                self.id, "tab_label", getattr(self, "name", self.id)
+            )
 
         except Exception as e:
             try:
@@ -277,7 +297,10 @@ class NuitkaEngine(CompilerEngine):
         """Return a JSON-serializable snapshot of current Nuitka UI options."""
         try:
             cfg = {}
-            if hasattr(self, "_nuitka_onefile") and self._nuitka_onefile is not None:
+            if (
+                hasattr(self, "_nuitka_onefile")
+                and self._nuitka_onefile is not None
+            ):
                 cfg["onefile"] = bool(self._nuitka_onefile.isChecked())
             if (
                 hasattr(self, "_nuitka_standalone")
@@ -288,7 +311,9 @@ class NuitkaEngine(CompilerEngine):
                 hasattr(self, "_nuitka_disable_console")
                 and self._nuitka_disable_console is not None
             ):
-                cfg["disable_console"] = bool(self._nuitka_disable_console.isChecked())
+                cfg["disable_console"] = bool(
+                    self._nuitka_disable_console.isChecked()
+                )
             return cfg
         except Exception:
             return {}
@@ -329,7 +354,9 @@ class NuitkaEngine(CompilerEngine):
         """Get button widget from engine instance or GUI."""
         if hasattr(self, f"_btn_{name}"):
             return getattr(self, f"_btn_{name}")
-        return getattr(self._gui, name, None) if hasattr(self, "_gui") else None
+        return (
+            getattr(self._gui, name, None) if hasattr(self, "_gui") else None
+        )
 
     def get_log_prefix(self, file_basename: str) -> str:
         return f"Nuitka ({self.version})"

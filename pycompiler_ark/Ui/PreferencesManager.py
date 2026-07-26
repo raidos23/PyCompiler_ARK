@@ -64,7 +64,9 @@ def load_preferences(self):
             # Migration douce: tenter l'ancien chemin dans le projet <project_root>/.pref
             try:
                 project_root = os.path.abspath(
-                    os.path.join(os.path.dirname(os.path.abspath(__file__)), os.pardir)
+                    os.path.join(
+                        os.path.dirname(os.path.abspath(__file__)), os.pardir
+                    )
                 )
                 old_pref_dir = os.path.join(project_root, ".pref")
                 old_pref_path = os.path.join(old_pref_dir, PREFS_BASENAME)
@@ -88,7 +90,9 @@ def load_preferences(self):
                     with open(PREFS_BASENAME, encoding="utf-8") as f:
                         prefs = json.load(f)
 
-        self.language_pref = prefs.get("language_pref", prefs.get("language", "System"))
+        self.language_pref = prefs.get(
+            "language_pref", prefs.get("language", "System")
+        )
         # Compat: conserver self.language utilisé ailleurs
         self.language = self.language_pref
         # Thème UI
@@ -107,12 +111,16 @@ def save_preferences(self):
         "language_pref": getattr(
             self,
             "language_pref",
-            getattr(self, "language", getattr(self, "current_language", "System")),
+            getattr(
+                self, "language", getattr(self, "current_language", "System")
+            ),
         ),
         "language": getattr(
             self,
             "language_pref",
-            getattr(self, "language", getattr(self, "current_language", "System")),
+            getattr(
+                self, "language", getattr(self, "current_language", "System")
+            ),
         ),
         "theme": getattr(self, "theme", "System"),
     }
@@ -144,7 +152,8 @@ def save_preferences(self):
                 from pycompiler_ark.Ui import output
 
                 output.warn(
-                    f"Impossible de sauvegarder les préférences : {e}", gui=self
+                    f"Impossible de sauvegarder les préférences : {e}",
+                    gui=self,
                 )
             except Exception:
                 pass
@@ -197,7 +206,10 @@ def detect_system_color_scheme() -> str:
                     capture_output=True,
                     text=True,
                 )
-                if out.returncode == 0 and "dark" in out.stdout.strip().lower():
+                if (
+                    out.returncode == 0
+                    and "dark" in out.stdout.strip().lower()
+                ):
                     return "dark"
             except Exception:
                 pass
@@ -207,7 +219,12 @@ def detect_system_color_scheme() -> str:
             # GNOME 42+: color-scheme
             try:
                 out = subprocess.run(
-                    ["gsettings", "get", "org.gnome.desktop.interface", "color-scheme"],
+                    [
+                        "gsettings",
+                        "get",
+                        "org.gnome.desktop.interface",
+                        "color-scheme",
+                    ],
                     capture_output=True,
                     text=True,
                 )
@@ -218,7 +235,12 @@ def detect_system_color_scheme() -> str:
             # GNOME: gtk-theme contains "dark"
             try:
                 out = subprocess.run(
-                    ["gsettings", "get", "org.gnome.desktop.interface", "gtk-theme"],
+                    [
+                        "gsettings",
+                        "get",
+                        "org.gnome.desktop.interface",
+                        "gtk-theme",
+                    ],
                     capture_output=True,
                     text=True,
                 )
@@ -230,7 +252,9 @@ def detect_system_color_scheme() -> str:
             try:
                 kdeglobals = _os.path.expanduser("~/.config/kdeglobals")
                 if _os.path.isfile(kdeglobals):
-                    with open(kdeglobals, encoding="utf-8", errors="ignore") as f:
+                    with open(
+                        kdeglobals, encoding="utf-8", errors="ignore"
+                    ) as f:
                         txt = f.read().lower()
                     if "colorscheme" in txt and "dark" in txt:
                         return "dark"

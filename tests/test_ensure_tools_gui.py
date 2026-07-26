@@ -16,13 +16,18 @@
 import unittest
 from unittest.mock import MagicMock, patch
 
-from pycompiler_ark.Core.utils.ensure_tools import ToolsCheckResult, ensure_tools
+from pycompiler_ark.Core.utils.ensure_tools import (
+    ToolsCheckResult,
+    ensure_tools,
+)
 
 
 class TestEnsureToolsGui(unittest.TestCase):
     @patch("pycompiler_ark.Core.Compiler.utils.check_internet_connection")
     @patch("pycompiler_ark.Core.SystemDepsManager.check_system_packages")
-    def test_ensure_tools_gui_system_success(self, mock_check_sys, mock_check_net):
+    def test_ensure_tools_gui_system_success(
+        self, mock_check_sys, mock_check_net
+    ):
         # Setup mock GUI
         mock_gui = MagicMock()
         mock_sys_manager = MagicMock()
@@ -35,7 +40,9 @@ class TestEnsureToolsGui(unittest.TestCase):
         mock_sys_manager.install_packages_linux.return_value = mock_process
 
         mock_check_net.return_value = True
-        mock_check_sys.side_effect = lambda tools: False  # package gcc is missing
+        mock_check_sys.side_effect = lambda tools: (
+            False
+        )  # package gcc is missing
 
         required = {"system": ["gcc"]}
 
@@ -45,7 +52,9 @@ class TestEnsureToolsGui(unittest.TestCase):
             # Assert result ok, because installation succeeded
             self.assertTrue(res.ok)
             self.assertEqual(res.missing_system, [])
-            mock_sys_manager.install_packages_linux.assert_called_once_with(["gcc"])
+            mock_sys_manager.install_packages_linux.assert_called_once_with(
+                ["gcc"]
+            )
 
     @patch("pycompiler_ark.Core.Compiler.utils.check_internet_connection")
     def test_ensure_tools_gui_python_venv_success(self, mock_check_net):

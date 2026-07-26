@@ -31,8 +31,8 @@ class PreCompileContext:
     config: dict[str, Any] = field(default_factory=dict)
     metadata: dict[str, Any] = field(default_factory=dict)
     build_context: Optional[Any] = None
-    _iter_cache: dict[tuple[tuple[str, ...], tuple[str, ...]], list[Path]] = field(
-        default_factory=dict, repr=False, compare=False
+    _iter_cache: dict[tuple[tuple[str, ...], tuple[str, ...]], list[Path]] = (
+        field(default_factory=dict, repr=False, compare=False)
     )
 
     @property
@@ -68,7 +68,11 @@ class PreCompileContext:
         inc = tuple(include) if include is not None else self.file_patterns
         exc = tuple(exclude) if exclude is not None else self.exclude_patterns
 
-        opt = self.config.get("options", {}) if isinstance(self.config, dict) else {}
+        opt = (
+            self.config.get("options", {})
+            if isinstance(self.config, dict)
+            else {}
+        )
         enable_cache = bool(opt.get("iter_files_cache", True))
 
         cache_key = None

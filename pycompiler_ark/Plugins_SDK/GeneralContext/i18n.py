@@ -61,7 +61,9 @@ def resolve_language_code(gui, tr: Optional[dict]) -> str:
         code = None
     if not code:
         try:
-            pref = getattr(gui, "language_pref", getattr(gui, "language", "System"))
+            pref = getattr(
+                gui, "language_pref", getattr(gui, "language", "System")
+            )
             if isinstance(pref, str) and pref != "System":
                 code = pref
         except Exception:
@@ -185,7 +187,9 @@ def refresh_widget_translations(root: Any, plugin_id: str) -> None:
         if isinstance(value, str) and value:
             obj.setTitle(value)
 
-    def _apply_placeholder(obj: Any, key: str, default: str | None = None) -> None:
+    def _apply_placeholder(
+        obj: Any, key: str, default: str | None = None
+    ) -> None:
         if not hasattr(obj, "setPlaceholderText"):
             return
         value = translate(plugin_id, key, default)
@@ -211,12 +215,16 @@ def refresh_widget_translations(root: Any, plugin_id: str) -> None:
 
         if hasattr(obj, "setTitle"):
             current = obj.title() if hasattr(obj, "title") else None
-            _apply_title(obj, title_key, current if isinstance(current, str) else None)
+            _apply_title(
+                obj, title_key, current if isinstance(current, str) else None
+            )
             continue
 
         if hasattr(obj, "setText"):
             current = obj.text() if hasattr(obj, "text") else None
-            _apply_text(obj, text_key, current if isinstance(current, str) else None)
+            _apply_text(
+                obj, text_key, current if isinstance(current, str) else None
+            )
 
         if tooltip_key:
             current = obj.toolTip() if hasattr(obj, "toolTip") else None
@@ -225,9 +233,15 @@ def refresh_widget_translations(root: Any, plugin_id: str) -> None:
             )
 
         if placeholder_key:
-            current = obj.placeholderText() if hasattr(obj, "placeholderText") else None
+            current = (
+                obj.placeholderText()
+                if hasattr(obj, "placeholderText")
+                else None
+            )
             _apply_placeholder(
-                obj, placeholder_key, current if isinstance(current, str) else None
+                obj,
+                placeholder_key,
+                current if isinstance(current, str) else None,
             )
 
 
@@ -287,7 +301,9 @@ def _discover_plugins_dir() -> str | None:
     try:
         base = os.path.abspath(
             os.path.join(
-                os.path.dirname(os.path.abspath(__file__)), os.pardir, os.pardir
+                os.path.dirname(os.path.abspath(__file__)),
+                os.pardir,
+                os.pardir,
             )
         )
         cand = os.path.join(base, INTERNAL_PLUGINS_DIR)
@@ -298,7 +314,9 @@ def _discover_plugins_dir() -> str | None:
     return None
 
 
-def _load_plugin_languages_from_fs(plugins_dir: str, code: str) -> dict[str, dict]:
+def _load_plugin_languages_from_fs(
+    plugins_dir: str, code: str
+) -> dict[str, dict]:
     data: dict[str, dict] = {}
     normalized = normalize_language_code(code)
     candidates = [

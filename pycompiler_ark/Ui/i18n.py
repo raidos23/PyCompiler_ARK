@@ -85,7 +85,9 @@ def _resolve_system_language_sync() -> str:
     return "fr" if loc.lower().startswith(("fr", "fr_")) else "en"
 
 
-def _load_language_file_sync(code: str) -> tuple[str | None, dict[str, Any] | None]:
+def _load_language_file_sync(
+    code: str,
+) -> tuple[str | None, dict[str, Any] | None]:
     """Charger un fichier de langue YAML/JSON avec résolution souple.
 
     Returns (resolved_code, data) or (None, None) if not found/invalid.
@@ -213,10 +215,16 @@ def set_active_translations(tr: dict[str, Any] | None) -> None:
 
 def get_active_translations() -> dict[str, Any]:
     """Retourne le catalogue actif courant."""
-    return dict(_ACTIVE_TRANSLATIONS) if isinstance(_ACTIVE_TRANSLATIONS, dict) else {}
+    return (
+        dict(_ACTIVE_TRANSLATIONS)
+        if isinstance(_ACTIVE_TRANSLATIONS, dict)
+        else {}
+    )
 
 
-def translate(domain: object | None, key: str, default: str | None = None) -> str:
+def translate(
+    domain: object | None, key: str, default: str | None = None
+) -> str:
     """Retourne la traduction active pour une clé donnée.
 
     `domain` est conservé pour garder la même signature que les engines et les plugins.
@@ -287,7 +295,9 @@ async def get_translations(lang_pref: str | None) -> dict[str, Any]:
             return _TRANSLATION_CACHE[code]
 
         # Charger depuis le disque en thread pool (avec résolution flexible)
-        resolved_code, data = await asyncio.to_thread(_load_language_file_sync, code)
+        resolved_code, data = await asyncio.to_thread(
+            _load_language_file_sync, code
+        )
 
         # Charger l'anglais depuis les fichiers de langue comme base commune
         _, base_en = await asyncio.to_thread(_load_language_file_sync, "en")
@@ -317,7 +327,9 @@ async def get_translations(lang_pref: str | None) -> dict[str, Any]:
         return _normalize_translation_meta({}, "en")
 
 
-def _normalize_translation_meta(data: dict[str, Any], code: str) -> dict[str, Any]:
+def _normalize_translation_meta(
+    data: dict[str, Any], code: str
+) -> dict[str, Any]:
     """Normalize translation metadata (sync, no I/O)."""
     try:
         if not isinstance(data, dict):
@@ -334,7 +346,9 @@ def _normalize_translation_meta(data: dict[str, Any], code: str) -> dict[str, An
         # Construire les métadonnées finales avec fallbacks
         final_code = top_code or meta_in.get("code") or code or "en"
 
-        final_name = top_name or meta_in.get("name") or _get_language_name(final_code)
+        final_name = (
+            top_name or meta_in.get("name") or _get_language_name(final_code)
+        )
 
         # Mettre à jour les métadonnées
         data["_meta"] = {
@@ -347,7 +361,10 @@ def _normalize_translation_meta(data: dict[str, Any], code: str) -> dict[str, An
     except Exception:
         # En cas d'erreur, retourner une structure minimale valide
         return {
-            "_meta": {"code": code or "en", "name": _get_language_name(code or "en")}
+            "_meta": {
+                "code": code or "en",
+                "name": _get_language_name(code or "en"),
+            }
         }
 
 
@@ -399,7 +416,9 @@ def get_current_language_sync() -> str:
         if os.path.isfile(PREFS_FILE):
             with open(PREFS_FILE, encoding="utf-8") as f:
                 prefs = json.load(f)
-            lang_pref = prefs.get("language_pref", prefs.get("language", "System"))
+            lang_pref = prefs.get(
+                "language_pref", prefs.get("language", "System")
+            )
             if lang_pref == "System":
                 return _resolve_system_language_sync()
             return lang_pref
@@ -420,7 +439,9 @@ def _is_french_token(value: object | None) -> bool:
         return False
     if val in ("fr", "français", "francais", "french"):
         return True
-    return val.startswith("fr-") or val.startswith("fr_") or val.startswith("fr")
+    return (
+        val.startswith("fr-") or val.startswith("fr_") or val.startswith("fr")
+    )
 
 
 def is_french_language(gui: object | None = None) -> bool:
@@ -489,7 +510,9 @@ def tr_fr_en(gui: object | None, fr: str, en: str) -> str:
 
 _REDACT_PATTERNS = [
     re.compile(r"(password\s*[:=]\s*)([^\s]+)", re.IGNORECASE),
-    re.compile(r"(authorization\s*[:]\s*bearer\s+)([A-Za-z0-9\-_.]+)", re.IGNORECASE),
+    re.compile(
+        r"(authorization\s*[:]\s*bearer\s+)([A-Za-z0-9\-_.]+)", re.IGNORECASE
+    ),
     re.compile(r"(token\s*[:=]\s*)([A-Za-z0-9\-_.]{12,})", re.IGNORECASE),
 ]
 
@@ -532,7 +555,9 @@ essential_log_max_len = 10000
 def i18n_synchro(self, lang_pref: str, tr: dict[str, Any]) -> str:
     """Synchronise la langue active sur l'UI, les engines et les plugins."""
     meta = tr.get("_meta", {}) if isinstance(tr, dict) else {}
-    lang_name = meta.get("name", lang_pref) if isinstance(meta, dict) else lang_pref
+    lang_name = (
+        meta.get("name", lang_pref) if isinstance(meta, dict) else lang_pref
+    )
 
     setattr(self, "_tr", tr)
     set_active_translations(tr)
@@ -571,7 +596,10 @@ def i18n_synchro(self, lang_pref: str, tr: dict[str, Any]) -> str:
         from pycompiler_ark.Ui import output
 
         output.info(
-            (f"Langue appliquée : {lang_name}", f"Language applied: {lang_name}"),
+            (
+                f"Langue appliquée : {lang_name}",
+                f"Language applied: {lang_name}",
+            ),
             gui=self,
         )
     except Exception:
@@ -692,13 +720,17 @@ def _apply_main_app_translations(self, tr: dict[str, object]) -> None:
             if isinstance(value, str) and value:
                 obj.setToolTip(value)
 
-    def _apply_placeholder(obj: Any, key: str, default: str | None = None) -> None:
+    def _apply_placeholder(
+        obj: Any, key: str, default: str | None = None
+    ) -> None:
         if hasattr(obj, "setPlaceholderText"):
             value = translate(self.id, key, default)
             if isinstance(value, str) and value:
                 obj.setPlaceholderText(value)
 
-    def _apply_tab_text(obj: Any, key: str, default: str | None = None) -> None:
+    def _apply_tab_text(
+        obj: Any, key: str, default: str | None = None
+    ) -> None:
         parent = getattr(obj, "parent", lambda: None)()
         while parent is not None:
             if hasattr(parent, "indexOf") and hasattr(parent, "setTabText"):
@@ -747,22 +779,32 @@ def _apply_main_app_translations(self, tr: dict[str, object]) -> None:
                     )
                 continue
 
-            _apply_text(obj, chosen_key, current if isinstance(current, str) else None)
+            _apply_text(
+                obj, chosen_key, current if isinstance(current, str) else None
+            )
 
         tooltip_key = _prop(obj, "i18n_tooltip_key") or _tooltip_for_name(name)
         if tooltip_key:
             current = obj.toolTip() if hasattr(obj, "toolTip") else None
             _apply_tooltip(
-                obj, str(tooltip_key), current if isinstance(current, str) else None
+                obj,
+                str(tooltip_key),
+                current if isinstance(current, str) else None,
             )
 
-        placeholder_key = _prop(obj, "i18n_placeholder_key") or _placeholder_for_name(
-            name
-        )
+        placeholder_key = _prop(
+            obj, "i18n_placeholder_key"
+        ) or _placeholder_for_name(name)
         if placeholder_key:
-            current = obj.placeholderText() if hasattr(obj, "placeholderText") else None
+            current = (
+                obj.placeholderText()
+                if hasattr(obj, "placeholderText")
+                else None
+            )
             _apply_placeholder(
-                obj, str(placeholder_key), current if isinstance(current, str) else None
+                obj,
+                str(placeholder_key),
+                current if isinstance(current, str) else None,
             )
 
         tab_key = _prop(obj, "i18n_tab_key") or (
@@ -771,5 +813,7 @@ def _apply_main_app_translations(self, tr: dict[str, object]) -> None:
         if tab_key:
             current = obj.text() if hasattr(obj, "text") else None
             _apply_tab_text(
-                obj, str(tab_key), current if isinstance(current, str) else None
+                obj,
+                str(tab_key),
+                current if isinstance(current, str) else None,
             )

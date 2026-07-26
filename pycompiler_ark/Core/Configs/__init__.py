@@ -164,7 +164,9 @@ class ArkConfigValidationResult:
 # ── Internal helpers ──────────────────────────────────────────────────────────
 
 
-def _deep_merge_dict(base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any]:
+def _deep_merge_dict(
+    base: dict[str, Any], override: dict[str, Any]
+) -> dict[str, Any]:
     result = deepcopy(base)
     for key, value in override.items():
         if isinstance(result.get(key), dict) and isinstance(value, dict):
@@ -182,7 +184,9 @@ def _normalize_list(values: Any) -> list[Any]:
 
 def _normalize_build_exclude(values: Any) -> list[str]:
     return list(
-        dict.fromkeys(pattern for pattern in _normalize_list(values) if pattern)
+        dict.fromkeys(
+            pattern for pattern in _normalize_list(values) if pattern
+        )
     )
 
 
@@ -300,7 +304,9 @@ def load_ark_config(
     workspace: Path | str, *, require_exists: bool = False
 ) -> dict[str, Any]:
     workspace_path = Path(workspace)
-    path = next((c for c in _config_candidates(workspace_path) if c.is_file()), None)
+    path = next(
+        (c for c in _config_candidates(workspace_path) if c.is_file()), None
+    )
     if path is None:
         if require_exists:
             raise ArkConfigError("ark.yml not found in current directory.")
@@ -310,7 +316,9 @@ def load_ark_config(
     except Exception as exc:
         raise ArkConfigError(f"Unable to read ark.yml: {exc}") from exc
     if not isinstance(data, dict):
-        raise ArkConfigError("ark.yml must contain a YAML mapping at the root.")
+        raise ArkConfigError(
+            "ark.yml must contain a YAML mapping at the root."
+        )
     return _compatibility_view(data)
 
 
@@ -515,9 +523,13 @@ def should_exclude_file(
                 continue
             if pat.endswith("/**"):
                 prefix = pat[:-3].rstrip("/")
-                if relative_path == prefix or relative_path.startswith(prefix + "/"):
+                if relative_path == prefix or relative_path.startswith(
+                    prefix + "/"
+                ):
                     return True
-            if fnmatch.fnmatch(relative_path, pat) or Path(relative_path).match(pat):
+            if fnmatch.fnmatch(relative_path, pat) or Path(
+                relative_path
+            ).match(pat):
                 return True
             if "/" not in pat and Path(file_abs.name).match(pat):
                 return True
@@ -596,7 +608,9 @@ def config_file_for(key: str, *, create_root: bool = True) -> Path:
     return ensure_config_home(create=create_root) / CONFIG_KEYS[key]
 
 
-def resolve_config_value(key: str, *, create_default: bool = True) -> str | None:
+def resolve_config_value(
+    key: str, *, create_default: bool = True
+) -> str | None:
     """Read a user config value.
 
     Returns the persisted override when present, otherwise falls back to the

@@ -27,7 +27,9 @@ def _make_internal_workspace(root):
     package_dir = workspace / "src" / "pkg"
     package_dir.mkdir(parents=True)
     (package_dir / "__init__.py").write_text("", encoding="utf-8")
-    (package_dir / "internal_mod.py").write_text("VALUE = 1\n", encoding="utf-8")
+    (package_dir / "internal_mod.py").write_text(
+        "VALUE = 1\n", encoding="utf-8"
+    )
     (package_dir / "main.py").write_text(
         "from .internal_mod import VALUE\n", encoding="utf-8"
     )
@@ -61,7 +63,9 @@ def test_collect_internal_modules_uses_classification(tmp_path):
 
 
 @patch("pycompiler_ark.Ui.Cli.interactive.ask_yes_no", return_value=False)
-def test_init_workspace_apply_internal_prompts_and_can_decline(mock_confirm, tmp_path):
+def test_init_workspace_apply_internal_prompts_and_can_decline(
+    mock_confirm, tmp_path
+):
     workspace = _make_internal_workspace(tmp_path)
 
     payload = init_workspace(
@@ -79,7 +83,9 @@ def test_init_workspace_apply_internal_prompts_and_can_decline(mock_confirm, tmp
 
 
 @patch("pycompiler_ark.Ui.Cli.interactive.ask_yes_no", return_value=True)
-def test_init_workspace_apply_internal_prompts_and_can_accept(mock_confirm, tmp_path):
+def test_init_workspace_apply_internal_prompts_and_can_accept(
+    mock_confirm, tmp_path
+):
     workspace = _make_internal_workspace(tmp_path)
 
     payload = init_workspace(

@@ -118,7 +118,9 @@ def _load_excluded_stdlib() -> set[str]:
             modules = data
         if not isinstance(modules, list):
             return default
-        cleaned = [m.strip() for m in modules if isinstance(m, str) and m.strip()]
+        cleaned = [
+            m.strip() for m in modules if isinstance(m, str) and m.strip()
+        ]
         return set(cleaned) or default
     except Exception:
         return default
@@ -248,7 +250,9 @@ def _discover_workspace_hints(
 
     pyproject_path = os.path.join(ws, "pyproject.toml")
     pyproject = (
-        _load_toml_file(pyproject_path) if os.path.isfile(pyproject_path) else {}
+        _load_toml_file(pyproject_path)
+        if os.path.isfile(pyproject_path)
+        else {}
     )
     try:
         project = pyproject.get("project", {})
@@ -276,7 +280,9 @@ def _discover_workspace_hints(
                     from_dir = pkg.get("from")
                     if isinstance(from_dir, str) and from_dir.strip():
                         _add_source_root(from_dir.strip())
-        setuptools = tool.get("setuptools", {}) if isinstance(tool, dict) else {}
+        setuptools = (
+            tool.get("setuptools", {}) if isinstance(tool, dict) else {}
+        )
         if isinstance(setuptools, dict):
             package_dir = setuptools.get("package-dir", {})
             if isinstance(package_dir, dict):
@@ -324,10 +330,14 @@ def _discover_workspace_hints(
         except Exception:
             pass
 
-    return tuple(sorted(source_roots)), tuple(sorted(m for m in module_roots if m))
+    return tuple(sorted(source_roots)), tuple(
+        sorted(m for m in module_roots if m)
+    )
 
 
-def _should_skip_analysis_path(path: str, workspace_dir: str | None = None) -> bool:
+def _should_skip_analysis_path(
+    path: str, workspace_dir: str | None = None
+) -> bool:
     abs_path = _normalize_realpath(path)
     if not abs_path:
         return True
@@ -378,7 +388,9 @@ def _should_skip_analysis_path(path: str, workspace_dir: str | None = None) -> b
     return False
 
 
-def _relative_package_parts(file_path: str, workspace_dir: str | None) -> list[str]:
+def _relative_package_parts(
+    file_path: str, workspace_dir: str | None
+) -> list[str]:
     abs_file = _normalize_realpath(file_path)
     ws = _normalize_realpath(workspace_dir)
     if not abs_file or not ws:
@@ -462,7 +474,9 @@ def _extract_imported_modules_from_source(
     except Exception:
         # Robust regex-based fallback if AST parsing fails (e.g. syntax error or newer Python version)
         # Handle 'import module1, module2 as alias'
-        import_matches = re.findall(r"^\s*import\s+([\w\.,\s]+)", source, re.MULTILINE)
+        import_matches = re.findall(
+            r"^\s*import\s+([\w\.,\s]+)", source, re.MULTILINE
+        )
         for match in import_matches:
             for part in match.split(","):
                 # Extract 'module1' from 'module1 as alias'
@@ -482,7 +496,11 @@ def _extract_imported_modules_from_source(
 
     dynamic_imports = re.findall(r"__import__\(['\"]([\w\.]+)['\"]\)", source)
     modules.update(
-        [top for top in (_top_level_module_name(mod) for mod in dynamic_imports) if top]
+        [
+            top
+            for top in (_top_level_module_name(mod) for mod in dynamic_imports)
+            if top
+        ]
     )
 
     importlib_imports = re.findall(
@@ -491,7 +509,9 @@ def _extract_imported_modules_from_source(
     modules.update(
         [
             top
-            for top in (_top_level_module_name(mod) for mod in importlib_imports)
+            for top in (
+                _top_level_module_name(mod) for mod in importlib_imports
+            )
             if top
         ]
     )
@@ -582,7 +602,9 @@ def _classify_module_origin(module_name: str, workspace_dir: str) -> str:
         if normalized_module:
             for root in source_roots:
                 try:
-                    pkg_init = os.path.join(root, normalized_module, "__init__.py")
+                    pkg_init = os.path.join(
+                        root, normalized_module, "__init__.py"
+                    )
                     mod_file = os.path.join(root, f"{normalized_module}.py")
                     if os.path.isfile(pkg_init) or os.path.isfile(mod_file):
                         return "internal"
@@ -646,7 +668,9 @@ def _check_module_installed(module: str) -> bool:
     return False
 
 
-def _find_pip_executable(venv_path: str = None, workspace_dir: str = None) -> tuple:
+def _find_pip_executable(
+    venv_path: str = None, workspace_dir: str = None
+) -> tuple:
     """
     Locate pip executable with multiple fallback strategies.
     Return un tuple (program, prefix_args) où:
@@ -689,7 +713,9 @@ def _find_pip_executable(venv_path: str = None, workspace_dir: str = None) -> tu
             pass
 
     # Stratégie 2: python -m pip du venv
-    python_exe = os.path.join(bin_dir, "python.exe" if is_windows else "python")
+    python_exe = os.path.join(
+        bin_dir, "python.exe" if is_windows else "python"
+    )
     if os.path.isfile(python_exe):
         try:
             result = subprocess.run(
@@ -778,7 +804,9 @@ def collect_project_dependencies(
                     for group in opt_deps.values():
                         if isinstance(group, list):
                             for d in group:
-                                name = re.split(r"[<>=!~\s]", str(d))[0].strip()
+                                name = re.split(r"[<>=!~\s]", str(d))[
+                                    0
+                                ].strip()
                                 if name:
                                     all_deps.add(name)
 
@@ -794,7 +822,9 @@ def collect_project_dependencies(
                             all_deps.add(name)
                 if include_dev:
                     d_deps = (
-                        poetry.get("group", {}).get("dev", {}).get("dependencies", {})
+                        poetry.get("group", {})
+                        .get("dev", {})
+                        .get("dependencies", {})
                     )
                     if isinstance(d_deps, dict):
                         for name in d_deps.keys():
@@ -829,7 +859,9 @@ def collect_project_dependencies(
     pipfile_path = os.path.join(workspace_dir, "Pipfile")
     if os.path.isfile(pipfile_path):
         try:
-            with open(pipfile_path, "r", encoding="utf-8", errors="ignore") as f:
+            with open(
+                pipfile_path, "r", encoding="utf-8", errors="ignore"
+            ) as f:
                 content = f.read()
             match = re.search(r"\[packages\](.*?)(?=\[|$)", content, re.DOTALL)
             if match:
@@ -872,7 +904,9 @@ def collect_project_dependencies(
                 workspace_python_files.append(file_path)
                 try:
                     modules_from_imports.update(
-                        _extract_imported_modules_from_file(file_path, workspace_dir)
+                        _extract_imported_modules_from_file(
+                            file_path, workspace_dir
+                        )
                     )
                 except Exception:
                     pass
@@ -932,11 +966,16 @@ def collect_internal_modules(workspace_dir: str) -> set[str]:
             file_path = os.path.join(root, file)
             workspace_python_files.append(file_path)
             try:
-                imported = _extract_imported_modules_from_file(file_path, workspace_dir)
+                imported = _extract_imported_modules_from_file(
+                    file_path, workspace_dir
+                )
             except Exception:
                 continue
             for module_name in imported:
-                if _classify_module_origin(module_name, workspace_dir) == "internal":
+                if (
+                    _classify_module_origin(module_name, workspace_dir)
+                    == "internal"
+                ):
                     top = _top_level_module_name(module_name)
                     if top:
                         internal_modules.add(top)
@@ -945,14 +984,18 @@ def collect_internal_modules(workspace_dir: str) -> set[str]:
 
 
 def write_requirements_txt(
-    workspace_dir: str, output_path: str | None = None, include_dev: bool = False
+    workspace_dir: str,
+    output_path: str | None = None,
+    include_dev: bool = False,
 ) -> str | None:
     """
     Generate a requirements.txt file based on project analysis.
     Returns the path to the written file, or None on failure.
     """
     try:
-        deps = collect_project_dependencies(workspace_dir, include_dev=include_dev)
+        deps = collect_project_dependencies(
+            workspace_dir, include_dev=include_dev
+        )
         if not deps:
             return None
 
@@ -961,7 +1004,9 @@ def write_requirements_txt(
 
         with open(output_path, "w", encoding="utf-8") as f:
             f.write("# Auto-generated by PyCompiler ARK DepsAnalyser\n")
-            f.write("# Generated from project imports and configuration files\n\n")
+            f.write(
+                "# Generated from project imports and configuration files\n\n"
+            )
             for dep in sorted(deps):
                 f.write(f"{dep}\n")
 

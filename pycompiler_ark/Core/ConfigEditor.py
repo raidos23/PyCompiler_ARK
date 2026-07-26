@@ -118,12 +118,19 @@ def validate_ark_payload(data: Any) -> tuple[list[str], list[str]]:
                 else:
                     for idx, item in enumerate(data_map):
                         if not isinstance(item, dict):
-                            errs.append(f"build.data[{idx}] must be an object.")
+                            errs.append(
+                                f"build.data[{idx}] must be an object."
+                            )
                         else:
                             if not item.get("source"):
-                                errs.append(f"build.data[{idx}] missing 'source'.")
+                                errs.append(
+                                    f"build.data[{idx}] missing 'source'."
+                                )
                             m_type = item.get("type")
-                            if m_type is not None and m_type not in ("file", "dir"):
+                            if m_type is not None and m_type not in (
+                                "file",
+                                "dir",
+                            ):
                                 errs.append(
                                     f"build.data[{idx}].type must be 'file' or 'dir'."
                                 )
@@ -135,7 +142,9 @@ def validate_ark_payload(data: Any) -> tuple[list[str], list[str]]:
             errs.append("plugins must be an object.")
         else:
             bcasl_enabled = plugins.get("bcasl_enabled")
-            if bcasl_enabled is not None and not isinstance(bcasl_enabled, bool):
+            if bcasl_enabled is not None and not isinstance(
+                bcasl_enabled, bool
+            ):
                 errs.append("plugins.bcasl_enabled must be a boolean.")
 
     return errs, warns

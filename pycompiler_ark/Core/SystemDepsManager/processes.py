@@ -54,7 +54,9 @@ class ProcessBridge:
         cmd: Union[str, list[str]],
         cwd: Optional[str] = None,
         on_output: Optional[Callable[[str], None]] = None,
-        on_finished: Optional[Callable[[int, QProcess.ExitStatus], None]] = None,
+        on_finished: Optional[
+            Callable[[int, QProcess.ExitStatus], None]
+        ] = None,
     ) -> Optional[QProcess]:
         try:
             proc = QProcess()
@@ -66,19 +68,29 @@ class ProcessBridge:
                 proc.setArguments(cmd[1:])
             else:
                 proc.setProgram(
-                    "/bin/bash" if platform.system() != "Windows" else "cmd.exe"
+                    "/bin/bash"
+                    if platform.system() != "Windows"
+                    else "cmd.exe"
                 )
                 proc.setArguments(
-                    ["-lc", cmd] if platform.system() != "Windows" else ["/c", cmd]
+                    ["-lc", cmd]
+                    if platform.system() != "Windows"
+                    else ["/c", cmd]
                 )
 
             def _read_output():
-                raw = proc.readAllStandardOutput().data().decode(errors="replace")
+                raw = (
+                    proc.readAllStandardOutput()
+                    .data()
+                    .decode(errors="replace")
+                )
                 if on_output:
                     on_output(raw)
 
             def _read_error():
-                raw = proc.readAllStandardError().data().decode(errors="replace")
+                raw = (
+                    proc.readAllStandardError().data().decode(errors="replace")
+                )
                 if on_output:
                     on_output(raw)
 
@@ -91,7 +103,9 @@ class ProcessBridge:
                 self._unregister_task(proc)
 
             proc.finished.connect(_finished_wrapper)
-            self._register_task(proc, None, "commande système", "system command")
+            self._register_task(
+                proc, None, "commande système", "system command"
+            )
             proc.start()
             return proc
         except Exception:
@@ -102,7 +116,9 @@ class ProcessBridge:
         cmd_str: str,
         cwd: Optional[str] = None,
         on_output: Optional[Callable[[str], None]] = None,
-        on_finished: Optional[Callable[[int, QProcess.ExitStatus], None]] = None,
+        on_finished: Optional[
+            Callable[[int, QProcess.ExitStatus], None]
+        ] = None,
     ) -> Optional[QProcess]:
         if platform.system() == "Linux":
             return self.shell_run(

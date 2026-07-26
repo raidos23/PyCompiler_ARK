@@ -87,7 +87,9 @@ def _headless_engine_instance(engine_id: str):
 def _engine_required_tools(engine_id: str) -> dict[str, list[str]]:
     try:
         engine = _headless_engine_instance(engine_id)
-        required_tools = getattr(engine, "required_tools", {"python": [], "system": []})
+        required_tools = getattr(
+            engine, "required_tools", {"python": [], "system": []}
+        )
         if not isinstance(required_tools, dict):
             return {"python": [], "system": []}
         return {
@@ -137,7 +139,9 @@ def _plugin_candidates() -> list[dict[str, Any]]:
     candidates: list[dict[str, Any]] = []
     if not plugins_root.exists():
         return candidates
-    for pkg_dir in sorted(plugins_root.iterdir(), key=lambda p: p.name.lower()):
+    for pkg_dir in sorted(
+        plugins_root.iterdir(), key=lambda p: p.name.lower()
+    ):
         init_file = pkg_dir / "__init__.py"
         if not pkg_dir.is_dir() or not init_file.exists():
             continue
@@ -190,7 +194,9 @@ def engine_list_payload(workspace: str | None = None) -> dict[str, Any]:
                         ("user-engine-dir", "user"),
                     ):
                         try:
-                            dir_val = resolve_config_value(key, create_default=False)
+                            dir_val = resolve_config_value(
+                                key, create_default=False
+                            )
                             if dir_val:
                                 p = Path(dir_val).expanduser().resolve()
                                 if str(mod_path).startswith(str(p)):
@@ -212,7 +218,9 @@ def engine_list_payload(workspace: str | None = None) -> dict[str, Any]:
                 "required_core": getattr(
                     engine_class, "required_core_version", "1.0.0"
                 ),
-                "required_sdk": getattr(engine_class, "required_sdk_version", "1.0.0"),
+                "required_sdk": getattr(
+                    engine_class, "required_sdk_version", "1.0.0"
+                ),
                 "compatible": bool(getattr(compat, "is_compatible", False)),
                 "message": getattr(compat, "error_message", ""),
                 "source": source,
@@ -221,7 +229,9 @@ def engine_list_payload(workspace: str | None = None) -> dict[str, Any]:
     return {"engines": engines, "count": len(engines), "workspace": workspace}
 
 
-def engine_info_payload(engine_id: str, workspace: str | None = None) -> dict[str, Any]:
+def engine_info_payload(
+    engine_id: str, workspace: str | None = None
+) -> dict[str, Any]:
     engine_class = _headless_engine_class(engine_id)
     if not engine_class:
         return {"found": False, "engine_id": engine_id}
@@ -233,8 +243,12 @@ def engine_info_payload(engine_id: str, workspace: str | None = None) -> dict[st
             "id": getattr(engine_class, "id", engine_id),
             "name": getattr(engine_class, "name", engine_id),
             "version": getattr(engine_class, "version", "unknown"),
-            "required_core": getattr(engine_class, "required_core_version", "1.0.0"),
-            "required_sdk": getattr(engine_class, "required_sdk_version", "1.0.0"),
+            "required_core": getattr(
+                engine_class, "required_core_version", "1.0.0"
+            ),
+            "required_sdk": getattr(
+                engine_class, "required_sdk_version", "1.0.0"
+            ),
             "compatible": bool(getattr(compat, "is_compatible", False)),
             "message": getattr(compat, "error_message", ""),
             "missing_requirements": list(
@@ -246,7 +260,11 @@ def engine_info_payload(engine_id: str, workspace: str | None = None) -> dict[st
 
 
 def bcasl_list_payload(workspace: str | None = None) -> dict[str, Any]:
-    ws = str(Path(workspace).expanduser().resolve()) if workspace else str(Path.cwd())
+    ws = (
+        str(Path(workspace).expanduser().resolve())
+        if workspace
+        else str(Path.cwd())
+    )
     plugins_dir = _plugins_root()
     plugins = _plugin_candidates()
     return {
@@ -274,7 +292,9 @@ def bcasl_doctor_payload(workspace: str | None = None) -> dict[str, Any]:
             "message": (
                 f"{plugins['count']} plugin(s) available"
                 if not plugins.get("errors")
-                else "; ".join(item["error"] for item in plugins.get("errors", []))
+                else "; ".join(
+                    item["error"] for item in plugins.get("errors", [])
+                )
             ),
         },
     ]
@@ -295,7 +315,9 @@ def bcasl_doctor_payload(workspace: str | None = None) -> dict[str, Any]:
     }
 
 
-def scaffold_engine(target_name: str, root_dir: str | None = None) -> dict[str, Any]:
+def scaffold_engine(
+    target_name: str, root_dir: str | None = None
+) -> dict[str, Any]:
     safe = str(target_name).strip().replace("-", "_").replace(" ", "_").lower()
     base_root = Path(root_dir or Path.cwd())
     engine_dir = base_root / safe
@@ -303,7 +325,11 @@ def scaffold_engine(target_name: str, root_dir: str | None = None) -> dict[str, 
     lang_dir = engine_dir / "languages"
     created: list[str] = []
     if engine_dir.exists():
-        return {"created": False, "path": str(engine_dir), "reason": "already exists"}
+        return {
+            "created": False,
+            "path": str(engine_dir),
+            "reason": "already exists",
+        }
 
     lang_dir.mkdir(parents=True, exist_ok=True)
     created.extend([str(engine_dir), str(lang_dir)])
@@ -358,14 +384,20 @@ def scaffold_engine(target_name: str, root_dir: str | None = None) -> dict[str, 
     return {"created": True, "path": str(engine_dir)}
 
 
-def scaffold_plugin(target_name: str, root_dir: str | None = None) -> dict[str, Any]:
+def scaffold_plugin(
+    target_name: str, root_dir: str | None = None
+) -> dict[str, Any]:
     safe = str(target_name).strip().replace("-", "_").replace(" ", "_")
     base_root = Path(root_dir or Path.cwd())
     plugin_dir = base_root / safe
 
     lang_dir = plugin_dir / "languages"
     if plugin_dir.exists():
-        return {"created": False, "path": str(plugin_dir), "reason": "already exists"}
+        return {
+            "created": False,
+            "path": str(plugin_dir),
+            "reason": "already exists",
+        }
 
     lang_dir.mkdir(parents=True, exist_ok=True)
     (plugin_dir / "__init__.py").write_text(

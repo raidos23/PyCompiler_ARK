@@ -68,7 +68,9 @@ class PluginMeta:
         try:
             if isinstance(self.tags, str):
                 normalized = tuple(
-                    t.strip().lower() for t in str(self.tags).split(",") if t.strip()
+                    t.strip().lower()
+                    for t in str(self.tags).split(",")
+                    if t.strip()
                 )
             elif isinstance(self.tags, (list, tuple)):
                 normalized = tuple(
@@ -89,12 +91,17 @@ class BcPluginBase:
     priority: int
 
     def __init__(
-        self, meta: PluginMeta, requires: Iterable[str] = (), priority: int = 100
+        self,
+        meta: PluginMeta,
+        requires: Iterable[str] = (),
+        priority: int = 100,
     ) -> None:
         if not meta or not meta.id:
             raise ValueError("Invalid PluginMeta: 'id' required")
         self.meta = meta
-        self.requires = tuple(str(r).strip() for r in requires if str(r).strip())
+        self.requires = tuple(
+            str(r).strip() for r in requires if str(r).strip()
+        )
         self.priority = int(priority)
 
     @property
@@ -185,7 +192,10 @@ def bc_register(
         setattr(cls_to_decorate, "__bcasl_plugin__", True)
         meta = getattr(cls_to_decorate, "meta", None)
 
-        if meta is None and cls_to_decorate.__init__ is not BcPluginBase.__init__:
+        if (
+            meta is None
+            and cls_to_decorate.__init__ is not BcPluginBase.__init__
+        ):
             try:
                 temp = cls_to_decorate()
                 meta = getattr(temp, "meta", None)
@@ -193,7 +203,9 @@ def bc_register(
                 pass
 
         if meta is None:
-            raise ValueError(f"Attribut 'meta' requis pour {cls_to_decorate.__name__}")
+            raise ValueError(
+                f"Attribut 'meta' requis pour {cls_to_decorate.__name__}"
+            )
 
         def _create_instance() -> BcPluginBase:
             try:

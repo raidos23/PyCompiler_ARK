@@ -68,7 +68,9 @@ class SafeGuiBridge(QObject):
         super().__init__()
         self._gui = original_gui
         self.workspace_dir = getattr(original_gui, "workspace_dir", None)
-        self.use_system_python = getattr(original_gui, "use_system_python", False)
+        self.use_system_python = getattr(
+            original_gui, "use_system_python", False
+        )
 
         # Mirror managers
         self.venv_manager = getattr(original_gui, "venv_manager", None)
@@ -135,7 +137,9 @@ class CompilationThread(QThread):
         if self.bridge:
             # Connect bridge signals to emit via the thread
             self.bridge.log_triggered.connect(self._handle_bridge_log)
-            self.bridge.log_message_triggered.connect(self._handle_bridge_log_message)
+            self.bridge.log_message_triggered.connect(
+                self._handle_bridge_log_message
+            )
 
         self.cancel_requested = False
         self.start_time: Optional[datetime] = None
@@ -163,7 +167,8 @@ class CompilationThread(QThread):
         if not self.is_rebuild and self.ark_config:
             try:
                 self.log_requested.emit(
-                    "info", "🔒 Generating compilation lock file (background)..."
+                    "info",
+                    "🔒 Generating compilation lock file (background)...",
                 )
                 from ....Core.Compiler.engine_runner import (
                     resolve_engine_command,
@@ -201,7 +206,11 @@ class CompilationThread(QThread):
                         self.engine_config,
                         gui=self.bridge,
                     )
-                    resolved_command = {"program": prog, "args": args, "env": env}
+                    resolved_command = {
+                        "program": prog,
+                        "args": args,
+                        "env": env,
+                    }
                 except Exception as e:
                     self.log_requested.emit(
                         "warning", f"Auto-mapping not persisted in lock: {e}"
@@ -218,11 +227,15 @@ class CompilationThread(QThread):
                 write_lock_files(self.workspace, lock_payload)
 
                 # 4. Final Alignment: refresh context and config from lock
-                self.context = build_context_object_from_ark_config(self.ark_config)
+                self.context = build_context_object_from_ark_config(
+                    self.ark_config
+                )
                 self.engine_config = engine_config_from_lock(lock_payload)
 
             except Exception as e:
-                self.log_requested.emit("error", f"Lock generation failed: {e}")
+                self.log_requested.emit(
+                    "error", f"Lock generation failed: {e}"
+                )
 
         def _on_stdout(line: str):
             self.output_ready.emit(line)
@@ -347,7 +360,8 @@ class CompilerCore(QObject):
         Legacy compile method. Use compile_from_context instead.
         """
         self.log_message.emit(
-            "warning", "Legacy compile() called. Use compile_from_context() instead."
+            "warning",
+            "Legacy compile() called. Use compile_from_context() instead.",
         )
         if not file_path:
             return False

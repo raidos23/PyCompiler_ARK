@@ -52,7 +52,9 @@ from ....Core.ConfigEditor import validate_ark_payload
 from ....Core.engine.registry import available_engines
 
 
-def _apply_themed_icon(widget: QPushButton, icon_name: str, size: int = 16) -> None:
+def _apply_themed_icon(
+    widget: QPushButton, icon_name: str, size: int = 16
+) -> None:
     """Applique une icône SVG thémée au widget."""
     try:
         from ..UiConnection import themed_svg_icon
@@ -83,7 +85,9 @@ class ConfigEditor(QDialog):
     def __init__(self, gui):
         super().__init__(gui)
         self.gui = gui
-        self.setWindowTitle(gui.tr("Configuration du projet", "Project Configuration"))
+        self.setWindowTitle(
+            gui.tr("Configuration du projet", "Project Configuration")
+        )
         self.resize(800, 800)
 
         layout = QVBoxLayout(self)
@@ -129,8 +133,12 @@ class ConfigEditor(QDialog):
         form_project.addRow(
             self.gui.tr("Nom du projet:", "Project Name:"), self.edit_name
         )
-        form_project.addRow(self.gui.tr("Version:", "Version:"), self.edit_version)
-        form_project.addRow(self.gui.tr("Point d'entrée:", "Entry Point:"), row_entry)
+        form_project.addRow(
+            self.gui.tr("Version:", "Version:"), self.edit_version
+        )
+        form_project.addRow(
+            self.gui.tr("Point d'entrée:", "Entry Point:"), row_entry
+        )
         self.form_layout.addWidget(group_project)
 
         # --- Section: Build ---
@@ -157,7 +165,9 @@ class ConfigEditor(QDialog):
         row_icon.addWidget(self.edit_icon)
         row_icon.addWidget(btn_browse_icon)
 
-        form_build.addRow(self.gui.tr("Moteur (Engine):", "Engine:"), self.combo_engine)
+        form_build.addRow(
+            self.gui.tr("Moteur (Engine):", "Engine:"), self.combo_engine
+        )
         form_build.addRow(
             self.gui.tr("Dossier de sortie:", "Output Directory:"), row_output
         )
@@ -165,7 +175,9 @@ class ConfigEditor(QDialog):
         self.form_layout.addWidget(group_build)
 
         # --- Section: Data Mappings ---
-        group_data = QGroupBox(self.gui.tr("Données (Assets)", "Data Mappings"))
+        group_data = QGroupBox(
+            self.gui.tr("Données (Assets)", "Data Mappings")
+        )
         lay_data = QVBoxLayout(group_data)
         self.table_data = QTableWidget(0, 3)
         self.table_data.setHorizontalHeaderLabels(
@@ -217,7 +229,9 @@ class ConfigEditor(QDialog):
             )
         )
         self.edit_build_exclude = QPlainTextEdit()
-        self.edit_build_exclude.setPlaceholderText("tkinter\nunittest\nrequests")
+        self.edit_build_exclude.setPlaceholderText(
+            "tkinter\nunittest\nrequests"
+        )
         self.edit_build_exclude.setMaximumHeight(80)
         lay_exclude.addWidget(self.edit_build_exclude)
 
@@ -230,7 +244,9 @@ class ConfigEditor(QDialog):
             )
         )
         self.edit_build_include = QPlainTextEdit()
-        self.edit_build_include.setPlaceholderText("my_custom_lib\nrare_package")
+        self.edit_build_include.setPlaceholderText(
+            "my_custom_lib\nrare_package"
+        )
         self.edit_build_include.setMaximumHeight(80)
         lay_exclude.addWidget(self.edit_build_include)
 
@@ -243,7 +259,9 @@ class ConfigEditor(QDialog):
             )
         )
         self.edit_ws_exclude = QPlainTextEdit()
-        self.edit_ws_exclude.setPlaceholderText(".git/**\nvenv/**\n__pycache__/**")
+        self.edit_ws_exclude.setPlaceholderText(
+            ".git/**\nvenv/**\n__pycache__/**"
+        )
         self.edit_ws_exclude.setMaximumHeight(80)
         lay_exclude.addWidget(self.edit_ws_exclude)
         self.form_layout.addWidget(group_exclude)
@@ -327,7 +345,9 @@ class ConfigEditor(QDialog):
                         )
 
             plugins = config.get("plugins", {})
-            self.check_bcasl.setChecked(bool(plugins.get("bcasl_enabled", True)))
+            self.check_bcasl.setChecked(
+                bool(plugins.get("bcasl_enabled", True))
+            )
 
         except Exception as e:
             QMessageBox.critical(
@@ -359,7 +379,9 @@ class ConfigEditor(QDialog):
                 m_type = combo.currentText()
 
             if src:
-                data_map.append({"source": src, "destination": dst, "type": m_type})
+                data_map.append(
+                    {"source": src, "destination": dst, "type": m_type}
+                )
 
         config = {
             "project": {
@@ -451,16 +473,26 @@ class ConfigEditor(QDialog):
             "All Files (*)",
         )
         if path:
-            rel = os.path.relpath(path, ws) if ws and path.startswith(ws) else path
+            rel = (
+                os.path.relpath(path, ws)
+                if ws and path.startswith(ws)
+                else path
+            )
             self._add_data_row(rel, rel, "file")
 
     def _on_add_dir_data(self) -> None:
         ws = self._workspace_dir()
         path = QFileDialog.getExistingDirectory(
-            self, self.gui.tr("Sélectionner un dossier", "Select Directory"), ws or ""
+            self,
+            self.gui.tr("Sélectionner un dossier", "Select Directory"),
+            ws or "",
         )
         if path:
-            rel = os.path.relpath(path, ws) if ws and path.startswith(ws) else path
+            rel = (
+                os.path.relpath(path, ws)
+                if ws and path.startswith(ws)
+                else path
+            )
             self._add_data_row(rel, rel, "dir")
 
     def _remove_data_row(self) -> None:
@@ -472,7 +504,9 @@ class ConfigEditor(QDialog):
         ws = self._workspace_dir()
         path, _ = QFileDialog.getOpenFileName(
             self,
-            self.gui.tr("Sélectionner le point d'entrée", "Select Entry Point"),
+            self.gui.tr(
+                "Sélectionner le point d'entrée", "Select Entry Point"
+            ),
             ws or "",
             "Python Files (*.py *.pyw);;All Files (*)",
         )
@@ -484,7 +518,9 @@ class ConfigEditor(QDialog):
     def _browse_output(self) -> None:
         ws = self._workspace_dir()
         path = QFileDialog.getExistingDirectory(
-            self, self.gui.tr("Dossier de sortie", "Output Directory"), ws or ""
+            self,
+            self.gui.tr("Dossier de sortie", "Output Directory"),
+            ws or "",
         )
         if path:
             if ws and path.startswith(ws):

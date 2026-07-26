@@ -204,7 +204,11 @@ from ...Core.Configs import config_home as _config_home
 from ...Core.Configs import ensure_config_home as _ensure_config_home
 from ...Core.Configs import load_ark_config as _load_ark_config
 from ...Core.Configs import validate_ark_config as _validate_ark_config
-from ...Core.Locking import BuildContext, ensure_workspace_layout, load_yaml_file
+from ...Core.Locking import (
+    BuildContext,
+    ensure_workspace_layout,
+    load_yaml_file,
+)
 from ...Core.Locking import (
     build_context_from_ark_config as _build_context_from_ark_config,
 )
@@ -372,7 +376,14 @@ def init_workspace(
             builder.create(str(venv_path))
         python_exe = python_in_venv(venv_path)
         result = subprocess.run(
-            [str(python_exe), "-m", "pip", "install", "-r", str(requirements_path)],
+            [
+                str(python_exe),
+                "-m",
+                "pip",
+                "install",
+                "-r",
+                str(requirements_path),
+            ],
             cwd=str(workspace),
             capture_output=True,
             text=True,
@@ -405,7 +416,9 @@ def init_workspace(
         "workspace": str(workspace),
         "ark_yml": str(ark_yml),
         "venv": str(venv_path) if venv_path.exists() else None,
-        "requirements": str(requirements_path) if requirements_path.exists() else None,
+        "requirements": str(requirements_path)
+        if requirements_path.exists()
+        else None,
         "config": config,
         "apply_internal": apply_internal,
         "internal_modules": internal_modules,
@@ -427,7 +440,9 @@ def validate_ark_config(
     errors = list(result.errors)
     warnings = list(result.warnings)
 
-    engine = str(((result.config.get("build") or {}).get("engine")) or "").strip()
+    engine = str(
+        ((result.config.get("build") or {}).get("engine")) or ""
+    ).strip()
     if engine:
         try:
             info = engine_info_payload(engine)
@@ -440,16 +455,18 @@ def validate_ark_config(
         joined = "\n".join(f"- {item}" for item in errors)
         raise CliSpecError(f"Invalid ark.yml\n{joined}")
 
-    return PyCompilerArkValidationResult(config=result.config, warnings=warnings)
+    return PyCompilerArkValidationResult(
+        config=result.config, warnings=warnings
+    )
 
 
 def engine_version(engine_id: str) -> str:
     try:
         payload = engine_info_payload(engine_id)
         return str(
-            ((payload.get("engine") or {}) if payload.get("found") else {}).get(
-                "version"
-            )
+            (
+                (payload.get("engine") or {}) if payload.get("found") else {}
+            ).get("version")
             or "unknown"
         )
     except Exception:
@@ -474,7 +491,9 @@ def build_lock_payload(
     )
 
 
-def write_lock_files(workspace: Path, payload: dict[str, Any]) -> dict[str, str]:
+def write_lock_files(
+    workspace: Path, payload: dict[str, Any]
+) -> dict[str, str]:
     return _write_lock_files(workspace, payload)
 
 
@@ -500,11 +519,15 @@ def build_context_from_lock(lock_payload: dict[str, Any]) -> dict[str, Any]:
     return _build_context_from_lock(lock_payload).to_dict()
 
 
-def build_context_object_from_ark_config(config: dict[str, Any]) -> BuildContext:
+def build_context_object_from_ark_config(
+    config: dict[str, Any],
+) -> BuildContext:
     return _build_context_from_ark_config(config)
 
 
-def build_context_object_from_lock(lock_payload: dict[str, Any]) -> BuildContext:
+def build_context_object_from_lock(
+    lock_payload: dict[str, Any],
+) -> BuildContext:
     return _build_context_from_lock(lock_payload)
 
 
@@ -602,7 +625,9 @@ def ensure_correct_git_commit(
                 return ask_yes_no(msg, default_yes=True)
 
             if not branch_match and locked_branch:
-                if _confirm(f"Perform automatic 'git checkout {locked_branch}'?"):
+                if _confirm(
+                    f"Perform automatic 'git checkout {locked_branch}'?"
+                ):
                     info(
                         (
                             "Changement de branche...",
@@ -621,7 +646,9 @@ def ensure_correct_git_commit(
                     )
 
             if not commit_match and locked_commit:
-                if _confirm(f"Perform automatic 'git checkout {locked_commit[:8]}'?"):
+                if _confirm(
+                    f"Perform automatic 'git checkout {locked_commit[:8]}'?"
+                ):
                     info(
                         (
                             "Alignement du commit...",
@@ -699,14 +726,18 @@ def list_plugins_payload() -> dict[str, Any]:
     return bcasl_list_payload()
 
 
-def scaffold_engine_payload(name: str, root_dir: str | None = None) -> dict[str, Any]:
+def scaffold_engine_payload(
+    name: str, root_dir: str | None = None
+) -> dict[str, Any]:
     from ...Core.Configs import config_file_for, resolve_config_value
     from .interactive import ask_path
 
     if not root_dir:
         conf_path = config_file_for("dev-engine-dir", create_root=False)
         if conf_path.exists():
-            root_dir = resolve_config_value("dev-engine-dir", create_default=False)
+            root_dir = resolve_config_value(
+                "dev-engine-dir", create_default=False
+            )
 
     if not root_dir:
         root_dir = ask_path("Path for the new engine")
@@ -716,14 +747,18 @@ def scaffold_engine_payload(name: str, root_dir: str | None = None) -> dict[str,
     return scaffold_engine(name, root_dir=root_dir)
 
 
-def scaffold_plugin_payload(name: str, root_dir: str | None = None) -> dict[str, Any]:
+def scaffold_plugin_payload(
+    name: str, root_dir: str | None = None
+) -> dict[str, Any]:
     from ...Core.Configs import config_file_for, resolve_config_value
     from .interactive import ask_path
 
     if not root_dir:
         conf_path = config_file_for("dev-plugin-dir", create_root=False)
         if conf_path.exists():
-            root_dir = resolve_config_value("dev-plugin-dir", create_default=False)
+            root_dir = resolve_config_value(
+                "dev-plugin-dir", create_default=False
+            )
 
     if not root_dir:
         root_dir = ask_path("Path for the new plugin")
@@ -753,7 +788,9 @@ def run_bcasl_before_compile_sync(
     console = get_console()
     status = None
     if not verbose and console:
-        status = console.status("[cyan]Running BCASL...[/cyan]", spinner="dots")
+        status = console.status(
+            "[cyan]Running BCASL...[/cyan]", spinner="dots"
+        )
         register_cli_status(status)
         status.start()
 
@@ -777,14 +814,10 @@ def run_bcasl_before_compile_sync(
                             if clean.startswith("Plugin: "):
                                 # Utilisation de markup Rich au lieu d'icônes
                                 plugin_name = clean[8:].strip()
-                                display = (
-                                    f"Plugin: [bold white]{plugin_name}[/bold white]"
-                                )
+                                display = f"Plugin: [bold white]{plugin_name}[/bold white]"
                             elif clean.startswith("Phase: "):
                                 phase_name = clean[7:].strip()
-                                display = (
-                                    f"Phase: [bold yellow]{phase_name}[/bold yellow]"
-                                )
+                                display = f"Phase: [bold yellow]{phase_name}[/bold yellow]"
 
                             if len(display) < 120:
                                 self.host_ptr.status_obj.update(
@@ -924,14 +957,10 @@ def run_bcasl_headless(args: list[str], verbose: bool = False) -> int:
                             if clean.startswith("Plugin: "):
                                 # Utilisation de markup Rich au lieu d'icônes
                                 plugin_name = clean[8:].strip()
-                                display = (
-                                    f"Plugin: [bold white]{plugin_name}[/bold white]"
-                                )
+                                display = f"Plugin: [bold white]{plugin_name}[/bold white]"
                             elif clean.startswith("Phase: "):
                                 phase_name = clean[7:].strip()
-                                display = (
-                                    f"Phase: [bold yellow]{phase_name}[/bold yellow]"
-                                )
+                                display = f"Phase: [bold yellow]{phase_name}[/bold yellow]"
 
                             if len(display) < 120:
                                 self.host_ptr.status_obj.update(

@@ -47,7 +47,9 @@ class InitWorkspaceDialog(QDialog):
     def __init__(self, gui):
         super().__init__(gui)
         self.gui = gui
-        self.setWindowTitle(gui.tr("Initialiser le projet", "init_project_title"))
+        self.setWindowTitle(
+            gui.tr("Initialiser le projet", "init_project_title")
+        )
         self.resize(500, 300)
 
         layout = QVBoxLayout(self)
@@ -68,7 +70,9 @@ class InitWorkspaceDialog(QDialog):
         row_entry.addWidget(self.edit_entry)
         row_entry.addWidget(btn_browse)
 
-        form.addRow(self.gui.tr("Point d'entrée :", "init_project_entry"), row_entry)
+        form.addRow(
+            self.gui.tr("Point d'entrée :", "init_project_entry"), row_entry
+        )
 
         # Options
         self.chk_reqs = QCheckBox(
@@ -79,14 +83,17 @@ class InitWorkspaceDialog(QDialog):
 
         self.chk_venv = QCheckBox(
             self.gui.tr(
-                "Créer un environnement virtuel (venv)", "init_project_create_venv"
+                "Créer un environnement virtuel (venv)",
+                "init_project_create_venv",
             )
         )
         self.chk_venv.setChecked(False)
         form.addRow("", self.chk_venv)
 
         self.chk_install = QCheckBox(
-            self.gui.tr("Installer les dépendances", "init_project_install_reqs")
+            self.gui.tr(
+                "Installer les dépendances", "init_project_install_reqs"
+            )
         )
         self.chk_install.setChecked(False)
         self.chk_install.setEnabled(False)
@@ -134,7 +141,9 @@ class InitWorkspaceDialog(QDialog):
         btn_cancel = QPushButton(self.gui.tr("Annuler", "action_cancel"))
         btn_cancel.clicked.connect(self.reject)
 
-        self.btn_init = QPushButton(self.gui.tr("Initialiser", "action_init_project"))
+        self.btn_init = QPushButton(
+            self.gui.tr("Initialiser", "action_init_project")
+        )
         self.btn_init.setDefault(True)
         self.btn_init.clicked.connect(self._on_init)
 
@@ -166,7 +175,9 @@ class InitWorkspaceDialog(QDialog):
             QMessageBox.warning(
                 self,
                 "Error",
-                self.gui.tr("Aucun workspace sélectionné.", "msg_no_workspace_text"),
+                self.gui.tr(
+                    "Aucun workspace sélectionné.", "msg_no_workspace_text"
+                ),
             )
             return
 
@@ -205,13 +216,16 @@ class InitWorkspaceDialog(QDialog):
                         "Modules internes à appliquer :\n{modules}\n\nLes ajouter à build.include ?",
                         "Internal modules to apply:\n{modules}\n\nAdd them to build.include?",
                     ).format(
-                        modules="\n".join(f"- {item}" for item in internal_modules)
+                        modules="\n".join(
+                            f"- {item}" for item in internal_modules
+                        )
                     )
                     choice = QMessageBox.question(
                         self,
                         title,
                         message,
-                        QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                        QMessageBox.StandardButton.Yes
+                        | QMessageBox.StandardButton.No,
                         QMessageBox.StandardButton.No,
                     )
                     if choice == QMessageBox.StandardButton.No:
@@ -231,7 +245,9 @@ class InitWorkspaceDialog(QDialog):
                 auto_confirm=effective_auto_confirm,
             )
 
-            msg = self.gui.tr("Projet initialisé avec succès !", "init_project_success")
+            msg = self.gui.tr(
+                "Projet initialisé avec succès !", "init_project_success"
+            )
             QMessageBox.information(self, "Success", msg)
 
             # Refresh GUI

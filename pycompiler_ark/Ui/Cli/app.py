@@ -140,7 +140,12 @@ def _build_impl(
             info(("Chargement de ark.yml...", "Loading ark.yml..."))
         config = load_ark_config(workspace)
         if not as_json and verbose:
-            info(("Validation de la configuration...", "Validating configuration..."))
+            info(
+                (
+                    "Validation de la configuration...",
+                    "Validating configuration...",
+                )
+            )
         validated = validate_ark_config(workspace, config)
         engine_id = engine_override or str(validated.config["build"]["engine"])
         _ensure_engine_known(engine_id)
@@ -242,7 +247,12 @@ def _build_impl(
                 click.echo(_format_warning(warning))
             if verbose:
                 info((f"Moteur : {engine_id}", f"Engine: {engine_id}"))
-                info((f"Lock : {lock_paths['lock']}", f"Lock: {lock_paths['lock']}"))
+                info(
+                    (
+                        f"Lock : {lock_paths['lock']}",
+                        f"Lock: {lock_paths['lock']}",
+                    )
+                )
             if result.get("success"):
                 success(
                     (
@@ -280,10 +290,16 @@ def _build_impl(
         )
 
     lock_payload = load_yaml_file(lock_path)
-    engine_id = str(((lock_payload.get("engine") or {}).get("name")) or "").strip()
-    entry_file = str(((lock_payload.get("project") or {}).get("entry")) or "").strip()
+    engine_id = str(
+        ((lock_payload.get("engine") or {}).get("name")) or ""
+    ).strip()
+    entry_file = str(
+        ((lock_payload.get("project") or {}).get("entry")) or ""
+    ).strip()
     if not engine_id or not entry_file:
-        raise CliSpecError("Invalid lock file: missing engine.name or project.entry")
+        raise CliSpecError(
+            "Invalid lock file: missing engine.name or project.entry"
+        )
 
     entry_path = workspace / Path(entry_file)
     if not entry_path.is_file():
@@ -417,7 +433,9 @@ def build_cli():
         raise RuntimeError("Click is not available")
 
     @click.group(context_settings={"help_option_names": ["-h", "--help"]})
-    @click.version_option(version=_resolve_version(), prog_name="pycompiler_ark")
+    @click.version_option(
+        version=_resolve_version(), prog_name="pycompiler_ark"
+    )
     def cli():
         """PyCompiler ARK command line interface."""
 
@@ -433,7 +451,11 @@ def build_cli():
         help="Detect internal project modules and propose them for build.include.",
     )
     @click.option(
-        "--yes", "-y", "auto_confirm", is_flag=True, help="Auto-confirm all prompts."
+        "--yes",
+        "-y",
+        "auto_confirm",
+        is_flag=True,
+        help="Auto-confirm all prompts.",
     )
     @click.option("--json", "as_json", is_flag=True)
     def init_cmd(
@@ -472,7 +494,12 @@ def build_cli():
                 f"Workspace initialized: {payload['workspace']}",
             )
         )
-        info((f"ark.yml : {payload['ark_yml']}", f"ark.yml: {payload['ark_yml']}"))
+        info(
+            (
+                f"ark.yml : {payload['ark_yml']}",
+                f"ark.yml: {payload['ark_yml']}",
+            )
+        )
         if payload.get("apply_internal"):
             detected = payload.get("internal_modules", [])
             if detected:
@@ -521,9 +548,15 @@ def build_cli():
     @click.option("--json", "as_json", is_flag=True)
     @click.option("--verbose", "-v", is_flag=True)
     @click.option(
-        "--yes", "-y", "auto_confirm", is_flag=True, help="Auto-confirm all prompts."
+        "--yes",
+        "-y",
+        "auto_confirm",
+        is_flag=True,
+        help="Auto-confirm all prompts.",
     )
-    def build_cmd(engine_override, lock_file, lock_arg, as_json, verbose, auto_confirm):
+    def build_cmd(
+        engine_override, lock_file, lock_arg, as_json, verbose, auto_confirm
+    ):
         """Build from ark.yml or rebuild from a lock file."""
         effective_lock = (
             lock_arg if lock_arg and lock_file == "__default__" else lock_file
@@ -549,7 +582,11 @@ def build_cli():
     @click.option("--list-plugins", is_flag=True)
     @click.option("--verbose", "-v", is_flag=True)
     @click.option(
-        "--yes", "-y", "auto_confirm", is_flag=True, help="Auto-confirm all prompts."
+        "--yes",
+        "-y",
+        "auto_confirm",
+        is_flag=True,
+        help="Auto-confirm all prompts.",
     )
     def run_bcasl_cmd(list_plugins, verbose, auto_confirm):
         """Run BCASL in headless mode for the current workspace."""
@@ -654,7 +691,9 @@ def build_cli():
                 table.add_column("Version", style="green")
                 table.add_column("Name")
                 for engine in items:
-                    table.add_row(engine["id"], engine["version"], engine["name"])
+                    table.add_row(
+                        engine["id"], engine["version"], engine["name"]
+                    )
                 console.print(table)
         else:
             for section_key, title in (
@@ -672,7 +711,9 @@ def build_cli():
                     continue
                 click.echo(title + ":")
                 for engine in items:
-                    click.echo(f"  {engine['id']} {engine['version']} {engine['name']}")
+                    click.echo(
+                        f"  {engine['id']} {engine['version']} {engine['name']}"
+                    )
 
     @list_group.command("plugins")
     @click.option("--json", "as_json", is_flag=True)
@@ -688,7 +729,9 @@ def build_cli():
 
         console = get_console()
         if console:
-            table = Table(title="Available Plugins", box=None, header_style="bold cyan")
+            table = Table(
+                title="Available Plugins", box=None, header_style="bold cyan"
+            )
             table.add_column("ID", style="bright_blue")
             table.add_column("Version", style="green")
             table.add_column("Name")
@@ -698,7 +741,9 @@ def build_cli():
             console.print(table)
         else:
             for plugin in payload.get("plugins", []):
-                click.echo(f"{plugin['id']} {plugin['version']} {plugin['name']}")
+                click.echo(
+                    f"{plugin['id']} {plugin['version']} {plugin['name']}"
+                )
 
     @cli.group("scaffold")
     def scaffold_group():
@@ -706,7 +751,9 @@ def build_cli():
 
     @scaffold_group.command("engine")
     @click.argument("name")
-    @click.option("--path", "root_dir", type=click.Path(exists=True, file_okay=False))
+    @click.option(
+        "--path", "root_dir", type=click.Path(exists=True, file_okay=False)
+    )
     @click.option("--json", "as_json", is_flag=True)
     def scaffold_engine_cmd(name, root_dir, as_json):
         payload = scaffold_engine_payload(name, root_dir=root_dir)
@@ -721,7 +768,9 @@ def build_cli():
 
     @scaffold_group.command("plugin-bcasl")
     @click.argument("name")
-    @click.option("--path", "root_dir", type=click.Path(exists=True, file_okay=False))
+    @click.option(
+        "--path", "root_dir", type=click.Path(exists=True, file_okay=False)
+    )
     @click.option("--json", "as_json", is_flag=True)
     def scaffold_plugin_cmd(name, root_dir, as_json):
         payload = scaffold_plugin_payload(name, root_dir=root_dir)
@@ -742,12 +791,16 @@ def main(argv: list[str] | None = None) -> int:
     install_runtime(_resolve_version(), enable_qt=should_enable_qt(args))
     try:
         cli = build_cli()
-        result = cli.main(args=args, prog_name="pycompiler_ark", standalone_mode=False)
+        result = cli.main(
+            args=args, prog_name="pycompiler_ark", standalone_mode=False
+        )
         return int(result) if isinstance(result, int) else 0
     except SystemExit as exc:
         return int(exc.code) if isinstance(exc.code, int) else 0
     except Exception as exc:
-        if click is not None and isinstance(exc, click.exceptions.ClickException):
+        if click is not None and isinstance(
+            exc, click.exceptions.ClickException
+        ):
             exc.show()
             return int(getattr(exc, "exit_code", 2))
         raise

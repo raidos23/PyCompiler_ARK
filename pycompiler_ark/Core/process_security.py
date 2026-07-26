@@ -25,7 +25,9 @@ _ENV_KEY_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 
 
 def _is_safe_text(value: str) -> bool:
-    return ("\x00" not in value) and ("\r" not in value) and ("\n" not in value)
+    return (
+        ("\x00" not in value) and ("\r" not in value) and ("\n" not in value)
+    )
 
 
 def resolve_executable(program: str) -> str:
@@ -101,4 +103,8 @@ def hardened_popen_kwargs() -> Dict[str, object]:
 def secure_command(
     program: str, args: List[str], env: Optional[Dict[str, str]]
 ) -> Tuple[str, List[str], Dict[str, str]]:
-    return resolve_executable(program), sanitize_cli_args(args), build_secure_env(env)
+    return (
+        resolve_executable(program),
+        sanitize_cli_args(args),
+        build_secure_env(env),
+    )

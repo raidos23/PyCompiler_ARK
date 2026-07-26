@@ -121,7 +121,10 @@ def filter_workspace_files(
     Returns:
       (valid_files, excluded_count, exclusion_patterns)
     """
-    from pycompiler_ark.Core.Configs import load_ark_config, should_exclude_file
+    from pycompiler_ark.Core.Configs import (
+        load_ark_config,
+        should_exclude_file,
+    )
 
     ark_config = load_ark_config(workspace_dir) if workspace_dir else {}
     workspace_cfg = ark_config.get("workspace", {})

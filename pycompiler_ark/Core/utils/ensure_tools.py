@@ -104,7 +104,9 @@ def ensure_tools(
 
                 for tool in system_tools:
                     if stop_signal and stop_signal():
-                        errors.append("Annulé par stop_signal (outils système)")
+                        errors.append(
+                            "Annulé par stop_signal (outils système)"
+                        )
                         return ToolsCheckResult(
                             ok=False,
                             missing_system=missing_system,
@@ -151,7 +153,9 @@ def ensure_tools(
 
                     system_install_ok = True
                     if system == "linux":
-                        process = sys_manager.install_packages_linux(missing_system)
+                        process = sys_manager.install_packages_linux(
+                            missing_system
+                        )
                         if process:
                             timeout_total = 600000  # 10 minutes
                             elapsed = 0
@@ -243,13 +247,19 @@ def ensure_tools(
                         for tool in missing_system:
                             winget_map = {
                                 "build-essential": [
-                                    {"id": "Microsoft.VisualStudio.2022.BuildTools"}
+                                    {
+                                        "id": "Microsoft.VisualStudio.2022.BuildTools"
+                                    }
                                 ],
                                 "gcc": [
-                                    {"id": "Microsoft.VisualStudio.2022.BuildTools"}
+                                    {
+                                        "id": "Microsoft.VisualStudio.2022.BuildTools"
+                                    }
                                 ],
                                 "g++": [
-                                    {"id": "Microsoft.VisualStudio.2022.BuildTools"}
+                                    {
+                                        "id": "Microsoft.VisualStudio.2022.BuildTools"
+                                    }
                                 ],
                                 "python3-dev": [{"id": "Python.Python.3"}],
                                 "libpython3-dev": [{"id": "Python.Python.3"}],
@@ -275,7 +285,9 @@ def ensure_tools(
                                         )
 
                                         try:
-                                            kill_process_tree(process.processId())
+                                            kill_process_tree(
+                                                process.processId()
+                                            )
                                         except Exception:
                                             pass
                                         errors.append(
@@ -450,7 +462,11 @@ def ensure_tools(
     # 2. Outils Python                                                     #
     # ------------------------------------------------------------------ #
     if python_tools:
-        if gui is not None and hasattr(gui, "venv_manager") and gui.venv_manager:
+        if (
+            gui is not None
+            and hasattr(gui, "venv_manager")
+            and gui.venv_manager
+        ):
             try:
                 from ..Compiler.utils import check_internet_connection
 
@@ -495,7 +511,9 @@ def ensure_tools(
                                 f"Installing missing Python tools: {missing_python}",
                             ),
                         )
-                        gui.venv_manager.ensure_tools_installed_system(missing_python)
+                        gui.venv_manager.ensure_tools_installed_system(
+                            missing_python
+                        )
 
                         # Wait for Python tools to be installed on system
                         timeout_total = 600000  # 10 minutes
@@ -517,7 +535,9 @@ def ensure_tools(
                             # Check if all are installed
                             all_done = True
                             for tool in missing_python:
-                                if not gui.venv_manager.is_tool_installed_system(tool):
+                                if not gui.venv_manager.is_tool_installed_system(
+                                    tool
+                                ):
                                     all_done = False
                                     break
                             if all_done:
@@ -540,7 +560,9 @@ def ensure_tools(
                             missing_python = [
                                 t
                                 for t in missing_python
-                                if not gui.venv_manager.is_tool_installed_system(t)
+                                if not gui.venv_manager.is_tool_installed_system(
+                                    t
+                                )
                             ]
                         else:
                             missing_python = []
@@ -548,7 +570,9 @@ def ensure_tools(
                     venv_path = gui.venv_manager.resolve_project_venv()
                     if venv_path:
                         for tool in python_tools:
-                            if not gui.venv_manager.is_tool_installed(venv_path, tool):
+                            if not gui.venv_manager.is_tool_installed(
+                                venv_path, tool
+                            ):
                                 missing_python.append(tool)
 
                         if missing_python:
@@ -726,7 +750,9 @@ def ensure_tools(
                             output.error("error", err, err)
                             still_missing.append(pkg)
                     except subprocess.TimeoutExpired:
-                        err = f"[ensure_tools:python] Timeout pip install {pkg}"
+                        err = (
+                            f"[ensure_tools:python] Timeout pip install {pkg}"
+                        )
                         errors.append(err)
                         output.error("error", err, err)
                         still_missing.append(pkg)

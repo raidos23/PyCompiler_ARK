@@ -104,12 +104,16 @@ class Cleaner(BcPluginBase):
         lay.setContentsMargins(8, 8, 8, 8)
 
         # Safety
-        safety_group = QGroupBox(translate("cleaner", "ui_safety", "Safety"), w)
+        safety_group = QGroupBox(
+            translate("cleaner", "ui_safety", "Safety"), w
+        )
         safety_group.setObjectName("ui_safety")
         safety_layout = QVBoxLayout()
         safety_layout.setSpacing(4)
         chk_confirm = QCheckBox(
-            translate("cleaner", "ui_confirm", "Ask confirmation before cleaning"),
+            translate(
+                "cleaner", "ui_confirm", "Ask confirmation before cleaning"
+            ),
             safety_group,
         )
         chk_confirm.setObjectName("ui_confirm")
@@ -117,7 +121,9 @@ class Cleaner(BcPluginBase):
         safety_group.setLayout(safety_layout)
 
         # Targets
-        targets_group = QGroupBox(translate("cleaner", "ui_targets", "Targets"), w)
+        targets_group = QGroupBox(
+            translate("cleaner", "ui_targets", "Targets"), w
+        )
         targets_group.setObjectName("ui_targets")
         targets_layout = QFormLayout()
         targets_layout.setSpacing(6)
@@ -143,7 +149,9 @@ class Cleaner(BcPluginBase):
 
         hint = QLabel(
             translate(
-                "cleaner", "ui_tip", "Tip: disable items you don't want to delete."
+                "cleaner",
+                "ui_tip",
+                "Tip: disable items you don't want to delete.",
             ),
             w,
         )
@@ -185,7 +193,9 @@ class Cleaner(BcPluginBase):
             self.cleaned_dirs = 0
 
             log.log_info(f"Cleaning workspace: {ctx.name} ({ctx.root})")
-            progress = dialog.progress(title="Cleaning workspace...", cancelable=True)
+            progress = dialog.progress(
+                title="Cleaning workspace...", cancelable=True
+            )
             progress.show()
 
             try:

@@ -110,7 +110,9 @@ def _invoke_in_main_thread(fn, *args, **kwargs):
 
 _REDACT_PATTERNS = [
     re.compile(r"(password\s*[:=]\s*)([^\s]+)", re.IGNORECASE),
-    re.compile(r"(authorization\s*[:]\s*bearer\s+)([A-Za-z0-9\-_.]+)", re.IGNORECASE),
+    re.compile(
+        r"(authorization\s*[:]\s*bearer\s+)([A-Za-z0-9\-_.]+)", re.IGNORECASE
+    ),
     re.compile(r"(token\s*[:=]\s*)([A-Za-z0-9\-_.]{12,})", re.IGNORECASE),
 ]
 
@@ -177,7 +179,13 @@ class InstallAuth(NamedTuple):
 
 
 def show_msgbox(
-    kind: str, title: str, text: str, *, parent=None, buttons=None, default=None
+    kind: str,
+    title: str,
+    text: str,
+    *,
+    parent=None,
+    buttons=None,
+    default=None,
 ) -> Optional[bool]:
     """
     Show a message box if a Qt toolkit is available; fallback to console output otherwise.
@@ -190,13 +198,19 @@ def show_msgbox(
 
                 lvl = "warning" if kind in ("warning", "error") else "info"
                 try:
-                    output.log(lvl, f"[MSGBOX:{kind}] {title}: {text}", gui=None)
+                    output.log(
+                        lvl, f"[MSGBOX:{kind}] {title}: {text}", gui=None
+                    )
                 except Exception:
                     # fallback to helpers
                     if lvl in ("warning", "error"):
-                        output.warn(f"[MSGBOX:{kind}] {title}: {text}", gui=None)
+                        output.warn(
+                            f"[MSGBOX:{kind}] {title}: {text}", gui=None
+                        )
                     else:
-                        output.info(f"[MSGBOX:{kind}] {title}: {text}", gui=None)
+                        output.info(
+                            f"[MSGBOX:{kind}] {title}: {text}", gui=None
+                        )
             except Exception:
                 pass
         return _show_rich_msgbox(kind, title, text, default=default)
@@ -238,12 +252,18 @@ def show_msgbox(
 
                 lvl = "warning" if kind in ("warning", "error") else "info"
                 try:
-                    output.log(lvl, f"[MSGBOX:{kind}] {title}: {text}", gui=None)
+                    output.log(
+                        lvl, f"[MSGBOX:{kind}] {title}: {text}", gui=None
+                    )
                 except Exception:
                     if lvl in ("warning", "error"):
-                        output.warn(f"[MSGBOX:{kind}] {title}: {text}", gui=None)
+                        output.warn(
+                            f"[MSGBOX:{kind}] {title}: {text}", gui=None
+                        )
                     else:
-                        output.info(f"[MSGBOX:{kind}] {title}: {text}", gui=None)
+                        output.info(
+                            f"[MSGBOX:{kind}] {title}: {text}", gui=None
+                        )
             except Exception:
                 pass
             return _show_rich_msgbox(kind, title, text, default=default)
@@ -397,7 +417,9 @@ class CompilationProcessDialog(ProgressDialog):
     """Dialog integrated with application to display workspace loading."""
 
     def __init__(self, title="Chargement", parent=None):
-        super().__init__(title=title, parent=parent, cancelable=True, closeable=True)
+        super().__init__(
+            title=title, parent=parent, cancelable=True, closeable=True
+        )
         self.setMinimumHeight(150)
 
 
