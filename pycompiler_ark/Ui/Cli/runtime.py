@@ -85,7 +85,9 @@ def configure_env() -> None:
                     add.append(p)
             if add:
                 os.environ["PATH"] = (
-                    os.pathsep.join(add + [path]) if path else os.pathsep.join(add)
+                    os.pathsep.join(add + [path])
+                    if path
+                    else os.pathsep.join(add)
                 )
         except Exception:
             pass
@@ -185,7 +187,9 @@ def _excepthook(etype, value, tb) -> None:
             pass
         try:
             if _crash_log is not None:
-                with open(_crash_log, "a", encoding="utf-8", errors="ignore") as f:
+                with open(
+                    _crash_log, "a", encoding="utf-8", errors="ignore"
+                ) as f:
                     f.write(msg)
         except Exception:
             pass
@@ -222,7 +226,10 @@ def install_signal_handlers() -> None:
         except Exception:
             pass
 
-    for sig in (getattr(signal, "SIGINT", None), getattr(signal, "SIGTERM", None)):
+    for sig in (
+        getattr(signal, "SIGINT", None),
+        getattr(signal, "SIGTERM", None),
+    ):
         try:
             if sig is not None:
                 signal.signal(sig, _handle_signal)
@@ -257,7 +264,15 @@ def should_enable_qt(argv: list[str] | None) -> bool:
     if cmd is None:
         return True
 
-    headless_commands = {"build", "init", "list", "set", "get", "unset", "scaffold"}
+    headless_commands = {
+        "build",
+        "init",
+        "list",
+        "set",
+        "get",
+        "unset",
+        "scaffold",
+    }
     if cmd == "run":
         return False
     if cmd == "gui":

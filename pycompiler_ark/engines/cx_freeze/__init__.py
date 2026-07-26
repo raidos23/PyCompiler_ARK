@@ -154,7 +154,9 @@ class CXFreezeEngine(CompilerEngine):
     def on_success(self, gui, file: str) -> None:
         """Handle successful compilation."""
         try:
-            output.success("Compilation CX_Freeze terminée avec succès.", gui=gui)
+            output.success(
+                "Compilation CX_Freeze terminée avec succès.", gui=gui
+            )
         except Exception:
             pass
 
@@ -184,7 +186,9 @@ class CXFreezeEngine(CompilerEngine):
             layout.setSpacing(8)
             layout.setContentsMargins(8, 8, 8, 8)
 
-            build_group = QGroupBox(translate(self.id, "build_group", "Build"), tab)
+            build_group = QGroupBox(
+                translate(self.id, "build_group", "Build"), tab
+            )
             build_group.setObjectName("build_group")
             build_layout = QFormLayout()
             build_layout.setSpacing(6)
@@ -195,7 +199,9 @@ class CXFreezeEngine(CompilerEngine):
             )
             self._cx_windowed.setObjectName("windowed_checkbox")
             self._cx_windowed.setToolTip(
-                translate(self.id, "tt_windowed", "Disable the console window.")
+                translate(
+                    self.id, "tt_windowed", "Disable the console window."
+                )
             )
             build_layout.addRow(self._cx_windowed)
 
@@ -208,7 +214,9 @@ class CXFreezeEngine(CompilerEngine):
             diagnostics_layout = QVBoxLayout()
             diagnostics_layout.setSpacing(4)
 
-            self._cx_debug = QCheckBox(translate(self.id, "debug_checkbox", "Debug"))
+            self._cx_debug = QCheckBox(
+                translate(self.id, "debug_checkbox", "Debug")
+            )
             self._cx_debug.setObjectName("debug_checkbox")
             self._cx_debug.setToolTip(
                 translate(self.id, "tt_debug", "Enable debug output.")
@@ -246,7 +254,9 @@ class CXFreezeEngine(CompilerEngine):
             self._gui = gui
             self._tab_widget = tab
 
-            return tab, translate(self.id, "tab_label", getattr(self, "name", self.id))
+            return tab, translate(
+                self.id, "tab_label", getattr(self, "name", self.id)
+            )
 
         except Exception as e:
             try:
@@ -305,13 +315,17 @@ class CXFreezeEngine(CompilerEngine):
         if hasattr(self, f"_cx_{name}"):
             return getattr(self, f"_cx_{name}")
         # Fallback to GUI widget (static UI)
-        return getattr(self._gui, name, None) if hasattr(self, "_gui") else None
+        return (
+            getattr(self._gui, name, None) if hasattr(self, "_gui") else None
+        )
 
     def _get_input(self, name: str):
         """Get input widget from engine instance or GUI."""
         if hasattr(self, f"_cx_{name}"):
             return getattr(self, f"_cx_{name}")
-        return getattr(self._gui, name, None) if hasattr(self, "_gui") else None
+        return (
+            getattr(self._gui, name, None) if hasattr(self, "_gui") else None
+        )
 
     def _get_btn(self, name: str):
         """Get button widget from engine instance or GUI."""
@@ -319,7 +333,9 @@ class CXFreezeEngine(CompilerEngine):
             return getattr(self, f"_cx_btn_{name}")
         if hasattr(self, f"_btn_{name}"):
             return getattr(self, f"_btn_{name}")
-        return getattr(self._gui, name, None) if hasattr(self, "_gui") else None
+        return (
+            getattr(self._gui, name, None) if hasattr(self, "_gui") else None
+        )
 
     def get_log_prefix(self, file_basename: str) -> str:
         return f"CX_Freeze ({self.version})"

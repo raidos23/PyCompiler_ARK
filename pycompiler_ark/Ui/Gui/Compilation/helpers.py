@@ -81,7 +81,9 @@ def run_bcasl_before_compile(
     enabled = True
     try:
         if ark_config:
-            enabled = bool(ark_config.get("plugins", {}).get("bcasl_enabled", True))
+            enabled = bool(
+                ark_config.get("plugins", {}).get("bcasl_enabled", True)
+            )
         else:
             enabled = _is_bcasl_enabled(Path(ws))
     except Exception:
@@ -111,7 +113,9 @@ def run_bcasl_before_compile(
         pass
 
     try:
-        run_pre_compile_async(gui_instance, on_done, build_context=build_context)
+        run_pre_compile_async(
+            gui_instance, on_done, build_context=build_context
+        )
     except Exception:
         if callable(on_done):
             on_done(None)
@@ -151,7 +155,9 @@ def bcasl_report_allows_compile(gui_instance, report) -> bool:
             if "ok" in report:
                 res = report.get("ok")
                 return (
-                    bool(res) if not isinstance(res, (list, tuple, set)) else all(res)
+                    bool(res)
+                    if not isinstance(res, (list, tuple, set))
+                    else all(res)
                 )
             return True
 

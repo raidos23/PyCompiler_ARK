@@ -66,18 +66,24 @@ def check_plugin_compatibility(
 
     def _check(label, current, required):
         if parse_version(current) < parse_version(required):
-            missing_requirements.append(f"{label} >= {required} (current: {current})")
+            missing_requirements.append(
+                f"{label} >= {required} (current: {current})"
+            )
 
     _check("BCASL", bcasl_version, meta.required_bcasl_version)
     _check("Core", core_version, meta.required_core_version)
-    _check("Plugins SDK", plugins_sdk_version, meta.required_plugins_sdk_version)
+    _check(
+        "Plugins SDK", plugins_sdk_version, meta.required_plugins_sdk_version
+    )
     _check(
         "BcPluginContext",
         bc_plugin_context_version,
         meta.required_bc_plugin_context_version,
     )
     _check(
-        "GeneralContext", general_context_version, meta.required_general_context_version
+        "GeneralContext",
+        general_context_version,
+        meta.required_general_context_version,
     )
 
     is_compatible = len(missing_requirements) == 0
@@ -152,7 +158,9 @@ def validate_plugins_compatibility(
         except Exception as e:
             incompatible_results.append(
                 CompatibilityCheckResult(
-                    plugin_id=getattr(getattr(plugin, "meta", None), "id", "unknown"),
+                    plugin_id=getattr(
+                        getattr(plugin, "meta", None), "id", "unknown"
+                    ),
                     plugin_name=getattr(
                         getattr(plugin, "meta", None), "name", "Unknown"
                     ),
@@ -175,7 +183,9 @@ def print_compatibility_report(
     print("=" * 70)
     print(f"\n✓ Compatible: {len(compatible_plugins)}")
     for plugin in compatible_plugins:
-        print(f"  - {plugin.meta.name} ({plugin.meta.id}) v{plugin.meta.version}")
+        print(
+            f"  - {plugin.meta.name} ({plugin.meta.id}) v{plugin.meta.version}"
+        )
     print(f"\n✗ Incompatible: {len(incompatible_results)}")
     for result in incompatible_results:
         print(f"  - {result.plugin_name} ({result.plugin_id})")

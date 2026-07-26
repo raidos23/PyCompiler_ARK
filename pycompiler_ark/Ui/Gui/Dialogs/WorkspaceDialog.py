@@ -62,7 +62,9 @@ class WorkspaceDialog:
             except Exception:
                 pass
 
-            res = show_msgbox("question", title, message, parent=gui, default="Yes")
+            res = show_msgbox(
+                "question", title, message, parent=gui, default="Yes"
+            )
             return bool(res)
         except Exception:
             # If confirmation UI fails, accept by contract
@@ -88,7 +90,11 @@ class WorkspaceDialog:
 
         folder = QFileDialog.getExistingDirectory(
             gui_instance,
-            _t("action_select_workspace", "Choisir Workspace", "Select Workspace"),
+            _t(
+                "action_select_workspace",
+                "Choisir Workspace",
+                "Select Workspace",
+            ),
         )
         if folder:
             return folder
@@ -114,7 +120,8 @@ class WorkspaceDialog:
             try:
                 loading_dialog = CompilationProcessDialog(
                     gui_instance.tr(
-                        "Chargement de l'espace de travail", "Loading workspace"
+                        "Chargement de l'espace de travail",
+                        "Loading workspace",
                     ),
                     gui_instance,
                 )
@@ -197,7 +204,8 @@ class WorkspaceDialog:
             if hasattr(gui_instance, "label_folder"):
                 gui_instance.label_folder.setText(
                     gui_instance.tr(
-                        f"Dossier sélectionné : {folder}", f"Selected folder: {folder}"
+                        f"Dossier sélectionné : {folder}",
+                        f"Selected folder: {folder}",
                     )
                 )
             if hasattr(gui_instance, "label_workspace_status"):
@@ -205,7 +213,8 @@ class WorkspaceDialog:
                     tr_map = getattr(gui_instance, "_tr", None)
                     if isinstance(tr_map, dict):
                         tmpl = (
-                            tr_map.get("label_workspace_status") or "Workspace: {path}"
+                            tr_map.get("label_workspace_status")
+                            or "Workspace: {path}"
                         )
                         gui_instance.label_workspace_status.setText(
                             str(tmpl).replace("{path}", str(folder))
@@ -227,7 +236,10 @@ class WorkspaceDialog:
             files = SetupWorkspace.list_python_files(folder)
 
             # Filtrer et ajouter à l'UI
-            from pycompiler_ark.Core.Configs import load_ark_config, should_exclude_file
+            from pycompiler_ark.Core.Configs import (
+                load_ark_config,
+                should_exclude_file,
+            )
 
             ark_config = load_ark_config(folder)
 
@@ -298,11 +310,18 @@ class WorkspaceDialog:
                 pass
 
             # Étape 7: gérer le Venv (interactions UI)
-            if hasattr(gui_instance, "venv_manager") and gui_instance.venv_manager:
+            if (
+                hasattr(gui_instance, "venv_manager")
+                and gui_instance.venv_manager
+            ):
                 if str(source).lower() == "plugin":
-                    gui_instance.venv_manager.setup_workspace(folder, check_tools=False)
+                    gui_instance.venv_manager.setup_workspace(
+                        folder, check_tools=False
+                    )
                 else:
-                    if not gui_instance.venv_manager.apply_workspace_pref(folder):
+                    if not gui_instance.venv_manager.apply_workspace_pref(
+                        folder
+                    ):
                         # Proposer création ou sélection
                         def _t(fr, en):
                             return gui_instance.tr(fr, en)
@@ -316,7 +335,8 @@ class WorkspaceDialog:
                         box.setWindowTitle(title)
                         box.setText(msg)
                         btn_auto = box.addButton(
-                            _t("Créer un venv", "Create venv"), QMessageBox.AcceptRole
+                            _t("Créer un venv", "Create venv"),
+                            QMessageBox.AcceptRole,
                         )
                         btn_manual = box.addButton(
                             _t("Sélectionner un Venv", "Select Venv"),
@@ -380,11 +400,16 @@ class WorkspaceDialog:
 
         if not os.path.exists(config_path):
             try:
-                from pycompiler_ark.Core.Configs import create_default_ark_config
+                from pycompiler_ark.Core.Configs import (
+                    create_default_ark_config,
+                )
 
                 if create_default_ark_config(workspace_dir):
                     output.info(
-                        ("📋 Fichier ark.yml créé.", "📋 ark.yml file created."),
+                        (
+                            "📋 Fichier ark.yml créé.",
+                            "📋 ark.yml file created.",
+                        ),
                         gui=gui_instance,
                     )
             except Exception as e:
@@ -412,7 +437,10 @@ class WorkspaceDialog:
             else:
                 subprocess.run(["xdg-open", config_path])
             output.info(
-                (f"📝 Ouverture de {config_path}", f"📝 Opening {config_path}"),
+                (
+                    f"📝 Ouverture de {config_path}",
+                    f"📝 Opening {config_path}",
+                ),
                 gui=gui_instance,
             )
         except Exception as e:
@@ -420,6 +448,7 @@ class WorkspaceDialog:
                 gui_instance,
                 gui_instance.tr("Attention", "Warning"),
                 gui_instance.tr(
-                    f"Impossible d'ouvrir le fichier: {e}", f"Failed to open file: {e}"
+                    f"Impossible d'ouvrir le fichier: {e}",
+                    f"Failed to open file: {e}",
                 ),
             )

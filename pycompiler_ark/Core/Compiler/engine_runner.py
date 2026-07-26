@@ -76,7 +76,9 @@ def resolve_engine_command(
             except Exception:
                 pass
     except Exception as exc:
-        raise EngineRunnerError(f"Unable to load engine '{engine_id}': {exc}") from exc
+        raise EngineRunnerError(
+            f"Unable to load engine '{engine_id}': {exc}"
+        ) from exc
 
     try:
         setattr(engine, "_config_overrides", dict(engine_config or {}))
@@ -246,12 +248,16 @@ def run_engine_compile_streaming(
     # -- 1. Validate entry point ----------------------------------------------
     entry_path = workspace / Path(context.entry_point)
     if not context.entry_point or not entry_path.is_file():
-        return _failure(f"Entrypoint missing or obsolete: {context.entry_point}")
+        return _failure(
+            f"Entrypoint missing or obsolete: {context.entry_point}"
+        )
 
     # -- 2. Resolve (program, args, env) from engine --------------------------
     try:
         if on_stdout:
-            on_stdout("Etape 1/3 : Verification et installation des outils requis...")
+            on_stdout(
+                "Etape 1/3 : Verification et installation des outils requis..."
+            )
 
         from .. import engine as engines_loader
 
@@ -269,7 +275,9 @@ def run_engine_compile_streaming(
 
             # We pass a dummy 'gui' object that supports output-style logging
             class LogBridge(QObject):
-                def __init__(self, log_cb, workspace_path: Path, verbose: bool = False):
+                def __init__(
+                    self, log_cb, workspace_path: Path, verbose: bool = False
+                ):
                     super().__init__()
                     self.log_cb = log_cb
                     self.workspace_dir = str(workspace_path)
@@ -287,7 +295,10 @@ def run_engine_compile_streaming(
 
                         self._venv_manager = VenvManager(self)
                         # Automatically load workspace preferences if available
-                        if hasattr(self, "workspace_dir") and self.workspace_dir:
+                        if (
+                            hasattr(self, "workspace_dir")
+                            and self.workspace_dir
+                        ):
                             try:
                                 self._venv_manager.apply_workspace_pref(
                                     self.workspace_dir
@@ -334,7 +345,9 @@ def run_engine_compile_streaming(
 
         required_tools = getattr(engine_instance, "required_tools", {}) or {}
         if required_tools.get("python") or required_tools.get("system"):
-            result = ensure_tools(required_tools, stop_signal=stop_signal, gui=bridge)
+            result = ensure_tools(
+                required_tools, stop_signal=stop_signal, gui=bridge
+            )
             if not result.ok:
                 if stop_signal and stop_signal():
                     return _failure("Compilation annulee par l'utilisateur.")
@@ -346,7 +359,9 @@ def run_engine_compile_streaming(
             return _failure("Compilation annulee.")
 
         if on_stdout:
-            on_stdout("Etape 2/3 : Generation de la commande de compilation...")
+            on_stdout(
+                "Etape 2/3 : Generation de la commande de compilation..."
+            )
 
         # Check if we have a pre-resolved command in the engine_config (from lock)
         resolved_cmd = (engine_config or {}).get("_resolved_command")
@@ -355,7 +370,9 @@ def run_engine_compile_streaming(
             args = list(resolved_cmd.get("args") or [])
             engine_env = dict(resolved_cmd.get("env") or {})
             if not program:
-                return _failure("Verrou invalide : commande résolue manquante.")
+                return _failure(
+                    "Verrou invalide : commande résolue manquante."
+                )
         elif is_rebuild:
             return _failure(
                 "Mode Rebuild : Aucune commande pré-résolue trouvée dans le verrou. "
@@ -368,7 +385,9 @@ def run_engine_compile_streaming(
     except EngineRunnerError as exc:
         return _failure(str(exc))
     except Exception as exc:
-        return _failure(f"Echec de la preparation de l'engine '{engine_id}': {exc}")
+        return _failure(
+            f"Echec de la preparation de l'engine '{engine_id}': {exc}"
+        )
 
     if stop_signal and stop_signal():
         return _failure("Compilation annulee.")
@@ -377,9 +396,13 @@ def run_engine_compile_streaming(
     try:
         full_env = dict(engine_env)
         full_env["ARK_WORKSPACE"] = str(workspace)
-        safe_program, safe_args, safe_env = secure_command(program, args, full_env)
+        safe_program, safe_args, safe_env = secure_command(
+            program, args, full_env
+        )
     except Exception as exc:
-        return _failure(f"Commande de compilation non securisee bloquee : {exc}")
+        return _failure(
+            f"Commande de compilation non securisee bloquee : {exc}"
+        )
 
     # -- 4. Run with streaming ------------------------------------------------
     command = [safe_program] + safe_args

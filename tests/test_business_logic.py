@@ -16,7 +16,10 @@
 from unittest.mock import MagicMock, patch
 
 from pycompiler_ark.Core.Compiler.utils import check_internet_connection
-from pycompiler_ark.Core.Configs import normalize_ark_config, should_exclude_file
+from pycompiler_ark.Core.Configs import (
+    normalize_ark_config,
+    should_exclude_file,
+)
 from pycompiler_ark.Core.globals import WORKSPACE_CONFIG_DIRNAME
 from pycompiler_ark.Core.Locking import (
     build_lock_payload,
@@ -45,7 +48,9 @@ def test_normalize_ark_config_partial():
 
     assert normalized["project"]["name"] == "TestApp"
     assert normalized["build"]["engine"] == "nuitka"
-    assert normalized["project"]["version"] == "1.0.0"  # Default should be present
+    assert (
+        normalized["project"]["version"] == "1.0.0"
+    )  # Default should be present
 
 
 def test_should_exclude_file(tmp_path):
@@ -107,7 +112,9 @@ def test_check_internet_connection_failure():
     """Test internet check failure (mocked)."""
     with patch("socket.create_connection", side_effect=Exception("Offline")):
         with patch("http.client.HTTPSConnection") as mock_http:
-            mock_http.return_value.getresponse.side_effect = Exception("Offline")
+            mock_http.return_value.getresponse.side_effect = Exception(
+                "Offline"
+            )
             assert check_internet_connection(timeout=0.1, retries=0) is False
 
 

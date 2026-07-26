@@ -214,7 +214,9 @@ def _map_ide_like_widgets(self) -> None:
     self.status_hint = None
     try:
         self.status_hint = (
-            self.statusbar.findChild(QLabel, "status_ready") if self.statusbar else None
+            self.statusbar.findChild(QLabel, "status_ready")
+            if self.statusbar
+            else None
         )
     except Exception:
         self.status_hint = None
@@ -231,10 +233,14 @@ def _map_ide_like_widgets(self) -> None:
         )
         self.select_theme.setProperty("i18n_system_attr", "theme")
     if self.venv_label:
-        self.venv_label.setProperty("i18n_text_system_key", "venv_label_system")
+        self.venv_label.setProperty(
+            "i18n_text_system_key", "venv_label_system"
+        )
         self.venv_label.setProperty("i18n_system_attr", "use_system_python")
     if self.label_workspace_status:
-        self.label_workspace_status.setProperty("i18n_format_attr", "workspace_dir")
+        self.label_workspace_status.setProperty(
+            "i18n_format_attr", "workspace_dir"
+        )
         self.label_workspace_status.setProperty(
             "i18n_none_key", "label_workspace_status_none"
         )
@@ -246,7 +252,9 @@ def _map_ide_like_widgets(self) -> None:
         self.btn_acasl_loader.setProperty("i18n_text_key", "bc_loader")
         self.btn_acasl_loader.setProperty("i18n_tooltip_key", "tt_bc_loader")
     if self.activity_btn_deps:
-        self.activity_btn_deps.setProperty("i18n_tooltip_key", "tt_suggest_deps")
+        self.activity_btn_deps.setProperty(
+            "i18n_tooltip_key", "tt_suggest_deps"
+        )
 
     _setup_status_bar(self)
 
@@ -344,12 +352,15 @@ def _setup_more_tools_menu(self) -> None:
         return
 
     try:
-        more_btn.setToolTip(translate(self, "tt_more_actions", more_btn.toolTip()))
+        more_btn.setToolTip(
+            translate(self, "tt_more_actions", more_btn.toolTip())
+        )
         menu = QMenu(more_btn)
         self._ide_more_tools_menu = menu
 
         act_workspace = QAction(
-            translate(self, "action_select_workspace", "Select Workspace"), menu
+            translate(self, "action_select_workspace", "Select Workspace"),
+            menu,
         )
         act_workspace.setObjectName("action_select_workspace")
         act_workspace.triggered.connect(
@@ -366,14 +377,18 @@ def _setup_more_tools_menu(self) -> None:
         )
         menu.addAction(act_init)
 
-        act_venv = QAction(translate(self, "action_select_venv", "Select Venv"), menu)
+        act_venv = QAction(
+            translate(self, "action_select_venv", "Select Venv"), menu
+        )
         act_venv.setObjectName("action_select_venv")
         act_venv.triggered.connect(
             lambda: getattr(self, "select_venv_manually", lambda: None)()
         )
         menu.addAction(act_venv)
 
-        act_add_files = QAction(translate(self, "action_add_files", "Add Files"), menu)
+        act_add_files = QAction(
+            translate(self, "action_add_files", "Add Files"), menu
+        )
         act_add_files.setObjectName("action_add_files")
         act_add_files.triggered.connect(
             lambda: getattr(self, "select_files_manually", lambda: None)()
@@ -407,7 +422,9 @@ def _setup_more_tools_menu(self) -> None:
         )
         menu.addAction(act_language)
 
-        act_theme = QAction(translate(self, "choose_theme_button", "Theme"), menu)
+        act_theme = QAction(
+            translate(self, "choose_theme_button", "Theme"), menu
+        )
         act_theme.setObjectName("btn_select_theme")
         act_theme.triggered.connect(lambda: _open_theme_dialog(self))
         menu.addAction(act_theme)
@@ -419,11 +436,15 @@ def _setup_more_tools_menu(self) -> None:
         )
         act_advanced.setObjectName("advanced_config")
         act_advanced.triggered.connect(
-            lambda: getattr(self, "open_advanced_config_editor", lambda: None)()
+            lambda: getattr(
+                self, "open_advanced_config_editor", lambda: None
+            )()
         )
         menu.addAction(act_advanced)
 
-        act_lock = QAction(translate(self, "lock_manager", "Lock Manager"), menu)
+        act_lock = QAction(
+            translate(self, "lock_manager", "Lock Manager"), menu
+        )
         act_lock.setObjectName("lock_manager")
         act_lock.triggered.connect(
             lambda: getattr(self, "open_lock_dialog", lambda: None)()
@@ -535,7 +556,9 @@ def _apply_activity_buttons_theme(self) -> None:
 
     try:
         base_path = os.path.abspath(
-            os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..")
+            os.path.join(
+                os.path.dirname(os.path.abspath(__file__)), "..", "..", ".."
+            )
         )
         icons_dir = os.path.join(base_path, "data", "icons")
 

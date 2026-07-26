@@ -60,7 +60,9 @@ class EngineMeta:
             "required_sdk_version",
             str(self.required_sdk_version or "1.0.0").strip() or "1.0.0",
         )
-        object.__setattr__(self, "description", str(self.description or "").strip())
+        object.__setattr__(
+            self, "description", str(self.description or "").strip()
+        )
         object.__setattr__(self, "author", str(self.author or "").strip())
 
 
@@ -73,12 +75,18 @@ def resolve_engine_meta(engine_or_cls: object) -> EngineMeta:
 
     if isinstance(meta, dict):
         return EngineMeta(
-            id=str(meta.get("id") or getattr(engine_or_cls, "id", "") or "base"),
+            id=str(
+                meta.get("id") or getattr(engine_or_cls, "id", "") or "base"
+            ),
             name=str(
-                meta.get("name") or getattr(engine_or_cls, "name", "") or "BaseEngine"
+                meta.get("name")
+                or getattr(engine_or_cls, "name", "")
+                or "BaseEngine"
             ),
             version=str(
-                meta.get("version") or getattr(engine_or_cls, "version", "") or "1.0.0"
+                meta.get("version")
+                or getattr(engine_or_cls, "version", "")
+                or "1.0.0"
             ),
             required_core_version=str(
                 meta.get("required_core_version")
@@ -120,7 +128,9 @@ class CompilerEngine:
     provided via the `gui` object.
     """
 
-    meta: EngineMeta = EngineMeta(id="base", name="BaseEngine", version="1.0.0")
+    meta: EngineMeta = EngineMeta(
+        id="base", name="BaseEngine", version="1.0.0"
+    )
     id: str = "base"
     name: str = "BaseEngine"
     version: str = "1.0.0"
@@ -199,7 +209,9 @@ class CompilerEngine:
             # Log attempt to open
             gui = getattr(self, "_gui", None)
             if gui:
-                output.info(f"Ouverture du dossier de sortie : {path}", gui=gui)
+                output.info(
+                    f"Ouverture du dossier de sortie : {path}", gui=gui
+                )
             open_path(path)
 
     def create_tab(self, gui):
@@ -236,7 +248,9 @@ class CompilerEngine:
         """
         return None
 
-    def save_config(self, gui, workspace_dir: str, options: dict) -> Optional[bool]:
+    def save_config(
+        self, gui, workspace_dir: str, options: dict
+    ) -> Optional[bool]:
         """
         Optional custom config saver for special engines.
         Return True/False to override default save, or None to use default storage.

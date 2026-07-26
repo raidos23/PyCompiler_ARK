@@ -82,7 +82,9 @@ class MainProcess(QObject):
     progress_update = Signal(int, str)
 
     def __init__(
-        self, workspace_dir: Optional[str] = None, parent: Optional[QObject] = None
+        self,
+        workspace_dir: Optional[str] = None,
+        parent: Optional[QObject] = None,
     ):
         """
         Initialize the main process.
@@ -243,7 +245,9 @@ class MainProcess(QObject):
             return False
 
         if not file_path:
-            self.log_message.emit("error", "Compilation requires an entrypoint file")
+            self.log_message.emit(
+                "error", "Compilation requires an entrypoint file"
+            )
             return False
         if not os.path.isfile(file_path):
             self.log_message.emit(

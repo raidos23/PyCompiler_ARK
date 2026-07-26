@@ -126,7 +126,10 @@ class VenvManagerUI(VenvManager):
     def _update_venv_path_edit(self, text: str) -> None:
         """Set the venv path edit field on the parent widget if it exists."""
         try:
-            if hasattr(self.parent, "venv_path_edit") and self.parent.venv_path_edit:
+            if (
+                hasattr(self.parent, "venv_path_edit")
+                and self.parent.venv_path_edit
+            ):
                 self.parent.venv_path_edit.setText(text)
         except Exception:
             pass
@@ -136,7 +139,9 @@ class VenvManagerUI(VenvManager):
         Returns True if the user accepted, False otherwise.
         """
         try:
-            title = "Environnement virtuel invalide / Invalid virtual environment"
+            title = (
+                "Environnement virtuel invalide / Invalid virtual environment"
+            )
             folder = os.path.basename(os.path.normpath(venv_root))
             msg = (
                 "L'environnement virtuel du workspace est invalide :\n"
@@ -183,7 +188,9 @@ class VenvManagerUI(VenvManager):
         except Exception:
             pass
 
-    def _update_progress_progress(self, id: str, value: int, total: int) -> None:
+    def _update_progress_progress(
+        self, id: str, value: int, total: int
+    ) -> None:
         """Update the progress bar of a progress dialog."""
         try:
             dlg = self._progress_dialogs.get(id)
@@ -345,9 +352,12 @@ class VenvManagerUI(VenvManager):
                     workspace_dir = getattr(self.parent, "workspace_dir", None)
                     if workspace_dir:
                         btn_create = box.addButton(
-                            _t("Créer un venv", "Create venv"), QMessageBox.ActionRole
+                            _t("Créer un venv", "Create venv"),
+                            QMessageBox.ActionRole,
                         )
-                    box.addButton(_t("Annuler", "Cancel"), QMessageBox.RejectRole)
+                    box.addButton(
+                        _t("Annuler", "Cancel"), QMessageBox.RejectRole
+                    )
                     box.exec()
                     if box.clickedButton() == btn_retry:
                         self.select_venv_manually()
@@ -399,7 +409,9 @@ class VenvManagerUI(VenvManager):
         except Exception:
             pass
         self._update_venv_label(self._pref_label_system())
-        self._ui_log("success", "✅ Utilisation de Python système pour la compilation.")
+        self._ui_log(
+            "success", "✅ Utilisation de Python système pour la compilation."
+        )
         try:
             workspace_dir = getattr(self.parent, "workspace_dir", None)
             self.save_workspace_pref(workspace_dir)
@@ -440,7 +452,9 @@ class VenvManagerUI(VenvManager):
                 if not getattr(self.parent, "use_system_python", False):
                     if not getattr(self.parent, "venv_path_manuel", None):
                         self.parent.venv_path_manuel = venv_path
-                        self._update_venv_label(f"Venv sélectionné : {venv_path}")
+                        self._update_venv_label(
+                            f"Venv sélectionné : {venv_path}"
+                        )
                 self.save_workspace_pref(os.path.dirname(venv_path))
             except Exception:
                 pass

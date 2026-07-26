@@ -41,7 +41,9 @@ def _ensure_discovered() -> None:
     if _DISCOVERY_DONE:
         return
     try:
-        if str(os.environ.get("ARK_ENGINES_AUTO_DISCOVER", "1")).lower() not in (
+        if str(
+            os.environ.get("ARK_ENGINES_AUTO_DISCOVER", "1")
+        ).lower() not in (
             "0",
             "false",
             "no",

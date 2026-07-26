@@ -49,7 +49,9 @@ class WorkspaceAdvancedManipulation:
 
         files, _ = QFileDialog.getOpenFileNames(
             gui_instance,
-            gui_instance.tr("Sélectionner des fichiers Python", "Select Python Files"),
+            gui_instance.tr(
+                "Sélectionner des fichiers Python", "Select Python Files"
+            ),
             workspace_dir,
             gui_instance.tr("Fichiers Python (*.py)", "Python Files (*.py)"),
         )
@@ -67,7 +69,8 @@ class WorkspaceAdvancedManipulation:
                         QMessageBox.warning(
                             gui_instance,
                             gui_instance.tr(
-                                "Fichier hors workspace", "File outside workspace"
+                                "Fichier hors workspace",
+                                "File outside workspace",
                             ),
                             gui_instance.tr(
                                 f"Le fichier {f} est en dehors du workspace et sera ignoré.",
@@ -100,7 +103,11 @@ class WorkspaceAdvancedManipulation:
                 elif hasattr(gui_instance, "file_list"):
                     gui_instance.file_list.clear()
                     for f in gui_instance.python_files:
-                        rel = os.path.relpath(f, workspace_dir) if workspace_dir else f
+                        rel = (
+                            os.path.relpath(f, workspace_dir)
+                            if workspace_dir
+                            else f
+                        )
                         gui_instance.file_list.addItem(rel)
 
                 if hasattr(gui_instance, "update_command_preview"):
@@ -131,7 +138,9 @@ class WorkspaceAdvancedManipulation:
         for item in selected_items:
             rel_path = item.text()
             abs_path = (
-                os.path.join(workspace_dir, rel_path) if workspace_dir else rel_path
+                os.path.join(workspace_dir, rel_path)
+                if workspace_dir
+                else rel_path
             )
             abs_paths_to_remove.append(abs_path)
             gui_instance.file_list.takeItem(gui_instance.file_list.row(item))
@@ -171,7 +180,11 @@ class WorkspaceAdvancedManipulation:
             elif hasattr(gui_instance, "file_list"):
                 gui_instance.file_list.clear()
                 for f in gui_instance.python_files:
-                    rel = os.path.relpath(f, workspace_dir) if workspace_dir else f
+                    rel = (
+                        os.path.relpath(f, workspace_dir)
+                        if workspace_dir
+                        else f
+                    )
                     gui_instance.file_list.addItem(rel)
 
         # Log ignored files outside workspace
@@ -237,7 +250,8 @@ class WorkspaceAdvancedManipulation:
             if hasattr(gui_instance, "label_folder") and not keep_dir:
                 gui_instance.label_folder.setText(
                     gui_instance.tr(
-                        "Dossier sélectionné : (aucun)", "Selected folder: (none)"
+                        "Dossier sélectionné : (aucun)",
+                        "Selected folder: (none)",
                     )
                 )
             if hasattr(gui_instance, "label_workspace_status"):
@@ -257,7 +271,9 @@ class WorkspaceAdvancedManipulation:
                                 tr_map.get("label_workspace_status_none")
                                 or "Workspace: None"
                             )
-                            gui_instance.label_workspace_status.setText(str(val))
+                            gui_instance.label_workspace_status.setText(
+                                str(val)
+                            )
                     else:
                         if keep_dir and workspace_dir:
                             gui_instance.label_workspace_status.setText(
@@ -268,7 +284,9 @@ class WorkspaceAdvancedManipulation:
                             )
                         else:
                             gui_instance.label_workspace_status.setText(
-                                gui_instance.tr("Workspace : Aucun", "Workspace: None")
+                                gui_instance.tr(
+                                    "Workspace : Aucun", "Workspace: None"
+                                )
                             )
                 except Exception:
                     pass

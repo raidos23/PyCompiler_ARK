@@ -188,7 +188,9 @@ class PyInstallerEngine(CompilerEngine):
             layout.setSpacing(8)
             layout.setContentsMargins(8, 8, 8, 8)
 
-            build_group = QGroupBox(translate(self.id, "build_group", "Build"), tab)
+            build_group = QGroupBox(
+                translate(self.id, "build_group", "Build"), tab
+            )
             build_group.setObjectName("build_group")
             build_layout = QFormLayout()
             build_layout.setSpacing(6)
@@ -231,11 +233,15 @@ class PyInstallerEngine(CompilerEngine):
             self._gui = gui
             self._tab_widget = tab
 
-            return tab, translate(self.id, "tab_label", getattr(self, "name", self.id))
+            return tab, translate(
+                self.id, "tab_label", getattr(self, "name", self.id)
+            )
 
         except Exception as e:
             try:
-                output.error(f"Erreur création onglet PyInstaller: {e}", gui=gui)
+                output.error(
+                    f"Erreur création onglet PyInstaller: {e}", gui=gui
+                )
             except Exception:
                 pass
             return None
@@ -246,7 +252,10 @@ class PyInstallerEngine(CompilerEngine):
             cfg = {}
             if hasattr(self, "_opt_onefile") and self._opt_onefile is not None:
                 cfg["onefile"] = bool(self._opt_onefile.isChecked())
-            if hasattr(self, "_opt_windowed") and self._opt_windowed is not None:
+            if (
+                hasattr(self, "_opt_windowed")
+                and self._opt_windowed is not None
+            ):
                 cfg["windowed"] = bool(self._opt_windowed.isChecked())
             return cfg
         except Exception:
@@ -282,13 +291,17 @@ class PyInstallerEngine(CompilerEngine):
         if hasattr(self, f"_opt_{name}"):
             return getattr(self, f"_opt_{name}")
         # Fallback to GUI widget (static UI)
-        return getattr(self._gui, name, None) if hasattr(self, "_gui") else None
+        return (
+            getattr(self._gui, name, None) if hasattr(self, "_gui") else None
+        )
 
     def _get_input(self, name: str):
         """Get input widget from engine instance or GUI."""
         if hasattr(self, f"_{name}"):
             return getattr(self, f"_{name}")
-        return getattr(self._gui, name, None) if hasattr(self, "_gui") else None
+        return (
+            getattr(self._gui, name, None) if hasattr(self, "_gui") else None
+        )
 
     def get_log_prefix(self, file_basename: str) -> str:
         return f"PyInstaller ({self.version})"

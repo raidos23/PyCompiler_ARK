@@ -143,7 +143,9 @@ def _read_json_file(path: str) -> dict[str, dict[str, Optional[str]]]:
         try:
             repo_root = os.path.abspath(
                 os.path.join(
-                    os.path.dirname(os.path.abspath(__file__)), os.pardir, os.pardir
+                    os.path.dirname(os.path.abspath(__file__)),
+                    os.pardir,
+                    os.pardir,
                 )
             )
             schema_path = os.path.join(
@@ -174,7 +176,9 @@ def _read_json_file(path: str) -> dict[str, dict[str, Optional[str]]]:
                     f"Mapping entry for '{k}' should be an object; got {type(v).__name__} in '{path}'"
                 )
     else:
-        _VALIDATION_WARNINGS.append(f"Top-level mapping is not an object in '{path}'")
+        _VALIDATION_WARNINGS.append(
+            f"Top-level mapping is not an object in '{path}'"
+        )
     return normed
 
 
@@ -276,7 +280,9 @@ def _scan_imports(py_files: list[str], workspace_dir: str) -> set[str]:
             if af.startswith(venv_dir):
                 continue
             parts = af.split(os.sep)
-            if any(part.startswith(".") or part == "__pycache__" for part in parts):
+            if any(
+                part.startswith(".") or part == "__pycache__" for part in parts
+            ):
                 continue
             try:
                 if os.path.getsize(af) > size_cap:
@@ -306,8 +312,14 @@ def _scan_imports(py_files: list[str], workspace_dir: str) -> set[str]:
         except Exception:
             continue
     # Filtre stdlib et modules internes (fichiers du projet)
-    internal_names = {os.path.splitext(os.path.basename(p))[0] for p in py_files}
-    result = {m for m in found if not _is_stdlib_module(m) and m not in internal_names}
+    internal_names = {
+        os.path.splitext(os.path.basename(p))[0] for p in py_files
+    }
+    result = {
+        m
+        for m in found
+        if not _is_stdlib_module(m) and m not in internal_names
+    }
     return result
 
 
@@ -357,7 +369,8 @@ from typing import Optional as _Optional  # local alias to avoid confusion
 
 def _default_builder_for_engine(engine_id: str):
     def _builder(
-        matched: dict[str, dict[str, _Optional[str]]], pkg_to_import: dict[str, str]
+        matched: dict[str, dict[str, _Optional[str]]],
+        pkg_to_import: dict[str, str],
     ) -> list[str]:
         out: list[str] = []
         actions_seen = set()
@@ -378,7 +391,10 @@ def _default_builder_for_engine(engine_id: str):
                 a = val.get("args") or val.get("flags")
                 if isinstance(a, list):
                     tokens.extend(
-                        [str(x).replace("{import_name}", tmpl_import) for x in a]
+                        [
+                            str(x).replace("{import_name}", tmpl_import)
+                            for x in a
+                        ]
                     )
                 elif isinstance(a, str):
                     tokens.append(str(a).replace("{import_name}", tmpl_import))
@@ -626,7 +642,9 @@ def compute_for_all(
         try:
             project_root = os.path.abspath(
                 os.path.join(
-                    os.path.dirname(os.path.abspath(__file__)), os.pardir, os.pardir
+                    os.path.dirname(os.path.abspath(__file__)),
+                    os.pardir,
+                    os.pardir,
                 )
             )
             engines_root = os.path.join(project_root, INTERNAL_ENGINES_DIR)
@@ -693,7 +711,9 @@ def _load_engine_package_mapping(
     try:
         project_root = os.path.abspath(
             os.path.join(
-                os.path.dirname(os.path.abspath(__file__)), os.pardir, os.pardir
+                os.path.dirname(os.path.abspath(__file__)),
+                os.pardir,
+                os.pardir,
             )
         )
         engines_dir = os.path.join(
@@ -734,12 +754,16 @@ def _load_engine_package_mapping(
     try:
         aliases = combined.get("__aliases__")  # type: ignore[index]
         if isinstance(aliases, dict):
-            itp = aliases.get("import_to_package") or aliases.get("import2package")
+            itp = aliases.get("import_to_package") or aliases.get(
+                "import2package"
+            )
             if isinstance(itp, dict):
                 for k, v in itp.items():
                     if isinstance(k, str) and isinstance(v, str):
                         register_import_alias(k, v)
-            pti = aliases.get("package_to_import_name") or aliases.get("package2import")
+            pti = aliases.get("package_to_import_name") or aliases.get(
+                "package2import"
+            )
             if isinstance(pti, dict):
                 for k, v in pti.items():
                     if isinstance(k, str) and isinstance(v, str):
@@ -795,7 +819,9 @@ def compute_auto_for_engine(self, engine_id: str) -> list[str]:
 
     detected, source = _detect_modules_preferring_requirements(self)
     matched, pkg_to_import = _match_with_requirements_aware(detected, mapping)
-    builder = _ENGINE_BUILDERS.get(engine_id) or _default_builder_for_engine(engine_id)
+    builder = _ENGINE_BUILDERS.get(engine_id) or _default_builder_for_engine(
+        engine_id
+    )
     try:
         if engine_id not in _ENGINE_BUILDERS:
             output.info(
@@ -830,7 +856,10 @@ def compute_auto_for_engine(self, engine_id: str) -> list[str]:
             )
         )
         output.info(
-            (f"   Source détection: {source}", f"   Detection source: {source}"),
+            (
+                f"   Source détection: {source}",
+                f"   Detection source: {source}",
+            ),
         )
         if detected:
             output.info(

@@ -49,7 +49,9 @@ class LockDialog(QDialog):
     def __init__(self, gui):
         super().__init__(gui)
         self.gui = gui
-        self.setWindowTitle(gui.tr("Gestion des Verrous (Locks)", "Lock Management"))
+        self.setWindowTitle(
+            gui.tr("Gestion des Verrous (Locks)", "Lock Management")
+        )
         self.resize(900, 600)
 
         layout = QVBoxLayout(self)
@@ -63,7 +65,9 @@ class LockDialog(QDialog):
 
         # Liste des verrous
         self.list_widget = QListWidget()
-        self.list_widget.itemSelectionChanged.connect(self._on_selection_changed)
+        self.list_widget.itemSelectionChanged.connect(
+            self._on_selection_changed
+        )
         splitter.addWidget(self.list_widget)
 
         # Détails du verrou
@@ -77,11 +81,15 @@ class LockDialog(QDialog):
 
         # Actions
         btn_layout = QHBoxLayout()
-        self.btn_rebuild = QPushButton(gui.tr("Reconstruire (Rebuild)", "Rebuild"))
+        self.btn_rebuild = QPushButton(
+            gui.tr("Reconstruire (Rebuild)", "Rebuild")
+        )
         self.btn_rebuild.setEnabled(False)
         self.btn_rebuild.clicked.connect(self._do_rebuild)
 
-        self.btn_open_dir = QPushButton(gui.tr("Ouvrir dossier", "Open Directory"))
+        self.btn_open_dir = QPushButton(
+            gui.tr("Ouvrir dossier", "Open Directory")
+        )
         self.btn_open_dir.clicked.connect(self._open_lock_dir)
 
         btn_close = QPushButton(gui.tr("Fermer", "Close"))
@@ -108,7 +116,9 @@ class LockDialog(QDialog):
             return
 
         locks = sorted(
-            lock_dir.glob("*.lock"), key=lambda p: p.stat().st_mtime, reverse=True
+            lock_dir.glob("*.lock"),
+            key=lambda p: p.stat().st_mtime,
+            reverse=True,
         )
         for path in locks:
             item = QListWidgetItem(path.name)
@@ -142,7 +152,9 @@ class LockDialog(QDialog):
         try:
             lock_payload = load_yaml_file(Path(path))
         except Exception as e:
-            QMessageBox.critical(self, "Error", f"Impossible de lire le verrou : {e}")
+            QMessageBox.critical(
+                self, "Error", f"Impossible de lire le verrou : {e}"
+            )
             return
 
         # Vérification Alignement Git
@@ -166,7 +178,9 @@ class LockDialog(QDialog):
             self.gui.rebuild_from_lock(Path(path))
         else:
             QMessageBox.critical(
-                self, "Error", "rebuild_from_lock method not implemented in GUI"
+                self,
+                "Error",
+                "rebuild_from_lock method not implemented in GUI",
             )
 
     def _ensure_git_alignment(self, lock_payload: dict) -> bool:
@@ -177,7 +191,10 @@ class LockDialog(QDialog):
         if not locked_commit and not locked_branch:
             return True
 
-        from pycompiler_ark.Core.Locking import get_git_branch, get_git_commit_hash
+        from pycompiler_ark.Core.Locking import (
+            get_git_branch,
+            get_git_commit_hash,
+        )
 
         ws = getattr(self.gui, "workspace_dir", None)
         if not ws:
@@ -214,7 +231,9 @@ class LockDialog(QDialog):
             )
 
         msg = (
-            self.gui.tr("Désalignement Git détecté :\n", "Git mismatch detected:\n")
+            self.gui.tr(
+                "Désalignement Git détecté :\n", "Git mismatch detected:\n"
+            )
             + "\n".join(lines)
             + "\n\n"
         )
@@ -234,17 +253,25 @@ class LockDialog(QDialog):
                 try:
                     if not branch_match and locked_branch:
                         subprocess.run(
-                            ["git", "checkout", locked_branch], cwd=ws, check=True
+                            ["git", "checkout", locked_branch],
+                            cwd=ws,
+                            check=True,
                         )
                     if not commit_match and locked_commit:
                         subprocess.run(
-                            ["git", "checkout", locked_commit], cwd=ws, check=True
+                            ["git", "checkout", locked_commit],
+                            cwd=ws,
+                            check=True,
                         )
                     return True
                 except Exception as e:
-                    QMessageBox.critical(self, "Error", f"Échec de l'alignement : {e}")
+                    QMessageBox.critical(
+                        self, "Error", f"Échec de l'alignement : {e}"
+                    )
                     return False
-            return ans == QMessageBox.No  # True si l'user ignore, False si Cancel
+            return (
+                ans == QMessageBox.No
+            )  # True si l'user ignore, False si Cancel
         else:
             cmd_hint = ""
             if not branch_match and locked_branch:

@@ -54,7 +54,11 @@ def _apply_small_screen_compaction(app, window) -> None:
         geo = screen.availableGeometry() if screen is not None else None
         if geo and (geo.width() < 1000 or geo.height() < 650):
             try:
-                lays = window.ui.findChildren(QLayout) if hasattr(window, "ui") else []
+                lays = (
+                    window.ui.findChildren(QLayout)
+                    if hasattr(window, "ui")
+                    else []
+                )
                 for layout in lays:
                     try:
                         layout.setContentsMargins(6, 6, 6, 6)
@@ -85,7 +89,9 @@ def launch_main_application(
             try:
                 logo_dir = os.path.join(ROOT_DIR, "images")
                 safe_ver = "".join(
-                    c for c in app_version if c.isalnum() or c in (".", "-", "_")
+                    c
+                    for c in app_version
+                    if c.isalnum() or c in (".", "-", "_")
                 )
                 names = [
                     f"splash_v{safe_ver}.png",
@@ -115,14 +121,18 @@ def launch_main_application(
                                         Qt.SmoothTransformation,
                                     )
 
-                            splash = QSplashScreen(pix, Qt.WindowStaysOnTopHint)
+                            splash = QSplashScreen(
+                                pix, Qt.WindowStaysOnTopHint
+                            )
 
                             # Centrage explicite
                             if screen:
                                 sgeo = screen.availableGeometry()
                                 splash.move(
-                                    sgeo.x() + (sgeo.width() - pix.width()) // 2,
-                                    sgeo.y() + (sgeo.height() - pix.height()) // 2,
+                                    sgeo.x()
+                                    + (sgeo.width() - pix.width()) // 2,
+                                    sgeo.y()
+                                    + (sgeo.height() - pix.height()) // 2,
                                 )
 
                             splash.show()
@@ -134,7 +144,9 @@ def launch_main_application(
         if splash is not None:
             delay_ms = 4000
             try:
-                delay_ms = int(os.environ.get("PYCOMPILER_SPLASH_DELAY_MS", "4000"))
+                delay_ms = int(
+                    os.environ.get("PYCOMPILER_SPLASH_DELAY_MS", "4000")
+                )
             except Exception:
                 delay_ms = 4000
 

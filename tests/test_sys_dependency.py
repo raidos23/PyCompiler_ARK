@@ -27,7 +27,9 @@ from pycompiler_ark.Ui.Gui.Dialogs.SysDependencyUI import SysDependencyUI
 class TestSysDependencyManager:
     @patch("shutil.which")
     def test_detect_linux_package_manager(self, mock_which):
-        mock_which.side_effect = lambda x: "/usr/bin/" + x if x == "apt" else None
+        mock_which.side_effect = lambda x: (
+            "/usr/bin/" + x if x == "apt" else None
+        )
         manager = SysDependencyManager()
         assert manager.detect_linux_package_manager() == "apt"
 
@@ -78,7 +80,9 @@ class TestSysDependencyUI:
         self, mock_shell_run, mock_system, mock_which, mock_dlg
     ):
         ui = SysDependencyUI()
-        ui.install_packages_windows([{"id": "Git.Git"}, {"id": "Python.Python.3"}])
+        ui.install_packages_windows(
+            [{"id": "Git.Git"}, {"id": "Python.Python.3"}]
+        )
 
         mock_shell_run.assert_called_once()
         cmd = mock_shell_run.call_args[0][0]

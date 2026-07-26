@@ -35,7 +35,11 @@ def test_compare_lock_payloads_functional_equivalence():
         "build_id": "ARK_2026_05_31_001",
         "project": {"name": "App", "version": "1.0.0", "entry": "main.py"},
         "build": {"output": "dist/", "exclude": [], "data": []},
-        "engine": {"name": "nuitka", "version": "2.0", "config": {"standalone": True}},
+        "engine": {
+            "name": "nuitka",
+            "version": "2.0",
+            "config": {"standalone": True},
+        },
         "platform": {"os": "linux", "python_version": "3.12"},
         "dependencies": {"requests": "2.31.0"},
     }

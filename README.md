@@ -19,6 +19,22 @@ A Python project build workshop with a Qt GUI, a headless-friendly CLI, a pre-co
 
 Build Python apps with a predictable workflow, a configurable pre-compile pipeline, and the freedom to choose your build engine.
 
+## Comparison with auto-py-to-exe
+
+| Feature                        | auto-py-to-exe      | PyCompiler ARK                  |
+|--------------------------------|---------------------|---------------------------------|
+| GUI packaging workflow         | ✅                  | ✅                              |
+| Full CLI support               | Limited             | ✅                              |
+| CI/CD & automation             | Limited             | ✅ JSON output & scripting      |
+| Multiple build engines         | ❌ PyInstaller only | ✅ PyInstaller, Nuitka, cx_Freeze |
+| Pre-build pipeline             | ❌                  | ✅ BCASL                        |
+| Plugin / extensibility system  | ❌                  | ✅ Engines & BCASL plugins      |
+| Workspace management           | Basic               | ✅ Workspace-first              |
+| Virtual environment handling   | Limited             | ✅ Integrated                   |
+| Engine-specific optimizations  | ❌                  | ✅ Auto-mapping layer           |
+
+> **Note** : auto-py-to-exe is a great simple GUI wrapper around PyInstaller.  
+> PyCompiler ARK targets more advanced use cases (multi-engine, automation, CI/CD, extensibility).
 ## Core capabilities
 
 - **BCASL pre-compile pipeline**: validation, preparation, transformation before the build, with safety controls.

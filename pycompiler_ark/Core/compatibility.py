@@ -100,7 +100,9 @@ def _resolve_module_version(component: object) -> str | None:
         return None
 
 
-def _resolve_component_name(component: object, meta: object, fallback: str) -> str:
+def _resolve_component_name(
+    component: object, meta: object, fallback: str
+) -> str:
     for cand in (
         _get_meta_value(meta, "name"),
         getattr(component, "name", None),
@@ -239,7 +241,9 @@ def check_engine_compatibility(
     required_core_version = _resolve_required_core_version(engine_class, meta)
     current_core_version = _resolve_current_core_version(current_core_version)
 
-    is_compatible = compare_versions(current_core_version, required_core_version, "gte")
+    is_compatible = compare_versions(
+        current_core_version, required_core_version, "gte"
+    )
 
     message = _build_compat_message(
         "Engine",
@@ -278,7 +282,9 @@ def check_plugin_compatibility(
     required_core_version = _resolve_required_core_version(plugin_class, meta)
     current_core_version = _resolve_current_core_version(current_core_version)
 
-    is_compatible = compare_versions(current_core_version, required_core_version, "gte")
+    is_compatible = compare_versions(
+        current_core_version, required_core_version, "gte"
+    )
 
     message = _build_compat_message(
         "Plugin",
@@ -317,13 +323,9 @@ def check_sdk_compatibility(
     is_compatible = compare_versions(sdk_version, required_version, "gte")
 
     if _is_unknown_version(required_version):
-        message = (
-            f"{sdk_name} v{sdk_version} has no minimum required version specified."
-        )
+        message = f"{sdk_name} v{sdk_version} has no minimum required version specified."
     elif _is_unknown_version(sdk_version):
-        message = (
-            f"{sdk_name} version is unknown; requires v{required_version} or higher."
-        )
+        message = f"{sdk_name} version is unknown; requires v{required_version} or higher."
     elif is_compatible:
         message = f"{sdk_name} v{sdk_version} is compatible with required version v{required_version}"
     else:
@@ -418,7 +420,8 @@ def get_incompatible_components(
 
 
 def print_compatibility_report(
-    results: Dict[str, CompatibilityResult], title: str = "Compatibility Report"
+    results: Dict[str, CompatibilityResult],
+    title: str = "Compatibility Report",
 ) -> None:
     """
     Print a formatted compatibility report.

@@ -33,7 +33,9 @@ class AdvancedAuthUI:
                 return False
 
             if hasattr(gui, "apply_workspace_selection"):
-                return bool(gui.apply_workspace_selection(str(folder), source="plugin"))
+                return bool(
+                    gui.apply_workspace_selection(str(folder), source="plugin")
+                )
 
             # Fallback if the GUI instance doesn't have the method directly
             return bool(

@@ -217,4 +217,6 @@ class OutputCleaner(BcPluginBase):
                 )
 
         except Exception as e:
-            log.log_error(_tr("error_generic", "OutputCleaner error: {error}", error=e))
+            log.log_error(
+                _tr("error_generic", "OutputCleaner error: {error}", error=e)
+            )

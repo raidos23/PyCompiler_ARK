@@ -102,7 +102,9 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
 
         # Enregistrement du handler AdvancedAuth pour les requêtes de plugins
         try:
-            from ...Services.AdvancedAuth import AdvancedAuth as AuthAdvancedAuth
+            from ...Services.AdvancedAuth import (
+                AdvancedAuth as AuthAdvancedAuth,
+            )
             from .Dialogs.AdvancedAuthUI import AdvancedAuthUI
 
             AuthAdvancedAuth.register_workspace_change_handler(
@@ -115,7 +117,9 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
 
         # Étape 3: charger les préférences puis choisir la variante UI.
         self.load_preferences()
-        ui_variant = str(os.environ.get("PYCOMPILER_UI_VARIANT", "")).strip().lower()
+        ui_variant = (
+            str(os.environ.get("PYCOMPILER_UI_VARIANT", "")).strip().lower()
+        )
         if not ui_variant:
             ui_variant = "ide2"
         if ui_variant in {"classic", "classic-gui", "legacy"}:
@@ -145,12 +149,16 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
         try:
             loc = locale.getlocale()[0] or ""
             sys_lang = (
-                "Français" if loc.lower().startswith(("fr", "fr_")) else "English"
+                "Français"
+                if loc.lower().startswith(("fr", "fr_"))
+                else "English"
             )
         except Exception:
             sys_lang = "English"
 
-        pref_lang = getattr(self, "language_pref", getattr(self, "language", "System"))
+        pref_lang = getattr(
+            self, "language_pref", getattr(self, "language", "System")
+        )
         chosen_lang = sys_lang if pref_lang == "System" else pref_lang
         self.apply_language(chosen_lang)
         self.language_pref = pref_lang
@@ -198,9 +206,14 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
         files = SetupWorkspace.list_python_files(folder)
 
         # Logique UI pour ajouter les fichiers
-        from pycompiler_ark.Core.Configs import load_ark_config, should_exclude_file
+        from pycompiler_ark.Core.Configs import (
+            load_ark_config,
+            should_exclude_file,
+        )
 
-        ark_config = load_ark_config(self.workspace_dir) if self.workspace_dir else {}
+        ark_config = (
+            load_ark_config(self.workspace_dir) if self.workspace_dir else {}
+        )
 
         workspace_cfg = ark_config.get("workspace", {})
         exclusion_patterns = []
@@ -235,7 +248,9 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
         if folder:
             self.apply_workspace_selection(folder, source="ui")
 
-    def apply_workspace_selection(self, folder: str, source: str = "ui") -> bool:
+    def apply_workspace_selection(
+        self, folder: str, source: str = "ui"
+    ) -> bool:
         """Apply workspace selection and refresh GUI state."""
         return WorkspaceDialog.apply_workspace_selection(self, folder, source)
 
@@ -461,9 +476,13 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
                     if proc is None or proc.state() == proc.NotRunning:
                         continue
                     if is_french:
-                        details.append(task.get("label_fr") or "dépendances système")
+                        details.append(
+                            task.get("label_fr") or "dépendances système"
+                        )
                     else:
-                        details.append(task.get("label_en") or "system dependencies")
+                        details.append(
+                            task.get("label_en") or "system dependencies"
+                        )
             except Exception:
                 pass
 

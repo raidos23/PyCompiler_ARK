@@ -88,7 +88,9 @@ class ProcessKiller:
         if pid <= 0:
             return False
 
-        _logger.info("Requesting kill for process tree starting at PID %d", pid)
+        _logger.info(
+            "Requesting kill for process tree starting at PID %d", pid
+        )
 
         if psutil:
             return self._kill_with_psutil(pid, include_parent)
@@ -126,7 +128,9 @@ class ProcessKiller:
             for p in alive:
                 try:
                     if p.is_running():
-                        _logger.warning("Forcing kill on PID %d (%s)", p.pid, p.name())
+                        _logger.warning(
+                            "Forcing kill on PID %d (%s)", p.pid, p.name()
+                        )
                         p.kill()
                 except (psutil.NoSuchProcess, psutil.AccessDenied):
                     pass
@@ -180,11 +184,15 @@ class ProcessKiller:
                         time.sleep(0.5)
 
                     if self._is_alive(pid):
-                        _logger.warning("Forcing kill on process group %d", pgid)
+                        _logger.warning(
+                            "Forcing kill on process group %d", pgid
+                        )
                         os.killpg(pgid, signal.SIGKILL)
                     return True
                 except Exception as e:
-                    _logger.debug("Group kill failed, falling back to PID: %s", e)
+                    _logger.debug(
+                        "Group kill failed, falling back to PID: %s", e
+                    )
 
             # Fallback to killing only the pid and trying to find children via /proc
             if not _IS_WINDOWS:
@@ -208,7 +216,10 @@ class ProcessKiller:
         try:
             # Try using pgrep to find children
             result = subprocess.run(
-                ["pgrep", "-P", str(ppid)], capture_output=True, text=True, check=False
+                ["pgrep", "-P", str(ppid)],
+                capture_output=True,
+                text=True,
+                check=False,
             )
             if result.returncode == 0:
                 for line in result.stdout.splitlines():
@@ -367,7 +378,9 @@ def get_process_info(pid: int) -> Optional[ProcessInfo]:
             if cmdline_path.exists():
                 cmdline = cmdline_path.read_text().replace("\x00", " ")
                 comm_path = Path(f"/proc/{pid}/comm")
-                comm = comm_path.read_text().strip() if comm_path.exists() else ""
+                comm = (
+                    comm_path.read_text().strip() if comm_path.exists() else ""
+                )
                 return ProcessInfo(pid, comm, cmdline)
     except Exception:
         pass

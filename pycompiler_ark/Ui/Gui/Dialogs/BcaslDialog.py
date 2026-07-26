@@ -100,7 +100,9 @@ def _get_bcasl_colors() -> dict[str, str]:
     }
 
 
-def _apply_themed_icon(widget: QPushButton, icon_name: str, size: int = 18) -> None:
+def _apply_themed_icon(
+    widget: QPushButton, icon_name: str, size: int = 18
+) -> None:
     """Applique une icône SVG thémée au widget."""
     try:
         from PySide6.QtCore import QSize
@@ -154,7 +156,10 @@ except Exception:
 
 def _phase_score_for_tags(tags: list[str]) -> int:
     """Retourne le score de phase minimum pour une liste de tags."""
-    scores = [_TAG_PRIORITY_MAP.get(str(t).strip().lower(), 100) for t in (tags or [])]
+    scores = [
+        _TAG_PRIORITY_MAP.get(str(t).strip().lower(), 100)
+        for t in (tags or [])
+    ]
     return min(scores) if scores else 100
 
 
@@ -203,7 +208,9 @@ def _read_plugin_list(plugins_raw: Any) -> list[dict[str, Any]]:
     return []
 
 
-def _plugins_list_to_yaml(plugin_rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+def _plugins_list_to_yaml(
+    plugin_rows: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
     """Retourne la liste dans le format bcasl.yml officiel."""
     result = []
     for row in plugin_rows:
@@ -259,7 +266,9 @@ class _PluginRow(QFrame):
 
         # Nom plugin
         self.lbl_name = QLabel(name or pid)
-        self.lbl_name.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+        self.lbl_name.setSizePolicy(
+            QSizePolicy.Expanding, QSizePolicy.Preferred
+        )
         row.addWidget(self.lbl_name)
 
         # Boutons ↑ ↓
@@ -274,7 +283,9 @@ class _PluginRow(QFrame):
         self.btn_down.setFixedWidth(32)
         self.btn_down.setToolTip("Descendre dans la section")
         _apply_themed_icon(self.btn_down, "chevron-down.svg", size=18)
-        self.btn_down.clicked.connect(lambda: self.sig_move_down.emit(self.pid))
+        self.btn_down.clicked.connect(
+            lambda: self.sig_move_down.emit(self.pid)
+        )
         row.addWidget(self.btn_down)
 
         self.setStyleSheet(
@@ -492,7 +503,9 @@ class BcaslPipelineDialog(QDialog):
             self._gui.tr("Activer BCASL", "Enable BCASL")
         )
         self._chk_bcasl_enabled.setStyleSheet("font-weight: bold;")
-        bcasl_active = self._ark_cfg.get("plugins", {}).get("bcasl_enabled", True)
+        bcasl_active = self._ark_cfg.get("plugins", {}).get(
+            "bcasl_enabled", True
+        )
         self._chk_bcasl_enabled.setChecked(bool(bcasl_active))
         self._chk_bcasl_enabled.toggled.connect(self._on_bcasl_enabled_toggled)
         title_row.addWidget(self._chk_bcasl_enabled)
@@ -562,7 +575,8 @@ class BcaslPipelineDialog(QDialog):
         if not checked:
             self._tabs.setToolTip(
                 self._gui.tr(
-                    "BCASL est désactivé dans ark.yml", "BCASL is disabled in ark.yml"
+                    "BCASL est désactivé dans ark.yml",
+                    "BCASL is disabled in ark.yml",
                 )
             )
         else:
@@ -610,7 +624,9 @@ class BcaslPipelineDialog(QDialog):
 
         # Trier chaque groupe par priorité (ordre initial)
         for score in phase_groups:
-            phase_groups[score].sort(key=lambda x: int(x[1].get("priority", 0)))
+            phase_groups[score].sort(
+                key=lambda x: int(x[1].get("priority", 0))
+            )
 
         # Créer les sections dans l'ordre des phases
         # Insérer avant le stretch final
@@ -652,7 +668,9 @@ class BcaslPipelineDialog(QDialog):
             from ....bcasl.Loader import _build_workspace_meta
             from ....bcasl.PreCompileContext import PreCompileContext
 
-            workspace_meta = _build_workspace_meta(self._workspace_root, self._cfg)
+            workspace_meta = _build_workspace_meta(
+                self._workspace_root, self._cfg
+            )
             ctx = PreCompileContext(
                 self._workspace_root,
                 config=self._cfg,
@@ -698,7 +716,10 @@ class BcaslPipelineDialog(QDialog):
                 except Exception:
                     pass
                 if not title:
-                    title = getattr(getattr(plugin, "meta", None), "name", None) or pid
+                    title = (
+                        getattr(getattr(plugin, "meta", None), "name", None)
+                        or pid
+                    )
                 self._tabs.addTab(widget, str(title))
                 self._plugin_ui_state[pid] = {
                     "config": base_cfg,
@@ -719,13 +740,17 @@ class BcaslPipelineDialog(QDialog):
     def _unregister_language_refresh(self) -> None:
         try:
             if hasattr(self._gui, "unregister_language_refresh"):
-                self._gui.unregister_language_refresh(self._language_refresh_cb)
+                self._gui.unregister_language_refresh(
+                    self._language_refresh_cb
+                )
         except Exception:
             pass
 
     def _refresh_i18n(self) -> None:
         try:
-            self.setWindowTitle(self._gui.tr("BCASL Pipeline", "BCASL Pipeline"))
+            self.setWindowTitle(
+                self._gui.tr("BCASL Pipeline", "BCASL Pipeline")
+            )
         except Exception:
             pass
         try:
@@ -882,7 +907,9 @@ class BcaslPipelineDialog(QDialog):
                 current_prio += 1
 
         # Construire la config de sortie pour bcasl.yml
-        cfg_out: dict[str, Any] = dict(self._cfg) if isinstance(self._cfg, dict) else {}
+        cfg_out: dict[str, Any] = (
+            dict(self._cfg) if isinstance(self._cfg, dict) else {}
+        )
         cfg_out["plugins"] = _plugins_list_to_yaml(ordered)
         cfg_out["phases"] = phases_state
         # plugin_order maintient la compatibilité avec l'ancien loader
@@ -961,7 +988,9 @@ class _BCASLWorker(QObject):
 
             # 1. Vérifier si BCASL est activé (en arrière-plan)
             if not _is_bcasl_enabled(self.workspace_root):
-                self.log.emit("BCASL disabled in ark.yml. Skipping execution\n")
+                self.log.emit(
+                    "BCASL disabled in ark.yml. Skipping execution\n"
+                )
                 self.finished.emit(dict(BCASL_DISABLED_REPORT))
                 return
 
@@ -1027,7 +1056,9 @@ class _BCASLUiBridge(QObject):
                         )
                         dur = getattr(item, "duration_ms", 0.0)
                         pid = getattr(item, "plugin_id", "?")
-                        self._gui.log.append(f" - {pid}: {state} ({dur:.1f} ms)\n")
+                        self._gui.log.append(
+                            f" - {pid}: {state} ({dur:.1f} ms)\n"
+                        )
                     except Exception:
                         pass
                 try:
@@ -1074,7 +1105,9 @@ def _build_plugin_item(
             tooltip += f"\n\nTags: {', '.join(tags)}"
         reqs = meta.get("requirements", [])
         if reqs:
-            tooltip += "\n\nRequirements:\n" + "\n".join(f"  • {req}" for req in reqs)
+            tooltip += "\n\nRequirements:\n" + "\n".join(
+                f"  • {req}" for req in reqs
+            )
         if tooltip:
             item.setToolTip(tooltip)
     except Exception:
@@ -1230,7 +1263,9 @@ def open_bc_loader_dialog(self) -> None:
 
 
 def run_pre_compile_async(
-    self, on_done: Optional[callable] = None, build_context: Optional[Any] = None
+    self,
+    on_done: Optional[callable] = None,
+    build_context: Optional[Any] = None,
 ) -> None:
     """Lance BCASL en arrière-plan via QThread.
     on_done(report) appelé à la fin si fourni.
@@ -1255,7 +1290,9 @@ def run_pre_compile_async(
         if not _is_bcasl_enabled(workspace_root):
             try:
                 if hasattr(self, "log") and self.log is not None:
-                    self.log.append("BCASL désactivé dans ark.yml. Exécution ignorée\n")
+                    self.log.append(
+                        "BCASL désactivé dans ark.yml. Exécution ignorée\n"
+                    )
             except Exception:
                 pass
             if callable(on_done):
@@ -1316,7 +1353,9 @@ def open_bcasl_pipeline_dialog(
     plugin_instances: "dict[str, Any]",
 ) -> None:
     """Ouvre le dialog BCASL Pipeline."""
-    dlg = BcaslPipelineDialog(gui, workspace_root, meta_map, cfg, plugin_instances)
+    dlg = BcaslPipelineDialog(
+        gui, workspace_root, meta_map, cfg, plugin_instances
+    )
     try:
         dlg.setModal(False)
         dlg.show()

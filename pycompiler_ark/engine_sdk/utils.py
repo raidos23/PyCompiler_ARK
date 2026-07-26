@@ -37,7 +37,10 @@ from ..Core.utils.os_helpers import open_path as _open_path
 # Executable resolution helper
 # -------------------------------
 def resolve_executable(
-    program: Pathish, base_dir: Optional[Pathish] = None, *, prefer_path: bool = True
+    program: Pathish,
+    base_dir: Optional[Pathish] = None,
+    *,
+    prefer_path: bool = True,
 ) -> str:
     """Resolve an executable path according to a clear, cross-platform policy.
 

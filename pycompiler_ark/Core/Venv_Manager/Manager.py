@@ -115,7 +115,9 @@ class VenvManager:
     def _workspace_pref_path(self, workspace_dir: str) -> str:
         """Return the resolved workspace path information."""
         return os.path.join(
-            os.path.abspath(workspace_dir), WORKSPACE_CONFIG_DIRNAME, "pref.json"
+            os.path.abspath(workspace_dir),
+            WORKSPACE_CONFIG_DIRNAME,
+            "pref.json",
         )
 
     def _read_workspace_pref(self, workspace_dir: str) -> dict | None:
@@ -207,7 +209,10 @@ class VenvManager:
             if venv_path:
                 self._write_workspace_pref(
                     workspace_dir,
-                    {"venv_mode": "venv", "venv_path": os.path.abspath(venv_path)},
+                    {
+                        "venv_mode": "venv",
+                        "venv_path": os.path.abspath(venv_path),
+                    },
                 )
                 return
         except Exception:
@@ -224,7 +229,9 @@ class VenvManager:
             pass
 
     # ---------- Public helpers for engines ----------
-    def resolve_existing_venv(self, workspace_dir: str | None = None) -> str | None:
+    def resolve_existing_venv(
+        self, workspace_dir: str | None = None
+    ) -> str | None:
         """Resolve an existing venv path (manual/local/manager).
 
         Returns only if a real, existing environment is found.
@@ -313,7 +320,9 @@ class VenvManager:
 
     def python_path(self, venv_root: str) -> str:
         """Get the absolute path to the python executable using deps_analyser."""
-        pip_exe, pip_args = deps_analyser._find_pip_executable(venv_path=venv_root)
+        pip_exe, pip_args = deps_analyser._find_pip_executable(
+            venv_path=venv_root
+        )
         if "-m" in pip_args and "pip" in pip_args:
             return pip_exe
         # Fallback to internal detection if pip_exe is directly the pip binary
@@ -349,7 +358,8 @@ class VenvManager:
         """
         try:
             bindir = os.path.join(
-                venv_root, "Scripts" if platform.system() == "Windows" else "bin"
+                venv_root,
+                "Scripts" if platform.system() == "Windows" else "bin",
             )
             if not os.path.isdir(bindir):
                 return False
@@ -394,7 +404,9 @@ class VenvManager:
                     engine = None
                 if engine is None:
                     continue
-                req = getattr(engine, "required_tools", {"python": [], "system": []})
+                req = getattr(
+                    engine, "required_tools", {"python": [], "system": []}
+                )
                 if not isinstance(req, dict):
                     continue
                 for item in req.get("python", []) or []:
@@ -424,12 +436,16 @@ class VenvManager:
         """
         return self.has_tool_binary(venv_root, tool)
 
-    def is_tool_installed_async(self, venv_root: str, tool: str, callback) -> None:
+    def is_tool_installed_async(
+        self, venv_root: str, tool: str, callback
+    ) -> None:
         """Asynchronous check using 'pip show <tool>' via QProcess, then callback(bool).
         Safe for UI: does not block. On any error, returns False.
         """
         try:
-            pip_exe, pip_args = deps_analyser._find_pip_executable(venv_path=venv_root)
+            pip_exe, pip_args = deps_analyser._find_pip_executable(
+                venv_path=venv_root
+            )
             if not pip_exe or not os.path.isfile(pip_exe):
                 callback(False)
                 return
@@ -469,7 +485,9 @@ class VenvManager:
             self._venv_check_pkgs = list(tools)
             self._venv_check_index = 0
 
-            pip_exe, pip_args = deps_analyser._find_pip_executable(venv_path=venv_root)
+            pip_exe, pip_args = deps_analyser._find_pip_executable(
+                venv_path=venv_root
+            )
             self._venv_check_pip_exe = pip_exe
             self._venv_check_pip_args = pip_args
             self._venv_check_path = venv_root
@@ -481,13 +499,17 @@ class VenvManager:
                 "Verification du venv",
                 "Verification du venv",
             )
-            self._bind_cancel_for_progress("tools_check", "verification des outils")
+            self._bind_cancel_for_progress(
+                "tools_check", "verification des outils"
+            )
             self._call_ui(
                 "update_progress_message",
                 "tools_check",
                 f"Verification de {tools[0]}...",
             )
-            self._call_ui("update_progress_progress", "tools_check", 0, len(tools))
+            self._call_ui(
+                "update_progress_progress", "tools_check", 0, len(tools)
+            )
 
             # We need a local event loop if we are in a background thread or CLI mode
             # to process QProcess signals and QTimer events.
@@ -498,7 +520,8 @@ class VenvManager:
                 or os.environ.get("PYCOMPILER_CLI") == "1"
                 or (
                     QCoreApplication.instance()
-                    and QThread.currentThread() != QCoreApplication.instance().thread()
+                    and QThread.currentThread()
+                    != QCoreApplication.instance().thread()
                 )
             )
 
@@ -561,7 +584,9 @@ class VenvManager:
                 "tools_check",
                 f"Verification de {tools[0]}...",
             )
-            self._call_ui("update_progress_progress", "tools_check", 0, len(tools))
+            self._call_ui(
+                "update_progress_progress", "tools_check", 0, len(tools)
+            )
 
             # We need a local event loop if we are in a background thread or CLI mode
             from PySide6.QtCore import QCoreApplication, QEventLoop, QThread
@@ -571,7 +596,8 @@ class VenvManager:
                 or os.environ.get("PYCOMPILER_CLI") == "1"
                 or (
                     QCoreApplication.instance()
-                    and QThread.currentThread() != QCoreApplication.instance().thread()
+                    and QThread.currentThread()
+                    != QCoreApplication.instance().thread()
                 )
             )
 
@@ -594,7 +620,9 @@ class VenvManager:
             )
 
     # ---------- Utility ----------
-    def _safe_decode(self, data: bytes, error_handling: str = "replace") -> str:
+    def _safe_decode(
+        self, data: bytes, error_handling: str = "replace"
+    ) -> str:
         """Safely decode bytes with fallback encodings."""
         if isinstance(data, str):
             return data
@@ -643,10 +671,14 @@ class VenvManager:
             pass
         self.terminate_tasks()
 
-    def _bind_cancel_for_progress(self, progress_id: str, action_label: str) -> None:
+    def _bind_cancel_for_progress(
+        self, progress_id: str, action_label: str
+    ) -> None:
         """Bind cancellation logic for a named progress dialog via UI callback."""
         self._call_ui(
-            "bind_cancel", progress_id, lambda: self._request_cancel(action_label)
+            "bind_cancel",
+            progress_id,
+            lambda: self._request_cancel(action_label),
         )
 
     def _safe_rmtree(self, path: str, max_retries: int = 3) -> bool:
@@ -695,12 +727,16 @@ class VenvManager:
                 pass
             return False
 
-    def _prompt_recreate_invalid_venv(self, venv_root: str, reason: str) -> bool:
+    def _prompt_recreate_invalid_venv(
+        self, venv_root: str, reason: str
+    ) -> bool:
         """Ask the UI delegate whether to delete and recreate an invalid venv.
         If the user confirms, performs deletion then triggers recreation (business logic).
         Returns True if recreation was initiated, False otherwise.
         """
-        confirmed = self._call_ui("ask_recreate_invalid_venv", venv_root, reason)
+        confirmed = self._call_ui(
+            "ask_recreate_invalid_venv", venv_root, reason
+        )
         if not confirmed:
             return False
         # Business logic: delete the bad venv
@@ -709,7 +745,9 @@ class VenvManager:
             try:
                 from pycompiler_ark.Ui import output
 
-                output.info(f"Deleted invalid venv: {venv_root}", gui=self.parent)
+                output.info(
+                    f"Deleted invalid venv: {venv_root}", gui=self.parent
+                )
             except Exception:
                 pass
         except Exception as e:
@@ -780,7 +818,10 @@ class VenvManager:
                     if "include-system-site-packages" in line.lower():
                         _, _, v = line.partition("=")
                         if str(v).strip().lower() in ("1", "true", "yes"):
-                            return False, "include-system-site-packages=true (refusé)"
+                            return (
+                                False,
+                                "include-system-site-packages=true (refusé)",
+                            )
                         break
             except Exception:
                 pass
@@ -873,7 +914,8 @@ class VenvManager:
                     except Exception:
                         pass
                     self._prompt_recreate_invalid_venv(
-                        venv_path, "Python/pip do not point to the selected venv"
+                        venv_path,
+                        "Python/pip do not point to the selected venv",
                     )
                     return
 
@@ -907,7 +949,9 @@ class VenvManager:
                         try:
                             from pycompiler_ark.Ui import output
 
-                            output.success("Outils systeme verifies.", gui=self.parent)
+                            output.success(
+                                "Outils systeme verifies.", gui=self.parent
+                            )
                         except Exception:
                             pass
 
@@ -982,14 +1026,18 @@ class VenvManager:
             return
         if self._venv_check_index >= len(self._venv_check_pkgs):
             self._call_ui(
-                "update_progress_message", "tools_check", "Verification terminee."
+                "update_progress_message",
+                "tools_check",
+                "Verification terminee.",
             )
             total = (
                 len(self._venv_check_pkgs)
                 if hasattr(self, "_venv_check_pkgs") and self._venv_check_pkgs
                 else 0
             )
-            self._call_ui("update_progress_progress", "tools_check", total, total)
+            self._call_ui(
+                "update_progress_progress", "tools_check", total, total
+            )
             self._call_ui("close_progress", "tools_check")
 
             # Exit local loop if any
@@ -1000,7 +1048,9 @@ class VenvManager:
             # Installer les dependances du projet si un requirements.txt est present
             try:
                 if getattr(self.parent, "workspace_dir", None):
-                    self.install_requirements_if_needed(self.parent.workspace_dir)
+                    self.install_requirements_if_needed(
+                        self.parent.workspace_dir
+                    )
             except Exception:
                 pass
             return
@@ -1013,7 +1063,9 @@ class VenvManager:
         process.setArguments(args + ["show", pkg])
         process.setWorkingDirectory(self._venv_check_path)
         process.finished.connect(
-            lambda code, status: self._on_venv_pkg_checked(process, code, status, pkg)
+            lambda code, status: self._on_venv_pkg_checked(
+                process, code, status, pkg
+            )
         )
         process.start()
         # Safety timeout for pip show (30s)
@@ -1072,7 +1124,9 @@ class VenvManager:
                 f"{self._tools_stage_prefix()}Installation automatique de {pkg}..."
             )
             self._call_ui(
-                "update_progress_message", "tools_check", f"Installation de {pkg}..."
+                "update_progress_message",
+                "tools_check",
+                f"Installation de {pkg}...",
             )
             self._call_ui(
                 "update_progress_progress", "tools_check", 0, 0
@@ -1117,7 +1171,9 @@ class VenvManager:
         )
         lines = data.strip().splitlines()
         if lines:
-            self._call_ui("update_progress_message", "tools_check", lines[-1][:200])
+            self._call_ui(
+                "update_progress_message", "tools_check", lines[-1][:200]
+            )
 
             # Detailed logging for verbose mode or errors
             is_verbose = getattr(self.parent, "verbose", False)
@@ -1136,7 +1192,11 @@ class VenvManager:
             if not os.path.isfile(vpython):
                 return False
             cp = subprocess.run(
-                [vpython, "-c", "import sys, os; print(os.path.realpath(sys.prefix))"],
+                [
+                    vpython,
+                    "-c",
+                    "import sys, os; print(os.path.realpath(sys.prefix))",
+                ],
                 capture_output=True,
                 text=True,
             )
@@ -1148,7 +1208,9 @@ class VenvManager:
             vpip = self.pip_path(venv_root)
             if not os.path.isfile(vpip):
                 return False
-            cp2 = subprocess.run([vpip, "--version"], capture_output=True, text=True)
+            cp2 = subprocess.run(
+                [vpip, "--version"], capture_output=True, text=True
+            )
             if cp2.returncode != 0:
                 return False
             import re as _re
@@ -1197,7 +1259,12 @@ class VenvManager:
                             if code2 != 0:
                                 callback(False)
                                 return
-                            text = p2.readAllStandardOutput().data().decode().strip()
+                            text = (
+                                p2.readAllStandardOutput()
+                                .data()
+                                .decode()
+                                .strip()
+                            )
                             import re as _re
 
                             m = _re.search(r" from (.+?) \(python ", text)
@@ -1227,7 +1294,9 @@ class VenvManager:
         except Exception:
             callback(False)
 
-    def _arm_process_timeout(self, process: QProcess, timeout_ms: int, label: str):
+    def _arm_process_timeout(
+        self, process: QProcess, timeout_ms: int, label: str
+    ):
         """Arm a one-shot timer to kill a long-running process and keep UI responsive."""
         try:
             if timeout_ms and timeout_ms > 0:
@@ -1276,7 +1345,9 @@ class VenvManager:
         p_dot = os.path.join(base, ".venv")
         p_std = os.path.join(base, "venv")
         existing = (
-            p_dot if os.path.isdir(p_dot) else (p_std if os.path.isdir(p_std) else None)
+            p_dot
+            if os.path.isdir(p_dot)
+            else (p_std if os.path.isdir(p_std) else None)
         )
         default = p_dot
         return existing, default
@@ -1302,7 +1373,9 @@ class VenvManager:
 
         return venvs
 
-    def _score_venv(self, venv_path: str, workspace_dir: str) -> tuple[int, str]:
+    def _score_venv(
+        self, venv_path: str, workspace_dir: str
+    ) -> tuple[int, str]:
         """Score a venv based on its completeness and requirements satisfaction.
         Returns (score, reason) where higher score = better venv.
 
@@ -1329,7 +1402,10 @@ class VenvManager:
                 score += 20
                 reasons.append("verified_binding")
             else:
-                return score, "Invalid binding (python/pip don't point to venv)"
+                return (
+                    score,
+                    "Invalid binding (python/pip don't point to venv)",
+                )
 
             # Check for requirements.txt (lightweight marker only to avoid blocking UI)
             req_path = os.path.join(workspace_dir, "requirements.txt")
@@ -1386,7 +1462,9 @@ class VenvManager:
                 try:
                     from pycompiler_ark.Ui import output
 
-                    output.success(f"Un seul venv trouve: {venvs[0]}", gui=self.parent)
+                    output.success(
+                        f"Un seul venv trouve: {venvs[0]}", gui=self.parent
+                    )
                 except Exception:
                     pass
                 return venvs[0]
@@ -1465,7 +1543,9 @@ class VenvManager:
             try:
                 from pycompiler_ark.Ui import output
 
-                output.success(f"{pkg} installe dans le venv.", gui=self.parent)
+                output.success(
+                    f"{pkg} installe dans le venv.", gui=self.parent
+                )
             except Exception:
                 pass
         else:
@@ -1505,7 +1585,9 @@ class VenvManager:
                     )
                 except Exception:
                     pass
-                recreated = self._prompt_recreate_invalid_venv(venv_path, reason)
+                recreated = self._prompt_recreate_invalid_venv(
+                    venv_path, reason
+                )
                 if not recreated:
                     return
             else:
@@ -1514,7 +1596,9 @@ class VenvManager:
         try:
             from pycompiler_ark.Ui import output
 
-            output.info("Aucun venv trouve, creation automatique...", gui=self.parent)
+            output.info(
+                "Aucun venv trouve, creation automatique...", gui=self.parent
+            )
         except Exception:
             pass
         try:
@@ -1599,7 +1683,9 @@ class VenvManager:
                 "venv_creation", "creation de l'environnement virtuel"
             )
             self._call_ui(
-                "update_progress_message", "venv_creation", "Creation du venv..."
+                "update_progress_message",
+                "venv_creation",
+                "Creation du venv...",
             )
 
             process = QProcess(self.parent)
@@ -1650,7 +1736,9 @@ class VenvManager:
         )
         lines = data.strip().splitlines()
         if lines:
-            self._call_ui("update_progress_message", "venv_creation", lines[-1][:200])
+            self._call_ui(
+                "update_progress_message", "venv_creation", lines[-1][:200]
+            )
             self._venv_progress_lines += len(lines)
             self._call_ui(
                 "update_progress_progress",
@@ -1693,7 +1781,9 @@ class VenvManager:
                 )
             except Exception:
                 pass
-            self._call_ui("update_progress_message", "venv_creation", "Venv cree.")
+            self._call_ui(
+                "update_progress_message", "venv_creation", "Venv cree."
+            )
             self._call_ui("close_progress", "venv_creation")
 
             # Installer les dependances du projet a partir de requirements.txt si present
@@ -1765,7 +1855,9 @@ class VenvManager:
                 return others[0]
 
             # 3. Use DepsAnalyser to generate requirements.txt from project analysis
-            output.state("Analyse des dependances du projet via DepsAnalyser...")
+            output.state(
+                "Analyse des dependances du projet via DepsAnalyser..."
+            )
             generated = deps_analyser.write_requirements_txt(workspace_dir)
             if generated and os.path.isfile(generated):
                 output.success("requirements.txt genere via DepsAnalyser.")
@@ -1777,7 +1869,9 @@ class VenvManager:
             return None
 
     # ---------- Install requirements.txt ----------
-    def install_requirements_if_needed(self, path: str, force_pip: bool = False):
+    def install_requirements_if_needed(
+        self, path: str, force_pip: bool = False
+    ):
         """Execute install_requirements_if_needed logic for this component."""
         # Get or generate requirements file
         req_path = self._get_requirements_file(path)
@@ -1841,7 +1935,11 @@ class VenvManager:
             return
 
         self._reset_cancel_state()
-        py_exe = sys.executable if use_system_python else self.python_path(venv_root)
+        py_exe = (
+            sys.executable
+            if use_system_python
+            else self.python_path(venv_root)
+        )
         if not os.path.isfile(py_exe):
             output.warn(
                 "python introuvable dans le venv; installation requirements ignoree."
@@ -1853,7 +1951,9 @@ class VenvManager:
                 data = f.read()
             req_hash = hashlib.sha256(data).hexdigest()
         except Exception as e:
-            output.warn(f"Impossible de calculer le hash de requirements.txt: {e}")
+            output.warn(
+                f"Impossible de calculer le hash de requirements.txt: {e}"
+            )
             req_hash = None
         marker_base = venv_root
         if use_system_python:
@@ -1876,7 +1976,9 @@ class VenvManager:
                     return
             except Exception:
                 pass
-        output.state("Installation des dependances a partir de requirements.txt...")
+        output.state(
+            "Installation des dependances a partir de requirements.txt..."
+        )
         try:
             # remember marker info to write after success
             self._req_marker_path = marker_path
@@ -1913,7 +2015,9 @@ class VenvManager:
                 lambda: self._on_pip_output(process, error=True)
             )
             process.finished.connect(
-                lambda code, status: self._on_pip_finished(process, code, status)
+                lambda code, status: self._on_pip_finished(
+                    process, code, status
+                )
             )
             self._pip_progress_lines = 0
             process.start()
@@ -1936,11 +2040,16 @@ class VenvManager:
         # Affiche la dernière ligne reçue
         lines = data.strip().splitlines()
         if lines:
-            self._call_ui("update_progress_message", "reqs_install", lines[-1][:200])
+            self._call_ui(
+                "update_progress_message", "reqs_install", lines[-1][:200]
+            )
             self._pip_progress_lines += len(lines)
             # Simule une progression (pip ne donne pas de %)
             self._call_ui(
-                "update_progress_progress", "reqs_install", self._pip_progress_lines, 0
+                "update_progress_progress",
+                "reqs_install",
+                self._pip_progress_lines,
+                0,
             )
 
             # Detailed logging for verbose mode or errors
@@ -1992,7 +2101,9 @@ class VenvManager:
             )
             self._pip_phase = "upgrade"
             p2.finished.connect(
-                lambda code2, status2: self._on_pip_finished(p2, code2, status2)
+                lambda code2, status2: self._on_pip_finished(
+                    p2, code2, status2
+                )
             )
             p2.start()
             # Safety timeout for upgrade (5 min)
@@ -2018,13 +2129,17 @@ class VenvManager:
                     )
                 )
                 p2.setWorkingDirectory(os.path.dirname(self._req_path))
-                p2.readyReadStandardOutput.connect(lambda: self._on_pip_output(p2))
+                p2.readyReadStandardOutput.connect(
+                    lambda: self._on_pip_output(p2)
+                )
                 p2.readyReadStandardError.connect(
                     lambda: self._on_pip_output(p2, error=True)
                 )
                 self._pip_phase = "install"
                 p2.finished.connect(
-                    lambda code2, status2: self._on_pip_finished(p2, code2, status2)
+                    lambda code2, status2: self._on_pip_finished(
+                        p2, code2, status2
+                    )
                 )
                 p2.start()
                 # Safety timeout for requirements install (15 min)
@@ -2033,7 +2148,9 @@ class VenvManager:
                 )
                 return
             else:
-                output.error(f"Echec mise a niveau pip/setuptools/wheel (code {code})")
+                output.error(
+                    f"Echec mise a niveau pip/setuptools/wheel (code {code})"
+                )
                 self._call_ui(
                     "update_progress_message",
                     "reqs_install",
@@ -2047,7 +2164,9 @@ class VenvManager:
                     if getattr(self, "_req_marker_path", None) and getattr(
                         self, "_req_marker_hash", None
                     ):
-                        with open(self._req_marker_path, "w", encoding="utf-8") as mf:
+                        with open(
+                            self._req_marker_path, "w", encoding="utf-8"
+                        ) as mf:
                             mf.write(self._req_marker_hash)
                 except Exception:
                     pass
@@ -2055,10 +2174,14 @@ class VenvManager:
                     self._req_marker_path = None
                     self._req_marker_hash = None
                 self._call_ui(
-                    "update_progress_message", "reqs_install", "Installation terminee."
+                    "update_progress_message",
+                    "reqs_install",
+                    "Installation terminee.",
                 )
             else:
-                output.error(f"Echec installation requirements.txt (code {code})")
+                output.error(
+                    f"Echec installation requirements.txt (code {code})"
+                )
                 self._call_ui(
                     "update_progress_message",
                     "reqs_install",
@@ -2118,7 +2241,9 @@ class VenvManager:
         except Exception:
             return False
 
-    def _get_manager_command(self, manager: str, action: str) -> list[str] | None:
+    def _get_manager_command(
+        self, manager: str, action: str
+    ) -> list[str] | None:
         """Get the command for a specific manager and action."""
         try:
             if manager in self._manager_commands:
@@ -2128,7 +2253,9 @@ class VenvManager:
             pass
         return None
 
-    def setup_workspace(self, workspace_dir: str, check_tools: bool = True) -> bool:
+    def setup_workspace(
+        self, workspace_dir: str, check_tools: bool = True
+    ) -> bool:
         """Setup a workspace with venv and dependencies."""
         try:
             workspace_dir = os.path.abspath(workspace_dir)
@@ -2160,7 +2287,9 @@ class VenvManager:
                                     "Liaison venv invalide, verification des outils ignoree."
                                 )
 
-                        self._verify_venv_binding_async(existing_check, _after_binding)
+                        self._verify_venv_binding_async(
+                            existing_check, _after_binding
+                        )
                     else:
                         output.warn(
                             f"Venv invalide, verification des outils ignoree: {reason}"
@@ -2168,7 +2297,9 @@ class VenvManager:
 
             # Create ARK config if it doesn't exist
             try:
-                from pycompiler_ark.Core.Configs import create_default_ark_config
+                from pycompiler_ark.Core.Configs import (
+                    create_default_ark_config,
+                )
 
                 if create_default_ark_config(workspace_dir):
                     output.state("Fichier ark.yml cree dans le workspace.")

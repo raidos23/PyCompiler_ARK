@@ -96,7 +96,9 @@ def _tag_priority_from_tags(tags: Any) -> int:
         if not norm:
             return DEFAULT_TAG_PRIORITY
         scores = [
-            TAG_PRIORITY_MAP.get(t, DEFAULT_TAG_PRIORITY) for t in norm if t is not None
+            TAG_PRIORITY_MAP.get(t, DEFAULT_TAG_PRIORITY)
+            for t in norm
+            if t is not None
         ]
         return min(scores) if scores else DEFAULT_TAG_PRIORITY
     except Exception:
@@ -231,7 +233,11 @@ def _stop_process(proc, join_s: float = 1.0) -> None:
 
 def _resolve_reliability_options(config: dict[str, Any]) -> tuple[bool, bool]:
     try:
-        opts = dict(config or {}).get("options", {}) if isinstance(config, dict) else {}
+        opts = (
+            dict(config or {}).get("options", {})
+            if isinstance(config, dict)
+            else {}
+        )
     except Exception:
         opts = {}
     skip_dependents = bool(opts.get("skip_dependents_on_failure", True))
@@ -239,9 +245,15 @@ def _resolve_reliability_options(config: dict[str, Any]) -> tuple[bool, bool]:
     return skip_dependents, fail_fast
 
 
-def _resolve_exec_options(config: dict[str, Any], default_sandbox: bool) -> bool:
+def _resolve_exec_options(
+    config: dict[str, Any], default_sandbox: bool
+) -> bool:
     try:
-        opts = dict(config or {}).get("options", {}) if isinstance(config, dict) else {}
+        opts = (
+            dict(config or {}).get("options", {})
+            if isinstance(config, dict)
+            else {}
+        )
     except Exception:
         opts = {}
     sandbox = bool(opts.get("sandbox", default_sandbox))
@@ -400,7 +412,9 @@ def _run_plugin_sequential(
 def _configure_worker_env(config: dict[str, Any]) -> None:
     try:
         _opts = (
-            dict(config or {}).get("options", {}) if isinstance(config, dict) else {}
+            dict(config or {}).get("options", {})
+            if isinstance(config, dict)
+            else {}
         )
         _env_nonint = os.environ.get("PYCOMPILER_NONINTERACTIVE_PLUGINS")
         _env_offscreen = os.environ.get("PYCOMPILER_OFFSCREEN_PLUGINS")
@@ -421,7 +435,8 @@ def _configure_worker_env(config: dict[str, Any]) -> None:
         except Exception:
             _is_windows = False
         if not _is_windows and (
-            not os.environ.get("DISPLAY") and not os.environ.get("WAYLAND_DISPLAY")
+            not os.environ.get("DISPLAY")
+            and not os.environ.get("WAYLAND_DISPLAY")
         ):
             _noninteractive = True
         if _noninteractive:
@@ -435,9 +450,13 @@ def _configure_worker_env(config: dict[str, Any]) -> None:
 def _apply_resource_limits(config: dict[str, Any]) -> None:
     try:
         _opts3 = (
-            dict(config or {}).get("options", {}) if isinstance(config, dict) else {}
+            dict(config or {}).get("options", {})
+            if isinstance(config, dict)
+            else {}
         )
-        _limits = _opts3.get("plugin_limits", {}) if isinstance(_opts3, dict) else {}
+        _limits = (
+            _opts3.get("plugin_limits", {}) if isinstance(_opts3, dict) else {}
+        )
         _mem_mb = int(_limits.get("mem_mb", 0))
         _cpu_s = int(_limits.get("cpu_time_s", 0))
         _nofile = int(_limits.get("nofile", 0))
@@ -452,7 +471,11 @@ def _apply_resource_limits(config: dict[str, Any]) -> None:
                     pass
 
             if _mem_mb > 0:
-                _set(_res.RLIMIT_AS, _mem_mb * 1024 * 1024, _mem_mb * 1024 * 1024)
+                _set(
+                    _res.RLIMIT_AS,
+                    _mem_mb * 1024 * 1024,
+                    _mem_mb * 1024 * 1024,
+                )
             if _cpu_s > 0:
                 _set(_res.RLIMIT_CPU, _cpu_s, _cpu_s)
             if _nofile > 0:
@@ -487,7 +510,10 @@ def _load_plugin_instance(
     _sys.modules[spec.name] = module
     spec.loader.exec_module(module)  # type: ignore[attr-defined]
     plg = getattr(module, "PLUGIN", None)
-    if plg is None or getattr(getattr(plg, "meta", None), "id", None) != plugin_id:
+    if (
+        plg is None
+        or getattr(getattr(plg, "meta", None), "id", None) != plugin_id
+    ):
         try:
             mgr = BCASL(_Path(project_root), config=config, sandbox=False)
             if hasattr(module, "bcasl_register") and callable(
@@ -505,13 +531,18 @@ def _load_plugin_instance(
                             continue
                         if not getattr(attr, "__bcasl_plugin__", False):
                             continue
-                        plugin_instance = getattr(attr, "_bcasl_instance_", None)
+                        plugin_instance = getattr(
+                            attr, "_bcasl_instance_", None
+                        )
                         if plugin_instance is None:
                             try:
                                 plugin_instance = attr()
                             except Exception:
                                 continue
-                        if getattr(plugin_instance.meta, "id", None) == plugin_id:
+                        if (
+                            getattr(plugin_instance.meta, "id", None)
+                            == plugin_id
+                        ):
                             plg = plugin_instance
                             break
                     except Exception:
@@ -519,7 +550,9 @@ def _load_plugin_instance(
             else:
                 plg = rec.plugin
             if plg is None:
-                raise RuntimeError(f"Plugin '{plugin_id}' introuvable dans le module")
+                raise RuntimeError(
+                    f"Plugin '{plugin_id}' introuvable dans le module"
+                )
         except Exception as ex:
             raise RuntimeError(f"Impossible d'instancier le plugin: {ex}")
     return plg
@@ -621,7 +654,8 @@ class BCASL:
         # Parcourt uniquement les packages Python (dossiers contenant __init__.py)
         try:
             pkg_dirs = sorted(
-                [p for p in directory.iterdir() if p.is_dir()], key=lambda p: p.name
+                [p for p in directory.iterdir() if p.is_dir()],
+                key=lambda p: p.name,
             )
         except Exception:
             pkg_dirs = []
@@ -634,7 +668,9 @@ class BCASL:
             mod_name = f"bcasl_Plugins_{pkg_dir.name}"
             try:
                 spec = importlib.util.spec_from_file_location(
-                    mod_name, str(init_file), submodule_search_locations=[str(pkg_dir)]
+                    mod_name,
+                    str(init_file),
+                    submodule_search_locations=[str(pkg_dir)],
                 )
                 if spec is None or spec.loader is None:
                     raise ImportError("spec invalide")
@@ -651,7 +687,9 @@ class BCASL:
                     # Ancien style: fonction bcasl_register(manager)
                     before_ids = set(self._registry.keys())
                     reg(self)  # le package appelle self.add_plugin(...)
-                    new_ids = [k for k in self._registry.keys() if k not in before_ids]
+                    new_ids = [
+                        k for k in self._registry.keys() if k not in before_ids
+                    ]
                 else:
                     # Nouveau style: chercher les classes marquées avec @bc_register
                     # Ces classes ont l'attribut __bcasl_plugin__ = True
@@ -667,7 +705,9 @@ class BCASL:
                             if not isinstance(attr, type):
                                 continue
                             # C'est une classe de plugin décorée avec @bc_register
-                            plugin_instance = getattr(attr, "_bcasl_instance_", None)
+                            plugin_instance = getattr(
+                                attr, "_bcasl_instance_", None
+                            )
                             if plugin_instance is None:
                                 try:
                                     plugin_instance = attr()
@@ -703,11 +743,14 @@ class BCASL:
                         )
                     else:
                         _logger.warning(
-                            "Aucun plugin enregistré par package %s", pkg_dir.name
+                            "Aucun plugin enregistré par package %s",
+                            pkg_dir.name,
                         )
                 else:
                     count += added
-                    _logger.info("Plugin(s) chargé(s) depuis package %s", pkg_dir.name)
+                    _logger.info(
+                        "Plugin(s) chargé(s) depuis package %s", pkg_dir.name
+                    )
             except Exception as exc:  # isolation
                 msg = f"échec chargement: {exc}"
                 errors.append((pkg_dir.name, msg))
@@ -746,7 +789,9 @@ class BCASL:
         )
 
         # 1. Identifier les plugins actifs
-        active_items = {pid: rec for pid, rec in self._registry.items() if rec.active}
+        active_items = {
+            pid: rec for pid, rec in self._registry.items() if rec.active
+        }
         if not active_items:
             if log_cb:
                 try:
@@ -869,7 +914,9 @@ def _plugin_worker(
         try:
             from ..bcasl.PreCompileContext import PreCompileContext as _PCC
 
-            plg = _load_plugin_instance(module_path, plugin_id, project_root, config)
+            plg = _load_plugin_instance(
+                module_path, plugin_id, project_root, config
+            )
             ctx = _PCC(
                 root=_Path(project_root),
                 config=dict(config or {}),
@@ -884,7 +931,11 @@ def _plugin_worker(
                 catch_exceptions=True,
             )
             q.put(
-                {"ok": res.success, "error": res.error, "duration_ms": res.duration_ms}
+                {
+                    "ok": res.success,
+                    "error": res.error,
+                    "duration_ms": res.duration_ms,
+                }
             )
         except Exception:
             q.put({"ok": False, "error": _tb.format_exc(), "duration_ms": 0.0})
