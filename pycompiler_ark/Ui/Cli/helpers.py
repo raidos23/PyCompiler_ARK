@@ -555,7 +555,7 @@ def ensure_correct_git_commit(
     lock_payload: dict[str, Any],
     confirm_cb: Callable[[str], bool] | None = None,
 ) -> bool:
-    """Vérifie si le commit et la branche Git actuels correspondent à ceux du verrou."""
+    """Checks if the current commit and Git branch match those of the lock."""
     project = lock_payload.get("project") or {}
     locked_commit = project.get("git_commit")
     locked_branch = project.get("git_branch")
@@ -812,7 +812,7 @@ def run_bcasl_before_compile_sync(
                         if clean and not clean.startswith("["):
                             display = clean
                             if clean.startswith("Plugin: "):
-                                # Utilisation de markup Rich au lieu d'icônes
+                                # Using Rich markup instead of icons
                                 plugin_name = clean[8:].strip()
                                 display = f"Plugin: [bold white]{plugin_name}[/bold white]"
                             elif clean.startswith("Phase: "):
@@ -955,7 +955,7 @@ def run_bcasl_headless(args: list[str], verbose: bool = False) -> int:
                         if clean and not clean.startswith("["):
                             display = clean
                             if clean.startswith("Plugin: "):
-                                # Utilisation de markup Rich au lieu d'icônes
+                                # Using Rich markup instead of icons
                                 plugin_name = clean[8:].strip()
                                 display = f"Plugin: [bold white]{plugin_name}[/bold white]"
                             elif clean.startswith("Phase: "):

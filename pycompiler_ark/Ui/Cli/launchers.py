@@ -105,7 +105,7 @@ def launch_main_application(
                     if os.path.isfile(path):
                         pix = QPixmap(path)
                         if not pix.isNull():
-                            # Ajustement du cadrage : limiter la taille à 80% de l'écran
+                            # Framing adjustment: limit the size to 80% of the screen
                             screen = app.primaryScreen()
                             if screen:
                                 sgeo = screen.availableGeometry()
@@ -125,7 +125,7 @@ def launch_main_application(
                                 pix, Qt.WindowStaysOnTopHint
                             )
 
-                            # Centrage explicite
+                            # Explicit centering
                             if screen:
                                 sgeo = screen.availableGeometry()
                                 splash.move(

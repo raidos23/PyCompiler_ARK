@@ -24,7 +24,7 @@ import os
 
 try:
     import yaml
-except ImportError:  # pragma: no cover - la génération peut échouer proprement
+except ImportError:  # pragma: no cover - generation can fail cleanly
     yaml = None
 
 

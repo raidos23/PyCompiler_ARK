@@ -13,14 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-VenvManagerUI — couche GUI du gestionnaire de venv.
+"""VenvManagerUI — GUI layer of the venv manager.
 
-Cette classe étend VenvManager (Core) avec la logique d'interface
-utilisateur (dialogues, sélection de dossier, mise à jour des labels).
+This class extends VenvManager (Core) with interface logic
+user (dialogues, folder selection, updating labels).
 
-La logique métier (détection, validation, processus pip) reste dans Core.
-"""
+The business logic (detection, validation, pip process) remains in Core."""
 
 import os
 

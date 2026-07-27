@@ -24,7 +24,7 @@ from typing import Any
 
 import yaml
 
-# Cache global pour les traductions chargées (évite les rechargements)
+# Global cache for loaded translations (avoids reloads)
 _TRANSLATION_CACHE: dict[str, dict[str, Any]] = {}
 _LANGUAGES_CACHE: list[dict[str, str]] | None = None
 _CACHE_LOCK = asyncio.Lock()
@@ -45,7 +45,7 @@ def _languages_dir() -> str:
 
 
 def _load_language_data_sync(path: str) -> dict[str, Any] | None:
-    """Charger un fichier de langue YAML."""
+    """Load a YAML language file."""
     with open(path, encoding="utf-8") as f:
         data = yaml.safe_load(f)
     return data if isinstance(data, dict) else None
@@ -88,10 +88,9 @@ def _resolve_system_language_sync() -> str:
 def _load_language_file_sync(
     code: str,
 ) -> tuple[str | None, dict[str, Any] | None]:
-    """Charger un fichier de langue YAML/JSON avec résolution souple.
+    """Load a YAML/JSON language file with flexible resolution.
 
-    Returns (resolved_code, data) or (None, None) if not found/invalid.
-    """
+    Returns (resolved_code, data) or (None, None) if not found/invalid."""
     raw = str(code or "").strip()
     if not raw:
         return None, None
@@ -208,13 +207,13 @@ def _merge_translations(
 
 
 def set_active_translations(tr: dict[str, Any] | None) -> None:
-    """Définit le catalogue actif utilisé par l'API publique `translate()`."""
+    """Defines the active catalog used by the public API `translate()`."""
     global _ACTIVE_TRANSLATIONS
     _ACTIVE_TRANSLATIONS = dict(tr) if isinstance(tr, dict) else {}
 
 
 def get_active_translations() -> dict[str, Any]:
-    """Retourne le catalogue actif courant."""
+    """Returns the current active catalog."""
     return (
         dict(_ACTIVE_TRANSLATIONS)
         if isinstance(_ACTIVE_TRANSLATIONS, dict)
@@ -225,10 +224,9 @@ def get_active_translations() -> dict[str, Any]:
 def translate(
     domain: object | None, key: str, default: str | None = None
 ) -> str:
-    """Retourne la traduction active pour une clé donnée.
+    """Returns the active translation for a given key.
 
-    `domain` est conservé pour garder la même signature que les engines et les plugins.
-    """
+    `domain` is preserved to keep the same signature as engines and plugins."""
     tr = get_active_translations()
     if isinstance(tr, dict):
         value = tr.get(key)
@@ -263,43 +261,43 @@ async def available_languages() -> list[dict[str, str]]:
     global _LANGUAGES_CACHE
 
     try:
-        # Vérifier le cache d'abord (rPluginsde)
+        # Check cache first (rPluginsde)
         if _LANGUAGES_CACHE is not None:
             return _LANGUAGES_CACHE
 
-        # Charger depuis le disque en thread pool
+        # Load from disk in thread pool
         langs = await asyncio.to_thread(_available_languages_sync)
 
-        # Mettre en cache de manière thread-safe
+        # Caching thread-safely
         async with _CACHE_LOCK:
             _LANGUAGES_CACHE = langs
 
         return langs
     except Exception:
-        # Fallback: retourner au moins l'anglais
+        # Fallback: return at least English
         return [{"code": "en", "name": "English"}]
 
 
 async def get_translations(lang_pref: str | None) -> dict[str, Any]:
     """Load translations in real time with caching and robust fallbacks."""
     try:
-        # Normaliser la préférence de langue
+        # Standardize language preference
         code = await normalize_lang_pref(lang_pref)
 
         # Résoudre "System" vers la langue réelle
         if code == "System":
             code = await resolve_system_language()
 
-        # Vérifier le cache d'abord (très rPluginsde)
+        # Check cache first (very rPluginsde)
         if code in _TRANSLATION_CACHE:
             return _TRANSLATION_CACHE[code]
 
-        # Charger depuis le disque en thread pool (avec résolution flexible)
+        # Load from disk in thread pool (with flexible resolution)
         resolved_code, data = await asyncio.to_thread(
             _load_language_file_sync, code
         )
 
-        # Charger l'anglais depuis les fichiers de langue comme base commune
+        # Load English from language files as common base
         _, base_en = await asyncio.to_thread(_load_language_file_sync, "en")
         base_catalog = base_en if isinstance(base_en, dict) else {}
 
@@ -307,14 +305,14 @@ async def get_translations(lang_pref: str | None) -> dict[str, Any]:
         if resolved_code and resolved_code in _TRANSLATION_CACHE:
             return _TRANSLATION_CACHE[resolved_code]
 
-        # Merge à partir du catalogue anglais chargé sur disque
+        # Merge from English catalog loaded on disk
         merged = _merge_translations(
             base_catalog,
             data if isinstance(data, dict) else None,
             resolved_code or code,
         )
 
-        # Mettre en cache de manière thread-safe (code demandé + code résolu)
+        # Cache thread-safely (requested code + resolved code)
         async with _CACHE_LOCK:
             _TRANSLATION_CACHE[code] = merged
             if resolved_code:
@@ -335,7 +333,7 @@ def _normalize_translation_meta(
         if not isinstance(data, dict):
             data = {}
 
-        # Extraire les métadonnées existantes
+        # Extract existing metadata
         top_name = data.get("name") if isinstance(data, dict) else None
         top_code = data.get("code") if isinstance(data, dict) else None
         meta_in = data.get("_meta", {}) if isinstance(data, dict) else {}
@@ -343,14 +341,14 @@ def _normalize_translation_meta(
         if not isinstance(meta_in, dict):
             meta_in = {}
 
-        # Construire les métadonnées finales avec fallbacks
+        # Building final metadata with fallbacks
         final_code = top_code or meta_in.get("code") or code or "en"
 
         final_name = (
             top_name or meta_in.get("name") or _get_language_name(final_code)
         )
 
-        # Mettre à jour les métadonnées
+        # Update metadata
         data["_meta"] = {
             "code": final_code,
             "name": final_name,
@@ -359,7 +357,7 @@ def _normalize_translation_meta(
         return data
 
     except Exception:
-        # En cas d'erreur, retourner une structure minimale valide
+        # On error, return a valid minimal structure
         return {
             "_meta": {
                 "code": code or "en",
@@ -391,7 +389,7 @@ def _get_language_name(code: str) -> str:
     elif code_lower in ("ru", "русский"):
         return "Русский"
     else:
-        # Retourner le code en majuscule comme fallback
+        # Return uppercase code as fallback
         return code.upper() if code else "Unknown"
 
 
@@ -553,7 +551,7 @@ essential_log_max_len = 10000
 
 
 def i18n_synchro(self, lang_pref: str, tr: dict[str, Any]) -> str:
-    """Synchronise la langue active sur l'UI, les engines et les plugins."""
+    """Synchronizes the active language on the UI, engines and plugins."""
     meta = tr.get("_meta", {}) if isinstance(tr, dict) else {}
     lang_name = (
         meta.get("name", lang_pref) if isinstance(meta, dict) else lang_pref

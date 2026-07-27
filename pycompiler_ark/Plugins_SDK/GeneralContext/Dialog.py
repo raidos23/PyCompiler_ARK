@@ -21,7 +21,7 @@ from typing import Optional
 
 from rich.console import Console
 
-# Import des classes et fonctions de Core.dialogs
+# Importing classes and functions from Core.dialogs
 from pycompiler_ark.Ui import output
 
 from ...Core.globals import INTERNAL_PLUGINS_DIR

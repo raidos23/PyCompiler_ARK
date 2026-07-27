@@ -13,14 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-WorkSpaceManager Module
+"""WorkSpaceManagerModule
 
-Ce module manage toutes les opérations liées au workspace:
-- Configuration initiale du workspace
-- Manipulation avancée (drag & drop, selection de files)
-- Management des files Python dans le workspace
-"""
+This module manages all operations related to the workspace:
+- Initial configuration of the workspace
+- Advanced manipulation (drag & drop, file selection)
+- Management of Python files in the workspace"""
 
 from .SetupWorkspace import SetupWorkspace
 from .WorkspaceManipulation import get_workspace_status

@@ -55,7 +55,7 @@ from ....Core.engine.registry import available_engines
 def _apply_themed_icon(
     widget: QPushButton, icon_name: str, size: int = 16
 ) -> None:
-    """Applique une icône SVG thémée au widget."""
+    """Applies a themed SVG icon to the widget."""
     try:
         from ..UiConnection import themed_svg_icon
 

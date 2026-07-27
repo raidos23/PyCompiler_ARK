@@ -13,31 +13,27 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-SetupWorkspace — logique pure de gestion et d'initialisation du workspace.
+"""SetupWorkspace — pure workspace management and initialization logic.
 
-Ce module ne contient AUCUNE dépendance Qt. Les interactions utilisateur
-sont gérées par Ui.Gui.Dialogs.WorkspaceDialog.
-"""
+This module contains NO Qt dependencies. User interactions
+are managed by Ui.Gui.Dialogs.WorkspaceDialog."""
 
 import os
 from typing import List
 
 
 class SetupWorkspace:
-    """Logique métier pour l'initialisation et le scan du workspace."""
+    """Business logic for initializing and scanning the workspace."""
 
     @staticmethod
     def list_python_files(folder: str) -> List[str]:
-        """
-        Récupère récursivement tous les fichiers Python d'un dossier.
+        """Recursively retrieves all Python files in a folder.
 
         Args:
-          folder: Dossier à scanner.
+          folder: Folder to scan.
 
         Returns:
-          Liste des chemins absolus vers les fichiers .py.
-        """
+          List of absolute paths to .py files."""
         py_files = []
         if not folder or not os.path.isdir(folder):
             return py_files
@@ -51,12 +47,10 @@ class SetupWorkspace:
 
     @staticmethod
     def create_workspace_dir(folder: str) -> bool:
-        """
-        Crée le dossier du workspace s'il n'existe pas.
+        """Creates the workspace folder if it does not exist.
 
         Returns:
-          True si le dossier existe ou a été créé, False sinon.
-        """
+          True if the folder exists or has been created, False otherwise."""
         try:
             if not os.path.isdir(folder):
                 os.makedirs(folder, exist_ok=True)

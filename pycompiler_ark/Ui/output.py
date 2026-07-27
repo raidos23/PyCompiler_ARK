@@ -223,7 +223,7 @@ def log(
     err: bool | None = None,
     gui: object | None = None,
 ) -> None:
-    """Log principal avec append automatique (thread-safe pour le widget GUI)."""
+    """Main log with automatic append (thread-safe for GUI widget)."""
 
     lvl = level.upper().strip()
 
@@ -269,15 +269,15 @@ def log(
             html = f'<span style="color:{color};">{plain_line}</span><br>'
             _safe_append_to_widget(widget, html, plain_line)
 
-    # Appel sûr à _emit (sans exc_info)
+    # Safe call to _emit (without exc_info)
     try:
         _emit(plain_line, err=out_err, style=style)
     except TypeError:
-        # Si _emit a une autre signature
+        # If _emit has another signature
         try:
             _emit(plain_line, err=out_err)
         except Exception:
-            pass  # dernier recours
+            pass  # last resort
 
 
 def info(message: str | tuple | list | Any, gui: object | None = None):

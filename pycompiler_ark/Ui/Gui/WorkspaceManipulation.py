@@ -13,12 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-WorkspaceAdvancedManipulation — interactions Qt avancées avec le workspace.
+"""WorkspaceAdvancedManipulation — advanced Qt interactions with the workspace.
 
-Ce module gère les événements Qt (drag & drop, sélection de fichiers, nettoyage)
-et délègue toute la logique fichier pure à Core.WorkSpaceManager.
-"""
+This module handles Qt events (drag & drop, file selection, cleaning)
+and delegates all pure file logic to Core.WorkSpaceManager."""
 
 import os
 
@@ -29,11 +27,11 @@ from pycompiler_ark.Ui import output
 
 
 class WorkspaceAdvancedManipulation:
-    """Gestion Qt avancée du workspace (drag & drop, sélection, nettoyage)."""
+    """Advanced Qt workspace management (drag & drop, selection, cleaning)."""
 
     @staticmethod
     def select_files_manually(gui_instance):
-        """Ouvrir un dialog de sélection de fichiers Python."""
+        """Open a Python file selection dialog."""
         workspace_dir = getattr(gui_instance, "workspace_dir", None)
 
         if not workspace_dir:
@@ -120,7 +118,7 @@ class WorkspaceAdvancedManipulation:
 
     @staticmethod
     def remove_selected_file(gui_instance):
-        """Supprimer les fichiers sélectionnés de la liste UI et de l'état interne."""
+        """Delete selected files from UI list and internal state."""
         if not hasattr(gui_instance, "file_list"):
             return
 
@@ -152,7 +150,7 @@ class WorkspaceAdvancedManipulation:
 
     @staticmethod
     def handle_drag_enter_event(gui_instance, event: QDropEvent):
-        """Accepter ou refuser l'événement dragEnter."""
+        """Accept or reject the dragEnter event."""
         if event.mimeData().hasUrls():
             event.acceptProposedAction()
         else:
@@ -160,7 +158,7 @@ class WorkspaceAdvancedManipulation:
 
     @staticmethod
     def handle_drop_event(gui_instance, event: QDropEvent):
-        """Traiter l'événement drop et ajouter les fichiers/dossiers Python déposés."""
+        """Process the drop event and add the dropped Python files/folders."""
         from ...Core.WorkSpaceManager.WorkspaceManipulation import (
             add_files,
             resolve_dropped_files,
@@ -232,7 +230,7 @@ class WorkspaceAdvancedManipulation:
 
     @staticmethod
     def clear_workspace(gui_instance, keep_dir: bool = True) -> bool:
-        """Vider l'état courant du workspace."""
+        """Empty the current state of the workspace."""
         try:
             from ...Core.WorkSpaceManager.WorkspaceManipulation import (
                 clear_workspace_data,

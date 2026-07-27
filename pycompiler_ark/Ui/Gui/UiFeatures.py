@@ -13,11 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-UiFeatures — mixin de fonctionnalités UI pour PyCompiler ARK.
+"""UiFeatures — mixin of UI features for PyCompiler ARK.
 
-Ce module ne contient que du code Qt. Toute logique métier est déléguée à Core/.
-"""
+This module contains only Qt code. All business logic is delegated to Core/."""
 
 import os
 import platform
@@ -31,7 +29,7 @@ from pycompiler_ark.Ui import output
 
 
 class UiFeatures:
-    """Mixin UI helper utilisé par la fenêtre principale."""
+    """Mixin UI helper used by the main window."""
 
     # =========================================================================
     # SÉLECTION D'ICÔNE

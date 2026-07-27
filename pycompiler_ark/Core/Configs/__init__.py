@@ -231,32 +231,31 @@ def _compatibility_view(config: dict[str, Any]) -> dict[str, Any]:
 
 
 def normalize_ark_config(config: dict[str, Any]) -> dict[str, Any]:
-    """Normalise une configuration brute en un dictionnaire canonique.
+    """Normalizes a raw configuration into a canonical dictionary.
 
-    Cette version ne gère plus la rétro-compatibilité avec 'exclusion_patterns'
-    et 'inclusion_patterns' au niveau racine. Ces réglages doivent désormais
-    être exclusivement gérés dans 'workspace: exclude'.
-    """
+    This version no longer supports backwards compatibility with 'exclusion_patterns'
+    and 'inclusion_patterns' at the root level. These settings should now
+    be exclusively managed in 'workspace: exclude'."""
     if not isinstance(config, dict):
         config = {}
 
-    # Fusion avec les valeurs par défaut
+    # Merge with defaults
     merged = _deep_merge_dict(DEFAULT_ARK_CONFIG, config)
 
-    # Nettoyage explicite des clés obsolètes si présentes
+    # Explicit cleaning of obsolete keys if present
     merged.pop("exclusion_patterns", None)
     merged.pop("inclusion_patterns", None)
     merged.pop("dependencies", None)
     merged.pop("environment_manager", None)
 
-    # Normalisation de la section 'project'
+    # Standardization of the 'project' section
     project = merged.get("project")
     if not isinstance(project, dict):
         project = {}
     project_name = str(project.get("name") or "").strip()
     project_version = str(project.get("version") or "").strip() or "1.0.0"
 
-    # Récupération de l'entrypoint (support build.entrypoint comme legacy interne)
+    # Entrypoint recovery (support build.entrypoint as internal legacy)
     build_for_entry = merged.get("build")
     if not isinstance(build_for_entry, dict):
         build_for_entry = {}
@@ -277,7 +276,7 @@ def normalize_ark_config(config: dict[str, Any]) -> dict[str, Any]:
         "exclude": _normalize_workspace_exclude(workspace_cfg.get("exclude")),
     }
 
-    # Normalisation de la section 'build'
+    # Standardization of the 'build' section
     build = merged.get("build")
     if not isinstance(build, dict):
         build = {}
