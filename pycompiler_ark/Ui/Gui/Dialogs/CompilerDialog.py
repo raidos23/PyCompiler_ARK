@@ -13,18 +13,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-CompilerDialog — couche GUI du pipeline de compilation.
+"""CompilerDialog — GUI layer of the compilation pipeline.
 
-Contient tous les éléments d'interface liés à la compilation :
-- Classes de signaux Qt (CompilationSignals, MainProcessSignals)
-- Fonctions de connexion UI (compile_all, handle_finished, …)
+Contains all interface elements related to compilation:
+- Qt signal classes (CompilationSignals, MainProcessSignals)
+- UI connection functions (compile_all, handle_finished, …)
 - Dialogues (prompt entrypoint, error dialog)
-- Gestion de la barre de progression
+- Progress bar management
 
-La logique métier (CompilationThread, CompilerCore, MainProcess)
-reste dans Core/Compiler/.
-"""
+Business logic (CompilationThread, CompilerCore, MainProcess)
+stays in Core/Compiler/."""
 
 from __future__ import annotations
 

@@ -318,7 +318,7 @@ def _run_plugin_sequential(
     plg = rec.plugin
     start = time.perf_counter()
 
-    # Vérification et installation des outils requis par le plugin
+    # Checking and installing the tools required by the plugin
     tools = getattr(plg, "required_tools", {})
     if tools.get("python") or tools.get("system"):
         log_cb = getattr(ctx, "_log_cb", None)
@@ -571,7 +571,7 @@ PHASES: dict[int, tuple[str, int, int]] = {
 
 
 class BCASL:
-    """Gestionnaire main des plugins et de leur exécution avant compilation."""
+    """Main manager of plugins and their execution before compilation."""
 
     def __init__(
         self,
@@ -589,7 +589,7 @@ class BCASL:
         # Sandbox settings
         self.sandbox = bool(sandbox)
 
-    # Plugins publique
+    # Public plugins
     def add_plugin(self, plugin: BcPluginBase) -> None:
         if not isinstance(plugin, BcPluginBase):
             raise TypeError("Le plugin doit être une instance de BcPluginBase")
@@ -636,14 +636,13 @@ class BCASL:
         rec.plugin.priority = int(priority)
         return True
 
-    # Chargement automatique
+    # Automatic loading
     def load_plugins_from_directory(
         self, directory: Path
     ) -> tuple[int, list[tuple[str, str]]]:
-        """Load automatiquement tous les plugins depuis un folder.
+        """Automatically load all plugins from a folder.
 
-        Return (nombre_plugins_enregistrés, liste_erreurs[(module, message)]).
-        """
+        Return (number_registered_plugins, error_list[(module, message)])."""
         directory = Path(directory)
         if not directory.exists() or not directory.is_dir():
             _logger.warning("Dossier plugins introuvable: %s", directory)
@@ -651,7 +650,7 @@ class BCASL:
 
         count = 0
         errors: list[tuple[str, str]] = []
-        # Parcourt uniquement les packages Python (dossiers contenant __init__.py)
+        # Browse only Python packages (folders containing __init__.py)
         try:
             pkg_dirs = sorted(
                 [p for p in directory.iterdir() if p.is_dir()],
@@ -678,7 +677,7 @@ class BCASL:
                 sys.modules[mod_name] = module
                 spec.loader.exec_module(module)  # type: ignore[attr-defined]
 
-                # Recherche et appel de la fonction d'enregistrement si présente
+                # Finding and calling the recording function if present
                 reg = getattr(module, BCASL_PLUGIN_REGISTER_FUNC, None)
                 is_decorator_plugin = False
                 new_ids: list[str] = []
@@ -686,25 +685,25 @@ class BCASL:
                 if callable(reg):
                     # Ancien style: fonction bcasl_register(manager)
                     before_ids = set(self._registry.keys())
-                    reg(self)  # le package appelle self.add_plugin(...)
+                    reg(self)  # the package calls self.add_plugin(...)
                     new_ids = [
                         k for k in self._registry.keys() if k not in before_ids
                     ]
                 else:
-                    # Nouveau style: chercher les classes marquées avec @bc_register
-                    # Ces classes ont l'attribut __bcasl_plugin__ = True
-                    # et peuvent avoir _bcasl_instance_ pour l'instance
+                    # New style: search for classes marked with @bc_register
+                    # These classes have the attribute __bcasl_plugin__ = True
+                    # and can have _bcasl_instance_ for the instance
                     for attr_name in dir(module):
                         try:
                             attr = getattr(module, attr_name, None)
                             if attr is None:
                                 continue
-                            # Vérifier si c'est une classe marquée comme plugin
+                            # Check if it's a class marked as plugin
                             if not getattr(attr, "__bcasl_plugin__", False):
                                 continue
                             if not isinstance(attr, type):
                                 continue
-                            # C'est une classe de plugin décorée avec @bc_register
+                            # It's a plugin class decorated with @bc_register
                             plugin_instance = getattr(
                                 attr, "_bcasl_instance_", None
                             )
@@ -718,7 +717,7 @@ class BCASL:
                                         e,
                                     )
                                     continue
-                            # Enregistrer le plugin
+                            # Register the plugin
                             pid = plugin_instance.meta.id
                             if pid not in self._registry:
                                 self.add_plugin(plugin_instance)
@@ -732,7 +731,7 @@ class BCASL:
                     if rec is not None:
                         rec.module_path = init_file
                         rec.module_name = mod_name
-                # Validation de signature supprimée (simplification)
+                # Signature validation removed (simplification)
                 added = len(new_ids)
                 if added <= 0:
                     if not is_decorator_plugin:
@@ -763,13 +762,12 @@ class BCASL:
         stop_requested: Optional[callable] = None,
         log_cb: Optional[callable] = None,
     ) -> ExecutionReport:
-        """Execute le hook 'on_pre_compile' de tous les plugins actifs.
+        """Execute the 'on_pre_compile' hook of all active plugins.
 
         Logic:
-        1. Groupes par phase (tags -> phase score)
-        2. Vérifie si la phase est activée (via self.config["phases"])
-        3. Exécution séquentielle par phase
-        """
+        1. Groups by phase (tags -> phase score)
+        2. Checks if phase is enabled (via self.config["phases"])
+        3. Sequential execution by phase"""
         if ctx is None:
             ctx = PreCompileContext(
                 root=self.project_root,
@@ -788,7 +786,7 @@ class BCASL:
             self.config
         )
 
-        # 1. Identifier les plugins actifs
+        # 1. Identify active plugins
         active_items = {
             pid: rec for pid, rec in self._registry.items() if rec.active
         }
@@ -801,19 +799,19 @@ class BCASL:
             _logger.info("Aucun plugin Bcasl actif")
             return report
 
-        # 2. Groupe par phase
+        # 2. Group by phase
         phase_groups: dict[int, list[str]] = {}
         for pid, rec in active_items.items():
             tags = getattr(rec.plugin.meta, "tags", ())
             score = _tag_priority_from_tags(tags)
             phase_groups.setdefault(score, []).append(pid)
 
-        # 3. Charger l'état d'activation des phases
+        # 3. Load phase activation status
         phases_cfg = self.config.get("phases", {})
         if not isinstance(phases_cfg, dict):
             phases_cfg = {}
 
-        # 4. Exécuter phases une par une
+        # 4. Execute phases one by one
         for score in sorted(PHASES.keys()):
             pname, _, _ = PHASES[score]
             if not phases_cfg.get(pname, True):
@@ -831,12 +829,12 @@ class BCASL:
                 except Exception:
                     pass
 
-            # Sous-ensemble d'items pour cette phase
+            # Subset of items for this phase
             p_items = {pid: active_items[pid] for pid in p_ids}
             indeg, children = _build_dependency_graph(p_items)
             ready = _build_ready_queue(p_items, indeg)
 
-            # Exécution strictement séquentielle
+            # Strictly sequential execution
             order = _compute_sequential_order(ready, children, indeg, p_items)
             failed_seq: set[str] = set()
             for pid in order:
@@ -886,7 +884,7 @@ def _plugin_worker(
     q,
     build_context: Optional[Any] = None,
 ) -> None:
-    """Load un module de plugin depuis son path et execute on_pre_compile dans un process isolé."""
+    """Load a plugin module from its path and execute on_pre_compile in an isolated process."""
     import logging as _logging
     import os as _os
     import sys as _sys

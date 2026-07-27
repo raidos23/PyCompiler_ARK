@@ -13,17 +13,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-BcaslDialog — éditeur visuel du pipeline BCASL (Qt pur).
+"""BcaslDialog — visual editor of the BCASL pipeline (pure Qt).
 
-Respecte la SPEC UX BCASL :
-  - Sections collapsibles par catégorie (tag → phase)
-  - Spinbox priorité + ⚠️ hors-plage
+Complies with SPEC UX BCASL:
+  - Collapsible sections by category (tag → phase)
+  - Spinbox priority + ⚠️ out of range
   - ↑ / ↓ intra-section, DnD intra-section
-  - Expert mode
+  - Fashion expert
   - Ctrl+S / Ctrl+Z / Ctrl+Y / Space / ↑↓
-  - Format bcasl.yml : plugins en liste [{name, enabled, priority, config}]
-"""
+  - bcasl.yml format: plugins in list [{name, enabled, priority, config}]"""
 
 from __future__ import annotations
 
@@ -64,7 +62,7 @@ from pycompiler_ark.Plugins_SDK.GeneralContext import (
 
 
 def _is_dark() -> bool:
-    """Détermine si le thème actuel est sombre."""
+    """Determines whether the current theme is dark."""
     try:
         from ..UiConnection import _is_qss_dark
 
@@ -75,7 +73,7 @@ def _is_dark() -> bool:
 
 
 def _get_bcasl_colors() -> dict[str, str]:
-    """Retourne les couleurs adaptées au thème (soumis au thème)."""
+    """Returns colors appropriate to the theme (subject to theme)."""
     app = QApplication.instance()
     pal = app.palette() if app else QPalette()
 
@@ -103,7 +101,7 @@ def _get_bcasl_colors() -> dict[str, str]:
 def _apply_themed_icon(
     widget: QPushButton, icon_name: str, size: int = 18
 ) -> None:
-    """Applique une icône SVG thémée au widget."""
+    """Applies a themed SVG icon to the widget."""
     try:
         from PySide6.QtCore import QSize
 
@@ -144,7 +142,7 @@ SECTION_PHASES: dict[int, tuple[str, str]] = {
     100: ("Default", "Other actions (default phase)"),
 }
 
-# Tag → score de phase
+# Tag → phase score
 _TAG_PRIORITY_MAP: dict[str, int] = {}
 try:
     from ....bcasl.tagging import (
@@ -155,7 +153,7 @@ except Exception:
 
 
 def _phase_score_for_tags(tags: list[str]) -> int:
-    """Retourne le score de phase minimum pour une liste de tags."""
+    """Returns the minimum phase score for a list of tags."""
     scores = [
         _TAG_PRIORITY_MAP.get(str(t).strip().lower(), 100)
         for t in (tags or [])
@@ -164,7 +162,7 @@ def _phase_score_for_tags(tags: list[str]) -> int:
 
 
 def _section_for_phase(score: int) -> tuple[int, str]:
-    """Retourne (key, name) pour un score de phase."""
+    """Returns (key, name) for a phase score."""
     # Trouver la section dont le score correspond
     for key in sorted(SECTION_PHASES):
         if score == key:
@@ -176,12 +174,12 @@ def _section_for_phase(score: int) -> tuple[int, str]:
 
 
 # ---------------------------------------------------------------------------
-# Helpers lecture/écriture plugins
+# Helpers read/write plugins
 # ---------------------------------------------------------------------------
 
 
 def _read_plugin_list(plugins_raw: Any) -> list[dict[str, Any]]:
-    """Normalise plugins (liste ou dict) → liste [{name, enabled, priority, config}]."""
+    """Normalize plugins (list or dict) → list [{name, enabled, priority, config}]."""
     if isinstance(plugins_raw, list):
         result = []
         for item in plugins_raw:
@@ -211,7 +209,7 @@ def _read_plugin_list(plugins_raw: Any) -> list[dict[str, Any]]:
 def _plugins_list_to_yaml(
     plugin_rows: list[dict[str, Any]],
 ) -> list[dict[str, Any]]:
-    """Retourne la liste dans le format bcasl.yml officiel."""
+    """Returns the list in the official bcasl.yml format."""
     result = []
     for row in plugin_rows:
         result.append(
@@ -231,7 +229,7 @@ def _plugins_list_to_yaml(
 
 
 class _PluginRow(QFrame):
-    """Widget représentant un seul plugin dans le pipeline."""
+    """Widget representing a single plugin in the pipeline."""
 
     sig_move_up = Signal(str)  # plugin_id
     sig_move_down = Signal(str)
@@ -314,7 +312,7 @@ class _PluginRow(QFrame):
 
 
 class _SectionWidget(QGroupBox):
-    """Section collapsible utilisant QGroupBox pour une meilleure intégration thématique."""
+    """Collapsible section using QGroupBox for better thematic integration."""
 
     sig_changed = Signal()
 
@@ -344,7 +342,7 @@ class _SectionWidget(QGroupBox):
     # ------------------------------------------------------------------
 
     def _on_toggled(self, checked: bool) -> None:
-        """Cache/affiche les lignes de plugins quand on toggle le GroupBox."""
+        """Hide/show plugin lines when toggling the GroupBox."""
         for i in range(self._content_lay.count()):
             item = self._content_lay.itemAt(i)
             if item and item.widget():
@@ -382,7 +380,7 @@ class _SectionWidget(QGroupBox):
         return -1
 
     def _swap(self, i: int, j: int) -> None:
-        """Échange visuellement deux lignes dans le layout."""
+        """Visually swaps two lines in the layout."""
         self._rows[i], self._rows[j] = self._rows[j], self._rows[i]
         # Retirer tous les widgets et les ré-insérer dans le bon ordre
         for r in self._rows:
@@ -438,7 +436,7 @@ class _SectionWidget(QGroupBox):
 
 
 class BcaslPipelineDialog(QDialog):
-    """Éditeur visuel du pipeline BCASL."""
+    """BCASL pipeline visual editor."""
 
     MAX_UNDO = 50
 
@@ -570,7 +568,7 @@ class BcaslPipelineDialog(QDialog):
         self._on_bcasl_enabled_toggled(self._chk_bcasl_enabled.isChecked())
 
     def _on_bcasl_enabled_toggled(self, checked: bool) -> None:
-        """Active ou désactive les onglets de configuration selon l'état global."""
+        """Enables or disables configuration tabs based on global status."""
         self._tabs.setEnabled(checked)
         if not checked:
             self._tabs.setToolTip(
@@ -587,7 +585,7 @@ class BcaslPipelineDialog(QDialog):
         super().closeEvent(event)
 
     def _populate_sections(self) -> None:
-        """Grouper les plugins par section et les insérer."""
+        """Group the plugins by section and insert them."""
         plugins_raw = (
             self._cfg.get("plugins", {}) if isinstance(self._cfg, dict) else {}
         )
@@ -663,7 +661,7 @@ class BcaslPipelineDialog(QDialog):
                 self._sections.append(section)
 
     def _build_plugin_config_tabs(self) -> None:
-        """Crée les onglets de configuration per-plugin."""
+        """Creates per-plugin configuration tabs."""
         try:
             from ....bcasl.Loader import _build_workspace_meta
             from ....bcasl.PreCompileContext import PreCompileContext
@@ -805,7 +803,7 @@ class BcaslPipelineDialog(QDialog):
     # ------------------------------------------------------------------
 
     def _snapshot(self) -> list[dict]:
-        """Prend un instantané de l'état complet du pipeline."""
+        """Takes a snapshot of the entire pipeline state."""
         state = []
         for section in self._sections:
             state.append(
@@ -851,7 +849,7 @@ class BcaslPipelineDialog(QDialog):
     # ------------------------------------------------------------------
 
     def _collect_plugin_configs(self) -> dict[str, dict]:
-        """Récupère les configs des onglets plugins."""
+        """Retrieves the plugin tab configs."""
         result = {}
         for pid, state in self._plugin_ui_state.items():
             cfg_obj = state.get("config", {})
@@ -948,7 +946,7 @@ class BcaslPipelineDialog(QDialog):
 
 
 # ---------------------------------------------------------------------------
-# Worker et bridge Qt (déplacés depuis bcasl/Loader.py)
+# Worker and bridge Qt (moved from bcasl/Loader.py)
 # ---------------------------------------------------------------------------
 
 
@@ -1084,7 +1082,7 @@ def _build_plugin_item(
     Qt,
     QListWidgetItem,
 ) -> Any:
-    """Construit un QListWidgetItem pour un plugin BCASL."""
+    """Constructs a QListWidgetItem for a BCASL plugin."""
     from ....bcasl.tagging import get_tag_phase_name
 
     label = meta.get("name") or pid
@@ -1135,12 +1133,12 @@ def _build_plugin_item(
 
 
 # ---------------------------------------------------------------------------
-# Point d'entrée (appelé par la GUI)
+# Entry point (called by the GUI)
 # ---------------------------------------------------------------------------
 
 
 def ensure_bcasl_thread_stopped(self, timeout_ms: int = 5000) -> None:
-    """Arrête proprement un thread BCASL en cours (si présent)."""
+    """Properly stops a running BCASL thread (if present)."""
     try:
         # Request cooperative cancellation first, then hard-kill any sandbox workers.
         try:
@@ -1193,10 +1191,9 @@ def ensure_bcasl_thread_stopped(self, timeout_ms: int = 5000) -> None:
 
 
 def open_bc_loader_dialog(self) -> None:
-    """Ouvre l'éditeur visuel du pipeline BCASL.
+    """Opens the BCASL pipeline visual editor.
 
-    Persiste dans <workspace>/bcasl.yml (format liste YAML).
-    """
+    Persists in <workspace>/bcasl.yml (YAML list format)."""
     try:
         from PySide6.QtWidgets import QMessageBox
     except Exception:  # pragma: no cover
@@ -1267,9 +1264,8 @@ def run_pre_compile_async(
     on_done: Optional[callable] = None,
     build_context: Optional[Any] = None,
 ) -> None:
-    """Lance BCASL en arrière-plan via QThread.
-    on_done(report) appelé à la fin si fourni.
-    """
+    """Runs BCASL in the background via QThread.
+    on_done(report) called at the end if provided."""
     try:
         if not getattr(self, "workspace_dir", None):
             if callable(on_done):
@@ -1352,7 +1348,7 @@ def open_bcasl_pipeline_dialog(
     cfg: "dict[str, Any]",
     plugin_instances: "dict[str, Any]",
 ) -> None:
-    """Ouvre le dialog BCASL Pipeline."""
+    """Opens the BCASL Pipeline dialog."""
     dlg = BcaslPipelineDialog(
         gui, workspace_root, meta_map, cfg, plugin_instances
     )

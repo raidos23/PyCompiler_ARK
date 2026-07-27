@@ -37,20 +37,18 @@ def build_command(
     env: Optional[Dict[str, str]] = None,
     use_shell: bool = False,
 ) -> Tuple[str, Dict[str, str]]:
-    """
-    Build a complete compilation command.
+    """Build a complete compilation command.
 
     Args:
-     program: Programme main (python, pyinstaller, etc.)
-     args: Arguments de la commande
-     working_dir: Répertoire de travail
-     env: Variables d'environment supplémentaires
-     use_shell: Utiliser shell pour l'exécution
+     program: Main program (python, pyinstaller, etc.)
+     args: Command arguments
+     working_dir: Working directory
+     env: Additional environment variables
+     use_shell: Use shell for execution
 
     Returns:
-     Tuple (commande str, environment dict)
-    """
-    # Construire la commande
+     Tuple (str command, environment dict)"""
+    # Build command
     if args:
         cmd_parts = [program] + args
     else:
@@ -61,12 +59,12 @@ def build_command(
     else:
         cmd_str = " ".join(cmd_parts)
 
-    # Préparer l'environnement
+    # Prepare the environment
     full_env = os.environ.copy()
     if env:
         full_env.update(env)
 
-    # Ajouter des variables par défaut
+    # Add default variables
     full_env.setdefault("PYTHONUNBUFFERED", "1")
     full_env.setdefault("ARK_COMPILER", "PyCompiler_ARK")
 
@@ -78,37 +76,35 @@ def validate_command(
     args: Optional[List[str]] = None,
     working_dir: Optional[str] = None,
 ) -> Tuple[bool, str]:
-    """
-    Validate a compilation command.
+    """Validate a compilation command.
 
     Args:
-     program: Programme main
+     program: Program main
      args: Arguments
-     working_dir: Répertoire de travail
+     working_dir: Working directory
 
     Returns:
-     Tuple (est_validate, message_erreur)
-    """
-    # Vérifier le programme
+     Tuple (is_validated, error_message)"""
+    # Check the program
     if not program:
         return False, "No program specified"
 
-    # Vérifier si le programme existe
+    # Check if the program exists
     program_path = None
 
-    # Chercher dans le PATH
+    # Search the PATH
     for path in os.environ.get("PATH", "").split(os.pathsep):
         test_path = os.path.join(path, program)
         if os.path.isfile(test_path) and os.access(test_path, os.X_OK):
             program_path = test_path
             break
 
-    # Vérifier si c'est un chemin absolu
+    # Check if it's an absolute path
     if not program_path and os.path.isabs(program):
         if os.path.isfile(program) and os.access(program, os.X_OK):
             program_path = program
 
-    # Si pas trouvé et pas d'extension, essayer avec .py
+    # If not found and no extension, try with .py
     if not program_path and not program.endswith((".exe", ".py")):
         py_program = program + ".py"
         for path in os.environ.get("PATH", "").split(os.pathsep):
@@ -118,13 +114,13 @@ def validate_command(
                 break
 
     if not program_path:
-        # Pour Python, on peut utiliser sys.executable
+        # For Python, we can use sys.executable
         if program in ("python", "python3"):
             program_path = sys.executable
         else:
             return False, f"Program not found: {program}"
 
-    # Vérifier le répertoire de travail
+    # Check working directory
     if working_dir and not os.path.isdir(working_dir):
         return False, f"Working directory not found: {working_dir}"
 
@@ -141,18 +137,16 @@ def validate_command(
 
 
 def escape_arguments(args: List[str]) -> List[str]:
-    """
-    Escape arguments for secure usage.
+    """Escape arguments for secure usage.
 
     Args:
-     args: Liste d'arguments
+     args: Argument list
 
     Returns:
-     Liste d'arguments échappés
-    """
+     List of escaped arguments"""
     escaped = []
     for arg in args:
-        # Échapper les caractères spéciaux
+        # Escaping special characters
         escaped.append(shlex.quote(str(arg)))
     return escaped
 
@@ -167,7 +161,7 @@ def sanitize_path(path: str) -> str:
     Returns:
      Path sanitisé
     """
-    # Supprimer les caractères dangereux
+    # Remove dangerous characters
     dangerous_chars = [
         ";",
         "|",
@@ -189,10 +183,10 @@ def sanitize_path(path: str) -> str:
     for char in dangerous_chars:
         sanitized = sanitized.replace(char, "")
 
-    # Normaliser le chemin
+    # Normalize the path
     try:
         sanitized = os.path.normpath(sanitized)
-        # Vérifier qu'il ne sort pas du répertoire racine
+        # Check that it does not leave the root directory
         if not os.path.isabs(sanitized):
             sanitized = os.path.abspath(sanitized)
     except Exception:
@@ -327,42 +321,36 @@ class CommandBuilder:
         return self
 
     def set_working_dir(self, path: str) -> "CommandBuilder":
-        """
-        Set le directory de travail.
+        """Set the working directory.
 
         Args:
-         path: Path du directory
+         path: Directory path
 
         Returns:
-         self pour chainage
-        """
+         choke for chaining"""
         sanitized = sanitize_path(path)
         if os.path.isdir(sanitized):
             self.working_dir = sanitized
         return self
 
     def add_multiple(self, option: str, values: List[str]) -> "CommandBuilder":
-        """
-        Add multiple values for the same option.
+        """Add multiple values ​​for the same option.
 
         Args:
-         option: Nom de l'option
-         values: Liste de valeurs
+         option: Option name
+         values: List of values
 
         Returns:
-         self pour chainage
-        """
+         choke for chaining"""
         for value in values:
             self.add_option(option, value)
         return self
 
     def build(self) -> Tuple[str, Dict[str, str], Optional[str]]:
-        """
-        Build la commande finale.
+        """Build the final command.
 
         Returns:
-         Tuple (commande str, environment, directory de travail)
-        """
+         Tuple (str command, environment, working directory)"""
         full_env = os.environ.copy()
         full_env.update(self.env)
         full_env.setdefault("PYTHONUNBUFFERED", "1")
@@ -375,12 +363,10 @@ class CommandBuilder:
     def build_for_execution(
         self,
     ) -> Tuple[List[str], Dict[str, str], Optional[str]]:
-        """
-        Build command for direct execution.
+        """Build command for direct execution.
 
         Returns:
-         Tuple (commande list, environment, directory de travail)
-        """
+         Tuple (list command, environment, working directory)"""
         full_env = os.environ.copy()
         full_env.update(self.env)
         full_env.setdefault("PYTHONUNBUFFERED", "1")
@@ -388,12 +374,10 @@ class CommandBuilder:
         return [self.program] + self.args, full_env, self.working_dir
 
     def get_summary(self) -> Dict[str, Any]:
-        """
-        Return un summary de la commande.
+        """Return a summary of the order.
 
         Returns:
-         Dictionnaire avec le summary
-        """
+         Dictionary with summary"""
         return {
             "program": self.program,
             "args": self.args,
@@ -403,12 +387,10 @@ class CommandBuilder:
         }
 
     def copy(self) -> "CommandBuilder":
-        """
-        Create a copy of the builder.
+        """Create a copy of the builder.
 
         Returns:
-         Nouvelle instance avec les mêmes paramètres
-        """
+         New instance with same settings"""
         builder = CommandBuilder(self.program)
         builder.args = self.args.copy()
         builder.env = self.env.copy()
@@ -423,22 +405,20 @@ def detect_python_executable() -> str:
     Returns:
      Path de l'executable Python
     """
-    # Utiliser le Python courant
+    # Use common Python
     return sys.executable
 
 
 def get_interpreter_version(
     python_path: Optional[str] = None,
 ) -> Tuple[int, int, int]:
-    """
-    Return Python interpreter version.
+    """Return Python interpreter version.
 
     Args:
-     python_path: Path de l'interpréteur (défaut: sys.executable)
+     python_path: Path of the interpreter (default: sys.executable)
 
     Returns:
-     Tuple (major, minor, patch)
-    """
+     Tuple (major, minor, patch)"""
     if python_path is None:
         python_path = sys.executable
 
@@ -468,15 +448,13 @@ def get_interpreter_version(
 
 
 def get_interpreter_version_str(python_path: Optional[str] = None) -> str:
-    """
-    Return Python interpreter version as a string.
+    """Return Python interpreter version as a string.
 
     Args:
-     python_path: Path de l'interpréteur (défaut: sys.executable)
+     python_path: Path of the interpreter (default: sys.executable)
 
     Returns:
-     Version string (ex: "3.10.12")
-    """
+     String version (eg: "3.10.12")"""
     v = get_interpreter_version(python_path)
     return f"{v[0]}.{v[1]}.{v[2]}"
 
@@ -484,16 +462,14 @@ def get_interpreter_version_str(python_path: Optional[str] = None) -> str:
 def check_module_available(
     module_name: str, python_path: Optional[str] = None
 ) -> bool:
-    """
-    Check whether a Python module is available.
+    """Check whether a Python module is available.
 
     Args:
-     module_name: Nom du module
-     python_path: Path de l'interpréteur
+     module_name: Module name
+     python_path: Path of the interpreter
 
     Returns:
-     True si le module est disponible
-    """
+     True if the module is available"""
     try:
         if python_path:
             result = subprocess.run(

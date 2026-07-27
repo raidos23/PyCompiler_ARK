@@ -13,8 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Qt GUI layer — uniquement du code PySide6. Appelle Core/ pour la logique métier.
+"""Qt GUI layer — only PySide6 code. Calls Core/ for business logic.
 
-Ne pas importer PyCompilerArkGui ici pour éviter les imports circulaires.
-Utiliser `from pycompiler_ark.Ui.Gui.Gui import PyCompilerArkGui` directement.
-"""
+Do not import PyCompilerArkGui here to avoid circular imports.
+Use `from pycompiler_ark.Ui.Gui.Gui import PyCompilerArkGui` directly."""

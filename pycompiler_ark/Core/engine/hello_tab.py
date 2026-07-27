@@ -94,7 +94,7 @@ class HelloTab(QWidget):
         guide_layout.addWidget(self.guide_title)
         guide_layout.addWidget(self.guide_desc)
 
-        # Buttons layout
+        # Button layout
         btn_layout = QHBoxLayout()
         btn_layout.setSpacing(10)
         btn_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)

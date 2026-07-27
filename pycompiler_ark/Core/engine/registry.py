@@ -780,7 +780,9 @@ def load_engine_language_file(engine_package: str, code: str) -> dict:
 
         try:
             import yaml
-        except ImportError:  # pragma: no cover - PyYAML attendu dans le projet
+        except (
+            ImportError
+        ):  # pragma: no cover - PyYAML expected in the project
             return {}
 
         candidates = [code]

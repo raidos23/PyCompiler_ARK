@@ -13,11 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Couche de câblage IDE-like.
+"""IDE-like cabling layer.
 
-Ce package câble uniquement le fichier `Ui/Forms/ide_main_window.ui` aux méthodes
-existantes de Core. Aucune logique métier ici.
-"""
+This package only wires the `Ui/Forms/ide_main_window.ui` file to the methods
+Core. No business logic here."""
 
 from .connections import init_ide_like_ui
 
