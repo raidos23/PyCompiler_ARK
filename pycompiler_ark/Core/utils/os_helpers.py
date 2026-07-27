@@ -22,7 +22,9 @@ import re
 import shutil
 from collections.abc import Sequence
 from pathlib import Path
-from typing import Any, Optional, Union
+import subprocess
+import sys
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 Pathish = Union[str, Path]
 
@@ -47,5 +49,90 @@ def open_path(path: Pathish) -> bool:
 
             subprocess.run(["open", p])
         return True
+    except Exception:
+        return False
+
+
+def get_interpreter_version(
+    python_path: Optional[str] = None,
+) -> Tuple[int, int, int]:
+    """
+    Return Python interpreter version.
+
+    Args:
+     python_path: Path de l'interpréteur (défaut: sys.executable)
+
+    Returns:
+     Tuple (major, minor, patch)
+    """
+    if python_path is None:
+        python_path = sys.executable
+
+    try:
+        result = subprocess.run(
+            [python_path, "--version"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+        version_str = result.stdout or result.stderr
+        match = re.search(r"(\d+)\.(\d+)\.(\d+)", version_str)
+        if match:
+            return (
+                int(match.group(1)),
+                int(match.group(2)),
+                int(match.group(3)),
+            )
+    except Exception:
+        pass
+
+    return (
+        sys.version_info.major,
+        sys.version_info.minor,
+        sys.version_info.micro,
+    )
+
+
+def get_interpreter_version_str(python_path: Optional[str] = None) -> str:
+    """
+    Return Python interpreter version as a string.
+
+    Args:
+     python_path: Path de l'interpréteur (défaut: sys.executable)
+
+    Returns:
+     Version string (ex: "3.10.12")
+    """
+    v = get_interpreter_version(python_path)
+    return f"{v[0]}.{v[1]}.{v[2]}"
+
+
+def check_module_available(
+    module_name: str, python_path: Optional[str] = None
+) -> bool:
+    """
+    Check whether a Python module is available.
+
+    Args:
+     module_name: Nom du module
+     python_path: Path de l'interpréteur
+
+    Returns:
+     True si le module est disponible
+    """
+    try:
+        if python_path:
+            result = subprocess.run(
+                [python_path, "-c", f"import {module_name}"],
+                capture_output=True,
+                text=True,
+                timeout=5,
+            )
+            return result.returncode == 0
+        else:
+            import importlib
+
+            importlib.import_module(module_name)
+            return True
     except Exception:
         return False

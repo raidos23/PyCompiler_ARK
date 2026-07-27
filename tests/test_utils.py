@@ -17,7 +17,7 @@ import socket
 import unittest
 from unittest.mock import MagicMock, patch
 
-from pycompiler_ark.Core.Compiler.utils import check_internet_connection
+from pycompiler_ark.Core.utils.internet import check_internet_connection
 
 
 class TestUtils(unittest.TestCase):

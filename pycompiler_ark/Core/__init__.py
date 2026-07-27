@@ -34,10 +34,7 @@ from .allversion import (
 from .Compiler.utils import (
     CommandBuilder,
     build_command,
-    check_module_available,
-    detect_python_executable,
     escape_arguments,
-    get_interpreter_version,
     sanitize_path,
     validate_command,
 )
@@ -60,9 +57,6 @@ __all__ = [
     "escape_arguments",
     "sanitize_path",
     "CommandBuilder",
-    "detect_python_executable",
-    "get_interpreter_version",
-    "check_module_available",
     "ProcessInfo",
     "ProcessKiller",
     "kill_process",
