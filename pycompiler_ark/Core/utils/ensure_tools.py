@@ -95,7 +95,7 @@ def ensure_tools(
                     check_system_packages,
                 )
 
-                from ..Compiler.utils import check_internet_connection
+                from .internet import check_internet_connection
 
                 if hasattr(gui, "sys_deps_manager") and gui.sys_deps_manager:
                     sys_manager = gui.sys_deps_manager
@@ -394,7 +394,7 @@ def ensure_tools(
         else:
             # Original headless system tools check & installation flow
             try:
-                from ..Compiler.utils import check_internet_connection
+                from ..utils.internet import check_internet_connection
                 from ..SystemDepsManager.headless import (
                     check_system_packages,
                     install_system_packages,
@@ -468,7 +468,7 @@ def ensure_tools(
             and gui.venv_manager
         ):
             try:
-                from ..Compiler.utils import check_internet_connection
+                from .internet import check_internet_connection
 
                 use_system = bool(getattr(gui, "use_system_python", False))
 
@@ -696,7 +696,7 @@ def ensure_tools(
                 )
 
                 try:
-                    from ..Compiler.utils import (
+                    from ..utils.internet import (
                         check_internet_connection,
                     )
 

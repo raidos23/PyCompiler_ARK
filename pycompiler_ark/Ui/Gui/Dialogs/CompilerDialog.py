@@ -485,7 +485,7 @@ def rebuild_from_lock(self, lock_path: Path) -> None:
         # Shared Python version resolution for locking/comparison (Aligned with CLI)
         self._python_version = None
         try:
-            from ....Core.Compiler.utils import get_interpreter_version_str
+            from ....Core.utils.internet import get_interpreter_version_str
             from ....Core.Venv_Manager.Manager import VenvManager
 
             vm = VenvManager(self)

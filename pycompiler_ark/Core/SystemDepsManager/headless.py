@@ -20,7 +20,7 @@ from __future__ import annotations
 import shutil
 import subprocess
 
-from ..Compiler.utils import check_internet_connection
+from ..utils.internet import check_internet_connection
 from .detection import detect_linux_package_manager
 
 

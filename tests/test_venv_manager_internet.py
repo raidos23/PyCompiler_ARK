@@ -15,7 +15,7 @@ class TestVenvManagerInternet(unittest.TestCase):
         self.output_error = patch.object(output, "error").start()
         self.addCleanup(patch.stopall)
 
-    @patch("pycompiler_ark.Core.Compiler.utils.check_internet_connection")
+    @patch("pycompiler_ark.Core.utils.internet.check_internet_connection")
     def test_ensure_tools_installed_no_internet(self, mock_check):
         mock_check.return_value = False
         self.manager._reset_cancel_state = MagicMock()
@@ -30,7 +30,7 @@ class TestVenvManagerInternet(unittest.TestCase):
         # Verify _reset_cancel_state was NOT called (it's the next line after the check)
         self.assertFalse(self.manager._reset_cancel_state.called)
 
-    @patch("pycompiler_ark.Core.Compiler.utils.check_internet_connection")
+    @patch("pycompiler_ark.Core.utils.internet.check_internet_connection")
     def test_ensure_tools_installed_system_no_internet(self, mock_check):
         mock_check.return_value = False
         self.manager._reset_cancel_state = MagicMock()
