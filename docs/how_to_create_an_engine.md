@@ -8,7 +8,8 @@ A PyCompiler ARK engine is a Python package placed in `pycompiler_ark/engines/<e
 
 ### **Discovery And Loading**
 
-- Engines are discovered in `pycompiler_ark/engines/<engine_id>/` for built-in engines, and in the configured engine directories for user or dev overlays.
+- Engines are discovered in `pycompiler_ark/engines/<engine_id>/` for built-in engines, and in configured engine directories for user or dev overlays.
+- Configured engine directories are set with `pycompiler_ark set user-engine-dir <path>` and `pycompiler_ark set dev-engine-dir <path>`.
 - The folder must contain an `__init__.py`.
 - Discovery is lazy: the registry loads engines on first real access such as `get_engine`, `available_engines`, `create`, or `bind_tabs`.
 - Auto discovery can be disabled with `ARK_ENGINES_AUTO_DISCOVER=0`.
