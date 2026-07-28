@@ -13,12 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-PyCompiler ARK — Fenêtre principale Qt.
+"""PyCompiler ARK — Qt main window.
 
-Ce module ne contient que du code Qt (cycle de vie de la fenêtre, slots,
-délégation vers les services Core). Aucune logique métier ici.
-"""
+This module only contains Qt code (window lifecycle, slots,
+delegation to Core services). No business logic here."""
 
 import os
 from typing import Optional
@@ -59,26 +57,24 @@ def get_selected_workspace() -> Optional[str]:
 
 
 class PyCompilerArkGui(QMainWindow, UiFeatures):
-    """
-    Fenêtre principale PyCompiler ARK.
+    """PyCompiler ARK main window.
 
-    Cette classe hérite de `UiFeatures` et orchestre uniquement le cycle de vie
-    de la fenêtre Qt. Toute la logique métier est déléguée à Core/.
-    """
+    This class inherits from `UiFeatures` and only orchestrates the lifecycle
+    from the Qt window. All business logic is delegated to Core/."""
 
     def __init__(self):
         super().__init__()
         global _latest_gui_instance
         _latest_gui_instance = self
 
-        # Identifiant stable utilisé par l'API i18n centrale.
+        # Stable identifier used by the central i18n API.
         self.id = "ui"
 
         self.setWindowTitle("PyCompiler ARK")
         self.setGeometry(100, 100, 1280, 720)
         self.setAcceptDrops(True)
 
-        # Étape 1: initialiser l'état runtime de la fenêtre.
+        # Step 1: Initialize the window's runtime state.
         self.workspace_dir = None
         self.python_files = []
         self.icon_path = None
@@ -91,7 +87,7 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
         self._closing = False
         self._language_refresh_callbacks = []
 
-        # Étape 2: brancher les services partagés (venv manager, sys deps).
+        # Step 2: Plug in shared services (venv manager, sys deps).
         self.venv_manager = VenvManagerUI(self)
         try:
             from .Dialogs.SysDependencyUI import SysDependencyUI
@@ -100,7 +96,7 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
         except Exception:
             self.sys_deps_manager = None
 
-        # Enregistrement du handler AdvancedAuth pour les requêtes de plugins
+        # Registering the AdvancedAuth handler for plugin requests
         try:
             from ...Services.AdvancedAuth import (
                 AdvancedAuth as AuthAdvancedAuth,
@@ -115,7 +111,7 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
         except Exception:
             pass
 
-        # Étape 3: charger les préférences puis choisir la variante UI.
+        # Step 3: Load preferences then choose UI variant.
         self.load_preferences()
         ui_variant = (
             str(os.environ.get("PYCOMPILER_UI_VARIANT", "")).strip().lower()
@@ -142,7 +138,7 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
             self._ui_variant_active = "classic"
             self.init_ui()
 
-        # Étape 4: résoudre la langue effective et appliquer l'i18n.
+        # Step 4: Solve the effective language and apply the i18n.
         import locale
 
         sys_lang = None
@@ -205,7 +201,7 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
 
         files = SetupWorkspace.list_python_files(folder)
 
-        # Logique UI pour ajouter les fichiers
+        # UI logic to add the files
         from pycompiler_ark.Core.Configs import (
             load_ark_config,
             should_exclude_file,
@@ -335,7 +331,7 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
             pass
 
     # =========================================================================
-    # COMPILATION (délégation à Ui/Gui/Compilation)
+    # COMPILATION (delegation to Ui/Gui/Compilation)
     # =========================================================================
 
     from .Dialogs.DepsAnalyserUI import (
@@ -367,11 +363,11 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
     )
 
     # =========================================================================
-    # PRÉFÉRENCES (délégation à Core/PreferencesManager)
+    # PREFERENCES (delegation to Core/PreferencesManager)
     # =========================================================================
 
     # =========================================================================
-    # DÉPENDANCES (délégation à Core/deps_analyser)
+    # DEPENDENCIES (delegation to Core/deps_analyser)
     # =========================================================================
 
     # =========================================================================

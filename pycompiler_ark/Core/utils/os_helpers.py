@@ -56,15 +56,7 @@ def open_path(path: Pathish) -> bool:
 def get_interpreter_version(
     python_path: Optional[str] = None,
 ) -> Tuple[int, int, int]:
-    """
-    Return Python interpreter version.
-
-    Args:
-     python_path: Path de l'interpréteur (défaut: sys.executable)
-
-    Returns:
-     Tuple (major, minor, patch)
-    """
+    """Return Python interpreter version (major, minor, patch)"""
     if python_path is None:
         python_path = sys.executable
 
@@ -94,15 +86,7 @@ def get_interpreter_version(
 
 
 def get_interpreter_version_str(python_path: Optional[str] = None) -> str:
-    """
-    Return Python interpreter version as a string.
-
-    Args:
-     python_path: Path de l'interpréteur (défaut: sys.executable)
-
-    Returns:
-     Version string (ex: "3.10.12")
-    """
+    """Return Python interpreter version as a string."""
     v = get_interpreter_version(python_path)
     return f"{v[0]}.{v[1]}.{v[2]}"
 
@@ -110,16 +94,14 @@ def get_interpreter_version_str(python_path: Optional[str] = None) -> str:
 def check_module_available(
     module_name: str, python_path: Optional[str] = None
 ) -> bool:
-    """
-    Check whether a Python module is available.
+    """Check whether a Python module is available.
 
     Args:
-     module_name: Nom du module
-     python_path: Path de l'interpréteur
+     module_name: Module name
+     python_path: Path of the interpreter
 
     Returns:
-     True si le module est disponible
-    """
+     True if the module is available"""
     try:
         if python_path:
             result = subprocess.run(

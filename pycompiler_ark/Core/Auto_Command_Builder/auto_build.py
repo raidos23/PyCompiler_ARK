@@ -1,15 +1,13 @@
 # Copyright (C) 2025
 
-"""
-Automatic detection of sensitive modules and hook/plugin application
-pour les engines, basée sur un mapping JSON piloté par les engines (ENGINES).
+"""Automatic detection of sensitive modules and hook/plugin application
+for engines, based on a JSON mapping driven by engines (ENGINES).
 
-Règles clés:
-- La détection est automatique et non désactivable par l'utilisateur.
-- Priorité à requirements.txt s'il existe dans le workspace, sinon scan des imports.
-- Les actions sont dérivées du JSON (clé = id du engine).
-- Rapport optionnel pouvant être écrit dans le workspace.
-"""
+Key rules:
+- Detection is automatic and cannot be deactivated by the user.
+- Priority to requirements.txt if it exists in the workspace, otherwise scan of imports.
+- Actions are derived from JSON (key = engine id).
+- Optional report that can be written in the workspace."""
 
 from __future__ import annotations
 
@@ -36,7 +34,7 @@ try:
 except Exception:
     jsonschema = None
 
-# Import utilitaire d'exclusion stdlib
+# Import stdlib exclusion utility
 try:
     from ..deps_analyser import _is_stdlib_module
 except Exception:  # fallback au cas où
@@ -71,10 +69,10 @@ _MAPPING_CACHE: dict[str, dict[str, dict[str, Optional[str]]]] = {}
 # Collect validation warnings to surface them later in compute_auto_for_engine
 _VALIDATION_WARNINGS: list[str] = []
 
-# Aliases import_name -> package_name (mapping keys potentiels). Extensible à l'exécution.
+# Aliases import_name -> package_name (potential mapping keys). Extensible at runtime.
 ALIASES_IMPORT_TO_PACKAGE: dict[str, str] = {}
 
-# Aliases package_name -> import_name canonique utilisé pour PyInstaller --collect-all. Extensible à l'exécution.
+# Aliases package_name -> canonical import_name used for PyInstaller --collect-all. Extensible at runtime.
 PACKAGE_TO_IMPORT_NAME: dict[str, str] = {}
 
 
@@ -130,13 +128,13 @@ def _tr(self, fr: str, en: str) -> str:
     return en
 
 
-# Normalisation des noms (pour matcher mapping keys insensibles à la casse/aux tirets)
+# Name normalization (for case/hyphen insensitive match mapping keys)
 def _norm(s: str) -> str:
     return s.replace("_", "-").lower().strip()
 
 
 def _read_json_file(path: str) -> dict[str, dict[str, Optional[str]]]:
-    with open(path, encoding="utf-8-sig") as f:  # support BOM
+    with open(path, encoding="utf-8-sig") as f:  # BOM support
         data = json.load(f)
     # Validation JSON Schema optionnelle (si schéma disponible)
     if jsonschema is not None:
@@ -266,10 +264,9 @@ def _parse_requirements(requirements_path: str) -> set[str]:
 
 def _scan_imports(py_files: list[str], workspace_dir: str) -> set[str]:
     """Analyze .py files and return imported top-level module names.
-    - Ignore venv/, __pycache__/ et folders cachés
-    - Ignore files trop volumineux (>1.5 Mo) pour robustesse
-    - Tolérant aux erreurs d'encodage/syntaxe
-    """
+    - Ignore venv/, __pycache__/ and hidden folders
+    - Ignore files that are too large (>1.5 MB) for robustness
+    - Tolerant of encoding/syntax errors"""
     found: set[str] = set()
     # Exclure venv interne
     venv_dir = os.path.abspath(os.path.join(workspace_dir, "venv"))
@@ -302,7 +299,7 @@ def _scan_imports(py_files: list[str], workspace_dir: str) -> set[str]:
                 elif isinstance(node, ast.ImportFrom):
                     if node.module:
                         found.add(node.module.split(".")[0])
-            # Imports dynamiques
+            # Dynamic imports
             for m in re.findall(r"__import__\(['\"]([\w\.]+)['\"]\)", src):
                 found.add(m.split(".")[0])
             for m in re.findall(
@@ -311,7 +308,7 @@ def _scan_imports(py_files: list[str], workspace_dir: str) -> set[str]:
                 found.add(m.split(".")[0])
         except Exception:
             continue
-    # Filtre stdlib et modules internes (fichiers du projet)
+    # Stdlib filter and internal modules (project files)
     internal_names = {
         os.path.splitext(os.path.basename(p))[0] for p in py_files
     }
@@ -330,13 +327,13 @@ def _match_modules_to_mapping(
     - `matched`: `{package_key_in_mapping: mapping_entry}`
     - `package_to_import_name`: `{package_key_in_mapping: import_name}`
     """
-    # Build lookup index insensible à la casse et aux tirets
+    # Build lookup index case and hyphen insensitive
     index = {_norm(name): name for name in mapping.keys()}
 
     matched: dict[str, dict[str, Optional[str]]] = {}
     pkg_to_import: dict[str, str] = {}
 
-    # 1) modules peuvent être des noms d'import (e.g. cv2, PIL, sklearn)
+    # 1) modules can be import names (e.g. cv2, PIL, sklearn)
     for mod in modules:
         norm_mod = _norm(mod)
         # map import alias -> package key attendu
@@ -347,7 +344,7 @@ def _match_modules_to_mapping(
             import_name = PACKAGE_TO_IMPORT_NAME.get(key, mod)
             pkg_to_import[key] = import_name
             continue
-        # direct match si le même nom est référencé comme package (ex: numpy, scipy, lxml)
+        # direct match if the same name is referenced as package (ex: numpy, scipy, lxml)
         if norm_mod in index:
             key = index[norm_mod]
             matched[key] = mapping[key]
@@ -505,7 +502,7 @@ def _write_report_if_enabled(self, report: dict):
 
 def _detect_modules_preferring_requirements(self) -> tuple[set[str], str]:
     """Return `(detected_modules, source: 'requirements'|'pyproject'|'imports')`."""
-    # 1) requirements.{txt|in} dans le workspace (configurable via env PYCOMPILER_REQ_FILES)
+    # 1) requirements.{txt|in} in the workspace (configurable via env PYCOMPILER_REQ_FILES)
     req_names = os.environ.get(
         "PYCOMPILER_REQ_FILES", "requirements.txt,requirements.in"
     ).split(",")
@@ -575,13 +572,13 @@ def _match_with_requirements_aware(
     modules: set[str], mapping: dict[str, dict[str, Optional[str]]]
 ) -> tuple[dict[str, dict[str, Optional[str]]], dict[str, str]]:
     """Try matching by package names first, then fallback to import aliases."""
-    # D'abord, essayer correspondance directe sur package (utile pour Pillow, opencv, scikit-learn)
+    # First, try direct match on package (useful for Pillow, opencv, scikit-learn)
     index = {_norm(name): name for name in mapping.keys()}
     matched: dict[str, dict[str, Optional[str]]] = {}
     pkg_to_import: dict[str, str] = {}
 
     for mod in modules:
-        # Le set 'modules' peut contenir des noms de package (requirements) avec ou sans extras
+        # The 'modules' set can contain package names (requirements) with or without extras
         base = mod
         if "[" in base and "]" in base:
             base = base.split("[", 1)[0]
@@ -592,7 +589,7 @@ def _match_with_requirements_aware(
             import_name = PACKAGE_TO_IMPORT_NAME.get(k, base)
             pkg_to_import[k] = import_name
 
-    # Compléter via alias d'import pour ceux non trouvés
+    # Complete via import alias for those not found
     rem_imports = {m for m in modules if m not in matched}
     add, add_imp = _match_modules_to_mapping(rem_imports, mapping)
     matched.update(add)
@@ -603,26 +600,24 @@ def _match_with_requirements_aware(
 def compute_for_all(
     self, engine_ids: Optional[list[str]] = None
 ) -> dict[str, list[str]]:
-    """
-    Compute auto arguments for all engines (plug-and-play).
-    - engine_ids: liste optionnelle d'identifiants de engines à traiter. Si None,
-     on detect automatiquement:
-     * engines enregistrés dans _ENGINE_BUILDERS
-     * engines avec un mapping engine_plugins/<engine_id>/mapping.json
-     * engines embarqués utils/engines/<engine_id>/mapping.json
-    Return un dict: { engine_id: List[str] }.
-    """
-    # Construire la liste ordonnée des moteurs à traiter
+    """Compute auto arguments for all engines (plug-and-play).
+    - engine_ids: optional list of engine identifiers to process. If None,
+     we automatically detect:
+     * engines saved in _ENGINE_BUILDERS
+     * engines with a mapping engine_plugins/<engine_id>/mapping.json
+     * embedded engines utils/engines/<engine_id>/mapping.json
+    Return a dict: { engine_id: List[str] }."""
+    # Construct the ordered list of engines to process
     ordered: list[str] = []
     if engine_ids:
-        # préserve l'ordre fourni et déduplique
+        # preserves the supplied order and deduplicates
         seen: set[str] = set()
         for e in engine_ids:
             if e and e not in seen:
                 seen.add(e)
                 ordered.append(e)
     else:
-        # 0) moteurs enregistrés via le registry central s'ils existent
+        # 0) engines registered via the central registry if they exist
         try:
             if engines_registry is not None:
                 for e in engines_registry.available_engines():
@@ -631,7 +626,7 @@ def compute_for_all(
                         _maybe_load_plugin_auto_builder(e)
         except Exception:
             pass
-        # 1) moteurs déjà enregistrés dans _ENGINE_BUILDERS
+        # 1) engines already registered in _ENGINE_BUILDERS
         try:
             for e in _ENGINE_BUILDERS.keys():
                 if e and e not in ordered:
@@ -659,7 +654,7 @@ def compute_for_all(
                             _maybe_load_plugin_auto_builder(name)
         except Exception:
             pass
-    # Calculer pour chaque moteur
+    # Calculate for each engine
     results: dict[str, list[str]] = {}
     for e in ordered:
         try:
@@ -682,7 +677,7 @@ def _load_engine_package_mapping(
     combined: dict[str, dict[str, Optional[str]]] = {}
     used: Optional[str] = None
 
-    # 1) mapping intégré dans le package du moteur (importé par engines_loader)
+    # 1) mapping integrated into the engine package (imported by engines_loader)
     try:
         from ..engine.registry import _engine_package_for_class, get_engine
 
@@ -733,7 +728,7 @@ def _load_engine_package_mapping(
     except Exception:
         pass
 
-    # 3) mapping via variable d'environnement (fusion, priorité la plus faible)
+    # 3) mapping via environment variable (merge, lowest priority)
     try:
         env_path = os.environ.get("PYCOMPILER_MAPPING")
         if env_path and os.path.isfile(env_path):
@@ -750,7 +745,7 @@ def _load_engine_package_mapping(
     except Exception:
         pass
 
-    # Fusion optionnelle d'alias déclarés via "__aliases__"
+    # Optional merging of aliases declared via "__aliases__"
     try:
         aliases = combined.get("__aliases__")  # type: ignore[index]
         if isinstance(aliases, dict):
@@ -785,7 +780,7 @@ def compute_auto_for_engine(self, engine_id: str) -> list[str]:
             os.path.join(os.path.dirname(os.path.abspath(__file__)), os.pardir)
         )
         getattr(self, "workspace_dir", None)
-        # Charge uniquement le mapping spécifique moteur (package)
+        # Only loads the specific engine mapping (package)
         eng_mapping, eng_used_path = _load_engine_package_mapping(engine_id)
         mapping = dict(eng_mapping)
         try:
@@ -892,7 +887,7 @@ def compute_auto_for_engine(self, engine_id: str) -> list[str]:
     except Exception:
         pass
 
-    # Rapport optionnel
+    # Optional report
     report = {
         "source": source,
         "detected_modules": sorted(detected),

@@ -438,9 +438,7 @@ class CompilerCore(QObject):
         return True
 
     def cancel(self) -> bool:
-        """
-        Cancel current compilation.
-        """
+        """Cancel current compilation."""
         if not self.is_running or not self._thread:
             return False
 

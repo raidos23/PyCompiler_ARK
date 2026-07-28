@@ -20,7 +20,7 @@ BCASL - Before-Compilation Actions System Loader
 
 from __future__ import annotations
 
-# Coeur BCASL (moteur de plugins et contexte)
+# BCASL core (plugin engine and context)
 from ..bcasl.Base import (
     BCASL_PLUGIN_REGISTER_FUNC,
     BcPluginBase,
@@ -31,7 +31,7 @@ from ..bcasl.Base import (
 )
 from ..bcasl.executor import BCASL
 
-# Chargeur (exécution synchrone, pure-Python)
+# Loader (synchronous execution, pure-Python)
 from ..bcasl.Loader import (
     run_pre_compile,
 )
@@ -45,7 +45,7 @@ from ..bcasl.validator import (
     validate_plugins_compatibility,
 )
 
-# Utilitaire universel d'installation d'outils
+# Universal tool installation utility
 from ..Core.utils.ensure_tools import ToolsCheckResult
 
 __version__ = "1.0.0"

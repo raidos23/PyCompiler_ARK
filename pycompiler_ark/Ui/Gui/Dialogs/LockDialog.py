@@ -13,9 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-LockDialog — Dialog pour gérer et reconstruire à partir de fichiers lock.
-"""
+"""LockDialog — Dialog for managing and reconstructing from lock files."""
 
 from __future__ import annotations
 
@@ -44,7 +42,7 @@ from ....Core.globals import WORKSPACE_CONFIG_DIRNAME
 
 
 class LockDialog(QDialog):
-    """Dialog pour lister les fichiers .lock et relancer un build."""
+    """Dialog to list .lock files and restart a build."""
 
     def __init__(self, gui):
         super().__init__(gui)
@@ -306,7 +304,7 @@ class LockDialog(QDialog):
 
 
 def open_lock_dialog(gui):
-    """Helper pour ouvrir le dialog."""
+    """Helper to open the dialog."""
     workspace_dir = getattr(gui, "workspace_dir", None)
     if not workspace_dir:
         QMessageBox.warning(

@@ -267,7 +267,7 @@ def apply_translations(gui, tr: dict) -> None:
 
 
 def load_plugin_language_file(plugin_package: str, code: str) -> dict:
-    """Charger un fichier de langue YAML pour un plugin."""
+    """Load a YAML language file for a plugin."""
     try:
         import importlib.resources as ilr
 

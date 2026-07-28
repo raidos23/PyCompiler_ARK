@@ -13,18 +13,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-Utilitaire universel de vérification et d'installation d'outils.
+"""Universal utility for checking and installing tools.
 
-Indépendant de BCASL, Engine, BuildContext et Qt (sauf si un objet GUI est passé).
-Utilisable depuis n'importe quel module du projet via :
+Independent of BCASL, Engine, BuildContext and Qt (unless a GUI object is passed).
+Usable from any module of the project via:
 
     from pycompiler_ark.Core.utils.ensure_tools import ensure_tools, ToolsCheckResult
 
     result = ensure_tools({"python": ["black"], "system": ["gcc"]})
     if not result.ok:
-        print(result.errors)
-"""
+        print(result.errors)"""
 
 from __future__ import annotations
 
@@ -43,7 +41,7 @@ __all__ = ["ToolsCheckResult", "ensure_tools"]
 
 @dataclass
 class ToolsCheckResult:
-    """Résultat de la vérification/installation des outils requis."""
+    """Result of verification/installation of required tools."""
 
     ok: bool
     missing_system: list[str] = field(default_factory=list)
@@ -63,18 +61,17 @@ def ensure_tools(
     timeout_s: int = 300,
     gui: Any | None = None,
 ) -> ToolsCheckResult:
-    """Vérifie et installe les outils requis (système + Python).
+    """Checks and installs the required tools (system + Python).
 
     Args:
-        required_tools: Dictionnaire ``{"python": [...], "system": [...]}``
-        stop_signal:    Callable sans argument retournant True pour annuler
-        log_cb:         Callable(str) pour émettre les messages de progression (utilisé si gui est absent)
-        timeout_s:      Timeout global en secondes (non utilisé pour pip, garde-fou futur)
-        gui:            Objet GUI ou Bridge optionnel pour le support complet de l'UI (VenvManager, SysDependencyManager, etc.)
+        required_tools: Dictionary ``{"python": [...], "system": [...]}``
+        stop_signal: Callable without argument returning True to cancel
+        log_cb: Callable(str) to emit progress messages (used if gui is absent)
+        timeout_s: Global timeout in seconds (not used for pip, future guardrail)
+        gui: Optional GUI or Bridge object for full UI support (VenvManager, SysDependencyManager, etc.)
 
     Returns:
-        ToolsCheckResult avec ok=True si tout est disponible après installation.
-    """
+        ToolsCheckResult with ok=True if everything is available after installation."""
 
     missing_system: list[str] = []
     missing_python: list[str] = []
@@ -84,7 +81,7 @@ def ensure_tools(
     python_tools = [t for t in (required_tools.get("python") or []) if t]
 
     # ------------------------------------------------------------------ #
-    # 1. Outils système                                                    #
+    # 1. System Tools #
     # ------------------------------------------------------------------ #
     if system_tools:
         if gui is not None:

@@ -137,7 +137,7 @@ class OutputCleaner(BcPluginBase):
         return (_tr("tab_title", "Output Cleaner"), widget, on_save)
 
     def on_pre_compile(self, ctx: PreCompileContext) -> None:
-        """Nettoie le dossier output avant la compilation."""
+        """Clean up the output folder before compiling."""
         try:
             if not ctx.build_context:
                 log.log_warn(

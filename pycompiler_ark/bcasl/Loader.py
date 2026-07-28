@@ -91,7 +91,7 @@ def _discover_bcasl_meta(Plugins_dir: Path) -> dict[str, dict[str, Any]]:
                 _sys.modules[mod_name] = module
                 spec.loader.exec_module(module)  # type: ignore[attr-defined]
 
-                # Utilise un gestionnaire temporaire pour enregistrer et lire les métadonnées
+                # Uses a temporary handler to save and read metadata
                 mgr = BCASL(Plugins_dir, config={}, sandbox=False)  # type: ignore[call-arg]
 
                 # Méthode 1: chercher fonction bcasl_register
@@ -118,18 +118,18 @@ def _discover_bcasl_meta(Plugins_dir: Path) -> dict[str, dict[str, Any]]:
                                     plugin_instance = attr()
                                 except Exception:
                                     continue
-                            # Enregistrer temporairement pour récupérer les métadonnées
+                            # Save temporarily to recover metadata
                             pid = plugin_instance.meta.id
                             if pid not in mgr._registry:
                                 mgr.add_plugin(plugin_instance)
                         except Exception:
                             continue
 
-                # Récupère les plugins enregistrés
+                # Retrieves saved plugins
                 for pid, rec in getattr(mgr, "_registry", {}).items():
                     try:
                         plg = rec.plugin
-                        # Récupérer les tags depuis PluginMeta (normalisés)
+                        # Retrieve tags from PluginMeta (normalized)
                         tags: list[str] = []
                         try:
                             meta_tags = getattr(plg.meta, "tags", ())
@@ -142,7 +142,7 @@ def _discover_bcasl_meta(Plugins_dir: Path) -> dict[str, dict[str, Any]]:
                         except Exception:
                             tags = []
 
-                        # Récupérer les requirements
+                        # Retrieve requirements
                         reqs: list[str] = []
                         try:
                             if plg.meta.required_bcasl_version != "1.0.0":
@@ -199,7 +199,7 @@ def _discover_bcasl_meta(Plugins_dir: Path) -> dict[str, dict[str, Any]]:
 def _discover_bcasl_plugins(
     Plugins_dir: Path, workspace_root: Path, cfg: dict[str, Any]
 ) -> dict[str, BcPluginBase]:
-    """Load les plugins et return un mapping plugin_id -> instance."""
+    """Load the plugins and return a mapping plugin_id -> instance."""
     plugins: dict[str, BcPluginBase] = {}
     try:
         mgr = BCASL(workspace_root, config=cfg, sandbox=False)
@@ -218,11 +218,11 @@ def _discover_bcasl_plugins(
 # independent from BCASL and support future plugin systems.
 
 
-# --- Chargement config (YML uniquement) ---
+# --- Loading config (YML only) ---
 
 
 def _emit_log(log_cb: Optional[callable], message: str) -> None:
-    """Émet un message via un callback de log si disponible."""
+    """Issues a message via a log callback if available."""
     try:
         if callable(log_cb):
             log_cb(message)
@@ -231,7 +231,7 @@ def _emit_log(log_cb: Optional[callable], message: str) -> None:
 
 
 def _is_bcasl_enabled(workspace_root: Path) -> bool:
-    """Consulte ark.yml pour savoir si le BCASL est activé globalement."""
+    """Check ark.yml to see if BCASL is enabled globally."""
     try:
         ark_cfg = load_ark_config(workspace_root)
         return bool(ark_cfg.get("plugins", {}).get("bcasl_enabled", True))
@@ -242,7 +242,7 @@ def _is_bcasl_enabled(workspace_root: Path) -> bool:
 def _build_workspace_meta(
     workspace_root: Path, cfg: dict[str, Any]
 ) -> dict[str, Any]:
-    """Build les métadonnées du workspace pour BCASL."""
+    """Build workspace metadata for BCASL."""
     return {
         "workspace_name": workspace_root.name,
         "workspace_path": str(workspace_root),
@@ -252,7 +252,7 @@ def _build_workspace_meta(
 
 
 def _resolve_order_list(cfg: dict[str, Any], plugins_dir: Path) -> list[str]:
-    """Résout l'ordre des plugins (config > tags)."""
+    """Resolves the order of plugins (config > tags)."""
     order_list: list[str] = []
     try:
         order_list = (
@@ -275,7 +275,7 @@ def _apply_plugins_config(
     plugins_dir: Path,
     log_cb: Optional[callable] = None,
 ) -> list[str]:
-    """Applique l'activation et les priorités, return l'ordre utilisé."""
+    """Applies activation and priorities, returns the order used."""
     pmap = cfg.get("plugins", {}) if isinstance(cfg, dict) else {}
     if isinstance(pmap, dict):
         for pid, val in pmap.items():
@@ -363,7 +363,7 @@ def _run_bcasl_sync(
     stop_requested: Optional[callable] = None,
     build_context: Optional[Any] = None,
 ):
-    """Execute BCASL en mode synchrone et return le rapport."""
+    """Execute BCASL in synchronous mode and return the report."""
     manager = BCASL(
         workspace_root,
         config=cfg,
@@ -444,11 +444,10 @@ def _plugin_enabled(plugins_cfg: dict[str, Any], pid: str) -> bool:
 
 
 def _load_workspace_config(workspace_root: Path) -> dict[str, Any]:
-    """Load bcasl.yml si présent, sinon génère une config par défaut minimale et l'écrit.
+    """Load bcasl.yml if present, otherwise generate a minimal default config and write it.
 
-    Fusionne aussi avec ark.yml si disponible pour les patterns et options plugins.
-    YML ONLY - YAML and JSON files are NOT supported.
-    """
+    Also merges with ark.yml if available for patterns and plugin options.
+    YML ONLY - YAML and JSON files are NOT supported."""
 
     def _read_yml(p: Path) -> dict[str, Any]:
         try:
@@ -456,7 +455,7 @@ def _load_workspace_config(workspace_root: Path) -> dict[str, Any]:
         except Exception:
             return {}
 
-    # 1) Fichiers candidats (YML uniquement - NO YAML, NO JSON)
+    # 1) Candidate files (YML only - NO YAML, NO JSON)
     # Priorité: bcasl.yml > .bcasl.yml
     for name in ("bcasl.yml", ".bcasl.yml"):
         p = workspace_root / name
@@ -466,7 +465,7 @@ def _load_workspace_config(workspace_root: Path) -> dict[str, Any]:
             if isinstance(data, dict) and data:
                 return data
 
-    # 2) Génération défaut avec fusion ARK
+    # 2) Default generation with ARK fusion
     default_cfg: dict[str, Any] = {}
     try:
         detected_plugins: dict[str, Any] = {}
@@ -477,7 +476,7 @@ def _load_workspace_config(workspace_root: Path) -> dict[str, Any]:
                 detected_plugins[pid] = {"enabled": True, "priority": idx}
             plugin_order = order
         else:
-            # Fallback alphabétique par dossier
+            # Alphabetical fallback by folder
             names = []
             for pdir in _get_all_plugins_dirs():
                 try:
@@ -494,7 +493,7 @@ def _load_workspace_config(workspace_root: Path) -> dict[str, Any]:
                 detected_plugins[pid] = {"enabled": True, "priority": idx}
             plugin_order = sorted(names)
 
-        # Charger ARK config pour les patterns par défaut
+        # Load ARK config for default patterns
         file_patterns = ["**/*.py"]
         exclude_patterns = [
             "**/__pycache__/**",
@@ -526,7 +525,7 @@ def _load_workspace_config(workspace_root: Path) -> dict[str, Any]:
             "plugins": detected_plugins,
             "plugin_order": plugin_order,
         }
-        # Ecriture best-effort en YML uniquement
+        # Best-effort writing in YML only
         try:
             target = workspace_root / "bcasl.yml"
             target.write_text(
@@ -548,14 +547,14 @@ def _load_workspace_config(workspace_root: Path) -> dict[str, Any]:
 def run_pre_compile(
     self, build_context: Optional[Any] = None
 ) -> Optional[object]:
-    """Execute la phase BCASL de pre-compilation (path synchrone, simple)."""
+    """Executes the BCASL pre-compilation phase (synchronous path, simple)."""
     try:
         if not getattr(self, "workspace_dir", None):
             return None
         workspace_root = Path(self.workspace_dir).resolve()
 
-        # Étape 0: Vérifier si BCASL est activé globalement via ark.yml
-        # On le fait AVANT toute découverte lourde de plugins ou de config
+        # Step 0: Check if BCASL is enabled globally via ark.yml
+        # We do this BEFORE any heavy discovery of plugins or config
         if not _is_bcasl_enabled(workspace_root):
             try:
                 if hasattr(self, "log") and self.log is not None:

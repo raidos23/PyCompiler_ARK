@@ -35,7 +35,7 @@ from typing import Any, Dict, List, Optional
 
 from PySide6.QtCore import QObject, Signal
 
-# Importations ArkConfig pour la gestion des exclusions
+# ArkConfig imports for managing exclusions
 from pycompiler_ark.Core.Configs import (
     DEFAULT_EXCLUDE_PATTERNS,
     load_ark_config,
@@ -188,15 +188,13 @@ class MainProcess(QObject):
         return True
 
     def set_file(self, file_path: str) -> bool:
-        """
-        Set file to compile.
+        """Set file to compile.
 
         Args:
-         file_path: Path du file Python
+         file_path: Python file path
 
         Returns:
-         True si le file a été défini, False sinon
-        """
+         True if the file has been defined, False otherwise"""
         if not file_path or not os.path.isfile(file_path):
             self.log_message.emit("error", f"File not found: {file_path}")
             return False
@@ -207,12 +205,10 @@ class MainProcess(QObject):
         return True
 
     def set_engine(self, engine_id: str) -> None:
-        """
-        Set compilation engine to use.
+        """Set compilation engine to use.
 
         Args:
-         engine_id: Identifiant du engine
-        """
+         engine_id: Engine identifier"""
         self._current_engine = engine_id
         self.log_message.emit("info", f"Engine selected: {engine_id}")
         self.engine_ready.emit(engine_id)
@@ -226,20 +222,18 @@ class MainProcess(QObject):
         file_path: Optional[str] = None,
         workspace_dir: Optional[str] = None,
     ) -> bool:
-        """
-        Start a compilation.
+        """Start a compilation.
 
         Args:
-         program: Programme à executer
-         args: Arguments de compilation
-         env: Variables d'environment (optionnel)
-         engine_id: Identifiant du engine (optionnel)
-         file_path: Path du file (optionnel)
-         workspace_dir: Répertoire de travail (optionnel)
+         program: Program to execute
+         args: Compile arguments
+         env: Environment variables (optional)
+         engine_id: Engine identifier (optional)
+         file_path: File path (optional)
+         workspace_dir: Working directory (optional)
 
         Returns:
-         True si la compilation a démarré, False sinon
-        """
+         True if compilation has started, False otherwise"""
         if self.is_compiling:
             self.log_message.emit("warning", "Compilation already in progress")
             return False
@@ -306,12 +300,10 @@ class MainProcess(QObject):
         return success
 
     def cancel(self) -> bool:
-        """
-        Cancel current compilation.
+        """Cancel current compilation.
 
         Returns:
-         True si l'annulation a été demandée, False sinon
-        """
+         True if cancellation was requested, False otherwise"""
         if not self.is_compiling:
             return False
 
@@ -325,18 +317,16 @@ class MainProcess(QObject):
         env: Optional[Dict[str, str]] = None,
         workspace_dir: Optional[str] = None,
     ) -> str:
-        """
-        Simulate compilation without execution.
+        """Simulate compilation without execution.
 
         Args:
-         program: Programme à executer
+         program: Program to execute
          args: Arguments
-         env: Variables d'environment (optionnel)
-         workspace_dir: Répertoire de travail (optionnel)
+         env: Environment variables (optional)
+         workspace_dir: Working directory (optional)
 
         Returns:
-         Description de la commande à executer
-        """
+         Description of the command to execute"""
         working_dir = workspace_dir or self._workspace_dir
         return self.compiler.dry_run(program, args, env, working_dir)
 
@@ -373,12 +363,10 @@ class MainProcess(QObject):
             self._set_state(ProcessState.READY)
 
     def get_compilation_info(self) -> Dict[str, Any]:
-        """
-        Return current compilation information.
+        """Return current compilation information.
 
         Returns:
-         Dictionnaire avec les infos de compilation
-        """
+         Dictionary with compilation information"""
         return {
             "engine": self._current_engine,
             "file": self._current_file,
@@ -453,12 +441,10 @@ class MainProcess(QObject):
     # =========================================================================
 
     def get_exclusion_patterns(self) -> List[str]:
-        """
-        Return configured exclusion patterns.
+        """Return configured exclusion patterns.
 
         Returns:
-         Liste des patterns d'exclusion
-        """
+         List of exclusion patterns"""
         if self._workspace_dir:
             try:
                 config = load_ark_config(self._workspace_dir)
@@ -471,15 +457,13 @@ class MainProcess(QObject):
         return DEFAULT_EXCLUDE_PATTERNS
 
     def should_exclude(self, file_path: str) -> bool:
-        """
-        Determine whether a file must be excluded from compilation.
+        """Determines whether a file must be excluded from compilation.
 
         Args:
-         file_path: Path absolu du file à checkr
+         file_path: Absolute path of the file to check
 
         Returns:
-         True si le file doit être exclu, False sinon
-        """
+         True if the file must be excluded, False otherwise"""
         if not self._workspace_dir:
             return False
         patterns = self.get_exclusion_patterns()
@@ -489,6 +473,6 @@ class MainProcess(QObject):
 # =========================================================================
 # FONCTIONS DE CONSTRUCTION ET VALIDATION DE COMMANDES
 # =========================================================================
-# Ces fonctions ont été déplacées dans Core.Compiler.utils
-# et sont importées au début de ce fichier pour maintenir la compatibilité.
+# These functions have been moved to Core.Compiler.utils
+# and are imported at the beginning of this file to maintain compatibility.
 # =========================================================================

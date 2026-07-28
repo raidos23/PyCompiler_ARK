@@ -13,14 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-WorkspaceAdvancedManipulation — logique pure de statut du workspace.
+"""WorkspaceAdvancedManipulation — pure workspace status logic.
 
-Les interactions Qt (drag & drop, dialogs, widgets) ont été déplacées dans
+Qt interactions (drag & drop, dialogs, widgets) have been moved to
 `Ui/Gui/WorkspaceAdvancedManipulation.py`.
 
-Ce module conserve uniquement la fonction pure `get_workspace_status()`.
-"""
+This module only keeps the pure `get_workspace_status()` function."""
 
 import os
 

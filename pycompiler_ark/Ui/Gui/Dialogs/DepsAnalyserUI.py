@@ -61,10 +61,8 @@ def _log_append(gui, msg: str) -> None:
 
 
 def suggest_missing_dependencies(self):
-    """
-    Analyze primary files to compile and detect imported modules,
-    check leur présence dans le venv, et propose d'installer ceux qui manquent.
-    """
+    """Analyze primary files to compile and detect imported modules,
+    check their presence in the friv, and offer to install those who are missing."""
 
     def _t(_key: str, fr: str, en: str) -> str:
         try:
@@ -411,7 +409,7 @@ def suggest_missing_dependencies(self):
         )
 
 
-# Installation automatique des dépendances manquantes (récursif)
+# Automatic installation of missing dependencies (recursive)
 def _install_next_dependency(self):
     # Si tous les modules ont été installés, termine le processus
     if self._dep_install_index >= len(self._dep_install_list):
@@ -454,7 +452,7 @@ def _install_next_dependency(self):
     process.start()
 
 
-# Affiche la sortie de pip dans la ProgressDialog et les logs
+# Show pip output in the ProgressDialog and logs
 def _on_dep_pip_output(self, process, error=False):
     data = (
         process.readAllStandardError().data().decode()
@@ -468,7 +466,7 @@ def _on_dep_pip_output(self, process, error=False):
     _log_append(self, data)
 
 
-# Callback après l'installation d'un module (pip)
+# Callback after installing a module (pip)
 def _on_dep_pip_finished(self, process, code, status):
     module = self._dep_install_list[self._dep_install_index]
     if code == 0:
