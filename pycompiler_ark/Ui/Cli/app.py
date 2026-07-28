@@ -310,7 +310,7 @@ def _build_impl(
     if not as_json and verbose:
         info((f"Moteur cible : {engine_id}", f"Target engine: {engine_id}"))
 
-    # Alignement Git
+    # Git alignment
     from .helpers import ensure_correct_git_commit
 
     if not ensure_correct_git_commit(workspace, lock_payload):

@@ -13,19 +13,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-Plugins_SDK
+"""Plugins_SDK
 ===========
 
-Kit de développement pour plugins couvrant:
-- Contexte BC (Before Compilation)
-- Contexte UI (dialogs de dialogue, i18n)
+Plugin SDK covering:
+- BC Context (Before Compilation)
+- UI context (dialogue dialogs, i18n)
 
-Ce package expose une SDK stable pour les plugins tiers.
-"""
+This package exposes a stable SDK for third-party plugins."""
 
-# Expose uniquement les sous-packages pour éviter les imports précoces
-# Les Context concrets (Bc/UI) sont disponibles dans leurs sous-modules respectifs.
+# Expose only subpackages to avoid early imports
+# Concrete Contexts (Bc/UI) are available in their respective submodules.
 
 # from . import AcPluginContext as AcPluginContext  # noqa: F401  # ACASL removed
 from . import BcPluginContext as BcPluginContext  # noqa: F401

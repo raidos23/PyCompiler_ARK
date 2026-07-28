@@ -26,9 +26,9 @@ from importlib.metadata import PackageNotFoundError, distribution
 import yaml
 
 # NOTE PRODUCTION-HARDENING:
-# Les fonctionnalités non finalisées sont encapsulées dans des gardes afin de ne jamais
-# faire échouer l'application. Les Plugins publiques restent stables; les chemins non
-# implémentés renvoient silencieusement.
+# Unfinalized features are encapsulated in guards so they never
+# cause the application to fail. Public Plugins remain stable; the paths no
+# implemented return silently.
 
 
 def _default_excluded_stdlib() -> set[str]:
@@ -126,17 +126,15 @@ def _load_excluded_stdlib() -> set[str]:
         return default
 
 
-# Liste explicite de modules de la bibliothèque standard à exclure (chargée du YAML)
+# Explicit list of standard library modules to exclude (loaded with YAML)
 EXCLUDED_STDLIB = _load_excluded_stdlib()
 
 
 @functools.lru_cache(maxsize=256)
 def _is_stdlib_module(module_name: str) -> bool:
-    """
-    Determine whether module belongs to Python standard library.
-    Combine une liste d'exclusion explicite et une détection basée sur importlib.util.find_spec.
-    Résultats cachés pour éviter les appels répétés.
-    """
+    """Determine whether module belongs to Python standard library.
+    Combines an explicit exclude list and detection based on importlib.util.find_spec.
+    Hidden results to avoid repeated calls."""
     try:
         if module_name in EXCLUDED_STDLIB:
             return True
@@ -163,7 +161,7 @@ def _is_stdlib_module(module_name: str) -> bool:
                 if os.path.commonpath([c, stdlib_path]) == stdlib_path:
                     return True
             except Exception:
-                # os.path.commonpath peut lever si chemins sur volumes différents
+                # os.path.commonpath may raise if paths on different volumes
                 pass
         return False
     except Exception:
@@ -671,25 +669,23 @@ def _check_module_installed(module: str) -> bool:
 def _find_pip_executable(
     venv_path: str = None, workspace_dir: str = None
 ) -> tuple:
-    """
-    Locate pip executable with multiple fallback strategies.
-    Return un tuple (program, prefix_args) où:
-    - program: path vers l'executable ou 'python'
-    - prefix_args: arguments à préfixer ([] pour pip direct, ['-m', 'pip'] pour module)
+    """Locate pip executable with multiple fallback strategies.
+    Return a tuple (program, prefix_args) where:
+    - program: path to executable or 'python'
+    - prefix_args: arguments to prefix ([] for direct pip, ['-m', 'pip'] for module)
 
-    Stratégies (dans l'ordre):
-    1. pip du venv (Scripts/pip.exe ou bin/pip)
-    2. python -m pip du venv
-    3. python -m pip du système
-    """
+    Strategies (in order):
+    1. venv pip (Scripts/pip.exe or bin/pip)
+    2. python -m pip from venv
+    3. python -m system pip"""
 
-    # Déterminer le chemin du venv
+    # Determine the path of the venv
     if venv_path:
         venv_dir = os.path.abspath(venv_path)
     elif workspace_dir:
         venv_dir = os.path.abspath(os.path.join(workspace_dir, "venv"))
     else:
-        # Fallback: utiliser python -m pip du système
+        # Fallback: use python -m system pip
         return (sys.executable, ["-m", "pip"])
 
     is_windows = platform.system() == "Windows"
@@ -697,10 +693,10 @@ def _find_pip_executable(
     pip_name = "pip.exe" if is_windows else "pip"
     pip_exe = os.path.join(bin_dir, pip_name)
 
-    # Stratégie 1: pip exécutable du venv
+    # Strategy 1: executable pip from venv
     if os.path.isfile(pip_exe):
         try:
-            # Vérifier que pip est exécutable
+            # Check that pip is executable
             result = subprocess.run(
                 [pip_exe, "--version"],
                 stdout=subprocess.PIPE,
@@ -712,7 +708,7 @@ def _find_pip_executable(
         except Exception:
             pass
 
-    # Stratégie 2: python -m pip du venv
+    # Strategy 2: python -m pip from venv
     python_exe = os.path.join(
         bin_dir, "python.exe" if is_windows else "python"
     )
@@ -729,7 +725,7 @@ def _find_pip_executable(
         except Exception:
             pass
 
-    # Stratégie 3: python -m pip du système
+    # Strategy 3: python -m system pip
     try:
         result = subprocess.run(
             [sys.executable, "-m", "pip", "--version"],

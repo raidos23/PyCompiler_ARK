@@ -782,14 +782,13 @@ class VenvManager:
 
     def validate_venv_strict(self, venv_root: str) -> tuple[bool, str]:
         """Strict validation of a venv.
-        Return (ok, raison_si_ko).
-        Règles:
-         - Dossier existant
-         - pyvenv.cfg présent
-         - Scripts/python.exe (Windows) ou bin/python[3] (POSIX) présent
-         - include-system-site-packages=false (refus si true)
-         - pyvenv.cfg, folder Scripts/bin et executable Python doivent rester confinés dans le venv (pas de liens sortants)
-        """
+        Return (ok, reason_si_ko).
+        Rules:
+         - Existing file
+         - pyvenv.cfg present
+         - Scripts/python.exe (Windows) or bin/python[3] (POSIX) present
+         - include-system-site-packages=false (refused if true)
+         - pyvenv.cfg, Scripts/bin folder and Python executable must remain contained in the venv (no outgoing links)"""
         try:
             if not venv_root or not os.path.isdir(venv_root):
                 return False, "Chemin invalide (dossier manquant)"
@@ -810,7 +809,7 @@ class VenvManager:
                 if not (os.path.isfile(cand1) or os.path.isfile(cand2)):
                     return False, "python ou python3 introuvable dans bin/"
                 pyexe = cand1 if os.path.isfile(cand1) else cand2
-            # Politique pyvenv.cfg: include-system-site-packages doit être false
+            # pyvenv.cfg policy: include-system-site-packages must be false
             try:
                 with open(cfg, encoding="utf-8", errors="ignore") as f:
                     text = f.read()
@@ -825,9 +824,9 @@ class VenvManager:
                         break
             except Exception:
                 pass
-            # Confinement: pyvenv.cfg et le dossier bin/Scripts doivent rester dans le venv.
-            # L'exécutable Python peut être un lien symbolique hors venv selon la plateforme;
-            # la vérification de liaison (verify_venv_binding) garantira l'isolation effective.
+            # Containment: pyvenv.cfg and the bin/Scripts folder must remain in the venv.
+            # The Python executable may be a non-venv symlink depending on the platform;
+            # binding verification (verify_venv_binding) will ensure effective isolation.
             for p in (cfg, bpath):
                 if not self._is_within(p, venv_root):
                     return (
@@ -900,7 +899,7 @@ class VenvManager:
                 self._prompt_recreate_invalid_venv(venv_path, reason)
                 return
 
-            # Verification asynchrone de la liaison python/pip -> venv
+            # Asynchronous verification of the python/pip -> venv connection
             def _after_binding(ok_bind: bool):
                 """Execute _after_binding logic for this component."""
                 if not ok_bind:
@@ -943,8 +942,8 @@ class VenvManager:
                             )
                         except Exception:
                             pass
-                        # On pourrait proposer l'installation, mais on laisse les engines gérer
-                        # ou on affiche juste l'avertissement.
+                        # We could offer the installation, but we let the engines manage
+                        # or we just display the warning.
                     else:
                         try:
                             from pycompiler_ark.Ui import output
@@ -1045,7 +1044,7 @@ class VenvManager:
             if loop:
                 loop.quit()
 
-            # Installer les dependances du projet si un requirements.txt est present
+            # Install project dependencies if a requirements.txt is present
             try:
                 if getattr(self.parent, "workspace_dir", None):
                     self.install_requirements_if_needed(
@@ -1232,7 +1231,7 @@ class VenvManager:
             if not os.path.isfile(vpython):
                 callback(False)
                 return
-            # Étape 1: vérifier sys.prefix
+            # Step 1: Check sys.prefix
             p1 = QProcess(self.parent)
 
             def _p1_finished(code, _status):
@@ -1246,7 +1245,7 @@ class VenvManager:
                     if not self._is_within(sys_prefix, venv_root):
                         callback(False)
                         return
-                    # Étape 2: vérifier pip --version et site-path
+                    # Step 2: check pip --version and site-path
                     vpip = self.pip_path(venv_root)
                     if not os.path.isfile(vpip):
                         callback(False)
@@ -1603,7 +1602,7 @@ class VenvManager:
             pass
         try:
             self._reset_cancel_state()
-            # Recherche d'un python embarque a cote de l'executable
+            # Search for a python embedded next to the executable
             python_candidate = None
             exe_dir = os.path.dirname(sys.executable)
             # Windows: python.exe, Linux/Mac: python3 ou python
@@ -1615,7 +1614,7 @@ class VenvManager:
                 os.path.join(exe_dir, "python_embedded", "python3"),
                 os.path.join(exe_dir, "python_embedded", "python"),
             ]
-            # Recherche egalement les interpreteurs systeme disponibles dans le PATH
+            # Also searches for system interpreters available in the PATH
             path_candidates = []
             try:
                 if platform.system() == "Windows":
@@ -1637,7 +1636,7 @@ class VenvManager:
                     break
             if not python_candidate:
                 python_candidate = sys.executable
-            # Journalisation du type d'interpreteur detecte
+            # Logging the type of interpreter detected
             base = os.path.basename(python_candidate).lower()
             if (
                 python_candidate.startswith(exe_dir)
@@ -1692,7 +1691,7 @@ class VenvManager:
             self._venv_create_process = process
             process.setProgram(python_candidate)
             args = ["-m", "venv", venv_path]
-            # Si l'on utilise le launcher Windows 'py', forcer Python 3 avec -3
+            # If you use the Windows 'py' launcher, force Python 3 with -3
             if base in ("py", "py.exe"):
                 args = ["-3"] + args
             process.setArguments(args)
@@ -1786,7 +1785,7 @@ class VenvManager:
             )
             self._call_ui("close_progress", "venv_creation")
 
-            # Installer les dependances du projet a partir de requirements.txt si present
+            # Install project dependencies from requirements.txt if present
             try:
                 self.install_requirements_if_needed(os.path.dirname(venv_path))
             except Exception:
@@ -1905,7 +1904,7 @@ class VenvManager:
                 self._start_requirements_install(path, venv_root, req_path)
             return
 
-        # Verifier la liaison de maniere asynchrone, puis demarrer l'installation
+        # Verify the link asynchronously, then start the installation
         def _after_binding(ok_bind: bool):
             """Execute _after_binding logic for this component."""
             if not ok_bind:
@@ -2037,14 +2036,14 @@ class VenvManager:
             if error
             else process.readAllStandardOutput().data().decode()
         )
-        # Affiche la dernière ligne reçue
+        # Shows the last line received
         lines = data.strip().splitlines()
         if lines:
             self._call_ui(
                 "update_progress_message", "reqs_install", lines[-1][:200]
             )
             self._pip_progress_lines += len(lines)
-            # Simule une progression (pip ne donne pas de %)
+            # Simulates progress (pip does not give %)
             self._call_ui(
                 "update_progress_progress",
                 "reqs_install",
@@ -2297,7 +2296,7 @@ class VenvManager:
 
             # Create ARK config if it doesn't exist
             try:
-                from pycompiler_ark.Core.Configs import (
+                from ..Configs import (
                     create_default_ark_config,
                 )
 

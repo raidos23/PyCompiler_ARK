@@ -13,16 +13,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-Custom dialogs for PyCompiler ARK.
-Inclut ProgressDialog, dialogs de message, et autres dialogues spécifiques.
+"""Custom dialogs for PyCompiler ARK.
+Includes ProgressDialog, message dialogs, and other specific dialogs.
 
-IMPORTANT: Tous les dialogs ici executent les opérations Qt dans le thread main
-via le système d'invoker de Plugins_SDK.GeneralContext.Dialog pour assurer:
-- L'héritage du theme de l'application
-- L'intégration visuelle avec l'application maine
-- La sécurité des threads
-"""
+IMPORTANT: All dialogs here execute Qt operations in the main thread
+via the Plugins_SDK.GeneralContext.Dialog invoker system to ensure:
+- Inheritance of the application theme
+- Visual integration with the Maine application
+- Thread safety"""
 
 import getpass
 import platform

@@ -28,9 +28,9 @@ import shutil
 from collections.abc import Sequence
 from pathlib import Path
 from typing import Any, Optional, Union
+from ..Core.utils.os_helpers import open_path as _open_path
 
 Pathish = Union[str, Path]
-from ..Core.utils.os_helpers import open_path as _open_path
 
 
 # -------------------------------

@@ -70,7 +70,7 @@ TAG_PRIORITY_MAP = {
     "minify": 50,
 }
 
-# Valeur par défaut pour les tags inconnus
+# Default value for unknown tags
 DEFAULT_TAG_PRIORITY = 100
 
 
@@ -104,7 +104,7 @@ def compute_tag_order(meta_map: dict[str, dict[str, Any]]) -> list[str]:
             if not isinstance(tags, (list, tuple)):
                 return DEFAULT_TAG_PRIORITY
 
-            # Normaliser les tags et trouver le score minimum
+            # Normalize tags and find the minimum score
             scores = []
             for tag in tags:
                 tag_str = str(tag).strip().lower()
@@ -116,12 +116,12 @@ def compute_tag_order(meta_map: dict[str, dict[str, Any]]) -> list[str]:
         except Exception:
             return DEFAULT_TAG_PRIORITY
 
-    # Trier par (score, id) pour stabilité et lisibilité
+    # Sort by (score, id) for stability and readability
     return sorted(meta_map.keys(), key=lambda x: (_compute_score(x), x))
 
 
 def get_tag_phase_name(tag: str) -> str:
-    """Return le nom lisible de la phase pour un tag donné."""
+    """Return the readable name of the phase for a given tag."""
     tag_lower = str(tag).strip().lower()
     score = TAG_PRIORITY_MAP.get(tag_lower, DEFAULT_TAG_PRIORITY)
 
@@ -139,9 +139,10 @@ def get_tag_phase_name(tag: str) -> str:
 
 
 def describe_plugin_priority(plugin_id: str, tags: list[str]) -> str:
-    """Return une description lisible de la priorité d'un plugin.
+    """Return a readable description of a plugin's priority.
 
-    Exemple: "plugin_id (lint, format) -> Phase 4: Linting"
+    Example: "plugin_id (lint, format) -> Phase 4: Linting"
+
     """
     if not tags:
         return (

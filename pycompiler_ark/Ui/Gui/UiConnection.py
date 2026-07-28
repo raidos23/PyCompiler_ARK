@@ -806,9 +806,7 @@ def _resolve_theme_icon_color(css: str | None = None) -> str:
         if accent:
             return accent
         return "#FFFFFF" if _is_qss_dark(css) else "#111111"
-    return (
-        "#FFFFFF" if _detect_system_color_scheme() == "sombre" else "#111111"
-    )
+    return "# FFFFFF" if _detect_system_color_scheme() == "dark" else "#111111"
 
 
 def themed_svg_icon(

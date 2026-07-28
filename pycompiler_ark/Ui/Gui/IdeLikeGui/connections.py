@@ -15,9 +15,8 @@
 
 """Connections for `Ui/Forms/ide_main_window.ui`.
 
-Ce module contient uniquement le chargement UI, le mapping des widgets et les
-connexions de signaux vers les méthodes existantes de la GUI principale.
-"""
+This module only contains UI loading, widget mapping and
+signal connections to existing main GUI methods."""
 
 from __future__ import annotations
 

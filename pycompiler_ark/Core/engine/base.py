@@ -27,7 +27,7 @@ if TYPE_CHECKING:
 
 @dataclass(frozen=True)
 class EngineMeta:
-    """Métadonnées d'un moteur de compilation."""
+    """Metadata of a compilation engine."""
 
     id: str
     name: str

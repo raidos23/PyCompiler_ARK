@@ -13,11 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-User preferences management for PyCompiler ARK.
-Inclut la sauvegarde et le loadment des preferences.
-La language selected par l'utilisateur (clé "language") est enregistrée et restaurée automatiquement.
-"""
+"""User preferences management for PyCompiler ARK.
+Includes saving and loading of preferences.
+The language selected by the user ("language" key) is saved and restored automatically."""
 
 import json
 import os
@@ -27,9 +25,7 @@ PREFS_BASENAME = "gui_prefs.json"
 
 
 def _user_config_dir() -> str:
-    """
-    Return le folder de preferences global de l'utilisateur : ~/.pycompiler_ark
-    """
+    """Return the user's global preferences folder: ~/.pycompiler_ark"""
     return os.path.expanduser("~/.pycompiler_ark")
 
 
@@ -55,13 +51,13 @@ def _atomic_write_json(path: str, data: dict):
 
 def load_preferences(self):
     try:
-        # Essaye d'abord le chemin config utilisateur (nouveau), puis les anciens chemins (migration)
+        # First try the user config path (new), then the old paths (migration)
         prefs_path = PREFS_FILE
         try:
             with open(prefs_path, encoding="utf-8") as f:
                 prefs = json.load(f)
         except Exception:
-            # Migration douce: tenter l'ancien chemin dans le projet <project_root>/.pref
+            # Soft migration: try the old path in the project <project_root>/.pref
             try:
                 project_root = os.path.abspath(
                     os.path.join(
@@ -73,7 +69,7 @@ def load_preferences(self):
                 with open(old_pref_path, encoding="utf-8") as f:
                     prefs = json.load(f)
             except Exception:
-                # Migration douce: tenter l'ancien chemin <project_root>/pref/
+                # Soft migration: try the old path <project_root>/pref/
                 try:
                     old_dir = os.path.abspath(
                         os.path.join(
@@ -86,22 +82,22 @@ def load_preferences(self):
                     with open(old_path, encoding="utf-8") as f:
                         prefs = json.load(f)
                 except Exception:
-                    # Dernier recours: fichier à la racine du cwd
+                    # Last resort: file at the root of the cwd
                     with open(PREFS_BASENAME, encoding="utf-8") as f:
                         prefs = json.load(f)
 
         self.language_pref = prefs.get(
             "language_pref", prefs.get("language", "System")
         )
-        # Compat: conserver self.language utilisé ailleurs
+        # Compat: keep self.language used elsewhere
         self.language = self.language_pref
-        # Thème UI
+        # UI Theme
         self.theme = prefs.get("theme", "System")
     except Exception:
-        # Préférence de langue par défaut
+        # Default language preference
         self.language_pref = "System"
         self.language = "System"
-        # Thème UI par défaut
+        # Default UI theme
         self.theme = "System"
 
 
@@ -125,13 +121,13 @@ def save_preferences(self):
         "theme": getattr(self, "theme", "System"),
     }
     try:
-        # Écriture atomique dans le dossier de config utilisateur
+        # Atomic write to user config folder
         try:
             os.makedirs(os.path.dirname(PREFS_FILE), exist_ok=True)
         except Exception:
             pass
         _atomic_write_json(PREFS_FILE, prefs)
-        # Écrit également un JSON d'information système détectée (diagnostic)
+        # Also writes a JSON of detected system information (diagnostics)
         try:
             export_system_preferences_json()
         except Exception:
@@ -319,12 +315,10 @@ def preferences_system_info() -> dict:
 
 
 def export_system_preferences_json(path: str | None = None) -> str:
-    """
-    Write JSON file containing system information tied to preferences
-    (language système détectée, theme clair/sombre, paths de config).
-    Si path n'est pas fourni, écrit dans le folder de config utilisateur
-    sous le nom 'system_infos.json'. Return le path final écrit.
-    """
+    """Write JSON file containing system information tied to preferences
+    (system language detected, light/dark theme, config paths).
+    If path is not provided, written to the user config folder
+    under the name 'system_infos.json'. Return the final written path."""
     data = preferences_system_info()
     if not path:
         path = os.path.join(_user_config_dir(), "system_infos.json")

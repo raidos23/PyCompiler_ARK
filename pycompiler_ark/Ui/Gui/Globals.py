@@ -67,7 +67,7 @@ def _run_coro_async(coro, on_result, ui_owner=None):
 
 
 _workspace_dir_lock = threading.RLock()
-# Référence globale vers l'instance GUI pour récupération du workspace par l'Plugins_SDK
+# Global reference to the GUI instance for workspace recovery by the Plugins_SDK
 _latest_gui_instance = None
 
 # Non-blocking workspace cache for cross-thread access

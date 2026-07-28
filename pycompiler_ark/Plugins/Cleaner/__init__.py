@@ -62,11 +62,10 @@ PLUGIN_META = PluginMeta(
 
 @bc_register
 class Cleaner(BcPluginBase):
-    """Plugin de nettoyage du workspace avant compilation.
+    """Workspace cleaning plugin before compilation.
 
-    Remove les files .pyc et les folders __pycache__ pour réduire la taille
-    et éviter les problèmes de cache lors de la compilation.
-    """
+    Remove .pyc files and __pycache__ folders to reduce size
+    and avoid cache issues during compilation."""
 
     meta = PLUGIN_META
 
@@ -170,7 +169,7 @@ class Cleaner(BcPluginBase):
         return (translate("cleaner", "tab_title", "Cleaner"), w, on_save)
 
     def on_pre_compile(self, ctx: PreCompileContext) -> None:
-        """Nettoie le workspace avant la compilation."""
+        """Cleans the workspace before compiling."""
         try:
             cfg = self._get_config(ctx)
             ask_confirm = bool(cfg.get("confirm", True))

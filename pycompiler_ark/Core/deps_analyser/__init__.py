@@ -13,22 +13,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-Python dependency analysis for PyCompiler ARK.
-Inclut la détection, la sugmanagement et l'installation automatique des modules manquants.
+"""Python dependency analysis for PyCompiler ARK.
+Includes detection, suggestion and automatic installation of missing modules.
 
-Optimisations appliquées:
-- Caching des résultats stdlib via @lru_cache
-- Parallélisation des vérifications pip via ThreadPoolExecutor
-- Utilisation de importlib.metadata au lieu de subprocess pip show
-- Async I/O pour les opérations bloquantes
+Optimizations applied:
+- Caching stdlib results via @lru_cache
+- Parallelization of pip checks via ThreadPoolExecutor
+- Using importlib.metadata instead of subprocess pip show
+- Async I/O for blocking operations
 
-Statut: module utilisable pour une sugmanagement/installation basique. Les
-fonctions d'auto-analysis avancée mentionnées dans la feuille de route ne sont
-pas nécessaires à l'exécution et sont désactivées/neutralisées pour éviter tout
-impact en production. La logique UI (suggest_missing_dependencies) a été déplacée
-vers la couche UI.
-"""
+Status: usable module for basic suggestion/installation. The
+advanced auto-analysis functions mentioned in the roadmap are not
+not necessary for execution and are deactivated/neutralized to avoid any
+impact in production. UI logic (suggest_missing_dependencies) has been moved
+to the UI layer."""
 
 from __future__ import annotations
 

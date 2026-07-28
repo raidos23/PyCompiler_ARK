@@ -13,12 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-WorkspaceDialog — interactions Qt pour la sélection et l'initialisation du workspace.
+"""WorkspaceDialog — Qt interactions for workspace selection and initialization.
 
-Ce module gère les dialogues Qt (QFileDialog, QMessageBox, loading dialogs)
-et délègue toute la logique métier à Core.WorkSpaceManager.SetupWorkspace.
-"""
+This module manages Qt dialogs (QFileDialog, QMessageBox, loading dialogs)
+and delegates all business logic to Core.WorkSpaceManager.SetupWorkspace."""
 
 from __future__ import annotations
 
@@ -35,7 +33,7 @@ from ..WidgetsCreator import CompilationProcessDialog
 
 
 class WorkspaceDialog:
-    """Gestion Qt du workspace (sélection, application, initialisation)."""
+    """Qt workspace management (selection, application, initialization)."""
 
     @staticmethod
     def confirm_workspace_change(gui, folder: str) -> bool:

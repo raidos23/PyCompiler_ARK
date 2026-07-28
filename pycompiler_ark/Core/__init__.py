@@ -23,14 +23,14 @@ Qt-dependent classes have been moved to Ui/Gui/Compilation/.
 
 from __future__ import annotations
 
-# Importations de allversion.py
+# Imports of allversion.py
 from .allversion import (
     get_bcasl_version,
     get_core_version,
     get_engine_sdk_version,
 )
 
-# Importations de utils.py
+# Imports of utils.py
 from .Compiler.utils import (
     CommandBuilder,
     build_command,
@@ -39,7 +39,7 @@ from .Compiler.utils import (
     validate_command,
 )
 
-# Importations de process_killer.py
+# Process_killer.py imports
 from .process_killer import (
     ProcessInfo,
     ProcessKiller,
@@ -48,7 +48,7 @@ from .process_killer import (
     kill_process_tree,
 )
 
-# Importations de Venv_Manager/Manager.py
+# Venv_Manager/Manager.py imports
 from .Venv_Manager.Manager import VenvManager
 
 __all__ = [
