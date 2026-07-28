@@ -186,7 +186,7 @@ Generates starter templates for engines or plugins.
 
 - **Path Resolution**: 
     1. If `--path` is provided, it is used as the base directory.
-    2. If a developer directory is explicitly configured (via `set dev-engine-dir` or `set dev-plugin-dir`), the template is created directly inside that folder.
-    3. Otherwise, the CLI will interactively prompt for a destination path.
+    2. If `--path` is not provided and a developer directory is configured (via `set dev-engine-dir` or `set dev-plugin-dir`), the template is created directly inside that directory.
+    3. Otherwise, the CLI prompts interactively for a destination path.
 - **Interactive Prompt**: The command will wait for user input unless in a non-interactive environment or bypassed with a path/config.
-- **Structure**: Templates are created with the correct directory structure (`engines/<name>` or `Plugins/<name>`) unless created inside a `dev` directory, where they are placed at the root of that directory.
+- **Structure**: Templates are created with the correct directory structure (`engines/<name>` or `Plugins/<name>`) when created inside an explicit `--path` directory. If generated inside a configured `dev` directory, the package is created directly at that directory root.

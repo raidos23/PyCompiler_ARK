@@ -121,6 +121,8 @@ pycompiler_ark unset dev-plugin-dir
 # Scaffolding
 pycompiler_ark scaffold engine <name> [--path <dir>]
 pycompiler_ark scaffold plugin-bcasl <name> [--path <dir>]
+
+If `--path` is not provided, the CLI uses `dev-engine-dir` or `dev-plugin-dir` when configured. Otherwise, it prompts for a destination path.
 ```
 
 ### JSON Output

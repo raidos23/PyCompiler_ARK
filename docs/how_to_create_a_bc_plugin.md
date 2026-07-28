@@ -9,7 +9,8 @@ The BCASL loader and runtime are **pure-Python**. They run in headless environme
 
 **Discovery And Loading**
 
-- Plugins are discovered in `pycompiler_ark/Plugins/<plugin_name>/`.
+- Plugins are discovered in `pycompiler_ark/Plugins/<plugin_name>/` and in externally configured plugin directories when available.
+- Configured plugin directories are set with `pycompiler_ark set user-plugin-dir <path>` and `pycompiler_ark set dev-plugin-dir <path>`.
 - The folder must contain an `__init__.py`.
 - The loader imports each package and detects plugins via `@bc_register`; legacy registration helpers remain available for older plugins when needed.
 - If `bcasl.yml` is missing, BCASL generates a best-effort default file when it runs.
