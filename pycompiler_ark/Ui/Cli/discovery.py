@@ -22,6 +22,8 @@ import importlib
 import inspect
 import os
 
+from ...Core.Configs import resolve_config_value
+
 try:
     import yaml
 except ImportError:  # pragma: no cover - generation can fail cleanly
@@ -39,6 +41,47 @@ def _plugins_root() -> Path:
     except Exception:
         pass
     return path
+
+
+def _is_plugin_package_dir(path: Path) -> bool:
+    return path.is_dir() and (path / "__init__.py").exists()
+
+
+def _template_root() -> Path:
+    path = _project_root() / "data" / "templates"
+    try:
+        path.mkdir(parents=True, exist_ok=True)
+    except Exception:
+        pass
+    return path
+
+
+def _read_template(name: str) -> str | None:
+    path = _template_root() / name
+    try:
+        return path.read_text(encoding="utf-8")
+    except Exception:
+        return None
+
+
+def _plugin_roots() -> list[tuple[Path, str]]:
+    roots: list[tuple[Path, str]] = []
+
+    internal = _plugins_root()
+    roots.append((internal, "internal"))
+
+    for key, label in (("user-plugin-dir", "user"), ("dev-plugin-dir", "dev")):
+        try:
+            dir_val = resolve_config_value(key, create_default=False)
+            if not dir_val:
+                continue
+            path = Path(dir_val).expanduser().resolve()
+            if path.exists() and path.is_dir():
+                roots.append((path, label))
+        except Exception:
+            continue
+
+    return roots
 
 
 def _read_version_from_init(rel_path: str) -> str:
@@ -135,17 +178,32 @@ def _extract_plugin_meta(init_file: Path, folder_name: str) -> dict[str, Any]:
 
 
 def _plugin_candidates() -> list[dict[str, Any]]:
-    plugins_root = _plugins_root()
     candidates: list[dict[str, Any]] = []
-    if not plugins_root.exists():
-        return candidates
-    for pkg_dir in sorted(
-        plugins_root.iterdir(), key=lambda p: p.name.lower()
-    ):
-        init_file = pkg_dir / "__init__.py"
-        if not pkg_dir.is_dir() or not init_file.exists():
+    for plugins_root, source in _plugin_roots():
+        if not plugins_root.exists():
             continue
-        candidates.append(_extract_plugin_meta(init_file, pkg_dir.name))
+
+        if _is_plugin_package_dir(plugins_root):
+            pkg_dirs = [plugins_root]
+        else:
+            try:
+                pkg_dirs = sorted(
+                    [p for p in plugins_root.iterdir() if p.is_dir()],
+                    key=lambda p: p.name.lower(),
+                )
+            except Exception:
+                pkg_dirs = []
+
+        for pkg_dir in pkg_dirs:
+            if pkg_dir.name.startswith("__"):
+                continue
+            init_file = pkg_dir / "__init__.py"
+            if not init_file.exists():
+                continue
+            plugin = _extract_plugin_meta(init_file, pkg_dir.name)
+            plugin["source"] = source
+            plugin["path"] = str(init_file)
+            candidates.append(plugin)
     return candidates
 
 
@@ -319,11 +377,11 @@ def scaffold_engine(
     target_name: str, root_dir: str | None = None
 ) -> dict[str, Any]:
     safe = str(target_name).strip().replace("-", "_").replace(" ", "_").lower()
+    class_name = safe.title().replace("_", "")
+    name = safe.title().replace("_", " ")
     base_root = Path(root_dir or Path.cwd())
     engine_dir = base_root / safe
 
-    lang_dir = engine_dir / "languages"
-    created: list[str] = []
     if engine_dir.exists():
         return {
             "created": False,
@@ -331,48 +389,22 @@ def scaffold_engine(
             "reason": "already exists",
         }
 
-    lang_dir.mkdir(parents=True, exist_ok=True)
-    created.extend([str(engine_dir), str(lang_dir)])
-    (engine_dir / "__init__.py").write_text(
-        "\n".join(
-            [
-                "from __future__ import annotations",
-                "",
-                "import sys",
-                "from pycompiler_ark.engine_sdk import BuildContext, CompilerEngine, EngineMeta, engine_register",
-                "",
-                "",
-                "@engine_register",
-                f"class {safe.title().replace('_', '')}Engine(CompilerEngine):",
-                f'    id = "{safe}"',
-                f'    name = "{safe.title().replace("_", " ")}"',
-                '    version = "0.1.0"',
-                '    required_core_version = "1.0.0"',
-                '    required_sdk_version = "1.0.0"',
-                "",
-                "    meta = EngineMeta(",
-                f'        id="{safe}",',
-                f'        name="{safe.title().replace("_", " ")}",',
-                '        version="0.1.0",',
-                '        required_core_version="1.0.0",',
-                '        required_sdk_version="1.0.0",',
-                "    )",
-                "",
-                "    @property",
-                "    def required_tools(self):",
-                '        return {"python": [], "system": []}',
-                "",
-                "    def build_command(self, context: BuildContext) -> list[str]:",
-                "        return [sys.executable, context.entry_point]",
-            ]
-        )
-        + "\n",
-        encoding="utf-8",
-    )
+    engine_dir.mkdir(parents=True, exist_ok=True)
+    template = _read_template("engine_template.txt")
+    if template is None:
+        return {
+            "created": False,
+            "path": str(engine_dir),
+            "reason": "template unavailable",
+        }
+
+    content = template.format(class_name=class_name, id=safe, name=name)
+    (engine_dir / "__init__.py").write_text(content, encoding="utf-8")
+    (engine_dir / "languages").mkdir(parents=True, exist_ok=True)
     if yaml is not None:
         (engine_dir / "languages" / "en.yml").write_text(
             yaml.safe_dump(
-                {"tab_title": safe.title().replace("_", " ")},
+                {"tab_title": name},
                 allow_unicode=True,
                 sort_keys=False,
             ),
@@ -388,10 +420,11 @@ def scaffold_plugin(
     target_name: str, root_dir: str | None = None
 ) -> dict[str, Any]:
     safe = str(target_name).strip().replace("-", "_").replace(" ", "_")
+    class_name = safe.title().replace("_", "")
+    name = safe.title().replace("_", " ")
     base_root = Path(root_dir or Path.cwd())
     plugin_dir = base_root / safe
 
-    lang_dir = plugin_dir / "languages"
     if plugin_dir.exists():
         return {
             "created": False,
@@ -399,29 +432,24 @@ def scaffold_plugin(
             "reason": "already exists",
         }
 
-    lang_dir.mkdir(parents=True, exist_ok=True)
-    (plugin_dir / "__init__.py").write_text(
-        "\n".join(
-            [
-                "from __future__ import annotations",
-                "",
-                'id = "' + safe.lower() + '"',
-                'name = "' + safe + '"',
-                'version = "0.1.0"',
-                'description = ""',
-                'author = ""',
-                "",
-                "def bc_register(registry):",
-                "    return None",
-            ]
-        )
-        + "\n",
-        encoding="utf-8",
+    plugin_dir.mkdir(parents=True, exist_ok=True)
+    template = _read_template("bcasl_plugin_template.txt")
+    if template is None:
+        return {
+            "created": False,
+            "path": str(plugin_dir),
+            "reason": "template unavailable",
+        }
+
+    content = template.format(
+        class_name=class_name, id=safe.lower(), name=name
     )
+    (plugin_dir / "__init__.py").write_text(content, encoding="utf-8")
     if yaml is not None:
+        (plugin_dir / "languages").mkdir(parents=True, exist_ok=True)
         (plugin_dir / "languages" / "en.yml").write_text(
             yaml.safe_dump(
-                {"plugin_name": safe},
+                {"plugin_name": name},
                 allow_unicode=True,
                 sort_keys=False,
             ),

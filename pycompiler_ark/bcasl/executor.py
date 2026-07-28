@@ -652,10 +652,13 @@ class BCASL:
         errors: list[tuple[str, str]] = []
         # Browse only Python packages (folders containing __init__.py)
         try:
-            pkg_dirs = sorted(
-                [p for p in directory.iterdir() if p.is_dir()],
-                key=lambda p: p.name,
-            )
+            if directory.is_dir() and (directory / "__init__.py").exists():
+                pkg_dirs = [directory]
+            else:
+                pkg_dirs = sorted(
+                    [p for p in directory.iterdir() if p.is_dir()],
+                    key=lambda p: p.name,
+                )
         except Exception:
             pkg_dirs = []
         for pkg_dir in pkg_dirs:

@@ -1,0 +1,34 @@
+from __future__ import annotations
+
+"""Starter engine template for PyCompiler ARK."""
+
+import sys
+
+from pycompiler_ark.engine_sdk import BuildContext, CompilerEngine, EngineMeta, engine_register
+
+
+@engine_register
+class {class_name}Engine(CompilerEngine):
+    """Minimal engine implementation."""
+
+    id = "{id}"
+    name = "{name}"
+    version = "0.1.0"
+    required_core_version = "1.0.0"
+    required_sdk_version = "1.0.0"
+
+    meta = EngineMeta(
+        id="{id}",
+        name="{name}",
+        version="0.1.0",
+        required_core_version="1.0.0",
+        required_sdk_version="1.0.0",
+    )
+
+    @property
+    def required_tools(self) -> dict[str, list[str]]:
+        return {{"python": [], "system": []}}
+
+    def build_command(self, context: BuildContext) -> list[str]:
+        """Return the command to execute the engine build."""
+        return [sys.executable, context.entry_point]
