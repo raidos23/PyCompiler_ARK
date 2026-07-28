@@ -729,21 +729,47 @@ def build_cli():
 
         console = get_console()
         if console:
-            table = Table(
-                title="Available Plugins", box=None, header_style="bold cyan"
-            )
-            table.add_column("ID", style="bright_blue")
-            table.add_column("Version", style="green")
-            table.add_column("Name")
+            from collections import defaultdict
 
+            groups = defaultdict(list)
             for plugin in payload.get("plugins", []):
-                table.add_row(plugin["id"], plugin["version"], plugin["name"])
-            console.print(table)
+                groups[plugin.get("source", "internal")].append(plugin)
+
+            for section_key, title in (
+                ("user", "User Plugins"),
+                ("dev", "Dev Plugins"),
+                ("internal", "Internal Plugins"),
+            ):
+                items = groups.get(section_key, [])
+                if not items:
+                    continue
+                table = Table(title=title, box=None, header_style="bold cyan")
+                table.add_column("ID", style="bright_blue")
+                table.add_column("Version", style="green")
+                table.add_column("Name")
+                for plugin in items:
+                    table.add_row(
+                        plugin["id"], plugin["version"], plugin["name"]
+                    )
+                console.print(table)
         else:
-            for plugin in payload.get("plugins", []):
-                click.echo(
-                    f"{plugin['id']} {plugin['version']} {plugin['name']}"
-                )
+            for section_key, title in (
+                ("user", "User Plugins"),
+                ("dev", "Dev Plugins"),
+                ("internal", "Internal Plugins"),
+            ):
+                items = [
+                    plugin
+                    for plugin in payload.get("plugins", [])
+                    if plugin.get("source", "internal") == section_key
+                ]
+                if not items:
+                    continue
+                click.echo(title + ":")
+                for plugin in items:
+                    click.echo(
+                        f"  {plugin['id']} {plugin['version']} {plugin['name']}"
+                    )
 
     @cli.group("scaffold")
     def scaffold_group():

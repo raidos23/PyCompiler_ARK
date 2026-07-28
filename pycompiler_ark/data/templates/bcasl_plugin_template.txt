@@ -1,0 +1,56 @@
+from __future__ import annotations
+
+"""Starter BCASL plugin template for PyCompiler ARK."""
+
+from pycompiler_ark.Plugins_SDK.BcPluginContext import BcPluginBase, PluginMeta, PreCompileContext, bc_register
+from pycompiler_ark.Plugins_SDK.GeneralContext import Dialog
+
+log = Dialog()
+dialog = Dialog()
+
+META = PluginMeta(
+    id="{id}",
+    name="{name}",
+    version="0.1.0",
+    description="Describe the plugin purpose and expected behavior.",
+    author="Your Name",
+    tags=("check",),
+    required_bcasl_version="2.0.0",
+    required_core_version="1.0.0",
+    required_plugins_sdk_version="1.0.0",
+    required_bc_plugin_context_version="1.0.0",
+    required_general_context_version="1.0.0",
+)
+
+
+@bc_register
+class {class_name}(BcPluginBase):
+    """Example BCASL plugin class."""
+
+    def __init__(self) -> None:
+        super().__init__(META)
+
+    def on_pre_compile(self, ctx: PreCompileContext) -> None:
+        """Run pre-compilation checks or prepare workspace state."""
+        try:
+            if not dialog.msg_question(
+                title="{name}",
+                text="Continue with pre-compilation checks?",
+                default_yes=True,
+            ):
+                log.log_info("Plugin cancelled by user")
+                return
+
+            files = list(ctx.iter_files(["*.py"], []))
+            if not files:
+                log.log_warn("No Python files found in workspace")
+                raise RuntimeError("No Python files found in workspace")
+
+            log.log_info(f"Found {{len(files)}} Python files")
+
+        except Exception as exc:
+            log.log_error(f"Plugin error: {{exc}}")
+            raise
+
+
+
