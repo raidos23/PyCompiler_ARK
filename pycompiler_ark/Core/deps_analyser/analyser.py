@@ -101,7 +101,7 @@ def _load_excluded_stdlib() -> set[str]:
             os.pardir,
             os.pardir,
             "data",
-            "stblib.yml",
+            "stdlib.yml",
         )
     )
     if not os.path.isfile(mapping_path):
@@ -111,7 +111,7 @@ def _load_excluded_stdlib() -> set[str]:
             data = yaml.safe_load(f)
         modules = None
         if isinstance(data, dict):
-            modules = data.get("excluded_stdlib")
+            modules = data.get("stdlib")
             if modules is None:
                 modules = data.get("modules")
         elif isinstance(data, list):

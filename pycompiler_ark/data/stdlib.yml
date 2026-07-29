@@ -1,4 +1,4 @@
-excluded_stdlib:
+stdlib:
   - sys
   - os
   - re
