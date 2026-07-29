@@ -664,7 +664,6 @@ class VenvManager:
                     f"Annulation demandee par l'utilisateur{suffix}.",
                     f"Cancellation requested by user{suffix}.",
                 ),
-                gui=self.parent,
             )
         except Exception:
             pass
@@ -702,7 +701,6 @@ class VenvManager:
 
                         output.warn(
                             f"Failed to remove {path} after {max_retries} attempts: {e}",
-                            gui=self.parent,
                         )
                     except Exception:
                         pass
@@ -720,7 +718,6 @@ class VenvManager:
 
                 output.warn(
                     f"Failed to create directory {path}: {e}",
-                    gui=self.parent,
                 )
             except Exception:
                 pass
@@ -744,9 +741,7 @@ class VenvManager:
             try:
                 from pycompiler_ark.Ui import output
 
-                output.info(
-                    f"Deleted invalid venv: {venv_root}", gui=self.parent
-                )
+                output.info(f"Deleted invalid venv: {venv_root}")
             except Exception:
                 pass
         except Exception as e:
@@ -891,7 +886,7 @@ class VenvManager:
                 try:
                     from pycompiler_ark.Ui import output
 
-                    output.error(f"Invalid venv: {reason}", gui=self.parent)
+                    output.error(f"Invalid venv: {reason}")
                 except Exception:
                     pass
                 # Offer to delete and recreate
@@ -907,7 +902,6 @@ class VenvManager:
 
                         output.error(
                             "Invalid venv binding: python/pip do not point to the selected venv.",
-                            gui=self.parent,
                         )
                     except Exception:
                         pass
@@ -937,7 +931,6 @@ class VenvManager:
                                     f"Outils systeme manquants : {', '.join(missing_sys)}",
                                     f"Missing system tools: {', '.join(missing_sys)}",
                                 ),
-                                gui=self.parent,
                             )
                         except Exception:
                             pass
@@ -947,9 +940,7 @@ class VenvManager:
                         try:
                             from pycompiler_ark.Ui import output
 
-                            output.success(
-                                "Outils systeme verifies.", gui=self.parent
-                            )
+                            output.success("Outils systeme verifies.")
                         except Exception:
                             pass
 
@@ -961,9 +952,8 @@ class VenvManager:
                         output.info(
                             (
                                 "Aucun outil Python requis detecte depuis les engines.",
-                                "No required Python tools detected from pycompiler_ark.engines.",
+                                "No required Python tools detected from engines.",
                             ),
-                            gui=self.parent,
                         )
                     except Exception:
                         pass
@@ -1008,7 +998,6 @@ class VenvManager:
 
                 output.error(
                     f"Erreur lors de la verification du venv: {e}",
-                    gui=self.parent,
                 )
             except Exception:
                 pass
@@ -1118,7 +1107,7 @@ class VenvManager:
                     loop.quit()
                 return
 
-            output.state(
+            output.info(
                 f"{self._tools_stage_prefix()}Installation automatique de {pkg}..."
             )
             self._call_ui(
@@ -1450,7 +1439,6 @@ class VenvManager:
 
                     output.info(
                         "Aucun venv valide trouve dans le workspace.",
-                        gui=self.parent,
                     )
                 except Exception:
                     pass
@@ -1460,9 +1448,7 @@ class VenvManager:
                 try:
                     from pycompiler_ark.Ui import output
 
-                    output.success(
-                        f"Un seul venv trouve: {venvs[0]}", gui=self.parent
-                    )
+                    output.success(f"Un seul venv trouve: {venvs[0]}")
                 except Exception:
                     pass
                 return venvs[0]
@@ -1473,7 +1459,6 @@ class VenvManager:
 
                 output.info(
                     f"{len(venvs)} venv(s) trouve(s), selection du meilleur...",
-                    gui=self.parent,
                 )
             except Exception:
                 pass
@@ -1487,7 +1472,6 @@ class VenvManager:
 
                     output.info(
                         f"  - {os.path.basename(venv_path)}: score={score} ({reason})",
-                        gui=self.parent,
                     )
                 except Exception:
                     pass
@@ -1503,7 +1487,6 @@ class VenvManager:
 
                     output.error(
                         "Aucun venv valide avec une bonne liaison.",
-                        gui=self.parent,
                     )
                 except Exception:
                     pass
@@ -1514,7 +1497,6 @@ class VenvManager:
 
                 output.success(
                     f"Meilleur venv selectionne: {os.path.basename(best_venv)} (score={best_score})",
-                    gui=self.parent,
                 )
             except Exception:
                 pass
@@ -1525,7 +1507,6 @@ class VenvManager:
 
                 output.warn(
                     f"Erreur lors de la selection du meilleur venv: {e}",
-                    gui=self.parent,
                 )
             except Exception:
                 pass
@@ -1541,9 +1522,7 @@ class VenvManager:
             try:
                 from pycompiler_ark.Ui import output
 
-                output.success(
-                    f"{pkg} installe dans le venv.", gui=self.parent
-                )
+                output.success(f"{pkg} installe dans le venv.")
             except Exception:
                 pass
         else:
@@ -1552,7 +1531,6 @@ class VenvManager:
 
                 output.error(
                     f"Erreur installation {pkg} (code {code})",
-                    gui=self.parent,
                 )
             except Exception:
                 pass
@@ -1579,7 +1557,6 @@ class VenvManager:
 
                     output.error(
                         f"Invalid venv detected: {reason}",
-                        gui=self.parent,
                     )
                 except Exception:
                     pass
@@ -1594,9 +1571,7 @@ class VenvManager:
         try:
             from pycompiler_ark.Ui import output
 
-            output.info(
-                "Aucun venv trouve, creation automatique...", gui=self.parent
-            )
+            output.info("Aucun venv trouve, creation automatique...")
         except Exception:
             pass
         try:
@@ -1644,9 +1619,8 @@ class VenvManager:
                 try:
                     from pycompiler_ark.Ui import output
 
-                    output.state(
+                    output.info(
                         f"Utilisation de l'interpreteur Python embarque : {python_candidate}",
-                        gui=self.parent,
                     )
                 except Exception:
                     pass
@@ -1654,9 +1628,8 @@ class VenvManager:
                 try:
                     from pycompiler_ark.Ui import output
 
-                    output.state(
+                    output.info(
                         f"Utilisation de l'interpreteur systeme : {python_candidate}",
-                        gui=self.parent,
                     )
                 except Exception:
                     pass
@@ -1664,9 +1637,8 @@ class VenvManager:
                 try:
                     from pycompiler_ark.Ui import output
 
-                    output.state(
+                    output.info(
                         f"Utilisation de sys.executable : {python_candidate}",
-                        gui=self.parent,
                     )
                 except Exception:
                     pass
@@ -1692,14 +1664,10 @@ class VenvManager:
             create_args = self._get_manager_command(
                 self._detected_manager, "create_venv"
             ) or ["-m", "venv"]
-            if create_args and create_args[0] != "python":
-                args = create_args + [venv_path]
+            if create_args and create_args[0] == "python":
+                args = create_args[1:] + [venv_path]
             else:
-                args = list(create_args)
-                if args and args[0] == "python":
-                    args = args + [venv_path]
-                else:
-                    args = ["-m", "venv", venv_path]
+                args = create_args + [venv_path]
             # If you use the Windows 'py' launcher, force Python 3 with -3
             if base in ("py", "py.exe"):
                 args = ["-3"] + args
@@ -1726,7 +1694,6 @@ class VenvManager:
 
                 output.error(
                     f"Echec de creation du venv ou installation des outils : {e}",
-                    gui=self.parent,
                 )
             except Exception:
                 pass
@@ -1763,7 +1730,7 @@ class VenvManager:
                     try:
                         from pycompiler_ark.Ui import output
 
-                        output.log(lvl, f"  [venv] {line}", gui=self.parent)
+                        output.log(lvl, f"  [venv] {line}")
                     except Exception:
                         pass
 
@@ -1775,7 +1742,7 @@ class VenvManager:
             try:
                 from pycompiler_ark.Ui import output
 
-                output.info("Creation du venv annulee.", gui=self.parent)
+                output.info("Creation du venv annulee.")
             except Exception:
                 pass
             self._call_ui("close_progress", "venv_creation")
@@ -1784,9 +1751,7 @@ class VenvManager:
             try:
                 from pycompiler_ark.Ui import output
 
-                output.success(
-                    "Environnement virtuel cree avec succes.", gui=self.parent
-                )
+                output.success("Environnement virtuel cree avec succes.")
             except Exception:
                 pass
             self._call_ui(
@@ -1805,7 +1770,6 @@ class VenvManager:
 
                 output.error(
                     f"Echec de creation du venv (code {code})",
-                    gui=self.parent,
                 )
             except Exception:
                 pass
@@ -1863,7 +1827,7 @@ class VenvManager:
                 return others[0]
 
             # 3. Use DepsAnalyser to generate requirements.txt from project analysis
-            output.state(
+            output.info(
                 "Analyse des dependances du projet via DepsAnalyser..."
             )
             generated = deps_analyser.write_requirements_txt(workspace_dir)
@@ -1984,7 +1948,7 @@ class VenvManager:
                     return
             except Exception:
                 pass
-        output.state(
+        output.info(
             "Installation des dependances a partir de requirements.txt..."
         )
         try:
@@ -2303,7 +2267,7 @@ class VenvManager:
 
                         def _after_binding(ok_bind: bool):
                             if ok_bind:
-                                output.state(
+                                output.info(
                                     "Verification des outils de compilation..."
                                 )
                                 self.check_tools_in_venv(existing_check)
@@ -2327,9 +2291,9 @@ class VenvManager:
                 )
 
                 if create_default_ark_config(workspace_dir):
-                    output.state("Fichier ark.yml cree dans le workspace.")
+                    output.success("Fichier ark.yml cree dans le workspace.")
             except Exception as e:
-                output.warn(f"Impossible de creer ark.yml: {e}")
+                output.warn(f"erreur lors de la creation de ark.yml: {e}")
 
             return True
         except Exception as e:
