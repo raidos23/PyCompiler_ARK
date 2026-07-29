@@ -5,7 +5,7 @@
 <p align="center">
   <a href="https://pypi.org/project/pycompiler-ark/"><img src="https://img.shields.io/pypi/v/pycompiler-ark?style=flat-square" alt="PyPI version"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache%202.0-blue?style=flat-square" alt="License"></a>
-  <a href="https://www.python.org/"><img src="https://img.shields.io/badge/python-3.8%2B-blue?style=flat-square" alt="Python"></a>
+  <a href="https://www.python.org/"><img src="https://img.shields.io/badge/python-3.11%2B-blue?style=flat-square" alt="Python"></a>
   <a href="https://github.com/raidos23/PyCompiler_ARK/stargazers"><img src="https://img.shields.io/github/stars/raidos23/PyCompiler_ARK?style=flat-square" alt="Stars"></a>
 </p>
 
