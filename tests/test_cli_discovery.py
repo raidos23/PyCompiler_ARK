@@ -53,9 +53,10 @@ class TestCliDiscovery(unittest.TestCase):
             self.assertEqual(
                 [label for _, label in roots], ["internal", "user", "dev"]
             )
-            self.assertEqual(
-                [path for path, _ in roots][1:], [user_dir, dev_dir]
-            )
+            # Normalize paths for cross-platform comparison (handles Windows 8.3 vs long format)
+            actual_paths = [Path(path).resolve() for path, _ in roots][1:]
+            expected_paths = [user_dir.resolve(), dev_dir.resolve()]
+            self.assertEqual(actual_paths, expected_paths)
 
     def test_plugin_candidates_accepts_package_root(self):
         with tempfile.TemporaryDirectory() as temp_dir:
