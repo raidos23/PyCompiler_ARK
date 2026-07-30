@@ -65,7 +65,6 @@ _LOG_COLORS = {
     "warning": "#ffaa00",
     "error": "#ff4444",
     "success": "#00cc66",
-    "state": "#5500ff",
 }
 
 # Global widget cache
@@ -233,7 +232,6 @@ def log(
         "WARNING": "warning",
         "ERROR": "error",
         "SUCCESS": "success",
-        "STATE": "state",
     }
 
     style = style_map.get(lvl, "info")
@@ -294,7 +292,3 @@ def error(message: str | tuple | list | Any, gui: object | None = None):
 
 def success(message: str | tuple | list | Any, gui: object | None = None):
     log("SUCCESS", message, err=False, gui=gui)
-
-
-def state(message: str | tuple | list | Any, gui: object | None = None):
-    log("STATE", message, err=False, gui=gui)

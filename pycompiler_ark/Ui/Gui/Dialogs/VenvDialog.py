@@ -28,6 +28,7 @@ from pycompiler_ark.Ui import output
 
 from ....Core.Venv_Manager.Manager import VenvManager
 from ..WidgetsCreator import ProgressDialog
+from ... import output
 
 
 class VenvManagerUI(VenvManager):
@@ -83,14 +84,14 @@ class VenvManagerUI(VenvManager):
     def _ui_log(self, level: str, text: str) -> None:
         """Log a message via the UI logging system."""
         try:
-            output.log(level, text, gui=self.parent)
+            output.log(level, text)
         except Exception:
             pass
 
     def _ui_log_message(self, level: str, text_fr: str, text_en: str) -> None:
         """Log an internationalized message via the UI logging system."""
         try:
-            output.log(level, (text_fr, text_en), gui=self.parent)
+            output.log(level, (text_fr, text_en))
         except Exception:
             pass
 
@@ -279,7 +280,7 @@ class VenvManagerUI(VenvManager):
             else:
                 if missing:
                     try:
-                        self._safe_log(
+                        output.log(
                             f"ℹ️ Python système incomplet (dépendances manquantes: {', '.join(sorted(set(missing)))})"
                         )
                     except Exception:
@@ -302,14 +303,14 @@ class VenvManagerUI(VenvManager):
                     pass
                 self.parent.venv_path_manuel = path
                 self._update_venv_label(f"Venv sélectionné : {path}")
-                self._safe_log(f"✅ Venv valide sélectionné: {path}")
+                output.success(f"✅ Venv valide sélectionné: {path}")
                 try:
                     workspace_dir = getattr(self.parent, "workspace_dir", None)
                     self.save_workspace_pref(workspace_dir)
                 except Exception:
                     pass
             else:
-                self._safe_log(f"❌ Venv refusé: {reason}")
+                output.warn(f"❌ Venv refusé: {reason}")
                 self.parent.venv_path_manuel = None
                 try:
                     setattr(self.parent, "use_system_python", False)
