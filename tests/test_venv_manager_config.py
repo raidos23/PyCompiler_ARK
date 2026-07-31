@@ -18,7 +18,11 @@ class TestVenvManagerConfig(unittest.TestCase):
         self.assertEqual(executor, {"type": "python_module", "module": "pip"})
 
         commands = config.get_commands("pip")
-        self.assertEqual(commands["create_venv"], ["-m", "venv"])
+        self.assertEqual(commands["create_venv"], ["{venv_path}"])
+        self.assertEqual(
+            config.get_executor("pip", "create_venv"),
+            {"type": "python_module", "module": "venv"},
+        )
         self.assertEqual(commands["install"], ["install", "-r"])
         self.assertEqual(commands["add"], ["install"])
         self.assertEqual(commands["check"], ["check"])
@@ -32,7 +36,7 @@ class TestVenvManagerConfig(unittest.TestCase):
         )
 
         commands = config.get_commands("poetry")
-        self.assertEqual(commands["create_venv"], ["env", "use"])
+        self.assertEqual(commands["create_venv"], ["env", "use", "{python}"])
         self.assertEqual(commands["install"], ["install"])
         self.assertEqual(commands["add"], ["add"])
         self.assertEqual(commands["check"], ["check"])
@@ -49,13 +53,13 @@ class TestExecutorFactory(unittest.TestCase):
         self.assertEqual(args, ["-m", "pip", "install", "requests"])
 
     def test_executable_executor(self):
-        cfg = {"type": "executable", "executable": "uv"}
+        cfg = {"type": "executable", "executable": "poetry"}
         executor = ExecutorFactory.create(cfg)
         self.assertIsInstance(executor, ExecutableExecutor)
 
-        program, args = executor.build_command(["pip", "install", "requests"])
-        self.assertEqual(program, "uv")
-        self.assertEqual(args, ["pip", "install", "requests"])
+        program, args = executor.build_command(["install"])
+        self.assertEqual(program, "poetry")
+        self.assertEqual(args, ["install"])
 
 
 class TestVenvManagerCommandPreparation(unittest.TestCase):
@@ -68,6 +72,27 @@ class TestVenvManagerCommandPreparation(unittest.TestCase):
         )
         self.assertEqual(program, "/fake/python")
         self.assertEqual(args, ["-m", "pip", "install", "-r", "reqs.txt"])
+
+    def test_prepare_manager_command_pip_create_venv(self):
+        manager = VenvManager(MagicMock())
+        manager._detected_manager = "pip"
+        program, args = manager._prepare_manager_command(
+            "create_venv",
+            kwargs={"venv_path": "/path/to/venv", "python": "/fake/python"},
+            python_exe="/fake/python",
+        )
+        self.assertEqual(program, "/fake/python")
+        self.assertEqual(args, ["-m", "venv", "/path/to/venv"])
+
+    def test_prepare_manager_command_poetry_create_venv(self):
+        manager = VenvManager(MagicMock())
+        manager._detected_manager = "poetry"
+        program, args = manager._prepare_manager_command(
+            "create_venv",
+            kwargs={"venv_path": "/path/to/venv", "python": "/fake/python"},
+        )
+        self.assertEqual(program, "poetry")
+        self.assertEqual(args, ["env", "use", "/fake/python"])
 
     def test_prepare_manager_command_poetry_add(self):
         manager = VenvManager(MagicMock())

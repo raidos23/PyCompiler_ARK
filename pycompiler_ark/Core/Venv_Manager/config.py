@@ -70,12 +70,21 @@ class VenvManagerConfig:
 
         return result
 
-    def get_executor(self, manager_name: str) -> dict[str, Any]:
-        """Return executor configuration of a manager."""
+    def get_executor(
+        self, manager_name: str, action: str | None = None
+    ) -> dict[str, Any]:
+        """Return executor configuration of a manager (action-specific or general)."""
         manager = self.get_manager(manager_name)
 
         if not manager:
             return {}
+
+        if action:
+            executors = manager.get("executors", {})
+            if isinstance(executors, dict) and action in executors:
+                act_exec = executors[action]
+                if isinstance(act_exec, dict):
+                    return act_exec
 
         executor = manager.get("executor", {})
 
@@ -101,3 +110,87 @@ class VenvManagerConfig:
             return [name for name in managers.keys() if isinstance(name, str)]
 
         return []
+
+    def get_default_manager(self) -> str:
+        """Return default fallback manager name from configuration."""
+        available = self.get_available_managers()
+        if not available:
+            return "pip"
+
+        rules = [
+            (name, self.get_detection_rules(name).get("priority", 0))
+            for name in available
+        ]
+        rules.sort(key=lambda x: x[1])
+        return rules[0][0]
+
+    def get_detection_rules(self, manager_name: str) -> dict[str, Any]:
+        """Return detection rules of a manager."""
+        manager = self.get_manager(manager_name)
+
+        if not manager or not isinstance(manager.get("detection"), dict):
+            return {"priority": 0, "files": [], "patterns": {}}
+
+        detection = manager["detection"]
+        priority = detection.get("priority", 0)
+        if not isinstance(priority, int):
+            priority = 0
+
+        files = detection.get("files", [])
+        if not isinstance(files, list):
+            files = []
+        files = [f for f in files if isinstance(f, str)]
+
+        patterns = detection.get("patterns", {})
+        if not isinstance(patterns, dict):
+            patterns = {}
+        patterns = {
+            k: str(v) for k, v in patterns.items() if isinstance(k, str)
+        }
+
+        return {
+            "priority": priority,
+            "files": files,
+            "patterns": patterns,
+        }
+
+    def detect_manager_for_workspace(self, workspace_dir: str) -> str | None:
+        """Detect environment manager for a workspace directory based on detection rules."""
+        try:
+            workspace_path = Path(workspace_dir)
+            if not workspace_path.is_dir():
+                return None
+        except Exception:
+            return None
+
+        available = self.get_available_managers()
+        manager_rules = []
+
+        for name in available:
+            rules = self.get_detection_rules(name)
+            if rules["files"]:
+                manager_rules.append((name, rules))
+
+        manager_rules.sort(key=lambda item: item[1]["priority"], reverse=True)
+
+        for name, rules in manager_rules:
+            files = rules["files"]
+            patterns = rules["patterns"]
+
+            for filename in files:
+                target_file = workspace_path / filename
+                if target_file.is_file():
+                    required_pattern = patterns.get(filename)
+                    if required_pattern:
+                        try:
+                            content = target_file.read_text(
+                                encoding="utf-8", errors="ignore"
+                            )
+                            if required_pattern in content:
+                                return name
+                        except Exception:
+                            continue
+                    else:
+                        return name
+
+        return None
