@@ -14,6 +14,7 @@ import pycompiler_ark.Core.SystemDepsManager as sys_deps
 from ...Ui import output as output
 from ..globals import WORKSPACE_CONFIG_DIRNAME
 from .config import VenvManagerConfig
+from .executor import ExecutorFactory, PythonModuleExecutor, ExecutableExecutor
 
 
 class VenvManager:
@@ -84,14 +85,67 @@ class VenvManager:
         self._cancel_requested = False
 
     # ---------- Manager mapping from YAML ----------
-    def _get_manager_commands(self) -> dict[str, dict[str, list[str]]]:
+    def _get_manager_commands(self) -> dict[str, list[str]]:
         """Return commands from the YAML configuration for all available managers."""
-        commands: dict[str, dict[str, list[str]]] = {}
+        commands: dict[str, list[str]] = {}
         for manager_name in self._config.get_available_managers():
             commands[manager_name] = self._config.get_commands(manager_name)
         if not commands:
-            return {"pip": {"create_venv": ["python", "-m", "venv"]}}
+            return {"pip": {"create_venv": ["-m", "venv"]}}
         return commands
+
+    def _get_executor_config(self, manager: str) -> dict:
+        """get executor config (type / module / executable) from VenvManagerConfig.
+        Fallback to python_module + pip si la méthode n'existe pas encore dans Config.
+        """
+        try:
+            cfg = self._config.get_executor(manager)
+            if isinstance(cfg, dict) and cfg:
+                return cfg
+        except Exception:
+            pass
+        return {"type": "python_module", "module": "pip"}
+
+    def _prepare_manager_command(
+        self,
+        action: str,
+        extra_args: list[str] | None = None,
+        python_exe: str | None = None,
+    ) -> tuple[str, list[str]]:
+        """
+        build (program, arguments) from executor + commands of YAML file using ExecutorFactory.
+
+        - executor.type == "python_module"  →  <python> -m <module> <args...>
+        - executor.type == "executable"    →  <executable> <args...>
+        """
+        extra_args = list(extra_args or [])
+        manager = (
+            self._detected_manager
+            if isinstance(getattr(self, "_detected_manager", None), str)
+            else "pip"
+        )
+
+        # Commande pure depuis la config (liste d'args, sans interpréteur)
+        cmd_args = self._get_manager_command(manager, action)
+        if not cmd_args:
+            # Fallbacks minimaux
+            defaults = {
+                "install": ["install", "-r"],
+                "add": ["install"],
+                "check": ["check"],
+                "create_venv": ["-m", "venv"],
+            }
+            cmd_args = defaults.get(action, ["install"])
+
+        executor_cfg = self._get_executor_config(manager)
+        python_interpreter = (
+            python_exe
+            or getattr(self, "_venv_python_exe", None)
+            or sys.executable
+        )
+
+        executor = ExecutorFactory.create(executor_cfg, python_interpreter)
+        return executor.build_command(list(cmd_args) + extra_args)
 
     def _call_ui(self, method: str, *args, **kwargs):
         """Invoke a registered UI callback by name. Returns None if no delegate registered."""
@@ -1121,13 +1175,26 @@ class VenvManager:
 
             process2 = QProcess(self.parent)
             self._venv_check_install_process = process2
-            process2.setProgram(self._venv_check_pip_exe)
-
-            # Use stored pip args (e.g. ['-m', 'pip']) if available
-            args = list(getattr(self, "_venv_check_pip_args", []))
-            process2.setArguments(
-                args + ["install"] + self._pip_break_system_args() + [pkg]
-            )
+            # --- Executor system ---
+            try:
+                program, args = self._prepare_manager_command(
+                    "add",  # "add" == install d'un paquet
+                    extra_args=self._pip_break_system_args() + [pkg],
+                    python_exe=self._venv_check_pip_exe
+                    if self._venv_check_use_python
+                    else None,
+                )
+                # if in venv, force venv's python using
+                if not self._venv_check_use_python and self._venv_check_path:
+                    program = self.python_path(self._venv_check_path)
+                process2.setProgram(program)
+                process2.setArguments(args)
+            except Exception:
+                process2.setProgram(self._venv_check_pip_exe)
+                args = list(getattr(self, "_venv_check_pip_args", []))
+                process2.setArguments(
+                    args + ["install"] + self._pip_break_system_args() + [pkg]
+                )
 
             process2.setWorkingDirectory(self._venv_check_path)
             process2.readyReadStandardOutput.connect(
@@ -1660,17 +1727,19 @@ class VenvManager:
 
             process = QProcess(self.parent)
             self._venv_create_process = process
-            process.setProgram(python_candidate)
-            create_args = self._get_manager_command(
+            # --- Executor system ---
+            # create_venv reste spécial (module venv), on force python_module
+            create_cmd = self._get_manager_command(
                 self._detected_manager, "create_venv"
             ) or ["-m", "venv"]
-            if create_args and create_args[0] == "python":
-                args = create_args[1:] + [venv_path]
+            # if command already start with -m, keep
+            if create_cmd and create_cmd[0] == "-m":
+                args = create_cmd + [venv_path]
             else:
-                args = create_args + [venv_path]
-            # If you use the Windows 'py' launcher, force Python 3 with -3
+                args = ["-m", "venv", venv_path]
             if base in ("py", "py.exe"):
                 args = ["-3"] + args
+            process.setProgram(python_candidate)
             process.setArguments(args)
             process.setWorkingDirectory(path)
             process.readyReadStandardOutput.connect(
@@ -2049,29 +2118,19 @@ class VenvManager:
             )
             p2 = QProcess(self.parent)
             self._req_install_process = p2
-            p2.setProgram(self._venv_python_exe)
-            upgrade_args = self._get_manager_command(
-                self._detected_manager, "add"
-            ) or ["-m", "pip", "install"]
-            p2.setArguments(
-                [
-                    *(
-                        ["-m"]
-                        if upgrade_args and upgrade_args[0] == "pip"
-                        else []
-                    ),
-                    *upgrade_args,
-                    "--upgrade",
-                    "pip",
-                    "setuptools",
-                    "wheel",
-                ]
+            # --- Executor system ---
+            program, args = self._prepare_manager_command(
+                "add",
+                extra_args=["--upgrade", "pip", "setuptools", "wheel"]
                 + (
                     self._pip_break_system_args()
                     if getattr(self, "_req_use_system_python", False)
                     else []
-                )
+                ),
+                python_exe=self._venv_python_exe,
             )
+            p2.setProgram(program)
+            p2.setArguments(args)
             p2.setWorkingDirectory(os.path.dirname(self._req_path))
             p2.readyReadStandardOutput.connect(lambda: self._on_pip_output(p2))
             p2.readyReadStandardError.connect(
@@ -2097,26 +2156,19 @@ class VenvManager:
                 )
                 p2 = QProcess(self.parent)
                 self._req_install_process = p2
-                p2.setProgram(self._venv_python_exe)
-                install_args = self._get_manager_command(
-                    self._detected_manager, "install"
-                ) or ["-m", "pip", "install", "-r"]
-                p2.setArguments(
-                    [
-                        *(
-                            ["-m"]
-                            if install_args and install_args[0] == "pip"
-                            else []
-                        ),
-                        *install_args,
-                        self._req_path,
-                    ]
+                # --- Executor system ---
+                program, args = self._prepare_manager_command(
+                    "install",
+                    extra_args=[self._req_path]
                     + (
                         self._pip_break_system_args()
                         if getattr(self, "_req_use_system_python", False)
                         else []
-                    )
+                    ),
+                    python_exe=self._venv_python_exe,
                 )
+                p2.setProgram(program)
+                p2.setArguments(args)
                 p2.setWorkingDirectory(os.path.dirname(self._req_path))
                 p2.readyReadStandardOutput.connect(
                     lambda: self._on_pip_output(p2)
@@ -2235,6 +2287,9 @@ class VenvManager:
     ) -> list[str] | None:
         """Get the command for a specific manager and action."""
         try:
+            cmd = self._config.get_command(manager, action)
+            if cmd:
+                return cmd
             if manager in self._manager_commands:
                 if action in self._manager_commands[manager]:
                     return self._manager_commands[manager][action]
