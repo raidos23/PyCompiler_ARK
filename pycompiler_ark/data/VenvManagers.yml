@@ -20,3 +20,23 @@ managers:
 
       check:
         - check
+
+  poetry:
+    executor:
+      type: executable
+      executable: poetry
+
+    commands:
+
+      create_venv:
+        - env
+        - use
+
+      install:
+        - install
+
+      add:
+        - add
+
+      check:
+        - check

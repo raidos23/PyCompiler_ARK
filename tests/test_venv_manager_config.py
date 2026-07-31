@@ -23,6 +23,20 @@ class TestVenvManagerConfig(unittest.TestCase):
         self.assertEqual(commands["add"], ["install"])
         self.assertEqual(commands["check"], ["check"])
 
+    def test_loads_poetry_config_from_yaml(self):
+        config = VenvManagerConfig()
+
+        executor = config.get_executor("poetry")
+        self.assertEqual(
+            executor, {"type": "executable", "executable": "poetry"}
+        )
+
+        commands = config.get_commands("poetry")
+        self.assertEqual(commands["create_venv"], ["env", "use"])
+        self.assertEqual(commands["install"], ["install"])
+        self.assertEqual(commands["add"], ["add"])
+        self.assertEqual(commands["check"], ["check"])
+
 
 class TestExecutorFactory(unittest.TestCase):
     def test_python_module_executor(self):
@@ -54,6 +68,16 @@ class TestVenvManagerCommandPreparation(unittest.TestCase):
         )
         self.assertEqual(program, "/fake/python")
         self.assertEqual(args, ["-m", "pip", "install", "-r", "reqs.txt"])
+
+    def test_prepare_manager_command_poetry_add(self):
+        manager = VenvManager(MagicMock())
+        manager._detected_manager = "poetry"
+        program, args = manager._prepare_manager_command(
+            "add",
+            extra_args=["requests"],
+        )
+        self.assertEqual(program, "poetry")
+        self.assertEqual(args, ["add", "requests"])
 
 
 if __name__ == "__main__":
