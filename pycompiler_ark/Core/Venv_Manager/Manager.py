@@ -76,8 +76,8 @@ class VenvManager:
         self._fallback_encodings = ["utf-8", "latin-1", "cp1252", "ascii"]
 
         # Environment manager detection (Simplified to PIP only)
-        self._detected_manager = "pip"
         self._config = VenvManagerConfig()
+        self._detected_manager = self._config.get_default_manager()
         self._manager_commands = self._get_manager_commands()
         # Cache for auto-selected venv per workspace
         self._auto_venv_cache: dict[str, str] = {}
@@ -91,15 +91,18 @@ class VenvManager:
         for manager_name in self._config.get_available_managers():
             commands[manager_name] = self._config.get_commands(manager_name)
         if not commands:
-            return {"pip": {"create_venv": ["-m", "venv"]}}
+            default_mgr = self._config.get_default_manager()
+            return {default_mgr: {"create_venv": []}}
         return commands
 
-    def _get_executor_config(self, manager: str) -> dict:
+    def _get_executor_config(
+        self, manager: str, action: str | None = None
+    ) -> dict:
         """get executor config (type / module / executable) from VenvManagerConfig.
-        Fallback to python_module + pip si la méthode n'existe pas encore dans Config.
+        Fallback to python_module + pip if missing.
         """
         try:
-            cfg = self._config.get_executor(manager)
+            cfg = self._config.get_executor(manager, action=action)
             if isinstance(cfg, dict) and cfg:
                 return cfg
         except Exception:
@@ -111,6 +114,7 @@ class VenvManager:
         action: str,
         extra_args: list[str] | None = None,
         python_exe: str | None = None,
+        kwargs: dict[str, str] | None = None,
     ) -> tuple[str, list[str]]:
         """
         build (program, arguments) from executor + commands of YAML file using ExecutorFactory.
@@ -122,22 +126,31 @@ class VenvManager:
         manager = (
             self._detected_manager
             if isinstance(getattr(self, "_detected_manager", None), str)
-            else "pip"
+            else self._config.get_default_manager()
         )
 
-        # Commande pure depuis la config (liste d'args, sans interpréteur)
         cmd_args = self._get_manager_command(manager, action)
-        if not cmd_args:
+        resolved_args = []
+        if cmd_args:
+            fmt_vars = kwargs or {}
+            for arg in cmd_args:
+                formatted_arg = str(arg)
+                for k, v in fmt_vars.items():
+                    formatted_arg = formatted_arg.replace(f"{{{k}}}", str(v))
+                resolved_args.append(formatted_arg)
+        elif action != "create_venv":
             # Fallbacks minimaux
             defaults = {
                 "install": ["install", "-r"],
                 "add": ["install"],
                 "check": ["check"],
-                "create_venv": ["-m", "venv"],
             }
-            cmd_args = defaults.get(action, ["install"])
+            resolved_args = defaults.get(action, ["install"])
 
-        executor_cfg = self._get_executor_config(manager)
+        if extra_args:
+            resolved_args.extend(extra_args)
+
+        executor_cfg = self._get_executor_config(manager, action=action)
         python_interpreter = (
             python_exe
             or getattr(self, "_venv_python_exe", None)
@@ -145,7 +158,7 @@ class VenvManager:
         )
 
         executor = ExecutorFactory.create(executor_cfg, python_interpreter)
-        return executor.build_command(list(cmd_args) + extra_args)
+        return executor.build_command(resolved_args)
 
     def _call_ui(self, method: str, *args, **kwargs):
         """Invoke a registered UI callback by name. Returns None if no delegate registered."""
@@ -201,9 +214,32 @@ class VenvManager:
         except Exception:
             pass
 
+    def resolve_workspace_manager(self, workspace_dir: str) -> str:
+        """Resolve environment manager for workspace (User Pref -> Dynamic Detection -> Fallback pip)."""
+        if workspace_dir:
+            pref_data = self._read_workspace_pref(workspace_dir)
+            if pref_data and isinstance(pref_data, dict):
+                saved_mgr = pref_data.get("manager")
+                if (
+                    isinstance(saved_mgr, str)
+                    and saved_mgr in self._config.get_available_managers()
+                ):
+                    self._detected_manager = saved_mgr
+                    return saved_mgr
+
+            detected = self._config.detect_manager_for_workspace(workspace_dir)
+            if detected:
+                self._detected_manager = detected
+                return detected
+
+        default_mgr = self._config.get_default_manager()
+        self._detected_manager = default_mgr
+        return default_mgr
+
     def apply_workspace_pref(self, workspace_dir: str) -> bool:
         """Apply saved venv/system selection from .ark/pref.json if available."""
         try:
+            self.resolve_workspace_manager(workspace_dir)
             data = self._read_workspace_pref(workspace_dir)
             if not data:
                 return False
@@ -249,24 +285,24 @@ class VenvManager:
         if not workspace_dir:
             return
         try:
+            pref_data = self._read_workspace_pref(workspace_dir) or {}
+            pref_data["manager"] = self._detected_manager
             if getattr(self.parent, "use_system_python", False):
-                self._write_workspace_pref(
-                    workspace_dir,
-                    {"venv_mode": "system", "venv_path": None},
-                )
+                pref_data.update({"venv_mode": "system", "venv_path": None})
+                self._write_workspace_pref(workspace_dir, pref_data)
                 return
             venv_path = getattr(self.parent, "venv_path_manuel", None)
             if not venv_path and hasattr(self.parent, "venv_path"):
                 venv_path = getattr(self.parent, "venv_path", None)
 
             if venv_path:
-                self._write_workspace_pref(
-                    workspace_dir,
+                pref_data.update(
                     {
                         "venv_mode": "venv",
                         "venv_path": os.path.abspath(venv_path),
-                    },
+                    }
                 )
+                self._write_workspace_pref(workspace_dir, pref_data)
                 return
         except Exception:
             pass
@@ -306,6 +342,9 @@ class VenvManager:
 
             if not base:
                 return None
+
+            # Dynamically resolve manager for workspace
+            self.resolve_workspace_manager(base)
 
             # Apply saved workspace preference first (.ark/pref.json)
             try:
@@ -1390,6 +1429,36 @@ class VenvManager:
         except Exception:
             pass
 
+    def _query_manager_venv_path(self, base_dir: str) -> str | None:
+        """Query active manager dynamically for environment path via YAML get_venv_path command."""
+        try:
+            manager = (
+                self._detected_manager
+                if isinstance(getattr(self, "_detected_manager", None), str)
+                else "pip"
+            )
+            cmd = self._get_manager_command(manager, "get_venv_path")
+            if not cmd:
+                return None
+
+            program, args = self._prepare_manager_command("get_venv_path")
+            import subprocess
+
+            res = subprocess.run(
+                [program, *args],
+                cwd=base_dir,
+                capture_output=True,
+                text=True,
+                timeout=5,
+            )
+            if res.returncode == 0 and res.stdout.strip():
+                detected_path = res.stdout.strip().splitlines()[-1].strip()
+                if os.path.isdir(detected_path):
+                    return detected_path
+        except Exception:
+            pass
+        return None
+
     def _detect_venv_in(self, base: str) -> tuple[str | None, str]:
         """Return (existing_venv_path_or_None, default_venv_path). Prefers .venv if present, otherwise venv. Default path is .venv."""
         try:
@@ -1403,6 +1472,12 @@ class VenvManager:
             if os.path.isdir(p_dot)
             else (p_std if os.path.isdir(p_std) else None)
         )
+
+        if not existing:
+            mgr_path = self._query_manager_venv_path(base)
+            if mgr_path:
+                existing = mgr_path
+
         default = p_dot
         return existing, default
 
@@ -1424,6 +1499,13 @@ class VenvManager:
                 ok, _ = self.validate_venv_strict(venv_path)
                 if ok:
                     venvs.append(venv_path)
+
+        if not venvs:
+            mgr_path = self._query_manager_venv_path(base)
+            if mgr_path:
+                ok, _ = self.validate_venv_strict(mgr_path)
+                if ok:
+                    venvs.append(mgr_path)
 
         return venvs
 
@@ -1727,19 +1809,15 @@ class VenvManager:
 
             process = QProcess(self.parent)
             self._venv_create_process = process
-            # --- Executor system ---
-            # create_venv reste spécial (module venv), on force python_module
-            create_cmd = self._get_manager_command(
-                self._detected_manager, "create_venv"
-            ) or ["-m", "venv"]
-            # if command already start with -m, keep
-            if create_cmd and create_cmd[0] == "-m":
-                args = create_cmd + [venv_path]
-            else:
-                args = ["-m", "venv", venv_path]
-            if base in ("py", "py.exe"):
+            # --- Dynamic Executor System for venv creation ---
+            program, args = self._prepare_manager_command(
+                "create_venv",
+                kwargs={"venv_path": venv_path, "python": python_candidate},
+                python_exe=python_candidate,
+            )
+            if base in ("py", "py.exe") and program == python_candidate:
                 args = ["-3"] + args
-            process.setProgram(python_candidate)
+            process.setProgram(program)
             process.setArguments(args)
             process.setWorkingDirectory(path)
             process.readyReadStandardOutput.connect(
@@ -1828,9 +1906,19 @@ class VenvManager:
             )
             self._call_ui("close_progress", "venv_creation")
 
+            # Persist workspace preference automatically in .ark/pref.json
+            ws_dir = getattr(
+                self.parent, "workspace_dir", None
+            ) or os.path.dirname(venv_path)
+            try:
+                setattr(self.parent, "venv_path", venv_path)
+            except Exception:
+                pass
+            self.save_workspace_pref(ws_dir)
+
             # Install project dependencies from requirements.txt if present
             try:
-                self.install_requirements_if_needed(os.path.dirname(venv_path))
+                self.install_requirements_if_needed(ws_dir)
             except Exception:
                 pass
         else:
@@ -2304,6 +2392,9 @@ class VenvManager:
         try:
             workspace_dir = os.path.abspath(workspace_dir)
 
+            # Dynamically resolve manager for workspace
+            self.resolve_workspace_manager(workspace_dir)
+
             # Resolve an existing environment first
             existing_env = self.resolve_existing_venv(workspace_dir)
 
@@ -2312,6 +2403,11 @@ class VenvManager:
                 self.create_venv_if_needed(workspace_dir)
             else:
                 output.success(f"Venv existant detecte: {existing_env}")
+                try:
+                    setattr(self.parent, "venv_path", existing_env)
+                except Exception:
+                    pass
+                self.save_workspace_pref(workspace_dir)
 
             # Check and install tools if requested
             if check_tools:
