@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import os
 from pathlib import Path
 from typing import Any
 
@@ -28,31 +27,77 @@ class VenvManagerConfig:
                 return loaded
         except Exception:
             pass
+
         return {}
 
     def get_manager(self, manager_name: str) -> dict[str, Any] | None:
+        """Return complete manager configuration."""
         managers = self._data.get("managers", {})
+
         if isinstance(managers, dict):
-            value = managers.get(manager_name)
-            if isinstance(value, dict):
-                return value
+            manager = managers.get(manager_name)
+
+            if isinstance(manager, dict):
+                return manager
+
         return None
 
     def get_commands(self, manager_name: str) -> dict[str, list[str]]:
+        """Return manager commands with their arguments."""
         manager = self.get_manager(manager_name)
+
         if not manager:
             return {}
 
-        commands: dict[str, list[str]] = {}
-        for key, value in manager.items():
-            if isinstance(value, list) and all(
-                isinstance(item, str) for item in value
+        commands = manager.get("commands", {})
+
+        if not isinstance(commands, dict):
+            return {}
+
+        result: dict[str, list[str]] = {}
+
+        for name, command in commands.items():
+            if isinstance(command, list) and all(
+                isinstance(item, str) for item in command
             ):
-                commands[key] = value
-        return commands
+                result[name] = command
+            elif isinstance(command, dict):
+                args = command.get("args", [])
+                if isinstance(args, list) and all(
+                    isinstance(item, str) for item in args
+                ):
+                    result[name] = args
+
+        return result
+
+    def get_executor(self, manager_name: str) -> dict[str, Any]:
+        """Return executor configuration of a manager."""
+        manager = self.get_manager(manager_name)
+
+        if not manager:
+            return {}
+
+        executor = manager.get("executor", {})
+
+        if isinstance(executor, dict):
+            return executor
+
+        return {}
+
+    def get_command(
+        self,
+        manager_name: str,
+        command_name: str,
+    ) -> list[str]:
+        """Return only command arguments."""
+        commands = self.get_commands(manager_name)
+        return commands.get(command_name, [])
 
     def get_available_managers(self) -> list[str]:
+        """Return available manager names."""
         managers = self._data.get("managers", {})
+
         if isinstance(managers, dict):
             return [name for name in managers.keys() if isinstance(name, str)]
+
         return []
