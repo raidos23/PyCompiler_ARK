@@ -4,6 +4,7 @@ import hashlib
 import os
 import platform
 import shutil
+import subprocess
 import sys
 from typing import Any
 
@@ -461,6 +462,18 @@ class VenvManager:
         """Execute _using_system_python logic for this component."""
         try:
             return bool(getattr(self.parent, "use_system_python", False))
+        except Exception:
+            return False
+
+    def _is_cli_mode(self) -> bool:
+        """Return whether the manager runs in CLI/synchronous mode."""
+        try:
+            if bool(getattr(self.parent, "_cli_mode", False)):
+                return True
+        except Exception:
+            pass
+        try:
+            return os.environ.get("PYCOMPILER_CLI") == "1"
         except Exception:
             return False
 
@@ -1543,6 +1556,71 @@ class VenvManager:
                     )
                 except Exception:
                     pass
+
+            if self._is_cli_mode():
+                try:
+                    program, args = self._prepare_manager_command(
+                        "create_venv",
+                        kwargs={
+                            "venv_path": venv_path,
+                            "python": python_candidate,
+                        },
+                        python_exe=python_candidate,
+                    )
+                    if (
+                        base in ("py", "py.exe")
+                        and program == python_candidate
+                    ):
+                        args = ["-3"] + args
+                    completed = subprocess.run(
+                        [program, *args],
+                        cwd=path,
+                        capture_output=True,
+                        text=True,
+                    )
+                    if completed.returncode != 0:
+                        err = (
+                            completed.stderr or completed.stdout or ""
+                        ).strip()
+                        raise RuntimeError(err or "venv creation failed")
+                    try:
+                        from pycompiler_ark.Ui import output
+
+                        output.success(
+                            "Environnement virtuel cree avec succes."
+                        )
+                    except Exception:
+                        pass
+                    resolved_venv = self.resolve_existing_venv(path)
+                    if not resolved_venv:
+                        resolved_venv = self.resolve_project_venv()
+                    if resolved_venv:
+                        try:
+                            setattr(self.parent, "venv_path", resolved_venv)
+                        except Exception:
+                            pass
+                        ws_dir = (
+                            path
+                            or getattr(self.parent, "workspace_dir", None)
+                            or os.path.dirname(resolved_venv)
+                        )
+                        if ws_dir:
+                            self.save_workspace_pref(ws_dir)
+                            try:
+                                self.install_requirements_if_needed(ws_dir)
+                            except Exception:
+                                pass
+                    return
+                except Exception as e:
+                    try:
+                        from pycompiler_ark.Ui import output
+
+                        output.error(
+                            f"Echec de creation du venv ou installation des outils : {e}",
+                        )
+                    except Exception:
+                        pass
+                    return
 
             self._show_progress(
                 "venv_creation",
