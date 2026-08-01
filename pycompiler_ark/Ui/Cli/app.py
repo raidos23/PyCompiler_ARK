@@ -118,7 +118,7 @@ def _build_impl(
     # Shared Python version resolution for locking/comparison
     python_version = None
     try:
-        from ...Core.utils.internet import get_interpreter_version_str
+        from ...Core.utils.os_helpers import get_interpreter_version_str
         from ...Core.Venv_Manager.Manager import VenvManager
 
         # We create a dummy bridge for VenvManager
