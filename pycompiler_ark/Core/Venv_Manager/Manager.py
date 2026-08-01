@@ -71,7 +71,7 @@ class VenvManager:
         self._output_encoding = "utf-8"
         self._fallback_encodings = ["utf-8", "latin-1", "cp1252", "ascii"]
 
-        # Environment manager detection (Simplified to PIP only)
+        # Environment manager detection is driven by YAML configuration.
         self._config = VenvManagerConfig()
         self._detected_manager = self._config.get_default_manager()
         self._manager_commands = self._get_manager_commands()
@@ -81,29 +81,44 @@ class VenvManager:
         self._cancel_requested = False
 
     # ---------- Manager mapping from YAML ----------
-    def _get_manager_commands(self) -> dict[str, list[str]]:
+    def _get_manager_commands(self) -> dict[str, dict[str, list[str]]]:
         """Return commands from the YAML configuration for all available managers."""
-        commands: dict[str, list[str]] = {}
+        commands: dict[str, dict[str, list[str]]] = {}
         for manager_name in self._config.get_available_managers():
             commands[manager_name] = self._config.get_commands(manager_name)
-        if not commands:
-            default_mgr = self._config.get_default_manager()
-            return {default_mgr: {"create_venv": []}}
         return commands
 
     def _get_executor_config(
         self, manager: str, action: str | None = None
     ) -> dict:
-        """get executor config (type / module / executable) from VenvManagerConfig.
-        Fallback to python_module + pip if missing.
-        """
+        """Get executor config (type / module / executable) from VenvManagerConfig."""
         try:
             cfg = self._config.get_executor(manager, action=action)
             if isinstance(cfg, dict) and cfg:
                 return cfg
         except Exception:
             pass
-        return {"type": "python_module", "module": "pip"}
+        raise ValueError(f"Missing executor config for manager '{manager}'")
+
+    def _resolve_manager_venv_path(
+        self, workspace_dir: str | None = None
+    ) -> str | None:
+        """Resolve the venv path from the active manager YAML definition."""
+        try:
+            base = workspace_dir or getattr(self.parent, "workspace_dir", None)
+            if not base:
+                return None
+            base = os.path.abspath(base)
+            manager = self.resolve_workspace_manager(base)
+            if not manager:
+                return None
+            return self._config.resolve_venv_path(
+                manager,
+                base,
+                python_interpreter=self._venv_python_exe or sys.executable,
+            )
+        except Exception:
+            return None
 
     def _prepare_manager_command(
         self,
@@ -115,33 +130,32 @@ class VenvManager:
         """
         build (program, arguments) from executor + commands of YAML file using ExecutorFactory.
 
-        - executor.type == "python_module"  →  <python> -m <module> <args...>
-        - executor.type == "executable"    →  <executable> <args...>
+        - executor.type == "python_module"  ->  <python> -m <module> <args...>
+        - executor.type == "executable"     ->  <executable> <args...>
         """
         extra_args = list(extra_args or [])
         manager = (
             self._detected_manager
             if isinstance(getattr(self, "_detected_manager", None), str)
+            and self._detected_manager
             else self._config.get_default_manager()
         )
+        if not manager:
+            raise ValueError("No environment manager configured")
 
         cmd_args = self._get_manager_command(manager, action)
+        if not cmd_args:
+            raise ValueError(
+                f"Missing command config for manager '{manager}' and action '{action}'"
+            )
+
         resolved_args = []
-        if cmd_args:
-            fmt_vars = kwargs or {}
-            for arg in cmd_args:
-                formatted_arg = str(arg)
-                for k, v in fmt_vars.items():
-                    formatted_arg = formatted_arg.replace(f"{{{k}}}", str(v))
-                resolved_args.append(formatted_arg)
-        elif action != "create_venv":
-            # Fallbacks minimaux
-            defaults = {
-                "install": ["install", "-r"],
-                "add": ["install"],
-                "check": ["check"],
-            }
-            resolved_args = defaults.get(action, ["install"])
+        fmt_vars = kwargs or {}
+        for arg in cmd_args:
+            formatted_arg = str(arg)
+            for k, v in fmt_vars.items():
+                formatted_arg = formatted_arg.replace(f"{{{k}}}", str(v))
+            resolved_args.append(formatted_arg)
 
         if extra_args:
             resolved_args.extend(extra_args)
@@ -254,7 +268,7 @@ class VenvManager:
             pass
 
     def resolve_workspace_manager(self, workspace_dir: str) -> str:
-        """Resolve environment manager for workspace (User Pref -> Dynamic Detection -> Fallback pip)."""
+        """Resolve environment manager for workspace (User Pref -> Dynamic Detection -> YAML default)."""
         if workspace_dir:
             pref_data = self._read_workspace_pref(workspace_dir)
             if pref_data and isinstance(pref_data, dict):
@@ -272,6 +286,8 @@ class VenvManager:
                 return detected
 
         default_mgr = self._config.get_default_manager()
+        if not default_mgr:
+            raise ValueError("No environment manager configured in YAML")
         self._detected_manager = default_mgr
         return default_mgr
 
@@ -360,69 +376,52 @@ class VenvManager:
     def resolve_existing_venv(
         self, workspace_dir: str | None = None
     ) -> str | None:
-        """Resolve an existing venv path (manual/local/manager).
-
-        Returns only if a real, existing environment is found.
-        Does not return a default path when no venv exists.
-        """
+        """Resolve an existing venv path from the manager definition."""
         try:
             if getattr(self.parent, "use_system_python", False):
                 return None
 
             manual = getattr(self.parent, "venv_path_manuel", None)
             if manual:
-                return os.path.abspath(manual)
-
-            base = None
-            if workspace_dir:
-                base = os.path.abspath(workspace_dir)
-            elif getattr(self.parent, "workspace_dir", None):
-                base = os.path.abspath(self.parent.workspace_dir)
-
-            if not base:
+                manual = os.path.abspath(manual)
+                if (
+                    os.path.isdir(manual)
+                    and self.validate_venv_strict(manual)[0]
+                ):
+                    return manual
                 return None
 
-            # Dynamically resolve manager for workspace
-            self.resolve_workspace_manager(base)
+            base = workspace_dir or getattr(self.parent, "workspace_dir", None)
+            if not base:
+                return None
+            base = os.path.abspath(base)
 
-            # Apply saved workspace preference first (.ark/pref.json)
             try:
                 if self.apply_workspace_pref(base):
                     if getattr(self.parent, "use_system_python", False):
                         return None
                     manual = getattr(self.parent, "venv_path_manuel", None)
                     if manual:
-                        return os.path.abspath(manual)
+                        manual = os.path.abspath(manual)
+                        if (
+                            os.path.isdir(manual)
+                            and self.validate_venv_strict(manual)[0]
+                        ):
+                            return manual
             except Exception:
                 pass
 
-            # Prefer local venv if available
-            try:
-                cached = self._auto_venv_cache.get(base)
-                if cached and os.path.isdir(cached):
-                    ok, _ = self.validate_venv_strict(cached)
-                    if ok:
-                        return cached
-            except Exception:
-                pass
-
-            # Auto-detect best local venv among common names in workspace
-            best = self.select_best_venv(base)
-            if best:
-                try:
-                    self._auto_venv_cache[base] = best
-                except Exception:
-                    pass
-                return best
-
+            resolved = self._resolve_manager_venv_path(base)
+            if resolved and os.path.isdir(resolved):
+                ok, _ = self.validate_venv_strict(resolved)
+                if ok:
+                    return resolved
         except Exception:
             return None
         return None
 
     def resolve_project_venv(self) -> str | None:
-        """Resolve the venv root to use based on manual selection or workspace.
-        Prefers an existing .venv over venv; if none exists, returns the default path (.venv).
-        """
+        """Resolve the manager-defined venv path for the active workspace."""
         try:
             if getattr(self.parent, "use_system_python", False):
                 return None
@@ -431,15 +430,7 @@ class VenvManager:
                 return os.path.abspath(manual)
             if getattr(self.parent, "workspace_dir", None):
                 base = os.path.abspath(self.parent.workspace_dir)
-
-                # First, use an existing environment if available
-                existing = self.resolve_existing_venv(base)
-                if existing:
-                    return existing
-
-                # Fallback to default detection (.venv / venv)
-                existing2, default_path = self._detect_venv_in(base)
-                return existing2 or default_path
+                return self._resolve_manager_venv_path(base)
         except Exception:
             return None
         return None
@@ -1413,234 +1404,17 @@ class VenvManager:
     def _query_manager_venv_path(self, base_dir: str) -> str | None:
         """Query active manager dynamically for environment path via YAML get_venv_path command."""
         try:
-            manager = (
-                self._detected_manager
-                if isinstance(getattr(self, "_detected_manager", None), str)
-                else "pip"
-            )
-            cmd = self._get_manager_command(manager, "get_venv_path")
-            if not cmd:
+            manager = self.resolve_workspace_manager(base_dir)
+            if not manager:
                 return None
-
-            program, args = self._prepare_manager_command("get_venv_path")
-            import subprocess
-
-            res = subprocess.run(
-                [program, *args],
-                cwd=base_dir,
-                capture_output=True,
-                text=True,
-                timeout=5,
+            return self._config.resolve_venv_path(
+                manager,
+                base_dir,
+                python_interpreter=self._venv_python_exe or sys.executable,
             )
-            if res.returncode == 0 and res.stdout.strip():
-                detected_path = res.stdout.strip().splitlines()[-1].strip()
-                if os.path.isdir(detected_path):
-                    return detected_path
         except Exception:
             pass
         return None
-
-    def _detect_venv_in(self, base: str) -> tuple[str | None, str]:
-        """Return (existing_venv_path_or_None, default_venv_path). Prefers .venv if present, otherwise venv. Default path is .venv."""
-        try:
-            base = os.path.abspath(base)
-        except Exception:
-            pass
-        p_dot = os.path.join(base, ".venv")
-        p_std = os.path.join(base, "venv")
-        existing = (
-            p_dot
-            if os.path.isdir(p_dot)
-            else (p_std if os.path.isdir(p_std) else None)
-        )
-
-        if not existing:
-            mgr_path = self._query_manager_venv_path(base)
-            if mgr_path:
-                existing = mgr_path
-
-        default = p_dot
-        return existing, default
-
-    def _find_all_venvs_in(self, base: str) -> list[str]:
-        """Find all potential venv directories in the base path.
-        Returns a list of valid venv paths, sorted by preference.
-        """
-        try:
-            base = os.path.abspath(base)
-        except Exception:
-            return []
-
-        venvs = []
-        common_names = [".venv", "venv", ".env", "env", "virtualenv"]
-
-        for name in common_names:
-            venv_path = os.path.join(base, name)
-            if os.path.isdir(venv_path):
-                ok, _ = self.validate_venv_strict(venv_path)
-                if ok:
-                    venvs.append(venv_path)
-
-        if not venvs:
-            mgr_path = self._query_manager_venv_path(base)
-            if mgr_path:
-                ok, _ = self.validate_venv_strict(mgr_path)
-                if ok:
-                    venvs.append(mgr_path)
-
-        return venvs
-
-    def _score_venv(
-        self, venv_path: str, workspace_dir: str
-    ) -> tuple[int, str]:
-        """Score a venv based on its completeness and requirements satisfaction.
-        Returns (score, reason) where higher score = better venv.
-
-        Scoring criteria:
-        - Has requirements.txt satisfied: +100
-        - Has required engine python tools: +50 each
-        - Has pip/setuptools/wheel: +30
-        - Is valid venv: +10
-        - Has binding verified: +20
-        """
-        score = 0
-        reasons = []
-
-        try:
-            # Check if venv is valid
-            ok, _ = self.validate_venv_strict(venv_path)
-            if not ok:
-                return 0, "Invalid venv structure"
-            score += 10
-            reasons.append("valid_structure")
-
-            # Check binding
-            if self.verify_venv_binding(venv_path):
-                score += 20
-                reasons.append("verified_binding")
-            else:
-                return (
-                    score,
-                    "Invalid binding (python/pip don't point to venv)",
-                )
-
-            # Check for requirements.txt (lightweight marker only to avoid blocking UI)
-            req_path = os.path.join(workspace_dir, "requirements.txt")
-            if os.path.isfile(req_path):
-                marker = os.path.join(venv_path, ".requirements.sha256")
-                if os.path.isfile(marker):
-                    score += 100
-                    reasons.append("requirements_marker")
-                else:
-                    reasons.append("requirements_unknown")
-
-            # Check for key tools
-            tools_to_check = self._discover_engine_required_python_tools()
-            for tool in tools_to_check:
-                if self.has_tool_binary(venv_path, tool):
-                    score += 50
-                    reasons.append(f"has_{tool}")
-
-            # Check for pip/setuptools/wheel
-            pip_exe = self.pip_path(venv_path)
-            if os.path.isfile(pip_exe):
-                score += 30
-                reasons.append("has_pip")
-
-            return score, ", ".join(reasons)
-        except Exception as e:
-            return 0, f"Scoring error: {e}"
-
-    def select_best_venv(self, workspace_dir: str) -> str | None:
-        """Select the best venv from multiple candidates.
-
-        Strategy:
-        1. Find all valid venvs in workspace
-        2. Score each based on completeness and requirements satisfaction
-        3. Return the highest-scoring venv
-        4. If no valid venv found, return None
-        """
-        try:
-            venvs = self._find_all_venvs_in(workspace_dir)
-
-            if not venvs:
-                try:
-                    from pycompiler_ark.Ui import output
-
-                    output.info(
-                        "Aucun venv valide trouve dans le workspace.",
-                    )
-                except Exception:
-                    pass
-                return None
-
-            if len(venvs) == 1:
-                try:
-                    from pycompiler_ark.Ui import output
-
-                    output.success(f"Un seul venv trouve: {venvs[0]}")
-                except Exception:
-                    pass
-                return venvs[0]
-
-            # Multiple venvs found - score and select the best
-            try:
-                from pycompiler_ark.Ui import output
-
-                output.info(
-                    f"{len(venvs)} venv(s) trouve(s), selection du meilleur...",
-                )
-            except Exception:
-                pass
-
-            scored_venvs = []
-            for venv_path in venvs:
-                score, reason = self._score_venv(venv_path, workspace_dir)
-                scored_venvs.append((score, venv_path, reason))
-                try:
-                    from pycompiler_ark.Ui import output
-
-                    output.info(
-                        f"  - {os.path.basename(venv_path)}: score={score} ({reason})",
-                    )
-                except Exception:
-                    pass
-
-            # Sort by score (descending)
-            scored_venvs.sort(key=lambda x: x[0], reverse=True)
-
-            best_score, best_venv, best_reason = scored_venvs[0]
-
-            if best_score == 0:
-                try:
-                    from pycompiler_ark.Ui import output
-
-                    output.error(
-                        "Aucun venv valide avec une bonne liaison.",
-                    )
-                except Exception:
-                    pass
-                return None
-
-            try:
-                from pycompiler_ark.Ui import output
-
-                output.success(
-                    f"Meilleur venv selectionne: {os.path.basename(best_venv)} (score={best_score})",
-                )
-            except Exception:
-                pass
-            return best_venv
-        except Exception as e:
-            try:
-                from pycompiler_ark.Ui import output
-
-                output.warn(
-                    f"Erreur lors de la selection du meilleur venv: {e}",
-                )
-            except Exception:
-                pass
-            return None
 
     def _on_venv_pkg_installed(self, process, code, status, pkg):
         """Handle the related event callback."""
@@ -1675,26 +1449,24 @@ class VenvManager:
     # ---------- Create venv if needed ----------
     def create_venv_if_needed(self, path: str):
         """Execute create_venv_if_needed logic for this component."""
-        existing, default_path = self._detect_venv_in(path)
-        venv_path = existing or default_path
+        existing = self.resolve_existing_venv(path)
+        venv_path = existing or self.resolve_project_venv()
         if existing:
-            # Validate existing venv; if invalid, propose deletion/recreation
+            return
+        if venv_path and os.path.isdir(venv_path):
             ok, reason = self.validate_venv_strict(venv_path)
-            if not ok:
-                try:
-                    from pycompiler_ark.Ui import output
+            if ok:
+                return
+            try:
+                from pycompiler_ark.Ui import output
 
-                    output.error(
-                        f"Invalid venv detected: {reason}",
-                    )
-                except Exception:
-                    pass
-                recreated = self._prompt_recreate_invalid_venv(
-                    venv_path, reason
+                output.error(
+                    f"Invalid venv detected: {reason}",
                 )
-                if not recreated:
-                    return
-            else:
+            except Exception:
+                pass
+            recreated = self._prompt_recreate_invalid_venv(venv_path, reason)
+            if not recreated:
                 return
 
         try:
@@ -1806,7 +1578,7 @@ class VenvManager:
             )
             process.finished.connect(
                 lambda code, status: self._on_venv_created(
-                    process, code, status, venv_path
+                    process, code, status, path
                 )
             )
             self._venv_progress_lines = 0
@@ -1856,7 +1628,7 @@ class VenvManager:
                     except Exception:
                         pass
 
-    def _on_venv_created(self, process, code, status, venv_path):
+    def _on_venv_created(self, process, code, status, workspace_dir):
         """Handle the related event callback."""
         if getattr(self.parent, "_closing", False):
             return
@@ -1879,12 +1651,28 @@ class VenvManager:
             self._update_progress_message("venv_creation", "Venv cree.")
             self._close_progress("venv_creation")
 
-            # Persist workspace preference automatically in .ark/pref.json
-            ws_dir = getattr(
-                self.parent, "workspace_dir", None
-            ) or os.path.dirname(venv_path)
+            resolved_venv = self.resolve_existing_venv(workspace_dir)
+            if not resolved_venv:
+                resolved_venv = self.resolve_project_venv()
+            ws_dir = (
+                workspace_dir
+                or getattr(self.parent, "workspace_dir", None)
+                or (
+                    os.path.dirname(resolved_venv)
+                    if isinstance(resolved_venv, str) and resolved_venv
+                    else None
+                )
+            )
+            if not ws_dir or not resolved_venv:
+                try:
+                    from pycompiler_ark.Ui import output
+
+                    output.warn("can't resolve venv path.")
+                except Exception:
+                    pass
+                return
             try:
-                setattr(self.parent, "venv_path", venv_path)
+                setattr(self.parent, "venv_path", resolved_venv)
             except Exception:
                 pass
             self.save_workspace_pref(ws_dir)
@@ -1990,13 +1778,11 @@ class VenvManager:
         if manual:
             venv_root = os.path.abspath(manual)
         else:
-            existing, default_path = self._detect_venv_in(path)
-            venv_root = existing or default_path
+            existing = self.resolve_existing_venv(path)
             if not existing:
-                # Create default .venv if none exists
                 self.create_venv_if_needed(path)
-                existing2, _ = self._detect_venv_in(path)
-                venv_root = existing2 or venv_root
+                return
+            venv_root = existing
         ok, reason = self.validate_venv_strict(venv_root)
         if not ok:
             output.warn(f"Invalid venv for requirements: {reason}")
@@ -2322,8 +2108,14 @@ class VenvManager:
 
     # ---------- Environment Manager Detection & Handling ----------
     def _detect_environment_manager(self, workspace_dir: str) -> str:
-        """Detect which environment manager is used in the project (Simplified to PIP)."""
-        return "pip"
+        """Detect which environment manager is used in the project."""
+        detected = self._config.detect_manager_for_workspace(workspace_dir)
+        if detected:
+            return detected
+        default_mgr = self._config.get_default_manager()
+        if default_mgr:
+            return default_mgr
+        raise ValueError("No environment manager configured in YAML")
 
     def _is_tool_available(self, tool: str) -> bool:
         """Check if a tool is available in the system PATH."""
@@ -2373,7 +2165,7 @@ class VenvManager:
 
             # Check and install tools if requested
             if check_tools:
-                existing_check, _ = self._detect_venv_in(workspace_dir)
+                existing_check = self.resolve_existing_venv(workspace_dir)
                 if existing_check:
                     ok, reason = self.validate_venv_strict(existing_check)
                     if ok:

@@ -2,10 +2,14 @@
 
 from __future__ import annotations
 
+import os
+import sys
 from pathlib import Path
 from typing import Any
 
 import yaml
+
+from .executor import ExecutorFactory
 
 
 class VenvManagerConfig:
@@ -93,6 +97,54 @@ class VenvManagerConfig:
 
         return {}
 
+    def resolve_venv_path(
+        self,
+        manager_name: str,
+        workspace_dir: str,
+        python_interpreter: str | None = None,
+    ) -> str | None:
+        """Resolve the venv path according to the manager YAML definition."""
+        try:
+            workspace_path = Path(workspace_dir)
+            if not workspace_path.is_dir():
+                return None
+        except Exception:
+            return None
+
+        command = self.get_command(manager_name, "get_venv_path")
+
+        if not isinstance(command, list) or not all(
+            isinstance(item, str) for item in command
+        ):
+            return None
+
+        executor_cfg = self.get_executor(manager_name, action="get_venv_path")
+        if not executor_cfg:
+            executor_cfg = self.get_executor(manager_name)
+        if not executor_cfg:
+            return None
+
+        interpreter = python_interpreter or sys.executable
+        try:
+            executor = ExecutorFactory.create(executor_cfg, interpreter)
+            resolved = executor.run(
+                list(command),
+                cwd=str(workspace_path),
+                context={
+                    "workspace": str(workspace_path),
+                    "cwd": str(workspace_path),
+                    "python": interpreter,
+                    "manager": manager_name,
+                },
+            )
+            if not resolved:
+                return None
+            if not os.path.isabs(resolved):
+                resolved = str((workspace_path / resolved).resolve())
+            return resolved
+        except Exception:
+            return None
+
     def get_command(
         self,
         manager_name: str,
@@ -112,10 +164,10 @@ class VenvManagerConfig:
         return []
 
     def get_default_manager(self) -> str:
-        """Return default fallback manager name from configuration."""
+        """Return the fallback manager name from configuration."""
         available = self.get_available_managers()
         if not available:
-            return "pip"
+            return ""
 
         rules = [
             (name, self.get_detection_rules(name).get("priority", 0))

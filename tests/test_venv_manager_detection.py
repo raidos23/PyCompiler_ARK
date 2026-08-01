@@ -51,7 +51,7 @@ class TestVenvManagerDetection(unittest.TestCase):
 
         venv_manager = VenvManager(MagicMock())
         resolved = venv_manager.resolve_workspace_manager(self.workspace_dir)
-        self.assertEqual(resolved, "pip")
+        self.assertEqual(resolved, self.config.get_default_manager())
 
     def test_user_preference_override(self):
         # Even with poetry detected, user pref in .ark/pref.json should override
@@ -63,11 +63,19 @@ class TestVenvManagerDetection(unittest.TestCase):
         ark_dir = Path(self.workspace_dir) / ".ark"
         ark_dir.mkdir(parents=True, exist_ok=True)
         pref_file = ark_dir / "pref.json"
-        pref_file.write_text(json.dumps({"manager": "pip"}), encoding="utf-8")
+        fallback_manager = self.config.get_default_manager()
+        pref_file.write_text(
+            json.dumps({"manager": fallback_manager}), encoding="utf-8"
+        )
 
         venv_manager = VenvManager(MagicMock())
         resolved = venv_manager.resolve_workspace_manager(self.workspace_dir)
-        self.assertEqual(resolved, "pip")
+        self.assertEqual(resolved, fallback_manager)
+
+    def test_detect_environment_manager_uses_yaml_default_when_needed(self):
+        venv_manager = VenvManager(MagicMock())
+        resolved = venv_manager._detect_environment_manager(self.workspace_dir)
+        self.assertEqual(resolved, self.config.get_default_manager())
 
 
 if __name__ == "__main__":

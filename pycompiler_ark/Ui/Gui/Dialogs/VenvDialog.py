@@ -426,12 +426,26 @@ class VenvManagerUI(VenvManager):
 
         if code == 0 and not self._is_cancel_requested():
             try:
+                resolved_venv = getattr(self.parent, "venv_path", None)
+                if not resolved_venv:
+                    resolved_venv = self.resolve_existing_venv(
+                        getattr(self.parent, "workspace_dir", None)
+                    )
+                if not resolved_venv:
+                    resolved_venv = self.resolve_project_venv()
                 if not getattr(self.parent, "use_system_python", False):
-                    if not getattr(self.parent, "venv_path_manuel", None):
-                        self.parent.venv_path_manuel = venv_path
+                    if resolved_venv and not getattr(
+                        self.parent, "venv_path_manuel", None
+                    ):
+                        self.parent.venv_path_manuel = resolved_venv
                         self._update_venv_label(
-                            f"Venv sélectionné : {venv_path}"
+                            f"Venv sélectionné : {resolved_venv}"
                         )
-                self.save_workspace_pref(os.path.dirname(venv_path))
+                if resolved_venv:
+                    self.save_workspace_pref(os.path.dirname(resolved_venv))
+                else:
+                    self.save_workspace_pref(
+                        getattr(self.parent, "workspace_dir", None)
+                    )
             except Exception:
                 pass
