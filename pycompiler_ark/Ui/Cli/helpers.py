@@ -24,7 +24,7 @@ import signal
 import subprocess
 import sys
 import threading
-import venv
+import time
 from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
@@ -267,10 +267,20 @@ def relative_to_workspace(workspace: Path, target: Path) -> str:
     return target.resolve().relative_to(workspace.resolve()).as_posix()
 
 
-def python_in_venv(venv_dir: Path) -> Path:
-    if os.name == "nt":
-        return venv_dir / "Scripts" / "python.exe"
-    return venv_dir / "bin" / "python"
+def _create_cli_venv_manager(workspace: Path):
+    from ...Core.Venv_Manager.Manager import VenvManager
+
+    class _Bridge:
+        def __init__(self, ws: str):
+            self.workspace_dir = ws
+            self.use_system_python = False
+            self.venv_path_manuel = None
+            self.verbose = False
+            self._cli_mode = True
+
+    bridge = _Bridge(str(workspace))
+    manager = VenvManager(bridge)
+    return manager
 
 
 def init_workspace(
@@ -363,20 +373,39 @@ def init_workspace(
                 "# Add your runtime dependencies here.\n", encoding="utf-8"
             )
 
-    venv_path = workspace / ".ark" / "venv"
-    if with_venv and not venv_path.exists():
-        builder = venv.EnvBuilder(with_pip=True)
-        builder.create(str(venv_path))
+    venv_manager = None
+    venv_path: str | None = None
+    if with_venv or install_requirements:
+        try:
+            venv_manager = _create_cli_venv_manager(workspace)
+        except Exception as exc:
+            raise CliSpecError(f"Unable to initialize venv manager: {exc}")
+
+        if with_venv:
+            venv_manager.create_venv_if_needed(str(workspace))
+            venv_path = venv_manager.resolve_existing_venv(str(workspace))
+            if not venv_path:
+                raise CliSpecError(
+                    "venv creation failed or venv path could not be resolved"
+                )
+        else:
+            venv_path = venv_manager.resolve_existing_venv(str(workspace))
 
     if install_requirements:
         if not requirements_path.exists():
             raise CliSpecError(
                 "requirements.txt not found. Run 'pycompiler_ark init --generate-requirements' first."
             )
-        if not venv_path.exists():
-            builder = venv.EnvBuilder(with_pip=True)
-            builder.create(str(venv_path))
-        python_exe = python_in_venv(venv_path)
+        if not venv_manager:
+            venv_manager = _create_cli_venv_manager(workspace)
+        if not venv_path:
+            venv_manager.create_venv_if_needed(str(workspace))
+            venv_path = venv_manager.resolve_existing_venv(str(workspace))
+        if not venv_path:
+            raise CliSpecError(
+                "venv creation failed or venv path could not be resolved"
+            )
+        python_exe = venv_manager.python_path(venv_path)
         result = subprocess.run(
             [
                 str(python_exe),
@@ -401,8 +430,8 @@ def init_workspace(
     pref_path = workspace / ".ark" / "pref.json"
     pref_data = {"venv_mode": "system", "venv_path": None}
 
-    if venv_path.exists():
-        pref_data["venv_mode"] = "manual"
+    if venv_path:
+        pref_data["venv_mode"] = "venv"
         pref_data["venv_path"] = str(venv_path)
     else:
         info(
@@ -417,7 +446,7 @@ def init_workspace(
     return {
         "workspace": str(workspace),
         "ark_yml": str(ark_yml),
-        "venv": str(venv_path) if venv_path.exists() else None,
+        "venv": str(venv_path) if venv_path else None,
         "requirements": str(requirements_path)
         if requirements_path.exists()
         else None,
