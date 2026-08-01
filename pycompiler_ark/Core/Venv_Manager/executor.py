@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+import os
+import subprocess
 from typing import Any
 
 
@@ -23,6 +25,16 @@ class BaseExecutor(ABC):
         args: list[str],
     ) -> tuple[str, list[str]]:
         """Build executable program and arguments."""
+
+    @abstractmethod
+    def run(
+        self,
+        args: list[str],
+        *,
+        cwd: str | None = None,
+        context: dict[str, str] | None = None,
+    ) -> str | None:
+        """Execute or resolve the configured strategy and return a result."""
 
 
 class PythonModuleExecutor(BaseExecutor):
@@ -49,6 +61,27 @@ class PythonModuleExecutor(BaseExecutor):
             ],
         )
 
+    def run(
+        self,
+        args: list[str],
+        *,
+        cwd: str | None = None,
+        context: dict[str, str] | None = None,
+    ) -> str | None:
+        program, argv = self.build_command(args)
+        completed = subprocess.run(
+            [program, *argv],
+            cwd=cwd,
+            capture_output=True,
+            text=True,
+        )
+        if completed.returncode != 0:
+            return None
+        output = completed.stdout.strip().splitlines()
+        if not output:
+            return None
+        return output[-1].strip() or None
+
 
 class ExecutableExecutor(BaseExecutor):
     """Executor for external executables."""
@@ -66,6 +99,62 @@ class ExecutableExecutor(BaseExecutor):
             executable,
             args,
         )
+
+    def run(
+        self,
+        args: list[str],
+        *,
+        cwd: str | None = None,
+        context: dict[str, str] | None = None,
+    ) -> str | None:
+        program, argv = self.build_command(args)
+        completed = subprocess.run(
+            [program, *argv],
+            cwd=cwd,
+            capture_output=True,
+            text=True,
+        )
+        if completed.returncode != 0:
+            return None
+        output = completed.stdout.strip().splitlines()
+        if not output:
+            return None
+        return output[-1].strip() or None
+
+
+class WorkspacePathExecutor(BaseExecutor):
+    """Executor that resolves a workspace-relative path template."""
+
+    def build_command(
+        self,
+        args: list[str],
+    ) -> tuple[str, list[str]]:
+        raise NotImplementedError(
+            "WorkspacePathExecutor does not build subprocess commands"
+        )
+
+    def run(
+        self,
+        args: list[str],
+        *,
+        cwd: str | None = None,
+        context: dict[str, str] | None = None,
+    ) -> str | None:
+        if not args:
+            return None
+        template = args[0]
+        if not isinstance(template, str) or not template.strip():
+            return None
+        base = dict(context or {})
+        workspace = base.get("workspace", cwd or "")
+        if not workspace:
+            return None
+        base["workspace"] = workspace
+        base["cwd"] = base.get("cwd", workspace)
+        resolved = template.format(**base)
+        if not os.path.isabs(resolved):
+            resolved = os.path.abspath(os.path.join(workspace, resolved))
+        return resolved
 
 
 class ExecutorFactory:
@@ -86,6 +175,12 @@ class ExecutorFactory:
 
         if executor_type == "executable":
             return ExecutableExecutor(
+                executor_config,
+                python_interpreter,
+            )
+
+        if executor_type == "workspace_path":
+            return WorkspacePathExecutor(
                 executor_config,
                 python_interpreter,
             )
