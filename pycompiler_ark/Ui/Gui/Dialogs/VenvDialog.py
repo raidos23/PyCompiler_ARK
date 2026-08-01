@@ -36,43 +36,21 @@ class VenvManagerUI(VenvManager):
     Extension GUI de VenvManager.
 
     Responsibilities:
-    - Manuel venv selection dialog (QFileDialog)
+    - Manual venv selection dialog (QFileDialog)
     - Invalid-venv confirmation dialog (QMessageBox)
     - Updating parent widget labels (venv_label, venv_path_edit)
-    - Managing ProgressDialog instances via callbacks
-    - Registering all UI callbacks into VenvManager's _ui_callbacks dict
+    - Managing ProgressDialog instances via virtual hook overrides
     """
 
     def __init__(self, parent_widget):
         super().__init__(parent_widget)
         self._progress_dialogs: dict[str, ProgressDialog] = {}
 
-        # Register UI callbacks so Core methods can trigger GUI updates
-        self._ui_callbacks.update(
-            {
-                "tr": self._ui_tr,
-                "log": self._ui_log,
-                "log_message": self._ui_log_message,
-                "on_pref_applied": self._on_pref_applied,
-                "update_venv_label": self._update_venv_label,
-                "update_venv_path_edit": self._update_venv_path_edit,
-                "ask_recreate_invalid_venv": self._ask_recreate_invalid_venv,
-                "show_error_dialog": self._show_error_dialog,
-                "show_progress": self._show_progress,
-                "update_progress_message": self._update_progress_message,
-                "update_progress_progress": self._update_progress_progress,
-                "close_progress": self._close_progress,
-                "is_progress_visible": self._is_progress_visible,
-                "bind_cancel": self._bind_cancel,
-                "process_events": self._process_events,
-            }
-        )
-
     # ------------------------------------------------------------------
-    # UI callback implementations
+    # UI Hook implementations (overriding VenvManager Core hooks)
     # ------------------------------------------------------------------
 
-    def _ui_tr(self, fr: str, en: str) -> str:
+    def _tr(self, fr: str, en: str) -> str:
         """Translate text via the UI translator."""
         try:
             if hasattr(self.parent, "tr"):
