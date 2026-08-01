@@ -1,7 +1,55 @@
 managers:
+
+  poetry:
+    executor:
+      type: executable
+      executable: poetry
+    detection:
+      priority: 100
+      files:
+        - pyproject.toml
+      patterns:
+        pyproject.toml: "[tool.poetry]"
+    commands:
+      create_venv:
+        - env
+        - use
+        - "{python}"
+      get_venv_path:
+        - env
+        - info
+        - -p
+      install:
+        - install
+      add:
+        - add
+      check:
+        - check
+
   pip:
-    create_venv: ["python", "-m", "venv"]
-    install: ["pip", "install", "-r"]
-    add: ["pip", "install"]
-    show: ["pip", "show"]
-    check: ["pip", "check"]
+    executor:
+      type: python_module
+      module: pip
+    executors:
+      create_venv:
+        type: python_module
+        module: venv
+      get_venv_path:
+        type: workspace_path
+    detection:
+      priority: 10
+      files:
+        - requirements.txt
+        - setup.py
+    commands:
+      create_venv:
+        - "{venv_path}"
+      install:
+        - install
+        - -r
+      add:
+        - install
+      check:
+        - check
+      get_venv_path:
+        - "{workspace}/.venv"
