@@ -173,7 +173,7 @@ class CompilationThread(QThread):
                 from ....Core.Compiler.engine_runner import (
                     resolve_engine_command,
                 )
-                from ....Core.utils.internet import (
+                from ....Core.utils.os_helpers import (
                     get_interpreter_version_str,
                 )
                 from ....Core.Venv_Manager.Manager import VenvManager
