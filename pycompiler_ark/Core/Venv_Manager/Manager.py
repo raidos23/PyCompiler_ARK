@@ -5,8 +5,7 @@ import os
 import platform
 import shutil
 import sys
-
-from PySide6.QtCore import QProcess, QTimer
+from typing import Any
 
 import pycompiler_ark.Core.deps_analyser.analyser as deps_analyser
 import pycompiler_ark.Core.SystemDepsManager as sys_deps
@@ -61,11 +60,8 @@ class VenvManager:
         # Progress state management handled via UI callbacks
         # (venv_progress_dialog, venv_check_progress, progress_dialog removed)
 
-        # UI delegate callbacks — registered by VenvManagerUI (Ui layer)
-        self._ui_callbacks: dict = {}
-
         # Internal timers to enforce timeouts on background processes
-        self._proc_timers: list[QTimer] = []
+        self._proc_timers: list = []
 
         # Retry counters for resilience
         self._venv_check_retries = {}
@@ -160,22 +156,65 @@ class VenvManager:
         executor = ExecutorFactory.create(executor_cfg, python_interpreter)
         return executor.build_command(resolved_args)
 
-    def _call_ui(self, method: str, *args, **kwargs):
-        """Invoke a registered UI callback by name. Returns None if no delegate registered."""
-        fn = self._ui_callbacks.get(method)
-        if callable(fn):
-            try:
-                return fn(*args, **kwargs)
-            except Exception:
-                pass
-        return None
+    # ---------- UI / Event Hooks (Overridden by UI Layer) ----------
+    def _tr(self, fr: str, en: str) -> str:
+        """Translation helper (overridden by UI layer)."""
+        return en
 
     def tr(self, fr: str, en: str) -> str:
-        """Translation helper using UI callback or fallback to English."""
-        res = self._call_ui("tr", fr, en)
-        if res is not None:
-            return str(res)
-        return en
+        """Translation helper using UI hook or fallback to English."""
+        return self._tr(fr, en)
+
+    def _on_pref_applied(self, mode: str, venv_path: str | None) -> None:
+        """Hook called when preference is applied (overridden by UI layer)."""
+        pass
+
+    def _show_progress(self, id: str, title: str, cancel_label: str) -> None:
+        """Hook to display progress (overridden by UI layer)."""
+        pass
+
+    def _update_progress_message(self, id: str, message: str) -> None:
+        """Hook to update progress message (overridden by UI layer)."""
+        pass
+
+    def _update_progress_progress(
+        self, id: str, value: int, total: int
+    ) -> None:
+        """Hook to update progress bar value (overridden by UI layer)."""
+        pass
+
+    def _close_progress(self, id: str) -> None:
+        """Hook to close progress indicator (overridden by UI layer)."""
+        pass
+
+    def _is_progress_visible(self, id: str) -> bool:
+        """Hook to check if progress is visible (overridden by UI layer)."""
+        return False
+
+    def _bind_cancel(self, id: str, callback) -> None:
+        """Hook to bind cancel action (overridden by UI layer)."""
+        pass
+
+    def _process_events(self) -> None:
+        """Hook to process UI events (overridden by UI layer)."""
+        pass
+
+    def _ask_recreate_invalid_venv(self, venv_root: str, reason: str) -> bool:
+        """Hook to prompt user for venv recreation (overridden by UI layer)."""
+        return False
+
+    def _show_error_dialog(self, title: str, text: str) -> None:
+        """Hook to display error dialog (overridden by UI layer)."""
+        pass
+
+    def _create_process(self):
+        """Create a process instance (overridden by UI layer or fallback)."""
+        try:
+            from PySide6.QtCore import QProcess
+
+            return QProcess(self.parent)
+        except Exception:
+            return None
 
     # ---------- Workspace pref management ----------
     def _workspace_pref_path(self, workspace_dir: str) -> str:
@@ -274,7 +313,7 @@ class VenvManager:
                     self._clear_workspace_pref(workspace_dir)
 
             if applied:
-                self._call_ui("on_pref_applied", mode, venv_path)
+                self._on_pref_applied(mode, venv_path)
                 return True
             return False
         except Exception:
@@ -541,7 +580,7 @@ class VenvManager:
             if not pip_exe or not os.path.isfile(pip_exe):
                 callback(False)
                 return
-            proc = QProcess(self.parent)
+            proc = self._create_process()
 
             def _done(code, _status):
                 """Execute _done logic for this component."""
@@ -585,8 +624,7 @@ class VenvManager:
             self._venv_check_path = venv_root
             self._venv_check_use_python = False
 
-            self._call_ui(
-                "show_progress",
+            self._show_progress(
                 "tools_check",
                 "Verification du venv",
                 "Verification du venv",
@@ -594,14 +632,11 @@ class VenvManager:
             self._bind_cancel_for_progress(
                 "tools_check", "verification des outils"
             )
-            self._call_ui(
-                "update_progress_message",
+            self._update_progress_message(
                 "tools_check",
                 f"Verification de {tools[0]}...",
             )
-            self._call_ui(
-                "update_progress_progress", "tools_check", 0, len(tools)
-            )
+            self._update_progress_progress("tools_check", 0, len(tools))
 
             # We need a local event loop if we are in a background thread or CLI mode
             # to process QProcess signals and QTimer events.
@@ -662,8 +697,7 @@ class VenvManager:
             )
             self._venv_check_use_python = True
 
-            self._call_ui(
-                "show_progress",
+            self._show_progress(
                 "tools_check",
                 "Verification du Python systeme",
                 "Verification du Python systeme",
@@ -671,14 +705,11 @@ class VenvManager:
             self._bind_cancel_for_progress(
                 "tools_check", "verification des outils systeme"
             )
-            self._call_ui(
-                "update_progress_message",
+            self._update_progress_message(
                 "tools_check",
                 f"Verification de {tools[0]}...",
             )
-            self._call_ui(
-                "update_progress_progress", "tools_check", 0, len(tools)
-            )
+            self._update_progress_progress("tools_check", 0, len(tools))
 
             # We need a local event loop if we are in a background thread or CLI mode
             from PySide6.QtCore import QCoreApplication, QEventLoop, QThread
@@ -766,8 +797,7 @@ class VenvManager:
         self, progress_id: str, action_label: str
     ) -> None:
         """Bind cancellation logic for a named progress dialog via UI callback."""
-        self._call_ui(
-            "bind_cancel",
+        self._bind_cancel(
             progress_id,
             lambda: self._request_cancel(action_label),
         )
@@ -823,9 +853,7 @@ class VenvManager:
         If the user confirms, performs deletion then triggers recreation (business logic).
         Returns True if recreation was initiated, False otherwise.
         """
-        confirmed = self._call_ui(
-            "ask_recreate_invalid_venv", venv_root, reason
-        )
+        confirmed = self._ask_recreate_invalid_venv(venv_root, reason)
         if not confirmed:
             return False
         # Business logic: delete the bad venv
@@ -838,8 +866,7 @@ class VenvManager:
             except Exception:
                 pass
         except Exception as e:
-            self._call_ui(
-                "show_error_dialog",
+            self._show_error_dialog(
                 "Environnement virtuel invalide / Invalid virtual environment",
                 f"Echec suppression venv / Failed to delete venv: {e}",
             )
@@ -850,8 +877,7 @@ class VenvManager:
             self.create_venv_if_needed(workspace_dir)
             return True
         except Exception as e:
-            self._call_ui(
-                "show_error_dialog",
+            self._show_error_dialog(
                 "Environnement virtuel invalide / Invalid virtual environment",
                 f"Echec de recreation du venv / Failed to recreate venv: {e}",
             )
@@ -1062,8 +1088,7 @@ class VenvManager:
                 self._venv_check_path = venv_path
                 self._venv_check_use_python = False
 
-                self._call_ui(
-                    "show_progress",
+                self._show_progress(
                     "tools_check",
                     "Verification du venv",
                     "Verification du venv",
@@ -1071,13 +1096,11 @@ class VenvManager:
                 self._bind_cancel_for_progress(
                     "tools_check", "verification des outils du venv"
                 )
-                self._call_ui(
-                    "update_progress_message",
+                self._update_progress_message(
                     "tools_check",
                     f"Verification de {self._venv_check_pkgs[0]}...",
                 )
-                self._call_ui(
-                    "update_progress_progress",
+                self._update_progress_progress(
                     "tools_check",
                     0,
                     len(self._venv_check_pkgs),
@@ -1098,15 +1121,14 @@ class VenvManager:
     def _check_next_venv_pkg(self):
         """Execute _check_next_venv_pkg logic for this component."""
         if self._is_cancel_requested():
-            self._call_ui("close_progress", "tools_check")
+            self._close_progress("tools_check")
             # Exit local loop if any
             loop = getattr(self, "_venv_check_loop", None)
             if loop:
                 loop.quit()
             return
         if self._venv_check_index >= len(self._venv_check_pkgs):
-            self._call_ui(
-                "update_progress_message",
+            self._update_progress_message(
                 "tools_check",
                 "Verification terminee.",
             )
@@ -1115,10 +1137,8 @@ class VenvManager:
                 if hasattr(self, "_venv_check_pkgs") and self._venv_check_pkgs
                 else 0
             )
-            self._call_ui(
-                "update_progress_progress", "tools_check", total, total
-            )
-            self._call_ui("close_progress", "tools_check")
+            self._update_progress_progress("tools_check", total, total)
+            self._close_progress("tools_check")
 
             # Exit local loop if any
             loop = getattr(self, "_venv_check_loop", None)
@@ -1135,7 +1155,7 @@ class VenvManager:
                 pass
             return
         pkg = self._venv_check_pkgs[self._venv_check_index]
-        process = QProcess(self.parent)
+        process = self._create_process()
         self._venv_check_process = process
         process.setProgram(self._venv_check_pip_exe)
         # Use stored pip args (e.g. ['-m', 'pip']) if available
@@ -1172,13 +1192,11 @@ class VenvManager:
                 if self._venv_check_index < len(self._venv_check_pkgs)
                 else ""
             )
-            self._call_ui(
-                "update_progress_message",
+            self._update_progress_message(
                 "tools_check",
                 f"Verification de {next_label}...",
             )
-            self._call_ui(
-                "update_progress_progress",
+            self._update_progress_progress(
                 "tools_check",
                 self._venv_check_index,
                 len(self._venv_check_pkgs),
@@ -1192,7 +1210,7 @@ class VenvManager:
                     f"Pas de connexion internet. Impossible d'installer {pkg}.",
                     f"No internet connection. Unable to install {pkg}.",
                 )
-                self._call_ui("close_progress", "tools_check")
+                self._close_progress("tools_check")
 
                 # Exit local loop if any
                 loop = getattr(self, "_venv_check_loop", None)
@@ -1203,16 +1221,15 @@ class VenvManager:
             output.info(
                 f"{self._tools_stage_prefix()}Installation automatique de {pkg}..."
             )
-            self._call_ui(
-                "update_progress_message",
+            self._update_progress_message(
                 "tools_check",
                 f"Installation de {pkg}...",
             )
-            self._call_ui(
-                "update_progress_progress", "tools_check", 0, 0
+            self._update_progress_progress(
+                "tools_check", 0, 0
             )  # indeterminate
 
-            process2 = QProcess(self.parent)
+            process2 = self._create_process()
             self._venv_check_install_process = process2
             # --- Executor system ---
             try:
@@ -1264,9 +1281,7 @@ class VenvManager:
         )
         lines = data.strip().splitlines()
         if lines:
-            self._call_ui(
-                "update_progress_message", "tools_check", lines[-1][:200]
-            )
+            self._update_progress_message("tools_check", lines[-1][:200])
 
             # Detailed logging for verbose mode or errors
             is_verbose = getattr(self.parent, "verbose", False)
@@ -1326,7 +1341,7 @@ class VenvManager:
                 callback(False)
                 return
             # Step 1: Check sys.prefix
-            p1 = QProcess(self.parent)
+            p1 = self._create_process()
 
             def _p1_finished(code, _status):
                 """Execute _p1_finished logic for this component."""
@@ -1344,7 +1359,7 @@ class VenvManager:
                     if not os.path.isfile(vpip):
                         callback(False)
                         return
-                    p2 = QProcess(self.parent)
+                    p2 = self._create_process()
 
                     def _p2_finished(code2, _status2):
                         """Execute _p2_finished logic for this component."""
@@ -1387,45 +1402,11 @@ class VenvManager:
         except Exception:
             callback(False)
 
-    def _arm_process_timeout(
-        self, process: QProcess, timeout_ms: int, label: str
-    ):
-        """Arm a one-shot timer to kill a long-running process and keep UI responsive."""
+    def _arm_process_timeout(self, process: Any, timeout_ms: int, label: str):
+        """Arm a one-shot timeout for a background process (overridden by UI layer)."""
         try:
-            if timeout_ms and timeout_ms > 0:
-                t = QTimer(self.parent)
-                t.setSingleShot(True)
-
-                def _on_timeout():
-                    """Handle the related event callback."""
-                    try:
-                        if process.state() != QProcess.NotRunning:
-                            output.warn(
-                                f"Timeout exceeded for {label} ({timeout_ms} ms). Killing process..."
-                            )
-                            from ..process_killer import (
-                                kill_process_tree,
-                            )
-
-                            kill_process_tree(process.processId())
-                    except Exception:
-                        pass
-
-                t.timeout.connect(_on_timeout)
-                t.start(timeout_ms)
-                # keep reference to avoid GC
-                self._proc_timers.append(t)
-
-                # also attach to process so timer can be cleared if process finishes earlier
-                def _clear_timer(*_args):
-                    """Clear the related cached state or UI values."""
-                    try:
-                        if t.isActive():
-                            t.stop()
-                    except Exception:
-                        pass
-
-                process.finished.connect(_clear_timer)
+            if hasattr(self.parent, "_arm_process_timeout"):
+                self.parent._arm_process_timeout(process, timeout_ms, label)
         except Exception:
             pass
 
@@ -1684,8 +1665,7 @@ class VenvManager:
             except Exception:
                 pass
         self._venv_check_index += 1
-        self._call_ui(
-            "update_progress_progress",
+        self._update_progress_progress(
             "tools_check",
             self._venv_check_index,
             len(self._venv_check_pkgs),
@@ -1792,8 +1772,7 @@ class VenvManager:
                 except Exception:
                     pass
 
-            self._call_ui(
-                "show_progress",
+            self._show_progress(
                 "venv_creation",
                 "Creation de l'environnement virtuel",
                 "creation de l'environnement virtuel",
@@ -1801,13 +1780,12 @@ class VenvManager:
             self._bind_cancel_for_progress(
                 "venv_creation", "creation de l'environnement virtuel"
             )
-            self._call_ui(
-                "update_progress_message",
+            self._update_progress_message(
                 "venv_creation",
                 "Creation du venv...",
             )
 
-            process = QProcess(self.parent)
+            process = self._create_process()
             self._venv_create_process = process
             # --- Dynamic Executor System for venv creation ---
             program, args = self._prepare_manager_command(
@@ -1858,12 +1836,9 @@ class VenvManager:
         )
         lines = data.strip().splitlines()
         if lines:
-            self._call_ui(
-                "update_progress_message", "venv_creation", lines[-1][:200]
-            )
+            self._update_progress_message("venv_creation", lines[-1][:200])
             self._venv_progress_lines += len(lines)
-            self._call_ui(
-                "update_progress_progress",
+            self._update_progress_progress(
                 "venv_creation",
                 self._venv_progress_lines,
                 0,
@@ -1892,7 +1867,7 @@ class VenvManager:
                 output.info("Creation du venv annulee.")
             except Exception:
                 pass
-            self._call_ui("close_progress", "venv_creation")
+            self._close_progress("venv_creation")
             return
         if code == 0:
             try:
@@ -1901,10 +1876,8 @@ class VenvManager:
                 output.success("Environnement virtuel cree avec succes.")
             except Exception:
                 pass
-            self._call_ui(
-                "update_progress_message", "venv_creation", "Venv cree."
-            )
-            self._call_ui("close_progress", "venv_creation")
+            self._update_progress_message("venv_creation", "Venv cree.")
+            self._close_progress("venv_creation")
 
             # Persist workspace preference automatically in .ark/pref.json
             ws_dir = getattr(
@@ -1930,12 +1903,11 @@ class VenvManager:
                 )
             except Exception:
                 pass
-            self._call_ui(
-                "update_progress_message",
+            self._update_progress_message(
                 "venv_creation",
                 "Erreur lors de la creation du venv.",
             )
-            self._call_ui("close_progress", "venv_creation")
+            self._close_progress("venv_creation")
 
     # ---------- Requirements detection and generation ----------
     def _find_requirements_files(
@@ -2117,8 +2089,7 @@ class VenvManager:
             self._req_use_system_python = bool(use_system_python)
             self._pip_phase = "ensurepip"
 
-            self._call_ui(
-                "show_progress",
+            self._show_progress(
                 "reqs_install",
                 "Installation des dependances",
                 "installation des dependances",
@@ -2126,13 +2097,12 @@ class VenvManager:
             self._bind_cancel_for_progress(
                 "reqs_install", "installation des dependances"
             )
-            self._call_ui(
-                "update_progress_message",
+            self._update_progress_message(
                 "reqs_install",
                 "Activation de pip (ensurepip)...",
             )
 
-            process = QProcess(self.parent)
+            process = self._create_process()
             self._req_install_process = process
             process.setProgram(py_exe)
             process.setArguments(["-m", "ensurepip", "--upgrade"])
@@ -2169,13 +2139,10 @@ class VenvManager:
         # Shows the last line received
         lines = data.strip().splitlines()
         if lines:
-            self._call_ui(
-                "update_progress_message", "reqs_install", lines[-1][:200]
-            )
+            self._update_progress_message("reqs_install", lines[-1][:200])
             self._pip_progress_lines += len(lines)
             # Simulates progress (pip does not give %)
-            self._call_ui(
-                "update_progress_progress",
+            self._update_progress_progress(
                 "reqs_install",
                 self._pip_progress_lines,
                 0,
@@ -2194,17 +2161,16 @@ class VenvManager:
             return
         if self._is_cancel_requested():
             output.info("Installation des dependances annulee.")
-            self._call_ui("close_progress", "reqs_install")
+            self._close_progress("reqs_install")
             return
         phase = self._pip_phase
         if phase == "ensurepip":
             # Proceed to upgrade pip/setuptools/wheel regardless of ensurepip result
-            self._call_ui(
-                "update_progress_message",
+            self._update_progress_message(
                 "reqs_install",
                 "Mise a niveau de pip/setuptools/wheel...",
             )
-            p2 = QProcess(self.parent)
+            p2 = self._create_process()
             self._req_install_process = p2
             # --- Executor system ---
             program, args = self._prepare_manager_command(
@@ -2237,12 +2203,11 @@ class VenvManager:
         elif phase == "upgrade":
             if code == 0:
                 # now install requirements.txt
-                self._call_ui(
-                    "update_progress_message",
+                self._update_progress_message(
                     "reqs_install",
                     "Installation des dependances (requirements.txt)...",
                 )
-                p2 = QProcess(self.parent)
+                p2 = self._create_process()
                 self._req_install_process = p2
                 # --- Executor system ---
                 program, args = self._prepare_manager_command(
@@ -2280,8 +2245,7 @@ class VenvManager:
                 output.error(
                     f"Echec mise a niveau pip/setuptools/wheel (code {code})"
                 )
-                self._call_ui(
-                    "update_progress_message",
+                self._update_progress_message(
                     "reqs_install",
                     "Echec upgrade pip/setuptools/wheel.",
                 )
@@ -2302,8 +2266,7 @@ class VenvManager:
                 finally:
                     self._req_marker_path = None
                     self._req_marker_hash = None
-                self._call_ui(
-                    "update_progress_message",
+                self._update_progress_message(
                     "reqs_install",
                     "Installation terminee.",
                 )
@@ -2311,19 +2274,18 @@ class VenvManager:
                 output.error(
                     f"Echec installation requirements.txt (code {code})"
                 )
-                self._call_ui(
-                    "update_progress_message",
+                self._update_progress_message(
                     "reqs_install",
                     "Erreur lors de l'installation.",
                 )
-        self._call_ui("close_progress", "reqs_install")
-        self._call_ui("process_events")
+        self._close_progress("reqs_install")
+        self._process_events()
 
     # ---------- Background tasks status/control ----------
     def has_active_tasks(self) -> bool:
         """Return whether any venv-related tasks are active."""
         for task_id in ["venv_creation", "reqs_install", "tools_check"]:
-            if self._call_ui("is_progress_visible", task_id):
+            if self._is_progress_visible(task_id):
                 return True
         return False
 
@@ -2356,7 +2318,7 @@ class VenvManager:
 
         # Close dialogs via UI callbacks
         for task_id in ["venv_creation", "reqs_install", "tools_check"]:
-            self._call_ui("close_progress", task_id)
+            self._close_progress(task_id)
 
     # ---------- Environment Manager Detection & Handling ----------
     def _detect_environment_manager(self, workspace_dir: str) -> str:
