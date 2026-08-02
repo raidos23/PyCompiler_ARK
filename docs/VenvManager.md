@@ -57,6 +57,8 @@ managers:
       create_venv:
         type: python_module
         module: venv
+      get_venv_path:
+        type: workspace_path
     detection:
       priority: 10
       files:
@@ -72,11 +74,13 @@ managers:
         - install
       check:
         - check
+      get_venv_path:
+        - "{workspace}/.venv"
 ```
 
 ### Field Definitions:
 
-- `executor`: Defines the primary command executor (`python_module` or `executable`).
+- `executor`: Defines the primary command executor (`python_module`, `executable`, or `workspace_path`).
 - `executors`: Optional action-specific executor overrides (e.g., `create_venv` for `pip` using the `venv` module).
 - `detection`:
   - `priority` *(integer)*: Evaluation priority order (higher priority values are evaluated first).
@@ -84,6 +88,7 @@ managers:
   - `patterns` *(dictionary)*: Required substring/pattern in target indicator file (e.g., `[tool.poetry]` in `pyproject.toml`).
 - `commands`: Argument lists for actions (`create_venv`, `get_venv_path`, `install`, `add`, `check`).
   - Supports dynamic placeholders: `{python}` (target Python interpreter) and `{venv_path}` (target virtual environment path).
+  - Commands may be given as a list of strings or as a dictionary with an `args` list.
 
 ---
 
@@ -92,11 +97,12 @@ managers:
 ### A. Command Executors (`executor.py`)
 - `PythonModuleExecutor`: Resolves commands in the form `<python_interpreter> -m <module> <args...>`.
 - `ExecutableExecutor`: Resolves standalone executables `<executable> <args...>`.
+- `WorkspacePathExecutor`: Resolves workspace-relative path templates such as `{workspace}/.venv`.
 - `ExecutorFactory`: Dynamically instantiates the correct executor from YAML configuration.
 
 ### B. Configuration Parser (`config.py`)
 - `get_available_managers()`: Returns available manager names.
-- `get_default_manager()`: Retrieves default manager (lowest priority or configured fallback).
+- `get_default_manager()`: Retrieves default manager (lowest priority manager from YAML).
 - `get_detection_rules(manager_name)`: Returns normalized detection rules.
 - `detect_manager_for_workspace(workspace_dir)`: Evaluates workspace indicator files and patterns in priority order and returns matching manager.
 
