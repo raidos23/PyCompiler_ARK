@@ -79,7 +79,7 @@ def _resolve_version() -> str:
             if line.strip().startswith("__version__"):
                 return line.split("=", 1)[1].strip().strip("\"'")
     except Exception:
-        pass
+        return "unknown"
     return "unknown"
 
 
@@ -134,8 +134,17 @@ def _build_impl(
             python_version = get_interpreter_version_str(vpath)
         else:
             python_version = get_interpreter_version_str()
-    except Exception:
-        pass
+    except Exception as exc:
+        python_version = "unknown"
+        if not as_json and verbose:
+            from .output import warn
+
+            warn(
+                (
+                    f"Impossible de déterminer la version Python: {exc}",
+                    f"Unable to determine Python version: {exc}",
+                )
+            )
 
     if lock_file is None:
         if not as_json and verbose:
