@@ -15,6 +15,7 @@ from ...Ui import output as output
 from ..globals import WORKSPACE_CONFIG_DIRNAME
 from .config import VenvManagerConfig
 from .executor import ExecutorFactory, PythonModuleExecutor, ExecutableExecutor
+from .venvengine import VenvEngine
 
 
 class VenvManager:
@@ -29,9 +30,31 @@ class VenvManager:
     - Report/terminate active background tasks related to venv operations
     """
 
-    def __init__(self, parent_widget):
+    def __init__(
+        self,
+        workspace_dir: str | os.PathLike | Any | None = None,
+        *,
+        parent: Any | None = None,
+    ):
         """Initialize instance state and runtime dependencies."""
-        self.parent = parent_widget
+        parent_obj = parent
+        if workspace_dir is not None and not isinstance(
+            workspace_dir, (str, os.PathLike)
+        ):
+            parent_obj = workspace_dir
+            resolved_ws = getattr(parent_obj, "workspace_dir", None)
+        else:
+            resolved_ws = workspace_dir
+
+        self.parent = parent_obj
+        self.workspace_dir = str(resolved_ws) if resolved_ws else None
+        self.use_system_python = False
+        self.venv_path_manuel = None
+        self.venv_path = None
+        self.verbose = False
+        self._closing = False
+        self._cli_mode = False
+
         # QProcess references for graceful termination
         self._venv_create_process = None
         self._venv_check_process = None
@@ -72,8 +95,9 @@ class VenvManager:
         self._output_encoding = "utf-8"
         self._fallback_encodings = ["utf-8", "latin-1", "cp1252", "ascii"]
 
-        # Environment manager detection is driven by YAML configuration.
+        # Environment manager detection & pure engine delegate
         self._config = VenvManagerConfig()
+        self.engine = VenvEngine(self._config)
         self._detected_manager = self._config.get_default_manager()
         self._manager_commands = self._get_manager_commands()
         # Cache for auto-selected venv per workspace
@@ -128,48 +152,20 @@ class VenvManager:
         python_exe: str | None = None,
         kwargs: dict[str, str] | None = None,
     ) -> tuple[str, list[str]]:
-        """
-        build (program, arguments) from executor + commands of YAML file using ExecutorFactory.
-
-        - executor.type == "python_module"  ->  <python> -m <module> <args...>
-        - executor.type == "executable"     ->  <executable> <args...>
-        """
-        extra_args = list(extra_args or [])
+        """Build (program, arguments) using self.engine."""
         manager = (
             self._detected_manager
             if isinstance(getattr(self, "_detected_manager", None), str)
             and self._detected_manager
             else self._config.get_default_manager()
         )
-        if not manager:
-            raise ValueError("No environment manager configured")
-
-        cmd_args = self._get_manager_command(manager, action)
-        if not cmd_args:
-            raise ValueError(
-                f"Missing command config for manager '{manager}' and action '{action}'"
-            )
-
-        resolved_args = []
-        fmt_vars = kwargs or {}
-        for arg in cmd_args:
-            formatted_arg = str(arg)
-            for k, v in fmt_vars.items():
-                formatted_arg = formatted_arg.replace(f"{{{k}}}", str(v))
-            resolved_args.append(formatted_arg)
-
-        if extra_args:
-            resolved_args.extend(extra_args)
-
-        executor_cfg = self._get_executor_config(manager, action=action)
-        python_interpreter = (
-            python_exe
-            or getattr(self, "_venv_python_exe", None)
-            or sys.executable
+        return self.engine.prepare_manager_command(
+            action=action,
+            manager_name=manager,
+            extra_args=extra_args,
+            python_exe=python_exe or getattr(self, "_venv_python_exe", None),
+            kwargs=kwargs,
         )
-
-        executor = ExecutorFactory.create(executor_cfg, python_interpreter)
-        return executor.build_command(resolved_args)
 
     # ---------- UI / Event Hooks (Overridden by UI Layer) ----------
     def _tr(self, fr: str, en: str) -> str:
@@ -234,39 +230,15 @@ class VenvManager:
     # ---------- Workspace pref management ----------
     def _workspace_pref_path(self, workspace_dir: str) -> str:
         """Return the resolved workspace path information."""
-        return os.path.join(
-            os.path.abspath(workspace_dir),
-            WORKSPACE_CONFIG_DIRNAME,
-            "pref.json",
-        )
+        return self.engine.workspace_pref_path(workspace_dir)
 
     def _read_workspace_pref(self, workspace_dir: str) -> dict | None:
-        """Execute _read_workspace_pref logic for this component."""
-        try:
-            path = self._workspace_pref_path(workspace_dir)
-            if not os.path.isfile(path):
-                return None
-            with open(path, encoding="utf-8") as f:
-                import json
-
-                data = json.load(f)
-            return data if isinstance(data, dict) else None
-        except Exception:
-            return None
+        """Read workspace preferences using self.engine."""
+        return self.engine.read_workspace_pref(workspace_dir)
 
     def _write_workspace_pref(self, workspace_dir: str, data: dict) -> None:
-        """Execute _write_workspace_pref logic for this component."""
-        try:
-            path = self._workspace_pref_path(workspace_dir)
-            os.makedirs(os.path.dirname(path), exist_ok=True)
-            tmp = path + ".tmp"
-            import json
-
-            with open(tmp, "w", encoding="utf-8") as f:
-                json.dump(data, f, indent=2)
-            os.replace(tmp, path)
-        except Exception:
-            pass
+        """Write workspace preferences using self.engine."""
+        self.engine.write_workspace_pref(workspace_dir, data)
 
     def resolve_workspace_manager(self, workspace_dir: str) -> str:
         """Resolve environment manager for workspace (User Pref -> Dynamic Detection -> YAML default)."""
@@ -437,26 +409,12 @@ class VenvManager:
         return None
 
     def pip_path(self, venv_root: str) -> str:
-        """Get the absolute path to the pip executable using deps_analyser."""
-        pip_exe, _ = deps_analyser._find_pip_executable(venv_path=venv_root)
-        return pip_exe
+        """Get the absolute path to the pip executable using self.engine."""
+        return self.engine.pip_path(venv_root)
 
     def python_path(self, venv_root: str) -> str:
-        """Get the absolute path to the python executable using deps_analyser."""
-        pip_exe, pip_args = deps_analyser._find_pip_executable(
-            venv_path=venv_root
-        )
-        if "-m" in pip_args and "pip" in pip_args:
-            return pip_exe
-        # Fallback to internal detection if pip_exe is directly the pip binary
-        base = os.path.join(
-            venv_root, "Scripts" if platform.system() == "Windows" else "bin"
-        )
-        if platform.system() == "Windows":
-            return os.path.join(base, "python.exe")
-        cand1 = os.path.join(base, "python")
-        cand2 = os.path.join(base, "python3")
-        return cand1 if os.path.isfile(cand1) else cand2
+        """Get the absolute path to the python executable using self.engine."""
+        return self.engine.python_path(venv_root)
 
     def _using_system_python(self) -> bool:
         """Execute _using_system_python logic for this component."""
@@ -488,42 +446,8 @@ class VenvManager:
         return "[tools:python] "
 
     def has_tool_binary(self, venv_root: str, tool: str) -> bool:
-        """Non-blocking heuristic check: detect console script/binary inside the venv.
-        This avoids spawning subprocesses and keeps UI fully responsive.
-        """
-        try:
-            bindir = os.path.join(
-                venv_root,
-                "Scripts" if platform.system() == "Windows" else "bin",
-            )
-            if not os.path.isdir(bindir):
-                return False
-            raw = str(tool or "").strip()
-            if not raw:
-                return False
-            lower = raw.lower()
-            variants = {lower}
-            if "_" in lower:
-                variants.add(lower.replace("_", "-"))
-                variants.add(lower.replace("_", ""))
-            if "-" in lower:
-                variants.add(lower.replace("-", "_"))
-                variants.add(lower.replace("-", ""))
-            variants.add(f"{lower}3")
-
-            names: list[str] = []
-            for name in sorted(variants):
-                names.extend([name, f"{name}.exe", f"{name}-script.py"])
-            for n in names:
-                p = os.path.join(bindir, n)
-                if os.path.isfile(p):
-                    try:
-                        return os.access(p, os.X_OK) or p.endswith(".py")
-                    except Exception:
-                        return True
-            return False
-        except Exception:
-            return False
+        """Non-blocking heuristic check: detect console script/binary inside the venv using self.engine."""
+        return self.engine.has_tool_binary(venv_root, tool)
 
     def _discover_engine_requirements(self) -> dict[str, list[str]]:
         """Discover tools required by available engines dynamically."""
@@ -748,21 +672,10 @@ class VenvManager:
 
     # ---------- Utility ----------
     def _safe_decode(
-        self, data: bytes, error_handling: str = "replace"
+        self, data: bytes | str, error_handling: str = "replace"
     ) -> str:
-        """Safely decode bytes with fallback encodings."""
-        if isinstance(data, str):
-            return data
-        for encoding in self._fallback_encodings:
-            try:
-                return data.decode(encoding, errors=error_handling)
-            except Exception:
-                continue
-        # Last resort: decode with errors ignored
-        try:
-            return data.decode("utf-8", errors="ignore")
-        except Exception:
-            return "[Decode Error]"
+        """Safely decode bytes with fallback encodings using self.engine."""
+        return self.engine.safe_decode(data, error_handling)
 
     def _reset_cancel_state(self) -> None:
         """Execute _reset_cancel_state logic for this component."""
@@ -889,70 +802,12 @@ class VenvManager:
 
     # ---------- Venv validation ----------
     def _is_within(self, path: str, root: str) -> bool:
-        """Return whether the related condition is satisfied."""
-        try:
-            rp = os.path.realpath(path)
-            rr = os.path.realpath(root)
-            return os.path.commonpath([rp, rr]) == rr
-        except Exception:
-            return False
+        """Check if path is within root using self.engine."""
+        return self.engine.is_within(path, root)
 
     def validate_venv_strict(self, venv_root: str) -> tuple[bool, str]:
-        """Strict validation of a venv.
-        Return (ok, reason_si_ko).
-        Rules:
-         - Existing file
-         - pyvenv.cfg present
-         - Scripts/python.exe (Windows) or bin/python[3] (POSIX) present
-         - include-system-site-packages=false (refused if true)
-         - pyvenv.cfg, Scripts/bin folder and Python executable must remain contained in the venv (no outgoing links)"""
-        try:
-            if not venv_root or not os.path.isdir(venv_root):
-                return False, "Chemin invalide (dossier manquant)"
-            cfg = os.path.join(venv_root, "pyvenv.cfg")
-            if not os.path.isfile(cfg):
-                return False, "pyvenv.cfg introuvable"
-            bindir = "Scripts" if platform.system() == "Windows" else "bin"
-            bpath = os.path.join(venv_root, bindir)
-            if not os.path.isdir(bpath):
-                return False, f"Dossier {bindir}/ introuvable"
-            if platform.system() == "Windows":
-                pyexe = os.path.join(bpath, "python.exe")
-                if not os.path.isfile(pyexe):
-                    return False, "python.exe introuvable dans Scripts/"
-            else:
-                cand1 = os.path.join(bpath, "python")
-                cand2 = os.path.join(bpath, "python3")
-                if not (os.path.isfile(cand1) or os.path.isfile(cand2)):
-                    return False, "python ou python3 introuvable dans bin/"
-                pyexe = cand1 if os.path.isfile(cand1) else cand2
-            # pyvenv.cfg policy: include-system-site-packages must be false
-            try:
-                with open(cfg, encoding="utf-8", errors="ignore") as f:
-                    text = f.read()
-                for line in text.splitlines():
-                    if "include-system-site-packages" in line.lower():
-                        _, _, v = line.partition("=")
-                        if str(v).strip().lower() in ("1", "true", "yes"):
-                            return (
-                                False,
-                                "include-system-site-packages=true (refusé)",
-                            )
-                        break
-            except Exception:
-                pass
-            # Containment: pyvenv.cfg and the bin/Scripts folder must remain in the venv.
-            # The Python executable may be a non-venv symlink depending on the platform;
-            # binding verification (verify_venv_binding) will ensure effective isolation.
-            for p in (cfg, bpath):
-                if not self._is_within(p, venv_root):
-                    return (
-                        False,
-                        f"Lien/symlink sortant du venv: {os.path.relpath(p, venv_root)}",
-                    )
-            return True, ""
-        except Exception as e:
-            return False, f"Erreur validation venv: {e}"
+        """Strict validation of a venv using self.engine."""
+        return self.engine.validate_venv_strict(venv_root)
 
     def is_valid_venv(self, venv_root: str) -> bool:
         """Return whether the related condition is satisfied."""
@@ -963,42 +818,21 @@ class VenvManager:
     def _collect_declared_dependencies(
         self, workspace_dir: str
     ) -> tuple[list[str], bool]:
-        """Collect project dependencies using DepsAnalyser."""
-        try:
-            deps = deps_analyser.collect_project_dependencies(workspace_dir)
-            if deps:
-                return list(deps), True
-            return [], False
-        except Exception:
-            return [], False
+        """Collect project dependencies using self.engine."""
+        return self.engine.collect_declared_dependencies(workspace_dir)
 
     def _missing_in_system_python(self, packages: list[str]) -> list[str]:
-        """Check for missing packages in system Python using deps_analyser."""
-        missing = []
-        for pkg in packages:
-            if not pkg:
-                continue
-            if not deps_analyser._check_module_installed(str(pkg)):
-                missing.append(str(pkg))
-        return missing
+        """Check for missing packages in system Python using self.engine."""
+        return self.engine.missing_in_system_python(packages)
 
     def _can_use_system_python(self) -> tuple[bool, list[str], bool]:
         """Return whether this operation can run safely using system Python."""
         workspace_dir = getattr(self.parent, "workspace_dir", None)
-        if not workspace_dir:
-            return False, [], False
-        deps, has_source = self._collect_declared_dependencies(workspace_dir)
-        if not deps:
-            # If we have a source but no deps, allow system python (no external deps)
-            if has_source:
-                return True, [], True
-            return True, [], False
-        missing = self._missing_in_system_python(sorted(set(deps)))
-        return (len(missing) == 0), missing, has_source
+        return self.engine.can_use_system_python(workspace_dir)
 
     def is_tool_installed_system(self, tool: str) -> bool:
-        """Check if a tool is installed in system Python via deps_analyser."""
-        return deps_analyser._check_module_installed(tool)
+        """Check if a tool is installed in system Python using self.engine."""
+        return self.engine.is_tool_installed_system(tool)
 
     def check_tools_in_venv(self, venv_path: str):
         """Check both python and system requirements for the current workspace."""
@@ -1856,11 +1690,13 @@ class VenvManager:
         if manual:
             venv_root = os.path.abspath(manual)
         else:
-            existing = self.resolve_existing_venv(path)
-            if not existing:
-                self.create_venv_if_needed(path)
+            existing = (
+                self.resolve_existing_venv(path) or self.resolve_project_venv()
+            )
+            if not existing or not os.path.isdir(existing):
                 return
             venv_root = existing
+
         ok, reason = self.validate_venv_strict(venv_root)
         if not ok:
             output.warn(f"Invalid venv for requirements: {reason}")
