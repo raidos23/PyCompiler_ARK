@@ -27,7 +27,11 @@ A PyCompiler ARK engine is a Python package placed in `pycompiler_ark/engines/<e
 from __future__ import annotations
 
 import sys
-from pycompiler_ark.engine_sdk import BuildContext, CompilerEngine, engine_register
+from pycompiler_ark.engine_sdk import (
+    BuildContext,
+    CompilerEngine,
+    engine_register,
+)
 
 
 @engine_register
@@ -138,7 +142,9 @@ class MyEngine(CompilerEngine):
 
     def get_config(self, gui) -> dict:
         return {
-            "fast": bool(self._opt_fast.isChecked()) if self._opt_fast else False,
+            "fast": bool(self._opt_fast.isChecked())
+            if self._opt_fast
+            else False,
         }
 
     def set_config(self, gui, cfg: dict) -> None:
@@ -214,7 +220,11 @@ from PySide6.QtWidgets import (
     QLineEdit,
     QPushButton,
 )
-from pycompiler_ark.engine_sdk import BuildContext, CompilerEngine, engine_register
+from pycompiler_ark.engine_sdk import (
+    BuildContext,
+    CompilerEngine,
+    engine_register,
+)
 
 
 @engine_register
@@ -228,7 +238,7 @@ class MonolithicEngine(CompilerEngine):
     def build_command(self, context: BuildContext):
         # Use settings from _config_overrides (populated from get_config or saved JSON)
         cfg = getattr(self, "_config_overrides", {})
-        
+
         cmd = [sys.executable, "-m", "mytool"]
         if cfg.get("fast"):
             cmd.append("--fast")
@@ -236,11 +246,11 @@ class MonolithicEngine(CompilerEngine):
             cmd.append("--safe")
         if cfg.get("verbose"):
             cmd.append("--verbose")
-        
+
         output = str(context.output_dir or cfg.get("output_dir") or "").strip()
         if output:
             cmd.extend(["--output", output])
-            
+
         cmd.append(context.entry_point)
         return cmd
 
@@ -298,9 +308,19 @@ btn_action: Action
 `pycompiler_ark/engines/my_engine/__init__.py`
 
 ```python
-from PySide6.QtWidgets import QCheckBox, QFormLayout, QPushButton, QVBoxLayout, QWidget
+from PySide6.QtWidgets import (
+    QCheckBox,
+    QFormLayout,
+    QPushButton,
+    QVBoxLayout,
+    QWidget,
+)
 
-from pycompiler_ark.engine_sdk import CompilerEngine, engine_register, translate
+from pycompiler_ark.engine_sdk import (
+    CompilerEngine,
+    engine_register,
+    translate,
+)
 
 
 @engine_register
@@ -311,9 +331,15 @@ class MyEngine(CompilerEngine):
     def create_tab(self, gui):
         tab = QWidget()
         layout = QVBoxLayout(tab)
-        self._opt_onefile = QCheckBox(translate(self.id, "opt_onefile", "Onefile"), tab)
-        self._opt_clean = QCheckBox(translate(self.id, "opt_clean", "Clean build"), tab)
-        self._btn_action = QPushButton(translate(self.id, "btn_action", "Action"), tab)
+        self._opt_onefile = QCheckBox(
+            translate(self.id, "opt_onefile", "Onefile"), tab
+        )
+        self._opt_clean = QCheckBox(
+            translate(self.id, "opt_clean", "Clean build"), tab
+        )
+        self._btn_action = QPushButton(
+            translate(self.id, "btn_action", "Action"), tab
+        )
         form = QFormLayout()
         form.addRow("", self._opt_onefile)
         form.addRow("", self._opt_clean)
@@ -371,6 +397,7 @@ Each example includes context, intent, and a working pattern. Adjust IDs and lab
 class MinimalToolEngine(CompilerEngine):
     id = "minimal"
     name = "Minimal"
+
     def build_command(self, context: BuildContext):
         return [sys.executable, "-m", "mytool", context.entry_point]
 ```
@@ -404,7 +431,8 @@ Notes.
 ```python
 def preflight(self, gui, file):
     if not os.path.isfile(file):
-        from pycompiler_ark.engine_sdk  import output
+        from pycompiler_ark.engine_sdk import output
+
         output.error(("Fichier non trouvé", "File not found"), gui=gui)
         return False
     return True
@@ -457,6 +485,7 @@ def on_success(self, gui, file):
     # ARK already opens the output directory.
     # Use this for additional engine-specific messages.
     from pycompiler_ark.engine_sdk import output
+
     output.success(("Build terminé!", "Build finished!"), gui=gui)
 ```
 
@@ -728,12 +757,14 @@ Notes.
 ```python
 # pycompiler_ark/engines/my_engine/auto_plugins.py
 
+
 def get_auto_builder():
     def builder(matched, pkg_to_import):
         args = []
         if "torch" in matched:
             args.append("--include-package=torch")
         return args
+
     return builder
 ```
 

@@ -35,7 +35,7 @@ except Exception:
 
 from pycompiler_ark.Ui import output
 
-from .Dialogs.i18nDialog import show_language_dialog, translate
+from .Dialogs.WorkspaceDialog import show_language_dialog, translate
 
 
 def _detect_system_color_scheme() -> str:

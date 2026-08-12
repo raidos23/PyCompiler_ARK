@@ -12,10 +12,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-"""Process execution helpers for system commands."""
-
 from __future__ import annotations
+
+import platform
+import shutil
+import subprocess
+from typing import Optional
 
 import platform
 import webbrowser
@@ -24,9 +26,99 @@ from typing import Any, Optional, Union
 
 from PySide6.QtCore import QObject, QProcess
 
+from .utils.internet import check_internet_connection
+
+
+#################
+### Detection   #
+#################
+
+
+def detect_linux_package_manager() -> Optional[str]:
+    for pm in ("apt", "dnf", "yum", "pacman", "zypper"):
+        if shutil.which(pm):
+            return pm
+    return None
+
+
+def detect_macos_package_manager() -> Optional[str]:
+    if shutil.which("brew"):
+        return "brew"
+    return None
+
+
+def which(cmd: str) -> Optional[str]:
+    return shutil.which(cmd)
+
+
+def get_install_command(packages: list[str]) -> Optional[str]:
+    """Generate a platform-specific install command string."""
+    if not packages:
+        return None
+
+    system = platform.system()
+    if system == "Linux":
+        pm = detect_linux_package_manager()
+        if not pm:
+            return None
+        pkgs = " ".join(packages)
+        return f"{pm} install -y {pkgs}"
+
+    if system == "Windows":
+        if not shutil.which("winget"):
+            return None
+        parts = [
+            f"winget install --id {p} --silent --accept-source-agreements --accept-package-agreements"
+            for p in packages
+        ]
+        return " && ".join(parts)
+
+    if system == "Darwin":
+        pm = detect_macos_package_manager()
+        if pm == "brew":
+            pkgs = " ".join(packages)
+            return f"brew install {pkgs}"
+
+    return None
+
+
+def check_system_packages(packages: list[str]) -> bool:
+    return all(shutil.which(pkg) for pkg in packages if pkg)
+
+
+def install_system_packages(packages: list[str], gui=None) -> bool:
+    """Headless/CI install entry point."""
+    if not check_internet_connection():
+        return False
+
+    pkgs = [p.strip() for p in packages if p.strip()]
+    if not pkgs:
+        return True
+
+    pm = detect_linux_package_manager()
+    if not pm:
+        return False
+
+    cmd_prefix = ["sudo", "-n"]
+    if pm == "apt":
+        steps = [
+            cmd_prefix + ["apt-get", "update"],
+            cmd_prefix + ["apt-get", "install", "-y"] + pkgs,
+        ]
+    else:
+        steps = [cmd_prefix + [pm, "install", "-y"] + pkgs]
+
+    for cmd in steps:
+        if subprocess.run(cmd).returncode != 0:
+            return False
+    return True
+
+
+### process execution
+
 
 class ProcessBridge:
-    """Thin wrapper around QProcess execution and UI task registration."""
+    """QProcess execution and UI task registration."""
 
     def __init__(self, parent_widget: Optional[QObject] = None):
         self.parent_widget = parent_widget
@@ -131,3 +223,34 @@ class ProcessBridge:
     def open_urls(self, urls: list[str]) -> None:
         for u in urls or []:
             webbrowser.open(u)
+
+
+##################################
+### system dependency management #
+##################################
+class SysDepsManager(ProcessBridge):
+    """
+    system dependency management.
+    """
+
+    def __init__(self, parent_widget: Optional[QObject] = None):
+        super().__init__(parent_widget)
+
+    def detect_linux_package_manager(self) -> Optional[str]:
+        return detect_linux_package_manager()
+
+    def detect_macos_package_manager(self) -> Optional[str]:
+        return detect_macos_package_manager()
+
+    def which(self, cmd: str) -> Optional[str]:
+        return which(cmd)
+
+    def get_install_command(self, packages: list[str]) -> Optional[str]:
+        return get_install_command(packages)
+
+
+__all__ = [
+    "SysDepsManager",
+    "check_system_packages",
+    "install_system_packages",
+]

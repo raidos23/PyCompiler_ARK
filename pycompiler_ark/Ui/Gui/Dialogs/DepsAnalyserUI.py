@@ -27,7 +27,7 @@ from PySide6.QtWidgets import QApplication, QMessageBox
 
 from pycompiler_ark.Ui import output
 
-from ....Core.deps_analyser.analyser import (
+from ....Core.deps_analyser import (
     _classify_module_origin,
     _collect_workspace_module_roots,
     _extract_imported_modules_from_file,

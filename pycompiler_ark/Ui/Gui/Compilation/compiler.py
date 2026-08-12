@@ -17,7 +17,7 @@
 Compiler GUI Module
 
 Handles compilation process execution with threading support
-by delegating to Core.Compiler.
+by delegating to Core.engine_runner.
 """
 
 from __future__ import annotations
@@ -31,7 +31,7 @@ from typing import Any, Dict, List, Optional
 
 from PySide6.QtCore import QObject, QThread, Signal
 
-from ....Core.Compiler.engine_runner import (
+from ....Core.engine_runner import (
     BuildContext,
     run_engine_compile_streaming,
 )
@@ -102,7 +102,7 @@ class SafeGuiBridge(QObject):
 class CompilationThread(QThread):
     """
     Thread used to run compilation without blocking the UI.
-    Delegates the heavy lifting to Core.Compiler.run_engine_compile_streaming.
+    Delegates the heavy lifting to Core.engine_runner.run_engine_compile_streaming.
     """
 
     output_ready = Signal(str)
@@ -170,7 +170,7 @@ class CompilationThread(QThread):
                     "info",
                     "🔒 Generating compilation lock file (background)...",
                 )
-                from ....Core.Compiler.engine_runner import (
+                from ....Core.engine_runner import (
                     resolve_engine_command,
                 )
                 from ....Core.utils.os_helpers import (

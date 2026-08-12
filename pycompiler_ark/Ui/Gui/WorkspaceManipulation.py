@@ -13,21 +13,218 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""WorkspaceAdvancedManipulation — advanced Qt interactions with the workspace.
-
-This module handles Qt events (drag & drop, file selection, cleaning)
-and delegates all pure file logic to Core.WorkSpaceManager."""
+"""WorkspaceAdvancedManipulation"""
 
 import os
-
+from typing import List
 from PySide6.QtGui import QDropEvent
 from PySide6.QtWidgets import QFileDialog, QMessageBox
 
 from pycompiler_ark.Ui import output
 
 
+@staticmethod
+def list_python_files(folder: str) -> List[str]:
+    """Recursively retrieves all Python files in a folder.
+
+    Args:
+        folder: Folder to scan.
+
+    Returns:
+    List of absolute paths to .py files."""
+    py_files = []
+    if not folder or not os.path.isdir(folder):
+        return py_files
+
+    for root, _, files in os.walk(folder):
+        for f in files:
+            if f.endswith(".py"):
+                py_files.append(os.path.join(root, f))
+
+    return sorted(py_files)
+
+
+@staticmethod
+def create_workspace_dir(folder: str) -> bool:
+    """Creates the workspace folder if it does not exist.
+
+    Returns:
+      True if the folder exists or has been created, False otherwise."""
+    try:
+        if not os.path.isdir(folder):
+            os.makedirs(folder, exist_ok=True)
+        return True
+    except Exception:
+        return False
+
+
+def get_workspace_status(gui_instance) -> dict:
+    """
+    Return dictionary describing current workspace status.
+
+    Args:
+      gui_instance: GUI instance (or any object with workspace_dir, python_files,
+                    selected_files attributes).
+
+    Returns:
+      Workspace status information dict.
+    """
+    workspace_dir = getattr(gui_instance, "workspace_dir", None)
+    python_files = getattr(gui_instance, "python_files", [])
+    selected_files = getattr(gui_instance, "selected_files", [])
+
+    return {
+        "workspace_dir": workspace_dir,
+        "file_count": len(python_files),
+        "selected_count": len(selected_files),
+        "is_valid": bool(workspace_dir and os.path.isdir(workspace_dir)),
+        "has_files": len(python_files) > 0,
+    }
+
+
+def clear_workspace_data(gui_instance, keep_dir: bool = True) -> None:
+    """
+    Pure business logic for clearing workspace state in the GUI instance.
+    """
+    if hasattr(gui_instance, "python_files"):
+        gui_instance.python_files.clear()
+    if hasattr(gui_instance, "selected_files"):
+        gui_instance.selected_files.clear()
+
+    if not keep_dir:
+        setattr(gui_instance, "workspace_dir", None)
+
+
+def add_files(gui_instance, files: list[str]) -> tuple[int, int]:
+    """
+    Filter and add files to the workspace.
+    Returns (added_count, excluded_count).
+    """
+    workspace_dir = getattr(gui_instance, "workspace_dir", None)
+    python_files = getattr(gui_instance, "python_files", [])
+
+    valid_files, excluded, _ = filter_workspace_files(files, workspace_dir)
+
+    added = 0
+    for f in valid_files:
+        if f not in python_files:
+            python_files.append(f)
+            added += 1
+
+    return added, excluded
+
+
+def remove_files(gui_instance, abs_paths: list[str]) -> None:
+    """
+    Remove files from the workspace state.
+    """
+    python_files = getattr(gui_instance, "python_files", [])
+    selected_files = getattr(gui_instance, "selected_files", [])
+
+    for path in abs_paths:
+        if path in python_files:
+            python_files.remove(path)
+        if path in selected_files:
+            selected_files.remove(path)
+
+
+def resolve_dropped_files(paths: list[str]) -> list[str]:
+    """
+    Business logic to resolve a list of file/directory paths into a flat list of Python files.
+    """
+
+    all_files = []
+    for path in paths:
+        if not path:
+            continue
+        if os.path.isdir(path):
+            all_files.extend(list_python_files(path))
+        elif path.endswith(".py"):
+            all_files.append(path)
+    return all_files
+
+
+def filter_workspace_files(
+    files: list[str], workspace_dir: str | None
+) -> tuple[list[str], int, list[str]]:
+    """
+    Filter files according to ark.yml exclusion patterns and workspace containment.
+
+    Returns:
+      (valid_files, excluded_count, exclusion_patterns)
+    """
+    from pycompiler_ark.Core.Configs import (
+        load_ark_config,
+        should_exclude_file,
+    )
+
+    ark_config = load_ark_config(workspace_dir) if workspace_dir else {}
+    workspace_cfg = ark_config.get("workspace", {})
+    exclusion_patterns = []
+    if isinstance(workspace_cfg, dict):
+        exclusion_patterns = workspace_cfg.get("exclude", [])
+
+    valid_files = []
+    excluded_count = 0
+
+    for f in files:
+        if workspace_dir:
+            # Check if within workspace
+            try:
+                if os.path.commonpath([f, workspace_dir]) != workspace_dir:
+                    continue
+            except Exception:
+                continue
+
+            # Check exclusion patterns
+            if should_exclude_file(f, workspace_dir, exclusion_patterns):
+                excluded_count += 1
+                continue
+
+        valid_files.append(f)
+
+    return valid_files, excluded_count, exclusion_patterns
+
+
+class SetupWorkspace:
+    """Business logic for initializing and scanning the workspace."""
+
+    @staticmethod
+    def list_python_files(folder: str) -> List[str]:
+        """Recursively retrieves all Python files in a folder.
+
+        Args:
+          folder: Folder to scan.
+
+        Returns:
+          List of absolute paths to .py files."""
+        py_files = []
+        if not folder or not os.path.isdir(folder):
+            return py_files
+
+        for root, _, files in os.walk(folder):
+            for f in files:
+                if f.endswith(".py"):
+                    py_files.append(os.path.join(root, f))
+
+        return sorted(py_files)
+
+    @staticmethod
+    def create_workspace_dir(folder: str) -> bool:
+        """Creates the workspace folder if it does not exist.
+
+        Returns:
+          True if the folder exists or has been created, False otherwise."""
+        try:
+            if not os.path.isdir(folder):
+                os.makedirs(folder, exist_ok=True)
+            return True
+        except Exception:
+            return False
+
+
 class WorkspaceAdvancedManipulation:
-    """Advanced Qt workspace management (drag & drop, selection, cleaning)."""
+    """Qt workspace management (drag & drop, selection, cleaning)"""
 
     @staticmethod
     def select_files_manually(gui_instance):
@@ -54,10 +251,6 @@ class WorkspaceAdvancedManipulation:
             gui_instance.tr("Fichiers Python (*.py)", "Python Files (*.py)"),
         )
         if files:
-            from ...Core.WorkSpaceManager.WorkspaceManipulation import (
-                add_files,
-            )
-
             added, excluded = add_files(gui_instance, files)
 
             # Warning for files outside workspace
@@ -126,10 +319,6 @@ class WorkspaceAdvancedManipulation:
         if not selected_items:
             return
 
-        from ...Core.WorkSpaceManager.WorkspaceManipulation import (
-            remove_files,
-        )
-
         workspace_dir = getattr(gui_instance, "workspace_dir", None)
         abs_paths_to_remove = []
 
@@ -159,10 +348,6 @@ class WorkspaceAdvancedManipulation:
     @staticmethod
     def handle_drop_event(gui_instance, event: QDropEvent):
         """Process the drop event and add the dropped Python files/folders."""
-        from ...Core.WorkSpaceManager.WorkspaceManipulation import (
-            add_files,
-            resolve_dropped_files,
-        )
 
         paths = [url.toLocalFile() for url in event.mimeData().urls()]
         workspace_dir = getattr(gui_instance, "workspace_dir", None)
@@ -232,10 +417,6 @@ class WorkspaceAdvancedManipulation:
     def clear_workspace(gui_instance, keep_dir: bool = True) -> bool:
         """Empty the current state of the workspace."""
         try:
-            from ...Core.WorkSpaceManager.WorkspaceManipulation import (
-                clear_workspace_data,
-            )
-
             workspace_dir = getattr(gui_instance, "workspace_dir", None)
 
             # Business logic to clear internal state

@@ -20,23 +20,23 @@ from unittest.mock import MagicMock, patch
 import pytest
 from PySide6.QtCore import QProcess
 
-from pycompiler_ark.Core.SysDependencyManager import SysDependencyManager
+from pycompiler_ark.Core.SysDepsManager import SysDepsManager
 from pycompiler_ark.Ui.Gui.Dialogs.SysDependencyUI import SysDependencyUI
 
 
-class TestSysDependencyManager:
+class TestSysDepsManager:
     @patch("shutil.which")
     def test_detect_linux_package_manager(self, mock_which):
         mock_which.side_effect = lambda x: (
             "/usr/bin/" + x if x == "apt" else None
         )
-        manager = SysDependencyManager()
+        manager = SysDepsManager()
         assert manager.detect_linux_package_manager() == "apt"
 
     @patch("platform.system", return_value="Linux")
     @patch.object(QProcess, "start")
     def test_run_elevated_shell_linux(self, mock_start, mock_system):
-        manager = SysDependencyManager()
+        manager = SysDepsManager()
         # Mocking shell_run because QProcess start is tricky to mock directly with args
         with patch.object(manager, "shell_run") as mock_shell_run:
             manager.run_elevated_shell("apt-get update")
@@ -46,7 +46,7 @@ class TestSysDependencyManager:
 
     @patch("platform.system", return_value="Windows")
     def test_run_elevated_shell_windows(self, mock_system):
-        manager = SysDependencyManager()
+        manager = SysDepsManager()
         with patch.object(manager, "shell_run") as mock_shell_run:
             manager.run_elevated_shell("winget install dummy")
             mock_shell_run.assert_called_once_with(

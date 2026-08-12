@@ -8,8 +8,8 @@ import subprocess
 import sys
 from typing import Any
 
-import pycompiler_ark.Core.deps_analyser.analyser as deps_analyser
-import pycompiler_ark.Core.SystemDepsManager as sys_deps
+import pycompiler_ark.Core.deps_analyser as deps_analyser
+import pycompiler_ark.Core.SysDepsManager as sys_deps
 
 from ...Ui import output as output
 from ..globals import WORKSPACE_CONFIG_DIRNAME

@@ -82,7 +82,12 @@ An engine implementation MUST adhere to the following rules when processing a `B
 ### **6. Implementation Example**
 
 ```python
-from pycompiler_ark.engine_sdk import BuildContext, CompilerEngine, engine_register
+from pycompiler_ark.engine_sdk import (
+    BuildContext,
+    CompilerEngine,
+    engine_register,
+)
+
 
 @engine_register
 class MyEngine(CompilerEngine):
@@ -96,29 +101,29 @@ class MyEngine(CompilerEngine):
         # Force package inclusions
         for package in context.include_packages:
             cmd.append(f"--include-package={package}")
-        
+
         # Convert exclusions
         for package in context.exclude_packages:
             cmd.append(f"--nofollow-import-to={package}")
-        
+
         # Add data files
         for mapping in context.data_mappings:
-            source = mapping['source']
-            dest = mapping['destination']
-            mapping_type = mapping.get('type', 'dir')
-            
-            if mapping_type == 'file':
+            source = mapping["source"]
+            dest = mapping["destination"]
+            mapping_type = mapping.get("type", "dir")
+
+            if mapping_type == "file":
                 cmd.append(f"--include-data-files={source}={dest}")
             else:
                 cmd.append(f"--include-data-dir={source}={dest}")
-        
+
         # Metadata and resources
         if context.icon:
             cmd.append(f"--windows-icon-from-ico={context.icon}")
-        
+
         cmd.append(f"--output-dir={context.output_dir}")
         cmd.append(f"--output-filename={context.project_name}")
-        
+
         return cmd
 ```
 

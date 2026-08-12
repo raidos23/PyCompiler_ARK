@@ -14,58 +14,9 @@
 # limitations under the License.
 
 """
-PyCompiler ARK - Compiler Core Module
+PyCompiler ARK - Core Module
 
-Main compiler core module for PyCompiler ARK.
-This module now exposes only pure business-logic types and helpers.
-Qt-dependent classes have been moved to Ui/Gui/Compilation/.
 """
 
-from __future__ import annotations
-
-# Imports of allversion.py
-from .allversion import (
-    get_bcasl_version,
-    get_core_version,
-    get_engine_sdk_version,
-)
-
-# Imports of utils.py
-from .Compiler.utils import (
-    CommandBuilder,
-    build_command,
-    escape_arguments,
-    sanitize_path,
-    validate_command,
-)
-
-# Process_killer.py imports
-from .process_killer import (
-    ProcessInfo,
-    ProcessKiller,
-    get_process_info,
-    kill_process,
-    kill_process_tree,
-)
-
-# Venv_Manager/Manager.py imports
-from .Venv_Manager.Manager import VenvManager
-
-__all__ = [
-    "build_command",
-    "validate_command",
-    "escape_arguments",
-    "sanitize_path",
-    "CommandBuilder",
-    "ProcessInfo",
-    "ProcessKiller",
-    "kill_process",
-    "kill_process_tree",
-    "get_process_info",
-    "VenvManager",
-    "get_core_version",
-    "get_bcasl_version",
-    "get_engine_sdk_version",
-]
 __version__ = "1.1.0"
 __author__ = "Samuel Amen Ague"

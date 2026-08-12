@@ -68,7 +68,7 @@ def ensure_tools(
         stop_signal: Callable without argument returning True to cancel
         log_cb: Callable(str) to emit progress messages (used if gui is absent)
         timeout_s: Global timeout in seconds (not used for pip, future guardrail)
-        gui: Optional GUI or Bridge object for full UI support (VenvManager, SysDependencyManager, etc.)
+        gui: Optional GUI or Bridge object for full UI support (VenvManager, SysDepsManager, etc.)
 
     Returns:
         ToolsCheckResult with ok=True if everything is available after installation."""
@@ -87,8 +87,8 @@ def ensure_tools(
         if gui is not None:
             # GUI/Bridge system tools flow
             try:
-                from pycompiler_ark.Core.SystemDepsManager import (
-                    SysDependencyManager,
+                from pycompiler_ark.Core.SysDepsManager import (
+                    SysDepsManager,
                     check_system_packages,
                 )
 
@@ -97,7 +97,7 @@ def ensure_tools(
                 if hasattr(gui, "sys_deps_manager") and gui.sys_deps_manager:
                     sys_manager = gui.sys_deps_manager
                 else:
-                    sys_manager = SysDependencyManager(gui)
+                    sys_manager = SysDepsManager(gui)
 
                 for tool in system_tools:
                     if stop_signal and stop_signal():
@@ -209,7 +209,7 @@ def ensure_tools(
                                     system_install_ok = False
                         else:
                             # Fallback to headless
-                            from pycompiler_ark.Core.SystemDepsManager import (
+                            from pycompiler_ark.Core.SysDepsManager import (
                                 install_system_packages,
                             )
 
@@ -392,7 +392,7 @@ def ensure_tools(
             # Original headless system tools check & installation flow
             try:
                 from ..utils.internet import check_internet_connection
-                from ..SystemDepsManager.headless import (
+                from ..SysDepsManager.headless import (
                     check_system_packages,
                     install_system_packages,
                 )

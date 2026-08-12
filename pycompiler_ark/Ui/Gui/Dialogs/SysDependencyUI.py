@@ -25,13 +25,13 @@ from typing import Any, Optional
 from PySide6.QtCore import QObject, QProcess, Qt, QTimer
 from PySide6.QtWidgets import QMessageBox
 
-from ....Core.SysDependencyManager import SysDependencyManager
+from ....Core.SysDepsManager import SysDepsManager
 from ..WidgetsCreator import ProgressDialog
 
 
-class SysDependencyUI(SysDependencyManager):
+class SysDependencyUI(SysDepsManager):
     """
-    GUI extension of SysDependencyManager.
+    GUI extension of SysDepsManager.
     Proxies GUI calls to the main thread to avoid segfaults and PySide6 signature errors.
     """
 

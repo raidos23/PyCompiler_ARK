@@ -473,6 +473,6 @@ class MainProcess(QObject):
 # =========================================================================
 # FONCTIONS DE CONSTRUCTION ET VALIDATION DE COMMANDES
 # =========================================================================
-# These functions have been moved to Core.Compiler.utils
+# These functions have been moved to Core.engine_runner.utils
 # and are imported at the beginning of this file to maintain compatibility.
 # =========================================================================

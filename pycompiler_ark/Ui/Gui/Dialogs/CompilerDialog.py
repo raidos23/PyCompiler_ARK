@@ -32,8 +32,8 @@ from pathlib import Path
 
 from PySide6.QtWidgets import QFileDialog, QMessageBox
 
-from pycompiler_ark.Core.Compiler import create
-from pycompiler_ark.Ui import output
+from ....Core.engine import create
+from ... import output
 
 # Shared helpers from CLI for exact code alignment
 from ...Cli.helpers import (
@@ -240,7 +240,7 @@ def compile_all(self) -> None:
         # Use BuildContext helper to get initial context
         context = build_context_object_from_ark_config(validated.config)
         # load the engine config from disk
-        from pycompiler_ark.Core.Locking import read_engine_config
+        from ....Core.locking import read_engine_config
 
         engine_config = read_engine_config(ws, engine_id)
     except Exception as e:
@@ -409,7 +409,7 @@ def rebuild_from_lock(self, lock_path: Path) -> None:
         pass
 
     try:
-        from pycompiler_ark.Core.Locking import load_yaml_file
+        from pycompiler_ark.Core.locking import load_yaml_file
 
         output.info(
             (
@@ -645,7 +645,7 @@ def start_compilation_process(self, engine_id: str, file_path: str) -> bool:
             context.entry_point = file_path
 
         # load the engine config from disk
-        from pycompiler_ark.Core.Locking import read_engine_config
+        from pycompiler_ark.Core.locking import read_engine_config
 
         engine_config = read_engine_config(ws, engine_id)
 

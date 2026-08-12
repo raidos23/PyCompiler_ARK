@@ -174,10 +174,10 @@ def _build_impl(
         # Pre-resolve command for auto-mapping persistence (Phase 3)
         resolved_command = None
         try:
-            from ...Core.Compiler.engine_runner import (
+            from ...Core.engine_runner import (
                 resolve_engine_command,
             )
-            from ...Core.Locking import read_engine_config
+            from ...Core.locking import read_engine_config
 
             # Create a minimal bridge for resolution
             class ResolutionBridge:

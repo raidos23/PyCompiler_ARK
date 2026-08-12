@@ -83,7 +83,7 @@ def run_engine_compile(
     is_rebuild: bool = False,
 ) -> dict[str, Any]:
     """Execute a compilation with real-time output streaming to the CLI."""
-    from ...Core.Compiler.engine_runner import run_engine_compile_streaming
+    from ...Core.engine_runner import run_engine_compile_streaming
     from .output import error, get_console, plain
 
     captured_stdout = []
@@ -206,22 +206,22 @@ from ...Core.Configs import config_home as _config_home
 from ...Core.Configs import ensure_config_home as _ensure_config_home
 from ...Core.Configs import load_ark_config as _load_ark_config
 from ...Core.Configs import validate_ark_config as _validate_ark_config
-from ...Core.Locking import (
+from ...Core.locking import (
     BuildContext,
     ensure_workspace_layout,
     load_yaml_file,
 )
-from ...Core.Locking import (
+from ...Core.locking import (
     build_context_from_ark_config as _build_context_from_ark_config,
 )
-from ...Core.Locking import (
+from ...Core.locking import (
     build_context_from_lock as _build_context_from_lock,
 )
-from ...Core.Locking import build_lock_payload as _build_lock_payload
-from ...Core.Locking import cache_rebuild_lock as _cache_rebuild_lock
-from ...Core.Locking import compare_lock_payloads as _compare_lock_payloads
-from ...Core.Locking import default_lock_path as _default_lock_path
-from ...Core.Locking import write_lock_files as _write_lock_files
+from ...Core.locking import build_lock_payload as _build_lock_payload
+from ...Core.locking import cache_rebuild_lock as _cache_rebuild_lock
+from ...Core.locking import compare_lock_payloads as _compare_lock_payloads
+from ...Core.locking import default_lock_path as _default_lock_path
+from ...Core.locking import write_lock_files as _write_lock_files
 from .discovery import (
     bcasl_list_payload,
     engine_info_payload,
@@ -329,7 +329,7 @@ def init_workspace(
     internal_modules: list[str] = []
     internal_modules_applied = False
     if apply_internal:
-        from ...Core.deps_analyser.analyser import collect_internal_modules
+        from ...Core.deps_analyser import collect_internal_modules
 
         internal_modules = sorted(
             collect_internal_modules(str(workspace)),
@@ -366,7 +366,7 @@ def init_workspace(
             raise CliSpecError(
                 "requirements.txt already exists. (--generate-requirements)"
             )
-        from ...Core.deps_analyser.analyser import write_requirements_txt
+        from ...Core.deps_analyser import write_requirements_txt
 
         if not write_requirements_txt(str(workspace), str(requirements_path)):
             requirements_path.write_text(
@@ -594,7 +594,7 @@ def ensure_correct_git_commit(
     if not locked_commit and not locked_branch:
         return True
 
-    from ...Core.Locking import get_git_branch, get_git_commit_hash
+    from ...Core.locking import get_git_branch, get_git_commit_hash
 
     current_commit = get_git_commit_hash(workspace)
     current_branch = get_git_branch(workspace)

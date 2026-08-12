@@ -36,7 +36,7 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
 )
 
-from pycompiler_ark.Core.Locking import load_yaml_file
+from pycompiler_ark.Core.locking import load_yaml_file
 
 from ....Core.globals import WORKSPACE_CONFIG_DIRNAME
 
@@ -189,7 +189,7 @@ class LockDialog(QDialog):
         if not locked_commit and not locked_branch:
             return True
 
-        from pycompiler_ark.Core.Locking import (
+        from pycompiler_ark.Core.locking import (
             get_git_branch,
             get_git_commit_hash,
         )

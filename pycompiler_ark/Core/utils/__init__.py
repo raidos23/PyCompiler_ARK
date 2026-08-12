@@ -15,7 +15,6 @@
 
 """Core utilities shared across PyCompiler ARK."""
 
-from .data import DependencyInfo, PythonFileInfo
 from .ensure_tools import ToolsCheckResult, ensure_tools
 from .executor import ExecutionResult, executor
 from .os_helpers import open_path
@@ -23,10 +22,6 @@ from .os_helpers import open_path
 __all__ = [
     "ToolsCheckResult",
     "ensure_tools",
-    "DependencyInfo",
-    "PythonFileInfo",
-    "VenvInfo",
-    "GitInfo",
     "executor",
     "ExecutionResult",
     "open_path",

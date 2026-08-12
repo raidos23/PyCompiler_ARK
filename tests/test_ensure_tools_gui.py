@@ -24,7 +24,7 @@ from pycompiler_ark.Core.utils.ensure_tools import (
 
 class TestEnsureToolsGui(unittest.TestCase):
     @patch("pycompiler_ark.Core.utils.internet.check_internet_connection")
-    @patch("pycompiler_ark.Core.SystemDepsManager.check_system_packages")
+    @patch("pycompiler_ark.Core.SysDepsManager.check_system_packages")
     def test_ensure_tools_gui_system_success(
         self, mock_check_sys, mock_check_net
     ):

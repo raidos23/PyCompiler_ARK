@@ -49,11 +49,11 @@ def test_collect_internal_modules_uses_classification(tmp_path):
 
     with (
         patch(
-            "pycompiler_ark.Core.deps_analyser.analyser._extract_imported_modules_from_file",
+            "pycompiler_ark.Core.deps_analyser._extract_imported_modules_from_file",
             return_value={"pkg", "requests", "os"},
         ),
         patch(
-            "pycompiler_ark.Core.deps_analyser.analyser._classify_module_origin",
+            "pycompiler_ark.Core.deps_analyser._classify_module_origin",
             side_effect=_classify,
         ),
     ):

@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from pycompiler_ark.Core.Locking import compare_lock_payloads
+from pycompiler_ark.Core.locking import compare_lock_payloads
 from pycompiler_ark.Ui.Cli.helpers import (
     compare_lock_payloads as wrapper_compare_lock_payloads,
 )

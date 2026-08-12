@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""BcaslDialog — visual editor of the BCASL pipeline (pure Qt).
+"""BcaslDialog — visual editor of the BCASL pipeline.
 
 Complies with SPEC UX BCASL:
   - Collapsible sections by category (tag → phase)

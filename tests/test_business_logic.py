@@ -21,7 +21,7 @@ from pycompiler_ark.Core.Configs import (
     should_exclude_file,
 )
 from pycompiler_ark.Core.globals import WORKSPACE_CONFIG_DIRNAME
-from pycompiler_ark.Core.Locking import (
+from pycompiler_ark.Core.locking import (
     build_lock_payload,
     ensure_workspace_layout,
     get_git_commit_hash,
@@ -91,7 +91,7 @@ def test_build_lock_payload_with_git(tmp_path):
         "project": {"name": "Test", "version": "1.0.0", "entry": "main.py"},
         "build": {"engine": "nuitka", "include": ["requests", "rich"]},
     }
-    with patch("pycompiler_ark.Core.Locking.get_git_commit_hash") as mock_git:
+    with patch("pycompiler_ark.Core.locking.get_git_commit_hash") as mock_git:
         mock_git.return_value = "git_hash_123"
         payload = build_lock_payload(tmp_path, config, engine_id="nuitka")
 

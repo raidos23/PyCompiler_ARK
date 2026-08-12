@@ -101,7 +101,7 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
             from ...Services.AdvancedAuth import (
                 AdvancedAuth as AuthAdvancedAuth,
             )
-            from .Dialogs.AdvancedAuthUI import AdvancedAuthUI
+            from .Dialogs.WorkspaceDialog import AdvancedAuthUI
 
             AuthAdvancedAuth.register_workspace_change_handler(
                 lambda folder: AdvancedAuthUI.handle_workspace_change_request(
@@ -197,7 +197,7 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
 
     def add_py_files_from_folder(self, folder):
         """Add Python files from a folder into the workspace list."""
-        from ...Core.WorkSpaceManager.SetupWorkspace import SetupWorkspace
+        from .WorkspaceManipulation import SetupWorkspace
 
         files = SetupWorkspace.list_python_files(folder)
 
@@ -272,7 +272,7 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
 
     def open_init_workspace_dialog(self):
         """Open the project initialization dialog."""
-        from .Dialogs.InitWorkspaceDialog import (
+        from .Dialogs.WorkspaceDialog import (
             open_init_workspace_dialog,
         )
 

@@ -27,9 +27,9 @@ from typing import Any
 
 import yaml
 
-from ..Configs import normalize_ark_config
-from ..engine.build_context import BuildContext
-from ..globals import WORKSPACE_CONFIG_DIRNAME
+from .Configs import normalize_ark_config
+from .engine.build_context import BuildContext
+from .globals import WORKSPACE_CONFIG_DIRNAME
 
 LOCK_DIRNAME = "lock"
 CACHE_DIRNAME = "cache"

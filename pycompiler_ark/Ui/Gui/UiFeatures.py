@@ -669,7 +669,7 @@ class UiFeatures:
 
     def show_language_dialog(self) -> None:
         """Open language selection dialog."""
-        from .Dialogs.i18nDialog import (
+        from .Dialogs.WorkspaceDialog import (
             show_language_dialog as _i18n_show_dialog,
         )
 
