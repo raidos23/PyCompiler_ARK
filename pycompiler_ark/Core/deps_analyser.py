@@ -23,126 +23,20 @@ import subprocess
 import sys
 from importlib.metadata import PackageNotFoundError, distribution
 
-import yaml
-
-# NOTE PRODUCTION-HARDENING:
-# Unfinalized features are encapsulated in guards so they never
-# cause the application to fail. Public Plugins remain stable; the paths no
-# implemented return silently.
-
-
-def _default_excluded_stdlib() -> set[str]:
-    return {
-        "sys",
-        "os",
-        "re",
-        "subprocess",
-        "json",
-        "math",
-        "time",
-        "pathlib",
-        "typing",
-        "itertools",
-        "functools",
-        "collections",
-        "asyncio",
-        "importlib",
-        "inspect",
-        "logging",
-        "argparse",
-        "dataclasses",
-        "unittest",
-        "threading",
-        "multiprocessing",
-        "http",
-        "urllib",
-        "email",
-        "socket",
-        "ssl",
-        "hashlib",
-        "hmac",
-        "gzip",
-        "bz2",
-        "lzma",
-        "base64",
-        "shutil",
-        "tempfile",
-        "glob",
-        "fnmatch",
-        "statistics",
-        "pprint",
-        "getpass",
-        "uuid",
-        "enum",
-        "contextlib",
-        "queue",
-        "traceback",
-        "warnings",
-        "gc",
-        "platform",
-        "sysconfig",
-        "pkgutil",
-        "site",
-        "venv",
-        "sqlite3",
-        "tkinter",
-        "__future__",
-        "__main__",
-        "__builtins__",
-    }
-
-
-def _load_excluded_stdlib() -> set[str]:
-    default = _default_excluded_stdlib()
-    # Path to decentralized data folder
-    mapping_path = os.path.abspath(
-        os.path.join(
-            os.path.dirname(os.path.abspath(__file__)),
-            os.pardir,
-            os.pardir,
-            "data",
-            "stdlib.yml",
-        )
-    )
-    if not os.path.isfile(mapping_path):
-        return default
-    try:
-        with open(mapping_path, encoding="utf-8") as f:
-            data = yaml.safe_load(f)
-        modules = None
-        if isinstance(data, dict):
-            modules = data.get("stdlib")
-            if modules is None:
-                modules = data.get("modules")
-        elif isinstance(data, list):
-            modules = data
-        if not isinstance(modules, list):
-            return default
-        cleaned = [
-            m.strip() for m in modules if isinstance(m, str) and m.strip()
-        ]
-        return set(cleaned) or default
-    except Exception:
-        return default
-
-
-# Explicit list of standard library modules to exclude (loaded with YAML)
-EXCLUDED_STDLIB = _load_excluded_stdlib()
-
 
 @functools.lru_cache(maxsize=256)
 def _is_stdlib_module(module_name: str) -> bool:
-    """Determine whether module belongs to Python standard library.
-    Combines an explicit exclude list and detection based on importlib.util.find_spec.
-    Hidden results to avoid repeated calls."""
+    """Determine whether module belongs to Python standard library."""
     try:
-        if module_name in EXCLUDED_STDLIB:
-            return True
         import importlib.util
         import sys
         import sysconfig
 
-        if module_name in sys.builtin_module_names:
+        top_level = (module_name or "").split(".")[0]
+        if top_level in sys.builtin_module_names:
+            return True
+        stdlib_names = getattr(sys, "stdlib_module_names", None)
+        if stdlib_names and top_level in stdlib_names:
             return True
         spec = importlib.util.find_spec(module_name)
         if spec is None:
