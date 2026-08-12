@@ -46,7 +46,7 @@ from ..bcasl.validator import (
 )
 
 # Universal tool installation utility
-from ..Core.utils.ensure_tools import ToolsCheckResult
+from ..Core.utils import ToolsCheckResult
 
 __version__ = "1.0.0"
 

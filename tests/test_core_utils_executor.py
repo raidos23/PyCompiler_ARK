@@ -18,7 +18,7 @@ from __future__ import annotations
 import time
 import unittest
 
-from pycompiler_ark.Core.utils.executor import ExecutionResult, executor
+from pycompiler_ark.Core.utils import ExecutionResult, executor
 
 
 class TestCoreUtilsExecutor(unittest.TestCase):

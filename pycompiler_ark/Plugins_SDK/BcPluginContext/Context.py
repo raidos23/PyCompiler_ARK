@@ -104,19 +104,6 @@ __version__ = "1.0.0"
 # Type aliases
 # -----------------------------
 Pathish = Union[str, Path]
-try:
-    from ...Core.utils.data import (
-        DependencyInfo,
-        GitInfo,
-        PythonFileInfo,
-        VenvInfo,
-    )
-except Exception:
-    DependencyInfo = None
-    VenvInfo = None
-    PythonFileInfo = None
-    GitInfo = None
-
 
 # -----------------------------
 # Workspace management utilities
@@ -276,11 +263,6 @@ __all__ = [
     "bc_register",
     # Type aliases
     "Pathish",
-    # Data classes
-    "DependencyInfo",
-    "PythonFileInfo",
-    "VenvInfo",
-    "GitInfo",
     # Workspace management
     "set_selected_workspace",
     # Template generation

@@ -26,7 +26,7 @@ from typing import Any, Optional, Union
 
 from PySide6.QtCore import QObject, QProcess
 
-from .utils.internet import check_internet_connection
+from .utils import check_internet_connection
 
 
 #################

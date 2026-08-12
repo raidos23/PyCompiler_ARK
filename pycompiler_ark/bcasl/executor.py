@@ -33,7 +33,7 @@ from ..bcasl.Base import (
     _PluginRecord,
 )
 from ..bcasl.PreCompileContext import PreCompileContext
-from ..Core.utils.ensure_tools import ensure_tools
+from ..Core.utils import ensure_tools
 
 _ACTIVE_WORKER_PIDS: set[int] = set()
 _ACTIVE_WORKER_LOCK = threading.Lock()
@@ -389,7 +389,7 @@ def _run_plugin_sequential(
             _unregister_worker_pid(p.pid)
             _cleanup_queue(q)
     else:
-        from ..Core.utils.executor import executor
+        from ..Core.utils import executor
 
         res = executor(
             plg.on_pre_compile,
@@ -923,7 +923,7 @@ def _plugin_worker(
                 config=dict(config or {}),
                 build_context=build_context,
             )
-            from ..Core.utils.executor import executor as _executor
+            from ..Core.utils import executor as _executor
 
             res = _executor(
                 plg.on_pre_compile,

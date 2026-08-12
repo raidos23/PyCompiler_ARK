@@ -36,11 +36,6 @@ __all__ = [
     "bc_register",
     # Type aliases
     "Pathish",
-    # Data classes
-    "DependencyInfo",
-    "PythonFileInfo",
-    "VenvInfo",
-    "GitInfo",
     # Workspace management
     "set_selected_workspace",
     # Template generation

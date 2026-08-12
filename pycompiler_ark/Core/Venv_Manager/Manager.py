@@ -607,7 +607,7 @@ class VenvManager:
     def ensure_tools_installed(self, venv_root: str, tools: list[str]) -> None:
         """Asynchronously check/install the provided tools list with progress dialog."""
         try:
-            from ..utils.internet import check_internet_connection
+            from ..utils import check_internet_connection
 
             if not check_internet_connection():
                 output.error(
@@ -678,7 +678,7 @@ class VenvManager:
     def ensure_tools_installed_system(self, tools: list[str]) -> None:
         """Asynchronously check/install tools in system Python using pip."""
         try:
-            from ..utils.internet import check_internet_connection
+            from ..utils import check_internet_connection
 
             if not check_internet_connection():
                 output.error(
@@ -1207,7 +1207,7 @@ class VenvManager:
             )
             self._check_next_venv_pkg()
         else:
-            from ..utils.internet import check_internet_connection
+            from ..utils import check_internet_connection
 
             if not check_internet_connection():
                 output.error(
@@ -1890,7 +1890,7 @@ class VenvManager:
         use_system_python: bool = False,
     ):
         """Start the related asynchronous operation."""
-        from ..utils.internet import check_internet_connection
+        from ..utils import check_internet_connection
 
         if not check_internet_connection():
             output.error(

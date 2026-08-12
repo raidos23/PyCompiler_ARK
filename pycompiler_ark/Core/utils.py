@@ -1,31 +1,21 @@
-# SPDX-License-Identifier: Apache-2.0
-# Copyright 2026 Samuel Amen Ague
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
-"""Universal utility for checking and installing tools.
-
-Independent of BCASL, Engine, BuildContext and Qt (unless a GUI object is passed).
-Usable from any module of the project via:
-
-    from pycompiler_ark.Core.utils.ensure_tools import ensure_tools, ToolsCheckResult
-
-    result = ensure_tools({"python": ["black"], "system": ["gcc"]})
-    if not result.ok:
-        print(result.errors)"""
-
 from __future__ import annotations
 
+import locale
+import os
+import platform
+import re
+import shutil
+from collections.abc import Sequence
+from pathlib import Path
+import subprocess
+import sys
+from typing import Any, Dict, List, Optional, Tuple, Union
+
+import time
+from dataclasses import dataclass
+from typing import Any, Callable, Optional
+
+from ..Ui import output as output
 import importlib.util
 import subprocess
 import sys
@@ -34,9 +24,50 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any
 
-from ...Ui import output
+Pathish = Union[str, Path]
 
-__all__ = ["ToolsCheckResult", "ensure_tools"]
+
+# =================
+# internet
+# ================
+def check_internet_connection(timeout: float = 3.0, retries: int = 0) -> bool:
+    """
+    Check if internet connection is available with high certainty.
+    Prioritizes checking connectivity to essential services like PyPI.
+    """
+    import http.client
+    import socket
+    import time
+
+    # Essential hosts to verify connectivity for tool installation
+    # pypi.org is the most important one for pip installs
+    hosts = ["pypi.org", "www.google.com", "www.cloudflare.com", "1.1.1.1"]
+
+    for attempt in range(retries + 1):
+        # Try each host
+        for host in hosts:
+            try:
+                # If it looks like an IP, use direct connection
+                if host[0].isdigit():
+                    with socket.create_connection((host, 53), timeout=timeout):
+                        return True
+                else:
+                    # For domains, try both resolution and a quick HTTP HEAD request
+                    # This handles environments with DNS but no real internet egress
+                    socket.gethostbyname(host)
+                    conn = http.client.HTTPSConnection(host, timeout=timeout)
+                    conn.request("HEAD", "/")
+                    res = conn.getresponse()
+                    conn.close()
+                    if 200 <= res.status < 400:
+                        return True
+            except Exception:
+                continue
+
+        if attempt < retries:
+            time.sleep(1.0)
+
+    return False
 
 
 @dataclass
@@ -54,6 +85,9 @@ def _tools_stage_message(stage: str, fr: str, en: str) -> tuple[str, str]:
     return prefix + fr, prefix + en
 
 
+# ===============
+# install tools
+# ================
 def ensure_tools(
     required_tools: dict,
     stop_signal: Callable[[], bool] | None = None,
@@ -91,8 +125,6 @@ def ensure_tools(
                     SysDepsManager,
                     check_system_packages,
                 )
-
-                from .internet import check_internet_connection
 
                 if hasattr(gui, "sys_deps_manager") and gui.sys_deps_manager:
                     sys_manager = gui.sys_deps_manager
@@ -159,7 +191,7 @@ def ensure_tools(
                             interval = 500  # 0.5s
                             while not process.waitForFinished(interval):
                                 if stop_signal and stop_signal():
-                                    from ..process_killer import (
+                                    from .process_killer import (
                                         kill_process_tree,
                                     )
 
@@ -277,7 +309,7 @@ def ensure_tools(
                                 interval = 500  # 0.5s
                                 while not process.waitForFinished(interval):
                                     if stop_signal and stop_signal():
-                                        from ..process_killer import (
+                                        from .process_killer import (
                                             kill_process_tree,
                                         )
 
@@ -391,8 +423,7 @@ def ensure_tools(
         else:
             # Original headless system tools check & installation flow
             try:
-                from ..utils.internet import check_internet_connection
-                from ..SysDepsManager.headless import (
+                from .SysDepsManager import (
                     check_system_packages,
                     install_system_packages,
                 )
@@ -465,8 +496,6 @@ def ensure_tools(
             and gui.venv_manager
         ):
             try:
-                from .internet import check_internet_connection
-
                 use_system = bool(getattr(gui, "use_system_python", False))
 
                 if use_system:
@@ -693,10 +722,6 @@ def ensure_tools(
                 )
 
                 try:
-                    from ..utils.internet import (
-                        check_internet_connection,
-                    )
-
                     output.info(
                         "[ensure_tools:python] Vérification de la connexion Internet…",
                         "[ensure_tools:python] Checking Internet connection...",
@@ -773,3 +798,213 @@ def ensure_tools(
         missing_python=missing_python,
         errors=errors,
     )
+
+
+# ======================
+#
+# Executor
+#
+# =======================
+
+
+@dataclass
+class ExecutionResult:
+    """Structured result of a function execution."""
+
+    success: bool
+    value: Any | None = None
+    error: str = ""
+    duration_ms: float = 0.0
+    name: str = ""
+
+
+def _emit_log(
+    log_callback: Optional[Callable[[str], None]], message: str
+) -> None:
+    """Emit a log line via callback if one was provided."""
+    if log_callback is None:
+        return
+    try:
+        log_callback(message)
+    except Exception:
+        pass
+
+
+def _check_stop(stop_requested: Optional[Callable[[], bool]]) -> bool:
+    """Return True if the caller requested a stop."""
+    if stop_requested is None:
+        return False
+    try:
+        return bool(stop_requested())
+    except Exception:
+        return False
+
+
+def executor(
+    func: Callable,
+    *args,
+    name: Optional[str] = None,
+    stop_requested: Optional[Callable[[], bool]] = None,
+    log_callback: Optional[Callable[[str], None]] = None,
+    catch_exceptions: bool = True,
+    **kwargs,
+) -> ExecutionResult:
+    """Execute ``func(*args, **kwargs)`` and return a structured result.
+    It can be used to run any callable with uniform error handling, timing and
+    logging.
+
+    Args:
+        func: The callable to execute.
+        *args: Positional arguments passed to ``func``.
+        name: Optional display name used in logs and in the returned result.
+              Defaults to ``func.__name__``.
+        stop_requested: Optional callable returning ``True`` when execution
+            should be cancelled. Checked before starting and can be polled
+            inside long-running ``func`` implementations if they accept it.
+        log_callback: Optional callable receiving log lines.
+        catch_exceptions: If ``True`` (default), exceptions are caught and
+            returned as a failed ``ExecutionResult``. If ``False``, exceptions
+            propagate normally.
+        **kwargs: Keyword arguments passed to ``func``.
+
+    Returns:
+        ``ExecutionResult`` describing the outcome of the call.
+    """
+    task_name = name or getattr(func, "__name__", repr(func))
+
+    if _check_stop(stop_requested):
+        msg = f"Cancelled before start: {task_name}"
+        _emit_log(log_callback, msg)
+        output.info(msg)
+        return ExecutionResult(
+            success=False,
+            error="Execution cancelled before start",
+            name=task_name,
+        )
+
+    msg = f"Start: {task_name}"
+    _emit_log(log_callback, msg)
+    output.info(msg)
+    start = time.perf_counter()
+
+    try:
+        value = func(*args, **kwargs)
+        duration_ms = (time.perf_counter() - start) * 1000.0
+        _emit_log(
+            log_callback,
+            f"Success: {task_name} ({duration_ms:.1f} ms)",
+        )
+        output.success(
+            f" {task_name} ({duration_ms:.1f} ms)",
+        )
+        return ExecutionResult(
+            success=True,
+            value=value,
+            duration_ms=duration_ms,
+            name=task_name,
+        )
+    except Exception as exc:
+        duration_ms = (time.perf_counter() - start) * 1000.0
+        error_message = str(exc)
+        _emit_log(
+            log_callback,
+            f"Failure: {task_name} - {error_message}",
+        )
+        output.error(
+            f" {task_name} - {error_message}",
+        )
+        if not catch_exceptions:
+            raise
+        return ExecutionResult(
+            success=False,
+            error=error_message,
+            duration_ms=duration_ms,
+            name=task_name,
+        )
+
+
+def open_path(path: Pathish) -> bool:
+    """Open a file or directory with the OS default handler. Returns True on attempt."""
+    try:
+        p = str(path)
+        sysname = platform.system()
+        if sysname == "Windows":
+            os.startfile(p)  # type: ignore[attr-defined]
+        elif sysname == "Linux":
+            import subprocess
+
+            subprocess.run(["xdg-open", p])
+        else:
+            import subprocess
+
+            subprocess.run(["open", p])
+        return True
+    except Exception:
+        return False
+
+
+def get_interpreter_version(
+    python_path: Optional[str] = None,
+) -> Tuple[int, int, int]:
+    """Return Python interpreter version (major, minor, patch)"""
+    if python_path is None:
+        python_path = sys.executable
+
+    try:
+        result = subprocess.run(
+            [python_path, "--version"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+        version_str = result.stdout or result.stderr
+        match = re.search(r"(\d+)\.(\d+)\.(\d+)", version_str)
+        if match:
+            return (
+                int(match.group(1)),
+                int(match.group(2)),
+                int(match.group(3)),
+            )
+    except Exception:
+        pass
+
+    return (
+        sys.version_info.major,
+        sys.version_info.minor,
+        sys.version_info.micro,
+    )
+
+
+def get_interpreter_version_str(python_path: Optional[str] = None) -> str:
+    """Return Python interpreter version as a string."""
+    v = get_interpreter_version(python_path)
+    return f"{v[0]}.{v[1]}.{v[2]}"
+
+
+def check_module_available(
+    module_name: str, python_path: Optional[str] = None
+) -> bool:
+    """Check whether a Python module is available.
+
+    Args:
+     module_name: Module name
+     python_path: Path of the interpreter
+
+    Returns:
+     True if the module is available"""
+    try:
+        if python_path:
+            result = subprocess.run(
+                [python_path, "-c", f"import {module_name}"],
+                capture_output=True,
+                text=True,
+                timeout=5,
+            )
+            return result.returncode == 0
+        else:
+            import importlib
+
+            importlib.import_module(module_name)
+            return True
+    except Exception:
+        return False

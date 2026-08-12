@@ -38,7 +38,7 @@ import shutil
 import subprocess
 from typing import Dict, List, Optional, Tuple
 from .engine.build_context import BuildContext
-from .utils.ensure_tools import ensure_tools
+from .utils import ensure_tools
 
 #####################
 # Process Security ##
@@ -160,7 +160,7 @@ def resolve_engine_command(
                            BuildContext builds, or returns an empty command.
     """
     try:
-        from .. import engine as engines_loader
+        from . import engine as engines_loader
 
         engine = engines_loader.create(engine_id)
         if gui:
@@ -352,7 +352,7 @@ def run_engine_compile_streaming(
                 "Etape 1/3 : Verification et installation des outils requis..."
             )
 
-        from .. import engine as engines_loader
+        from . import engine as engines_loader
 
         engine_instance = engines_loader.create(engine_id)
 
