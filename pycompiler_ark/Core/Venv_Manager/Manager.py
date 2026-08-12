@@ -2269,7 +2269,7 @@ class VenvManager:
 
             # Create ARK config if it doesn't exist
             try:
-                from ..Configs import (
+                from ..configs import (
                     create_default_ark_config,
                 )
 

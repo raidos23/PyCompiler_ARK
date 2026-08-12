@@ -200,7 +200,7 @@ class UiFeatures:
         if not workspace_dir:
             return
         try:
-            from pycompiler_ark.Core.Configs import (
+            from pycompiler_ark.Core.configs import (
                 get_entrypoint,
                 load_ark_config,
             )
@@ -240,7 +240,7 @@ class UiFeatures:
             )
             return
         try:
-            from pycompiler_ark.Core.Configs import set_entrypoint
+            from pycompiler_ark.Core.configs import set_entrypoint
 
             ok = set_entrypoint(workspace_dir, rel_path)
         except Exception:
@@ -271,7 +271,7 @@ class UiFeatures:
         if not workspace_dir:
             return
         try:
-            from pycompiler_ark.Core.Configs import set_entrypoint
+            from pycompiler_ark.Core.configs import set_entrypoint
 
             ok = set_entrypoint(workspace_dir, None)
         except Exception:

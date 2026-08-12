@@ -189,7 +189,7 @@ def run_engine_compile(
     return result
 
 
-from ...Core.Configs import (
+from ...Core.configs import (
     CONFIG_KEYS,
     DEFAULT_USER_DIRS,
     ArkConfigError,
@@ -201,11 +201,11 @@ from ...Core.Configs import (
     unset_config_value,
     write_ark_config,
 )
-from ...Core.Configs import config_file_for as _config_file_for
-from ...Core.Configs import config_home as _config_home
-from ...Core.Configs import ensure_config_home as _ensure_config_home
-from ...Core.Configs import load_ark_config as _load_ark_config
-from ...Core.Configs import validate_ark_config as _validate_ark_config
+from ...Core.configs import config_file_for as _config_file_for
+from ...Core.configs import config_home as _config_home
+from ...Core.configs import ensure_config_home as _ensure_config_home
+from ...Core.configs import load_ark_config as _load_ark_config
+from ...Core.configs import validate_ark_config as _validate_ark_config
 from ...Core.locking import (
     BuildContext,
     ensure_workspace_layout,
@@ -242,13 +242,13 @@ class PyCompilerArkValidationResult:
     warnings: list[str]
 
 
-# ── Thin CLI wrappers around Core.Configs (user config) ──────────────────────
+# ── Thin CLI wrappers around Core.configs (user config) ──────────────────────
 # resolve_config_value / set_config_value / unset_config_value are imported
-# directly from ...Core.Configs above and re-exported as-is.
+# directly from ...Core.configs above and re-exported as-is.
 
 
 def config_home() -> Path:
-    """Return the PyCompiler ARK user config root (delegates to Core.Configs)."""
+    """Return the PyCompiler ARK user config root (delegates to Core.configs)."""
     return _config_home()
 
 
@@ -760,7 +760,7 @@ def list_plugins_payload() -> dict[str, Any]:
 def scaffold_engine_payload(
     name: str, root_dir: str | None = None
 ) -> dict[str, Any]:
-    from ...Core.Configs import config_file_for, resolve_config_value
+    from ...Core.configs import config_file_for, resolve_config_value
     from .interactive import ask_path
 
     if not root_dir:
@@ -781,7 +781,7 @@ def scaffold_engine_payload(
 def scaffold_plugin_payload(
     name: str, root_dir: str | None = None
 ) -> dict[str, Any]:
-    from ...Core.Configs import config_file_for, resolve_config_value
+    from ...Core.configs import config_file_for, resolve_config_value
     from .interactive import ask_path
 
     if not root_dir:

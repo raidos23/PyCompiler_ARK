@@ -17,7 +17,7 @@ from __future__ import annotations
 
 from unittest.mock import patch
 
-from pycompiler_ark.Core.Configs import load_ark_config
+from pycompiler_ark.Core.configs import load_ark_config
 from pycompiler_ark.Core.deps_analyser import collect_internal_modules
 from pycompiler_ark.Ui.Cli.helpers import init_workspace
 

@@ -226,7 +226,7 @@ def _auto_discover() -> None:
 
     # 2. User-level and Dev-level engines folders (direct packages, no namespace)
     try:
-        from ..Configs import resolve_config_value
+        from ..configs import resolve_config_value
 
         for key in ("user-engine-dir", "dev-engine-dir"):
             try:

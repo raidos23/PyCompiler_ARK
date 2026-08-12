@@ -32,7 +32,7 @@ from typing import Any, Optional
 
 import yaml
 
-from ..Core.Configs import load_ark_config
+from ..Core.configs import load_ark_config
 from ..Core.globals import INTERNAL_PLUGINS_DIR
 from .Base import BcPluginBase
 from .executor import BCASL
@@ -322,7 +322,7 @@ def _get_all_plugins_dirs() -> list[Path]:
 
     # 2. User-level and Dev-level plugins folders
     try:
-        from ..Core.Configs import resolve_config_value
+        from ..Core.configs import resolve_config_value
 
         for key in ("user-plugin-dir", "dev-plugin-dir"):
             try:

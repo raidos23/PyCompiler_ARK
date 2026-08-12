@@ -153,7 +153,7 @@ def filter_workspace_files(
     Returns:
       (valid_files, excluded_count, exclusion_patterns)
     """
-    from pycompiler_ark.Core.Configs import (
+    from pycompiler_ark.Core.configs import (
         load_ark_config,
         should_exclude_file,
     )

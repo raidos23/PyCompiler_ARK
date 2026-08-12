@@ -14,7 +14,7 @@
 # limitations under the License.
 
 """
-Core.Configs — unified configuration module for PyCompiler ARK.
+Core.configs — unified configuration module for PyCompiler ARK.
 
 Merges the former ``Core.ArkConfig`` (workspace / project configuration) and
 ``Core.UserConfig`` (user-level persistent settings) into a single canonical
@@ -60,7 +60,7 @@ from typing import Any, Optional
 
 import yaml
 
-from ..globals import INTERNAL_ENGINES_DIR, INTERNAL_PLUGINS_DIR
+from .globals import INTERNAL_ENGINES_DIR, INTERNAL_PLUGINS_DIR
 
 # =============================================================================
 # WORKSPACE / PROJECT CONFIGURATION  (was Core.ArkConfig)

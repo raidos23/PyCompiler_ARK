@@ -16,7 +16,7 @@
 from unittest.mock import MagicMock, patch
 
 from pycompiler_ark.Core.utils.internet import check_internet_connection
-from pycompiler_ark.Core.Configs import (
+from pycompiler_ark.Core.configs import (
     normalize_ark_config,
     should_exclude_file,
 )

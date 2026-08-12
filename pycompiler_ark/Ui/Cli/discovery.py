@@ -24,7 +24,7 @@ import importlib
 import inspect
 import os
 
-from ...Core.Configs import resolve_config_value
+from ...Core.configs import resolve_config_value
 
 try:
     import yaml
@@ -247,7 +247,7 @@ def engine_list_payload(workspace: str | None = None) -> dict[str, Any]:
                 except Exception:
                     pass
                 try:
-                    from ...Core.Configs import resolve_config_value
+                    from ...Core.configs import resolve_config_value
 
                     for key, label in (
                         ("dev-engine-dir", "dev"),

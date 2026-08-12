@@ -251,7 +251,7 @@ class WorkspaceDialog:
             files = SetupWorkspace.list_python_files(folder)
 
             # Filtrer et ajouter à l'UI
-            from pycompiler_ark.Core.Configs import (
+            from pycompiler_ark.Core.configs import (
                 load_ark_config,
                 should_exclude_file,
             )
@@ -415,7 +415,7 @@ class WorkspaceDialog:
 
         if not os.path.exists(config_path):
             try:
-                from pycompiler_ark.Core.Configs import (
+                from pycompiler_ark.Core.configs import (
                     create_default_ark_config,
                 )
 

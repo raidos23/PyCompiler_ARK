@@ -50,7 +50,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from pycompiler_ark.Core.Configs import load_ark_config, save_ark_config
+from pycompiler_ark.Core.configs import load_ark_config, save_ark_config
 from pycompiler_ark.Plugins_SDK.GeneralContext import (
     refresh_widget_translations,
     translate,

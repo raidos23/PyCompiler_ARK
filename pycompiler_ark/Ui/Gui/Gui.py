@@ -202,7 +202,7 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
         files = SetupWorkspace.list_python_files(folder)
 
         # UI logic to add the files
-        from pycompiler_ark.Core.Configs import (
+        from pycompiler_ark.Core.configs import (
             load_ark_config,
             should_exclude_file,
         )
