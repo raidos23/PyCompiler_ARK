@@ -566,10 +566,40 @@ class VenvManager:
 
     def is_tool_installed(self, venv_root: str, tool: str) -> bool:
         """Non-blocking check for tool presence in venv.
-        Uses has_tool_binary() only (no subprocess run). If uncertain, returns False
-        so that callers can trigger the asynchronous ensure_tools_installed() flow.
+        Prefer a real module import check in the target venv so package-backed
+        tools like cx_Freeze are not mistaken for present just because a script
+        filename exists.
         """
-        return self.has_tool_binary(venv_root, tool)
+        raw = str(tool or "").strip()
+        if not raw:
+            return False
+
+        module_name = raw.replace("-", "_").split("[")[0]
+        try:
+            python_exe = self.python_path(venv_root)
+            if python_exe and os.path.isfile(python_exe):
+                probe = subprocess.run(
+                    [
+                        python_exe,
+                        "-c",
+                        (
+                            "import importlib.util, sys; "
+                            "sys.exit(0 if importlib.util.find_spec(sys.argv[1]) "
+                            "is not None else 1)"
+                        ),
+                        module_name,
+                    ],
+                    capture_output=True,
+                    text=True,
+                    timeout=15,
+                )
+                if probe.returncode == 0:
+                    return True
+                return False
+        except Exception:
+            pass
+
+        return self.has_tool_binary(venv_root, raw)
 
     def is_tool_installed_async(
         self, venv_root: str, tool: str, callback

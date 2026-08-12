@@ -2,7 +2,8 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
-from unittest.mock import MagicMock
+from types import SimpleNamespace
+from unittest.mock import MagicMock, patch
 
 from pycompiler_ark.Core.Venv_Manager.config import VenvManagerConfig
 from pycompiler_ark.Core.Venv_Manager.Manager import VenvManager
@@ -76,6 +77,26 @@ class TestVenvManagerDetection(unittest.TestCase):
         venv_manager = VenvManager(MagicMock())
         resolved = venv_manager._detect_environment_manager(self.workspace_dir)
         self.assertEqual(resolved, self.config.get_default_manager())
+
+    @patch(
+        "pycompiler_ark.Core.Venv_Manager.Manager.os.path.isfile",
+        return_value=True,
+    )
+    @patch("pycompiler_ark.Core.Venv_Manager.Manager.subprocess.run")
+    def test_is_tool_installed_checks_importable_module_in_venv(
+        self, mock_run, _mock_isfile
+    ):
+        venv_manager = VenvManager(MagicMock())
+        venv_manager.python_path = MagicMock(
+            return_value="/fake/venv/bin/python"
+        )
+        venv_manager.has_tool_binary = MagicMock(return_value=False)
+        mock_run.return_value = SimpleNamespace(returncode=0)
+
+        self.assertTrue(
+            venv_manager.is_tool_installed("/fake/venv", "cx-Freeze")
+        )
+        venv_manager.has_tool_binary.assert_not_called()
 
 
 if __name__ == "__main__":

@@ -113,12 +113,23 @@ def ensure_tools(
 
     system_tools = [t for t in (required_tools.get("system") or []) if t]
     python_tools = [t for t in (required_tools.get("python") or []) if t]
+    use_qt_gui_helpers = False
+    if gui is not None:
+        try:
+            from PySide6.QtCore import QCoreApplication, QThread
+
+            app = QCoreApplication.instance()
+            use_qt_gui_helpers = (
+                app is None or QThread.currentThread() == app.thread()
+            )
+        except Exception:
+            use_qt_gui_helpers = False
 
     # ------------------------------------------------------------------ #
     # 1. System Tools #
     # ------------------------------------------------------------------ #
     if system_tools:
-        if gui is not None:
+        if gui is not None and use_qt_gui_helpers:
             # GUI/Bridge system tools flow
             try:
                 from pycompiler_ark.Core.SysDepsManager import (

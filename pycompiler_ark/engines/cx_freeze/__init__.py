@@ -60,7 +60,7 @@ class CXFreezeEngine(CompilerEngine):
     @property
     def required_tools(self) -> dict[str, list[str]]:
         """Return required tools for CX_Freeze compilation."""
-        return {"python": ["cx_freeze"], "system": []}
+        return {"python": ["cx-Freeze"], "system": []}
 
     def preflight(self, gui, file: str) -> bool:
         """Preflight check - dependencies are handled automatically by required_tools."""
