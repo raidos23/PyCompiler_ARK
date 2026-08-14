@@ -21,8 +21,11 @@ import locale
 import os
 import re
 from typing import Any
-
+import threading
 import yaml
+from PySide6.QtCore import QObject, QTimer, Signal
+from PySide6.QtGui import QDropEvent, Qt
+from PySide6.QtWidgets import QMainWindow, QMessageBox
 
 # Global cache for loaded translations (avoids reloads)
 _TRANSLATION_CACHE: dict[str, dict[str, Any]] = {}
@@ -30,6 +33,53 @@ _LANGUAGES_CACHE: list[dict[str, str]] | None = None
 _CACHE_LOCK = asyncio.Lock()
 _LANGUAGE_EXTENSIONS = (".yml", ".yaml")
 _ACTIVE_TRANSLATIONS: dict[str, Any] = {}
+
+
+class _UiInvoker(QObject):
+    _sig = Signal(object)
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self._sig.connect(self._exec, Qt.QueuedConnection)
+
+    def post(self, fn):
+        try:
+            self._sig.emit(fn)
+        except Exception:
+            pass
+
+    def _exec(self, fn):
+        try:
+            fn()
+        except Exception:
+            pass
+
+
+def _run_coro_async(coro, on_result, ui_owner=None):
+    invoker = None
+    try:
+        if ui_owner is not None and isinstance(ui_owner, QObject):
+            invoker = getattr(ui_owner, "_ui_invoker", None)
+            if invoker is None:
+                invoker = _UiInvoker(ui_owner)
+                setattr(ui_owner, "_ui_invoker", invoker)
+    except Exception:
+        invoker = None
+
+    def _runner():
+        try:
+            res = asyncio.run(coro)
+        except Exception as e:
+            res = e
+        try:
+            if invoker is not None:
+                invoker.post(lambda: on_result(res))
+            else:
+                QTimer.singleShot(0, lambda: on_result(res))
+        except Exception:
+            pass
+
+    threading.Thread(target=_runner, daemon=True).start()
 
 
 def _project_root() -> str:
@@ -409,7 +459,7 @@ def get_current_language_sync() -> str:
     """Return current language from user preferences (sync)."""
     try:
         # Absolute import to avoid relative-import issues outside Core package
-        from .PreferencesManager import PREFS_FILE
+        from .prefs import PREFS_FILE
 
         if os.path.isfile(PREFS_FILE):
             with open(PREFS_FILE, encoding="utf-8") as f:
@@ -566,7 +616,7 @@ def i18n_synchro(self, lang_pref: str, tr: dict[str, Any]) -> str:
 
     _apply_main_app_translations(self, tr)
 
-    from .Gui.IdeLikeGui.connections import (
+    from .Gui.UiConnection import (
         _retranslate_ide_like_actions,
     )
 
@@ -608,7 +658,6 @@ def i18n_synchro(self, lang_pref: str, tr: dict[str, Any]) -> str:
 
 def apply_language(self, lang_display: str) -> None:
     """Apply selected language through centralized i18n flow."""
-    from .Gui.Globals import _run_coro_async
 
     async def _do():
         code = (

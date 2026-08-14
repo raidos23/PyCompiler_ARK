@@ -21,19 +21,21 @@ delegation to Core services). No business logic here."""
 import os
 from typing import Optional
 
-from PySide6.QtGui import QDropEvent
+from PySide6.QtCore import QObject, QTimer, Signal
+from PySide6.QtGui import QDropEvent, Qt
 from PySide6.QtWidgets import QMainWindow, QMessageBox
 
 from pycompiler_ark.Ui import output
 
 from ..i18n import is_french_language, tr_fr_en
 from .Dialogs.VenvDialog import VenvManagerUI
-from .Dialogs.WorkspaceDialog import WorkspaceDialog
-from .Globals import (
+from .Dialogs.WorkspaceDialog import (
+    WorkspaceDialog,
     _latest_gui_instance,
-    _workspace_dir_cache,
     _workspace_dir_lock,
+    _workspace_dir_cache,
 )
+
 from .UiFeatures import UiFeatures as UiFeatures
 from .WorkspaceManipulation import WorkspaceAdvancedManipulation
 
@@ -111,32 +113,7 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
         except Exception:
             pass
 
-        # Step 3: Load preferences then choose UI variant.
-        self.load_preferences()
-        ui_variant = (
-            str(os.environ.get("PYCOMPILER_UI_VARIANT", "")).strip().lower()
-        )
-        if not ui_variant:
-            ui_variant = "ide2"
-        if ui_variant in {"classic", "classic-gui", "legacy"}:
-            ui_variant = "classic"
-        if ui_variant in {"ide2", "design2", "ide-like", "idelike", "vscode"}:
-            try:
-                self.init_ide_like_ui()
-                self._ui_variant_active = "ide2"
-            except Exception:
-                self._ui_variant_active = "classic"
-                output.warn(
-                    (
-                        "UI IDE-like indisponible, bascule vers l'interface classique.",
-                        "IDE-like UI unavailable, falling back to classic UI.",
-                    ),
-                    gui=self,
-                )
-                self.init_ui()
-        else:
-            self._ui_variant_active = "classic"
-            self.init_ui()
+        self.init_ui()
 
         # Step 4: Solve the effective language and apply the i18n.
         import locale
@@ -178,8 +155,6 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
     # =========================================================================
     # INITIALISATION UI
     # =========================================================================
-
-    from pycompiler_ark.Ui.Gui.IdeLikeGui import init_ide_like_ui
 
     from .UiConnection import init_ui
 
@@ -330,10 +305,6 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
         except Exception:
             pass
 
-    # =========================================================================
-    # COMPILATION (delegation to Ui/Gui/Compilation)
-    # =========================================================================
-
     from .Dialogs.DepsAnalyserUI import (
         _install_next_dependency,
         _on_dep_pip_finished,
@@ -347,7 +318,7 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
 
         open_lock_dialog(self)
 
-    from ..PreferencesManager import load_preferences, save_preferences
+    from ..prefs import load_preferences, save_preferences
     from .Dialogs.CompilerDialog import (
         _continue_compile_all,
         cancel_all_compilations,
@@ -361,10 +332,6 @@ class PyCompilerArkGui(QMainWindow, UiFeatures):
         try_install_missing_modules,
         try_start_processes,
     )
-
-    # =========================================================================
-    # PREFERENCES (delegation to Core/PreferencesManager)
-    # =========================================================================
 
     # =========================================================================
     # DEPENDENCIES (delegation to Core/deps_analyser)

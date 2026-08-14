@@ -21,6 +21,7 @@ and delegates all business logic to Core.WorkSpaceManager.SetupWorkspace."""
 from __future__ import annotations
 import asyncio
 import os
+import threading
 from typing import Optional
 from pathlib import Path
 from PySide6.QtWidgets import QApplication, QFileDialog, QMessageBox
@@ -28,7 +29,6 @@ from PySide6.QtWidgets import QApplication, QFileDialog, QMessageBox
 from pycompiler_ark.Ui import output
 
 from ..WorkspaceManipulation import SetupWorkspace
-from ..Globals import _workspace_dir_lock
 from ..WidgetsCreator import CompilationProcessDialog
 from PySide6.QtCore import QSize, Qt
 from PySide6.QtWidgets import (
@@ -47,6 +47,13 @@ from PySide6.QtWidgets import (
 from pycompiler_ark.Core.deps_analyser import collect_internal_modules
 
 from ...Cli.helpers import init_workspace
+
+_workspace_dir_lock = threading.RLock()
+# Global reference to the GUI instance for workspace recovery by the Plugins_SDK
+_latest_gui_instance = None
+
+# Non-blocking workspace cache for cross-thread access
+_workspace_dir_cache = None
 
 
 class WorkspaceDialog:
@@ -208,7 +215,7 @@ class WorkspaceDialog:
 
             # Étape 5: synchroniser le cache global thread-safe.
             try:
-                from ..Globals import _workspace_dir_cache
+                from ..Gui import _workspace_dir_cache
 
                 with _workspace_dir_lock:
                     _workspace_dir_cache = folder

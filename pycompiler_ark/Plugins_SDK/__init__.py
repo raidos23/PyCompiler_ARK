@@ -18,7 +18,7 @@
 
 Plugin SDK covering:
 - BC Context (Before Compilation)
-- UI context (dialogue dialogs, i18n)
+- UI context (dialogs, i18n)
 
 This package exposes a stable SDK for third-party plugins."""
 

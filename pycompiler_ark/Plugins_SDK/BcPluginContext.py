@@ -57,7 +57,7 @@ try:
     from pycompiler_ark.bcasl import bc_register as _bc_register
     from pycompiler_ark.bcasl import register_plugin as register_plugin
 
-    from ...bcasl.PreCompileContext import (
+    from ..bcasl.PreCompileContext import (
         PreCompileContext as PreCompileContext,
     )
 except ImportError:
@@ -90,7 +90,7 @@ except ImportError:
 
 
 def bc_register(cls=None, **kwargs):
-    """SDK-level wrapper for bc_register."""
+    """wrapper for bc_register."""
     return _bc_register(cls, **kwargs)
 
 
@@ -144,7 +144,7 @@ def set_selected_workspace(path: Pathish) -> bool:
         pass
     # Try to inform the GUI when running with UI; ignore result and accept by contract
     try:
-        from ...Services.AdvancedAuth import (
+        from ..Services.AdvancedAuth import (
             request_workspace_change_from_BcPlugin,
         )  # type: ignore
 
@@ -157,99 +157,6 @@ def set_selected_workspace(path: Pathish) -> bool:
         pass
     return True
 
-
-# -----------------------------
-# Template generation
-# -----------------------------
-
-
-def Generate_Bc_Plugin_Template() -> str:
-    """Generate a ready-to-use BC plugin template.
-
-    - Exposes a plugin class with proper metadata
-    - Provides the global PLUGIN variable for execution
-    - Provides the bcasl_register(manager) function for direct registration
-    - Includes Dialog Plugins for user interaction and logging
-    - Includes proper version requirements
-
-    """
-
-    template = '''from __future__ import annotations
-
-from pathlib import Path
-from pycompiler_ark.Plugins_SDK.BcPluginContext import BcPluginBase, PluginMeta, PreCompileContext
-from pycompiler_ark.Plugins_SDK.GeneralContext import Dialog
-
-# Create Dialog instances for user interaction and logging
-log = Dialog()
-dialog = Dialog()
-
-META = PluginMeta(
-    id="my.plugin.id",
-    name="My BC Plugin",
-    version="1.0.0",
-    description="Describe what this BC plugin does before compilation.",
-    author="Your Name",
-    tags=("check",),   # e.g., ("clean", "check", "optimize", "prepare", ...)
-    required_bcasl_version="2.0.0",
-    required_core_version="1.0.0",
-    required_plugins_sdk_version="1.0.0",
-    required_bc_plugin_context_version="1.0.0",
-    required_general_context_version="1.0.0",
-)
-
-
-class MyPlugin(BcPluginBase):
-    def __init__(self) -> None:
-        super().__init__(META)
-
-    def on_pre_compile(self, ctx: PreCompileContext) -> None:
-        """Execute pre-compilation actions.
-        
-        Args:
-            ctx: PreCompileContext with workspace information and utilities
-        """
-        try:
-            # Example: Ask user for confirmation
-            response = dialog.msg_question(
-                title="My Plugin",
-                text="Proceed with pre-build checks?",
-                default_yes=True,
-            )
-            
-            if not response:
-                log.log_info("Plugin cancelled by user")
-                return
-            
-            # Example: Check for Python files
-            files = list(ctx.iter_files(["*.py"], []))
-            if not files:
-                log.log_warn("No Python files found in workspace")
-                raise RuntimeError("No Python files found in workspace")
-            
-            log.log_info(f"Found {len(files)} Python files")
-            # Perform additional preparation...
-            
-        except Exception as e:
-            log.log_error(f"Plugin error: {e}")
-            raise
-
-
-# Create plugin instance
-PLUGIN = MyPlugin()
-
-
-def bcasl_register(manager):
-    """Register the plugin with the BCASL manager."""
-    manager.add_plugin(PLUGIN)
-'''
-
-    return template
-
-
-# -----------------------------
-# Public APIs exports
-# -----------------------------
 
 __all__ = [
     # Version
@@ -265,6 +172,4 @@ __all__ = [
     "Pathish",
     # Workspace management
     "set_selected_workspace",
-    # Template generation
-    "Generate_Bc_Plugin_Template",
 ]

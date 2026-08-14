@@ -15,17 +15,24 @@
 
 import os
 
-from PySide6.QtCore import QByteArray, QFile, QRectF, QSize, Qt
-from PySide6.QtGui import QIcon, QPainter, QPixmap
-from PySide6.QtUiTools import QUiLoader
+from PySide6.QtCore import QByteArray, QTimer, QRectF, QSize, Qt
+from PySide6.QtGui import QAction, QIcon, QPainter, QPixmap
 from PySide6.QtWidgets import (
+    QApplication,
     QFrame,
     QLabel,
     QLineEdit,
     QListWidget,
+    QMainWindow,
+    QMenu,
     QProgressBar,
     QPushButton,
+    QSplitter,
+    QStatusBar,
+    QTabWidget,
     QTextEdit,
+    QToolButton,
+    QWidget,
 )
 
 try:
@@ -35,6 +42,7 @@ except Exception:
 
 from pycompiler_ark.Ui import output
 
+from .mainwindow import Ui_MainWindow
 from .Dialogs.WorkspaceDialog import show_language_dialog, translate
 
 
@@ -141,32 +149,6 @@ def _detect_system_color_scheme() -> str:
 # =========================================================================
 
 
-def _load_ui_file(self) -> None:
-    """Load the classic `.ui` file and install its central widget."""
-    from pycompiler_ark.Ui import ui_form_path
-
-    loader = QUiLoader()
-    ui_path = ui_form_path("classic_main_window.ui")
-    ui_file = QFile(os.path.abspath(ui_path))
-    if not ui_file.open(QFile.ReadOnly):
-        raise RuntimeError(f"Impossible d'ouvrir le fichier UI : {ui_path}")
-    self.ui = loader.load(ui_file, self)
-    ui_file.close()
-    if self.ui is None:
-        raise RuntimeError(f"Échec du chargement du fichier UI : {ui_path}")
-    self.setCentralWidget(self.ui)
-
-
-def _clear_inline_styles(self) -> None:
-    """Remove inline styles so the global theme can apply consistently."""
-    from PySide6.QtWidgets import QWidget
-
-    widgets = [self.ui] + self.ui.findChildren(QWidget)
-    for widget in widgets:
-        if widget.styleSheet():
-            widget.setStyleSheet("")
-
-
 def _connect_dialogs_to_app(self) -> None:
     """Connect helper dialogs to the app for theme synchronization."""
     try:
@@ -186,42 +168,6 @@ def _apply_initial_theme(self) -> None:
             self.save_preferences()
     except Exception:
         pass
-
-
-def _setup_sidebar_logo(self) -> None:
-    """Configure the sidebar logo when a dedicated label is available."""
-    if not getattr(self, "ui", None):
-        return
-    candidates = [
-        "sidebar_logo",
-        "label_logo",
-        "label_app_logo",
-        "logo_label",
-    ]
-    logo_label = None
-    for name in candidates:
-        logo_label = self.ui.findChild(QLabel, name)
-        if logo_label is not None:
-            break
-    if logo_label is None:
-        return
-    logo_path = os.path.abspath(
-        os.path.join(
-            os.path.dirname(os.path.abspath(__file__)),
-            "..",
-            "..",
-            "images",
-            "logo2.png",
-        )
-    )
-    if not os.path.isfile(logo_path):
-        return
-    pixmap = QPixmap(logo_path)
-    if pixmap.isNull():
-        return
-    logo_label.setPixmap(pixmap)
-    logo_label.setAlignment(Qt.AlignCenter)
-    logo_label.setScaledContents(True)
 
 
 def _auto_resize_for_screen(self) -> None:
@@ -437,6 +383,48 @@ def _setup_widgets(self) -> None:
     def _find(cls, name: str):
         return self.ui.findChild(cls, name)
 
+    for name in (
+        "btn_select_folder",
+        "venv_button",
+        "venv_label",
+        "label_folder",
+        "label_workspace_status",
+        "label_workspace_section",
+        "label_files_section",
+        "label_tools",
+        "label_options_section",
+        "label_logs_section",
+        "label_progress",
+        "file_list",
+        "file_filter_input",
+        "btn_select_files",
+        "btn_remove_file",
+        "btn_clear_workspace",
+        "compile_btn",
+        "cancel_btn",
+        "btn_help",
+        "btn_suggest_deps",
+        "activity_btn_deps",
+        "btn_bc_loader",
+        "btn_acasl_loader",
+        "btn_lock_manager",
+        "progress",
+        "log",
+        "btn_show_stats",
+        "advanced_cfg_btn",
+        "select_lang",
+        "select_theme",
+        "compiler_tabs",
+        "tab_hello",
+        "toolButton_more",
+        "btn_select_icon",
+        "btn_nuitka_icon",
+        "statusbar",
+        "status_hint",
+    ):
+        if not hasattr(self, name):
+            setattr(self, name, None)
+
     self.btn_select_folder = _find(QPushButton, "btn_select_folder")
     self.venv_button = _find(QPushButton, "btn_venv_button")
     self.venv_label = _find(QLabel, "venv_label")
@@ -464,6 +452,10 @@ def _setup_widgets(self) -> None:
     self.btn_bc_loader = _find(QPushButton, "btn_bc_loader")
     self.btn_acasl_loader = _find(QPushButton, "btn_acasl_loader")
     self.btn_lock_manager = _find(QPushButton, "btn_lock_manager")
+    self.activity_btn_deps = _find(QToolButton, "btn_activity_deps")
+    self.btn_select_icon = _find(QPushButton, "btn_select_icon")
+    self.btn_nuitka_icon = _find(QPushButton, "btn_nuitka_icon")
+    self.toolButton_more = _find(QToolButton, "btn_more_actions")
 
     self.progress = _find(QProgressBar, "progress")
     self.log = _find(QTextEdit, "log")
@@ -471,6 +463,18 @@ def _setup_widgets(self) -> None:
     self.advanced_cfg_btn = _find(QPushButton, "btn_advanced_config")
     self.select_lang = _find(QPushButton, "btn_select_lang")
     self.select_theme = _find(QPushButton, "btn_select_theme")
+    self.compiler_tabs = _find(QTabWidget, "compiler_tabs")
+    self.tab_hello = _find(QWidget, "tab_hello")
+    self.statusbar = self.findChild(QStatusBar, "statusbar")
+    self.status_hint = None
+    try:
+        self.status_hint = (
+            self.statusbar.findChild(QLabel, "status_ready")
+            if self.statusbar
+            else None
+        )
+    except Exception:
+        self.status_hint = None
 
     # Set properties for dynamic i18n
     if self.select_lang:
@@ -502,6 +506,14 @@ def _setup_widgets(self) -> None:
     if self.btn_acasl_loader:
         self.btn_acasl_loader.setProperty("i18n_text_key", "bc_loader")
         self.btn_acasl_loader.setProperty("i18n_tooltip_key", "tt_bc_loader")
+    if self.btn_select_icon:
+        self.btn_select_icon.setProperty("i18n_tooltip_key", "tt_select_icon")
+    if self.btn_nuitka_icon:
+        self.btn_nuitka_icon.setProperty("i18n_tooltip_key", "tt_select_icon")
+    if self.activity_btn_deps:
+        self.activity_btn_deps.setProperty(
+            "i18n_tooltip_key", "tt_suggest_deps"
+        )
 
     for _lbl in (self.label_folder, self.venv_label):
         if _lbl is None:
@@ -518,25 +530,57 @@ def _setup_widgets(self) -> None:
     if self.btn_acasl_loader:
         self.btn_acasl_loader.hide()
         self.btn_acasl_loader.setEnabled(False)
+    _setup_status_bar(self)
 
 
-def _setup_compiler_tabs(self) -> None:
-    """Initialize compiler tabs and bind available engines."""
-    from PySide6.QtWidgets import QTabWidget, QWidget
+def _prime_expected_attrs(self) -> None:
+    """Backward-compatible helper for attribute bootstrapping."""
+    for name in (
+        "btn_select_folder",
+        "venv_button",
+        "venv_label",
+        "label_folder",
+        "label_workspace_status",
+        "label_workspace_section",
+        "label_files_section",
+        "label_tools",
+        "label_options_section",
+        "label_logs_section",
+        "label_progress",
+        "file_list",
+        "file_filter_input",
+        "btn_select_files",
+        "btn_remove_file",
+        "btn_clear_workspace",
+        "compile_btn",
+        "cancel_btn",
+        "btn_help",
+        "btn_suggest_deps",
+        "activity_btn_deps",
+        "btn_bc_loader",
+        "btn_acasl_loader",
+        "btn_lock_manager",
+        "progress",
+        "log",
+        "btn_show_stats",
+        "advanced_cfg_btn",
+        "select_lang",
+        "select_theme",
+        "compiler_tabs",
+        "tab_hello",
+        "toolButton_more",
+        "btn_select_icon",
+        "btn_nuitka_icon",
+        "statusbar",
+        "status_hint",
+    ):
+        if not hasattr(self, name):
+            setattr(self, name, None)
 
-    if not getattr(self, "ui", None):
-        return
 
-    self.compiler_tabs = self.ui.findChild(QTabWidget, "compiler_tabs")
-    self.tab_hello = self.ui.findChild(QWidget, "tab_hello")
-
-    if self.compiler_tabs:
-        try:
-            import pycompiler_ark.Core.engine as engines_loader
-
-            engines_loader.bind_tabs(self)
-        except Exception:
-            pass
+def _map_ide_like_widgets(self) -> None:
+    """Backward-compatible alias for widget mapping."""
+    _setup_widgets(self)
 
 
 def _connect_signals(self) -> None:
@@ -625,28 +669,35 @@ def _show_initial_help_message(self) -> None:
 
 def init_ui(self) -> None:
     """Initialize UI and connect shared feature wiring."""
-    _load_ui_file(self)
-    _clear_inline_styles(self)
-    _apply_initial_theme(self)
-    _connect_dialogs_to_app(self)
+    _load_ui(self)
     _setup_widgets(self)
-    _refresh_log_palette(self)
-    _apply_button_icons(self)
-    _setup_sidebar_logo(self)
-    _setup_compiler_tabs(self)
-    _connect_signals(self)
-    try:
-        from PySide6.QtCore import QTimer
+    _tune_layout(self)
 
-        QTimer.singleShot(0, lambda: _auto_resize_for_screen(self))
+    try:
+        _connect_dialogs_to_app(self)
+        _apply_initial_theme(self)
+        _refresh_log_palette(self)
+        _apply_button_icons(self)
+        try:
+            QTimer.singleShot(0, lambda: _auto_resize_for_screen(self))
+        except Exception:
+            _auto_resize_for_screen(self)
+        _apply_activity_buttons_theme(self)
     except Exception:
-        _auto_resize_for_screen(self)
+        pass
+
+    _setup_more_tools_menu(self)
+    try:
+        _connect_signals(self)
+    except Exception:
+        pass
+    _connect_ui_specific_signals(self)
     try:
         if hasattr(self, "setup_entrypoint_selector"):
             self.setup_entrypoint_selector()
     except Exception:
         pass
-    _show_initial_help_message(self)
+    _schedule_async_init(self)
     try:
         self.set_controls_enabled(True)
     except Exception:
@@ -917,10 +968,6 @@ def apply_theme(self, pref: str) -> None:
         except Exception:
             pass
         try:
-            from .IdeLikeGui.connections import (
-                _apply_activity_buttons_theme,
-            )
-
             _apply_activity_buttons_theme(self)
         except Exception:
             pass
@@ -1020,3 +1067,622 @@ def show_theme_dialog(self) -> None:
             )
         except Exception:
             pass
+
+
+def _load_ui(self) -> None:
+    """Load the generated Qt UI module and bind it to the main window."""
+    ui = Ui_MainWindow()
+    ui.setupUi(self)
+    # Keep the main window as the lookup root; setupUi attaches children to it.
+    self.ui = self
+
+    _clear_inline_styles(self)
+    try:
+        central = self.centralWidget()
+        if central is not None:
+            _clear_inline_styles(central)
+    except Exception:
+        pass
+
+    try:
+        self.setStyleSheet("")
+    except Exception:
+        pass
+    try:
+        app = QApplication.instance()
+        if app is not None and app.styleSheet():
+            self.ui.style().unpolish(self.ui)
+            self.ui.style().polish(self.ui)
+    except Exception:
+        pass
+
+
+def _clear_inline_styles(root: QWidget) -> None:
+    """Remove inline stylesheets so the app theme can apply cleanly."""
+    try:
+        if root.styleSheet():
+            root.setStyleSheet("")
+    except Exception:
+        pass
+    try:
+        for widget in root.findChildren(QWidget):
+            try:
+                if widget.styleSheet():
+                    widget.setStyleSheet("")
+            except Exception:
+                pass
+    except Exception:
+        pass
+
+
+def _tune_layout(self) -> None:
+    """Apply runtime splitter ratios; static constraints live in the .ui file."""
+    main_splitter = self.ui.findChild(QSplitter, "mainSplitter")
+    if main_splitter is not None:
+        try:
+            main_splitter.setStretchFactor(0, 0)
+            main_splitter.setStretchFactor(1, 0)
+            main_splitter.setStretchFactor(2, 1)
+            main_splitter.setSizes([52, 300, 1013])
+        except Exception:
+            pass
+
+    top_splitter = self.ui.findChild(QSplitter, "topSplitter")
+    if top_splitter is not None:
+        try:
+            top_splitter.setStretchFactor(0, 1)
+            top_splitter.setStretchFactor(1, 0)
+            top_splitter.setSizes([820, 245])
+        except Exception:
+            pass
+
+    right_splitter = self.ui.findChild(QSplitter, "rightSplitter")
+    if right_splitter is not None:
+        try:
+            right_splitter.setStretchFactor(0, 1)
+            right_splitter.setStretchFactor(1, 0)
+            right_splitter.setSizes([470, 230])
+        except Exception:
+            pass
+
+
+def _setup_compiler_tabs(self) -> None:
+    """Bind compiler tabs using the existing engine registry."""
+    tabs = getattr(self, "compiler_tabs", None)
+    if tabs is None:
+        return
+    try:
+        import pycompiler_ark.Core.engine as engines_loader
+
+        engines_loader.bind_tabs(self)
+    except Exception:
+        pass
+
+
+def _setup_more_tools_menu(self) -> None:
+    """Attach a compact actions menu to the three-dots tool button."""
+    more_btn = getattr(self, "toolButton_more", None)
+    if more_btn is None:
+        return
+
+    try:
+        more_btn.setToolTip(
+            translate(self, "tt_more_actions", more_btn.toolTip())
+        )
+        menu = QMenu(more_btn)
+        self._ide_more_tools_menu = menu
+
+        act_workspace = QAction(
+            translate(self, "action_select_workspace", "Select Workspace"),
+            menu,
+        )
+        act_workspace.setObjectName("action_select_workspace")
+        act_workspace.triggered.connect(
+            lambda: getattr(self, "select_workspace", lambda: None)()
+        )
+        menu.addAction(act_workspace)
+
+        act_init = QAction(
+            translate(self, "action_init_project", "Initialise Project"), menu
+        )
+        act_init.setObjectName("action_init_project")
+        act_init.triggered.connect(
+            lambda: getattr(self, "open_init_workspace_dialog", lambda: None)()
+        )
+        menu.addAction(act_init)
+
+        act_venv = QAction(
+            translate(self, "action_select_venv", "Select Venv"), menu
+        )
+        act_venv.setObjectName("action_select_venv")
+        act_venv.triggered.connect(
+            lambda: getattr(self, "select_venv_manually", lambda: None)()
+        )
+        menu.addAction(act_venv)
+
+        act_add_files = QAction(
+            translate(self, "action_add_files", "Add Files"), menu
+        )
+        act_add_files.setObjectName("action_add_files")
+        act_add_files.triggered.connect(
+            lambda: getattr(self, "select_files_manually", lambda: None)()
+        )
+        menu.addAction(act_add_files)
+
+        act_clear_workspace = QAction(
+            translate(self, "btn_clear_workspace", "Clear Workspace"), menu
+        )
+        act_clear_workspace.setObjectName("btn_clear_workspace")
+        act_clear_workspace.triggered.connect(
+            lambda: getattr(self, "clear_workspace", lambda: None)()
+        )
+        menu.addAction(act_clear_workspace)
+
+        act_stats = QAction(translate(self, "show_stats", "Show Stats"), menu)
+        act_stats.setObjectName("show_stats")
+        act_stats.triggered.connect(
+            lambda: getattr(self, "show_statistics", lambda: None)()
+        )
+        menu.addAction(act_stats)
+
+        menu.addSeparator()
+
+        act_language = QAction(
+            translate(self, "choose_language_button", "Language"), menu
+        )
+        act_language.setObjectName("btn_select_lang")
+        act_language.triggered.connect(
+            lambda: getattr(self, "show_language_dialog", lambda: None)()
+        )
+        menu.addAction(act_language)
+
+        act_theme = QAction(
+            translate(self, "choose_theme_button", "Theme"), menu
+        )
+        act_theme.setObjectName("btn_select_theme")
+        act_theme.triggered.connect(lambda: _open_theme_dialog(self))
+        menu.addAction(act_theme)
+
+        menu.addSeparator()
+
+        act_advanced = QAction(
+            translate(self, "advanced_config", "Advanced Config"), menu
+        )
+        act_advanced.setObjectName("advanced_config")
+        act_advanced.triggered.connect(
+            lambda: getattr(
+                self, "open_advanced_config_editor", lambda: None
+            )()
+        )
+        menu.addAction(act_advanced)
+
+        act_lock = QAction(
+            translate(self, "lock_manager", "Lock Manager"), menu
+        )
+        act_lock.setObjectName("lock_manager")
+        act_lock.triggered.connect(
+            lambda: getattr(self, "open_lock_dialog", lambda: None)()
+        )
+        menu.addAction(act_lock)
+
+        act_save_engines = QAction(
+            translate(self, "save_engine_configs", "Save Engine Configs"), menu
+        )
+        act_save_engines.setObjectName("save_engine_configs")
+        act_save_engines.triggered.connect(
+            lambda: getattr(self, "save_all_engine_configs", lambda: None)()
+        )
+        menu.addAction(act_save_engines)
+
+        act_help = QAction(translate(self, "help", "Help"), menu)
+        act_help.setObjectName("help")
+        act_help.triggered.connect(
+            lambda: getattr(self, "show_help_dialog", lambda: None)()
+        )
+        menu.addAction(act_help)
+
+        self._ide_more_menu_actions = {
+            "workspace": act_workspace,
+            "init": act_init,
+            "venv": act_venv,
+            "add_files": act_add_files,
+            "clear_workspace": act_clear_workspace,
+            "stats": act_stats,
+            "language": act_language,
+            "theme": act_theme,
+            "advanced": act_advanced,
+            "lock": act_lock,
+            "save_engines": act_save_engines,
+            "help": act_help,
+        }
+
+        more_btn.setMenu(menu)
+        more_btn.setPopupMode(QToolButton.InstantPopup)
+    except Exception:
+        pass
+    _retranslate_actions(self)
+    _apply_activity_buttons_theme(self)
+
+    for attr in (
+        "btn_select_folder",
+        "venv_button",
+        "btn_select_files",
+        "btn_clear_workspace",
+        "btn_show_stats",
+        "select_lang",
+        "select_theme",
+        "advanced_cfg_btn",
+        "btn_help",
+        "btn_suggest_deps",
+    ):
+        widget = getattr(self, attr, None)
+        if widget is None:
+            continue
+        try:
+            widget.setVisible(False)
+        except Exception:
+            pass
+
+
+def _open_theme_dialog(self) -> None:
+    """Bridge to existing theme dialog function without adding new core logic."""
+    try:
+        show_theme_dialog(self)
+    except Exception:
+        pass
+    _apply_activity_buttons_theme(self)
+
+
+def _apply_activity_buttons_theme(self) -> None:
+    """Ensure activity-bar tool buttons follow current app theme."""
+    try:
+        app = QApplication.instance()
+        css = app.styleSheet() if app else ""
+        dark = _is_qss_dark(css or "")
+    except Exception:
+        dark = True
+
+    if dark:
+        base = "#1B1E23"
+        hover = "#232831"
+        pressed = "#20242C"
+        border = "#2A2F37"
+        fg = "#E6E8EB"
+    else:
+        base = "#FFFFFF"
+        hover = "#F1F3F6"
+        pressed = "#E7EAF0"
+        border = "#D6D9DF"
+        fg = "#1C1F26"
+
+    style = (
+        "QToolButton {"
+        f"background: {base};"
+        f"color: {fg};"
+        f"border: 1px solid {border};"
+        "border-radius: 8px;"
+        "padding: 4px;"
+        "}"
+        f"QToolButton:hover {{ background: {hover}; }}"
+        f"QToolButton:pressed, QToolButton:checked {{ background: {pressed}; }}"
+        "QToolButton::menu-indicator { image: none; width: 0px; }"
+    )
+
+    try:
+        base_path = os.path.abspath(
+            os.path.join(
+                os.path.dirname(os.path.abspath(__file__)), "..", "..", ".."
+            )
+        )
+        icons_dir = os.path.join(base_path, "data", "icons")
+
+        more_btn = getattr(self, "toolButton_more", None)
+        if more_btn is not None:
+            more_icon = themed_svg_icon(
+                os.path.join(icons_dir, "more-horizontal.svg"), size=18
+            )
+            if more_icon is not None and not more_icon.isNull():
+                more_btn.setIcon(more_icon)
+                more_btn.setIconSize(more_btn.iconSize())
+                more_btn.setText("")
+
+        deps_btn = getattr(self, "activity_btn_deps", None)
+        src_btn = getattr(self, "btn_suggest_deps", None)
+        if deps_btn is not None:
+            if (
+                src_btn is not None
+                and src_btn.icon() is not None
+                and not src_btn.icon().isNull()
+            ):
+                deps_btn.setIcon(src_btn.icon())
+                deps_btn.setIconSize(src_btn.iconSize())
+                try:
+                    deps_btn.setToolTip(src_btn.toolTip())
+                except Exception:
+                    pass
+            else:
+                deps_icon = themed_svg_icon(
+                    os.path.join(icons_dir, "search.svg"), size=18
+                )
+                if deps_icon is not None and not deps_icon.isNull():
+                    deps_btn.setIcon(deps_icon)
+    except Exception:
+        pass
+
+    for attr in ("toolButton_more", "activity_btn_deps"):
+        btn = getattr(self, attr, None)
+        if btn is None:
+            continue
+        try:
+            btn.setStyleSheet(style)
+        except Exception:
+            pass
+    _apply_status_bar_theme(self, dark, fg, border)
+
+
+def _retranslate_actions(self) -> None:
+    """Refresh IDE-specific actions using the generic i18n traversal."""
+    try:
+        from ..i18n import (
+            _apply_main_app_translations,
+            get_active_translations,
+        )
+
+        _apply_main_app_translations(self, get_active_translations())
+    except Exception:
+        pass
+
+
+def _retranslate_ide_like_actions(self) -> None:
+    """Backward-compatible alias for older i18n call sites."""
+    _retranslate_actions(self)
+
+
+def _connect_ui_specific_signals(self) -> None:
+    """Connect only UI-specific signals on top of the shared wiring."""
+
+    def _connect_clicked(widget, handler) -> None:
+        if widget is None or handler is None:
+            return
+        try:
+            widget.clicked.connect(handler)
+        except Exception:
+            pass
+
+    _connect_clicked(
+        getattr(self, "activity_btn_deps", None),
+        getattr(self, "suggest_missing_dependencies", None),
+    )
+    _bind_status_updates(self)
+
+
+def _setup_status_bar(self) -> None:
+    if self.statusbar is None:
+        try:
+            self.statusbar = QStatusBar(self)
+            self.statusbar.setObjectName("statusbar")
+            self.setStatusBar(self.statusbar)
+        except Exception:
+            return
+    try:
+        existing = getattr(self, "status_hint", None)
+        if existing is None:
+            existing = self.statusbar.findChild(QLabel, "status_ready")
+        if existing is None:
+            existing = QLabel("Ready")
+            existing.setObjectName("status_ready")
+            self.statusbar.addPermanentWidget(existing, 1)
+        self.status_hint = existing
+        self.status_hint.setText(translate(self, "status_ready", "Ready"))
+    except Exception:
+        pass
+
+
+def _apply_status_bar_theme(self, dark: bool, fg: str, border: str) -> None:
+    if not getattr(self, "statusbar", None):
+        return
+    bg = "#151A20" if dark else "#F7F7F9"
+    style = (
+        "QStatusBar {"
+        f"background: {bg};"
+        f"color: {fg};"
+        f"border-top: 1px solid {border};"
+        "}"
+        "QStatusBar::item { border: none; }"
+        "QLabel#status_ready { padding: 2px 8px; }"
+    )
+    try:
+        self.statusbar.setStyleSheet(style)
+    except Exception:
+        pass
+
+
+def _bind_status_updates(self) -> None:
+    """Keep a lightweight status line without touching core logic."""
+    statusbar = getattr(self, "statusbar", None)
+    if statusbar is None:
+        return
+
+    def _queue_update() -> None:
+        try:
+            QTimer.singleShot(0, lambda: _update_status_line(self))
+        except Exception:
+            _update_status_line(self)
+
+    _queue_update()
+
+    for attr in (
+        "btn_select_folder",
+        "btn_select_files",
+        "btn_remove_file",
+        "btn_clear_workspace",
+        "venv_button",
+        "compile_btn",
+        "cancel_btn",
+    ):
+        btn = getattr(self, attr, None)
+        if btn is None:
+            continue
+        try:
+            btn.clicked.connect(_queue_update)
+        except Exception:
+            pass
+
+    file_list = getattr(self, "file_list", None)
+    if file_list is not None:
+        try:
+            file_list.itemSelectionChanged.connect(_queue_update)
+        except Exception:
+            pass
+        try:
+            model = file_list.model()
+            if model is not None:
+                model.rowsInserted.connect(lambda *_: _queue_update())
+                model.rowsRemoved.connect(lambda *_: _queue_update())
+                model.modelReset.connect(lambda *_: _queue_update())
+        except Exception:
+            pass
+
+    compiler_tabs = getattr(self, "compiler_tabs", None)
+    if compiler_tabs is not None:
+        try:
+            compiler_tabs.currentChanged.connect(lambda *_: _queue_update())
+        except Exception:
+            pass
+
+    progress = getattr(self, "progress", None)
+    if progress is not None:
+        try:
+            progress.valueChanged.connect(lambda *_: _queue_update())
+        except Exception:
+            pass
+
+
+def _update_status_line(self) -> None:
+    statusbar = getattr(self, "statusbar", None)
+    if statusbar is None:
+        return
+
+    def _workspace_label(path: str | None) -> str:
+        if not path:
+            return "-"
+        try:
+            p = os.path.normpath(path)
+            name = os.path.basename(p)
+            return name or p
+        except Exception:
+            return path
+
+    ws = _workspace_label(getattr(self, "workspace_dir", None))
+    files_total = 0
+    files_sel = 0
+    try:
+        fl = getattr(self, "file_list", None)
+        if fl is not None:
+            files_total = fl.count()
+            files_sel = len(fl.selectedItems())
+    except Exception:
+        pass
+
+    engine_name = "None"
+    try:
+        tabs = getattr(self, "compiler_tabs", None)
+        if tabs is not None and tabs.currentIndex() >= 0:
+            engine_name = tabs.tabText(tabs.currentIndex())
+    except Exception:
+        pass
+
+    prog = ""
+    try:
+        pb = getattr(self, "progress", None)
+        if pb is not None and pb.value() > 0:
+            prog = f"{pb.value()}%"
+    except Exception:
+        pass
+
+    parts = [f"WS:{ws}", f"F:{files_sel}/{files_total}", f"E:{engine_name}"]
+    if prog:
+        parts.append(f"P:{prog}")
+
+    msg = " | ".join(parts)
+    try:
+        if getattr(self, "status_hint", None):
+            self.status_hint.setText(msg)
+        statusbar.showMessage(msg)
+    except Exception:
+        pass
+
+
+def _schedule_async_init(self) -> None:
+    """Defer heavier setup steps to keep first paint responsive."""
+    try:
+        QTimer.singleShot(0, lambda: _setup_compiler_tabs(self))
+    except Exception:
+        _setup_compiler_tabs(self)
+
+
+def _load_ide_like_ui(self) -> None:
+    """Backward-compatible alias for older loader call sites."""
+    _load_ui(self)
+
+
+def _tune_ide_like_layout(self) -> None:
+    """Backward-compatible alias for older layout call sites."""
+    _tune_layout(self)
+
+
+def _connect_ide_like_specific_signals(self) -> None:
+    """Backward-compatible alias for older signal wiring call sites."""
+    _connect_ui_specific_signals(self)
+
+
+def _schedule_ide_like_async_init(self) -> None:
+    """Backward-compatible alias for older async init call sites."""
+    _schedule_async_init(self)
+
+
+def _setup_ide_like_compiler_tabs(self) -> None:
+    """Backward-compatible alias for older compiler tab init call sites."""
+    _setup_compiler_tabs(self)
+
+
+def _apply_classic_policies(self) -> None:
+    """Backward-compatible alias for the old policy block."""
+    try:
+        _connect_dialogs_to_app(self)
+        _apply_initial_theme(self)
+        _refresh_log_palette(self)
+        _apply_button_icons(self)
+        try:
+            QTimer.singleShot(0, lambda: _auto_resize_for_screen(self))
+        except Exception:
+            _auto_resize_for_screen(self)
+        _apply_activity_buttons_theme(self)
+    except Exception:
+        pass
+
+    try:
+        if getattr(self, "btn_acasl_loader", None):
+            self.btn_acasl_loader.hide()
+            self.btn_acasl_loader.setEnabled(False)
+    except Exception:
+        pass
+
+    for lbl_name in ("label_folder", "venv_label"):
+        lbl = getattr(self, lbl_name, None)
+        if lbl is None:
+            continue
+        try:
+            lbl.setStyleSheet("border: none; background: transparent;")
+        except Exception:
+            pass
+
+    try:
+        if getattr(self, "activity_btn_deps", None):
+            src = getattr(self, "btn_suggest_deps", None)
+            if src is not None:
+                self.activity_btn_deps.setIcon(src.icon())
+                self.activity_btn_deps.setIconSize(src.iconSize())
+                self.activity_btn_deps.setToolTip(src.toolTip())
+    except Exception:
+        pass

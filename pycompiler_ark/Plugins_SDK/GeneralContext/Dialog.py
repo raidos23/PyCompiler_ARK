@@ -26,6 +26,7 @@ from pycompiler_ark.Ui import output
 
 from ...Core.globals import INTERNAL_PLUGINS_DIR
 from ...Ui.Cli.runtime import is_cli_mode, is_noninteractive
+from ...Ui.Cli.discovery import _plugin_roots
 from ...Ui.Gui.WidgetsCreator import (
     InstallAuth,
     ProgressDialog,
@@ -82,20 +83,41 @@ class Dialog:
 
         Priority:
         1) Explicit `self.plugin_id` when provided by caller/plugin.
-        2) Infer from call stack path containing `.../Plugins/<plugin_dir>/...`.
+        2) Infer from call stack path under any discovered plugin root.
         """
         if isinstance(self.plugin_id, str) and self.plugin_id.strip():
             return self.plugin_id.strip()
         try:
+            roots: list[tuple[Path, str]] = []
+            for root, label in _plugin_roots():
+                try:
+                    roots.append((Path(root).expanduser().resolve(), label))
+                except Exception:
+                    continue
             for frame_info in inspect.stack()[2:]:
                 filename = str(getattr(frame_info, "filename", "") or "")
                 if not filename:
                     continue
-                parts = Path(filename).parts
+                file_path = Path(filename).expanduser().resolve()
+                parts = file_path.parts
+
                 if INTERNAL_PLUGINS_DIR in parts:
                     idx = parts.index(INTERNAL_PLUGINS_DIR)
                     if idx + 1 < len(parts):
                         return str(parts[idx + 1])
+
+                for root, _label in roots:
+                    try:
+                        if file_path == root:
+                            return root.name
+                        if file_path.is_relative_to(root):
+                            rel = file_path.relative_to(root)
+                            if rel.parts:
+                                if (root / "__init__.py").is_file():
+                                    return root.name
+                                return str(rel.parts[0])
+                    except Exception:
+                        continue
         except Exception:
             pass
         return ""

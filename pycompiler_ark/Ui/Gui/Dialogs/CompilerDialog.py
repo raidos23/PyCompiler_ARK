@@ -47,12 +47,12 @@ from ...Cli.helpers import (
     validate_ark_config,
     write_lock_files,
 )
-from ..Compilation.helpers import (
+from ..build import (
     bcasl_report_allows_compile,
     get_main_process,
     run_bcasl_before_compile,
 )
-from ..Compilation.mainprocess import ProcessState
+from ..build import ProcessState
 
 # ============================================================================
 # DIALOG HELPERS
@@ -815,7 +815,7 @@ def try_start_processes(self) -> bool:
             engine_id = engines_loader.registry.get_engine_for_tab(idx)
     except Exception:
         pass
-    from ..Compilation.helpers import resolve_default_engine_id
+    from ..build import resolve_default_engine_id
 
     if not engine_id:
         engine_id = resolve_default_engine_id()

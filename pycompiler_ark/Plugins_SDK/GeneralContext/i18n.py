@@ -23,7 +23,6 @@ from ...Core.globals import (
     _GLOBAL_LANG,
     _GLOBAL_TR,
     _LANG_ALIASES,
-    INTERNAL_PLUGINS_DIR,
 )
 
 try:
@@ -297,26 +296,24 @@ def load_plugin_language_file(plugin_package: str, code: str) -> dict:
         return {}
 
 
-def _discover_plugins_dir() -> str | None:
+from ...Ui.Cli.discovery import _plugin_roots
+
+
+def _candidate_plugin_dirs(root: Path) -> list[Path]:
     try:
-        base = os.path.abspath(
-            os.path.join(
-                os.path.dirname(os.path.abspath(__file__)),
-                os.pardir,
-                os.pardir,
-            )
+        if not root.exists() or not root.is_dir():
+            return []
+        if (root / "__init__.py").is_file():
+            return [root]
+        return sorted(
+            [p for p in root.iterdir() if p.is_dir()],
+            key=lambda p: p.name.lower(),
         )
-        cand = os.path.join(base, INTERNAL_PLUGINS_DIR)
-        if os.path.isdir(cand):
-            return cand
     except Exception:
-        pass
-    return None
+        return []
 
 
-def _load_plugin_languages_from_fs(
-    plugins_dir: str, code: str
-) -> dict[str, dict]:
+def _load_plugin_languages_from_fs(root: Path, code: str) -> dict[str, dict]:
     data: dict[str, dict] = {}
     normalized = normalize_language_code(code)
     candidates = [
@@ -325,19 +322,14 @@ def _load_plugin_languages_from_fs(
         "en.yml",
     ]
     try:
-        for entry in os.listdir(plugins_dir):
-            plugin_path = os.path.join(plugins_dir, entry)
-            if not os.path.isdir(plugin_path):
-                continue
-            if not os.path.isfile(os.path.join(plugin_path, "__init__.py")):
-                continue
-            lang_dir = os.path.join(plugin_path, "languages")
-            if not os.path.isdir(lang_dir):
+        for plugin_path in _candidate_plugin_dirs(root):
+            lang_dir = plugin_path / "languages"
+            if not lang_dir.is_dir():
                 continue
             payload: dict = {}
             for name in candidates:
-                p = os.path.join(lang_dir, name)
-                if not os.path.isfile(p):
+                p = lang_dir / name
+                if not p.is_file():
                     continue
                 try:
                     if yaml is None:
@@ -350,25 +342,26 @@ def _load_plugin_languages_from_fs(
                 except Exception:
                     continue
             if payload:
-                data[entry] = payload
+                data[plugin_path.name] = payload
     except Exception:
         pass
     return data
 
 
 def _load_all_plugin_languages(code: str) -> None:
-    """Load translations for all plugins in Plugins/ folder."""
+    """Load translations for all plugins."""
     try:
         _PLUGIN_TR.clear()
     except Exception:
         pass
-    plugins_dir = _discover_plugins_dir()
-    if not plugins_dir:
+    roots = _plugin_roots()
+    if not roots:
         return
-    data = _load_plugin_languages_from_fs(plugins_dir, code)
-    for plugin_id, tr in data.items():
-        register_plugin_translations(plugin_id, tr)
-        try:
-            register_plugin_translations(str(plugin_id).lower(), tr)
-        except Exception:
-            pass
+    for plugins_dir, _source in roots:
+        data = _load_plugin_languages_from_fs(Path(plugins_dir), code)
+        for plugin_id, tr in data.items():
+            register_plugin_translations(plugin_id, tr)
+            try:
+                register_plugin_translations(str(plugin_id).lower(), tr)
+            except Exception:
+                pass
