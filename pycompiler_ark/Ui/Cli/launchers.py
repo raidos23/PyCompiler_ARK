@@ -71,9 +71,7 @@ def _apply_small_screen_compaction(app, window) -> None:
         pass
 
 
-def launch_main_application(
-    no_splash: bool = False, ide_gui: bool = False, classic_gui: bool = False
-) -> int:
+def launch_main_application(no_splash: bool = False) -> int:
     try:
         from PySide6.QtCore import Qt, QTimer
         from PySide6.QtGui import QPixmap
@@ -152,10 +150,6 @@ def launch_main_application(
 
             def _launch_main():
                 try:
-                    if classic_gui:
-                        os.environ["PYCOMPILER_UI_VARIANT"] = "classic"
-                    elif ide_gui:
-                        os.environ["PYCOMPILER_UI_VARIANT"] = "ide2"
                     window = PyCompilerArkGui()
                     set_window_icon(window)
                     window.show()
@@ -169,10 +163,6 @@ def launch_main_application(
 
             QTimer.singleShot(max(0, delay_ms), _launch_main)
         else:
-            if classic_gui:
-                os.environ["PYCOMPILER_UI_VARIANT"] = "classic"
-            elif ide_gui:
-                os.environ["PYCOMPILER_UI_VARIANT"] = "ide2"
             window = PyCompilerArkGui()
             set_window_icon(window)
             window.show()

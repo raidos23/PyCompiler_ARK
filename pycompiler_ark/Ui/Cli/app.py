@@ -613,14 +613,9 @@ def build_cli():
         raise click.exceptions.Exit(run_bcasl_headless(args, verbose=verbose))
 
     @cli.command("gui")
-    @click.option("--legacy", is_flag=True)
-    def gui_cmd(legacy):
+    def gui_cmd():
         """Launch the PyCompiler ARK GUI."""
-        if legacy:
-            click.echo(
-                "LIMITATION: The classic GUI does not support full UI feature integration.\nFor full functionality, use 'pycompiler_ark gui'."
-            )
-        raise click.exceptions.Exit(launch_gui(legacy=legacy))
+        raise click.exceptions.Exit(launch_gui())
 
     @cli.group("set")
     def set_group():

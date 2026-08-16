@@ -30,7 +30,6 @@ pycompiler_ark run bcasl [-y|--yes] [--list-plugins]
 
 # GUI
 pycompiler_ark gui
-pycompiler_ark gui --legacy
 
 # Configuration (Developer)
 pycompiler_ark set user-engine-dir <path>
@@ -63,8 +62,7 @@ pycompiler_ark scaffold plugin-bcasl <name> [--path <dir>]
 
 | GUI Mode | Command | Status |
 | :--- | :--- | :--- |
-| **IDE-like GUI** | `pycompiler_ark gui` | **Active** (Modern, full feature set) |
-| **Classic GUI** | `pycompiler_ark gui --legacy` | **Frozen** (Legacy maintenance only) |
+| **GUI** | `pycompiler_ark gui` | **Active** (Modern, full feature set) |
 
 ---
 

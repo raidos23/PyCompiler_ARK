@@ -1072,9 +1072,5 @@ def run_bcasl_headless(args: list[str], verbose: bool = False) -> int:
             unregister_cli_status(status)
 
 
-def launch_gui(*, legacy: bool = False) -> int:
-    return launch_main_application(
-        no_splash=False,
-        ide_gui=not legacy,
-        classic_gui=legacy,
-    )
+def launch_gui() -> int:
+    return launch_main_application(no_splash=False)

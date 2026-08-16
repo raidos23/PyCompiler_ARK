@@ -417,9 +417,7 @@ class Ui_MainWindow(object):
 
     def retranslateUi(self, MainWindow):
         MainWindow.setWindowTitle(
-            QCoreApplication.translate(
-                "MainWindow", "PyCompiler ARK - IDE Layout", None
-            )
+            QCoreApplication.translate("MainWindow", "PyCompiler ARK", None)
         )
         self.label_app_title.setText(
             QCoreApplication.translate("MainWindow", "PyCompiler ARK", None)

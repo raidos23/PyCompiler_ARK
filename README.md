@@ -11,7 +11,7 @@
 
 # **PyCompiler ARK**
 
-A Python project build workshop with a Qt GUI, a headless-friendly CLI, a pre-compilation pipeline, and a multi-engine system.
+A Python project build workshop with a modern Qt GUI, a headless-friendly CLI, a pre-compilation pipeline, and a multi-engine system.
 
 ---
 
@@ -92,7 +92,6 @@ pycompiler_ark run bcasl [-y|--yes] [--list-plugins]
 
 # GUI
 pycompiler_ark gui
-pycompiler_ark gui --legacy
 ```
 
 ### Developer Commands
