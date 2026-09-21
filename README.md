@@ -101,7 +101,7 @@ You don't have to redesign your workflow around every build backend.
 
 ---
 
-##✨ What makes ARK different?
+## ✨ What makes ARK different?
 
 ### ⚙️ Multi-engine
 
