@@ -11,224 +11,168 @@
 
 # **PyCompiler ARK**
 
-A Python project build workshop with a modern Qt GUI, a headless-friendly CLI, a pre-compilation pipeline, and a multi-engine system.
+Build Python applications without being locked to a single build engine.
+
+You have a Python project.
+You want to turn it into a standalone application.
+
+But building a real Python application can quickly become annoying:
+
+· Which build engine should I use?
+· How do I handle dependencies?
+· What packages need to be included?
+· Which options does each engine require?
+· How do I prepare the project before building?
+· How do I reproduce the same build later?
+· How do I automate it in CI/CD?
+
+ARK handles it for you.
 
 ---
 
-## Why this app?
+## 🚀 Quick Start
 
-Build Python apps with a predictable workflow, a configurable pre-compile pipeline, and the freedom to choose your build engine.
-
-## Comparison with auto-py-to-exe
-
-| Feature                        | auto-py-to-exe      | PyCompiler ARK                  |
-|--------------------------------|---------------------|---------------------------------|
-| GUI packaging workflow         | ✅                  | ✅                              |
-| Full CLI support               | Limited             | ✅                              |
-| CI/CD & automation             | Limited             | ✅ JSON output & scripting      |
-| Multiple build engines         | ❌ PyInstaller only | ✅ PyInstaller, Nuitka, cx_Freeze |
-| Pre-build pipeline             | ❌                  | ✅ BCASL                        |
-| Plugin / extensibility system  | ❌                  | ✅ Engines & BCASL plugins      |
-| Workspace management           | Basic               | ✅ Workspace-first              |
-| Virtual environment handling   | Limited             | ✅ Integrated                   |
-| Engine-specific optimizations  | ❌                  | ✅ Auto-mapping layer           |
-
-> **Note** : auto-py-to-exe is a great simple GUI wrapper around PyInstaller.  
-> PyCompiler ARK targets more advanced use cases (multi-engine, automation, CI/CD, extensibility).
-## Core capabilities
-
-- **BCASL pre-compile pipeline**: validation, preparation, transformation before the build, with safety controls.
-- **Unified EngineRunner architecture**: a single source of truth for both CLI and GUI compilation, ensuring identical build results across all interfaces.
-- **BuildContext-driven builds**: engines receive a normalized project context, abstracting away the source of configuration (YAML vs. Lock files).
-- **Multi-engine support**: switch between PyInstaller, Nuitka, and cx_Freeze seamlessly.
-- **Extensible SDKs**: create new engines and BCASL plugins using simplified, consolidated APIs.
-- **Core auto-mapping for 80+ libraries**: automatic import detection from requirements and imports covers major AI, modern web, data science, and automation stacks, with engine-specific arguments applied through the engine mapping layer.
-- **Simplified build inclusions**: `build.include` forces package bundling and ARK translates it automatically per engine.
-- **Workspace-first UI**: filter files, manage exclusions, and follow progress and logs in one place.
-- **Venv-aware execution**: engines can use the project virtual environment automatically.
-- **Theme-aware dynamic UI**: 100% dynamic integration using QPalette and themed SVGs.
-
----
-
-## Quick Start
-
-### Install
+Initialize your project:
 
 ```bash
-git clone https://github.com/raidos23/PyCompiler_ARK.git
-cd PyCompiler_ARK
-pip install -e .
+pycompiler_ark init --entry main.py
 ```
-## Install latest version via pip
+
+Then build:
+
+```bash
+pycompiler_ark build
+```
+
+ARK takes care of the build workflow — from project configuration and environment handling to pre-build processing, dependency handling, engine selection, and build execution.
+
+You focus on your Python application.
+ARK handles the build.
+
+---
+
+## 🤔 Why ARK?
+
+Building a Python application is rarely just:
+
+```
+Python → EXE
+```
+
+Behind that simple result can be a lot of work:
+
+```
+Project
+   ↓
+Configuration
+   ↓
+Environment
+   ↓
+Dependencies
+   ↓
+Pre-build processing
+   ↓
+Engine selection
+   ↓
+Engine-specific options
+   ↓
+Build
+   ↓
+Artifacts
+   ↓
+Distribution
+```
+
+ARK brings these steps into a single workflow.
+
+Instead of manually dealing with every build engine and every project-specific detail, you give ARK your project and let it handle the build process.
+
+One project. Multiple engines.
+
+```
+                  ┌─ PyInstaller
+                  │
+Your project ─ ARK ┼─ Nuitka
+                  │
+                  └─ cx_Freeze
+```
+
+You don't have to redesign your workflow around every build backend.
+
+---
+
+##✨ What makes ARK different?
+
+### ⚙️ Multi-engine
+
+Use PyInstaller, Nuitka, or cx_Freeze through the same ARK workflow.
+
+ARK handles the differences between engines instead of forcing you to learn every engine's workflow separately.
+
+### 🔧 Pre-build pipeline
+
+Prepare and transform your project before the actual build begins.
+
+### 📦 Dependency & package handling
+
+ARK can detect and handle project dependencies and translate package inclusions into the format required by the selected engine.
+
+### 🧠 Engine-specific configuration
+
+Different engines have different requirements and options.
+
+ARK provides an abstraction layer so you don't have to manually translate your project configuration for every engine.
+
+### 🤖 Automation
+
+The same workflow can be used locally or integrated into automated build pipelines and CI/CD.
+
+### 🧩 Extensible
+
+ARK separates the build workflow from the engines performing the actual build.
+
+This allows new build engines and BCASL plugins to be integrated without redesigning the whole system.
+
+---
+
+##🛠️ Quick Start
+
+Install
+
 ```bash
 pip install pycompiler-ark
 ```
-### Launch Gui
+
+Initialize your project
 
 ```bash
-pycompiler_ark gui
-# or
-python -m pycompiler_ark gui
+pycompiler_ark init --entry main.py
 ```
----
 
-## CLI Usage
+ARK prepares the project workspace and build configuration.
 
-The PyCompiler ARK CLI provides a structured set of commands for workspace management, building, and developer tasks.
-
-### Core Commands
+Build
 
 ```bash
-# Workspace Initialization
-pycompiler_ark init --entry <path> [--icon <path>] [--with-venv] [--install-requirements] [--generate-requirements] [--apply-internal] [-y|--yes]
-
-# Building
-pycompiler_ark build [-y|--yes] [-v|--verbose] [--json]
-pycompiler_ark build --engine <id> [-y|--yes]
-pycompiler_ark build --lock [file] [-y|--yes]
-
-# Execution
-pycompiler_ark run bcasl [-y|--yes] [--list-plugins]
-
-# GUI
-pycompiler_ark gui
+pycompiler_ark build
 ```
 
-### Developer Commands
+That's the simple path.
 
-```bash
-# Discovery
-pycompiler_ark list engines
-pycompiler_ark list plugins
+You don't need to manually assemble the entire build process first.
 
-# Configuration
-pycompiler_ark set user-engine-dir <path>
-pycompiler_ark set user-plugin-dir <path>
-pycompiler_ark set dev-engine-dir <path>
-pycompiler_ark set dev-plugin-dir <path>
+For advanced workflows, ARK provides a GUI for:
 
-pycompiler_ark get user-engine-dir
-pycompiler_ark get user-plugin-dir
-pycompiler_ark get dev-engine-dir
-pycompiler_ark get dev-plugin-dir
+· Configuration
+· Engine selection
+· Build contexts
+· Lock files
+· Plugin orchestration
+· Automation
 
-pycompiler_ark unset user-engine-dir
-pycompiler_ark unset user-plugin-dir
-pycompiler_ark unset dev-engine-dir
-pycompiler_ark unset dev-plugin-dir
-
-# Scaffolding
-pycompiler_ark scaffold engine <name> [--path <dir>]
-pycompiler_ark scaffold plugin-bcasl <name> [--path <dir>]
-
-If `--path` is not provided, the CLI uses `dev-engine-dir` or `dev-plugin-dir` when configured. Otherwise, it prompts for a destination path.
-```
-
-### JSON Output
-
-For CI/CD and scripting, key commands support the `--json` flag to return machine-readable results:
-
-```bash
-pycompiler_ark build --json
-pycompiler_ark init --entry main.py --json
-```
-
----
-# Architecture Preview
-```mermaid
-graph TD
-    classDef ui fill:#e1f5fe,stroke:#01579b,stroke-width:2px,color:#01579b;
-    classDef core fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px,color:#1b5e20;
-    classDef engine fill:#fff3e0,stroke:#e65100,stroke-width:2px,color:#e65100;
-    classDef bcasl fill:#f3e5f5,stroke:#4a148c,stroke-width:2px,color:#4a148c;
-    classDef system fill:#ffebee,stroke:#b71c1c,stroke-width:2px,color:#b71c1c;
-    classDef storage fill:#ffffff,stroke:#616161,stroke-width:1px,stroke-dasharray: 5 5;
-
-    subgraph ENTRY["Entry points"]
-        GUI["Ui/Gui"]:::ui
-        CLI["Ui/Cli/app.py"]:::ui
-    end
-
-    subgraph CLI_FLOW["CLI helpers"]
-        INIT["init_workspace"]:::core
-        BUILD["build / lock rebuild"]:::core
-        LIST["list / info / scaffold"]:::core
-    end
-
-    subgraph CONFIG["Configuration and context"]
-        ARK["Core/Configs"]:::core
-        LOCK["Core/Locking"]:::core
-        CTX["BuildContext"]:::core
-        FS[".ark/ workspace files"]:::storage
-    end
-
-    subgraph PREBUILD["Pre-build pipeline"]
-        BCASL["BCASL sync helper"]:::bcasl
-        BCASL_EXEC["bcasl/executor.py"]:::bcasl
-    end
-
-    subgraph ENGINE["Compilation pipeline"]
-        RUNNER["Core/Compiler/engine_runner.py"]:::engine
-        DISCOVERY["Core/engine"]:::engine
-        AUTO["Core/Auto_Command_Builder"]:::engine
-        ENGINES["pyinstaller / nuitka / cx_freeze"]:::engine
-    end
-
-    subgraph SYSTEM["Environment and OS"]
-        VENV["VenvManager"]:::system
-        DEPS["SysDependencyManager"]:::system
-        SECURE["process_security"]:::system
-    end
-
-    GUI --> INIT
-    GUI --> BUILD
-    CLI --> INIT
-    CLI --> BUILD
-    CLI --> LIST
-
-    INIT --> ARK
-    INIT --> FS
-    INIT --> CTX
-    INIT --> VENV
-
-    BUILD --> ARK
-    BUILD --> LOCK
-    BUILD --> CTX
-    LOCK --> FS
-    LOCK --> CTX
-
-    CTX --> BCASL
-    BCASL --> BCASL_EXEC
-    BCASL_EXEC --> RUNNER
-
-    RUNNER --> DISCOVERY
-    DISCOVERY --> ENGINES
-    RUNNER --> AUTO
-    AUTO --> ENGINES
-    RUNNER --> VENV
-    RUNNER --> DEPS
-    RUNNER --> SECURE
-
-    LOCK --> FS
-    BUILD --> FS
-
-```
-## Documentation
-
-- [Contributing guide](https://github.com/raidos23/PyCompiler_ARK/blob/main/CONTRIBUTING.md)
-- [VenvManager Architecture](https://github.com/raidos23/PyCompiler_ARK/blob/main/docs/VenvManager.md)
-- [How to create an engine](https://github.com/raidos23/PyCompiler_ARK/blob/main/docs/how_to_create_an_engine.md)
-- [How to create a BC plugin](https://github.com/raidos23/PyCompiler_ARK/blob/main/docs/how_to_create_a_bc_plugin.md)
 
 ---
 
-## Configuration
+## 📄 License
 
-- **`ark.yml`**: Project metadata, build entrypoint, build include/exclude rules, and global BCASL activation.
-- **`bcasl.yml`**: Detailed BCASL pipeline configuration, plugin settings, and execution order.
-
----
-
-## License
-
-Apache-2.0 (see [`LICENSE`](https://github.com/raidos23/PyCompiler_ARK/blob/main/LICENSE)).
+PyCompiler ARK is licensed under the Apache License 2.0.
