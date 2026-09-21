@@ -135,7 +135,7 @@ This allows new build engines and BCASL plugins to be integrated without redesig
 
 ---
 
-##🛠️ Quick Start
+## 🛠️ Quick Start
 
 Install
 
@@ -170,9 +170,19 @@ For advanced workflows, ARK provides a GUI for:
 · Plugin orchestration
 · Automation
 
+---
+
+## 📚 Documentation
+
+- [Contributing Guide](https://github.com/raidos23/PyCompiler_ARK/blob/main/CONTRIBUTING.md)
+- [VenvManager Architecture](https://github.com/raidos23/PyCompiler_ARK/blob/main/docs/VenvManager.md)
+- [How to create an engine](https://github.com/raidos23/PyCompiler_ARK/blob/main/docs/how_to_create_an_engine.md)
+- [How to create a BCASL plugin](https://github.com/raidos23/PyCompiler_ARK/blob/main/docs/how_to_create_a_bc_plugin.md)
 
 ---
 
-## 📄 License
+## License
 
-PyCompiler ARK is licensed under the Apache License 2.0.
+PyCompiler ARK is licensed under the Apache License 2.0
+
+See [LICENSE](https://github.com/raidos23/PyCompiler_ARK/blob/main/LICENSE) for the full license text
